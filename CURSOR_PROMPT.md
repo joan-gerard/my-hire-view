@@ -37,6 +37,7 @@ First, help me set up the Supabase database with the following schema:
 - updated_at: timestamp with time zone
 - view_count: integer (default 0, tracks page views)
 - user_id: uuid (foreign key to auth.users)
+- is_active: boolean (default true; when false, application is "archived"—link still works but shows a warning to recruiters)
 ```
 
 **Requirements:**
@@ -48,7 +49,7 @@ First, help me set up the Supabase database with the following schema:
 ### 2. Authentication Setup (Supabase)
 - Configure Supabase Auth for email/password authentication
 - Create protected admin routes that require authentication
-- Set up middleware to protect /admin routes
+- Set up proxy to protect /admin routes
 - Provide clear instructions on what I need to configure in Supabase dashboard
 
 ### 3. Application Structure
@@ -75,6 +76,7 @@ Create the following route structure:
 
 #### Public Application Page (`/apply/[slug]`)
 - Clean, professional design with company and role prominently displayed
+- If the application is archived (`is_active` false), show a warning message only; do not display the CV, video pitch, or description
 - Embedded PDF viewer for CV (with download option)
 - YouTube video embed (responsive, 16:9 aspect ratio)
 - Mobile-responsive layout
@@ -83,8 +85,8 @@ Create the following route structure:
 
 #### Admin Dashboard (`/admin`)
 - Table/grid view of all applications
-- Show: company, role, slug, created date, view count
-- Actions: Edit, Delete, Copy link
+- Show: company, role, slug, created date, view count; "Archived" badge when `is_active` is false
+- Actions: Edit, Archive / Restore, Copy link, Delete (permanent)
 - "Create New Application" button
 - Search/filter functionality
 
@@ -216,7 +218,7 @@ Please help me build this in the following order:
 **Phase 2: Authentication**
 1. Create login page
 2. Set up Supabase Auth client
-3. Implement middleware for protected routes
+3. Implement proxy for protected routes
 4. Create auth context/hooks
 
 **Phase 3: Admin Dashboard**

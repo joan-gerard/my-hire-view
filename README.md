@@ -34,4 +34,24 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# HireView
+
+Personalized recruiter landing pages: create shareable pages with your CV (PDF) and video pitch per application.
+
+## Setup
+
+1. Install dependencies: `pnpm install`
+2. Copy `.env.local.example` to `.env.local` and fill in Supabase and Vercel Blob values.
+3. Run the SQL migrations in the Supabase SQL Editor (in order): `supabase/migrations/001_initial_schema.sql`, then `supabase/migrations/002_add_application_is_active.sql`
+4. **Configure Supabase Auth**: see [docs/SUPABASE_AUTH_SETUP.md](docs/SUPABASE_AUTH_SETUP.md) to enable the Email provider and optional email templates.
+5. Ensure Supabase **Redirect URLs** include `/auth/callback` for email links.
+
+## Development
+
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
 # hireview
