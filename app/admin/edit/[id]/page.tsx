@@ -103,12 +103,22 @@ export default function EditApplicationPage() {
     return null;
   }
 
+  // Normalize DB shape to form shape: null -> undefined for optional fields
+  const initialData: Partial<ApplicationFormData> = {
+    company: application.company,
+    role: application.role,
+    slug: application.slug,
+    cv_url: application.cv_url,
+    video_url: application.video_url,
+    description: application.description ?? undefined,
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Edit Application</h1>
       <div className="rounded-lg bg-white p-6 shadow">
         <ApplicationForm
-          initialData={application}
+          initialData={initialData}
           onSubmit={handleSubmit}
           loading={loading}
         />
