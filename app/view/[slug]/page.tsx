@@ -3,7 +3,7 @@ import ApplicationPageHeader from '@/components/public/ApplicationPageHeader';
 import PDFViewer from '@/components/pdf/PDFViewer';
 import YouTubeEmbed from '@/components/video/YouTubeEmbed';
 import { getBaseUrl } from '@/lib/utils/url';
-import ViewTracker from './ViewTracker';
+import ViewTracker from '@/app/view/[slug]/ViewTracker';
 
 async function getApplication(slug: string) {
   const response = await fetch(`${getBaseUrl()}/api/applications/${slug}`, {
