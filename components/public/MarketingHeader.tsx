@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import SignOutButton from '@/app/admin/SignOutButton';
+import SignOutButton from '@/components/auth/SignOutButton';
 import type { User } from '@supabase/supabase-js';
 
 interface MarketingHeaderProps {

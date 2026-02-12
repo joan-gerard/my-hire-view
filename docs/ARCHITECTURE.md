@@ -324,6 +324,7 @@ hireview/
 │   └── api/                    # All API routes (see section 5.2)
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
+│   ├── auth/                   # SignOutButton
 │   ├── forms/                  # ApplicationForm, FileUpload, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
 │   ├── public/                 # ApplicationPageHeader, MarketingFeatures, MarketingHeader, MarketingHero
