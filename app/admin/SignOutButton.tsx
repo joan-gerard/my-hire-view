@@ -7,7 +7,7 @@ export default function SignOutButton() {
     const supabase = createClient();
     await supabase.auth.signOut();
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   return (
