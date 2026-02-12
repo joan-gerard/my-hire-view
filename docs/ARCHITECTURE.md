@@ -10,7 +10,7 @@ This document describes the architecture and design of **HireView**, an applicat
 
 **High-level behavior:**
 
-- **Public:** Anyone with a link can view an application at `/apply/[slug]`. Views are tracked (once per session).
+- **Public:** Anyone with a link can view an application at `/view/[slug]`. Views are tracked (once per session).
 - **Authenticated:** Users sign up / sign in, then create, edit, archive, and delete applications. They get shareable URLs and see view counts.
 
 ---
@@ -78,7 +78,7 @@ flowchart TB
 ```mermaid
 flowchart LR
   subgraph Frontend["Frontend (React)"]
-    Public[Public: /apply/slug]
+    Public[Public: /view/slug]
     Admin[Admin: /admin, /admin/new, /admin/edit/id]
     AuthPages[Auth: /login, /signup]
   end
@@ -160,18 +160,18 @@ flowchart LR
 
 | Route               | Purpose                                                                                                                         | Auth |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| `/`                 | Marketing home, “Get Started” → login                                                                                           | No   |
+| `/`                 | Marketing home; when signed out: "Sign In" / "Get Started" → login; when signed in: "Dashboard" / "Go to Dashboard" → `/admin` | No   |
 | `/login`, `/signup` | Auth forms; submit to `/api/auth/*`                                                                                             | No   |
 | `/auth/callback`    | Supabase email confirmation / magic link; exchanges `code` for session                                                          | No   |
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                | Yes  |
 | `/admin/new`        | Create application form (slug, company, role, CV upload, YouTube URL, description)                                              | Yes  |
 | `/admin/edit/[id]`  | Edit existing application (same form, load by id)                                                                               | Yes  |
-| `/apply/[slug]`     | Public application page: header, PDF viewer, YouTube embed, optional description; shows “archived” state if `is_active = false` | No   |
+| `/view/[slug]`      | Public application page: header, PDF viewer, YouTube embed, optional description; shows “archived” state if `is_active = false` | No   |
 
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
-- **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders nav (HireView, Dashboard, New Application, user email, Sign out) and `children`.
+- **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (HireView, Dashboard, New Application, user email, Sign out) and `children`.
 
 ### 5.2 API Layer
 
@@ -279,13 +279,13 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   participant R as Recruiter
-  participant Page as /apply/[slug]
+  participant Page as /view/[slug]
   participant SlugAPI as GET /api/applications/[slug]
   participant ViewAPI as POST /api/.../view
   participant VT as ViewTracker
   participant Supa as Supabase
 
-  R->>Page: Open /apply/my-company-role
+  R->>Page: Open /view/my-company-role
   Page->>SlugAPI: fetch(slug)
   SlugAPI->>Supa: select by slug
   Supa-->>SlugAPI: application
@@ -320,16 +320,19 @@ hireview/
 │   ├── login/, signup/         # Auth pages
 │   ├── auth/callback/          # Supabase OAuth/email callback
 │   ├── admin/                  # Dashboard, new, edit (layout uses requireAuth)
-│   ├── apply/[slug]/            # Public application page + ViewTracker
+│   ├── view/[slug]/             # Public application page + ViewTracker
 │   └── api/                    # All API routes (see section 5.2)
 ├── components/
-│   ├── admin/                  # ApplicationCard, SearchBar
+│   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
+│   ├── auth/                   # SignOutButton
 │   ├── forms/                  # ApplicationForm, FileUpload, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
-│   ├── public/                 # ApplicationHeader
+│   ├── public/                 # ApplicationPageHeader, MarketingFeatures, MarketingHeader, MarketingHero
 │   ├── ui/                     # Button, Input, Textarea
 │   └── video/                  # YouTubeEmbed
+├── hooks/                      # useApplications (admin dashboard state + API)
 ├── lib/
+│   ├── api/                    # applications (client: fetch, delete, archive, restore)
 │   ├── auth.ts                 # getUser, requireAuth
 │   ├── supabase/               # server, route-client, middleware, client, env
 │   ├── types/                  # application, database

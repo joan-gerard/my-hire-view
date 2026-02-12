@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HireView - Personalized Recruiter Landing Pages",
-  description: "Create unique, personalized landing pages for job applications with CVs and video pitches",
+  title: "MyHireView",
+  description:
+    "Create unique, personalized landing pages for job applications with CVs and video pitches",
 };
 
 export default function RootLayout({
