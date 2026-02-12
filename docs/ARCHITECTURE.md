@@ -323,13 +323,15 @@ hireview/
 │   ├── view/[slug]/             # Public application page + ViewTracker
 │   └── api/                    # All API routes (see section 5.2)
 ├── components/
-│   ├── admin/                  # AdminHeader, ApplicationCard, SearchBar
+│   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── forms/                  # ApplicationForm, FileUpload, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
-│   ├── public/                 # ApplicationPageHeader, MarketingHeader
+│   ├── public/                 # ApplicationPageHeader, MarketingFeatures, MarketingHeader, MarketingHero
 │   ├── ui/                     # Button, Input, Textarea
 │   └── video/                  # YouTubeEmbed
+├── hooks/                      # useApplications (admin dashboard state + API)
 ├── lib/
+│   ├── api/                    # applications (client: fetch, delete, archive, restore)
 │   ├── auth.ts                 # getUser, requireAuth
 │   ├── supabase/               # server, route-client, middleware, client, env
 │   ├── types/                  # application, database
