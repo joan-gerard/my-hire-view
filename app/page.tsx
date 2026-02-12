@@ -1,13 +1,13 @@
 import { getUser } from '@/lib/auth';
 import Link from 'next/link';
-import PublicSiteHeader from '@/components/public/PublicSiteHeader';
+import MarketingHeader from '@/components/public/MarketingHeader';
 
 export default async function Home() {
   const user = await getUser();
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <PublicSiteHeader user={user} />
+      <MarketingHeader user={user} />
 
       <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-3xl text-center">

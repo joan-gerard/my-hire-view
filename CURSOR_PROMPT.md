@@ -59,7 +59,7 @@ Create the following route structure:
 ```
 /app
   ├── page.tsx                          # Landing page (public)
-  ├── apply/[slug]/page.tsx             # Dynamic application page (public)
+  ├── view/[slug]/page.tsx              # Dynamic application page (public)
   ├── admin/
   │   ├── layout.tsx                    # Admin layout with auth check
   │   ├── page.tsx                      # Admin dashboard (list applications)
@@ -74,7 +74,7 @@ Create the following route structure:
 
 ### 4. Key Components Needed
 
-#### Public Application Page (`/apply/[slug]`)
+#### Public Application Page (`/view/[slug]`)
 - Clean, professional design with company and role prominently displayed
 - If the application is archived (`is_active` false), show a warning message only; do not display the CV, video pitch, or description
 - Embedded PDF viewer for CV (with download option)

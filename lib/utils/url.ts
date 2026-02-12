@@ -12,7 +12,7 @@ function getBaseUrl(): string {
  * Full URL for a public application view. Use for share links and display.
  */
 export function getApplicationUrl(slug: string): string {
-  return `${getBaseUrl()}/apply/${slug}`;
+  return `${getBaseUrl()}/view/${slug}`;
 }
 
 export { getBaseUrl };

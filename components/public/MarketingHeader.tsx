@@ -2,15 +2,15 @@ import Link from 'next/link';
 import SignOutButton from '@/app/admin/SignOutButton';
 import type { User } from '@supabase/supabase-js';
 
-interface PublicSiteHeaderProps {
+interface MarketingHeaderProps {
   user: User | null;
 }
 
 /**
- * Header for the public landing page (/). Shows logo and either
+ * Header for the marketing/landing page (/). Shows logo and either
  * Dashboard + Sign out (when authenticated) or Sign in.
  */
-export default function PublicSiteHeader({ user }: PublicSiteHeaderProps) {
+export default function MarketingHeader({ user }: MarketingHeaderProps) {
   return (
     <header className="bg-white shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

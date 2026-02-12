@@ -10,7 +10,7 @@ This document describes the architecture and design of **HireView**, an applicat
 
 **High-level behavior:**
 
-- **Public:** Anyone with a link can view an application at `/apply/[slug]`. Views are tracked (once per session).
+- **Public:** Anyone with a link can view an application at `/view/[slug]`. Views are tracked (once per session).
 - **Authenticated:** Users sign up / sign in, then create, edit, archive, and delete applications. They get shareable URLs and see view counts.
 
 ---
@@ -78,7 +78,7 @@ flowchart TB
 ```mermaid
 flowchart LR
   subgraph Frontend["Frontend (React)"]
-    Public[Public: /apply/slug]
+    Public[Public: /view/slug]
     Admin[Admin: /admin, /admin/new, /admin/edit/id]
     AuthPages[Auth: /login, /signup]
   end
@@ -166,7 +166,7 @@ flowchart LR
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                | Yes  |
 | `/admin/new`        | Create application form (slug, company, role, CV upload, YouTube URL, description)                                              | Yes  |
 | `/admin/edit/[id]`  | Edit existing application (same form, load by id)                                                                               | Yes  |
-| `/apply/[slug]`     | Public application page: header, PDF viewer, YouTube embed, optional description; shows “archived” state if `is_active = false` | No   |
+| `/view/[slug]`      | Public application page: header, PDF viewer, YouTube embed, optional description; shows “archived” state if `is_active = false` | No   |
 
 Layouts:
 
@@ -279,13 +279,13 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   participant R as Recruiter
-  participant Page as /apply/[slug]
+  participant Page as /view/[slug]
   participant SlugAPI as GET /api/applications/[slug]
   participant ViewAPI as POST /api/.../view
   participant VT as ViewTracker
   participant Supa as Supabase
 
-  R->>Page: Open /apply/my-company-role
+  R->>Page: Open /view/my-company-role
   Page->>SlugAPI: fetch(slug)
   SlugAPI->>Supa: select by slug
   Supa-->>SlugAPI: application
@@ -320,13 +320,13 @@ hireview/
 │   ├── login/, signup/         # Auth pages
 │   ├── auth/callback/          # Supabase OAuth/email callback
 │   ├── admin/                  # Dashboard, new, edit (layout uses requireAuth)
-│   ├── apply/[slug]/            # Public application page + ViewTracker
+│   ├── view/[slug]/             # Public application page + ViewTracker
 │   └── api/                    # All API routes (see section 5.2)
 ├── components/
 │   ├── admin/                  # AdminHeader, ApplicationCard, SearchBar
 │   ├── forms/                  # ApplicationForm, FileUpload, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
-│   ├── public/                 # ApplicationHeader, PublicSiteHeader
+│   ├── public/                 # ApplicationPageHeader, MarketingHeader
 │   ├── ui/                     # Button, Input, Textarea
 │   └── video/                  # YouTubeEmbed
 ├── lib/

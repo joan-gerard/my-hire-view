@@ -22,7 +22,7 @@ This document summarizes the code review performed on the HireView codebase, inc
 
 ### 1.2 DRY: Shareable application URL
 
-**Before:** The shareable application URL (`baseUrl + '/apply/' + slug`) was built in three places with slight variations (`NEXT_PUBLIC_SITE_URL`, `window.location.origin`, etc.).
+**Before:** The shareable application URL (`baseUrl + '/view/' + slug`) was built in three places with slight variations (`NEXT_PUBLIC_SITE_URL`, `window.location.origin`, etc.).
 
 **After:** A small util in `lib/utils/url.ts`:
 
@@ -30,7 +30,7 @@ This document summarizes the code review performed on the HireView codebase, inc
 - `getApplicationUrl(slug)` – full URL for the public application page
 
 **Files changed:**  
-`app/apply/[slug]/page.tsx`, `components/admin/ApplicationCard.tsx`, `components/forms/ApplicationForm.tsx` now use these helpers.
+`app/view/[slug]/page.tsx`, `components/admin/ApplicationCard.tsx`, `components/forms/ApplicationForm.tsx` now use these helpers.
 
 ---
 

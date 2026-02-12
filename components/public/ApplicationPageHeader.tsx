@@ -1,12 +1,16 @@
-interface ApplicationHeaderProps {
+interface ApplicationPageHeaderProps {
   company: string;
   role: string;
 }
 
-export default function ApplicationHeader({
+/**
+ * Header for the public application page (/view/[slug]). Shows company and role
+ * to recruiters viewing a candidate's application.
+ */
+export default function ApplicationPageHeader({
   company,
   role,
-}: ApplicationHeaderProps) {
+}: ApplicationPageHeaderProps) {
   return (
     <div className="bg-white py-12 shadow-sm">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">

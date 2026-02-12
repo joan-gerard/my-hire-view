@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import ApplicationHeader from '@/components/public/ApplicationHeader';
+import ApplicationPageHeader from '@/components/public/ApplicationPageHeader';
 import PDFViewer from '@/components/pdf/PDFViewer';
 import YouTubeEmbed from '@/components/video/YouTubeEmbed';
 import { getBaseUrl } from '@/lib/utils/url';
@@ -34,8 +34,8 @@ export default async function ApplicationPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ApplicationHeader company={application.company} role={application.role} />
-      
+      <ApplicationPageHeader company={application.company} role={application.role} />
+
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
         {isArchived ? (
           <div
