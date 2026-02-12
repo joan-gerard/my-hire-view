@@ -1,43 +1,13 @@
 import { getUser } from '@/lib/auth';
 import Link from 'next/link';
-import SignOutButton from '@/app/admin/SignOutButton';
+import PublicSiteHeader from '@/components/public/PublicSiteHeader';
 
 export default async function Home() {
   const user = await getUser();
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center">
-              <Link href="/">
-                <h1 className="text-xl font-bold text-gray-900">HireView</h1>
-              </Link>
-            </div>
-            <div className="flex items-center gap-3">
-              {user ? (
-                <>
-                  <Link
-                    href="/admin"
-                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-                  >
-                    Dashboard
-                  </Link>
-                  <SignOutButton />
-                </>
-              ) : (
-                <Link
-                  href="/login"
-                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-                >
-                  Sign In
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <PublicSiteHeader user={user} />
 
       <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-3xl text-center">

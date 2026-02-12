@@ -171,7 +171,7 @@ flowchart LR
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
-- **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders nav (HireView, Dashboard, New Application, user email, Sign out) and `children`.
+- **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (HireView, Dashboard, New Application, user email, Sign out) and `children`.
 
 ### 5.2 API Layer
 
@@ -323,10 +323,10 @@ hireview/
 │   ├── apply/[slug]/            # Public application page + ViewTracker
 │   └── api/                    # All API routes (see section 5.2)
 ├── components/
-│   ├── admin/                  # ApplicationCard, SearchBar
+│   ├── admin/                  # AdminHeader, ApplicationCard, SearchBar
 │   ├── forms/                  # ApplicationForm, FileUpload, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
-│   ├── public/                 # ApplicationHeader
+│   ├── public/                 # ApplicationHeader, PublicSiteHeader
 │   ├── ui/                     # Button, Input, Textarea
 │   └── video/                  # YouTubeEmbed
 ├── lib/
