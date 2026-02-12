@@ -54,4 +54,8 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-# hireview
+## Documentation
+
+- **[Architecture & system design](docs/ARCHITECTURE.md)** — High-level architecture, tech stack, data model, key flows, and Mermaid diagrams.
+- **[Supabase Auth setup](docs/SUPABASE_AUTH_SETUP.md)** — Email provider and email templates.
+- **[Code review notes](docs/CODE_REVIEW.md)** — Refactors and best practices.
