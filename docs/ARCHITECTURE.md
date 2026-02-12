@@ -160,7 +160,7 @@ flowchart LR
 
 | Route               | Purpose                                                                                                                         | Auth |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| `/`                 | Marketing home, “Get Started” → login                                                                                           | No   |
+| `/`                 | Marketing home; when signed out: "Sign In" / "Get Started" → login; when signed in: "Dashboard" / "Go to Dashboard" → `/admin` | No   |
 | `/login`, `/signup` | Auth forms; submit to `/api/auth/*`                                                                                             | No   |
 | `/auth/callback`    | Supabase email confirmation / magic link; exchanges `code` for session                                                          | No   |
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                | Yes  |

@@ -16,7 +16,7 @@ export default async function AdminLayout({
           <div className="flex h-16 justify-between">
             <div className="flex">
               <div className="flex flex-shrink-0 items-center">
-                <Link href="/admin" className="text-xl font-bold text-gray-900">
+                <Link href="/" className="text-xl font-bold text-gray-900">
                   HireView
                 </Link>
               </div>

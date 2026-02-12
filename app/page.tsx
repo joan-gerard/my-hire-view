@@ -1,21 +1,39 @@
+import { getUser } from '@/lib/auth';
 import Link from 'next/link';
+import SignOutButton from '@/app/admin/SignOutButton';
 
-export default function Home() {
+export default async function Home() {
+  const user = await getUser();
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">HireView</h1>
-            </div>
-            <div>
-              <Link
-                href="/login"
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-              >
-                Sign In
+              <Link href="/">
+                <h1 className="text-xl font-bold text-gray-900">HireView</h1>
               </Link>
+            </div>
+            <div className="flex items-center gap-3">
+              {user ? (
+                <>
+                  <Link
+                    href="/admin"
+                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+                  >
+                    Dashboard
+                  </Link>
+                  <SignOutButton />
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+                >
+                  Sign In
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -33,10 +51,10 @@ export default function Home() {
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Link
-              href="/login"
+              href={user ? '/admin' : '/login'}
               className="rounded-md bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
             >
-              Get Started
+              {user ? 'Go to Dashboard' : 'Get Started'}
             </Link>
             <Link
               href="#features"
