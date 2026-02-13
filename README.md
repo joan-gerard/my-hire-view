@@ -66,6 +66,7 @@ So **yes** — the current Supabase implementation and RLS policies allow for **
 
 ## Documentation
 
+- **[Build summary](docs/BUILD_SUMMARY.md)** — Chronological summary of what was built commit-by-commit (created, updated, fixed, refactored).
 - **[Architecture & system design](docs/ARCHITECTURE.md)** — High-level architecture, tech stack, data model, key flows, and Mermaid diagrams.
 - **[Data flow](docs/DATA_FLOW.md)** — Mermaid diagrams for auth, profile, create/edit application, and public view.
 - **[User guide](docs/USER_GUIDE.md)** — What candidates and recruiters can do with the app.
