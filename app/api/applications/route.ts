@@ -49,12 +49,25 @@ export async function POST(request: NextRequest) {
     const body: ApplicationCreateInput = await request.json();
     const snapshot = await getProfileSnapshot(supabase, user.id);
 
+    const candidateFields = {
+      first_name: body.first_name !== undefined ? body.first_name : snapshot.first_name,
+      last_name: body.last_name !== undefined ? body.last_name : snapshot.last_name,
+      location: body.location !== undefined ? body.location : snapshot.location,
+      portfolio_url: body.portfolio_url !== undefined ? body.portfolio_url : snapshot.portfolio_url,
+      linkedin_url: body.linkedin_url !== undefined ? body.linkedin_url : snapshot.linkedin_url,
+    };
+
     const { data, error } = await supabase
       .from('applications')
       .insert({
-        ...body,
+        company: body.company,
+        role: body.role,
+        slug: body.slug,
+        cv_url: body.cv_url,
+        video_url: body.video_url,
+        description: body.description ?? null,
         user_id: user.id,
-        ...snapshot,
+        ...candidateFields,
       })
       .select()
       .single();
@@ -93,10 +106,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const snapshot = await getProfileSnapshot(supabase, user.id);
     const { data, error } = await supabase
       .from('applications')
-      .update({ ...updateData, ...snapshot })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();

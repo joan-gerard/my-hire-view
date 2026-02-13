@@ -25,6 +25,12 @@ export interface ApplicationFormData {
   cv_url: string;
   video_url: string;
   description?: string;
+  /** Candidate fields shown to recruiters; null = do not show. Set from form toggles. */
+  first_name?: string | null;
+  last_name?: string | null;
+  location?: string | null;
+  portfolio_url?: string | null;
+  linkedin_url?: string | null;
 }
 
 export interface ApplicationCreateInput {
@@ -34,6 +40,11 @@ export interface ApplicationCreateInput {
   cv_url: string;
   video_url: string;
   description?: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  location?: string | null;
+  portfolio_url?: string | null;
+  linkedin_url?: string | null;
 }
 
 export interface ApplicationUpdateInput {
@@ -44,4 +55,9 @@ export interface ApplicationUpdateInput {
   video_url?: string;
   description?: string;
   is_active?: boolean;
+  first_name?: string | null;
+  last_name?: string | null;
+  location?: string | null;
+  portfolio_url?: string | null;
+  linkedin_url?: string | null;
 }

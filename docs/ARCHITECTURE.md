@@ -320,7 +320,9 @@ sequenceDiagram
 
 - **Profile page:** User opens `/admin/profile`. Server fetches `profiles` row by `user_id` (no row yet is allowed). Client form (ProfileForm) shows first name, last name, location, portfolio URL, LinkedIn URL. On save, client PUTs to `/api/profile` with the edited fields; API validates URLs (http/https) and upserts the profile row.
 - **Profile API:** GET returns the current user’s profile row, creating one with nulls if missing. PUT accepts partial updates, merges with existing row, and upserts.
-- **Snapshot into applications:** When the user creates (POST) or updates (PUT) an application, the applications API loads the user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the application row. Recruiters viewing `/view/[slug]` therefore see data from the application row only; no join to profile and no dependency on the user’s current profile after the fact.
+- **Candidate fields on create (POST):** The new-application form shows the user’s profile as a preview (name, location, portfolio URL, LinkedIn URL) above the application form. Users can toggle each field on/off (off stores null so recruiters don’t see it) and edit values; edits apply only to this application. The client sends candidate fields in the POST body; if provided, the API uses them, otherwise it falls back to a profile snapshot.
+- **Candidate fields on edit (PUT):** When editing an existing application, the form is pre-filled from the application row only. Users can toggle and edit as above. The API updates only the application row from the request body; the profile table is never updated from the application form. Profile is updated only via the profile page and `/api/profile`.
+- **Recruiter view:** Recruiters see data from the application row only (name, location, portfolio/LinkedIn when non-null).
 
 ---
 
