@@ -42,7 +42,7 @@ Personalized recruiter landing pages: create shareable pages with your CV (PDF) 
 
 1. Install dependencies: `pnpm install`
 2. Copy `.env.local.example` to `.env.local` and fill in Supabase and Vercel Blob values.
-3. Run the SQL migrations in the Supabase SQL Editor (in order): `supabase/migrations/001_initial_schema.sql`, then `supabase/migrations/002_add_application_is_active.sql`
+3. Run the SQL migrations in the Supabase SQL Editor (in order): `001_initial_schema.sql`, `002_add_application_is_active.sql`, `003_profiles_table.sql`, `004_application_candidate_fields.sql`, `005_application_include_name_in_slug.sql`, `006_slug_name_position_text.sql`
 4. **Configure Supabase Auth**: see [docs/SUPABASE_AUTH_SETUP.md](docs/SUPABASE_AUTH_SETUP.md) to enable the Email provider and optional email templates.
 5. Ensure Supabase **Redirect URLs** include `/auth/callback` for email links.
 

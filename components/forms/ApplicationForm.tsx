@@ -8,7 +8,7 @@ import YouTubeUrlInput from './YouTubeUrlInput';
 import CandidateFieldsSection from './CandidateFieldsSection';
 import type { CandidateFieldKey } from './CandidateFieldsSection';
 import ApplicationFormActions from './ApplicationFormActions';
-import { generateSlug } from '@/lib/utils/slug-generate';
+import { buildSlug } from '@/lib/utils/slug-generate';
 import { getApplicationUrl } from '@/lib/utils/url';
 import type { ApplicationFormData } from '@/lib/types/application';
 
@@ -55,15 +55,31 @@ export default function ApplicationForm({
     defaultInclude(initialData)
   );
 
+  const [slugNamePosition, setSlugNamePosition] = useState<'start' | 'end' | null>(
+    initialData?.slugNamePosition ?? null
+  );
   const [errors, setErrors] = useState<Partial<Record<keyof ApplicationFormData, string>>>({});
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
   useEffect(() => {
     if (!slugManuallyEdited && formData.company && formData.role) {
-      const autoSlug = generateSlug(formData.company, formData.role);
-      setFormData((prev) => ({ ...prev, slug: autoSlug }));
+      const slug = buildSlug(
+        formData.company,
+        formData.role,
+        formData.first_name,
+        formData.last_name,
+        slugNamePosition
+      );
+      setFormData((prev) => ({ ...prev, slug }));
     }
-  }, [formData.company, formData.role, slugManuallyEdited]);
+  }, [
+    formData.company,
+    formData.role,
+    formData.first_name,
+    formData.last_name,
+    slugNamePosition,
+    slugManuallyEdited,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -88,6 +104,7 @@ export default function ApplicationForm({
       location: include.location ? (formData.location?.trim() || null) : null,
       portfolio_url: include.portfolio_url ? (formData.portfolio_url?.trim() || null) : null,
       linkedin_url: include.linkedin_url ? (formData.linkedin_url?.trim() || null) : null,
+      slugNamePosition,
     };
     await onSubmit(payload);
   };
@@ -136,6 +153,48 @@ export default function ApplicationForm({
         />
       </div>
 
+      <fieldset className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+        <legend className="text-base font-semibold text-gray-900 px-1">
+          Name in URL
+        </legend>
+        <p className="text-sm text-gray-600 mt-0.5 mb-3">
+          Choose where your name appears in the shareable link (if at all).
+        </p>
+        <div className="flex flex-wrap gap-x-6 gap-y-3">
+          <label className="inline-flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="radio"
+              name="slugNamePosition"
+              checked={slugNamePosition === null}
+              onChange={() => setSlugNamePosition(null)}
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600"
+            />
+            <span className="text-base font-medium text-gray-900">None</span>
+          </label>
+          <label className="inline-flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="radio"
+              name="slugNamePosition"
+              checked={slugNamePosition === 'start'}
+              onChange={() => setSlugNamePosition('start')}
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600"
+            />
+            <span className="text-base font-medium text-gray-900">At start</span>
+            <span className="text-sm text-gray-500">(e.g. john-doe-company-role)</span>
+          </label>
+          <label className="inline-flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="radio"
+              name="slugNamePosition"
+              checked={slugNamePosition === 'end'}
+              onChange={() => setSlugNamePosition('end')}
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600"
+            />
+            <span className="text-base font-medium text-gray-900">At end</span>
+            <span className="text-sm text-gray-500">(e.g. company-role-john-doe)</span>
+          </label>
+        </div>
+      </fieldset>
       <Input
         label="Slug *"
         value={formData.slug}

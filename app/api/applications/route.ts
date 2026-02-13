@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         description: body.description ?? null,
         user_id: user.id,
         ...candidateFields,
+        include_name_in_slug: body.slugNamePosition ?? null,
       })
       .select()
       .single();
@@ -90,7 +91,12 @@ export async function PUT(request: NextRequest) {
     const user = await requireAuth();
     const supabase = await createClient();
     const body: ApplicationUpdateInput & { id: string } = await request.json();
-    const { id, ...updateData } = body;
+    const { id, slugNamePosition, ...rest } = body;
+
+    const updatePayload = {
+      ...rest,
+      ...(slugNamePosition !== undefined && { include_name_in_slug: slugNamePosition }),
+    };
 
     // Verify the application belongs to the user
     const { data: existing } = await supabase
@@ -108,7 +114,7 @@ export async function PUT(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('applications')
-      .update(updateData)
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();

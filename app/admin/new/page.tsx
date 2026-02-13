@@ -33,7 +33,7 @@ export default function NewApplicationPage() {
     try {
       setLoading(true);
 
-      // Generate unique slug via API
+      // Generate unique slug via API (optionally include name in URL)
       const slugResponse = await fetch('/api/slug', {
         method: 'POST',
         headers: {
@@ -42,6 +42,11 @@ export default function NewApplicationPage() {
         body: JSON.stringify({
           company: data.company,
           role: data.role,
+          slugNamePosition: data.slugNamePosition ?? null,
+          ...((data.slugNamePosition === 'start' || data.slugNamePosition === 'end') && {
+            first_name: data.first_name ?? undefined,
+            last_name: data.last_name ?? undefined,
+          }),
         }),
       });
 

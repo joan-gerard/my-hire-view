@@ -131,8 +131,8 @@ sequenceDiagram
   UploadAPI->>Blob: put(file)
   Blob-->>UploadAPI: url
   UploadAPI-->>Form: cv_url
-  Form->>SlugAPI: POST company, role
-  SlugAPI->>Applications: check slug
+  Form->>SlugAPI: POST company, role (optional: first_name, last_name if include name in URL)
+  SlugAPI->>Applications: check slug (with optional name prefix)
   SlugAPI-->>Form: slug
   Form->>AppsAPI: POST (company, role, slug, cv_url, video_url, candidate fields from form)
   AppsAPI->>AppsAPI: requireAuth()
@@ -145,7 +145,7 @@ sequenceDiagram
   Form->>U: Redirect to /admin
 ```
 
-Candidate fields (first name, last name, location, portfolio URL, LinkedIn URL) are sent from the form; toggles determine which are stored or set to null. If the client does not send them, the API falls back to the current profile.
+Candidate fields (first name, last name, location, portfolio URL, LinkedIn URL) are sent from the form; toggles determine which are stored or set to null. If the client does not send them, the API falls back to the current profile. If the user chooses **Name in URL** (At start or At end), the slug API is called with `slugNamePosition` and first/last name so the shareable link can be `firstname-lastname-company-role` or `company-role-firstname-lastname`.
 
 ---
 
@@ -167,8 +167,9 @@ sequenceDiagram
   ByIdAPI-->>EditPage: data
   EditPage->>Form: initialData from application only
 
-  U->>Form: Change fields, toggles, Save
+  U->>Form: Change fields, toggles, optionally Include name in URL, Save
   Form->>AppsAPI: PUT (id, all fields including candidate)
+  Note over Form,Applications: If slug changed, slug API called with company, role, optional first/last name
   AppsAPI->>AppsAPI: requireAuth(), verify ownership
   AppsAPI->>Applications: update row (no profile merge)
   Applications-->>AppsAPI: data

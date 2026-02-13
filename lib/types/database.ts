@@ -20,6 +20,7 @@ export interface Database {
           location: string | null;
           portfolio_url: string | null;
           linkedin_url: string | null;
+          include_name_in_slug: 'start' | 'end' | null;
         };
         Insert: {
           id?: string;
@@ -39,6 +40,7 @@ export interface Database {
           location?: string | null;
           portfolio_url?: string | null;
           linkedin_url?: string | null;
+          include_name_in_slug?: 'start' | 'end' | null;
         };
         Update: {
           id?: string;
@@ -58,6 +60,7 @@ export interface Database {
           location?: string | null;
           portfolio_url?: string | null;
           linkedin_url?: string | null;
+          include_name_in_slug?: 'start' | 'end' | null;
         };
       };
       profiles: {

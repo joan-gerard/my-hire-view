@@ -197,7 +197,7 @@ All under `app/api/`:
 | `/api/auth/signup`              | POST                   | Sign up; sets session cookies                                            | No                                                |
 | `/api/auth/logout`              | POST                   | Sign out; clears session                                                 | No                                                |
 | `/api/upload`                   | POST                   | Accept PDF `FormData`, upload to Vercel Blob, return URL                 | No (consider protecting in production)            |
-| `/api/slug`                     | POST                   | Generate unique slug from company + role (optional `excludeId` for edit) | No (slug generation is idempotent; consider auth) |
+| `/api/slug`                     | POST                   | Generate unique slug from company + role; optional `slugNamePosition` ('start' or 'end') and `first_name`, `last_name` to place name in URL; optional `excludeId` for edit | No (slug generation is idempotent; consider auth) |
 
 Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which uses the Supabase server client and redirects to `/login` when used in pages; in API routes it returns 401.
 
@@ -216,6 +216,7 @@ Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which u
 - **Table: `applications`**
   - `id` (UUID, PK), `slug` (unique), `company`, `role`, `cv_url`, `video_url`, `description`, `created_at`, `updated_at`, `view_count`, `user_id` (FK to `auth.users`), `is_active` (default true; archiving = soft hide).
   - **Candidate snapshot fields** (nullable): `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`. These are copied from the user’s **profile** when an application is created or updated, so the recruiter view always reads from the application row (no join to profile). Existing rows may have NULLs until the next edit or a backfill.
+  - **`include_name_in_slug`** (TEXT, nullable): Name position in the slug: `null` (not included), `'start'` (name-company-role), or `'end'` (company-role-name). Persisted so the edit form shows the correct choice and users can change it on save.
 - **Table: `profiles`**
   - One row per user: `user_id` (PK, FK to `auth.users`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `updated_at`. All profile fields are nullable. Users edit this on the profile page; the applications API does not expose profile directly to the public.
   - **Snapshot rule:** On POST or PUT to `/api/applications`, the server loads the current user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the insert or update. The recruiter-facing page at `/view/[slug]` uses only data from the application row.
@@ -375,7 +376,7 @@ hireview/
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Next.js App Router         | Single codebase for SSR, API, and client components; good fit for auth and public/private routes.                        |
 | Supabase                   | Managed Postgres + Auth + RLS in one product; reduces custom backend code.                                               |
-| Slug-based public URLs     | Stable, shareable links that don’t expose internal IDs; uniqueness enforced in DB and slug API.                          |
+| Slug-based public URLs     | Stable, shareable links that don’t expose internal IDs; uniqueness enforced in DB and slug API. Users can optionally include their name at the start (name-company-role) or end (company-role-name) of the slug. |
 | Vercel Blob for PDFs       | Simple serverless storage; no need to run or scale file servers.                                                         |
 | View count in DB           | Simple and accurate; one increment per view (deduplicated per session in ViewTracker).                                   |
 | `is_active` for archive    | Soft delete: link still works but shows “archived” message; no hard delete of history.                                   |

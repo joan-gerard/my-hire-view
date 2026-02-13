@@ -16,6 +16,8 @@ export interface Application {
   location: string | null;
   portfolio_url: string | null;
   linkedin_url: string | null;
+  /** Name position in slug: null = not included, 'start' = name-company-role, 'end' = company-role-name */
+  include_name_in_slug: 'start' | 'end' | null;
 }
 
 export interface ApplicationFormData {
@@ -31,6 +33,8 @@ export interface ApplicationFormData {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
+  /** Name in slug: null = not included, 'start' = name at start, 'end' = name at end. Stored in DB as include_name_in_slug. */
+  slugNamePosition?: 'start' | 'end' | null;
 }
 
 export interface ApplicationCreateInput {
@@ -45,6 +49,7 @@ export interface ApplicationCreateInput {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
+  slugNamePosition?: 'start' | 'end' | null;
 }
 
 export interface ApplicationUpdateInput {
@@ -60,4 +65,5 @@ export interface ApplicationUpdateInput {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
+  slugNamePosition?: 'start' | 'end' | null;
 }

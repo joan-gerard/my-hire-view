@@ -49,7 +49,8 @@ At **Dashboard** (`/admin`) you can:
    - You can **show or hide** the whole list of fields; that preference is remembered for next time.
 3. Fill in the **application form**:
    - **Company name** and **Role/Position** (required).
-   - **Slug** (used in the URL; usually auto-generated; you can change it).
+   - **Name in URL** (optional): choose **None**, **At start** (e.g. `john-doe-acme-software-engineer`), or **At end** (e.g. `acme-software-engineer-john-doe`). The slug preview updates as you type.
+   - **Slug** (used in the URL; auto-generated from company and role, and from your name and position if you chose; you can change it manually).
    - **CV**: upload a PDF (stored securely).
    - **YouTube URL** for your video pitch.
    - **Description** (optional text for recruiters).
@@ -58,12 +59,12 @@ At **Dashboard** (`/admin`) you can:
 ### Editing an application
 
 1. On the dashboard, click **Edit** on the application.
-2. The form is pre-filled from **that application only** (including which candidate fields are on or off and their values). Your profile is not changed when you save.
+2. The form is pre-filled from **that application only** (including which candidate fields are on or off and their values). You can change **Name in URL** (None / At start / At end) when you save. Your profile is not changed when you save.
 3. Change any fields or toggles, then click **Save Application**.
 
 ### Sharing with recruiters
 
-- Each application has a **unique link** like: `https://yoursite.com/view/company-name-role`.
+- Each application has a **unique link**. It can be based on company and role (e.g. `https://yoursite.com/view/acme-software-engineer`) or, if you chose to include your name when creating or editing, on your name plus company and role (e.g. `https://yoursite.com/view/john-doe-acme-software-engineer`).
 - Use **Copy link** on the dashboard card and send it by email, LinkedIn, or job portal.
 - Recruiters can open the link without signing in. You can see how many times the page was viewed (view count on the card; one count per recruiter session).
 
