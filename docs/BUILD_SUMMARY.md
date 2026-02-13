@@ -365,6 +365,83 @@ Result: end-to-end flow: sign up/in, create/edit applications (slug, CV, video, 
 
 ---
 
+## 25. docs: add BUILD_SUMMARY with commit-by-commit build history and link in README
+
+**Commit:** `fe2826e`  
+**Intent:** Add a single document that summarizes the build history commit-by-commit and link it from the README.
+
+**Created:**
+- `docs/BUILD_SUMMARY.md` — commit-by-commit build summary (scaffold through merge PR #2).
+
+**Updated:**
+- `README.md` — link to BUILD_SUMMARY.
+
+**Result:** One place to see what was built at each step; useful for onboarding and context.
+
+---
+
+## 26. docs: note that BUILD_SUMMARY is updated only on request
+
+**Commit:** `3956b3a`  
+**Intent:** Clarify maintenance policy for BUILD_SUMMARY.
+
+**Updated:**
+- `docs/BUILD_SUMMARY.md` — added note that the document is updated only when explicitly requested (not automatically on every commit).
+
+---
+
+## 27. feat(cv): upload PDF on save, delete blob on delete/replace, optional modal cv preview
+
+**Commit:** `c19c88e`  
+**Intent:** Defer CV upload until form save, clean up old blobs on delete or replace, and add optional in-app PDF preview.
+
+**Created:**
+- `lib/utils/blob.ts` — `isVercelBlobUrl()`, `deleteBlobIfOurs()` for safe Vercel Blob URL checks and deletion.
+- `docs/PDF_AND_VERCEL_BLOB.md` — documentation for PDF and Vercel Blob behavior.
+- `docs/my-docs/VERCEL_BLOB.md` — Vercel Blob reference notes.
+
+**Updated:**
+- `app/api/applications/route.ts` — on create/update/delete, delete previous blob when replacing or removing CV; upload flow aligned with save.
+- `components/forms/ApplicationForm.tsx` — CV file is selected in form but uploaded only on submit (pending file state).
+- `components/forms/FileUpload.tsx` — optional modal CV preview for selected file before save; pending vs saved state.
+- `README.md`, `docs/ARCHITECTURE.md`, `docs/DATA_FLOW.md` — references to blob lifecycle and CV flow.
+
+**Result:** No orphaned blobs; CV upload happens on save; user can preview selected PDF in a modal before submitting.
+
+---
+
+## 28. fix: handle missing CV blob with existence check and retry UI
+
+**Commit:** `a5da3f6`  
+**Intent:** When the stored CV URL points to a missing Vercel Blob (e.g. deleted or expired), check existence and show appropriate UI instead of a broken viewer or link.
+
+**Created:**
+- `app/view/[slug]/ViewPageContent.tsx` — client component for the public view page; holds application state and refetch for retry.
+- `components/public/CvUnavailableWithRetry.tsx` — message when CV is unavailable, with optional "Try again" that triggers a refetch.
+
+**Updated:**
+- `lib/utils/blob.ts` — added `checkBlobExists()` (HEAD request) to verify a Vercel Blob URL exists.
+- `lib/types/application.ts` — optional `cv_exists` on `Application` (set by APIs when they run the check).
+- `app/api/applications/[slug]/route.ts`, `app/api/applications/by-id/[id]/route.ts` — compute `cv_exists` via `checkBlobExists(cv_url)` and include in response.
+- `app/view/[slug]/page.tsx` — fetches application server-side and renders `ViewPageContent`; when `cv_exists === false`, view shows unavailable message and retry instead of loading PDF.
+- `components/pdf/PDFViewer.tsx` — clearer error handling for missing/unavailable PDFs (fetch/404/network).
+- `components/forms/ApplicationForm.tsx` — accepts `cvUrlExists` and `onRetryCvCheck`; passes to FileUpload so edit form can hide View link when blob is missing.
+- `components/forms/FileUpload.tsx` — when `cvUrlExists` is false, shows "CV file not found in storage" and optional "Check again" button calling `onRetryCvCheck`.
+- `app/admin/edit/[id]/page.tsx` — fetches application with `cv_exists`, passes `cvUrlExists` and `refetchCvCheck` to ApplicationForm.
+
+**Bug fixed:** Stale or missing CV blobs no longer show a broken PDF or misleading View link; public view and edit form show an explicit unavailable state with retry.
+
+---
+
+## 29. Merge pull request #3 — bug-cv-in-blob
+
+**Commit:** `20bf0e8`  
+**Intent:** Merge the "Fix Blob Storage issues" branch into main.
+
+**Scope:** All changes from commits 27–28: defer CV upload to save, blob delete on replace/delete, optional CV preview modal, and missing-CV existence check with retry UI on view and edit. No new files; merge only.
+
+---
+
 ## Summary table
 
 | # | Commit   | Type     | Summary |
@@ -393,6 +470,11 @@ Result: end-to-end flow: sign up/in, create/edit applications (slug, CV, video, 
 | 22 | `21a78df` | fix      | Mermaid labels quoted for GitHub |
 | 23 | `151667b` | fix      | Mermaid rectangle nodes for GitHub |
 | 24 | `eac7494` | merge    | PR #2 create-profile-page |
+| 25 | `fe2826e` | docs     | BUILD_SUMMARY + link in README |
+| 26 | `3956b3a` | docs     | BUILD_SUMMARY update policy |
+| 27 | `c19c88e` | feature  | CV upload on save, blob delete, optional preview modal |
+| 28 | `a5da3f6` | fix      | Missing CV blob: existence check and retry UI |
+| 29 | `20bf0e8` | merge    | PR #3 bug-cv-in-blob |
 
 ---
 
