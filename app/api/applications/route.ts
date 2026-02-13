@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
+import { deleteBlobIfOurs } from '@/lib/utils/blob';
 import type { ApplicationCreateInput, ApplicationUpdateInput } from '@/lib/types/application';
 
 export async function GET() {
@@ -98,10 +99,10 @@ export async function PUT(request: NextRequest) {
       ...(slugNamePosition !== undefined && { include_name_in_slug: slugNamePosition }),
     };
 
-    // Verify the application belongs to the user
+    // Verify the application belongs to the user and get current cv_url
     const { data: existing } = await supabase
       .from('applications')
-      .select('user_id')
+      .select('user_id, cv_url')
       .eq('id', id)
       .single();
 
@@ -110,6 +111,15 @@ export async function PUT(request: NextRequest) {
         { error: 'Not found or unauthorized' },
         { status: 404 }
       );
+    }
+
+    const newCvUrl = updatePayload.cv_url as string | undefined;
+    if (
+      newCvUrl !== undefined &&
+      existing.cv_url &&
+      newCvUrl !== existing.cv_url
+    ) {
+      await deleteBlobIfOurs(existing.cv_url);
     }
 
     const { data, error } = await supabase
@@ -146,10 +156,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Verify the application belongs to the user
+    // Verify the application belongs to the user and get cv_url for blob cleanup
     const { data: existing } = await supabase
       .from('applications')
-      .select('user_id')
+      .select('user_id, cv_url')
       .eq('id', id)
       .single();
 
@@ -159,6 +169,8 @@ export async function DELETE(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    await deleteBlobIfOurs(existing.cv_url);
 
     const { error } = await supabase
       .from('applications')

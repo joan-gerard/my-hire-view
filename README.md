@@ -72,3 +72,4 @@ So **yes** — the current Supabase implementation and RLS policies allow for **
 - **[User guide](docs/USER_GUIDE.md)** — What candidates and recruiters can do with the app.
 - **[Supabase Auth setup](docs/SUPABASE_AUTH_SETUP.md)** — Email provider and email templates.
 - **[Code review notes](docs/CODE_REVIEW.md)** — Refactors and best practices.
+- **[PDFs and Vercel Blob](docs/PDF_AND_VERCEL_BLOB.md)** — How CV PDFs are uploaded, stored, and deleted.

@@ -60,6 +60,8 @@ export default function ApplicationForm({
   );
   const [errors, setErrors] = useState<Partial<Record<keyof ApplicationFormData, string>>>({});
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  /** File selected but not yet uploaded (upload happens on submit). */
+  const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!slugManuallyEdited && formData.company && formData.role) {
@@ -89,7 +91,8 @@ export default function ApplicationForm({
     if (!formData.company.trim()) newErrors.company = 'Company name is required';
     if (!formData.role.trim()) newErrors.role = 'Role is required';
     if (!formData.slug.trim()) newErrors.slug = 'Slug is required';
-    if (!formData.cv_url.trim()) newErrors.cv_url = 'CV file is required';
+    const hasCv = cvPendingFile || (formData.cv_url && formData.cv_url.trim());
+    if (!hasCv) newErrors.cv_url = 'CV file is required';
     if (!formData.video_url.trim()) newErrors.video_url = 'YouTube URL is required';
 
     if (Object.keys(newErrors).length > 0) {
@@ -97,8 +100,26 @@ export default function ApplicationForm({
       return;
     }
 
+    let cvUrl = formData.cv_url.trim();
+    if (cvPendingFile) {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', cvPendingFile);
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+      if (!response.ok) {
+        const { error } = await response.json();
+        setErrors({ cv_url: error || 'Upload failed' });
+        return;
+      }
+      const { url } = await response.json();
+      cvUrl = url;
+    }
+
     const payload: ApplicationFormData = {
       ...formData,
+      cv_url: cvUrl,
       first_name: include.first_name ? (formData.first_name?.trim() || null) : null,
       last_name: include.last_name ? (formData.last_name?.trim() || null) : null,
       location: include.location ? (formData.location?.trim() || null) : null,
@@ -212,7 +233,8 @@ export default function ApplicationForm({
 
       <FileUpload
         value={formData.cv_url}
-        onChange={(url) => setFormData((prev) => ({ ...prev, cv_url: url }))}
+        pendingFile={cvPendingFile}
+        onPendingFileChange={setCvPendingFile}
         error={errors.cv_url}
       />
 

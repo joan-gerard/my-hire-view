@@ -229,7 +229,7 @@ Types are mirrored in `lib/types/application.ts`, `lib/types/profile.ts`, and `l
 ### 5.5 File Storage (Vercel Blob)
 
 - **Use case:** CV PDFs only.
-- **Flow:** Client uploads file to `/api/upload` → API validates type (PDF) and size (e.g. 10MB) → `put()` to Vercel Blob with public access → store returned URL in `applications.cv_url`.
+- **Flow (upload on save):** The form keeps the selected PDF in memory until the user saves. On submit, the client uploads to `/api/upload` → API validates type (PDF) and size (10MB max) → `put()` to Vercel Blob with public access → returned URL is stored in `applications.cv_url`. When editing, if the user replaces the CV, the new file is uploaded on save and the previous blob is deleted. When an application is deleted, its CV blob is also deleted. See **docs/PDF_AND_VERCEL_BLOB.md** for full details.
 
 Video is not stored; only YouTube URLs are stored and embedded via `YouTubeEmbed` and `lib/utils/youtube.ts`.
 
@@ -272,9 +272,9 @@ sequenceDiagram
   participant Supa as Supabase
   participant Blob as Vercel Blob
 
-  U->>Form: Fill company, role, upload PDF, YouTube URL
+  U->>Form: Fill company, role, select PDF (held in memory), YouTube URL
   U->>Form: Submit
-  Form->>UploadAPI: POST FormData (file)
+  Form->>UploadAPI: POST FormData (file) on submit
   UploadAPI->>Blob: put(file)
   Blob-->>UploadAPI: url
   UploadAPI-->>Form: { url }
