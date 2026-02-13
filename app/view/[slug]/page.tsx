@@ -34,7 +34,15 @@ export default async function ApplicationPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ApplicationPageHeader company={application.company} role={application.role} />
+      <ApplicationPageHeader
+        company={application.company}
+        role={application.role}
+        firstName={application.first_name}
+        lastName={application.last_name}
+        location={application.location}
+        portfolioUrl={application.portfolio_url}
+        linkedinUrl={application.linkedin_url}
+      />
 
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
         {isArchived ? (

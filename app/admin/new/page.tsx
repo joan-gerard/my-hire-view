@@ -1,19 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ApplicationForm from '@/components/forms/ApplicationForm';
 import type { ApplicationFormData } from '@/lib/types/application';
+import type { Profile } from '@/lib/types/profile';
 
 export default function NewApplicationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await fetch('/api/profile', { credentials: 'include' });
+        const json = await res.json().catch(() => ({}));
+        if (!cancelled && json.data) setProfile(json.data);
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubmit = async (data: ApplicationFormData) => {
     try {
       setLoading(true);
 
-      // Generate unique slug via API
+      // Generate unique slug via API (optionally include name in URL)
       const slugResponse = await fetch('/api/slug', {
         method: 'POST',
         headers: {
@@ -22,6 +42,11 @@ export default function NewApplicationPage() {
         body: JSON.stringify({
           company: data.company,
           role: data.role,
+          slugNamePosition: data.slugNamePosition ?? null,
+          ...((data.slugNamePosition === 'start' || data.slugNamePosition === 'end') && {
+            first_name: data.first_name ?? undefined,
+            last_name: data.last_name ?? undefined,
+          }),
         }),
       });
 
@@ -55,11 +80,32 @@ export default function NewApplicationPage() {
     }
   };
 
+  const initialData: Partial<ApplicationFormData> = {
+    company: '',
+    role: '',
+    slug: '',
+    cv_url: '',
+    video_url: '',
+    description: '',
+    first_name: profile?.first_name ?? '',
+    last_name: profile?.last_name ?? '',
+    location: profile?.location ?? '',
+    portfolio_url: profile?.portfolio_url ?? '',
+    linkedin_url: profile?.linkedin_url ?? '',
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Create New Application</h1>
       <div className="rounded-lg bg-white p-6 shadow">
-        <ApplicationForm onSubmit={handleSubmit} loading={loading} />
+        {profileLoading ? (
+          <div className="space-y-4">
+            <div className="h-24 animate-pulse rounded-lg bg-gray-100" />
+            <div className="h-96 animate-pulse rounded-lg bg-gray-100" />
+          </div>
+        ) : (
+          <ApplicationForm initialData={initialData} onSubmit={handleSubmit} loading={loading} />
+        )}
       </div>
     </div>
   );

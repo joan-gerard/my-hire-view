@@ -42,7 +42,7 @@ Personalized recruiter landing pages: create shareable pages with your CV (PDF) 
 
 1. Install dependencies: `pnpm install`
 2. Copy `.env.local.example` to `.env.local` and fill in Supabase and Vercel Blob values.
-3. Run the SQL migrations in the Supabase SQL Editor (in order): `supabase/migrations/001_initial_schema.sql`, then `supabase/migrations/002_add_application_is_active.sql`
+3. Run the SQL migrations in the Supabase SQL Editor (in order): `001_initial_schema.sql`, `002_add_application_is_active.sql`, `003_profiles_table.sql`, `004_application_candidate_fields.sql`, `005_application_include_name_in_slug.sql`, `006_slug_name_position_text.sql`
 4. **Configure Supabase Auth**: see [docs/SUPABASE_AUTH_SETUP.md](docs/SUPABASE_AUTH_SETUP.md) to enable the Email provider and optional email templates.
 5. Ensure Supabase **Redirect URLs** include `/auth/callback` for email links.
 
@@ -54,8 +54,20 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Security & data access
+
+Profile and account data are retrieved in a way that is safe and consistent with your Supabase setup:
+
+- **Auth user data:** Identity (email, id, created_at) comes only from **Supabase Auth** via `getUser()` / `requireAuth()`. The server uses the session cookie; Supabase returns only the current user. No raw access to `auth.users` from app code.
+- **Applications:** Row Level Security (RLS) is enabled on `applications`. Users can SELECT/INSERT/UPDATE/DELETE only their own rows (`auth.uid() = user_id`). The profile page and APIs use the server client and `requireAuth()`, then filter by `user.id`, so they only ever read or write the signed-in user’s data.
+- **Profile page:** `/admin/profile` is behind the same admin layout as the dashboard; it uses `requireAuth()` and only displays the current user’s email, “member since”, and application counts fetched with RLS-scoped queries.
+
+So **yes** — the current Supabase implementation and RLS policies allow for **safe retrieval of user data** for the account owner on the profile page and elsewhere in the admin area.
+
 ## Documentation
 
 - **[Architecture & system design](docs/ARCHITECTURE.md)** — High-level architecture, tech stack, data model, key flows, and Mermaid diagrams.
+- **[Data flow](docs/DATA_FLOW.md)** — Mermaid diagrams for auth, profile, create/edit application, and public view.
+- **[User guide](docs/USER_GUIDE.md)** — What candidates and recruiters can do with the app.
 - **[Supabase Auth setup](docs/SUPABASE_AUTH_SETUP.md)** — Email provider and email templates.
 - **[Code review notes](docs/CODE_REVIEW.md)** — Refactors and best practices.

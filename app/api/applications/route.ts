@@ -27,17 +27,48 @@ export async function GET() {
   }
 }
 
+async function getProfileSnapshot(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { data } = await supabase
+    .from('profiles')
+    .select('first_name, last_name, location, portfolio_url, linkedin_url')
+    .eq('user_id', userId)
+    .single();
+  return {
+    first_name: data?.first_name ?? null,
+    last_name: data?.last_name ?? null,
+    location: data?.location ?? null,
+    portfolio_url: data?.portfolio_url ?? null,
+    linkedin_url: data?.linkedin_url ?? null,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
     const supabase = await createClient();
     const body: ApplicationCreateInput = await request.json();
+    const snapshot = await getProfileSnapshot(supabase, user.id);
+
+    const candidateFields = {
+      first_name: body.first_name !== undefined ? body.first_name : snapshot.first_name,
+      last_name: body.last_name !== undefined ? body.last_name : snapshot.last_name,
+      location: body.location !== undefined ? body.location : snapshot.location,
+      portfolio_url: body.portfolio_url !== undefined ? body.portfolio_url : snapshot.portfolio_url,
+      linkedin_url: body.linkedin_url !== undefined ? body.linkedin_url : snapshot.linkedin_url,
+    };
 
     const { data, error } = await supabase
       .from('applications')
       .insert({
-        ...body,
+        company: body.company,
+        role: body.role,
+        slug: body.slug,
+        cv_url: body.cv_url,
+        video_url: body.video_url,
+        description: body.description ?? null,
         user_id: user.id,
+        ...candidateFields,
+        include_name_in_slug: body.slugNamePosition ?? null,
       })
       .select()
       .single();
@@ -60,7 +91,12 @@ export async function PUT(request: NextRequest) {
     const user = await requireAuth();
     const supabase = await createClient();
     const body: ApplicationUpdateInput & { id: string } = await request.json();
-    const { id, ...updateData } = body;
+    const { id, slugNamePosition, ...rest } = body;
+
+    const updatePayload = {
+      ...rest,
+      ...(slugNamePosition !== undefined && { include_name_in_slug: slugNamePosition }),
+    };
 
     // Verify the application belongs to the user
     const { data: existing } = await supabase
@@ -78,7 +114,7 @@ export async function PUT(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('applications')
-      .update(updateData)
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();

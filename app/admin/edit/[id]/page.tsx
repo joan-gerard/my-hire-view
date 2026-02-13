@@ -5,6 +5,15 @@ import { useRouter, useParams } from 'next/navigation';
 import ApplicationForm from '@/components/forms/ApplicationForm';
 import type { ApplicationFormData, Application } from '@/lib/types/application';
 
+/** Normalize DB value (legacy boolean or 'start'|'end'|null) to form slugNamePosition. */
+function slugNamePositionFromDb(
+  value: boolean | 'start' | 'end' | null | undefined
+): 'start' | 'end' | null {
+  if (value === true) return 'start';
+  if (value === false) return null;
+  return value ?? null;
+}
+
 export default function EditApplicationPage() {
   const router = useRouter();
   const params = useParams();
@@ -42,9 +51,12 @@ export default function EditApplicationPage() {
     try {
       setLoading(true);
 
-      // Generate unique slug if it changed
+      // Generate unique slug if slug or name position in URL changed
+      const slugOrPreferenceChanged =
+        data.slug !== application?.slug ||
+        data.slugNamePosition !== slugNamePositionFromDb(application?.include_name_in_slug);
       let slug = data.slug;
-      if (data.slug !== application?.slug) {
+      if (slugOrPreferenceChanged) {
         const slugResponse = await fetch('/api/slug', {
           method: 'POST',
           headers: {
@@ -54,6 +66,11 @@ export default function EditApplicationPage() {
             company: data.company,
             role: data.role,
             excludeId: id,
+            slugNamePosition: data.slugNamePosition ?? null,
+            ...((data.slugNamePosition === 'start' || data.slugNamePosition === 'end') && {
+              first_name: data.first_name ?? undefined,
+              last_name: data.last_name ?? undefined,
+            }),
           }),
         });
 
@@ -103,7 +120,7 @@ export default function EditApplicationPage() {
     return null;
   }
 
-  // Normalize DB shape to form shape: null -> undefined for optional fields
+  // Normalize DB shape to form shape; candidate fields and include_name_in_slug from application only
   const initialData: Partial<ApplicationFormData> = {
     company: application.company,
     role: application.role,
@@ -111,6 +128,12 @@ export default function EditApplicationPage() {
     cv_url: application.cv_url,
     video_url: application.video_url,
     description: application.description ?? undefined,
+    first_name: application.first_name ?? undefined,
+    last_name: application.last_name ?? undefined,
+    location: application.location ?? undefined,
+    portfolio_url: application.portfolio_url ?? undefined,
+    linkedin_url: application.linkedin_url ?? undefined,
+    slugNamePosition: slugNamePositionFromDb(application.include_name_in_slug),
   };
 
   return (

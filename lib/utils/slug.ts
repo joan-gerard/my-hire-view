@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import { generateSlug } from './slug-generate';
+import { generateSlug, buildSlug } from './slug-generate';
 
-export { generateSlug };
+export { generateSlug, buildSlug };
 
 export async function checkSlugUniqueness(
   slug: string,
@@ -26,9 +26,15 @@ export async function checkSlugUniqueness(
 export async function generateUniqueSlug(
   company: string,
   role: string,
-  excludeId?: string
+  excludeId?: string,
+  first_name?: string | null,
+  last_name?: string | null,
+  position?: 'start' | 'end' | null
 ): Promise<string> {
-  let baseSlug = generateSlug(company, role);
+  const baseSlug =
+    position && (first_name?.trim() || last_name?.trim())
+      ? buildSlug(company, role, first_name, last_name, position)
+      : generateSlug(company, role);
   let slug = baseSlug;
   let counter = 1;
 

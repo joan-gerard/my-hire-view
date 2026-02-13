@@ -15,6 +15,12 @@ export interface Database {
           view_count: number;
           user_id: string;
           is_active: boolean;
+          first_name: string | null;
+          last_name: string | null;
+          location: string | null;
+          portfolio_url: string | null;
+          linkedin_url: string | null;
+          include_name_in_slug: 'start' | 'end' | null;
         };
         Insert: {
           id?: string;
@@ -29,6 +35,12 @@ export interface Database {
           view_count?: number;
           user_id: string;
           is_active?: boolean;
+          first_name?: string | null;
+          last_name?: string | null;
+          location?: string | null;
+          portfolio_url?: string | null;
+          linkedin_url?: string | null;
+          include_name_in_slug?: 'start' | 'end' | null;
         };
         Update: {
           id?: string;
@@ -43,6 +55,40 @@ export interface Database {
           view_count?: number;
           user_id?: string;
           is_active?: boolean;
+          first_name?: string | null;
+          last_name?: string | null;
+          location?: string | null;
+          portfolio_url?: string | null;
+          linkedin_url?: string | null;
+          include_name_in_slug?: 'start' | 'end' | null;
+        };
+      };
+      profiles: {
+        Row: {
+          user_id: string;
+          first_name: string | null;
+          last_name: string | null;
+          location: string | null;
+          portfolio_url: string | null;
+          linkedin_url: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          location?: string | null;
+          portfolio_url?: string | null;
+          linkedin_url?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          first_name?: string | null;
+          last_name?: string | null;
+          location?: string | null;
+          portfolio_url?: string | null;
+          linkedin_url?: string | null;
+          updated_at?: string;
         };
       };
     };

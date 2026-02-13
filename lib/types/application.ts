@@ -11,6 +11,13 @@ export interface Application {
   view_count: number;
   user_id: string;
   is_active: boolean;
+  first_name: string | null;
+  last_name: string | null;
+  location: string | null;
+  portfolio_url: string | null;
+  linkedin_url: string | null;
+  /** Name position in slug: null = not included, 'start' = name-company-role, 'end' = company-role-name */
+  include_name_in_slug: 'start' | 'end' | null;
 }
 
 export interface ApplicationFormData {
@@ -20,6 +27,14 @@ export interface ApplicationFormData {
   cv_url: string;
   video_url: string;
   description?: string;
+  /** Candidate fields shown to recruiters; null = do not show. Set from form toggles. */
+  first_name?: string | null;
+  last_name?: string | null;
+  location?: string | null;
+  portfolio_url?: string | null;
+  linkedin_url?: string | null;
+  /** Name in slug: null = not included, 'start' = name at start, 'end' = name at end. Stored in DB as include_name_in_slug. */
+  slugNamePosition?: 'start' | 'end' | null;
 }
 
 export interface ApplicationCreateInput {
@@ -29,6 +44,12 @@ export interface ApplicationCreateInput {
   cv_url: string;
   video_url: string;
   description?: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  location?: string | null;
+  portfolio_url?: string | null;
+  linkedin_url?: string | null;
+  slugNamePosition?: 'start' | 'end' | null;
 }
 
 export interface ApplicationUpdateInput {
@@ -39,4 +60,10 @@ export interface ApplicationUpdateInput {
   video_url?: string;
   description?: string;
   is_active?: boolean;
+  first_name?: string | null;
+  last_name?: string | null;
+  location?: string | null;
+  portfolio_url?: string | null;
+  linkedin_url?: string | null;
+  slugNamePosition?: 'start' | 'end' | null;
 }
