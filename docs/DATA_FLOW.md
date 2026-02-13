@@ -1,0 +1,220 @@
+# HireView — Data Flow
+
+This document describes how data moves through the system using Mermaid diagrams. For system architecture and design, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+---
+
+## 1. High-level data flow
+
+```mermaid
+flowchart LR
+  subgraph Actors
+    Candidate[Candidate]
+    Recruiter[Recruiter]
+  end
+
+  subgraph App[Next.js App]
+    ProfilePage[Profile page]
+    NewEdit[New / Edit application]
+    ViewPage[Public view]
+  end
+
+  subgraph APIs[API routes]
+    ProfileAPI[/api/profile]
+    AppsAPI[/api/applications]
+    SlugAPI[GET /api/applications/slug]
+    ViewAPI[POST .../view]
+  end
+
+  subgraph Data[(Data)]
+    Profiles[(profiles)]
+    Applications[(applications)]
+  end
+
+  Candidate --> ProfilePage
+  Candidate --> NewEdit
+  ProfilePage --> ProfileAPI
+  NewEdit --> AppsAPI
+  Recruiter --> ViewPage
+  ViewPage --> SlugAPI
+  ViewPage --> ViewAPI
+
+  ProfileAPI --> Profiles
+  AppsAPI --> Profiles
+  AppsAPI --> Applications
+  SlugAPI --> Applications
+  ViewAPI --> Applications
+```
+
+- **Profiles** are read/updated only via the profile page and `/api/profile`.
+- **Applications** are created/updated via the application form; candidate fields can come from the form (with toggles) or, on create, from a profile fallback. Recruiters read only from the application row.
+
+---
+
+## 2. Authentication
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant Login as Login page
+  participant API as /api/auth/login
+  participant Supa as Supabase Auth
+  participant MW as Middleware
+
+  U->>Login: Enter email + password
+  Login->>API: POST credentials
+  API->>Supa: signInWithPassword
+  Supa-->>API: session
+  API->>API: Set session cookies on response
+  API-->>Login: 200 + Set-Cookie
+  Login->>U: Redirect to /admin
+  U->>MW: Request /admin
+  MW->>Supa: getUser (refresh from cookies)
+  MW-->>U: Allow /admin
+```
+
+Sign-up works the same way via `/api/auth/signup`. Session is stored in cookies; middleware refreshes it and protects `/admin` routes.
+
+---
+
+## 3. Profile (read and update)
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant Page as /admin/profile
+  participant API as /api/profile
+  participant DB as profiles table
+
+  U->>Page: Open profile
+  Page->>DB: select by user_id (server)
+  DB-->>Page: profile or none
+  Page->>U: Show form (email, profile fields)
+
+  U->>Page: Edit name, location, URLs, Save
+  Page->>API: PUT profile (partial)
+  API->>API: requireAuth, validate URLs
+  API->>DB: upsert by user_id
+  DB-->>API: updated row
+  API-->>Page: 200 + data
+  Page->>U: Refresh / success
+```
+
+Profile data is used as the default source for candidate fields when creating a new application; it is not updated from the application form.
+
+---
+
+## 4. Create application
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant NewPage as /admin/new
+  participant ProfileAPI as GET /api/profile
+  participant Form as ApplicationForm
+  participant SlugAPI as POST /api/slug
+  participant UploadAPI as POST /api/upload
+  participant AppsAPI as POST /api/applications
+  participant Blob as Vercel Blob
+  participant Profiles as profiles
+  participant Applications as applications
+
+  U->>NewPage: Open create form
+  NewPage->>ProfileAPI: GET profile
+  ProfileAPI->>Profiles: select by user_id
+  Profiles-->>ProfileAPI: profile
+  ProfileAPI-->>NewPage: profile data
+  NewPage->>Form: initialData (profile for candidate section)
+
+  U->>Form: Fill company, role, candidate toggles, CV, video, description
+  Form->>UploadAPI: POST PDF
+  UploadAPI->>Blob: put(file)
+  Blob-->>UploadAPI: url
+  UploadAPI-->>Form: cv_url
+  Form->>SlugAPI: POST company, role
+  SlugAPI->>Applications: check slug
+  SlugAPI-->>Form: slug
+  Form->>AppsAPI: POST (company, role, slug, cv_url, video_url, candidate fields from form)
+  AppsAPI->>AppsAPI: requireAuth()
+  AppsAPI->>Profiles: select profile (if candidate fields not in body)
+  Profiles-->>AppsAPI: profile
+  AppsAPI->>AppsAPI: use body candidate fields or profile fallback
+  AppsAPI->>Applications: insert row
+  Applications-->>AppsAPI: data
+  AppsAPI-->>Form: 201
+  Form->>U: Redirect to /admin
+```
+
+Candidate fields (first name, last name, location, portfolio URL, LinkedIn URL) are sent from the form; toggles determine which are stored or set to null. If the client does not send them, the API falls back to the current profile.
+
+---
+
+## 5. Edit application
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant EditPage as /admin/edit/[id]
+  participant ByIdAPI as GET /api/applications/by-id/[id]
+  participant Form as ApplicationForm
+  participant AppsAPI as PUT /api/applications
+  participant Applications as applications
+
+  U->>EditPage: Open edit
+  EditPage->>ByIdAPI: GET by id
+  ByIdAPI->>Applications: select by id, user_id
+  Applications-->>ByIdAPI: application (incl. candidate fields)
+  ByIdAPI-->>EditPage: data
+  EditPage->>Form: initialData from application only
+
+  U->>Form: Change fields, toggles, Save
+  Form->>AppsAPI: PUT (id, all fields including candidate)
+  AppsAPI->>AppsAPI: requireAuth(), verify ownership
+  AppsAPI->>Applications: update row (no profile merge)
+  Applications-->>AppsAPI: data
+  AppsAPI-->>Form: 200
+  Form->>U: Redirect to /admin
+```
+
+Only the application row is updated; the profile table is never written from the edit flow.
+
+---
+
+## 6. Public view and view count
+
+```mermaid
+sequenceDiagram
+  participant R as Recruiter
+  participant Page as /view/[slug]
+  participant SlugAPI as GET /api/applications/[slug]
+  participant ViewAPI as POST .../view
+  participant VT as ViewTracker
+  participant Applications as applications
+
+  R->>Page: Open shareable link
+  Page->>SlugAPI: fetch(slug)
+  SlugAPI->>Applications: select by slug
+  Applications-->>SlugAPI: full row (incl. candidate fields)
+  SlugAPI-->>Page: application
+  Page->>Page: Render header (company, role, name, location, portfolio/LinkedIn), PDF, video, description
+  Page->>VT: Mount
+  VT->>VT: sessionStorage already tracked?
+  VT->>ViewAPI: POST (if not)
+  ViewAPI->>Applications: increment view_count
+  ViewAPI-->>VT: 200
+  VT->>VT: sessionStorage set
+```
+
+All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per session via ViewTracker.
+
+---
+
+## 7. Data ownership summary
+
+| Data        | Written by                    | Read by                          |
+| ----------- | ----------------------------- | --------------------------------- |
+| **profiles** | Profile page → `/api/profile` | Profile page; applications API (create fallback) |
+| **applications** | New/Edit form → `/api/applications` | Dashboard, edit page, public `/view/[slug]` |
+| **auth**    | Login/signup → Supabase Auth  | Middleware, requireAuth(), profile/dashboard |
+
+Candidate fields on the application are either supplied by the form (with toggles) or, on create only, taken from the profile when not in the request body. The recruiter view never reads from the profile table.

@@ -67,5 +67,7 @@ So **yes** — the current Supabase implementation and RLS policies allow for **
 ## Documentation
 
 - **[Architecture & system design](docs/ARCHITECTURE.md)** — High-level architecture, tech stack, data model, key flows, and Mermaid diagrams.
+- **[Data flow](docs/DATA_FLOW.md)** — Mermaid diagrams for auth, profile, create/edit application, and public view.
+- **[User guide](docs/USER_GUIDE.md)** — What candidates and recruiters can do with the app.
 - **[Supabase Auth setup](docs/SUPABASE_AUTH_SETUP.md)** — Email provider and email templates.
 - **[Code review notes](docs/CODE_REVIEW.md)** — Refactors and best practices.
