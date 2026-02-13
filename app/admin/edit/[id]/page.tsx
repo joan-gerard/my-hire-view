@@ -47,6 +47,18 @@ export default function EditApplicationPage() {
     }
   };
 
+  /** Re-fetch application to get fresh cv_exists (no full-page loading). */
+  const refetchCvCheck = async () => {
+    try {
+      const response = await fetch(`/api/applications/by-id/${id}`);
+      if (!response.ok) return;
+      const { data } = await response.json();
+      setApplication(data);
+    } catch {
+      // Ignore; user can try again
+    }
+  };
+
   const handleSubmit = async (data: ApplicationFormData) => {
     try {
       setLoading(true);
@@ -121,7 +133,7 @@ export default function EditApplicationPage() {
   }
 
   // Normalize DB shape to form shape; candidate fields and include_name_in_slug from application only
-  const initialData: Partial<ApplicationFormData> = {
+  const initialData: Partial<ApplicationFormData> & { cvUrlExists?: boolean } = {
     company: application.company,
     role: application.role,
     slug: application.slug,
@@ -134,6 +146,7 @@ export default function EditApplicationPage() {
     portfolio_url: application.portfolio_url ?? undefined,
     linkedin_url: application.linkedin_url ?? undefined,
     slugNamePosition: slugNamePositionFromDb(application.include_name_in_slug),
+    cvUrlExists: application.cv_exists,
   };
 
   return (
@@ -144,6 +157,7 @@ export default function EditApplicationPage() {
           initialData={initialData}
           onSubmit={handleSubmit}
           loading={loading}
+          onRetryCvCheck={refetchCvCheck}
         />
       </div>
     </div>

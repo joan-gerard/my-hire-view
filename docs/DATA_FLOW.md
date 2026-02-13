@@ -126,8 +126,9 @@ sequenceDiagram
   ProfileAPI-->>NewPage: profile data
   NewPage->>Form: initialData (profile for candidate section)
 
-  U->>Form: Fill company, role, candidate toggles, CV, video, description
-  Form->>UploadAPI: POST PDF
+  U->>Form: Fill company, role, candidate toggles, CV (file held in memory), video, description
+  U->>Form: Save
+  Form->>UploadAPI: POST PDF (only on save)
   UploadAPI->>Blob: put(file)
   Blob-->>UploadAPI: url
   UploadAPI-->>Form: cv_url
@@ -167,10 +168,11 @@ sequenceDiagram
   ByIdAPI-->>EditPage: data
   EditPage->>Form: initialData from application only
 
-  U->>Form: Change fields, toggles, optionally Include name in URL, Save
+  U->>Form: Change fields, toggles, optionally new CV file, Include name in URL, Save
+  Note over Form: If new CV selected: upload to /api/upload on save, then PUT with new cv_url
   Form->>AppsAPI: PUT (id, all fields including candidate)
   Note over Form,Applications: If slug changed, slug API called with company, role, optional first/last name
-  AppsAPI->>AppsAPI: requireAuth(), verify ownership
+  AppsAPI->>AppsAPI: requireAuth(), verify ownership; if cv_url changed, delete old blob
   AppsAPI->>Applications: update row (no profile merge)
   Applications-->>AppsAPI: data
   AppsAPI-->>Form: 200

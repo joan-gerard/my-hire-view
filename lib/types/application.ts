@@ -18,6 +18,8 @@ export interface Application {
   linkedin_url: string | null;
   /** Name position in slug: null = not included, 'start' = name-company-role, 'end' = company-role-name */
   include_name_in_slug: 'start' | 'end' | null;
+  /** Set by GET by-id when cv_url is a Blob URL: true if file exists, false if missing. Omitted when not checked. */
+  cv_exists?: boolean;
 }
 
 export interface ApplicationFormData {
