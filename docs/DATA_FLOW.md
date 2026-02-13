@@ -20,10 +20,10 @@ flowchart LR
   end
 
   subgraph APIs[API routes]
-    ProfileAPI[/api/profile]
-    AppsAPI[/api/applications]
-    SlugAPI[GET /api/applications/slug]
-    ViewAPI[POST .../view]
+    ProfileAPI["/api/profile"]
+    AppsAPI["/api/applications"]
+    SlugAPI["GET /api/applications/slug"]
+    ViewAPI["POST .../view"]
   end
 
   subgraph Data[(Data)]
