@@ -2,6 +2,8 @@
 
 This document summarizes what was built commit-by-commit, in chronological order, to reflect the thinking process: what was created, updated, fixed, or refactored at each step.
 
+> **Note:** This document should be updated only when explicitly requested. Do not update it automatically when new commits are made.
+
 ---
 
 ## 1. Initial commit from Create Next App
