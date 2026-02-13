@@ -85,6 +85,7 @@ flowchart LR
 
   subgraph API["API Routes"]
     AppsAPI["/api/applications<br>GET, POST, PUT, DELETE"]
+    ProfileAPI["/api/profile<br>GET, PUT"]
     SlugAPI["/api/applications/slug<br>GET by slug"]
     ViewAPI["/api/applications/slug/view<br>POST increment"]
     ByIdAPI["/api/applications/by-id/id<br>GET by id"]
@@ -102,12 +103,14 @@ flowchart LR
 
   subgraph Data["Data & Storage"]
     DB[(applications table)]
+    ProfilesTable[(profiles table)]
     AuthUsers[(auth.users)]
     BlobStore[(Vercel Blob)]
   end
 
   Public --> SlugAPI
   Admin --> AppsAPI
+  Admin --> ProfileAPI
   Admin --> ByIdAPI
   Admin --> UploadAPI
   Admin --> SlugGenAPI
@@ -116,13 +119,16 @@ flowchart LR
 
   AppsAPI --> Auth
   ByIdAPI --> Auth
+  ProfileAPI --> Auth
   UploadAPI --> Lib
   AuthAPI --> SupabaseClients
   SlugGenAPI --> Lib
 
   Auth --> SupabaseClients
   AppsAPI --> DB
+  AppsAPI --> ProfilesTable
   ByIdAPI --> DB
+  ProfileAPI --> ProfilesTable
   SlugAPI --> DB
   ViewAPI --> DB
   SlugGenAPI --> DB
@@ -139,11 +145,13 @@ flowchart LR
   style AuthAPI fill:#e9d5ff,stroke:#6b21a8,stroke-width:2px
   style UploadAPI fill:#e9d5ff,stroke:#6b21a8,stroke-width:2px
   style SlugGenAPI fill:#e9d5ff,stroke:#6b21a8,stroke-width:2px
+  style ProfileAPI fill:#e9d5ff,stroke:#6b21a8,stroke-width:2px
   style Auth fill:#fef3c7,stroke:#b45309,stroke-width:2px
   style SupabaseClients fill:#fef3c7,stroke:#b45309,stroke-width:2px
   style Utils fill:#fef3c7,stroke:#b45309,stroke-width:2px
   style Types fill:#fef3c7,stroke:#b45309,stroke-width:2px
   style DB fill:#d1fae5,stroke:#047857,stroke-width:2px
+  style ProfilesTable fill:#d1fae5,stroke:#047857,stroke-width:2px
   style AuthUsers fill:#d1fae5,stroke:#047857,stroke-width:2px
   style BlobStore fill:#d1fae5,stroke:#047857,stroke-width:2px
   style Frontend fill:#eff6ff,stroke:#1d4ed8,stroke-width:2px
@@ -166,8 +174,8 @@ flowchart LR
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                | Yes  |
 | `/admin/new`        | Create application form (slug, company, role, CV upload, YouTube URL, description)                                              | Yes  |
 | `/admin/edit/[id]`  | Edit existing application (same form, load by id)                                                                               | Yes  |
-| `/admin/profile`    | Profile: account email, member since, application counts (all from auth + RLS-scoped queries)                                  | Yes  |
-| `/view/[slug]`      | Public application page: header, PDF viewer, YouTube embed, optional description; shows “archived” state if `is_active = false` | No   |
+| `/admin/profile`    | Profile: account email, member since; editable profile details (first name, last name, location, portfolio URL, LinkedIn URL); application counts | Yes  |
+| `/view/[slug]`      | Public application page: header (company, role, candidate name, location, portfolio/LinkedIn buttons), PDF viewer, YouTube embed, optional description; shows “archived” state if `is_active = false`. Candidate name, location, and links come from the application row (snapshot from profile at create/update). | No   |
 
 Layouts:
 
@@ -180,8 +188,9 @@ All under `app/api/`:
 
 | Endpoint                        | Methods                | Purpose                                                                  | Auth                                              |
 | ------------------------------- | ---------------------- | ------------------------------------------------------------------------ | ------------------------------------------------- |
-| `/api/applications`             | GET, POST, PUT, DELETE | List (user’s), create, update, delete application                        | Required (except N/A for unauthenticated)         |
-| `/api/applications/[slug]`      | GET                    | Fetch one application by slug (public)                                   | No                                                |
+| `/api/applications`             | GET, POST, PUT, DELETE | List (user’s), create, update, delete application. On POST/PUT, server snapshots current profile (first name, last name, location, portfolio URL, LinkedIn URL) into the application row. | Required (except N/A for unauthenticated)         |
+| `/api/applications/[slug]`      | GET                    | Fetch one application by slug (public); response includes candidate snapshot fields for recruiter view.                       | No                                                |
+| `/api/profile`                 | GET, PUT               | Get or update current user’s profile (first name, last name, location, portfolio URL, LinkedIn URL). GET creates a profile row if missing. | Required                                          |
 | `/api/applications/[slug]/view` | POST                   | Increment `view_count` for slug                                          | No                                                |
 | `/api/applications/by-id/[id]`  | GET                    | Fetch one by id (for edit page)                                          | Required                                          |
 | `/api/auth/login`               | POST                   | Sign in; sets session cookies via route client                           | No                                                |
@@ -204,13 +213,17 @@ Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which u
 
 ### 5.4 Data (Supabase)
 
-- **Single table:** `applications`
+- **Table: `applications`**
   - `id` (UUID, PK), `slug` (unique), `company`, `role`, `cv_url`, `video_url`, `description`, `created_at`, `updated_at`, `view_count`, `user_id` (FK to `auth.users`), `is_active` (default true; archiving = soft hide).
-- **Indexes:** `slug`, `user_id`, `created_at DESC`.
-- **RLS:** Enabled. Policies: users can SELECT/INSERT/UPDATE/DELETE their own rows; public can SELECT any row (for public apply page by slug).
-- **Trigger:** `updated_at` maintained on update.
+  - **Candidate snapshot fields** (nullable): `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`. These are copied from the user’s **profile** when an application is created or updated, so the recruiter view always reads from the application row (no join to profile). Existing rows may have NULLs until the next edit or a backfill.
+- **Table: `profiles`**
+  - One row per user: `user_id` (PK, FK to `auth.users`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `updated_at`. All profile fields are nullable. Users edit this on the profile page; the applications API does not expose profile directly to the public.
+  - **Snapshot rule:** On POST or PUT to `/api/applications`, the server loads the current user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the insert or update. The recruiter-facing page at `/view/[slug]` uses only data from the application row.
+- **Indexes (applications):** `slug`, `user_id`, `created_at DESC`.
+- **RLS:** Enabled on both tables. Applications: users can SELECT/INSERT/UPDATE/DELETE their own rows; public can SELECT any row by slug. Profiles: users can SELECT/INSERT/UPDATE their own row only.
+- **Triggers:** `updated_at` maintained on update for both tables.
 
-Types are mirrored in `lib/types/application.ts` and `lib/types/database.ts`.
+Types are mirrored in `lib/types/application.ts`, `lib/types/profile.ts`, and `lib/types/database.ts`.
 
 ### 5.5 File Storage (Vercel Blob)
 
@@ -269,7 +282,10 @@ sequenceDiagram
   SlugAPI-->>Form: { slug }
   Form->>AppsAPI: POST { company, role, slug, cv_url, video_url, ... }
   AppsAPI->>AppsAPI: requireAuth()
-  AppsAPI->>Supa: insert application
+  AppsAPI->>Supa: select profile by user_id
+  Supa-->>AppsAPI: profile (first_name, last_name, location, portfolio_url, linkedin_url)
+  AppsAPI->>AppsAPI: merge profile snapshot into insert
+  AppsAPI->>Supa: insert application (with snapshot)
   Supa-->>AppsAPI: data
   AppsAPI-->>Form: 201 { data }
   Form->>U: Redirect to /admin
@@ -288,10 +304,10 @@ sequenceDiagram
 
   R->>Page: Open /view/my-company-role
   Page->>SlugAPI: fetch(slug)
-  SlugAPI->>Supa: select by slug
+  SlugAPI->>Supa: select by slug (full row, includes candidate name, location, portfolio_url, linkedin_url)
   Supa-->>SlugAPI: application
   SlugAPI-->>Page: { data }
-  Page->>Page: Render PDF + YouTube + description
+  Page->>Page: Render header (company, role, candidate name, location, portfolio/LinkedIn buttons) + PDF + YouTube + description
   Page->>VT: Mount ViewTracker(slug)
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not tracked)
@@ -299,6 +315,12 @@ sequenceDiagram
   ViewAPI-->>VT: 200
   VT->>VT: sessionStorage set tracked
 ```
+
+### 6.4 Profile and snapshot into applications
+
+- **Profile page:** User opens `/admin/profile`. Server fetches `profiles` row by `user_id` (no row yet is allowed). Client form (ProfileForm) shows first name, last name, location, portfolio URL, LinkedIn URL. On save, client PUTs to `/api/profile` with the edited fields; API validates URLs (http/https) and upserts the profile row.
+- **Profile API:** GET returns the current user’s profile row, creating one with nulls if missing. PUT accepts partial updates, merges with existing row, and upserts.
+- **Snapshot into applications:** When the user creates (POST) or updates (PUT) an application, the applications API loads the user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the application row. Recruiters viewing `/view/[slug]` therefore see data from the application row only; no join to profile and no dependency on the user’s current profile after the fact.
 
 ---
 
@@ -326,7 +348,7 @@ hireview/
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── auth/                   # SignOutButton
-│   ├── forms/                  # ApplicationForm, FileUpload, YouTubeUrlInput
+│   ├── forms/                  # ApplicationForm, FileUpload, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
 │   ├── public/                 # ApplicationPageHeader, MarketingFeatures, MarketingHeader, MarketingHero
 │   ├── ui/                     # Button, Input, Textarea
@@ -336,9 +358,9 @@ hireview/
 │   ├── api/                    # applications (client: fetch, delete, archive, restore)
 │   ├── auth.ts                 # getUser, requireAuth
 │   ├── supabase/               # server, route-client, middleware, client, env
-│   ├── types/                  # application, database
+│   ├── types/                  # application, profile, database
 │   └── utils/                  # url, slug, slug-generate, youtube, clipboard
-├── supabase/migrations/        # 001 schema, 002 is_active
+├── supabase/migrations/        # 001 schema, 002 is_active, 003 profiles, 004 application candidate fields
 ├── proxy.ts                    # Middleware entry (session + /admin guard)
 └── docs/                       # ARCHITECTURE, CODE_REVIEW, SUPABASE_AUTH_SETUP
 ```
@@ -356,6 +378,7 @@ hireview/
 | View count in DB           | Simple and accurate; one increment per view (deduplicated per session in ViewTracker).                                   |
 | `is_active` for archive    | Soft delete: link still works but shows “archived” message; no hard delete of history.                                   |
 | Route client for auth APIs | Login/signup/logout must write cookies on the response; route client is the pattern recommended by Supabase for Next.js. |
+| Profile snapshot on application | Candidate name, location, portfolio URL, and LinkedIn URL are stored in `profiles` and copied into each application row on create/update. Recruiters read only from the application row, giving a stable snapshot and no auth dependency on the public view. |
 
 ---
 

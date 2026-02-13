@@ -1,15 +1,24 @@
 import Link from 'next/link';
 import { requireAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
+import ProfileForm from '@/components/forms/ProfileForm';
+import type { Profile } from '@/lib/types/profile';
 
 /**
- * Profile page for the account owner. Shows identity from Supabase Auth
- * and a summary of their applications. All data is retrieved server-side
- * with requireAuth() and RLS-scoped queries (user_id = auth.uid()).
+ * Profile page for the account owner. Shows identity from Supabase Auth,
+ * editable profile details (name, location, portfolio, LinkedIn), and a
+ * summary of their applications. All data is retrieved server-side with
+ * requireAuth() and RLS-scoped queries (user_id = auth.uid()).
  */
 export default async function AdminProfilePage() {
   const user = await requireAuth();
   const supabase = await createClient();
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
 
   const { count } = await supabase
     .from('applications')
@@ -47,6 +56,16 @@ export default async function AdminProfilePage() {
             </div>
           )}
         </dl>
+      </section>
+
+      <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-900">Profile details</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          This info is used when you create or update applications so recruiters see your name and links.
+        </p>
+        <div className="mt-4">
+          <ProfileForm initialData={profile as Profile | null} />
+        </div>
       </section>
 
       <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

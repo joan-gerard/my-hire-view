@@ -11,6 +11,11 @@ export interface Application {
   view_count: number;
   user_id: string;
   is_active: boolean;
+  first_name: string | null;
+  last_name: string | null;
+  location: string | null;
+  portfolio_url: string | null;
+  linkedin_url: string | null;
 }
 
 export interface ApplicationFormData {

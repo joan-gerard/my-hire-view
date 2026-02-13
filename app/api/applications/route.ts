@@ -27,17 +27,34 @@ export async function GET() {
   }
 }
 
+async function getProfileSnapshot(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { data } = await supabase
+    .from('profiles')
+    .select('first_name, last_name, location, portfolio_url, linkedin_url')
+    .eq('user_id', userId)
+    .single();
+  return {
+    first_name: data?.first_name ?? null,
+    last_name: data?.last_name ?? null,
+    location: data?.location ?? null,
+    portfolio_url: data?.portfolio_url ?? null,
+    linkedin_url: data?.linkedin_url ?? null,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
     const supabase = await createClient();
     const body: ApplicationCreateInput = await request.json();
+    const snapshot = await getProfileSnapshot(supabase, user.id);
 
     const { data, error } = await supabase
       .from('applications')
       .insert({
         ...body,
         user_id: user.id,
+        ...snapshot,
       })
       .select()
       .single();
@@ -76,9 +93,10 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const snapshot = await getProfileSnapshot(supabase, user.id);
     const { data, error } = await supabase
       .from('applications')
-      .update(updateData)
+      .update({ ...updateData, ...snapshot })
       .eq('id', id)
       .select()
       .single();
