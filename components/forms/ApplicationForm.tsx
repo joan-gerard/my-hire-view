@@ -27,15 +27,19 @@ function defaultInclude(initialData?: Partial<ApplicationFormData>): Record<Cand
 }
 
 interface ApplicationFormProps {
-  initialData?: Partial<ApplicationFormData>;
+  /** Optional cvUrlExists from server (e.g. by-id) to hide View link when blob is missing. */
+  initialData?: Partial<ApplicationFormData> & { cvUrlExists?: boolean };
   onSubmit: (data: ApplicationFormData) => Promise<void>;
   loading?: boolean;
+  /** When provided, passed to FileUpload so user can re-check CV existence (edit page). */
+  onRetryCvCheck?: () => Promise<void>;
 }
 
 export default function ApplicationForm({
   initialData,
   onSubmit,
   loading = false,
+  onRetryCvCheck,
 }: ApplicationFormProps) {
   const [formData, setFormData] = useState<ApplicationFormData>({
     company: initialData?.company || '',
@@ -235,6 +239,8 @@ export default function ApplicationForm({
         value={formData.cv_url}
         pendingFile={cvPendingFile}
         onPendingFileChange={setCvPendingFile}
+        cvUrlExists={initialData?.cvUrlExists}
+        onRetryCvCheck={onRetryCvCheck}
         error={errors.cv_url}
       />
 

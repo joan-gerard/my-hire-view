@@ -35,15 +35,32 @@ export default function PDFViewer({ url }: PDFViewerProps) {
   };
 
   if (error) {
+    const isMissingOrUnavailable =
+      /fetch|404|failed|network|Failed to fetch/i.test(error) ||
+      error.includes('Missing PDF');
     return (
-      <div className="rounded-lg bg-gray-100 p-8 text-center">
-        <p className="text-red-600">Failed to load PDF: {error}</p>
-        <button
-          onClick={handleDownload}
-          className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-500"
-        >
-          Download PDF Instead
-        </button>
+      <div
+        role="alert"
+        className="rounded-lg border border-amber-300 bg-amber-50 px-6 py-8 text-center"
+      >
+        <p className="font-semibold text-amber-900">
+          {isMissingOrUnavailable
+            ? 'CV is not available'
+            : 'Failed to load CV'}
+        </p>
+        <p className="mt-2 text-sm text-amber-800">
+          {isMissingOrUnavailable
+            ? 'The resume file is no longer available. It may have been removed from storage. Please contact the candidate if you need their CV.'
+            : `The document could not be loaded. (${error})`}
+        </p>
+        {!isMissingOrUnavailable && (
+          <button
+            onClick={handleDownload}
+            className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+          >
+            Try opening in new tab
+          </button>
+        )}
       </div>
     );
   }

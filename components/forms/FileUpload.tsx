@@ -8,6 +8,10 @@ interface FileUploadProps {
   /** Called when user selects a file (not uploaded yet; upload happens on form submit). */
   pendingFile?: File | null;
   onPendingFileChange: (file: File | null) => void;
+  /** When false, hide the View link (e.g. blob missing). When true or undefined, show View if value is set. */
+  cvUrlExists?: boolean;
+  /** When provided and cvUrlExists is false, show a "Check again" button to re-run the existence check. */
+  onRetryCvCheck?: () => Promise<void>;
   error?: string;
 }
 
@@ -17,9 +21,12 @@ export default function FileUpload({
   value,
   pendingFile,
   onPendingFileChange,
+  cvUrlExists = true,
+  onRetryCvCheck,
   error,
 }: FileUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [checkingCv, setCheckingCv] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -155,7 +162,7 @@ export default function FileUpload({
           </dialog>
         )}
 
-        {showSaved && (
+        {showSaved && cvUrlExists && (
           <p className="text-sm text-gray-600">
             CV uploaded:{' '}
             <a
@@ -167,6 +174,37 @@ export default function FileUpload({
               View
             </a>
           </p>
+        )}
+        {showSaved && !cvUrlExists && (
+          <div
+            role="alert"
+            className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+          >
+            <p className="font-semibold">CV file not found in storage</p>
+            <p className="mt-0.5 text-amber-800">
+              The file may have been removed from Vercel. Please upload a new CV
+              below to replace it.
+            </p>
+            {onRetryCvCheck && (
+              <>
+                <p className="mt-2 text-xs text-amber-700">
+                  If this might be a temporary issue (e.g. network), you can check again.
+                </p>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setCheckingCv(true);
+                    await onRetryCvCheck();
+                    setCheckingCv(false);
+                  }}
+                  disabled={checkingCv}
+                  className="mt-2 rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500 disabled:opacity-50"
+                >
+                  {checkingCv ? 'Checking…' : 'Check again'}
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}

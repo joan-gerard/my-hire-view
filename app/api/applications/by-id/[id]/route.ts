@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
+import { checkBlobExists } from '@/lib/utils/blob';
 
 /**
  * GET a single application by id. Requires auth; returns 404 if not found or not owned by user.
+ * When cv_url is a Vercel Blob URL, adds cv_exists (HEAD check) so the client can hide the View link if the file is missing.
  */
 export async function GET(
   _request: NextRequest,
@@ -28,7 +30,13 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ data });
+    const cv_exists = data.cv_url
+      ? await checkBlobExists(data.cv_url)
+      : undefined;
+
+    return NextResponse.json({
+      data: { ...data, cv_exists },
+    });
   } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

@@ -33,3 +33,17 @@ export async function deleteBlobIfOurs(url: string | null | undefined): Promise<
     console.error('Failed to delete blob:', url, err);
   }
 }
+
+/**
+ * Returns true if the URL is a Vercel Blob URL and a HEAD request returns 2xx.
+ * Returns false for non-blob URLs or on failure (e.g. 404, network error).
+ */
+export async function checkBlobExists(url: string | null | undefined): Promise<boolean> {
+  if (!isVercelBlobUrl(url)) return false;
+  try {
+    const res = await fetch(url!, { method: 'HEAD' });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
