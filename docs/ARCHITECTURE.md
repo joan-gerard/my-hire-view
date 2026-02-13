@@ -166,12 +166,13 @@ flowchart LR
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                | Yes  |
 | `/admin/new`        | Create application form (slug, company, role, CV upload, YouTube URL, description)                                              | Yes  |
 | `/admin/edit/[id]`  | Edit existing application (same form, load by id)                                                                               | Yes  |
+| `/admin/profile`    | Profile: account email, member since, application counts (all from auth + RLS-scoped queries)                                  | Yes  |
 | `/view/[slug]`      | Public application page: header, PDF viewer, YouTube embed, optional description; shows “archived” state if `is_active = false` | No   |
 
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
-- **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (HireView, Dashboard, New Application, user email, Sign out) and `children`.
+- **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (HireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
 ### 5.2 API Layer
 

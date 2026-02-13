@@ -54,6 +54,16 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Security & data access
+
+Profile and account data are retrieved in a way that is safe and consistent with your Supabase setup:
+
+- **Auth user data:** Identity (email, id, created_at) comes only from **Supabase Auth** via `getUser()` / `requireAuth()`. The server uses the session cookie; Supabase returns only the current user. No raw access to `auth.users` from app code.
+- **Applications:** Row Level Security (RLS) is enabled on `applications`. Users can SELECT/INSERT/UPDATE/DELETE only their own rows (`auth.uid() = user_id`). The profile page and APIs use the server client and `requireAuth()`, then filter by `user.id`, so they only ever read or write the signed-in user’s data.
+- **Profile page:** `/admin/profile` is behind the same admin layout as the dashboard; it uses `requireAuth()` and only displays the current user’s email, “member since”, and application counts fetched with RLS-scoped queries.
+
+So **yes** — the current Supabase implementation and RLS policies allow for **safe retrieval of user data** for the account owner on the profile page and elsewhere in the admin area.
+
 ## Documentation
 
 - **[Architecture & system design](docs/ARCHITECTURE.md)** — High-level architecture, tech stack, data model, key flows, and Mermaid diagrams.
