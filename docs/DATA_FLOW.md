@@ -26,9 +26,9 @@ flowchart LR
     ViewAPI["POST .../view"]
   end
 
-  subgraph Data[(Data)]
-    Profiles[(profiles)]
-    Applications[(applications)]
+  subgraph Data[Data]
+    Profiles[profiles]
+    Applications[applications]
   end
 
   Candidate --> ProfilePage
