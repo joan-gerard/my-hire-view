@@ -47,7 +47,7 @@ export default function AdminDashboard() {
       {filteredApplications.length === 0 ? (
         <AdminDashboardEmpty hasSearchQuery={searchQuery.trim() !== ''} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col gap-4">
           {filteredApplications.map((application) => (
             <ApplicationCard
               key={application.id}
