@@ -192,7 +192,7 @@ All under `app/api/`:
 | `/api/applications/[slug]`      | GET                    | Fetch one application by slug (public); response includes candidate snapshot fields for recruiter view.                       | No                                                |
 | `/api/profile`                 | GET, PUT               | Get or update current user’s profile (first name, last name, location, portfolio URL, LinkedIn URL). GET creates a profile row if missing. | Required                                          |
 | `/api/applications/[slug]/view` | POST                   | Increment `view_count` and set `last_viewed_at` for slug (owner views not counted). Uses SECURITY DEFINER RPC via service_role; see [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md). | No                                                |
-| `/api/applications/[slug]/download` | POST              | Increment `download_count` for slug (owner downloads not counted)        | No                                                |
+| `/api/applications/[slug]/download` | POST              | Increment `download_count` for slug (owner downloads not counted). Uses SECURITY DEFINER RPC via service_role; see [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md). | No                                                |
 | `/api/applications/by-id/[id]`  | GET                    | Fetch one by id (for edit page)                                          | Required                                          |
 | `/api/auth/login`               | POST                   | Sign in; sets session cookies via route client                           | No                                                |
 | `/api/auth/signup`              | POST                   | Sign up; sets session cookies                                            | No                                                |
@@ -209,7 +209,7 @@ Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which u
 - **Clients:**
   - **Server (Server Components, server-side logic):** `lib/supabase/server.ts` — `createClient()` using `cookies()` from `next/headers`.
   - **Route handler (login/signup/logout):** `lib/supabase/route-client.ts` — `createSupabaseRouteClient({ request, response })` so the response carries `Set-Cookie` headers.
-  - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used only for operations that must bypass RLS (e.g. view count increment RPC). Never used from the client.
+  - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used only for operations that must bypass RLS (e.g. view count and download count increment RPCs). Never used from the client.
   - **Middleware:** `lib/supabase/middleware.ts` — `updateSession(request)`: refreshes session and redirects unauthenticated users from `/admin` to `/login`. Intended to be invoked from root middleware (e.g. `middleware.ts` that re-exports or calls this; current entry is `proxy.ts` with matcher config).
   - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, redirects to `next` (default `/admin`).
 
@@ -322,7 +322,7 @@ sequenceDiagram
 
 View count and `last_viewed_at` are only updated when the viewer is not the application owner; the applicant can open their own link without affecting the count or last-viewed time. The increment is performed by a SECURITY DEFINER function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
 
-**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (once per session via sessionStorage). The download API increments `download_count` only when the requester is not the application owner, mirroring the view-count behaviour.
+**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (once per session via sessionStorage). The download API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), mirroring the view-count behaviour; see **docs/VIEW_COUNT_FIX.md**.
 
 ### 6.4 Profile and snapshot into applications
 

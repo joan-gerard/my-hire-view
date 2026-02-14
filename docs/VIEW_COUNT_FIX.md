@@ -1,6 +1,6 @@
-# View Count Fix — Summary
+# View Count and Download Count Fix — Summary
 
-This document summarizes the view-count behaviour issue, the analysis, and the solution implemented so that view counts update correctly for anonymous and non-owner viewers while remaining secure.
+This document summarizes the view-count (and download-count) behaviour issue, the analysis, and the solution implemented so that view counts and CV download counts update correctly for anonymous and non-owner viewers while remaining secure.
 
 ---
 
@@ -46,9 +46,9 @@ We chose the **SECURITY DEFINER** approach to keep the capability minimal and to
 
 ### 4.1 Design principles
 
-- **Minimal function:** The database function only updates `view_count` and `last_viewed_at` for the given slug. No other columns or logic.
-- **Service-role only:** Only the backend (using `SUPABASE_SERVICE_ROLE_KEY`) can execute the function. The RPC is **not** callable by `anon` or `authenticated`.
-- **No client exposure:** The service role key and the admin client are used only in server-side code (API route). The RPC is never called from the browser or with the anon key.
+- **Minimal functions:** Each database function updates only the relevant column(s) for the given slug. No other columns or logic.
+- **Service-role only:** Only the backend (using `SUPABASE_SERVICE_ROLE_KEY`) can execute these RPCs. They are **not** callable by `anon` or `authenticated`.
+- **No client exposure:** The service role key and the admin client are used only in server-side code (API routes). The RPCs are never called from the browser or with the anon key.
 
 ### 4.2 Components
 
@@ -60,31 +60,36 @@ We chose the **SECURITY DEFINER** approach to keep the capability minimal and to
    - **Revokes** `EXECUTE` from `PUBLIC`, `anon`, and `authenticated`.
    - **Grants** `EXECUTE` to `service_role` only.
 
-2. **Env helper `getSupabaseServiceRoleKey()`** (`lib/supabase/env.ts`)
+2. **Migration `010_increment_download_count_security_definer.sql`**
+   - Defines `increment_application_download_count(p_slug text)`:
+     - `SECURITY DEFINER`, `SET search_path = public`.
+     - Body: single `UPDATE applications SET download_count = COALESCE(download_count, 0) + 1 WHERE slug = p_slug`.
+   - Same revoke/grant pattern: only `service_role` can execute.
+
+3. **Env helper `getSupabaseServiceRoleKey()`** (`lib/supabase/env.ts`)
    - Reads `SUPABASE_SERVICE_ROLE_KEY` (server-side only; not `NEXT_PUBLIC_`).
    - Used only when creating the admin client.
 
-3. **Admin client** (`lib/supabase/admin.ts`)
+4. **Admin client** (`lib/supabase/admin.ts`)
    - `createAdminClient()` builds a Supabase client with the service role key.
-   - Used only in server-side code (e.g. the view API route). Never imported in client components.
+   - Used only in server-side code (view and download API routes). Never imported in client components.
 
-4. **View API route** (`app/api/applications/[slug]/view/route.ts`)
-   - Still uses the **cookie-based** Supabase client to:
-     - Fetch the application by slug and get `user_id`.
-     - Get the current viewer via `auth.getUser()`.
-   - If the viewer is the **owner**, returns success without incrementing.
-   - If the viewer is **not** the owner (or is anonymous), calls **`increment_application_view_count`** via the **admin client** (service role). No direct UPDATE from the anon/authenticated client.
+5. **View API route** (`app/api/applications/[slug]/view/route.ts`)
+   - Still uses the **cookie-based** Supabase client to fetch application and get viewer; if not owner, calls **`increment_application_view_count`** via the admin client.
+
+6. **Download API route** (`app/api/applications/[slug]/download/route.ts`)
+   - Same pattern: cookie-based client for fetch and owner check; if not owner, calls **`increment_application_download_count`** via the admin client. No direct UPDATE from the anon/authenticated client.
 
 ### 4.3 Security
 
-- **No new database vulnerability:** The function is minimal and only updates the two tracking columns. The only way to run it is via the API route, which uses the service role key (server-only).
-- **RPC not callable by anon/authenticated:** Revoke/grant ensures that even if someone has the project URL and anon key, they cannot call this RPC. Only the backend with the service role key can.
-- **Owner check remains in the app:** The decision to skip incrementing for the owner is done in the API (cookie-based user vs. `application.user_id`); the function does not need to know about the viewer.
+- **No new database vulnerability:** Each function is minimal and only updates the relevant tracking column(s). The only way to run them is via the API routes, which use the service role key (server-only).
+- **RPCs not callable by anon/authenticated:** Revoke/grant ensures that even if someone has the project URL and anon key, they cannot call these RPCs. Only the backend with the service role key can.
+- **Owner check remains in the app:** The decision to skip incrementing for the owner is done in each API (cookie-based user vs. `application.user_id`); the functions do not need to know about the viewer.
 
 ### 4.4 Why the service role key is never client-side
 
 - **Env var:** `SUPABASE_SERVICE_ROLE_KEY` is **not** prefixed with `NEXT_PUBLIC_`. In Next.js, only `NEXT_PUBLIC_*` env vars are inlined into the client bundle. So the service role key is never sent to the browser, even if some module that reads it were bundled for the client.
-- **Usage:** The only code that reads this key is `getSupabaseServiceRoleKey()` in `lib/supabase/env.ts`. That function is only called from `lib/supabase/admin.ts`, and the only importer of `admin.ts` is the view API route (`app/api/applications/[slug]/view/route.ts`). API routes run only on the server and are never part of the client bundle, so the chain that uses the service role key is never imported client-side.
+- **Usage:** The only code that reads this key is `getSupabaseServiceRoleKey()` in `lib/supabase/env.ts`. That function is only called from `lib/supabase/admin.ts`, and the only importers of `admin.ts` are the view and download API routes (`app/api/applications/[slug]/view/route.ts` and `app/api/applications/[slug]/download/route.ts`). API routes run only on the server and are never part of the client bundle, so the chain that uses the service role key is never imported client-side.
 - **Vercel (or other host):** When you add `SUPABASE_SERVICE_ROLE_KEY` in Vercel’s environment variables (Project → Settings → Environment Variables), it is injected only into the **server runtime** (API routes, Server Components, build). Vercel does not expose non-`NEXT_PUBLIC_` variables to the client, so the key is never available in the browser.
 - **Result:** The service role key is used only in server-side code and is never included in or exposed to the client bundle.
 
@@ -92,8 +97,8 @@ We chose the **SECURITY DEFINER** approach to keep the capability minimal and to
 
 ## 5. Deployment Notes
 
-- **Vercel:** Add **`SUPABASE_SERVICE_ROLE_KEY`** in your Vercel project’s environment variables (Settings → Environment Variables). It is required for the view-count RPC (and any future server-only admin operations). This variable is only available to the server at runtime and is never exposed to the client.
-- Run the migration **`009_increment_view_count_security_definer.sql`** on your Supabase project (e.g. via Supabase CLI or dashboard) so the function and permissions are in place before or at deploy.
+- **Vercel:** Add **`SUPABASE_SERVICE_ROLE_KEY`** in your Vercel project’s environment variables (Settings → Environment Variables). It is required for the view-count and download-count RPCs (and any future server-only admin operations). This variable is only available to the server at runtime and is never exposed to the client.
+- Run the migrations **`009_increment_view_count_security_definer.sql`** and **`010_increment_download_count_security_definer.sql`** on your Supabase project (e.g. via Supabase CLI or dashboard) so both functions and permissions are in place before or at deploy.
 
 ---
 
@@ -103,7 +108,7 @@ We chose the **SECURITY DEFINER** approach to keep the capability minimal and to
 - **API and RLS context:** [ARCHITECTURE.md](ARCHITECTURE.md) (API table, RLS, view count behaviour).
 - **Excluding the applicant from view count:** [BUILD_SUMMARY.md](BUILD_SUMMARY.md) (commit 33).
 
-After this fix, view count and last-viewed time update correctly when:
-- An **anonymous** visitor opens the public view page (once per session, as before).
-- A **logged-in non-owner** opens the public view page.
-The **owner** viewing their own page still does **not** increment the count.
+After this fix, view count, last-viewed time, and download count update correctly when:
+- An **anonymous** visitor opens the public view page or downloads the CV (once per session each, as before).
+- A **logged-in non-owner** opens the public view page or downloads the CV.
+The **owner** viewing or downloading their own application still does **not** increment the respective count.

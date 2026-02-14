@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
  * POST /api/applications/[slug]/download
  * Increments download_count for the application. Skips increment when the
  * applicant (owner) is downloading their own CV, so the count reflects only
- * external downloads.
+ * external downloads. Uses SECURITY DEFINER RPC via service_role (same pattern as view count).
  */
 export async function POST(
   _request: NextRequest,
@@ -17,7 +18,7 @@ export async function POST(
 
     const { data: application, error: fetchError } = await supabase
       .from('applications')
-      .select('download_count, user_id')
+      .select('user_id')
       .eq('slug', slug)
       .single();
 
@@ -36,14 +37,12 @@ export async function POST(
       return NextResponse.json({ success: true });
     }
 
-    const { error: updateError } = await supabase
-      .from('applications')
-      .update({
-        download_count: (application.download_count ?? 0) + 1,
-      })
-      .eq('slug', slug);
+    const admin = createAdminClient();
+    const { error: rpcError } = await admin.rpc('increment_application_download_count', {
+      p_slug: slug,
+    });
 
-    if (updateError) {
+    if (rpcError) {
       return NextResponse.json(
         { error: 'Failed to update download count' },
         { status: 500 }
