@@ -203,12 +203,13 @@ sequenceDiagram
   Page->>VT: Mount
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not)
-  ViewAPI->>Applications: increment view_count
+  ViewAPI->>ViewAPI: viewer is applicant? (auth.uid === application.user_id)
+  ViewAPI->>Applications: increment view_count (only if not applicant)
   ViewAPI-->>VT: 200
   VT->>VT: sessionStorage set
 ```
 
-All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per session via ViewTracker.
+All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per session via ViewTracker, **except when the applicant (owner) is viewing their own application**—in that case the API returns success without incrementing so the count reflects only external viewers.
 
 ---
 

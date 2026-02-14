@@ -312,10 +312,13 @@ sequenceDiagram
   Page->>VT: Mount ViewTracker(slug)
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not tracked)
-  ViewAPI->>Supa: update view_count += 1
+  ViewAPI->>ViewAPI: get viewer via auth.getUser(); skip increment if viewer is applicant (user_id match)
+  ViewAPI->>Supa: update view_count += 1 (only for non-owner viewers)
   ViewAPI-->>VT: 200
   VT->>VT: sessionStorage set tracked
 ```
+
+View count is only incremented when the viewer is not the application owner; the applicant can open their own link without affecting the count.
 
 ### 6.4 Profile and snapshot into applications
 

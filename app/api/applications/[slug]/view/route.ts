@@ -9,10 +9,10 @@ export async function POST(
     const supabase = await createClient();
     const { slug } = await params;
 
-    // Get current view count
+    // Get application with view count and owner for self-view check
     const { data: application, error: fetchError } = await supabase
       .from('applications')
-      .select('view_count')
+      .select('view_count, user_id')
       .eq('slug', slug)
       .single();
 
@@ -23,7 +23,15 @@ export async function POST(
       );
     }
 
-    // Increment view count
+    // Don't increment when the applicant (owner) views their own application
+    const {
+      data: { user: viewer },
+    } = await supabase.auth.getUser();
+    if (viewer?.id === application.user_id) {
+      return NextResponse.json({ success: true });
+    }
+
+    // Increment view count for other viewers
     const { error: updateError } = await supabase
       .from('applications')
       .update({ view_count: (application.view_count || 0) + 1 })
