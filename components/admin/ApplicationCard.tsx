@@ -15,6 +15,7 @@ import {
   ChevronUpIcon,
   CopyIcon,
   ExternalLinkIcon,
+  ClockIcon,
 } from '@/components/admin/icons';
 
 interface ApplicationCardProps {
@@ -24,16 +25,34 @@ interface ApplicationCardProps {
   onRestore?: (id: string) => void;
 }
 
-function StatusIcon({ isActive }: { isActive: boolean }) {
+function StatusIcon({
+  isActive,
+  viewCount,
+}: {
+  isActive: boolean;
+  viewCount: number;
+}) {
+  const hasBeenViewed = viewCount > 0;
+  const title = isActive
+    ? hasBeenViewed
+      ? 'Active (viewed)'
+      : 'Active (not viewed yet)'
+    : 'Archived';
+  const ariaLabel = title;
+
   return (
     <div
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-      title={isActive ? 'Active' : 'Archived'}
-      aria-label={isActive ? 'Active' : 'Archived'}
+      title={title}
+      aria-label={ariaLabel}
     >
       {isActive ? (
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
-          <CheckIcon className="h-5 w-5 text-emerald-600" />
+          {hasBeenViewed ? (
+            <CheckIcon className="h-5 w-5 text-emerald-600" />
+          ) : (
+            <ClockIcon className="h-5 w-5 text-emerald-600" />
+          )}
         </span>
       ) : (
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200">
@@ -67,7 +86,10 @@ export default function ApplicationCard({
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
           {/* 1. Status icon */}
-          <StatusIcon isActive={application.is_active} />
+          <StatusIcon
+            isActive={application.is_active}
+            viewCount={application.view_count}
+          />
 
           {/* 2 & 3. Company name - Role applied */}
           <span className="min-w-0 text-sm font-medium text-gray-900 sm:text-base">
