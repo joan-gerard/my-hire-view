@@ -21,23 +21,27 @@ export default function ApplicationPageHeader({
   portfolioUrl,
   linkedinUrl,
 }: ApplicationPageHeaderProps) {
-  const hasName = [firstName, lastName].some((v) => v != null && v.trim() !== '');
-  const displayName = [firstName, lastName].filter((v) => v != null && v.trim() !== '').join(' ').trim();
+  const hasName = [firstName, lastName].some(
+    (v) => v != null && v.trim() !== "",
+  );
+  const displayName = [firstName, lastName]
+    .filter((v) => v != null && v.trim() !== "")
+    .join(" ")
+    .trim();
 
   return (
     <div className="bg-white py-12 shadow-sm">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-bold text-gray-900">{company}</h1>
         <p className="mt-2 text-2xl text-gray-600">{role}</p>
-        {hasName && (
-          <p className="mt-2 text-lg text-gray-700">{displayName}</p>
-        )}
-        {location != null && location.trim() !== '' && (
+        {hasName && <p className="mt-2 text-lg text-gray-700">{displayName}</p>}
+        {location != null && location.trim() !== "" && (
           <p className="mt-1 text-sm text-gray-500">{location.trim()}</p>
         )}
-        {(portfolioUrl != null && portfolioUrl.trim() !== '' || linkedinUrl != null && linkedinUrl.trim() !== '') && (
+        {((portfolioUrl != null && portfolioUrl.trim() !== "") ||
+          (linkedinUrl != null && linkedinUrl.trim() !== "")) && (
           <div className="mt-4 flex flex-wrap gap-3">
-            {portfolioUrl != null && portfolioUrl.trim() !== '' && (
+            {portfolioUrl != null && portfolioUrl.trim() !== "" && (
               <a
                 href={portfolioUrl.trim()}
                 target="_blank"
@@ -47,7 +51,7 @@ export default function ApplicationPageHeader({
                 Portfolio
               </a>
             )}
-            {linkedinUrl != null && linkedinUrl.trim() !== '' && (
+            {linkedinUrl != null && linkedinUrl.trim() !== "" && (
               <a
                 href={linkedinUrl.trim()}
                 target="_blank"

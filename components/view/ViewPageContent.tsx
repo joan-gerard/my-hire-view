@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import ApplicationPageHeader from '@/components/public/ApplicationPageHeader';
-import CvUnavailableWithRetry from '@/components/public/CvUnavailableWithRetry';
-import PDFViewer from '@/components/pdf/PDFViewer';
-import YouTubeEmbed from '@/components/video/YouTubeEmbed';
-import ViewTracker from '@/components/view/ViewTracker';
-import type { Application } from '@/lib/types/application';
+import PDFViewer from "@/components/pdf/PDFViewer";
+import ApplicationPageHeader from "@/components/public/ApplicationPageHeader";
+import CvUnavailableWithRetry from "@/components/public/CvUnavailableWithRetry";
+import YouTubeEmbed from "@/components/video/YouTubeEmbed";
+import ViewTracker from "@/components/view/ViewTracker";
+import type { Application } from "@/lib/types/application";
+import { useCallback, useState } from "react";
 
 interface ViewPageContentProps {
   initialApplication: Application;
@@ -17,7 +17,8 @@ export default function ViewPageContent({
   initialApplication,
   slug,
 }: ViewPageContentProps) {
-  const [application, setApplication] = useState<Application>(initialApplication);
+  const [application, setApplication] =
+    useState<Application>(initialApplication);
 
   const refetchApplication = useCallback(async () => {
     const response = await fetch(`/api/applications/${slug}`);
@@ -40,13 +41,15 @@ export default function ViewPageContent({
         linkedinUrl={application.linkedin_url}
       />
 
-      <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         {isArchived ? (
           <div
             className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-amber-900"
             role="alert"
           >
-            <p className="font-semibold">This application is no longer active</p>
+            <p className="font-semibold">
+              This application is no longer active
+            </p>
             <p className="mt-1 text-sm">
               The candidate has archived this application. The CV and video
               pitch are no longer available.
