@@ -31,14 +31,13 @@ Saving updates only your profile. These values are not changed when you edit an 
 
 At **Dashboard** (`/admin`) you can:
 
-- See all your applications (company, role, slug, created date, view count).
+- See all your applications in horizontal cards showing: status (active/archived), company, role, and action buttons.
 - **Search** by company or role.
 - **Create** a new application (New Application).
-- **Edit** an existing application.
-- **Copy** the shareable link to send to recruiters.
-- **Archive** an application (link stays valid but recruiters see an “archived” message and no CV/video).
-- **Restore** an archived application.
-- **Delete** an application (removes it permanently).
+- **Copy Link** to copy the shareable link to send to recruiters.
+- **View Insights** to expand a card and see view count, CV downloads, creation date, and last viewed date/time.
+- **View Application** to open the application page in a new tab.
+- Use the **3-dot menu** on each card to **Edit**, **Archive** (or **Restore** if archived), or **Delete**.
 
 ### Creating an application
 
@@ -54,19 +53,19 @@ At **Dashboard** (`/admin`) you can:
    - **CV**: upload a PDF (stored securely).
    - **YouTube URL** for your video pitch.
    - **Description** (optional text for recruiters).
-4. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy link** to share it.
+4. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy Link** to share it.
 
 ### Editing an application
 
-1. On the dashboard, click **Edit** on the application.
+1. On the dashboard, open the **3-dot menu** on the application card and click **Edit**.
 2. The form is pre-filled from **that application only** (including which candidate fields are on or off and their values). You can change **Name in URL** (None / At start / At end) when you save. Your profile is not changed when you save.
 3. Change any fields or toggles, then click **Save Application**.
 
 ### Sharing with recruiters
 
 - Each application has a **unique link**. It can be based on company and role (e.g. `https://yoursite.com/view/acme-software-engineer`) or, if you chose to include your name when creating or editing, on your name plus company and role (e.g. `https://yoursite.com/view/john-doe-acme-software-engineer`).
-- Use **Copy link** on the dashboard card and send it by email, LinkedIn, or job portal.
-- Recruiters can open the link without signing in. You can see how many times the page was viewed (view count on the card; one count per recruiter session).
+- Use **Copy Link** on the dashboard card and send it by email, LinkedIn, or job portal.
+- Recruiters can open the link without signing in. You can see how many times the page was viewed and when it was last viewed (view count and last viewed date in View Insights; one count per recruiter session).
 
 ### Archiving and deleting
 
@@ -91,9 +90,9 @@ You will see:
 
 If the application was **archived**, you will see a message that it is no longer active and the CV and video are not available.
 
-### View count
+### View count and last viewed
 
-- Opening the link counts as one **view** per browser session. The candidate sees the total view count on their dashboard.
+- Opening the link counts as one **view** per browser session. The candidate sees the total view count and the last viewed date/time on their dashboard (View Insights on each card).
 
 ---
 

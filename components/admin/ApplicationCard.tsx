@@ -3,15 +3,64 @@
 import { Application } from '@/lib/types/application';
 import { getApplicationUrl } from '@/lib/utils/url';
 import { copyToClipboard } from '@/lib/utils/clipboard';
-import Button from '@/components/ui/Button';
 import Link from 'next/link';
 import { useState } from 'react';
+import ApplicationCardDropdown from '@/components/admin/ApplicationCardDropdown';
+import ApplicationCardInsights from '@/components/admin/ApplicationCardInsights';
+import {
+  ArchiveIcon,
+  ChartIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  CopyIcon,
+  ExternalLinkIcon,
+  ClockIcon,
+} from '@/components/admin/icons';
 
 interface ApplicationCardProps {
   application: Application;
   onDelete: (id: string) => void;
   onArchive?: (id: string) => void;
   onRestore?: (id: string) => void;
+}
+
+function StatusIcon({
+  isActive,
+  viewCount,
+}: {
+  isActive: boolean;
+  viewCount: number;
+}) {
+  const hasBeenViewed = viewCount > 0;
+  const title = isActive
+    ? hasBeenViewed
+      ? 'Active (viewed)'
+      : 'Active (not viewed yet)'
+    : 'Archived';
+  const ariaLabel = title;
+
+  return (
+    <div
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+      title={title}
+      aria-label={ariaLabel}
+    >
+      {isActive ? (
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
+          {hasBeenViewed ? (
+            <CheckIcon className="h-5 w-5 text-emerald-600" />
+          ) : (
+            <ClockIcon className="h-5 w-5 text-emerald-600" />
+          )}
+        </span>
+      ) : (
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200">
+          <ArchiveIcon className="h-5 w-5 text-gray-500" />
+        </span>
+      )}
+    </div>
+  );
 }
 
 export default function ApplicationCard({
@@ -21,6 +70,7 @@ export default function ApplicationCard({
   onRestore,
 }: ApplicationCardProps) {
   const [copied, setCopied] = useState(false);
+  const [insightsExpanded, setInsightsExpanded] = useState(false);
   const shareableUrl = getApplicationUrl(application.slug);
 
   const handleCopyLink = async () => {
@@ -31,73 +81,78 @@ export default function ApplicationCard({
     }
   };
 
-  const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this application?')) {
-      onDelete(application.id);
-    }
-  };
-
-  const isArchived = application.is_active === false;
-
   return (
-    <div className="overflow-hidden rounded-lg bg-white shadow">
-      <div className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {application.company}
-              </h3>
-              {isArchived && (
-                <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                  Archived
-                </span>
-              )}
-            </div>
-            <p className="mt-1 text-sm text-gray-600">{application.role}</p>
-            <p className="mt-2 text-xs text-gray-500">
-              Slug: <code className="rounded bg-gray-100 px-1 py-0.5">{application.slug}</code>
-            </p>
-            <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
-              <span>
-                Created: {new Date(application.created_at).toLocaleDateString()}
-              </span>
-              <span>Views: {application.view_count}</span>
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link href={`/admin/edit/${application.id}`}>
-            <Button variant="primary" type="button">
-              Edit
-            </Button>
-          </Link>
-          <Button variant="secondary" type="button" onClick={handleCopyLink}>
+    <div className="relative overflow-visible rounded-lg bg-white shadow">
+      <div className="p-4">
+        <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
+          {/* 1. Status icon */}
+          <StatusIcon
+            isActive={application.is_active}
+            viewCount={application.view_count}
+          />
+
+          {/* 2 & 3. Company name - Role applied */}
+          <span className="min-w-0 text-sm font-medium text-gray-900 sm:text-base">
+            {application.company} - {application.role}
+          </span>
+
+          {/* Spacer to push buttons right on larger screens */}
+          <div className="hidden flex-1 sm:block" aria-hidden="true" />
+
+          {/* 4. Copy Link button */}
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-blue-300 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          >
+            <CopyIcon className="h-4 w-4" />
             {copied ? 'Copied!' : 'Copy Link'}
-          </Button>
-          {isArchived && onRestore ? (
-            <Button
-              variant="primary"
-              type="button"
-              className="bg-emerald-600 hover:bg-emerald-500 focus-visible:outline-emerald-600"
-              onClick={() => onRestore(application.id)}
-            >
-              Restore
-            </Button>
-          ) : onArchive ? (
-            <Button
-              variant="primary"
-              type="button"
-              className="bg-amber-600 hover:bg-amber-500 focus-visible:outline-amber-600"
-              onClick={() => onArchive(application.id)}
-            >
-              Archive
-            </Button>
-          ) : null}
-          <Button variant="danger" type="button" onClick={handleDelete}>
-            Delete
-          </Button>
+          </button>
+
+          {/* 5. View Insights button - expands to show views and creation date */}
+          <button
+            type="button"
+            onClick={() => setInsightsExpanded(!insightsExpanded)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-blue-300 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          >
+            <ChartIcon className="h-4 w-4" />
+            View Insights
+            {insightsExpanded ? (
+              <ChevronUpIcon className="h-4 w-4" />
+            ) : (
+              <ChevronDownIcon className="h-4 w-4" />
+            )}
+          </button>
+
+          {/* 6. View Link button */}
+          <Link
+            href={`/view/${application.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          >
+            <ExternalLinkIcon className="h-4 w-4" />
+            View Application
+          </Link>
+
+          {/* 7. 3-dot dropdown menu */}
+          <ApplicationCardDropdown
+            applicationId={application.id}
+            isArchived={application.is_active === false}
+            onDelete={onDelete}
+            onArchive={onArchive}
+            onRestore={onRestore}
+          />
         </div>
+
+        {/* Expanded insights section */}
+        <ApplicationCardInsights
+          expanded={insightsExpanded}
+          viewCount={application.view_count}
+          downloadCount={application.download_count ?? 0}
+          createdAt={application.created_at}
+          lastViewedAt={application.last_viewed_at ?? null}
+        />
       </div>
     </div>
   );

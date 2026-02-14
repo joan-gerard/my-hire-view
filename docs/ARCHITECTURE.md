@@ -191,7 +191,8 @@ All under `app/api/`:
 | `/api/applications`             | GET, POST, PUT, DELETE | List (user’s), create, update, delete application. On POST/PUT, server snapshots current profile (first name, last name, location, portfolio URL, LinkedIn URL) into the application row. | Required (except N/A for unauthenticated)         |
 | `/api/applications/[slug]`      | GET                    | Fetch one application by slug (public); response includes candidate snapshot fields for recruiter view.                       | No                                                |
 | `/api/profile`                 | GET, PUT               | Get or update current user’s profile (first name, last name, location, portfolio URL, LinkedIn URL). GET creates a profile row if missing. | Required                                          |
-| `/api/applications/[slug]/view` | POST                   | Increment `view_count` for slug                                          | No                                                |
+| `/api/applications/[slug]/view` | POST                   | Increment `view_count` and set `last_viewed_at` for slug (owner views not counted) | No                                                |
+| `/api/applications/[slug]/download` | POST              | Increment `download_count` for slug (owner downloads not counted)        | No                                                |
 | `/api/applications/by-id/[id]`  | GET                    | Fetch one by id (for edit page)                                          | Required                                          |
 | `/api/auth/login`               | POST                   | Sign in; sets session cookies via route client                           | No                                                |
 | `/api/auth/signup`              | POST                   | Sign up; sets session cookies                                            | No                                                |
@@ -214,7 +215,7 @@ Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which u
 ### 5.4 Data (Supabase)
 
 - **Table: `applications`**
-  - `id` (UUID, PK), `slug` (unique), `company`, `role`, `cv_url`, `video_url`, `description`, `created_at`, `updated_at`, `view_count`, `user_id` (FK to `auth.users`), `is_active` (default true; archiving = soft hide).
+  - `id` (UUID, PK), `slug` (unique), `company`, `role`, `cv_url`, `video_url`, `description`, `created_at`, `updated_at`, `view_count`, `download_count` (CV downloads from public page; owner not counted), `last_viewed_at` (timestamptz, last time a non-owner viewed the page; null if never viewed), `user_id` (FK to `auth.users`), `is_active` (default true; archiving = soft hide).
   - **Candidate snapshot fields** (nullable): `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`. These are copied from the user’s **profile** when an application is created or updated, so the recruiter view always reads from the application row (no join to profile). Existing rows may have NULLs until the next edit or a backfill.
   - **`include_name_in_slug`** (TEXT, nullable): Name position in the slug: `null` (not included), `'start'` (name-company-role), or `'end'` (company-role-name). Persisted so the edit form shows the correct choice and users can change it on save.
 - **Table: `profiles`**
@@ -312,10 +313,15 @@ sequenceDiagram
   Page->>VT: Mount ViewTracker(slug)
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not tracked)
-  ViewAPI->>Supa: update view_count += 1
+  ViewAPI->>ViewAPI: get viewer via auth.getUser(); skip increment if viewer is applicant (user_id match)
+  ViewAPI->>Supa: update view_count += 1, last_viewed_at = now() (only for non-owner viewers)
   ViewAPI-->>VT: 200
   VT->>VT: sessionStorage set tracked
 ```
+
+View count and `last_viewed_at` are only updated when the viewer is not the application owner; the applicant can open their own link without affecting the count or last-viewed time.
+
+**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (once per session via sessionStorage). The download API increments `download_count` only when the requester is not the application owner, mirroring the view-count behaviour.
 
 ### 6.4 Profile and snapshot into applications
 
@@ -379,6 +385,8 @@ hireview/
 | Slug-based public URLs     | Stable, shareable links that don’t expose internal IDs; uniqueness enforced in DB and slug API. Users can optionally include their name at the start (name-company-role) or end (company-role-name) of the slug. |
 | Vercel Blob for PDFs       | Simple serverless storage; no need to run or scale file servers.                                                         |
 | View count in DB           | Simple and accurate; one increment per view (deduplicated per session in ViewTracker).                                   |
+| Last viewed at in DB       | Set to current time whenever view_count is incremented (non-owner only); null if never viewed.                            |
+| Download count in DB       | Same pattern as view count; one increment per download (per session), owner downloads not counted.                        |
 | `is_active` for archive    | Soft delete: link still works but shows “archived” message; no hard delete of history.                                   |
 | Route client for auth APIs | Login/signup/logout must write cookies on the response; route client is the pattern recommended by Supabase for Next.js. |
 | Profile snapshot on application | Candidate name, location, portfolio URL, and LinkedIn URL are stored in `profiles` and copied into each application row on create/update. Recruiters read only from the application row, giving a stable snapshot and no auth dependency on the public view. |
