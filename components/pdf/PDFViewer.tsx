@@ -1,19 +1,31 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+import { useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
 // Set up PDF.js worker
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 }
 
 interface PDFViewerProps {
   url: string;
-  /** When provided, a download is recorded (once per session) before opening the CV. Owner downloads are not counted. */
+  /** When provided, a download is recorded (once per session) when the user clicks Download CV. Owner downloads are not counted. */
   slug?: string;
+}
+
+/** Records a CV download (once per session). Owner downloads are not counted. */
+function recordDownloadCount(slug: string): void {
+  if (typeof window === "undefined") return;
+  const storageKey = `download_tracked_${slug}`;
+  if (sessionStorage.getItem(storageKey)) return;
+  fetch(`/api/applications/${slug}/download`, { method: "POST" })
+    .then((response) => {
+      if (response.ok) sessionStorage.setItem(storageKey, "true");
+    })
+    .catch((err) => console.error("Failed to track download:", err));
 }
 
 export default function PDFViewer({ url, slug }: PDFViewerProps) {
@@ -21,6 +33,7 @@ export default function PDFViewer({ url, slug }: PDFViewerProps) {
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
@@ -32,47 +45,54 @@ export default function PDFViewer({ url, slug }: PDFViewerProps) {
     setLoading(false);
   }
 
+  const handleViewFile = () => {
+    window.open(url, "_blank");
+  };
+
   const handleDownload = async () => {
-    if (slug && typeof window !== 'undefined') {
-      const storageKey = `download_tracked_${slug}`;
-      if (!sessionStorage.getItem(storageKey)) {
-        try {
-          const response = await fetch(`/api/applications/${slug}/download`, {
-            method: 'POST',
-          });
-          if (response.ok) {
-            sessionStorage.setItem(storageKey, 'true');
-          }
-        } catch (err) {
-          console.error('Failed to track download:', err);
-        }
-      }
+    if (typeof window === "undefined") return;
+    setDownloading(true);
+    try {
+      if (slug) recordDownloadCount(slug);
+      const response = await fetch(url, { mode: "cors" });
+      if (!response.ok) throw new Error("Failed to fetch PDF");
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = slug ? `cv-${slug}.pdf` : "cv.pdf";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+    } finally {
+      setDownloading(false);
     }
-    window.open(url, '_blank');
   };
 
   if (error) {
     const isMissingOrUnavailable =
       /fetch|404|failed|network|Failed to fetch/i.test(error) ||
-      error.includes('Missing PDF');
+      error.includes("Missing PDF");
     return (
       <div
         role="alert"
         className="rounded-lg border border-amber-300 bg-amber-50 px-6 py-8 text-center"
       >
         <p className="font-semibold text-amber-900">
-          {isMissingOrUnavailable
-            ? 'CV is not available'
-            : 'Failed to load CV'}
+          {isMissingOrUnavailable ? "CV is not available" : "Failed to load CV"}
         </p>
         <p className="mt-2 text-sm text-amber-800">
           {isMissingOrUnavailable
-            ? 'The resume file is no longer available. It may have been removed from storage. Please contact the candidate if you need their CV.'
+            ? "The resume file is no longer available. It may have been removed from storage. Please contact the candidate if you need their CV."
             : `The document could not be loaded. (${error})`}
         </p>
         {!isMissingOrUnavailable && (
           <button
-            onClick={handleDownload}
+            onClick={handleViewFile}
             className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
           >
             Try opening in new tab
@@ -109,10 +129,17 @@ export default function PDFViewer({ url, slug }: PDFViewerProps) {
             </div>
           )}
           <button
-            onClick={handleDownload}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+            onClick={handleViewFile}
+            className="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-500"
           >
-            Download CV
+            View CV
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+          >
+            {downloading ? "Downloading…" : "Download CV"}
           </button>
         </div>
       </div>
@@ -139,14 +166,18 @@ export default function PDFViewer({ url, slug }: PDFViewerProps) {
             renderTextLayer={true}
             renderAnnotationLayer={true}
             className="max-w-full"
-            width={Math.min(800, typeof window !== 'undefined' ? window.innerWidth - 64 : 800)}
+            width={Math.min(
+              800,
+              typeof window !== "undefined" ? window.innerWidth - 64 : 800,
+            )}
           />
         </Document>
       </div>
 
       {numPages && numPages > 1 && (
         <p className="text-center text-sm text-gray-500">
-          Showing page {pageNumber} of {numPages}. Use the buttons above to navigate.
+          Showing page {pageNumber} of {numPages}. Use the buttons above to
+          navigate.
         </p>
       )}
     </div>
