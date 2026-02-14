@@ -149,6 +149,7 @@ export default function ApplicationCard({
         <ApplicationCardInsights
           expanded={insightsExpanded}
           viewCount={application.view_count}
+          downloadCount={application.download_count ?? 0}
           createdAt={application.created_at}
         />
       </div>

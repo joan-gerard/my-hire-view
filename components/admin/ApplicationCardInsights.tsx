@@ -5,12 +5,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 export interface ApplicationCardInsightsProps {
   expanded: boolean;
   viewCount: number;
+  downloadCount: number;
   createdAt: string;
 }
 
 export default function ApplicationCardInsights({
   expanded,
   viewCount,
+  downloadCount,
   createdAt,
 }: ApplicationCardInsightsProps) {
   return (
@@ -27,6 +29,10 @@ export default function ApplicationCardInsights({
           <div className="mt-3 flex flex-wrap gap-4 border-t border-gray-100 pt-3">
             <span className="text-sm text-gray-500">
               Views: <strong className="font-medium text-gray-700">{viewCount}</strong>
+            </span>
+            <span className="text-sm text-gray-500">
+              CV downloads:{' '}
+              <strong className="font-medium text-gray-700">{downloadCount}</strong>
             </span>
             <span className="text-sm text-gray-500">
               Created:{' '}

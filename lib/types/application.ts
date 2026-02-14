@@ -9,6 +9,8 @@ export interface Application {
   created_at: string;
   updated_at: string;
   view_count: number;
+  /** Number of times the CV was downloaded from the public view page (owner downloads not counted). */
+  download_count: number;
   user_id: string;
   is_active: boolean;
   first_name: string | null;

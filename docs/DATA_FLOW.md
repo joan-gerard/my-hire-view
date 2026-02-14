@@ -211,6 +211,8 @@ sequenceDiagram
 
 All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per session via ViewTracker, **except when the applicant (owner) is viewing their own application**—in that case the API returns success without incrementing so the count reflects only external viewers.
 
+**CV download count:** When the recruiter (or any visitor) clicks "Download CV" in the PDF viewer, the client calls `POST /api/applications/[slug]/download` (once per session, via sessionStorage). The API increments `download_count` only when the requester is not the application owner, so the count reflects only external CV downloads. The dashboard "View Insights" panel shows both view count and CV download count.
+
 ---
 
 ## 7. Data ownership summary

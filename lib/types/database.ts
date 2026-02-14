@@ -13,6 +13,7 @@ export interface Database {
           created_at: string;
           updated_at: string;
           view_count: number;
+          download_count: number;
           user_id: string;
           is_active: boolean;
           first_name: string | null;
@@ -33,6 +34,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           view_count?: number;
+          download_count?: number;
           user_id: string;
           is_active?: boolean;
           first_name?: string | null;
@@ -53,6 +55,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           view_count?: number;
+          download_count?: number;
           user_id?: string;
           is_active?: boolean;
           first_name?: string | null;

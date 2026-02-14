@@ -12,9 +12,11 @@ if (typeof window !== 'undefined') {
 
 interface PDFViewerProps {
   url: string;
+  /** When provided, a download is recorded (once per session) before opening the CV. Owner downloads are not counted. */
+  slug?: string;
 }
 
-export default function PDFViewer({ url }: PDFViewerProps) {
+export default function PDFViewer({ url, slug }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -30,7 +32,22 @@ export default function PDFViewer({ url }: PDFViewerProps) {
     setLoading(false);
   }
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    if (slug && typeof window !== 'undefined') {
+      const storageKey = `download_tracked_${slug}`;
+      if (!sessionStorage.getItem(storageKey)) {
+        try {
+          const response = await fetch(`/api/applications/${slug}/download`, {
+            method: 'POST',
+          });
+          if (response.ok) {
+            sessionStorage.setItem(storageKey, 'true');
+          }
+        } catch (err) {
+          console.error('Failed to track download:', err);
+        }
+      }
+    }
     window.open(url, '_blank');
   };
 

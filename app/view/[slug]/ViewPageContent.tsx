@@ -63,7 +63,7 @@ export default function ViewPageContent({
                 {application.cv_exists === false ? (
                   <CvUnavailableWithRetry onRetry={refetchApplication} />
                 ) : (
-                  <PDFViewer url={application.cv_url} />
+                  <PDFViewer url={application.cv_url} slug={slug} />
                 )}
               </section>
 
