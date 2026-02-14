@@ -151,6 +151,7 @@ export default function ApplicationCard({
           viewCount={application.view_count}
           downloadCount={application.download_count ?? 0}
           createdAt={application.created_at}
+          lastViewedAt={application.last_viewed_at ?? null}
         />
       </div>
     </div>

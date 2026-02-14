@@ -11,6 +11,8 @@ export interface Application {
   view_count: number;
   /** Number of times the CV was downloaded from the public view page (owner downloads not counted). */
   download_count: number;
+  /** Last time the application page was viewed by someone other than the owner (null if never viewed). */
+  last_viewed_at: string | null;
   user_id: string;
   is_active: boolean;
   first_name: string | null;

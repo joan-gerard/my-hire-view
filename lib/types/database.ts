@@ -14,6 +14,8 @@ export interface Database {
           updated_at: string;
           view_count: number;
           download_count: number;
+          /** Last time the page was viewed by a non-owner (null if never viewed). */
+          last_viewed_at: string | null;
           user_id: string;
           is_active: boolean;
           first_name: string | null;
@@ -35,6 +37,7 @@ export interface Database {
           updated_at?: string;
           view_count?: number;
           download_count?: number;
+          last_viewed_at?: string | null;
           user_id: string;
           is_active?: boolean;
           first_name?: string | null;
@@ -56,6 +59,7 @@ export interface Database {
           updated_at?: string;
           view_count?: number;
           download_count?: number;
+          last_viewed_at?: string | null;
           user_id?: string;
           is_active?: boolean;
           first_name?: string | null;

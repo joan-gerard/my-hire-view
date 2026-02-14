@@ -7,6 +7,8 @@ export interface ApplicationCardInsightsProps {
   viewCount: number;
   downloadCount: number;
   createdAt: string;
+  /** Last time the page was viewed by a non-owner (null if never viewed). */
+  lastViewedAt: string | null;
 }
 
 export default function ApplicationCardInsights({
@@ -14,6 +16,7 @@ export default function ApplicationCardInsights({
   viewCount,
   downloadCount,
   createdAt,
+  lastViewedAt,
 }: ApplicationCardInsightsProps) {
   return (
     <AnimatePresence initial={false}>
@@ -38,6 +41,17 @@ export default function ApplicationCardInsights({
               Created:{' '}
               <strong className="font-medium text-gray-700">
                 {new Date(createdAt).toLocaleDateString()}
+              </strong>
+            </span>
+            <span className="text-sm text-gray-500">
+              Last viewed:{' '}
+              <strong className="font-medium text-gray-700">
+                {lastViewedAt
+                  ? new Date(lastViewedAt).toLocaleString(undefined, {
+                      dateStyle: 'short',
+                      timeStyle: 'short',
+                    })
+                  : '—'}
               </strong>
             </span>
           </div>

@@ -35,7 +35,7 @@ At **Dashboard** (`/admin`) you can:
 - **Search** by company or role.
 - **Create** a new application (New Application).
 - **Copy Link** to copy the shareable link to send to recruiters.
-- **View Insights** to expand a card and see view count and creation date.
+- **View Insights** to expand a card and see view count, CV downloads, creation date, and last viewed date/time.
 - **View Application** to open the application page in a new tab.
 - Use the **3-dot menu** on each card to **Edit**, **Archive** (or **Restore** if archived), or **Delete**.
 
@@ -65,7 +65,7 @@ At **Dashboard** (`/admin`) you can:
 
 - Each application has a **unique link**. It can be based on company and role (e.g. `https://yoursite.com/view/acme-software-engineer`) or, if you chose to include your name when creating or editing, on your name plus company and role (e.g. `https://yoursite.com/view/john-doe-acme-software-engineer`).
 - Use **Copy Link** on the dashboard card and send it by email, LinkedIn, or job portal.
-- Recruiters can open the link without signing in. You can see how many times the page was viewed (view count on the card; one count per recruiter session).
+- Recruiters can open the link without signing in. You can see how many times the page was viewed and when it was last viewed (view count and last viewed date in View Insights; one count per recruiter session).
 
 ### Archiving and deleting
 
@@ -90,9 +90,9 @@ You will see:
 
 If the application was **archived**, you will see a message that it is no longer active and the CV and video are not available.
 
-### View count
+### View count and last viewed
 
-- Opening the link counts as one **view** per browser session. The candidate sees the total view count on their dashboard.
+- Opening the link counts as one **view** per browser session. The candidate sees the total view count and the last viewed date/time on their dashboard (View Insights on each card).
 
 ---
 

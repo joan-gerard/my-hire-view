@@ -31,10 +31,14 @@ export async function POST(
       return NextResponse.json({ success: true });
     }
 
-    // Increment view count for other viewers
+    // Increment view count and record last viewed time for other viewers
+    const now = new Date().toISOString();
     const { error: updateError } = await supabase
       .from('applications')
-      .update({ view_count: (application.view_count || 0) + 1 })
+      .update({
+        view_count: (application.view_count || 0) + 1,
+        last_viewed_at: now,
+      })
       .eq('slug', slug);
 
     if (updateError) {
