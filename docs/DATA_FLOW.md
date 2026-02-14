@@ -204,12 +204,12 @@ sequenceDiagram
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not)
   ViewAPI->>ViewAPI: viewer is applicant? (auth.uid === application.user_id)
-  ViewAPI->>Applications: increment view_count, set last_viewed_at (only if not applicant)
+  ViewAPI->>Applications: RPC increment_application_view_count(slug) via service_role (only if not applicant)
   ViewAPI-->>VT: 200
   VT->>VT: sessionStorage set
 ```
 
-All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per session via ViewTracker, and `last_viewed_at` is set to the current time, **except when the applicant (owner) is viewing their own application**—in that case the API returns success without updating so the count and last-viewed time reflect only external viewers.
+All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per session via ViewTracker, and `last_viewed_at` is set to the current time, **except when the applicant (owner) is viewing their own application**—in that case the API returns success without updating so the count and last-viewed time reflect only external viewers. The increment is done via a SECURITY DEFINER database function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
 
 **CV download count:** When the recruiter (or any visitor) clicks "Download CV" in the PDF viewer, the client calls `POST /api/applications/[slug]/download` (once per session, via sessionStorage). The API increments `download_count` only when the requester is not the application owner, so the count reflects only external CV downloads. The dashboard "View Insights" panel shows view count, CV download count, creation date, and last viewed date/time.
 

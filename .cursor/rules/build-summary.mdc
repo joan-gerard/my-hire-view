@@ -1,0 +1,18 @@
+---
+description: BUILD_SUMMARY.md must be updated only when explicitly requested, never automatically
+globs: docs/BUILD_SUMMARY.md
+alwaysApply: false
+---
+
+# BUILD_SUMMARY.md — Update Policy
+
+**Do not update this document automatically.**
+
+- Update `docs/BUILD_SUMMARY.md` **only when the user explicitly asks** to update it (e.g. "update the build summary", "add this to BUILD_SUMMARY", "refresh BUILD_SUMMARY").
+- Do **not** update it when:
+  - Making new commits
+  - Completing other tasks (fixes, features, refactors)
+  - Following the "review and update documentation" rule for other docs
+- If a task would normally trigger documentation updates, update other relevant docs (e.g. ARCHITECTURE.md, USER_GUIDE.md) but **skip** BUILD_SUMMARY.md unless the user specifically requested it.
+
+This keeps the build summary as an intentional, on-demand record rather than an auto-maintained file.
