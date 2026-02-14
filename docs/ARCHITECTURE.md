@@ -353,7 +353,7 @@ hireview/
 │   ├── login/, signup/         # Auth pages
 │   ├── auth/callback/          # Supabase OAuth/email callback
 │   ├── admin/                  # Dashboard, new, edit (layout uses requireAuth)
-│   ├── view/[slug]/             # Public application page + ViewTracker
+│   ├── view/[slug]/            # Public application route (page, loading, not-found)
 │   └── api/                    # All API routes (see section 5.2)
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
@@ -362,7 +362,8 @@ hireview/
 │   ├── pdf/                    # PDFViewer
 │   ├── public/                 # ApplicationPageHeader, MarketingFeatures, MarketingHeader, MarketingHero
 │   ├── ui/                     # Button, Input, Textarea
-│   └── video/                  # YouTubeEmbed
+│   ├── video/                  # YouTubeEmbed
+│   └── view/                   # ViewPageContent, ViewTracker (public application page UI)
 ├── hooks/                      # useApplications (admin dashboard state + API)
 ├── lib/
 │   ├── api/                    # applications (client: fetch, delete, archive, restore)

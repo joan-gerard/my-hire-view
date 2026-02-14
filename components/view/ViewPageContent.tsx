@@ -5,7 +5,7 @@ import ApplicationPageHeader from '@/components/public/ApplicationPageHeader';
 import CvUnavailableWithRetry from '@/components/public/CvUnavailableWithRetry';
 import PDFViewer from '@/components/pdf/PDFViewer';
 import YouTubeEmbed from '@/components/video/YouTubeEmbed';
-import ViewTracker from '@/app/view/[slug]/ViewTracker';
+import ViewTracker from '@/components/view/ViewTracker';
 import type { Application } from '@/lib/types/application';
 
 interface ViewPageContentProps {

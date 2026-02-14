@@ -172,7 +172,7 @@ Result: end-to-end flow: sign up/in, create/edit applications (slug, CV, video, 
 
 **Renamed / moved:**
 
-- `app/apply/[slug]/*` → `app/view/[slug]/*` (page, loading, not-found, ViewTracker).
+- `app/apply/[slug]/*` → `app/view/[slug]/*` (page, loading, not-found); view UI components live in `components/view/` (ViewPageContent, ViewTracker).
 - `components/public/ApplicationHeader.tsx` → `components/public/ApplicationPageHeader.tsx`.
 - `components/public/PublicSiteHeader.tsx` → `components/public/MarketingHeader.tsx`.
 
@@ -240,7 +240,7 @@ Result: end-to-end flow: sign up/in, create/edit applications (slug, CV, video, 
 
 **Updated:**
 
-- `app/view/[slug]/page.tsx` — import `ViewTracker` via `@/` path alias (e.g. `@/app/view/[slug]/ViewTracker`) for consistency and to avoid brittle relative paths.
+- `app/view/[slug]/page.tsx` — imports `ViewPageContent` from `@/components/view/ViewPageContent`; `ViewTracker` lives in `@/components/view/ViewTracker` for consistency and reusable components.
 
 **Bug fixed:** ViewTracker import could break on refactors; path alias keeps imports stable.
 
@@ -454,7 +454,7 @@ Result: end-to-end flow: sign up/in, create/edit applications (slug, CV, video, 
 
 **Created:**
 
-- `app/view/[slug]/ViewPageContent.tsx` — client component for the public view page; holds application state and refetch for retry.
+- `components/view/ViewPageContent.tsx` — client component for the public view page; holds application state and refetch for retry.
 - `components/public/CvUnavailableWithRetry.tsx` — message when CV is unavailable, with optional "Try again" that triggers a refetch.
 
 **Updated:**
@@ -462,7 +462,7 @@ Result: end-to-end flow: sign up/in, create/edit applications (slug, CV, video, 
 - `lib/utils/blob.ts` — added `checkBlobExists()` (HEAD request) to verify a Vercel Blob URL exists.
 - `lib/types/application.ts` — optional `cv_exists` on `Application` (set by APIs when they run the check).
 - `app/api/applications/[slug]/route.ts`, `app/api/applications/by-id/[id]/route.ts` — compute `cv_exists` via `checkBlobExists(cv_url)` and include in response.
-- `app/view/[slug]/page.tsx` — fetches application server-side and renders `ViewPageContent`; when `cv_exists === false`, view shows unavailable message and retry instead of loading PDF.
+- `app/view/[slug]/page.tsx` — fetches application server-side and renders `ViewPageContent` (from `components/view/`); when `cv_exists === false`, view shows unavailable message and retry instead of loading PDF.
 - `components/pdf/PDFViewer.tsx` — clearer error handling for missing/unavailable PDFs (fetch/404/network).
 - `components/forms/ApplicationForm.tsx` — accepts `cvUrlExists` and `onRetryCvCheck`; passes to FileUpload so edit form can hide View link when blob is missing.
 - `components/forms/FileUpload.tsx` — when `cvUrlExists` is false, shows "CV file not found in storage" and optional "Check again" button calling `onRetryCvCheck`.
@@ -551,7 +551,7 @@ Result: end-to-end flow: sign up/in, create/edit applications (slug, CV, video, 
 
 **Updated:**
 
-- `app/view/[slug]/ViewPageContent.tsx` — link or action to download CV that hits the download API.
+- `components/view/ViewPageContent.tsx` — link or action to download CV that hits the download API.
 - `components/admin/ApplicationCard.tsx`, `components/admin/ApplicationCardInsights.tsx` — show CV download count in insights (owner excluded in API).
 - `components/pdf/PDFViewer.tsx` — ensure download flow goes through the tracked endpoint where appropriate.
 - `lib/types/application.ts`, `lib/types/database.ts` — add `cv_download_count` (and any owner-exclusion fields).
