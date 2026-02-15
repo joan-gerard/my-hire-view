@@ -1,3 +1,9 @@
+import ExternalLinkButton from "@/components/ui/ExternalLinkButton";
+
+/** Default placeholder when no profile image URL is provided (Unsplash). */
+const DEFAULT_PROFILE_IMAGE =
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop";
+
 interface ApplicationPageHeaderProps {
   company: string;
   role: string;
@@ -6,11 +12,19 @@ interface ApplicationPageHeaderProps {
   location?: string | null;
   portfolioUrl?: string | null;
   linkedinUrl?: string | null;
+  /** Optional profile picture URL. When omitted, a default placeholder is shown. */
+  profileImageUrl?: string | null;
+}
+
+function nonEmpty(value: string | null | undefined): value is string {
+  return value != null && String(value).trim() !== "";
 }
 
 /**
  * Header for the public application page (/view/[slug]). Shows company, role,
- * candidate name, location, and portfolio/LinkedIn links to recruiters.
+ * and an optional candidate block (name, location, portfolio/LinkedIn) only
+ * when the candidate has provided that data. Layout stays balanced whether
+ * optional fields are present or not.
  */
 export default function ApplicationPageHeader({
   company,
@@ -20,50 +34,110 @@ export default function ApplicationPageHeader({
   location,
   portfolioUrl,
   linkedinUrl,
+  profileImageUrl,
 }: ApplicationPageHeaderProps) {
-  const hasName = [firstName, lastName].some(
-    (v) => v != null && v.trim() !== "",
-  );
-  const displayName = [firstName, lastName]
-    .filter((v) => v != null && v.trim() !== "")
-    .join(" ")
-    .trim();
+  const imageUrl =
+    profileImageUrl != null && profileImageUrl.trim() !== ""
+      ? profileImageUrl.trim()
+      : DEFAULT_PROFILE_IMAGE;
+  const displayName = [firstName, lastName].filter(nonEmpty).join(" ").trim();
+  const hasName = displayName.length > 0;
+  const hasLocation = nonEmpty(location);
+  const hasPortfolio = nonEmpty(portfolioUrl);
+  const hasLinkedIn = nonEmpty(linkedinUrl);
+  const hasLinks = hasPortfolio || hasLinkedIn;
 
   return (
-    <div className="bg-white py-12 shadow-sm">
+    <header className="bg-gradient-to-b from-slate-50 to-white py-10 shadow-sm sm:py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-bold text-gray-900">{company}</h1>
-        <p className="mt-2 text-2xl text-gray-600">{role}</p>
-        {hasName && <p className="mt-2 text-lg text-gray-700">{displayName}</p>}
-        {location != null && location.trim() !== "" && (
-          <p className="mt-1 text-sm text-gray-500">{location.trim()}</p>
-        )}
-        {((portfolioUrl != null && portfolioUrl.trim() !== "") ||
-          (linkedinUrl != null && linkedinUrl.trim() !== "")) && (
-          <div className="mt-4 flex flex-wrap gap-3">
-            {portfolioUrl != null && portfolioUrl.trim() !== "" && (
-              <a
-                href={portfolioUrl.trim()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              >
-                Portfolio
-              </a>
-            )}
-            {linkedinUrl != null && linkedinUrl.trim() !== "" && (
-              <a
-                href={linkedinUrl.trim()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md bg-[#0A66C2] px-4 py-2 text-sm font-medium text-white hover:bg-[#004182] focus:outline-none focus:ring-2 focus:ring-[#0A66C2] focus:ring-offset-2"
-              >
-                LinkedIn
-              </a>
+        {/* Primary: name + Portfolio/LinkedIn + profile picture */}
+        <div className="flex flex-col-reverse gap-6 border-b border-gray-100 pb-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
+          <div className="min-w-0 flex-1 flex flex-col gap-6">
+            <h1 className="text-xl sm:text-5xl font-bold tracking-tight text-gray-900">
+              {displayName}
+            </h1>
+            {hasLinks && (
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {hasPortfolio && (
+                  <ExternalLinkButton
+                    href={portfolioUrl!.trim()}
+                    variant="portfolio"
+                  >
+                    Portfolio
+                  </ExternalLinkButton>
+                )}
+                {hasLinkedIn && (
+                  <ExternalLinkButton
+                    href={linkedinUrl!.trim()}
+                    variant="linkedin"
+                  >
+                    LinkedIn
+                  </ExternalLinkButton>
+                )}
+              </div>
             )}
           </div>
-        )}
+          <div className="flex shrink-0 justify-start sm:justify-end">
+            <div
+              className="h-28 w-28 overflow-hidden rounded-full bg-gray-100 ring-2 ring-gray-200/80 sm:h-36 sm:w-36"
+              aria-hidden
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageUrl}
+                alt=""
+                className="h-full w-full object-cover"
+                width={144}
+                height={144}
+                decoding="async"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Job (company + role) and optional candidate info */}
+        <div
+          className="mt-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2"
+          aria-label="Job and candidate details"
+        >
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xl text-gray-600 sm:text-2xl">
+            <span className="inline-flex items-center gap-2">
+              <svg
+                className="h-5 w-5 shrink-0 text-gray-400 sm:h-6 sm:w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008H17.25v-.008z"
+                />
+              </svg>
+              <span className="truncate">{company}</span>
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <svg
+                className="h-5 w-5 shrink-0 text-gray-400 sm:h-6 sm:w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z"
+                />
+              </svg>
+              <span className="truncate">{role}</span>
+            </span>
+          </div>
+        </div>
       </div>
-    </div>
+    </header>
   );
 }
