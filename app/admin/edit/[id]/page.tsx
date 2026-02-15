@@ -146,6 +146,8 @@ export default function EditApplicationPage() {
     portfolio_url: application.portfolio_url ?? undefined,
     linkedin_url: application.linkedin_url ?? undefined,
     slugNamePosition: slugNamePositionFromDb(application.include_name_in_slug),
+    cv_filename: application.cv_filename ?? null,
+    use_original_cv_filename: application.use_original_cv_filename ?? true,
     cvUrlExists: application.cv_exists,
   };
 

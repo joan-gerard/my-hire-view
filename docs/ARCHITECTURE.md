@@ -217,6 +217,7 @@ Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which u
 
 - **Table: `applications`**
   - `id` (UUID, PK), `slug` (unique), `company`, `role`, `cv_url`, `video_url`, `description`, `created_at`, `updated_at`, `view_count`, `download_count` (CV downloads from public page; owner not counted), `last_viewed_at` (timestamptz, last time a non-owner viewed the page; null if never viewed), `user_id` (FK to `auth.users`), `is_active` (default true; archiving = soft hide).
+  - **CV download filename:** `cv_filename` (TEXT, nullable) stores the original uploaded file name; `use_original_cv_filename` (BOOLEAN, default true) controls whether the public download uses that name or the generated `CV-{Slug}.pdf`. Set on create/update from the application form.
   - **Candidate snapshot fields** (nullable): `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`. These are copied from the user’s **profile** when an application is created or updated, so the recruiter view always reads from the application row (no join to profile). Existing rows may have NULLs until the next edit or a backfill.
   - **`include_name_in_slug`** (TEXT, nullable): Name position in the slug: `null` (not included), `'start'` (name-company-role), or `'end'` (company-role-name). Persisted so the edit form shows the correct choice and users can change it on save.
 - **Table: `profiles`**
@@ -322,7 +323,7 @@ sequenceDiagram
 
 View count and `last_viewed_at` are only updated when the viewer is not the application owner; the applicant can open their own link without affecting the count or last-viewed time. The increment is performed by a SECURITY DEFINER function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
 
-**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (once per session via sessionStorage). The download API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), mirroring the view-count behaviour; see **docs/VIEW_COUNT_FIX.md**.
+**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (once per session via sessionStorage). The download API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), mirroring the view-count behaviour; see **docs/VIEW_COUNT_FIX.md**. The downloaded file name is either the original upload name (when `use_original_cv_filename` is true and `cv_filename` is set) or the generated name `CV-{Slug}.pdf`.
 
 ### 6.4 Profile and snapshot into applications
 

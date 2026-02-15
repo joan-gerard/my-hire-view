@@ -70,6 +70,8 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         ...candidateFields,
         include_name_in_slug: body.slugNamePosition ?? null,
+        cv_filename: body.cv_filename ?? null,
+        use_original_cv_filename: body.use_original_cv_filename ?? true,
       })
       .select()
       .single();

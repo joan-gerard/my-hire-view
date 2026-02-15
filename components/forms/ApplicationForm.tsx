@@ -10,6 +10,7 @@ import type { CandidateFieldKey } from './CandidateFieldsSection';
 import ApplicationFormActions from './ApplicationFormActions';
 import { buildSlug } from '@/lib/utils/slug-generate';
 import { getApplicationUrl } from '@/lib/utils/url';
+import { getCvDownloadFilename } from '@/lib/utils/cv-filename';
 import type { ApplicationFormData } from '@/lib/types/application';
 
 function hasValue(v: string | null | undefined): boolean {
@@ -53,6 +54,8 @@ export default function ApplicationForm({
     location: initialData?.location ?? '',
     portfolio_url: initialData?.portfolio_url ?? '',
     linkedin_url: initialData?.linkedin_url ?? '',
+    cv_filename: initialData?.cv_filename ?? null,
+    use_original_cv_filename: initialData?.use_original_cv_filename ?? true,
   });
 
   const [include, setInclude] = useState<Record<CandidateFieldKey, boolean>>(() =>
@@ -130,6 +133,8 @@ export default function ApplicationForm({
       portfolio_url: include.portfolio_url ? (formData.portfolio_url?.trim() || null) : null,
       linkedin_url: include.linkedin_url ? (formData.linkedin_url?.trim() || null) : null,
       slugNamePosition,
+      cv_filename: cvPendingFile ? cvPendingFile.name : formData.cv_filename ?? null,
+      use_original_cv_filename: formData.use_original_cv_filename ?? true,
     };
     await onSubmit(payload);
   };
@@ -238,11 +243,61 @@ export default function ApplicationForm({
       <FileUpload
         value={formData.cv_url}
         pendingFile={cvPendingFile}
-        onPendingFileChange={setCvPendingFile}
+        onPendingFileChange={(file) => {
+          setCvPendingFile(file);
+          if (file) setFormData((prev) => ({ ...prev, cv_filename: file.name }));
+        }}
         cvUrlExists={initialData?.cvUrlExists}
         onRetryCvCheck={onRetryCvCheck}
         error={errors.cv_url}
       />
+
+      <fieldset className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+        <legend className="text-base font-semibold text-gray-900 px-1">
+          Download file name
+        </legend>
+        <p className="text-sm text-gray-600 mt-0.5 mb-3">
+          Choose the filename recruiters will see when they download your CV.
+        </p>
+        <div className="flex flex-wrap gap-x-6 gap-y-3">
+          <label className="inline-flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="radio"
+              name="useOriginalCvFilename"
+              checked={formData.use_original_cv_filename !== false}
+              onChange={() => setFormData((prev) => ({ ...prev, use_original_cv_filename: true }))}
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600"
+            />
+            <span className="text-base font-medium text-gray-900">Use original file name</span>
+            {(cvPendingFile?.name || formData.cv_filename) && (
+              <span className="text-sm text-gray-500">
+                ({cvPendingFile?.name ?? formData.cv_filename})
+              </span>
+            )}
+          </label>
+          <label className="inline-flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="radio"
+              name="useOriginalCvFilename"
+              checked={formData.use_original_cv_filename === false}
+              onChange={() => setFormData((prev) => ({ ...prev, use_original_cv_filename: false }))}
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600"
+            />
+            <span className="text-base font-medium text-gray-900">Use generated name</span>
+            <span className="text-sm text-gray-500">
+              ({formData.slug ? getCvDownloadFilename(formData.slug) : 'CV-Slug.pdf'})
+            </span>
+          </label>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">
+          Downloadable file name:{' '}
+          {formData.use_original_cv_filename !== false && (cvPendingFile?.name ?? formData.cv_filename)
+            ? (cvPendingFile?.name ?? formData.cv_filename)
+            : formData.slug
+              ? getCvDownloadFilename(formData.slug)
+              : '...'}
+        </p>
+      </fieldset>
 
       <YouTubeUrlInput
         value={formData.video_url}

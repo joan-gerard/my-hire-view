@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
+import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
 
 // Set up PDF.js worker
 if (typeof window !== "undefined") {
@@ -14,6 +15,10 @@ interface PDFViewerProps {
   url: string;
   /** When provided, a download is recorded (once per session) when the user clicks Download CV. Owner downloads are not counted. */
   slug?: string;
+  /** Original uploaded CV filename. Used for download when useOriginalCvFilename is true. */
+  cvFilename?: string | null;
+  /** When true (default), download uses cvFilename; when false, uses generated name CV-{Slug}.pdf. */
+  useOriginalCvFilename?: boolean;
 }
 
 /** Records a CV download (once per session). Owner downloads are not counted. */
@@ -28,7 +33,12 @@ function recordDownloadCount(slug: string): void {
     .catch((err) => console.error("Failed to track download:", err));
 }
 
-export default function PDFViewer({ url, slug }: PDFViewerProps) {
+export default function PDFViewer({
+  url,
+  slug,
+  cvFilename,
+  useOriginalCvFilename = true,
+}: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -60,7 +70,10 @@ export default function PDFViewer({ url, slug }: PDFViewerProps) {
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = slug ? `cv-${slug}.pdf` : "cv.pdf";
+      link.download =
+        useOriginalCvFilename && cvFilename
+          ? cvFilename
+          : getCvDownloadFilename(slug ?? undefined);
       link.rel = "noopener noreferrer";
       document.body.appendChild(link);
       link.click();
