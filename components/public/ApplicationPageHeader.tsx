@@ -53,26 +53,8 @@ export default function ApplicationPageHeader({
             <h1 className="text-xl sm:text-5xl font-bold tracking-tight text-gray-900">
               {displayName}
             </h1>
-            {(hasLinks || onWatchVideo) && (
+            {hasLinks && (
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                {onWatchVideo && (
-                  <button
-                    type="button"
-                    onClick={onWatchVideo}
-                    className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                    aria-label="Watch video pitch"
-                  >
-                    <svg
-                      className="h-5 w-5 shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden
-                    >
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                    Watch Video Pitch
-                  </button>
-                )}
                 {hasPortfolio && (
                   <ExternalLinkButton
                     href={portfolioUrl!.trim()}
@@ -114,10 +96,10 @@ export default function ApplicationPageHeader({
 
         {/* Job (company + role) and optional candidate info */}
         <div
-          className="mt-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2"
+          className="mt-6 flex flex-wrap items-center justify-between gap-4"
           aria-label="Job and candidate details"
         >
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xl text-gray-600 sm:text-2xl">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xl text-gray-600 sm:gap-y-1 sm:text-2xl">
             <span className="inline-flex items-center gap-2">
               <svg
                 className="h-5 w-5 shrink-0 text-gray-400 sm:h-6 sm:w-6"
@@ -153,6 +135,24 @@ export default function ApplicationPageHeader({
               <span className="truncate">{role}</span>
             </span>
           </div>
+          {onWatchVideo && (
+            <button
+              type="button"
+              onClick={onWatchVideo}
+              className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              aria-label="Watch video pitch"
+            >
+              <svg
+                className="h-5 w-5 shrink-0"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Watch Video Pitch
+            </button>
+          )}
         </div>
       </div>
     </header>
