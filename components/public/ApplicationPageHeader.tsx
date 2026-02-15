@@ -1,9 +1,5 @@
 import ExternalLinkButton from "@/components/ui/ExternalLinkButton";
 
-/** Default placeholder when no profile image URL is provided (Unsplash). */
-const DEFAULT_PROFILE_IMAGE =
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop";
-
 interface ApplicationPageHeaderProps {
   company: string;
   role: string;
@@ -12,7 +8,7 @@ interface ApplicationPageHeaderProps {
   location?: string | null;
   portfolioUrl?: string | null;
   linkedinUrl?: string | null;
-  /** Optional profile picture URL. When omitted, a default placeholder is shown. */
+  /** Profile picture URL when the candidate chose to show it. When null/empty, no avatar is shown. */
   profileImageUrl?: string | null;
 }
 
@@ -36,10 +32,8 @@ export default function ApplicationPageHeader({
   linkedinUrl,
   profileImageUrl,
 }: ApplicationPageHeaderProps) {
-  const imageUrl =
-    profileImageUrl != null && profileImageUrl.trim() !== ""
-      ? profileImageUrl.trim()
-      : DEFAULT_PROFILE_IMAGE;
+  const hasProfileImage =
+    profileImageUrl != null && String(profileImageUrl).trim() !== "";
   const displayName = [firstName, lastName].filter(nonEmpty).join(" ").trim();
   const hasName = displayName.length > 0;
   const hasLocation = nonEmpty(location);
@@ -77,22 +71,24 @@ export default function ApplicationPageHeader({
               </div>
             )}
           </div>
-          <div className="flex shrink-0 justify-start sm:justify-end">
-            <div
-              className="h-28 w-28 overflow-hidden rounded-full bg-gray-100 ring-2 ring-gray-200/80 sm:h-36 sm:w-36"
-              aria-hidden
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageUrl}
-                alt=""
-                className="h-full w-full object-cover"
-                width={144}
-                height={144}
-                decoding="async"
-              />
+          {hasProfileImage && (
+            <div className="flex shrink-0 justify-start sm:justify-end">
+              <div
+                className="h-28 w-28 overflow-hidden rounded-full bg-gray-100 ring-2 ring-gray-200/80 sm:h-36 sm:w-36"
+                aria-hidden
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={profileImageUrl!.trim()}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  width={144}
+                  height={144}
+                  decoding="async"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Job (company + role) and optional candidate info */}

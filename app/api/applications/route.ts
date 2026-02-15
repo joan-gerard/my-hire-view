@@ -1,8 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { requireAuth } from '@/lib/auth';
-import { deleteBlobIfOurs } from '@/lib/utils/blob';
-import type { ApplicationCreateInput, ApplicationUpdateInput } from '@/lib/types/application';
+import { requireAuth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import type {
+    ApplicationCreateInput,
+    ApplicationUpdateInput,
+} from "@/lib/types/application";
+import { deleteBlobIfOurs } from "@/lib/utils/blob";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   try {
@@ -10,10 +13,10 @@ export async function GET() {
     const supabase = await createClient();
 
     const { data, error } = await supabase
-      .from('applications')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+      .from("applications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -21,18 +24,20 @@ export async function GET() {
 
     return NextResponse.json({ data });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 }
 
-async function getProfileSnapshot(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+async function getProfileSnapshot(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+) {
   const { data } = await supabase
-    .from('profiles')
-    .select('first_name, last_name, location, portfolio_url, linkedin_url')
-    .eq('user_id', userId)
+    .from("profiles")
+    .select(
+      "first_name, last_name, location, portfolio_url, linkedin_url, profile_picture_url",
+    )
+    .eq("user_id", userId)
     .single();
   return {
     first_name: data?.first_name ?? null,
@@ -40,7 +45,18 @@ async function getProfileSnapshot(supabase: Awaited<ReturnType<typeof createClie
     location: data?.location ?? null,
     portfolio_url: data?.portfolio_url ?? null,
     linkedin_url: data?.linkedin_url ?? null,
+    profile_picture_url: data?.profile_picture_url ?? null,
   };
+}
+
+/** Set application profile_picture_url from profile when user chose to show it. */
+function resolveProfilePictureUrl(
+  snapshot: { profile_picture_url: string | null },
+  showProfilePicture: boolean,
+): string | null {
+  const url = snapshot.profile_picture_url?.trim() || null;
+  if (!url || !showProfilePicture) return null;
+  return url;
 }
 
 export async function POST(request: NextRequest) {
@@ -51,15 +67,29 @@ export async function POST(request: NextRequest) {
     const snapshot = await getProfileSnapshot(supabase, user.id);
 
     const candidateFields = {
-      first_name: body.first_name !== undefined ? body.first_name : snapshot.first_name,
-      last_name: body.last_name !== undefined ? body.last_name : snapshot.last_name,
+      first_name:
+        body.first_name !== undefined ? body.first_name : snapshot.first_name,
+      last_name:
+        body.last_name !== undefined ? body.last_name : snapshot.last_name,
       location: body.location !== undefined ? body.location : snapshot.location,
-      portfolio_url: body.portfolio_url !== undefined ? body.portfolio_url : snapshot.portfolio_url,
-      linkedin_url: body.linkedin_url !== undefined ? body.linkedin_url : snapshot.linkedin_url,
+      portfolio_url:
+        body.portfolio_url !== undefined
+          ? body.portfolio_url
+          : snapshot.portfolio_url,
+      linkedin_url:
+        body.linkedin_url !== undefined
+          ? body.linkedin_url
+          : snapshot.linkedin_url,
     };
 
+    const showProfilePicture = body.show_profile_picture === true;
+    const profilePictureUrl = resolveProfilePictureUrl(
+      snapshot,
+      showProfilePicture,
+    );
+
     const { data, error } = await supabase
-      .from('applications')
+      .from("applications")
       .insert({
         company: body.company,
         role: body.role,
@@ -72,6 +102,8 @@ export async function POST(request: NextRequest) {
         include_name_in_slug: body.slugNamePosition ?? null,
         cv_filename: body.cv_filename ?? null,
         use_original_cv_filename: body.use_original_cv_filename ?? true,
+        profile_picture_url: profilePictureUrl,
+        show_profile_picture: showProfilePicture,
       })
       .select()
       .single();
@@ -82,10 +114,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data }, { status: 201 });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 }
 
@@ -94,24 +123,29 @@ export async function PUT(request: NextRequest) {
     const user = await requireAuth();
     const supabase = await createClient();
     const body: ApplicationUpdateInput & { id: string } = await request.json();
-    const { id, slugNamePosition, ...rest } = body;
+    const { id, slugNamePosition, show_profile_picture, ...rest } = body;
 
-    const updatePayload = {
+    const updatePayload: Record<string, unknown> = {
       ...rest,
-      ...(slugNamePosition !== undefined && { include_name_in_slug: slugNamePosition }),
+      ...(slugNamePosition !== undefined && {
+        include_name_in_slug: slugNamePosition,
+      }),
+      ...(show_profile_picture !== undefined && {
+        show_profile_picture: show_profile_picture === true,
+      }),
     };
 
     // Verify the application belongs to the user and get current cv_url
     const { data: existing } = await supabase
-      .from('applications')
-      .select('user_id, cv_url')
-      .eq('id', id)
+      .from("applications")
+      .select("user_id, cv_url")
+      .eq("id", id)
       .single();
 
     if (!existing || existing.user_id !== user.id) {
       return NextResponse.json(
-        { error: 'Not found or unauthorized' },
-        { status: 404 }
+        { error: "Not found or unauthorized" },
+        { status: 404 },
       );
     }
 
@@ -124,10 +158,17 @@ export async function PUT(request: NextRequest) {
       await deleteBlobIfOurs(existing.cv_url);
     }
 
+    const snapshot = await getProfileSnapshot(supabase, user.id);
+    const showProfilePicture = show_profile_picture === true;
+    updatePayload.profile_picture_url = resolveProfilePictureUrl(
+      snapshot,
+      showProfilePicture,
+    );
+
     const { data, error } = await supabase
-      .from('applications')
+      .from("applications")
       .update(updatePayload)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -137,10 +178,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ data });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 }
 
@@ -149,35 +187,32 @@ export async function DELETE(request: NextRequest) {
     const user = await requireAuth();
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = searchParams.get("id");
 
     if (!id) {
       return NextResponse.json(
-        { error: 'Application ID is required' },
-        { status: 400 }
+        { error: "Application ID is required" },
+        { status: 400 },
       );
     }
 
     // Verify the application belongs to the user and get cv_url for blob cleanup
     const { data: existing } = await supabase
-      .from('applications')
-      .select('user_id, cv_url')
-      .eq('id', id)
+      .from("applications")
+      .select("user_id, cv_url")
+      .eq("id", id)
       .single();
 
     if (!existing || existing.user_id !== user.id) {
       return NextResponse.json(
-        { error: 'Not found or unauthorized' },
-        { status: 404 }
+        { error: "Not found or unauthorized" },
+        { status: 404 },
       );
     }
 
     await deleteBlobIfOurs(existing.cv_url);
 
-    const { error } = await supabase
-      .from('applications')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from("applications").delete().eq("id", id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
@@ -185,9 +220,6 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 }

@@ -39,6 +39,9 @@ export default function ViewPageContent({
         location={application.location}
         portfolioUrl={application.portfolio_url}
         linkedinUrl={application.linkedin_url}
+        profileImageUrl={
+          application.profile_picture_url?.trim() || undefined
+        }
       />
 
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">

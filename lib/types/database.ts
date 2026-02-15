@@ -23,9 +23,11 @@ export interface Database {
           location: string | null;
           portfolio_url: string | null;
           linkedin_url: string | null;
-          include_name_in_slug: 'start' | 'end' | null;
+          include_name_in_slug: "start" | "end" | null;
           cv_filename: string | null;
           use_original_cv_filename: boolean;
+          profile_picture_url: string | null;
+          show_profile_picture: boolean;
         };
         Insert: {
           id?: string;
@@ -47,9 +49,11 @@ export interface Database {
           location?: string | null;
           portfolio_url?: string | null;
           linkedin_url?: string | null;
-          include_name_in_slug?: 'start' | 'end' | null;
+          include_name_in_slug?: "start" | "end" | null;
           cv_filename?: string | null;
           use_original_cv_filename?: boolean;
+          profile_picture_url?: string | null;
+          show_profile_picture?: boolean;
         };
         Update: {
           id?: string;
@@ -71,9 +75,11 @@ export interface Database {
           location?: string | null;
           portfolio_url?: string | null;
           linkedin_url?: string | null;
-          include_name_in_slug?: 'start' | 'end' | null;
+          include_name_in_slug?: "start" | "end" | null;
           cv_filename?: string | null;
           use_original_cv_filename?: boolean;
+          profile_picture_url?: string | null;
+          show_profile_picture?: boolean;
         };
       };
       profiles: {
@@ -85,6 +91,7 @@ export interface Database {
           portfolio_url: string | null;
           linkedin_url: string | null;
           updated_at: string;
+          profile_picture_url: string | null;
         };
         Insert: {
           user_id: string;
@@ -94,6 +101,7 @@ export interface Database {
           portfolio_url?: string | null;
           linkedin_url?: string | null;
           updated_at?: string;
+          profile_picture_url?: string | null;
         };
         Update: {
           first_name?: string | null;
@@ -102,6 +110,7 @@ export interface Database {
           portfolio_url?: string | null;
           linkedin_url?: string | null;
           updated_at?: string;
+          profile_picture_url?: string | null;
         };
       };
     };

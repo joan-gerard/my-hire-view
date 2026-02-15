@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import ApplicationForm from '@/components/forms/ApplicationForm';
+import ApplicationForm, { type ApplicationFormInitialData } from '@/components/forms/ApplicationForm';
 import type { ApplicationFormData, Application } from '@/lib/types/application';
+import type { Profile } from '@/lib/types/profile';
 
 /** Normalize DB value (legacy boolean or 'start'|'end'|null) to form slugNamePosition. */
 function slugNamePositionFromDb(
@@ -19,12 +20,30 @@ export default function EditApplicationPage() {
   const params = useParams();
   const id = params.id as string;
   const [application, setApplication] = useState<Application | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     fetchApplication();
   }, [id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/profile', { credentials: 'include' });
+        const json = await res.json().catch(() => ({}));
+        if (!cancelled && json.data) setProfile(json.data);
+      } catch {
+        // ignore
+      }
+    }
+    loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const fetchApplication = async () => {
     try {
@@ -133,7 +152,7 @@ export default function EditApplicationPage() {
   }
 
   // Normalize DB shape to form shape; candidate fields and include_name_in_slug from application only
-  const initialData: Partial<ApplicationFormData> & { cvUrlExists?: boolean } = {
+  const initialData: ApplicationFormInitialData = {
     company: application.company,
     role: application.role,
     slug: application.slug,
@@ -149,6 +168,8 @@ export default function EditApplicationPage() {
     cv_filename: application.cv_filename ?? null,
     use_original_cv_filename: application.use_original_cv_filename ?? true,
     cvUrlExists: application.cv_exists,
+    show_profile_picture: application.show_profile_picture ?? false,
+    profile_picture_url: application.profile_picture_url,
   };
 
   return (
@@ -160,6 +181,7 @@ export default function EditApplicationPage() {
           onSubmit={handleSubmit}
           loading={loading}
           onRetryCvCheck={refetchCvCheck}
+          profilePictureUrl={profile?.profile_picture_url ?? null}
         />
       </div>
     </div>
