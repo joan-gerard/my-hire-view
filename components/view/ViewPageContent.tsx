@@ -6,7 +6,7 @@ import CvUnavailableWithRetry from "@/components/public/CvUnavailableWithRetry";
 import YouTubeEmbed from "@/components/video/YouTubeEmbed";
 import ViewTracker from "@/components/view/ViewTracker";
 import type { Application } from "@/lib/types/application";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface ViewPageContentProps {
   initialApplication: Application;
@@ -19,6 +19,17 @@ export default function ViewPageContent({
 }: ViewPageContentProps) {
   const [application, setApplication] =
     useState<Application>(initialApplication);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    if (!isVideoModalOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsVideoModalOpen(false);
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isVideoModalOpen]);
 
   const refetchApplication = useCallback(async () => {
     const response = await fetch(`/api/applications/${slug}`);
@@ -39,9 +50,8 @@ export default function ViewPageContent({
         location={application.location}
         portfolioUrl={application.portfolio_url}
         linkedinUrl={application.linkedin_url}
-        profileImageUrl={
-          application.profile_picture_url?.trim() || undefined
-        }
+        profileImageUrl={application.profile_picture_url?.trim() || undefined}
+        onWatchVideo={!isArchived ? () => setIsVideoModalOpen(true) : undefined}
       />
 
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
@@ -78,12 +88,48 @@ export default function ViewPageContent({
                 )}
               </section>
 
-              <section>
-                <h2 className="mb-4 text-2xl font-bold text-gray-900">
-                  Video Pitch
-                </h2>
-                <YouTubeEmbed url={application.video_url} />
-              </section>
+              {/* Right-side floating video modal */}
+              {isVideoModalOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsVideoModalOpen(false)}
+                    aria-hidden
+                  />
+                  <aside
+                    className="fixed right-4 top-1/2 z-50 max-w-md -translate-y-1/2 sm:right-6 sm:max-w-lg"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Video pitch"
+                  >
+                    <div className="relative w-[min(100vw-2rem,28rem)] overflow-visible rounded-[10px] shadow-[0_4px_10px_5px_rgba(0,0,0,0.15)]">
+                      <div className="overflow-hidden rounded-[10px]">
+                        <YouTubeEmbed url={application.video_url} />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsVideoModalOpen(false)}
+                        className="absolute -right-2 -top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black/20"
+                        aria-label="Close video modal"
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </aside>
+                </>
+              )}
 
               {application.description && (
                 <section>

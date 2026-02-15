@@ -10,6 +10,8 @@ interface ApplicationPageHeaderProps {
   linkedinUrl?: string | null;
   /** Profile picture URL when the candidate chose to show it. When null/empty, no avatar is shown. */
   profileImageUrl?: string | null;
+  /** When provided, shows a "Watch Video Pitch" button that calls this on click. */
+  onWatchVideo?: () => void;
 }
 
 function nonEmpty(value: string | null | undefined): value is string {
@@ -31,6 +33,7 @@ export default function ApplicationPageHeader({
   portfolioUrl,
   linkedinUrl,
   profileImageUrl,
+  onWatchVideo,
 }: ApplicationPageHeaderProps) {
   const hasProfileImage =
     profileImageUrl != null && String(profileImageUrl).trim() !== "";
@@ -50,8 +53,26 @@ export default function ApplicationPageHeader({
             <h1 className="text-xl sm:text-5xl font-bold tracking-tight text-gray-900">
               {displayName}
             </h1>
-            {hasLinks && (
-              <div className="mt-1.5 flex flex-wrap gap-2">
+            {(hasLinks || onWatchVideo) && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                {onWatchVideo && (
+                  <button
+                    type="button"
+                    onClick={onWatchVideo}
+                    className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    aria-label="Watch video pitch"
+                  >
+                    <svg
+                      className="h-5 w-5 shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    Watch Video Pitch
+                  </button>
+                )}
                 {hasPortfolio && (
                   <ExternalLinkButton
                     href={portfolioUrl!.trim()}
