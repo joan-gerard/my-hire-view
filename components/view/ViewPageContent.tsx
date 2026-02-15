@@ -102,7 +102,7 @@ export default function ViewPageContent({
                     aria-modal="true"
                     aria-label="Video pitch"
                   >
-                    <div className="relative w-[min(100vw-2rem,28rem)] overflow-visible rounded-[10px] shadow-[0_4px_10px_5px_rgba(0,0,0,0.15)]">
+                    <div className="relative w-[min(100vw-2rem,28rem)] overflow-visible">
                       <div className="overflow-hidden rounded-[10px]">
                         <YouTubeEmbed url={application.video_url} />
                       </div>

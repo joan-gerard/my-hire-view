@@ -112,7 +112,7 @@ Create the following route structure:
 #### Video Player Component
 - YouTube embed with responsive container
 - Extract video ID from YouTube URL
-- Handle different YouTube URL formats (watch?v=, youtu.be/, embed/)
+- Handle different YouTube URL formats (watch?v=, youtu.be/, embed/, shorts/)
 
 ### 5. File Upload Flow (Vercel Blob)
 
