@@ -10,6 +10,8 @@ export interface Profile {
   portfolio_url: string | null;
   linkedin_url: string | null;
   updated_at: string;
+  /** Profile picture URL (Supabase Storage). One picture per user. */
+  profile_picture_url?: string | null;
 }
 
 /**
@@ -21,4 +23,5 @@ export interface ProfileUpdateInput {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
+  profile_picture_url?: string | null;
 }

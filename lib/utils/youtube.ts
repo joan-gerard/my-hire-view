@@ -1,6 +1,13 @@
+/**
+ * Supported URL formats:
+ * - youtube.com/watch?v=VIDEO_ID
+ * - youtu.be/VIDEO_ID
+ * - youtube.com/embed/VIDEO_ID
+ * - youtube.com/shorts/VIDEO_ID (YouTube Shorts)
+ */
 export function extractVideoId(url: string): string | null {
   const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^&\n?#\/]+)/,
     /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
   ];
 
@@ -12,6 +19,12 @@ export function extractVideoId(url: string): string | null {
   }
 
   return null;
+}
+
+/** Returns true if the URL is a YouTube Shorts URL (youtube.com/shorts/...). */
+export function isYouTubeShortUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  return /youtube\.com\/shorts\//i.test(url);
 }
 
 export function validateYouTubeUrl(url: string): boolean {

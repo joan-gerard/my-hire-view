@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import ViewPageContent from '@/app/view/[slug]/ViewPageContent';
+import ViewPageContent from '@/components/view/ViewPageContent';
 import { getBaseUrl } from '@/lib/utils/url';
 
 async function getApplication(slug: string) {

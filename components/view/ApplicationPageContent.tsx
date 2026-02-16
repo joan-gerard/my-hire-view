@@ -1,0 +1,54 @@
+"use client";
+
+import PDFViewer from "@/components/pdf/PDFViewer";
+import CvUnavailableWithRetry from "@/components/public/CvUnavailableWithRetry";
+import VideoModal from "@/components/view/VideoModal";
+import ViewTracker from "@/components/view/ViewTracker";
+import type { Application } from "@/lib/types/application";
+
+interface ApplicationPageContentProps {
+  slug: string;
+  application: Application;
+  refetchApplication: () => Promise<void>;
+  isVideoModalOpen: boolean;
+  onCloseVideoModal: () => void;
+}
+
+/**
+ * Main content area when viewing an application: resume PDF, optional
+ * video pitch modal, and optional about section.
+ */
+export default function ApplicationPageContent({
+  slug,
+  application,
+  refetchApplication,
+  isVideoModalOpen,
+  onCloseVideoModal,
+}: ApplicationPageContentProps) {
+  return (
+    <div className="pb-12">
+      <ViewTracker slug={slug} />
+      <div className="space-y-12">
+        <section className="bg-white rounded-xl">
+          {application.cv_exists === false ? (
+            <CvUnavailableWithRetry onRetry={refetchApplication} />
+          ) : (
+            <PDFViewer
+              url={application.cv_url}
+              slug={slug}
+              cvFilename={application.cv_filename}
+              useOriginalCvFilename={application.use_original_cv_filename}
+            />
+          )}
+        </section>
+
+        {isVideoModalOpen && (
+          <VideoModal
+            videoUrl={application.video_url}
+            onClose={onCloseVideoModal}
+          />
+        )}
+      </div>
+    </div>
+  );
+}

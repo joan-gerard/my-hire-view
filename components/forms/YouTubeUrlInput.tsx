@@ -34,7 +34,7 @@ export default function YouTubeUrlInput({
       type="url"
       value={value}
       onChange={handleChange}
-      placeholder="https://www.youtube.com/watch?v=..."
+      placeholder="https://www.youtube.com/watch?v=... or youtube.com/shorts/..."
       error={externalError || localError}
     />
   );

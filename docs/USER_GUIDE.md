@@ -52,7 +52,6 @@ At **Dashboard** (`/admin`) you can:
    - **Slug** (used in the URL; auto-generated from company and role, and from your name and position if you chose; you can change it manually).
    - **CV**: upload a PDF (stored securely).
    - **YouTube URL** for your video pitch.
-   - **Description** (optional text for recruiters).
 4. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy Link** to share it.
 
 ### Editing an application
@@ -86,7 +85,6 @@ You will see:
 - **Header:** Company name, role, and (if the candidate chose to share them) their name, location, and buttons for **Portfolio** and **LinkedIn**.
 - **Resume:** A PDF viewer with the candidate’s CV.
 - **Video pitch:** An embedded YouTube video.
-- **About:** Optional description from the candidate.
 
 If the application was **archived**, you will see a message that it is no longer active and the CV and video are not available.
 
@@ -100,7 +98,7 @@ If the application was **archived**, you will see a message that it is no longer
 
 | Who       | What they can do |
 | --------- | ----------------- |
-| **Candidate** | Sign up, sign in, edit profile (name, location, portfolio, LinkedIn), create applications (company, role, CV, video, description, candidate toggles), edit or archive or delete applications, copy shareable links, see view counts. |
-| **Recruiter** | Open shareable link (no login), see candidate name/location/portfolio/LinkedIn when shared, view CV and video pitch, read description. |
+| **Candidate** | Sign up, sign in, edit profile (name, location, portfolio, LinkedIn), create applications (company, role, CV, video, candidate toggles), edit or archive or delete applications, copy shareable links, see view counts. |
+| **Recruiter** | Open shareable link (no login), see candidate name/location/portfolio/LinkedIn when shared, view CV and video pitch. |
 
 For setup and technical details, see [README.md](../README.md) and [ARCHITECTURE.md](ARCHITECTURE.md).

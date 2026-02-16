@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { extractVideoId } from '@/lib/utils/youtube';
+import { extractVideoId, isYouTubeShortUrl } from "@/lib/utils/youtube";
 
 interface YouTubeEmbedProps {
   url: string;
@@ -8,6 +8,7 @@ interface YouTubeEmbedProps {
 
 export default function YouTubeEmbed({ url }: YouTubeEmbedProps) {
   const videoId = extractVideoId(url);
+  const isShort = isYouTubeShortUrl(url);
 
   if (!videoId) {
     return (
@@ -18,7 +19,11 @@ export default function YouTubeEmbed({ url }: YouTubeEmbedProps) {
   }
 
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+    <div
+      className={`relative w-full overflow-hidden rounded-lg bg-black ${
+        isShort ? "mx-auto max-w-sm aspect-9/16" : "aspect-video"
+      }`}
+    >
       <iframe
         className="h-full w-full"
         src={`https://www.youtube.com/embed/${videoId}`}

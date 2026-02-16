@@ -5,7 +5,6 @@ export interface Application {
   role: string;
   cv_url: string;
   video_url: string;
-  description: string | null;
   created_at: string;
   updated_at: string;
   view_count: number;
@@ -21,9 +20,17 @@ export interface Application {
   portfolio_url: string | null;
   linkedin_url: string | null;
   /** Name position in slug: null = not included, 'start' = name-company-role, 'end' = company-role-name */
-  include_name_in_slug: 'start' | 'end' | null;
+  include_name_in_slug: "start" | "end" | null;
+  /** Original filename of the uploaded CV (e.g. My Resume.pdf). Used for download when use_original_cv_filename is true. Omitted before migration 011. */
+  cv_filename?: string | null;
+  /** When true, public download uses cv_filename; when false, uses generated name CV-{Slug}.pdf. Default true. Omitted before migration 011. */
+  use_original_cv_filename?: boolean;
   /** Set by GET by-id when cv_url is a Blob URL: true if file exists, false if missing. Omitted when not checked. */
   cv_exists?: boolean;
+  /** Profile picture URL copied from profile at save when user chose to show picture for this application. Null when user has no picture or removed it; view page only shows avatar when this is set. */
+  profile_picture_url?: string | null;
+  /** User chose to show profile picture on this application. When true, profile_picture_url is synced from profile; when user has no picture, URL stays null and view shows no avatar. */
+  show_profile_picture?: boolean;
 }
 
 export interface ApplicationFormData {
@@ -32,7 +39,6 @@ export interface ApplicationFormData {
   slug: string;
   cv_url: string;
   video_url: string;
-  description?: string;
   /** Candidate fields shown to recruiters; null = do not show. Set from form toggles. */
   first_name?: string | null;
   last_name?: string | null;
@@ -40,7 +46,13 @@ export interface ApplicationFormData {
   portfolio_url?: string | null;
   linkedin_url?: string | null;
   /** Name in slug: null = not included, 'start' = name at start, 'end' = name at end. Stored in DB as include_name_in_slug. */
-  slugNamePosition?: 'start' | 'end' | null;
+  slugNamePosition?: "start" | "end" | null;
+  /** Original CV filename (set when file selected or from server). Used for download when use_original_cv_filename is true. */
+  cv_filename?: string | null;
+  /** When true, download uses cv_filename; when false, uses generated name CV-{Slug}.pdf. */
+  use_original_cv_filename?: boolean;
+  /** When preference is per_application: whether to show profile picture for this application. Server copies profile URL when true. */
+  show_profile_picture?: boolean;
 }
 
 export interface ApplicationCreateInput {
@@ -49,13 +61,16 @@ export interface ApplicationCreateInput {
   slug: string;
   cv_url: string;
   video_url: string;
-  description?: string;
   first_name?: string | null;
   last_name?: string | null;
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
-  slugNamePosition?: 'start' | 'end' | null;
+  slugNamePosition?: "start" | "end" | null;
+  cv_filename?: string | null;
+  use_original_cv_filename?: boolean;
+  /** When preference is per_application: whether to show profile picture. Server copies profile URL when true. */
+  show_profile_picture?: boolean;
 }
 
 export interface ApplicationUpdateInput {
@@ -64,12 +79,14 @@ export interface ApplicationUpdateInput {
   slug?: string;
   cv_url?: string;
   video_url?: string;
-  description?: string;
   is_active?: boolean;
   first_name?: string | null;
   last_name?: string | null;
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
-  slugNamePosition?: 'start' | 'end' | null;
+  slugNamePosition?: "start" | "end" | null;
+  cv_filename?: string | null;
+  use_original_cv_filename?: boolean;
+  show_profile_picture?: boolean;
 }

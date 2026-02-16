@@ -126,7 +126,7 @@ sequenceDiagram
   ProfileAPI-->>NewPage: profile data
   NewPage->>Form: initialData (profile for candidate section)
 
-  U->>Form: Fill company, role, candidate toggles, CV (file held in memory), video, description
+  U->>Form: Fill company, role, candidate toggles, CV (file held in memory), video
   U->>Form: Save
   Form->>UploadAPI: POST PDF (only on save)
   UploadAPI->>Blob: put(file)
@@ -199,7 +199,7 @@ sequenceDiagram
   SlugAPI->>Applications: select by slug
   Applications-->>SlugAPI: full row (incl. candidate fields)
   SlugAPI-->>Page: application
-  Page->>Page: Render header (company, role, name, location, portfolio/LinkedIn), PDF, video, description
+  Page->>Page: Render header (company, role, name, location, portfolio/LinkedIn), PDF, video
   Page->>VT: Mount
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not)
@@ -211,7 +211,7 @@ sequenceDiagram
 
 All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per session via ViewTracker, and `last_viewed_at` is set to the current time, **except when the applicant (owner) is viewing their own application**—in that case the API returns success without updating so the count and last-viewed time reflect only external viewers. The increment is done via a SECURITY DEFINER database function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
 
-**CV download count:** When the recruiter (or any visitor) clicks "Download CV" in the PDF viewer, the client calls `POST /api/applications/[slug]/download` (once per session, via sessionStorage). The API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), only when the requester is not the application owner, so the count reflects only external CV downloads. The dashboard "View Insights" panel shows view count, CV download count, creation date, and last viewed date/time.
+**CV download count:** When the recruiter (or any visitor) clicks "Download CV" in the PDF viewer, the client calls `POST /api/applications/[slug]/download` (once per session, via sessionStorage). The API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), only when the requester is not the application owner, so the count reflects only external CV downloads. The dashboard "View Insights" panel shows view count, CV download count, creation date, and last viewed date/time. The file name used for the download is chosen when creating or editing the application: either the original uploaded filename (e.g. `My Resume.pdf`) or the generated name `CV-{Slug}.pdf`, stored in `applications.cv_filename` and `applications.use_original_cv_filename`.
 
 ---
 

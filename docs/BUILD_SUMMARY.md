@@ -708,7 +708,7 @@ Result: end-to-end flow: sign up/in, create/edit applications (slug, CV, video, 
 | 36  | `85667e7` | refactor | InsightItem + responsive grid for application card insights    |
 | 37  | `a00c745` | merge    | PR #4 update-application-cards-horizontal                      |
 | 38  | `04822bf` | docs     | BUILD_SUMMARY through commit 37, unify list formatting         |
-| 39  | `1824d5e` | fix      | View count via SECURITY DEFINER RPC, service_role admin client  |
+| 39  | `1824d5e` | fix      | View count via SECURITY DEFINER RPC, service_role admin client |
 | 40  | `68f019e` | fix      | Download count via SECURITY DEFINER RPC for anon/non-owner     |
 | 41  | `11a3a16` | merge    | PR #5 fix-view-count-does-not-update                           |
 
