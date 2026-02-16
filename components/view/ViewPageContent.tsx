@@ -1,6 +1,7 @@
 "use client";
 
 import ApplicationPageHeader from "@/components/public/ApplicationPageHeader";
+import ViewPageFooter from "@/components/public/ViewPageFooter";
 import type { Application } from "@/lib/types/application";
 import { useCallback, useEffect, useState } from "react";
 import ApplicationPageContent from "./ApplicationPageContent";
@@ -18,6 +19,7 @@ export default function ViewPageContent({
   const [application, setApplication] =
     useState<Application>(initialApplication);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [showFooter, setShowFooter] = useState<boolean | null>(null);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -34,6 +36,22 @@ export default function ViewPageContent({
     if (!response.ok) return;
     const { data } = await response.json();
     setApplication(data);
+  }, [slug]);
+
+  // Footer is shown only to non-owners (recruiters/visitors)
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/applications/${slug}/viewer-status`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : { isOwner: false }))
+      .then((data) => {
+        if (!cancelled) setShowFooter(data.isOwner === false);
+      })
+      .catch(() => {
+        if (!cancelled) setShowFooter(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   const isArchived = application.is_active === false;
@@ -69,6 +87,8 @@ export default function ViewPageContent({
           />
         )}
       </div>
+
+      {showFooter === true && <ViewPageFooter />}
     </div>
   );
 }

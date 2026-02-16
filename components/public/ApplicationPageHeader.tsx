@@ -2,6 +2,7 @@
 
 import ExternalLinkButton from "@/components/ui/ExternalLinkButton";
 import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
+import Link from "next/link";
 import { useState } from "react";
 import { BriefcaseIcon, BuildingIcon, LinkedInIcon } from "../admin/icons";
 
@@ -107,7 +108,11 @@ export default function ApplicationPageHeader({
   };
 
   return (
-    <header className="pt-10 shadow-sm sm:pt-12">
+    <header className="pt-5 shadow-sm sm:pt-6 px-2 sm:px-6 lg:px-8">
+      <Link href="/" className="text-xl font-bold text-white">
+        HireView
+      </Link>
+
       <div className="mx-auto max-w-6xl ">
         {/* Primary: name + Portfolio/LinkedIn + profile picture */}
         <div className="flex flex-col-reverse gap-6 border-b border-gray-100 pb-6 sm:flex-row sm:items-stretch sm:justify-between sm:gap-8 p-4 sm:p-6 lg:p-8 bg-white rounded-xl">
