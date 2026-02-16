@@ -158,7 +158,6 @@ export default function EditApplicationPage() {
     slug: application.slug,
     cv_url: application.cv_url,
     video_url: application.video_url,
-    description: application.description ?? undefined,
     first_name: application.first_name ?? undefined,
     last_name: application.last_name ?? undefined,
     location: application.location ?? undefined,

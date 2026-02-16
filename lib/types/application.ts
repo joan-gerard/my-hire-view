@@ -5,7 +5,6 @@ export interface Application {
   role: string;
   cv_url: string;
   video_url: string;
-  description: string | null;
   created_at: string;
   updated_at: string;
   view_count: number;
@@ -40,7 +39,6 @@ export interface ApplicationFormData {
   slug: string;
   cv_url: string;
   video_url: string;
-  description?: string;
   /** Candidate fields shown to recruiters; null = do not show. Set from form toggles. */
   first_name?: string | null;
   last_name?: string | null;
@@ -63,7 +61,6 @@ export interface ApplicationCreateInput {
   slug: string;
   cv_url: string;
   video_url: string;
-  description?: string;
   first_name?: string | null;
   last_name?: string | null;
   location?: string | null;
@@ -82,7 +79,6 @@ export interface ApplicationUpdateInput {
   slug?: string;
   cv_url?: string;
   video_url?: string;
-  description?: string;
   is_active?: boolean;
   first_name?: string | null;
   last_name?: string | null;

@@ -2,8 +2,8 @@
 
 import PDFViewer from "@/components/pdf/PDFViewer";
 import CvUnavailableWithRetry from "@/components/public/CvUnavailableWithRetry";
-import ViewTracker from "@/components/view/ViewTracker";
 import VideoModal from "@/components/view/VideoModal";
+import ViewTracker from "@/components/view/ViewTracker";
 import type { Application } from "@/lib/types/application";
 
 interface ApplicationPageContentProps {
@@ -26,7 +26,7 @@ export default function ApplicationPageContent({
   onCloseVideoModal,
 }: ApplicationPageContentProps) {
   return (
-    <>
+    <div className="pb-12">
       <ViewTracker slug={slug} />
       <div className="space-y-12">
         <section className="bg-white rounded-xl">
@@ -48,18 +48,7 @@ export default function ApplicationPageContent({
             onClose={onCloseVideoModal}
           />
         )}
-
-        {application.description && (
-          <section>
-            <h2 className="mb-4 text-2xl font-bold text-gray-900">About</h2>
-            <div className="rounded-lg bg-white p-6 shadow-sm">
-              <p className="whitespace-pre-wrap text-gray-700">
-                {application.description}
-              </p>
-            </div>
-          </section>
-        )}
       </div>
-    </>
+    </div>
   );
 }

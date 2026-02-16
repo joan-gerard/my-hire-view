@@ -9,7 +9,6 @@ export interface Database {
           role: string;
           cv_url: string;
           video_url: string;
-          description: string | null;
           created_at: string;
           updated_at: string;
           view_count: number;
@@ -36,7 +35,6 @@ export interface Database {
           role: string;
           cv_url: string;
           video_url: string;
-          description?: string | null;
           created_at?: string;
           updated_at?: string;
           view_count?: number;
@@ -62,7 +60,6 @@ export interface Database {
           role?: string;
           cv_url?: string;
           video_url?: string;
-          description?: string | null;
           created_at?: string;
           updated_at?: string;
           view_count?: number;

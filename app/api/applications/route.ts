@@ -96,7 +96,6 @@ export async function POST(request: NextRequest) {
         slug: body.slug,
         cv_url: body.cv_url,
         video_url: body.video_url,
-        description: body.description ?? null,
         user_id: user.id,
         ...candidateFields,
         include_name_in_slug: body.slugNamePosition ?? null,
@@ -134,6 +133,7 @@ export async function PUT(request: NextRequest) {
         show_profile_picture: show_profile_picture === true,
       }),
     };
+    delete updatePayload.description; // Column removed in migration 017
 
     // Verify the application belongs to the user and get current cv_url
     const { data: existing } = await supabase

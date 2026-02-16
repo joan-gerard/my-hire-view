@@ -1,7 +1,6 @@
 "use client";
 
 import Input from "@/components/ui/Input";
-import Textarea from "@/components/ui/Textarea";
 import type { ApplicationFormData } from "@/lib/types/application";
 import { buildSlug } from "@/lib/utils/slug-generate";
 import { getApplicationUrl } from "@/lib/utils/url";
@@ -74,7 +73,6 @@ export default function ApplicationForm({
     slug: initialData?.slug || "",
     cv_url: initialData?.cv_url || "",
     video_url: initialData?.video_url || "",
-    description: initialData?.description || "",
     first_name: initialData?.first_name ?? "",
     last_name: initialData?.last_name ?? "",
     location: initialData?.location ?? "",
@@ -284,16 +282,6 @@ export default function ApplicationForm({
         value={formData.video_url}
         onChange={(url) => setFormData((prev) => ({ ...prev, video_url: url }))}
         error={errors.video_url}
-      />
-
-      <Textarea
-        label="Description (Optional)"
-        value={formData.description || ""}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, description: e.target.value }))
-        }
-        rows={4}
-        placeholder="Add any notes about this application..."
       />
 
       <ApplicationFormActions

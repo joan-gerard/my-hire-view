@@ -32,7 +32,7 @@ First, help me set up the Supabase database with the following schema:
 - role: text (job title/position)
 - cv_url: text (Vercel Blob URL for the PDF)
 - video_url: text (YouTube unlisted video embed URL)
-- description: text (optional notes about the application)
+- description: text (legacy; no longer editable by candidates; column retained for backward compatibility)
 - created_at: timestamp with time zone
 - updated_at: timestamp with time zone
 - view_count: integer (default 0, tracks page views)
@@ -76,7 +76,7 @@ Create the following route structure:
 
 #### Public Application Page (`/view/[slug]`)
 - Clean, professional design with company and role prominently displayed
-- If the application is archived (`is_active` false), show a warning message only; do not display the CV, video pitch, or description
+- If the application is archived (`is_active` false), show a warning message only; do not display the CV or video pitch
 - Embedded PDF viewer for CV (with download option)
 - YouTube video embed (responsive, 16:9 aspect ratio)
 - Mobile-responsive layout

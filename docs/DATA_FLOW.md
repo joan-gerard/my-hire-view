@@ -126,7 +126,7 @@ sequenceDiagram
   ProfileAPI-->>NewPage: profile data
   NewPage->>Form: initialData (profile for candidate section)
 
-  U->>Form: Fill company, role, candidate toggles, CV (file held in memory), video, description
+  U->>Form: Fill company, role, candidate toggles, CV (file held in memory), video
   U->>Form: Save
   Form->>UploadAPI: POST PDF (only on save)
   UploadAPI->>Blob: put(file)
@@ -199,7 +199,7 @@ sequenceDiagram
   SlugAPI->>Applications: select by slug
   Applications-->>SlugAPI: full row (incl. candidate fields)
   SlugAPI-->>Page: application
-  Page->>Page: Render header (company, role, name, location, portfolio/LinkedIn), PDF, video, description
+  Page->>Page: Render header (company, role, name, location, portfolio/LinkedIn), PDF, video
   Page->>VT: Mount
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not)

@@ -6,7 +6,7 @@ This document describes the architecture and design of **HireView**, an applicat
 
 ## 1. Overview
 
-**Purpose:** Candidates create one landing page per application. Each page has a unique shareable link, shows a tailored CV (PDF), an embedded YouTube video pitch, and optional description. Recruiters open the link without logging in. Candidates manage applications from an authenticated admin dashboard and can track view counts.
+**Purpose:** Candidates create one landing page per application. Each page has a unique shareable link, shows a tailored CV (PDF) and an embedded YouTube video pitch. Recruiters open the link without logging in. Candidates manage applications from an authenticated admin dashboard and can track view counts.
 
 **High-level behavior:**
 
@@ -172,10 +172,10 @@ flowchart LR
 | `/login`, `/signup` | Auth forms; submit to `/api/auth/*`                                                                                                                                                                                                                                                                                | No   |
 | `/auth/callback`    | Supabase email confirmation / magic link; exchanges `code` for session                                                                                                                                                                                                                                             | No   |
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                                                                                                                                                                                                   | Yes  |
-| `/admin/new`        | Create application form (slug, company, role, CV upload, YouTube URL, description)                                                                                                                                                                                                                                 | Yes  |
+| `/admin/new`        | Create application form (slug, company, role, CV upload, YouTube URL)                                                                                                                                                                                                                                               | Yes  |
 | `/admin/edit/[id]`  | Edit existing application (same form, load by id)                                                                                                                                                                                                                                                                  | Yes  |
 | `/admin/profile`    | Profile: account email, member since; editable profile details (first name, last name, location, portfolio URL, LinkedIn URL); application counts                                                                                                                                                                  | Yes  |
-| `/view/[slug]`      | Public application page: header (company, role, candidate name, location, portfolio/LinkedIn buttons), PDF viewer, YouTube embed, optional description; shows “archived” state if `is_active = false`. Candidate name, location, and links come from the application row (snapshot from profile at create/update). | No   |
+| `/view/[slug]`      | Public application page: header (company, role, candidate name, location, portfolio/LinkedIn buttons), PDF viewer, YouTube embed; shows “archived” state if `is_active = false`. Candidate name, location, and links come from the application row (snapshot from profile at create/update). | No   |
 
 Layouts:
 
@@ -315,7 +315,7 @@ sequenceDiagram
   SlugAPI->>Supa: select by slug (full row, includes candidate name, location, portfolio_url, linkedin_url)
   Supa-->>SlugAPI: application
   SlugAPI-->>Page: { data }
-  Page->>Page: Render header (company, role, candidate name, location, portfolio/LinkedIn buttons) + PDF + YouTube + description
+  Page->>Page: Render header (company, role, candidate name, location, portfolio/LinkedIn buttons) + PDF + YouTube
   Page->>VT: Mount ViewTracker(slug)
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not tracked)

@@ -93,7 +93,6 @@ export default function NewApplicationPage() {
     slug: "",
     cv_url: "",
     video_url: "",
-    description: "",
     first_name: profile?.first_name ?? "",
     last_name: profile?.last_name ?? "",
     location: profile?.location ?? "",
