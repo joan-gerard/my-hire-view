@@ -1,11 +1,11 @@
 import { AnchorHTMLAttributes, ReactNode } from "react";
 
 const BASE_CLASSES =
-  "inline-flex items-center rounded-xl px-5 py-2.5 text-base font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2";
+  "inline-flex items-center rounded-lg text-base font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2";
 
 const VARIANT_CLASSES = {
-  portfolio: "bg-gray-800 hover:bg-gray-700 focus:ring-gray-500",
-  linkedin: "bg-[#0A66C2] hover:bg-[#004182] focus:ring-[#0A66C2]",
+  portfolio: "bg-gray-800 hover:bg-gray-700 focus:ring-gray-500 px-5 py-2.5",
+  linkedin: "px-3 py-2.5 bg-[#0A66C2] hover:bg-[#004182] focus:ring-[#0A66C2]",
 } as const;
 
 export type ExternalLinkButtonVariant = keyof typeof VARIANT_CLASSES;
