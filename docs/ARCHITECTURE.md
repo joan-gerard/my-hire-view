@@ -1,6 +1,6 @@
-# HireView — System Architecture & Design
+# MyHireView — System Architecture & Design
 
-This document describes the architecture and design of **HireView**, an application that lets users create personalized recruiter landing pages: one shareable page per job application, with a custom CV (PDF) and video pitch (YouTube).
+This document describes the architecture and design of **MyHireView**, an application that lets users create personalized recruiter landing pages: one shareable page per job application, with a custom CV (PDF) and video pitch (YouTube).
 
 ---
 
@@ -40,7 +40,7 @@ flowchart TB
     Recruiter[Recruiter]
   end
 
-  subgraph HireView["HireView (Next.js)"]
+  subgraph MyHireView["MyHireView (Next.js)"]
     direction TB
     Middleware[Middleware<br>Session refresh & /admin guard]
     App[App Router<br>Pages & Layouts]
@@ -175,12 +175,12 @@ flowchart LR
 | `/admin/new`        | Create application form (slug, company, role, CV upload, YouTube URL)                                                                                                                                                                                                                                               | Yes  |
 | `/admin/edit/[id]`  | Edit existing application (same form, load by id)                                                                                                                                                                                                                                                                  | Yes  |
 | `/admin/profile`    | Profile: account email, member since; editable profile details (first name, last name, location, portfolio URL, LinkedIn URL); application counts                                                                                                                                                                  | Yes  |
-| `/view/[slug]`      | Public application page: header (company, role, candidate name, location, portfolio/LinkedIn buttons), PDF viewer, YouTube embed; shows “archived” state if `is_active = false`. A footer (HireView logo, slogan, Terms/Privacy links, © MyHireView, socials) is shown only to non-owners. Candidate name, location, and links come from the application row (snapshot from profile at create/update). | No   |
+| `/view/[slug]`      | Public application page: header (company, role, candidate name, location, portfolio/LinkedIn buttons), PDF viewer, YouTube embed; shows “archived” state if `is_active = false`. A footer (MyHireView logo, slogan, Terms/Privacy links, © MyHireView, socials) is shown only to non-owners. Candidate name, location, and links come from the application row (snapshot from profile at create/update). | No   |
 
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
-- **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (HireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
+- **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (MyHireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
 ### 5.2 API Layer
 
@@ -352,7 +352,7 @@ View count and `last_viewed_at` are only updated when the viewer is not the appl
 ## 8. Project Structure (Summary)
 
 ```
-hireview/
+my-hire-view/
 ├── app/
 │   ├── layout.tsx              # Root layout
 │   ├── page.tsx                # Home

@@ -110,7 +110,7 @@ export default function ApplicationPageHeader({
   return (
     <header className="pt-5 shadow-sm sm:pt-6 px-2 sm:px-6 lg:px-8">
       <Link href="/" className="text-xl font-bold text-white">
-        HireView
+        MyHireView
       </Link>
 
       <div className="mx-auto max-w-6xl ">

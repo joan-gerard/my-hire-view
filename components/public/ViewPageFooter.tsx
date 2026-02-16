@@ -19,7 +19,7 @@ export default function ViewPageFooter() {
             href="/"
             className="text-4xl font-bold text-white transition-colors hover:text-slate-200"
           >
-            HireView
+            MyHireView
           </Link>
           <p className="text-lg text-slate-400">{SLOGAN}</p>
         </div>

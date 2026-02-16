@@ -18,7 +18,7 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
           <div className="flex">
             <div className="flex shrink-0 items-center">
               <Link href="/" className="text-xl font-bold text-gray-900">
-                HireView
+                MyHireView
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

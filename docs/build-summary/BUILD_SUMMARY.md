@@ -1,4 +1,4 @@
-# HireView — Build Summary
+# MyHireView — Build Summary
 
 This document summarizes what was built commit-by-commit, in chronological order, to reflect the thinking process: what was created, updated, fixed, or refactored at each step.
 
@@ -31,7 +31,7 @@ Doc-only commits (BUILD_SUMMARY updates, update policy, etc.) are not given sepa
 | 1   | `19a1111` | scaffold | Next.js app bootstrap                                          |
 | 2   | `dcf670a` | docs     | README for project                                             |
 | 3   | `9ddb9fa` | tooling  | CURSOR_PROMPT.md                                               |
-| 4   | `604c19d` | feature  | HireView core: auth, admin, apply/view, APIs, DB               |
+| 4   | `604c19d` | feature  | MyHireView core: auth, admin, apply/view, APIs, DB            |
 | 5   | `631252a` | chore    | Cursor commit message command                                  |
 | 6   | `4005c55` | fix      | Edit page: normalize DB → form data                            |
 | 7   | `927f0b3` | docs     | ARCHITECTURE.md                                                |

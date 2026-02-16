@@ -1,6 +1,6 @@
 # Code Review – Refactoring & Best Practices
 
-This document summarizes the code review performed on the HireView codebase, including refactors already applied and remaining recommendations.
+This document summarizes the code review performed on the MyHireView codebase, including refactors already applied and remaining recommendations.
 
 ---
 

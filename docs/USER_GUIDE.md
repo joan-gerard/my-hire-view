@@ -1,6 +1,6 @@
-# HireView — User Guide
+# MyHireView — User Guide
 
-This guide describes what you can do with HireView as a **candidate** (job seeker) or as a **recruiter** (someone viewing an application).
+This guide describes what you can do with MyHireView as a **candidate** (job seeker) or as a **recruiter** (someone viewing an application).
 
 ---
 

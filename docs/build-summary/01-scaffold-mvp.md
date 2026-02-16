@@ -16,7 +16,7 @@ Commit-by-commit detail for the initial scaffold and MVP. See [BUILD_SUMMARY.md]
 - **Assets:** `public/file.svg`, `public/globe.svg`, `public/next.svg`, `public/vercel.svg`, `public/window.svg`
 - **Docs:** `README.md`
 
-Standard Next.js app bootstrap; no HireView-specific logic yet.
+Standard Next.js app bootstrap; no MyHireView-specific logic yet.
 
 ---
 
@@ -42,7 +42,7 @@ Standard Next.js app bootstrap; no HireView-specific logic yet.
 
 ---
 
-## 4. feat: add HireView — recruiter landing pages with auth, admin and public apply
+## 4. feat: add MyHireView — recruiter landing pages with auth, admin and public apply
 
 **Commit:** `604c19d`  
 **Intent:** Deliver the core product: recruiter landing pages, auth, admin dashboard, and public apply/view flow.

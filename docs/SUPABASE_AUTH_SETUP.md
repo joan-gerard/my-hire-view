@@ -1,6 +1,6 @@
 # Supabase Auth Setup Guide
 
-This guide walks you through configuring Supabase Authentication for HireView: enabling the Email provider and optionally customizing email templates.
+This guide walks you through configuring Supabase Authentication for MyHireView: enabling the Email provider and optionally customizing email templates.
 
 ---
 
@@ -49,7 +49,7 @@ Inside templates you can use these placeholders (syntax may be `{{ .Variable }}`
 
 **Subject (example):**
 ```
-Confirm your signup for HireView
+Confirm your signup for MyHireView
 ```
 
 **Body (example):**
@@ -57,7 +57,7 @@ Confirm your signup for HireView
 <h2>Confirm your signup</h2>
 <p>Follow this link to confirm your account:</p>
 <p><a href="{{ .ConfirmationURL }}">Confirm my email</a></p>
-<p>If you didn't sign up for HireView, you can ignore this email.</p>
+<p>If you didn't sign up for MyHireView, you can ignore this email.</p>
 ```
 
 ### Site URL (required for links in emails)
@@ -76,7 +76,7 @@ Save the changes.
 
 ### Auth callback route (required for email links)
 
-HireView exchanges Supabase email confirmation and password-reset codes on:
+MyHireView exchanges Supabase email confirmation and password-reset codes on:
 
 - `http://localhost:3000/auth/callback`
 - `https://your-domain.com/auth/callback`

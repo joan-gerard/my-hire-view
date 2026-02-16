@@ -17,7 +17,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/">
-              <h1 className="text-xl font-bold text-gray-900">HireView</h1>
+              <h1 className="text-xl font-bold text-gray-900">MyHireView</h1>
             </Link>
           </div>
           <div className="flex items-center gap-3">

@@ -78,7 +78,7 @@ Commit-by-commit detail for PR #2 (create-profile-page): commits `f5d964a` throu
 **Created:**
 
 - `docs/DATA_FLOW.md` — data flow diagrams (e.g. Mermaid) for applications, profile, view tracking, slug, etc.
-- `docs/USER_GUIDE.md` — how to use HireView (create application, edit profile, share link, etc.).
+- `docs/USER_GUIDE.md` — how to use MyHireView (create application, edit profile, share link, etc.).
 
 **Updated:**
 
