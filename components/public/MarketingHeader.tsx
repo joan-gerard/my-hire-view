@@ -17,7 +17,7 @@ interface MarketingHeaderProps {
 export default function MarketingHeader({ user }: MarketingHeaderProps) {
   return (
     <motion.header
-      className="bg-[var(--background)] shadow-sm border-b border-white/10"
+      className="fixed top-0 left-0 right-0 z-50 bg-[var(--background)] shadow-sm border-b border-white/10"
       initial={headerEntrance.initial}
       animate={headerEntrance.animate}
       transition={headerEntrance.transition}
