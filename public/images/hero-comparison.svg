@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="panel-left" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(30, 41, 59, 0.9)" />
+      <stop offset="100%" stop-color="rgba(30, 58, 95, 0.6)" />
+    </linearGradient>
+    <linearGradient id="panel-right" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(46, 117, 182, 0.25)" />
+      <stop offset="100%" stop-color="rgba(30, 58, 95, 0.5)" />
+    </linearGradient>
+  </defs>
+  <!-- Left panel: Traditional resume -->
+  <rect x="24" y="24" width="280" height="272" rx="12" fill="url(#panel-left)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <text x="164" y="56" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="14" font-weight="600">Traditional</text>
+  <rect x="72" y="80" width="184" height="24" rx="4" fill="rgba(255,255,255,0.08)"/>
+  <rect x="72" y="116" width="184" height="8" rx="2" fill="rgba(255,255,255,0.06)"/>
+  <rect x="72" y="132" width="160" height="8" rx="2" fill="rgba(255,255,255,0.06)"/>
+  <rect x="72" y="148" width="144" height="8" rx="2" fill="rgba(255,255,255,0.06)"/>
+  <rect x="72" y="180" width="184" height="24" rx="4" fill="rgba(255,255,255,0.08)"/>
+  <rect x="72" y="216" width="120" height="8" rx="2" fill="rgba(255,255,255,0.06)"/>
+  <path d="M144 256 L144 272 L176 272 L176 256" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <circle cx="164" cy="264" r="16" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <path d="M156 264 L164 256 L172 264 L164 272 Z" fill="rgba(255,255,255,0.2)"/>
+  <!-- Right panel: MyHireView -->
+  <rect x="336" y="24" width="280" height="272" rx="12" fill="url(#panel-right)" stroke="rgba(46, 117, 182, 0.4)" stroke-width="1"/>
+  <text x="476" y="56" text-anchor="middle" fill="rgba(255,255,255,0.95)" font-size="14" font-weight="600">MyHireView</text>
+  <!-- Video area -->
+  <rect x="356" y="72" width="240" height="120" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <circle cx="476" cy="132" r="28" fill="rgba(46, 117, 182, 0.8)"/>
+  <path d="M466 122 L466 142 L482 132 Z" fill="white"/>
+  <!-- Feature row: CV, Analytics, Link -->
+  <rect x="356" y="208" width="72" height="56" rx="8" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <path d="M372 228 L372 252 L396 252 L396 228 Z" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" fill="none"/>
+  <rect x="404" y="208" width="72" height="56" rx="8" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <path d="M420 252 L428 236 L436 252 L444 236 L452 252" stroke="rgba(46, 117, 182, 0.9)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="452" y="208" width="72" height="56" rx="8" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <path d="M468 228 L492 228 M480 228 L480 252" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M472 248 L488 248 M476 244 L484 252 L484 244" stroke="rgba(255,255,255,0.2)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <!-- VS divider -->
+  <circle cx="320" cy="160" r="20" fill="#1e293b" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="320" y="166" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="12" font-weight="700">VS</text>
+</svg>

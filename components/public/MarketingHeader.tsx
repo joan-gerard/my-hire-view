@@ -1,6 +1,10 @@
-import Link from 'next/link';
-import SignOutButton from '@/components/auth/SignOutButton';
-import type { User } from '@supabase/supabase-js';
+"use client";
+
+import SignOutButton from "@/components/auth/SignOutButton";
+import { headerEntrance } from "@/lib/landing-animations";
+import type { User } from "@supabase/supabase-js";
+import { motion } from "framer-motion";
+import Link from "next/link";
 
 interface MarketingHeaderProps {
   user: User | null;
@@ -12,12 +16,17 @@ interface MarketingHeaderProps {
  */
 export default function MarketingHeader({ user }: MarketingHeaderProps) {
   return (
-    <header className="bg-white shadow-sm">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <motion.header
+      className="fixed top-0 left-0 right-0 z-50 bg-[var(--background)] shadow-sm border-b border-white/10"
+      initial={headerEntrance.initial}
+      animate={headerEntrance.animate}
+      transition={headerEntrance.transition}
+    >
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/">
-              <h1 className="text-xl font-bold text-gray-900">MyHireView</h1>
+              <h1 className="text-xl font-bold text-white">MyHireView</h1>
             </Link>
           </div>
           <div className="flex items-center gap-3">
@@ -25,7 +34,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
               <>
                 <Link
                   href="/admin"
-                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+                  className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
                 >
                   Dashboard
                 </Link>
@@ -34,7 +43,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
             ) : (
               <Link
                 href="/login"
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+                className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
               >
                 Sign In
               </Link>
@@ -42,6 +51,6 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
           </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }

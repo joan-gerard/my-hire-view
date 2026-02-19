@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none" aria-hidden="true">
+  <!-- Overlapping avatar circles (placeholder for community) -->
+  <circle cx="24" cy="24" r="20" fill="rgba(46, 117, 182, 0.4)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <circle cx="24" cy="28" r="8" fill="rgba(255,255,255,0.2)"/>
+  <circle cx="72" cy="24" r="20" fill="rgba(46, 117, 182, 0.35)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <circle cx="72" cy="28" r="8" fill="rgba(255,255,255,0.2)"/>
+  <circle cx="120" cy="24" r="20" fill="rgba(46, 117, 182, 0.3)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <circle cx="120" cy="28" r="8" fill="rgba(255,255,255,0.2)"/>
+  <circle cx="168" cy="24" r="20" fill="rgba(46, 117, 182, 0.25)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <circle cx="168" cy="28" r="8" fill="rgba(255,255,255,0.2)"/>
+  <circle cx="200" cy="24" r="20" fill="rgba(30, 41, 59, 0.9)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <text x="200" y="30" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="14" font-weight="600">+</text>
+</svg>

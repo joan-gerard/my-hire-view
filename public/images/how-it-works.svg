@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 120" fill="none" aria-hidden="true">
+  <!-- Step 1: Create -->
+  <g>
+    <circle cx="80" cy="60" r="32" fill="rgba(30, 41, 59, 0.9)" stroke="rgba(46, 117, 182, 0.5)" stroke-width="2"/>
+    <text x="80" y="68" text-anchor="middle" fill="white" font-size="24" font-weight="700">1</text>
+    <path d="M72 44 L72 52 L80 52 L88 44" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </g>
+  <path d="M120 60 L160 60" stroke="rgba(46, 117, 182, 0.4)" stroke-width="2" stroke-dasharray="4 4"/>
+  <!-- Step 2: Share -->
+  <g>
+    <circle cx="240" cy="60" r="32" fill="rgba(30, 41, 59, 0.9)" stroke="rgba(46, 117, 182, 0.5)" stroke-width="2"/>
+    <text x="240" y="68" text-anchor="middle" fill="white" font-size="24" font-weight="700">2</text>
+    <path d="M224 52 L232 60 L224 68 M232 52 L240 60 L232 68" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </g>
+  <path d="M280 60 L320 60" stroke="rgba(46, 117, 182, 0.4)" stroke-width="2" stroke-dasharray="4 4"/>
+  <!-- Step 3: Track -->
+  <g>
+    <circle cx="400" cy="60" r="32" fill="rgba(30, 41, 59, 0.9)" stroke="rgba(46, 117, 182, 0.5)" stroke-width="2"/>
+    <text x="400" y="68" text-anchor="middle" fill="white" font-size="24" font-weight="700">3</text>
+    <path d="M384 56 L388 48 L396 52 L392 60 L396 68 L388 72 L384 64" stroke="rgba(46, 117, 182, 0.8)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

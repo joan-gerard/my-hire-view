@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import SignOutButton from '@/components/auth/SignOutButton';
-import type { User } from '@supabase/supabase-js';
+import SignOutButton from "@/components/auth/SignOutButton";
+import type { User } from "@supabase/supabase-js";
+import Link from "next/link";
 
 interface AdminHeaderProps {
   user: User;
@@ -13,7 +13,7 @@ interface AdminHeaderProps {
 export default function AdminHeader({ user }: AdminHeaderProps) {
   return (
     <nav className="bg-white shadow-sm">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between">
           <div className="flex">
             <div className="flex shrink-0 items-center">
