@@ -1,5 +1,7 @@
 # MyHireView — User Guide
 
+**MyHireView** is a platform that transforms traditional job applications into dynamic, personalized landing pages. Instead of sending a static PDF resume, candidates create a unique, shareable page for each job application that combines their CV, a video pitch, and optional profile information (portfolio, LinkedIn, location). Each application gets its own custom URL that can be shared with recruiters—no login required for them to view it. Candidates can track when their applications are viewed, manage multiple applications from a central dashboard, and tailor each application to the specific role and company. MyHireView helps job seekers stand out by showcasing their personality and communication skills through video while providing visibility into application engagement.
+
 This guide describes what you can do with MyHireView as a **candidate** (job seeker) or as a **recruiter** (someone viewing an application).
 
 ---
