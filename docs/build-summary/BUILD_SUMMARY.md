@@ -19,8 +19,9 @@ The full commit-by-commit detail is split into phase-based chunks:
 | 5 | **PR #4 — Application cards horizontal** | 31–37 (`f8585bb` → `85667e7` + merge) | [05-pr4-application-cards-horizontal.md](build-summary/05-pr4-application-cards-horizontal.md) |
 | 6 | **PR #5 — Fix view count** | 39–41 (`1824d5e`, `68f019e` + merge) | [06-pr5-fix-view-count.md](build-summary/06-pr5-fix-view-count.md) |
 | 7 | **PR #6 — Improve view page UI** | 43–57 (`72d5f57` → `7803a0f` + merge) | [07-pr6-improve-view-page-ui.md](build-summary/07-pr6-improve-view-page-ui.md) |
+| 8 | **PR #7 — Update landing page** | 62–64 (`cb07f75` → `3a90e55` + merge) | [08-pr7-update-landing-page.md](build-summary/08-pr7-update-landing-page.md) |
 
-Doc-only commits (BUILD_SUMMARY updates, update policy, etc.) are not given separate phase files: 25, 26, 30, 38, 42, 54, 55.
+Doc-only commits (BUILD_SUMMARY updates, update policy, etc.) are not given separate phase files: 25, 26, 30, 38, 42, 54, 55, 58, 59, 60, 66.
 
 ---
 
@@ -85,6 +86,15 @@ Doc-only commits (BUILD_SUMMARY updates, update policy, etc.) are not given sepa
 | 55  | `41d034a` | chore    | Revert BUILD_SUMMARY changes                                   |
 | 56  | `7803a0f` | feature  | View page footer for recruiters, viewer-status API             |
 | 57  | `6c180ad` | merge    | PR #6 improve-view-page-ui                                     |
+| 58  | `f576b5b` | docs     | update BUILD SUMMARY with latest commits                       |
+| 59  | `afe1ec4` | docs     | move build summary detail to docs/build-summary/ by phase     |
+| 60  | `097f832` | docs     | move BUILD SUMMARY to correct folder                           |
+| 61  | `a7ae61e` | chore    | rebrand HireView to MyHireView                                 |
+| 62  | `cb07f75` | feature  | Add pre-launch landing page with waitlist, new sections, and brand theme |
+| 63  | `87a31da` | UX       | update brand-primary and minor updates to LandingHero          |
+| 64  | `3a90e55` | fix      | Fix MarketingHeader to stay visible on scroll                  |
+| 65  | `3541c00` | merge    | PR #7 improve-marketing-pahe                                   |
+| 66  | `08005ff` | docs     | add MyHireView introductory paragraph                          |
 
 ---
 
