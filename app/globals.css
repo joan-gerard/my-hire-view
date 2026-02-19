@@ -67,6 +67,14 @@
   --font-funnelsans: "FunnelSans", system-ui, sans-serif;
 }
 
+/* Main background: #f6f0e9 (also used for cards background when section background uses Seconday background)
+Primary text: #2b1809
+
+Seconday background: #fcf6ef
+
+Primary button: #2b1809 background with white text
+Secondary button: #f0e7dd background with Primary text */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -86,6 +94,7 @@ h2,
 h3,
 h4,
 h5,
-h6 {
+h6,
+#logo {
   font-family: var(--font-faunaone);
 }
