@@ -63,20 +63,20 @@ export default function CandidateFieldsSection({
   const includedCount = FIELDS.filter(({ key }) => include[key]).length;
 
   return (
-    <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-      <h3 className="text-sm font-semibold text-gray-900">
+    <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
+      <h3 className="text-sm font-semibold text-[var(--foreground)]">
         Info shown to recruiters{' '}
-        <span className="font-normal text-gray-500">
+        <span className="font-normal text-[var(--foreground)]/60">
           ({includedCount}/{TOTAL_FIELDS})
         </span>
       </h3>
-      <p className="mt-1 text-xs text-gray-500">
+      <p className="mt-1 text-xs text-[var(--foreground)]/60">
         Toggle off any field you do not want to share. Edits here apply only to this application.
       </p>
       <button
         type="button"
         onClick={toggleExpanded}
-        className="mt-2 text-xs font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:underline"
+        className="mt-2 text-xs font-medium text-[var(--brand-primary)] hover:opacity-80 focus:outline-none focus:underline"
       >
         {expanded ? 'Hide fields' : 'Show fields'}
       </button>

@@ -12,8 +12,8 @@ export default function YouTubeEmbed({ url }: YouTubeEmbedProps) {
 
   if (!videoId) {
     return (
-      <div className="rounded-lg bg-gray-100 p-8 text-center">
-        <p className="text-gray-600">Invalid YouTube URL</p>
+      <div className="rounded-lg bg-[var(--background)] p-8 text-center">
+        <p className="text-[var(--foreground)]/80">Invalid YouTube URL</p>
       </div>
     );
   }

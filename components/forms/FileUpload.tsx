@@ -90,7 +90,7 @@ export default function FileUpload({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-sm font-medium text-[var(--foreground)]">
         CV (PDF)
       </label>
       <div className="mt-1 flex flex-col gap-2">
@@ -100,13 +100,13 @@ export default function FileUpload({
             type="file"
             accept="application/pdf"
             onChange={handleFileChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+            className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-md file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90"
           />
           {showPending && (
             <button
               type="button"
               onClick={handleClearPending}
-              className="text-sm text-gray-600 hover:text-gray-900 underline"
+              className="text-sm text-[var(--foreground)]/80 hover:text-[var(--foreground)] underline"
             >
               Remove selection
             </button>
@@ -114,18 +114,18 @@ export default function FileUpload({
         </div>
 
         {showPending && pendingFile && (
-          <div className="rounded border border-gray-200 bg-gray-50/80 p-3">
-            <p className="text-sm font-medium text-gray-700">
+          <div className="rounded border border-[var(--foreground)]/10 bg-[var(--background)] p-3">
+            <p className="text-sm font-medium text-[var(--foreground)]">
               Selected: {pendingFile.name}
             </p>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-[var(--foreground)]/60 mt-0.5">
               File will be uploaded when you save the application.
             </p>
             {canPreview && (
               <button
                 type="button"
                 onClick={openPreview}
-                className="mt-2 text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                className="mt-2 text-sm text-[var(--brand-primary)] hover:opacity-80 hover:underline"
               >
                 Preview PDF
               </button>
@@ -137,16 +137,16 @@ export default function FileUpload({
           <dialog
             ref={dialogRef}
             onCancel={closePreview}
-            className="w-[90vw] max-w-4xl rounded-lg border border-gray-200 bg-white p-0 shadow-xl backdrop:bg-black/50"
+            className="w-[90vw] max-w-4xl rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-0 shadow-xl backdrop:bg-black/50"
           >
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2">
-              <span className="text-sm font-medium text-gray-700">
+            <div className="flex items-center justify-between border-b border-[var(--foreground)]/10 px-4 py-2">
+              <span className="text-sm font-medium text-[var(--foreground)]">
                 CV preview
               </span>
               <button
                 type="button"
                 onClick={closePreview}
-                className="rounded px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                className="rounded px-2 py-1 text-sm text-[var(--foreground)]/80 hover:bg-[var(--background)] hover:text-[var(--foreground)]"
                 aria-label="Close preview"
               >
                 Close
@@ -156,20 +156,20 @@ export default function FileUpload({
               <iframe
                 src={previewUrl!}
                 title="CV preview"
-                className="h-[70vh] w-full rounded border border-gray-200"
+                className="h-[70vh] w-full rounded border border-[var(--foreground)]/10"
               />
             </div>
           </dialog>
         )}
 
         {showSaved && cvUrlExists && (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-[var(--foreground)]/80">
             CV uploaded:{' '}
             <a
               href={value}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-[var(--brand-primary)] hover:underline"
             >
               View
             </a>

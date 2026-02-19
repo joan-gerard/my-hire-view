@@ -4,8 +4,8 @@ const BASE_CLASSES =
   "inline-flex items-center rounded-lg text-base font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2";
 
 const VARIANT_CLASSES = {
-  portfolio: "bg-gray-800 hover:bg-gray-700 focus:ring-gray-500 px-5 py-2.5",
-  linkedin: "px-3 py-2.5 bg-[#0A66C2] hover:bg-[#004182] focus:ring-[#0A66C2]",
+  portfolio: "bg-[var(--brand-primary)] hover:opacity-90 focus:ring-[var(--brand-primary)] px-5 py-2.5 text-[var(--brand-primary-text)]",
+  linkedin: "px-3 py-2.5 bg-[#0A66C2] hover:bg-[#004182] focus:ring-[#0A66C2] text-white",
 } as const;
 
 export type ExternalLinkButtonVariant = keyof typeof VARIANT_CLASSES;

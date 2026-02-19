@@ -31,10 +31,10 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Applications</h1>
+        <h1 className="text-3xl font-bold text-[var(--foreground)]">Applications</h1>
         <Link
           href="/admin/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+          className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95"
         >
           Create New Application
         </Link>

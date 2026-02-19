@@ -59,17 +59,17 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-[var(--foreground)]">
             Create your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-[var(--foreground)]/80">
             Or{' '}
             <Link
               href="/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-[var(--brand-primary)] hover:opacity-80"
             >
               sign in to your existing account
             </Link>
@@ -82,8 +82,8 @@ export default function SignUpPage() {
             </div>
           )}
           {notice && (
-            <div className="rounded-md bg-blue-50 p-4">
-              <div className="text-sm text-blue-800">{notice}</div>
+            <div className="rounded-md bg-[var(--brand-secondary)] p-4">
+              <div className="text-sm text-[var(--foreground)]">{notice}</div>
             </div>
           )}
           <div className="-space-y-px rounded-md shadow-sm">
@@ -97,7 +97,7 @@ export default function SignUpPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="relative block w-full rounded-t-md border-0 px-3 py-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-t-md border-0 px-3 py-2 text-[var(--foreground)] ring-1 ring-inset ring-[var(--foreground)]/20 placeholder:text-[var(--foreground)]/50 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-[var(--brand-primary)] sm:text-sm sm:leading-6"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -114,7 +114,7 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 required
                 minLength={6}
-                className="relative block w-full rounded-b-md border-0 px-3 py-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-b-md border-0 px-3 py-2 text-[var(--foreground)] ring-1 ring-inset ring-[var(--foreground)]/20 placeholder:text-[var(--foreground)]/50 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-[var(--brand-primary)] sm:text-sm sm:leading-6"
                 placeholder="Password (min. 6 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -126,7 +126,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative flex w-full justify-center rounded-md bg-[var(--brand-primary)] px-3 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating account...' : 'Sign up'}
             </button>

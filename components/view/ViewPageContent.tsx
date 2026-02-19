@@ -57,7 +57,7 @@ export default function ViewPageContent({
   const isArchived = application.is_active === false;
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-[var(--background)]">
       <ApplicationPageHeader
         company={application.company}
         role={application.role}

@@ -13,11 +13,11 @@ export default function ProfilePictureField({
   onShowProfilePictureChange,
 }: ProfilePictureFieldProps) {
   return (
-    <fieldset className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
-      <legend className="px-1 text-base font-semibold text-gray-900">
+    <fieldset className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
+      <legend className="px-1 text-base font-semibold text-[var(--foreground)]">
         Profile picture
       </legend>
-      <p className="mt-0.5 mb-3 text-sm text-gray-600">
+      <p className="mt-0.5 mb-3 text-sm text-[var(--foreground)]/80">
         {hasProfilePicture
           ? "Show your profile picture on this application?"
           : "Upload a profile picture in Profile to show it on applications!"}
@@ -30,9 +30,9 @@ export default function ProfilePictureField({
             checked={hasProfilePicture && showProfilePicture === true}
             disabled={!hasProfilePicture}
             onChange={() => onShowProfilePictureChange(true)}
-            className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600 disabled:opacity-60"
+            className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)] disabled:opacity-60"
           />
-          <span className="text-base font-medium text-gray-900">Yes</span>
+          <span className="text-base font-medium text-[var(--foreground)]">Yes</span>
         </label>
         <label className="inline-flex cursor-pointer items-center gap-2.5">
           <input
@@ -41,9 +41,9 @@ export default function ProfilePictureField({
             checked={!hasProfilePicture || showProfilePicture === false}
             disabled={!hasProfilePicture}
             onChange={() => onShowProfilePictureChange(false)}
-            className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600 disabled:opacity-60"
+            className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)] disabled:opacity-60"
           />
-          <span className="text-base font-medium text-gray-900">No</span>
+          <span className="text-base font-medium text-[var(--foreground)]">No</span>
         </label>
       </div>
     </fieldset>

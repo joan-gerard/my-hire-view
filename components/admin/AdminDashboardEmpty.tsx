@@ -9,8 +9,8 @@ export default function AdminDashboardEmpty({
   hasSearchQuery,
 }: AdminDashboardEmptyProps) {
   return (
-    <div className="rounded-lg bg-white p-12 text-center shadow">
-      <p className="text-gray-500">
+    <div className="rounded-lg bg-[var(--secondary-background)] p-12 text-center shadow border border-[var(--foreground)]/10">
+      <p className="text-[var(--foreground)]/60">
         {hasSearchQuery
           ? 'No applications match your search.'
           : "You don't have any applications yet. Create your first one!"}

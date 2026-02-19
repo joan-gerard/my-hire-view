@@ -55,8 +55,8 @@ function StatusIcon({
           )}
         </span>
       ) : (
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200">
-          <ArchiveIcon className="h-5 w-5 text-gray-500" />
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)]/10">
+          <ArchiveIcon className="h-5 w-5 text-[var(--foreground)]/60" />
         </span>
       )}
     </div>
@@ -82,7 +82,7 @@ export default function ApplicationCard({
   };
 
   return (
-    <div className="relative overflow-visible rounded-lg bg-white shadow">
+    <div className="relative overflow-visible rounded-lg bg-[var(--secondary-background)] shadow border border-[var(--foreground)]/10">
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
           {/* 1. Status icon */}
@@ -92,7 +92,7 @@ export default function ApplicationCard({
           />
 
           {/* 2 & 3. Company name - Role applied */}
-          <span className="min-w-0 text-sm font-medium text-gray-900 sm:text-base">
+          <span className="min-w-0 text-sm font-medium text-[var(--foreground)] sm:text-base">
             {application.company} - {application.role}
           </span>
 
@@ -103,7 +103,7 @@ export default function ApplicationCard({
           <button
             type="button"
             onClick={handleCopyLink}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-blue-300 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--brand-primary)]/30 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
           >
             <CopyIcon className="h-4 w-4" />
             {copied ? 'Copied!' : 'Copy Link'}
@@ -113,7 +113,7 @@ export default function ApplicationCard({
           <button
             type="button"
             onClick={() => setInsightsExpanded(!insightsExpanded)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-blue-300 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--brand-primary)]/30 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
           >
             <ChartIcon className="h-4 w-4" />
             View Insights
@@ -129,7 +129,7 @@ export default function ApplicationCard({
             href={`/view/${application.slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
           >
             <ExternalLinkIcon className="h-4 w-4" />
             View Application

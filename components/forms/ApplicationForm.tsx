@@ -251,7 +251,7 @@ export default function ApplicationForm({
         placeholder="auto-generated-slug"
         required
       />
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-[var(--foreground)]/60">
         This will be used in the URL: {shareableUrl || "..."}
       </p>
 
