@@ -4,12 +4,12 @@
 export default function AdminDashboardSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-8 w-64 animate-pulse rounded bg-gray-200" />
+      <div className="h-8 w-64 animate-pulse rounded bg-[var(--foreground)]/10" />
       <div className="flex flex-col gap-4">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-16 animate-pulse rounded-lg bg-gray-200"
+            className="h-16 animate-pulse rounded-lg bg-[var(--foreground)]/10"
           />
         ))}
       </div>

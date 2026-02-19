@@ -28,10 +28,10 @@ export default function CandidateFieldRow({
         id={id}
         checked={included}
         onChange={(e) => onIncludedChange(e.target.checked)}
-        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+        className="h-4 w-4 rounded border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
         aria-label={`Include ${label}`}
       />
-      <label htmlFor={id} className="flex-1 text-sm font-medium text-gray-700">
+      <label htmlFor={id} className="flex-1 text-sm font-medium text-[var(--foreground)]">
         {label}
       </label>
       <Input

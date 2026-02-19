@@ -102,14 +102,14 @@ export default function NewApplicationPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">
+      <h1 className="text-3xl font-bold text-[var(--foreground)]">
         Create New Application
       </h1>
-      <div className="rounded-lg bg-white p-6 shadow">
+      <div className="rounded-lg bg-[var(--secondary-background)] p-6 shadow border border-[var(--foreground)]/10">
         {profileLoading ? (
           <div className="space-y-4">
-            <div className="h-24 animate-pulse rounded-lg bg-gray-100" />
-            <div className="h-96 animate-pulse rounded-lg bg-gray-100" />
+            <div className="h-24 animate-pulse rounded-lg bg-[var(--background)]" />
+            <div className="h-96 animate-pulse rounded-lg bg-[var(--background)]" />
           </div>
         ) : (
           <ApplicationForm

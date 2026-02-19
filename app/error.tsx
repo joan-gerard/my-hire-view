@@ -15,10 +15,10 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Something went wrong!</h2>
-        <p className="mt-4 text-gray-600">
+        <h2 className="text-2xl font-bold text-[var(--foreground)]">Something went wrong!</h2>
+        <p className="mt-4 text-[var(--foreground)]/80">
           {error.message || 'An unexpected error occurred'}
         </p>
         <div className="mt-6 flex justify-center gap-4">

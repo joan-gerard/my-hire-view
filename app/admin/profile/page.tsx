@@ -36,19 +36,19 @@ export default async function AdminProfilePage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
+      <h1 className="text-3xl font-bold text-[var(--foreground)]">Profile</h1>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Account</h2>
+      <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">Account</h2>
         <dl className="mt-4 space-y-3">
           <div>
-            <dt className="text-sm font-medium text-gray-500">Email</dt>
-            <dd className="mt-1 text-sm text-gray-900">{user.email ?? '—'}</dd>
+            <dt className="text-sm font-medium text-[var(--foreground)]/60">Email</dt>
+            <dd className="mt-1 text-sm text-[var(--foreground)]">{user.email ?? '—'}</dd>
           </div>
           {user.created_at && (
             <div>
-              <dt className="text-sm font-medium text-gray-500">Member since</dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dt className="text-sm font-medium text-[var(--foreground)]/60">Member since</dt>
+              <dd className="mt-1 text-sm text-[var(--foreground)]">
                 {new Date(user.created_at).toLocaleDateString(undefined, {
                   dateStyle: 'long',
                 })}
@@ -58,9 +58,9 @@ export default async function AdminProfilePage() {
         </dl>
       </section>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Profile details</h2>
-        <p className="mt-1 text-sm text-gray-500">
+      <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">Profile details</h2>
+        <p className="mt-1 text-sm text-[var(--foreground)]/60">
           This info is used when you create or update applications so recruiters see your name and links.
         </p>
         <div className="mt-4">
@@ -68,9 +68,9 @@ export default async function AdminProfilePage() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Applications</h2>
-        <p className="mt-2 text-sm text-gray-600">
+      <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">Applications</h2>
+        <p className="mt-2 text-sm text-[var(--foreground)]/80">
           You have <strong>{applicationCount}</strong> application
           {applicationCount !== 1 ? 's' : ''} in total
           {applicationCount > 0 && (
@@ -79,7 +79,7 @@ export default async function AdminProfilePage() {
         </p>
         <Link
           href="/admin"
-          className="mt-4 inline-block text-sm font-medium text-blue-600 hover:text-blue-500"
+          className="mt-4 inline-block text-sm font-medium text-[var(--brand-primary)] hover:opacity-80"
         >
           View dashboard →
         </Link>

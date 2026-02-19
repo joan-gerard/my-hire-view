@@ -60,7 +60,7 @@ export default function PDFViewer({
         {!isMissingOrUnavailable && (
           <button
             onClick={() => window.open(url, "_blank")}
-            className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+            className="mt-4 rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95"
           >
             Try opening in new tab
           </button>
@@ -76,10 +76,10 @@ export default function PDFViewer({
 
   return (
     <div className="space-y-4 p-2">
-      <div className="flex max-h-[calc(100vh-200px)] justify-center overflow-y-auto rounded-lg bg-gray-50 p-4">
+      <div className="flex max-h-[calc(100vh-200px)] justify-center overflow-y-auto rounded-lg bg-[var(--background)] p-4">
         {loading && (
           <div className="flex items-center justify-center p-8">
-            <div className="text-gray-600">Loading PDF...</div>
+            <div className="text-[var(--foreground)]/80">Loading PDF...</div>
           </div>
         )}
         <Document
@@ -88,7 +88,7 @@ export default function PDFViewer({
           onLoadError={onDocumentLoadError}
           loading={
             <div className="flex items-center justify-center p-8">
-              <div className="text-gray-600">Loading PDF...</div>
+              <div className="text-[var(--foreground)]/80">Loading PDF...</div>
             </div>
           }
           className="max-w-full"

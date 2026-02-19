@@ -141,8 +141,8 @@ export default function EditApplicationPage() {
   if (fetching) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-64 animate-pulse rounded bg-gray-200"></div>
-        <div className="h-96 animate-pulse rounded-lg bg-gray-200"></div>
+        <div className="h-8 w-64 animate-pulse rounded bg-[var(--foreground)]/10"></div>
+        <div className="h-96 animate-pulse rounded-lg bg-[var(--foreground)]/10"></div>
       </div>
     );
   }
@@ -173,8 +173,8 @@ export default function EditApplicationPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Edit Application</h1>
-      <div className="rounded-lg bg-white p-6 shadow">
+      <h1 className="text-3xl font-bold text-[var(--foreground)]">Edit Application</h1>
+      <div className="rounded-lg bg-[var(--secondary-background)] p-6 shadow border border-[var(--foreground)]/10">
         <ApplicationForm
           initialData={initialData}
           onSubmit={handleSubmit}
