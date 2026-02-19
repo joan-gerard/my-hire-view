@@ -60,12 +60,12 @@ export default function EmailCaptureForm() {
   if (status === 'success') {
     return (
       <motion.div
-        className="mx-auto max-w-xl rounded-xl bg-[var(--brand-surface)] p-8 text-center border border-white/10"
+        className="mx-auto max-w-xl rounded-xl bg-[var(--background)] p-8 text-center border border-[var(--foreground)]/10"
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
-        <p className="text-lg font-medium text-white">
+        <p className="text-lg font-medium text-[var(--foreground)]">
           You&apos;re on the list! Check your email for exclusive updates and be among the first to try MyHireView when we launch.
         </p>
       </motion.div>
@@ -75,7 +75,7 @@ export default function EmailCaptureForm() {
   return (
     <motion.section
       id="early-access"
-      className="bg-[var(--background)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+      className="bg-[var(--secondary-background)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
       initial={fadeUp.initial}
       whileInView={fadeUp.whileInView}
       viewport={viewport}
@@ -85,7 +85,7 @@ export default function EmailCaptureForm() {
         <p className="text-sm font-semibold uppercase tracking-wide text-[var(--brand-primary)]">
           Be the first to stand out
         </p>
-        <p className="mt-4 text-2xl font-bold text-[var(--brand-text)] sm:text-3xl">
+        <p className="mt-4 text-2xl font-bold text-[var(--foreground)] sm:text-3xl">
           Early signups get 3 months of Pro free when we launch!
         </p>
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -101,7 +101,7 @@ export default function EmailCaptureForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={status === 'loading'}
-              className="w-full rounded-lg border border-white/20 bg-[var(--brand-surface)] px-4 py-3 text-white placeholder:text-white/50 focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 disabled:opacity-70"
+              className="w-full rounded-lg border border-[var(--foreground)]/20 bg-[var(--background)] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--foreground)]/50 focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 disabled:opacity-70"
             />
           </div>
           <div>
@@ -116,7 +116,7 @@ export default function EmailCaptureForm() {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               disabled={status === 'loading'}
-              className="w-full rounded-lg border border-white/20 bg-[var(--brand-surface)] px-4 py-3 text-white placeholder:text-white/50 focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 disabled:opacity-70"
+              className="w-full rounded-lg border border-[var(--foreground)]/20 bg-[var(--background)] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--foreground)]/50 focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 disabled:opacity-70"
             />
           </div>
           <div>
@@ -128,7 +128,7 @@ export default function EmailCaptureForm() {
               value={jobSearchStatus}
               onChange={(e) => setJobSearchStatus(e.target.value)}
               disabled={status === 'loading'}
-              className="w-full rounded-lg border border-white/20 bg-[var(--brand-surface)] px-4 py-3 text-white focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 disabled:opacity-70"
+              className="w-full rounded-lg border border-[var(--foreground)]/20 bg-[var(--background)] px-4 py-3 text-[var(--foreground)] focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 disabled:opacity-70"
             >
               {JOB_SEARCH_OPTIONS.map((opt) => (
                 <option key={opt.value || 'empty'} value={opt.value}>
@@ -145,7 +145,7 @@ export default function EmailCaptureForm() {
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="w-full rounded-lg bg-[var(--brand-primary)] px-6 py-4 text-lg font-semibold text-white shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 focus:ring-offset-[var(--background)] disabled:opacity-70"
+            className="w-full rounded-lg bg-[var(--brand-primary)] px-6 py-4 text-lg font-semibold text-[var(--brand-primary-text)] shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 focus:ring-offset-[var(--secondary-background)] disabled:opacity-70"
           >
             {status === 'loading' ? 'Joining…' : 'Get Early Access'}
           </button>

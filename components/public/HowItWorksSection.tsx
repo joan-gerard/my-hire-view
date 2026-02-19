@@ -17,14 +17,14 @@ const STEPS = [
 export default function HowItWorksSection() {
   return (
     <motion.section
-      className="bg-[var(--background)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+      className="bg-[var(--secondary-background)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
       initial={fadeUp.initial}
       whileInView={fadeUp.whileInView}
       viewport={viewport}
       transition={fadeUp.transition}
     >
       <div className="mx-auto max-w-4xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-[var(--brand-text)] sm:text-4xl">
+        <h2 className="text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
           Stand Out in Three Simple Steps
         </h2>
         <motion.div
@@ -51,14 +51,14 @@ export default function HowItWorksSection() {
         >
           {STEPS.map((step) => (
             <motion.div key={step.number} className="relative flex flex-col" variants={staggerItem}>
-              <div className="flex flex-1 flex-col rounded-xl bg-[var(--brand-surface)] p-6 shadow-sm border border-white/10">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand-primary)] text-lg font-bold text-white">
+              <div className="flex flex-1 flex-col rounded-xl bg-[var(--background)] p-6 shadow-sm border border-[var(--foreground)]/10">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand-primary)] text-lg font-bold text-[var(--brand-primary-text)]">
                   {step.number}
                 </span>
-                <h3 className="mt-4 text-lg font-semibold text-[var(--brand-text)]">
+                <h3 className="mt-4 text-lg font-semibold text-[var(--foreground)]">
                   {step.title}
                 </h3>
-                <p className="mt-2 flex-1 text-[var(--brand-text)]/80">
+                <p className="mt-2 flex-1 text-[var(--foreground)]/80">
                   {step.description}
                 </p>
               </div>

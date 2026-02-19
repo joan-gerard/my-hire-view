@@ -28,14 +28,14 @@ const FAQ_ITEMS = [
 export default function FAQSection() {
   return (
     <motion.section
-      className="bg-[var(--background)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+      className="bg-[var(--secondary-background)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
       initial={fadeUp.initial}
       whileInView={fadeUp.whileInView}
       viewport={viewport}
       transition={fadeUp.transition}
     >
       <div className="mx-auto max-w-3xl">
-        <h2 className="text-center text-3xl font-bold tracking-tight text-[var(--brand-text)] sm:text-4xl">
+        <h2 className="text-center text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
           Common Questions
         </h2>
         <motion.dl
@@ -47,10 +47,10 @@ export default function FAQSection() {
         >
           {FAQ_ITEMS.map((item, index) => (
             <motion.div key={index} variants={staggerItem}>
-              <dt className="text-lg font-semibold text-[var(--brand-text)]">
+              <dt className="text-lg font-semibold text-[var(--foreground)]">
                 {item.q}
               </dt>
-              <dd className="mt-2 text-[var(--brand-text)]/90">
+              <dd className="mt-2 text-[var(--foreground)]/90">
                 {item.a}
               </dd>
             </motion.div>

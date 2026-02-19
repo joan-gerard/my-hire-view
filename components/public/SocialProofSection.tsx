@@ -20,10 +20,10 @@ export default function SocialProofSection() {
       transition={fadeUp.transition}
     >
       <div className="mx-auto max-w-3xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-[var(--brand-text)] sm:text-4xl">
+        <h2 className="text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
           Join {WAITLIST_COUNT}+ Job Seekers on the Waitlist
         </h2>
-        <p className="mt-4 text-lg text-[var(--brand-text)]/80">
+        <p className="mt-4 text-lg text-[var(--foreground)]/80">
           Be part of a community that&apos;s rethinking how job applications work.
         </p>
         <motion.div

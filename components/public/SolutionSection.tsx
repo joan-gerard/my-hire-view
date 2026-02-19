@@ -37,7 +37,7 @@ export default function SolutionSection() {
     >
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-[var(--brand-text)] sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
             Introducing MyHireView: Your Application, Elevated
           </h2>
         </div>
@@ -53,7 +53,7 @@ export default function SolutionSection() {
             alt=""
             width={560}
             height={240}
-            className="w-full rounded-xl border border-white/10 bg-[var(--brand-surface)]/30 object-contain"
+            className="w-full rounded-xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] object-contain"
           />
         </motion.div>
         <motion.div
@@ -65,11 +65,11 @@ export default function SolutionSection() {
         >
           {FEATURES.map(({ title, description, Icon }) => (
             <motion.div key={title} className="flex flex-col" variants={staggerItem}>
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-white">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-[var(--brand-primary-text)]">
                 <Icon className="h-6 w-6" />
               </div>
-              <h3 className="text-lg font-semibold text-[var(--brand-text)]">{title}</h3>
-              <p className="mt-2 flex-1 text-[var(--brand-text)]/80">
+              <h3 className="text-lg font-semibold text-[var(--foreground)]">{title}</h3>
+              <p className="mt-2 flex-1 text-[var(--foreground)]/80">
                 {description}
               </p>
             </motion.div>

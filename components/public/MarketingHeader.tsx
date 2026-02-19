@@ -17,7 +17,7 @@ interface MarketingHeaderProps {
 export default function MarketingHeader({ user }: MarketingHeaderProps) {
   return (
     <motion.header
-      className="fixed top-0 left-0 right-0 z-50 bg-[var(--background)] shadow-sm border-b border-white/10"
+      className="fixed top-0 left-0 right-0 z-50 bg-[var(--background)] shadow-sm border-b border-[var(--foreground)]/10"
       initial={headerEntrance.initial}
       animate={headerEntrance.animate}
       transition={headerEntrance.transition}
@@ -26,7 +26,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/">
-              <h1 className="text-xl font-bold text-white">MyHireView</h1>
+              <h1 className="text-xl font-bold text-[var(--foreground)]">MyHireView</h1>
             </Link>
           </div>
           <div className="flex items-center gap-3">
@@ -34,7 +34,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
               <>
                 <Link
                   href="/admin"
-                  className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
+                  className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95"
                 >
                   Dashboard
                 </Link>
@@ -43,7 +43,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
             ) : (
               <Link
                 href="/login"
-                className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
+                className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95"
               >
                 Sign In
               </Link>
