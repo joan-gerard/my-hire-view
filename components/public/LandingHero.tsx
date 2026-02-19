@@ -11,20 +11,20 @@ import Image from "next/image";
 export default function LandingHero() {
   return (
     <motion.section
-      className="relative overflow-hidden bg-background px-4 py-16 sm:px-6 sm:py-24 lg:px-8"
+      className="relative overflow-hidden bg-[var(--background)] px-4 py-16 sm:px-6 sm:py-24 lg:px-8"
       initial="hidden"
       animate="visible"
       variants={staggerContainer.variants}
     >
       <div className="mx-auto max-w-4xl text-center">
         <motion.h1
-          className="text-5xl font-medium tracking-tight leading-tight text-(--brand-text) sm:text-5xl lg:text-6xl text-balance"
+          className="text-5xl font-medium tracking-tight leading-tight text-[var(--foreground)] sm:text-5xl lg:text-6xl text-balance"
           variants={staggerItem}
         >
           Your Job Application Deserves More Than a PDF
         </motion.h1>
         <motion.p
-          className="mx-auto mt-6 max-w-2xl text-base leading-normal text-(--brand-text)/80"
+          className="mx-auto mt-6 max-w-2xl text-base leading-normal text-[var(--foreground)]/80"
           variants={staggerItem}
         >
           MyHireView transforms your resume into a dynamic, trackable experience
@@ -33,7 +33,7 @@ export default function LandingHero() {
         </motion.p>
         <motion.a
           href="#early-access"
-          className="mt-8 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold bg-(--brand-primary) text-white hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--brand-primary) border border-blue-400/50"
+          className="mt-8 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold bg-[var(--brand-primary)] text-[var(--brand-primary-text)] hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]"
           variants={staggerItem}
         >
           Get Early Access
@@ -48,7 +48,7 @@ export default function LandingHero() {
             alt=""
             width={640}
             height={320}
-            className="w-full rounded-xl border border-white/10 bg-(--brand-surface)/50 object-contain"
+            className="w-full rounded-xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] object-contain"
             priority
           />
         </motion.div>

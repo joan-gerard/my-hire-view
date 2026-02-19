@@ -1,75 +1,65 @@
 @import "tailwindcss";
 
-/* VendSans – headings (local fonts from public/) */
+/* FaunaOne – headings (local font from public/fonts/) */
 @font-face {
-  font-family: "VendSans";
-  src: url("/VendSans-Regular.ttf") format("truetype");
+  font-family: "FaunaOne";
+  src: url("/fonts/FaunaOne-Regular.ttf") format("truetype");
   font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "VendSans";
-  src: url("/VendSans-Medium.ttf") format("truetype");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "VendSans";
-  src: url("/VendSans-SemiBold.ttf") format("truetype");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "VendSans";
-  src: url("/VendSans-Bold.ttf") format("truetype");
-  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
-/* FunnelSans – body text */
+/* FunnelSans – body text and buttons */
 @font-face {
   font-family: "FunnelSans";
-  src: url("/FunnelSans-Regular.ttf") format("truetype");
+  src: url("/fonts/FunnelSans-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "FunnelSans";
-  src: url("/FunnelSans-Medium.ttf") format("truetype");
+  src: url("/fonts/FunnelSans-Medium.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "FunnelSans";
-  src: url("/FunnelSans-SemiBold.ttf") format("truetype");
+  src: url("/fonts/FunnelSans-SemiBold.ttf") format("truetype");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "FunnelSans";
-  src: url("/FunnelSans-Bold.ttf") format("truetype");
+  src: url("/fonts/FunnelSans-Bold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
-  --font-vendsans: "VendSans", system-ui, sans-serif;
+  /* Main background: #f6f0e9 (also used for cards background when section background uses Secondary background) */
+  --background: #f6f0e9;
+  /* Primary text: #2b1809 */
+  --foreground: #2b1809;
+  /* Secondary background: #fcf6ef */
+  --secondary-background: #fcf6ef;
+  /* Primary button: #2b1809 background with white text */
+  --brand-primary: #2b1809;
+  --brand-primary-text: #ffffff;
+  /* Secondary button: #f0e7dd background with Primary text */
+  --brand-secondary: #f0e7dd;
+  --brand-secondary-text: #2b1809;
+  /* Legacy variables for compatibility */
+  --brand-text: #2b1809;
+  --brand-surface: #f6f0e9;
+  --brand-accent: #f0e7dd;
+  
+  /* Typography */
+  --font-faunaone: "FaunaOne", serif;
   --font-funnelsans: "FunnelSans", system-ui, sans-serif;
-  /* Landing page brand (LANDING_PAGE_BRIEF.md) – dark theme */
-  --brand-primary: #3064ff;
-  --brand-text: #ffffff;
-  --brand-accent: #1e3a5f;
-  --brand-surface: #1e293b;
 }
 
 @theme inline {
@@ -77,14 +67,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-funnelsans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-vendsans);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #000000;
-    --foreground: #ffffff;
-  }
+  --font-heading: var(--font-faunaone);
 }
 
 body {
@@ -99,5 +82,5 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-vendsans);
+  font-family: var(--font-faunaone);
 }

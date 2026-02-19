@@ -11,20 +11,20 @@ const SLOGAN = "Your video pitch, one link.";
  */
 export default function ViewPageFooter() {
   return (
-    <footer className="mt-12 border-t border-slate-700/50 px-4 py-10 sm:px-6 lg:px-12">
+    <footer className="mt-12 border-t border-[var(--foreground)]/10 px-4 py-10 sm:px-6 lg:px-12 bg-[var(--background)]">
       <div className="mx-auto">
         {/* Logo and slogan — centered */}
         <div className="flex flex-col items-center gap-2 text-center">
           <Link
             href="/"
-            className="text-4xl font-bold text-white transition-colors hover:text-slate-200"
+            className="text-4xl font-bold text-[var(--foreground)] transition-colors hover:opacity-80"
           >
             MyHireView
           </Link>
-          <p className="text-lg text-slate-400">{SLOGAN}</p>
+          <p className="text-lg text-[var(--foreground)]/70">{SLOGAN}</p>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-4 border-t border-slate-700/50 pt-8 text-center lg:grid-cols-3 lg:gap-6">
+        <div className="mt-8 grid grid-cols-1 gap-4 border-t border-[var(--foreground)]/10 pt-8 text-center lg:grid-cols-3 lg:gap-6">
           {/* 1. Terms & Privacy */}
           <div className="flex flex-col items-center lg:items-start gap-2 order-3 lg:order-1">
             <nav
@@ -33,13 +33,13 @@ export default function ViewPageFooter() {
             >
               <Link
                 href="/terms"
-                className="text-sm text-slate-300 hover:text-white"
+                className="text-sm text-[var(--foreground)]/70 hover:text-[var(--foreground)]"
               >
                 Terms of Service
               </Link>
               <Link
                 href="/privacy"
-                className="text-sm text-slate-300 hover:text-white"
+                className="text-sm text-[var(--foreground)]/70 hover:text-[var(--foreground)]"
               >
                 Privacy Policy
               </Link>
@@ -48,7 +48,7 @@ export default function ViewPageFooter() {
 
           {/* 2. Copyright */}
           <div className="flex flex-col items-center justify-center order-2 sm:items-center">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[var(--foreground)]/60">
               © 2026 MyHireView. All rights reserved.
             </p>
           </div>
@@ -63,7 +63,7 @@ export default function ViewPageFooter() {
                 href="https://twitter.com/myhireview"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-400 hover:text-white"
+                className="text-[var(--foreground)]/60 hover:text-[var(--foreground)]"
                 aria-label="Twitter / X"
               >
                 <TwitterIcon className="h-5 w-5" />
@@ -72,7 +72,7 @@ export default function ViewPageFooter() {
                 href="https://www.linkedin.com/company/myhireview"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-400 hover:text-white"
+                className="text-[var(--foreground)]/60 hover:text-[var(--foreground)]"
                 aria-label="LinkedIn"
               >
                 <LinkedInIcon className="h-5 w-5" />

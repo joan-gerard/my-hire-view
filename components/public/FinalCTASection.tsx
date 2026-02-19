@@ -24,20 +24,20 @@ export default function FinalCTASection() {
         variants={staggerContainer.variants}
       >
         <motion.h2
-          className="text-3xl font-bold tracking-tight text-[var(--brand-text)] sm:text-4xl"
+          className="text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl"
           variants={staggerItem}
         >
           Ready to Transform Your Job Search?
         </motion.h2>
         <motion.p
-          className="mt-4 text-lg text-[var(--brand-text)]/80"
+          className="mt-4 text-lg text-[var(--foreground)]/80"
           variants={staggerItem}
         >
           Join the waitlist now and be among the first to create applications that actually get noticed.
         </motion.p>
         <motion.a
           href="#early-access"
-          className="mt-8 inline-block rounded-lg bg-[var(--brand-primary)] px-8 py-4 text-lg font-semibold text-white shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 focus:ring-offset-[var(--background)]"
+          className="mt-8 inline-block rounded-lg bg-[var(--brand-primary)] px-8 py-4 text-lg font-semibold text-[var(--brand-primary-text)] shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 focus:ring-offset-[var(--background)]"
           variants={staggerItem}
         >
           Get Early Access

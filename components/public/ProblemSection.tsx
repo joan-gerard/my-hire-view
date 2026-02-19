@@ -17,17 +17,17 @@ export default function ProblemSection() {
 
   return (
     <motion.section
-      className="bg-[var(--background)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+      className="bg-[var(--secondary-background)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
       initial={fadeUp.initial}
       whileInView={fadeUp.whileInView}
       viewport={viewport}
       transition={fadeUp.transition}
     >
       <div className="mx-auto max-w-4xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-[var(--brand-text)] sm:text-4xl">
+        <h2 className="text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
           Still Sending the Same Old Resume?
         </h2>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[var(--brand-text)]/90">
+        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[var(--foreground)]/90">
           Your resume gets lost in a sea of PDFs. Recruiters spend 6 seconds scanning it. You have no idea if anyone even opened it. And there&apos;s no way to show your personality, passion, or communication skills that matter most for the job.
         </p>
         <motion.div
@@ -41,11 +41,11 @@ export default function ProblemSection() {
           {icons.map(({ Icon, label }) => (
             <motion.div
               key={label}
-              className="flex flex-col items-center gap-2 text-[var(--brand-text)]/70"
+              className="flex flex-col items-center gap-2 text-[var(--foreground)]/70"
               variants={staggerItem}
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-surface)]">
-                <Icon className="h-6 w-6" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--background)]">
+                <Icon className="h-6 w-6 text-[var(--foreground)]" />
               </div>
               <span className="text-sm font-medium">{label}</span>
             </motion.div>
