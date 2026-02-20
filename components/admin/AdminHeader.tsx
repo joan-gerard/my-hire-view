@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Logo from "../ui/Logo";
+import { LogoGradient } from "../ui/Logo";
 import SecondaryButton from "../ui/SecondaryButton";
 
 interface AdminHeaderProps {
@@ -60,7 +60,7 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
             })}
           </div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <Logo />
+            <LogoGradient />
           </div>
           <div className="flex flex-1 items-center justify-end gap-3">
             <span className="text-sm text-[var(--foreground)]/80">
