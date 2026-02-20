@@ -28,7 +28,8 @@ const handleSignOut = async () => {
 };
 
 /**
- * Header for the marketing/landing page (/). Left: nav (How it Works, Pricing,
+ * Header for public marketing pages: home (/), How it Works, Pricing, Blog.
+ * Rendered by app/(marketing)/layout.tsx. Left: nav (How it Works, Pricing,
  * Blog). Center: logo. Right: avatar dropdown with Dashboard + Sign out (when
  * authenticated) or Sign in (when not).
  */

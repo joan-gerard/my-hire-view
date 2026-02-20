@@ -168,7 +168,10 @@ flowchart LR
 
 | Route               | Purpose                                                                                                                                                                                                                                                                                                            | Auth |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
-| `/`                 | Pre-launch landing page (see [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md)): hero, email capture form (waitlist), problem/solution, how it works, social proof, FAQ, final CTA, footer. Header: avatar dropdown with Sign In (when not authenticated) or Dashboard + Sign out (when authenticated).                                                                                                                                 | No   |
+| `/`                 | Pre-launch landing page (see [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md)): hero, email capture form (waitlist), problem/solution, how it works, social proof, FAQ, final CTA, footer. Shares `MarketingHeader` with other marketing routes via `app/(marketing)/layout.tsx`.                                                                                                                                 | No   |
+| `/how-it-works`     | How it Works marketing page (placeholder). Uses same `MarketingHeader` as `/`.                                                                                                                                                                                                                                                                       | No   |
+| `/pricing`          | Pricing marketing page (placeholder). Uses same `MarketingHeader` as `/`.                                                                                                                                                                                                                                                                           | No   |
+| `/blog`             | Blog marketing page (placeholder). Uses same `MarketingHeader` as `/`.                                                                                                                                                                                                                                                                               | No   |
 | `/login`, `/signup` | Auth forms; submit to `/api/auth/*`                                                                                                                                                                                                                                                                                | No   |
 | `/auth/callback`    | Supabase email confirmation / magic link; exchanges `code` for session                                                                                                                                                                                                                                             | No   |
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                                                                                                                                                                                                   | Yes  |
@@ -180,6 +183,7 @@ flowchart LR
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
+- **Marketing (`app/(marketing)/layout.tsx`):** Renders `MarketingHeader` (logo, nav: How it Works, Pricing, Blog; avatar dropdown with Sign In or Dashboard + Sign out) and `children`. Used by `/`, `/how-it-works`, `/pricing`, `/blog`.
 - **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (MyHireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
 ### 5.2 API Layer
@@ -356,7 +360,12 @@ View count and `last_viewed_at` are only updated when the viewer is not the appl
 my-hire-view/
 ├── app/
 │   ├── layout.tsx              # Root layout
-│   ├── page.tsx                # Home
+│   ├── (marketing)/            # Public marketing routes (shared MarketingHeader)
+│   │   ├── layout.tsx          # Marketing layout (header + children)
+│   │   ├── page.tsx            # Home (landing)
+│   │   ├── how-it-works/       # How it Works page
+│   │   ├── pricing/            # Pricing page
+│   │   └── blog/               # Blog page
 │   ├── login/, signup/         # Auth pages
 │   ├── auth/callback/          # Supabase OAuth/email callback
 │   ├── admin/                  # Dashboard, new, edit (layout uses requireAuth)
