@@ -376,7 +376,7 @@ my-hire-view/
 │   ├── auth/                   # SignOutButton
 │   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, NameInUrlField, CvDownloadFilenameField, FileUpload, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
-│   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection, FinalCTASection, Footer (→ ViewPageFooter), HowItWorksSection, LandingHero, MarketingHeader, ProblemSection, SocialProofSection, SolutionSection, ViewPageFooter
+│   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection, FinalCTASection, Footer (→ ViewPageFooter), HomeHeroContent, HowItWorksSection, LandingHero (reusable: backgroundImage + children + optional imageCredit), MarketingHeader, ProblemSection, SocialProofSection, SolutionSection, ViewPageFooter
 │   ├── ui/                     # Button, Input, Textarea
 │   ├── video/                  # YouTubeEmbed
 │   └── view/                   # ViewPageContent, ViewTracker (public application page UI)
