@@ -42,8 +42,8 @@ export default function EmailCaptureForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.trim(),
-          first_name: firstName.trim() || undefined,
-          job_search_status: jobSearchStatus || undefined,
+          first_name: firstName.trim(),
+          job_search_status: jobSearchStatus,
         }),
       });
 
@@ -153,12 +153,13 @@ function SignupForm({
             className={CONTROL_CLASS}
           />
         </FormField>
-        <FormField id="waitlist-first-name" label="First name (optional)">
+        <FormField id="waitlist-first-name" label="First name (required)">
           <input
             id="waitlist-first-name"
             type="text"
+            required
             autoComplete="given-name"
-            placeholder="First name (optional)"
+            placeholder="First name*"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             disabled={isDisabled}
@@ -168,18 +169,18 @@ function SignupForm({
       </div>
       <FormField
         id="waitlist-status"
-        label="Current job search status (optional)"
+        label="Current job search status (required)"
       >
         <fieldset
           id="waitlist-status"
           className="flex flex-wrap gap-2"
-          aria-label="Current job search status (optional)"
+          aria-label="Current job search status (required)"
         >
-          <legend className="sr-only">Select your status (optional)</legend>
+          <legend className="sr-only">Select your status (required)</legend>
           <p className="w-full text-base text-[var(--foreground)]/80 mb-2 text-start">
-            Select your status (optional)
+            Select your status*
           </p>
-          {JOB_SEARCH_OPTIONS.map((opt) => (
+          {JOB_SEARCH_OPTIONS.map((opt, index) => (
             <StatusRadioOption
               key={opt.value}
               id={`waitlist-status-${opt.value}`}
@@ -188,6 +189,7 @@ function SignupForm({
               checked={jobSearchStatus === opt.value}
               disabled={isDisabled}
               onSelect={setJobSearchStatus}
+              required={index === 0}
             />
           ))}
         </fieldset>
@@ -225,6 +227,7 @@ function StatusRadioOption({
   checked,
   disabled,
   onSelect,
+  required,
 }: {
   id: string;
   value: string;
@@ -232,6 +235,7 @@ function StatusRadioOption({
   checked: boolean;
   disabled: boolean;
   onSelect: (value: string) => void;
+  required?: boolean;
 }) {
   return (
     <label
@@ -258,6 +262,7 @@ function StatusRadioOption({
         checked={checked}
         onChange={() => onSelect(value)}
         disabled={disabled}
+        required={required}
         className="sr-only"
       />
       <span className="text-[var(--foreground)]">{label}</span>
