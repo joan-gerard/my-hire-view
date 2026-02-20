@@ -2,9 +2,9 @@ import EmailCaptureForm from "@/components/public/EmailCaptureForm";
 import FAQSection from "@/components/public/FAQSection";
 import FinalCTASection from "@/components/public/FinalCTASection";
 import Footer from "@/components/public/Footer";
-import HowItWorksSection from "@/components/public/HowItWorksSection";
 import HomeHeroContent from "@/components/public/HomeHeroContent";
-import LandingHero from "@/components/public/LandingHero";
+import HowItWorksSection from "@/components/public/HowItWorksSection";
+import MarketingHero from "@/components/public/MarketingHero";
 import ProblemSection from "@/components/public/ProblemSection";
 import SocialProofSection from "@/components/public/SocialProofSection";
 import SolutionSection from "@/components/public/SolutionSection";
@@ -23,13 +23,13 @@ const HOME_HERO_IMAGE_CREDIT = {
 export default function Home() {
   return (
     <>
-      <LandingHero
+      <MarketingHero
         backgroundImage={HOME_HERO_IMAGE}
         backgroundImageLabel="Hero background"
         imageCredit={HOME_HERO_IMAGE_CREDIT}
       >
         <HomeHeroContent />
-      </LandingHero>
+      </MarketingHero>
       <EmailCaptureForm />
       <ProblemSection />
       <SolutionSection />
