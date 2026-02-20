@@ -18,7 +18,7 @@ function isValidStatus(value: unknown): value is (typeof JOB_SEARCH_STATUSES)[nu
 
 /**
  * POST /api/waitlist – add a signup to the waitlist (pre-launch landing page).
- * Email required; first_name and job_search_status optional.
+ * Email, first_name, and job_search_status are required.
  */
 export async function POST(request: NextRequest) {
   const rate = checkRateLimit(request, WAITLIST_RATE_LIMIT);
@@ -27,11 +27,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const email = typeof body?.email === 'string' ? body.email.trim() : '';
-    const first_name = typeof body?.first_name === 'string' ? body.first_name.trim() || null : null;
+    const first_name = typeof body?.first_name === 'string' ? body.first_name.trim() : '';
     const job_search_status = isValidStatus(body?.job_search_status) ? body.job_search_status : null;
 
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    }
+
+    if (!first_name) {
+      return NextResponse.json({ error: 'First name is required' }, { status: 400 });
+    }
+
+    if (!job_search_status) {
+      return NextResponse.json({ error: 'Please select your job search status' }, { status: 400 });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
