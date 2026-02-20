@@ -4,21 +4,17 @@ import FinalCTASection from "@/components/public/FinalCTASection";
 import Footer from "@/components/public/Footer";
 import HowItWorksSection from "@/components/public/HowItWorksSection";
 import LandingHero from "@/components/public/LandingHero";
-import MarketingHeader from "@/components/public/MarketingHeader";
 import ProblemSection from "@/components/public/ProblemSection";
 import SocialProofSection from "@/components/public/SocialProofSection";
 import SolutionSection from "@/components/public/SolutionSection";
-import { getUser } from "@/lib/auth";
 
 /**
  * Pre-launch "Coming Soon" landing page. Structure and copy follow docs/LANDING_PAGE_BRIEF.md.
+ * MarketingHeader is rendered by (marketing)/layout.tsx.
  */
-export default async function Home() {
-  const user = await getUser();
-
+export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <MarketingHeader user={user} />
+    <>
       <LandingHero />
       <EmailCaptureForm />
       <ProblemSection />
@@ -30,6 +26,6 @@ export default async function Home() {
       <div className="mt-auto bg-background">
         <Footer />
       </div>
-    </div>
+    </>
   );
 }
