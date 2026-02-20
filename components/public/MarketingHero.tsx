@@ -1,6 +1,7 @@
 "use client";
 
 import { staggerContainer } from "@/lib/landing-animations";
+import clsx from "clsx";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
@@ -11,6 +12,9 @@ export interface HeroImageCredit {
   name: string;
 }
 
+/** "full" = full-height hero (e.g. home); "compact" = shorter hero (e.g. How it Works, Pricing, Blog). */
+export type HeroVariant = "full" | "compact";
+
 export interface LandingHeroProps {
   /** Background image URL (path or full URL). */
   backgroundImage: string;
@@ -20,6 +24,8 @@ export interface LandingHeroProps {
   imageCredit?: HeroImageCredit | null;
   /** Hero content (headline, subtitle, CTA, etc.) rendered centered over the image. */
   children: ReactNode;
+  /** "full" = h-full (default, for /). "compact" = h-[35%] for subpages. */
+  variant?: HeroVariant;
 }
 
 /**
@@ -32,17 +38,29 @@ export default function MarketingHero({
   backgroundImageLabel = "Hero background",
   imageCredit = null,
   children,
+  variant = "full",
 }: LandingHeroProps) {
   return (
     <motion.section
-      className="relative overflow-hidden h-screen"
+      className={clsx(
+        "relative overflow-hidden",
+        variant === "full" ? "h-screen" : "h-auto"
+      )}
       initial="hidden"
       animate="visible"
       variants={staggerContainer.variants}
     >
-      <div className="px-4 py-12 sm:px-6 lg:px-8 lg:pb-8 lg:pt-24 h-full w-full">
+      <div
+        className={clsx(
+          "px-4 py-12 sm:px-6 lg:px-8 lg:pb-8 lg:pt-24 w-full",
+          variant === "full" ? "h-full" : "h-auto"
+        )}
+      >
         <div
-          className="relative h-full w-full bg-cover bg-center bg-no-repeat rounded-3xl"
+          className={clsx(
+            "relative w-full bg-cover bg-center bg-no-repeat rounded-3xl",
+            variant === "compact" ? "h-[35vh]" : "h-full"
+          )}
           style={{ backgroundImage: `url(${backgroundImage})` }}
           role="img"
           aria-label={backgroundImageLabel}
