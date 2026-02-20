@@ -8,8 +8,32 @@ const JOB_SEARCH_STATUSES = [
   'Other',
 ] as const;
 
+const PRIMARY_GOALS = [
+  'Get more interviews',
+  'Track my applications',
+  'Stand out to recruiters',
+  'Network with recruiters',
+  'Other',
+] as const;
+
+const CAREER_STAGES = [
+  'Entry-level',
+  'Junior (1–3 years)',
+  'Mid-level (3–7 years)',
+  'Senior (7+ years)',
+  'Other',
+] as const;
+
 function isValidStatus(value: unknown): value is (typeof JOB_SEARCH_STATUSES)[number] {
   return typeof value === 'string' && JOB_SEARCH_STATUSES.includes(value as (typeof JOB_SEARCH_STATUSES)[number]);
+}
+
+function isValidPrimaryGoal(value: unknown): value is (typeof PRIMARY_GOALS)[number] {
+  return typeof value === 'string' && PRIMARY_GOALS.includes(value as (typeof PRIMARY_GOALS)[number]);
+}
+
+function isValidCareerStage(value: unknown): value is (typeof CAREER_STAGES)[number] {
+  return typeof value === 'string' && CAREER_STAGES.includes(value as (typeof CAREER_STAGES)[number]);
 }
 
 /**
@@ -22,6 +46,8 @@ export async function POST(request: NextRequest) {
     const email = typeof body?.email === 'string' ? body.email.trim() : '';
     const first_name = typeof body?.first_name === 'string' ? body.first_name.trim() : '';
     const job_search_status = isValidStatus(body?.job_search_status) ? body.job_search_status : null;
+    const primary_goal = isValidPrimaryGoal(body?.primary_goal) ? body.primary_goal : null;
+    const career_stage = isValidCareerStage(body?.career_stage) ? body.career_stage : null;
 
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
@@ -45,6 +71,8 @@ export async function POST(request: NextRequest) {
       email: email.toLowerCase(),
       first_name,
       job_search_status,
+      primary_goal,
+      career_stage,
     });
 
     if (error) {

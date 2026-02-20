@@ -12,6 +12,21 @@ const JOB_SEARCH_OPTIONS = [
   { value: "Other", label: "Other" },
 ] as const;
 
+const PRIMARY_GOAL_OPTIONS = [
+  { value: "Get more interviews", label: "Get more interviews" },
+  { value: "Track my applications", label: "Track my applications" },
+  { value: "Stand out to recruiters", label: "Stand out to recruiters" },
+  { value: "Other", label: "Other" },
+] as const;
+
+const CAREER_STAGE_OPTIONS = [
+  { value: "Entry-level", label: "Entry-level" },
+  { value: "Junior", label: "Junior" },
+  { value: "Mid-level", label: "Mid-level" },
+  { value: "Senior", label: "Senior" },
+  { value: "Other", label: "Other" },
+] as const;
+
 const backgroundImage = "/images/diego-ph-@jdiegoph-1920-2400.jpg";
 
 /** Shared styles for text inputs and select to keep appearance consistent. */
@@ -26,6 +41,8 @@ export default function EmailCaptureForm() {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [jobSearchStatus, setJobSearchStatus] = useState("Actively searching");
+  const [primaryGoal, setPrimaryGoal] = useState("");
+  const [careerStage, setCareerStage] = useState("");
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
@@ -44,6 +61,8 @@ export default function EmailCaptureForm() {
           email: email.trim(),
           first_name: firstName.trim(),
           job_search_status: jobSearchStatus,
+          primary_goal: primaryGoal.trim() || undefined,
+          career_stage: careerStage.trim() || undefined,
         }),
       });
 
@@ -61,6 +80,8 @@ export default function EmailCaptureForm() {
       setEmail("");
       setFirstName("");
       setJobSearchStatus("Actively searching");
+      setPrimaryGoal("");
+      setCareerStage("");
     } catch {
       setStatus("error");
       setErrorMessage("Something went wrong. Please try again.");
@@ -80,7 +101,7 @@ export default function EmailCaptureForm() {
       transition={transition}
     >
       <div className="w-full max-w-5xl text-center flex flex-col items-center gap-4">
-        <SectionBadge label="Early Sign" />
+        <SectionBadge label="Early Sign Up" />
         <h2 className="text-6xl font-light tracking-wide text-[var(--brand-primary)]">
           Be the first to stand out
         </h2>
@@ -104,6 +125,10 @@ export default function EmailCaptureForm() {
                 setFirstName={setFirstName}
                 jobSearchStatus={jobSearchStatus}
                 setJobSearchStatus={setJobSearchStatus}
+                primaryGoal={primaryGoal}
+                setPrimaryGoal={setPrimaryGoal}
+                careerStage={careerStage}
+                setCareerStage={setCareerStage}
                 errorMessage={errorMessage}
                 status={status}
               />
@@ -123,6 +148,10 @@ function SignupForm({
   setFirstName,
   jobSearchStatus,
   setJobSearchStatus,
+  primaryGoal,
+  setPrimaryGoal,
+  careerStage,
+  setCareerStage,
   errorMessage,
   status,
 }: {
@@ -133,6 +162,10 @@ function SignupForm({
   setFirstName: (firstName: string) => void;
   jobSearchStatus: string;
   setJobSearchStatus: (jobSearchStatus: string) => void;
+  primaryGoal: string;
+  setPrimaryGoal: (value: string) => void;
+  careerStage: string;
+  setCareerStage: (value: string) => void;
   errorMessage: string;
   status: "idle" | "loading" | "success" | "error";
 }) {
@@ -167,33 +200,15 @@ function SignupForm({
           />
         </FormField>
       </div>
-      <FormField
-        id="waitlist-status"
-        label="Current job search status (required)"
-      >
-        <fieldset
-          id="waitlist-status"
-          className="flex flex-wrap gap-2"
-          aria-label="Current job search status (required)"
-        >
-          <legend className="sr-only">Select your status (required)</legend>
-          <p className="w-full text-base text-[var(--foreground)]/80 mb-2 text-start">
-            Select your status*
-          </p>
-          {JOB_SEARCH_OPTIONS.map((opt, index) => (
-            <StatusRadioOption
-              key={opt.value}
-              id={`waitlist-status-${opt.value}`}
-              value={opt.value}
-              label={opt.label}
-              checked={jobSearchStatus === opt.value}
-              disabled={isDisabled}
-              onSelect={setJobSearchStatus}
-              required={index === 0}
-            />
-          ))}
-        </fieldset>
-      </FormField>
+      <WaitlistRadioFieldsets
+        jobSearchStatus={jobSearchStatus}
+        setJobSearchStatus={setJobSearchStatus}
+        primaryGoal={primaryGoal}
+        setPrimaryGoal={setPrimaryGoal}
+        careerStage={careerStage}
+        setCareerStage={setCareerStage}
+        disabled={isDisabled}
+      />
       {errorMessage && (
         <p className="text-sm text-red-600" role="alert">
           {errorMessage}
@@ -217,6 +232,100 @@ function SignupForm({
         .
       </p>
     </form>
+  );
+}
+
+function WaitlistRadioFieldsets({
+  jobSearchStatus,
+  setJobSearchStatus,
+  primaryGoal,
+  setPrimaryGoal,
+  careerStage,
+  setCareerStage,
+  disabled,
+}: {
+  jobSearchStatus: string;
+  setJobSearchStatus: (value: string) => void;
+  primaryGoal: string;
+  setPrimaryGoal: (value: string) => void;
+  careerStage: string;
+  setCareerStage: (value: string) => void;
+  disabled: boolean;
+}) {
+  return (
+    <>
+      <RadioFieldset
+        id="waitlist-status"
+        label="Current job search status (required)"
+        description="Select your status*"
+        options={JOB_SEARCH_OPTIONS}
+        value={jobSearchStatus}
+        onSelect={setJobSearchStatus}
+        disabled={disabled}
+        required
+      />
+      <RadioFieldset
+        id="waitlist-primary-goal"
+        label="Primary goal (optional)"
+        options={PRIMARY_GOAL_OPTIONS}
+        value={primaryGoal}
+        onSelect={setPrimaryGoal}
+        disabled={disabled}
+      />
+      <RadioFieldset
+        id="waitlist-career-stage"
+        label="Career stage / seniority (optional)"
+        options={CAREER_STAGE_OPTIONS}
+        value={careerStage}
+        onSelect={setCareerStage}
+        disabled={disabled}
+      />
+    </>
+  );
+}
+
+/** Reusable single-select radio group for waitlist form (status, primary goal, career stage). */
+function RadioFieldset({
+  id,
+  label,
+  description,
+  options,
+  value,
+  onSelect,
+  disabled,
+  required = false,
+}: {
+  id: string;
+  label: string;
+  description?: string;
+  options: readonly { value: string; label: string }[];
+  value: string;
+  onSelect: (value: string) => void;
+  disabled: boolean;
+  required?: boolean;
+}) {
+  const visibleText = description ?? label;
+  return (
+    <FormField id={id} label={label}>
+      <fieldset id={id} className="flex flex-wrap gap-2" aria-label={label}>
+        <legend className="sr-only">{label}</legend>
+        <p className="w-full text-base text-[var(--foreground)]/80 mb-1 text-start">
+          {visibleText}
+        </p>
+        {options.map((opt, index) => (
+          <StatusRadioOption
+            key={opt.value}
+            id={`${id}-${opt.value}`}
+            value={opt.value}
+            label={opt.label}
+            checked={value === opt.value}
+            disabled={disabled}
+            onSelect={onSelect}
+            required={required && index === 0}
+          />
+        ))}
+      </fieldset>
+    </FormField>
   );
 }
 
@@ -247,7 +356,7 @@ function StatusRadioOption({
       } ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
     >
       <span
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors duration-500 ease-in-out ${
+        className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full transition-colors duration-500 ease-in-out ${
           checked ? "border-0 bg-[var(--brand-primary)]" : "border-0 bg-white"
         }`}
         aria-hidden
@@ -265,7 +374,7 @@ function StatusRadioOption({
         required={required}
         className="sr-only"
       />
-      <span className="text-[var(--foreground)]">{label}</span>
+      <span className="text-[var(--foreground)] text-sm">{label}</span>
     </label>
   );
 }
