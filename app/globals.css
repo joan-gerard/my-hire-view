@@ -39,6 +39,15 @@
   font-display: swap;
 }
 
+/* Varela Round – logos */
+@font-face {
+  font-family: "Varela Round";
+  src: url("/fonts/VarelaRound-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Main background: #f6f0e9 (also used for cards background when section background uses Secondary background) */
   --background: #f6f0e9;
@@ -65,6 +74,7 @@
   /* Typography */
   --font-faunaone: "FaunaOne", serif;
   --font-funnelsans: "FunnelSans", system-ui, sans-serif;
+  --font-varelaround: "Varela Round", system-ui, sans-serif;
 }
 
 /* Main background: #f6f0e9 (also used for cards background when section background uses Seconday background)
@@ -94,7 +104,11 @@ h2,
 h3,
 h4,
 h5,
-h6,
-#logo {
+h6 {
   font-family: var(--font-faunaone);
+}
+
+#logo,
+#marketing-nav-link {
+  font-family: var(--font-varelaround);
 }

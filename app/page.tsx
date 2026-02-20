@@ -17,7 +17,7 @@ export default async function Home() {
   const user = await getUser();
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background)] pt-16">
+    <div className="flex min-h-screen flex-col bg-white">
       <MarketingHeader user={user} />
       <LandingHero />
       <EmailCaptureForm />
@@ -27,7 +27,7 @@ export default async function Home() {
       <SocialProofSection />
       <FAQSection />
       <FinalCTASection />
-      <div className="mt-auto bg-[var(--background)]">
+      <div className="mt-auto bg-background">
         <Footer />
       </div>
     </div>
