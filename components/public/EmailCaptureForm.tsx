@@ -15,6 +15,15 @@ import { WaitlistSuccessMessage } from "./WaitlistSuccessMessage";
 
 const BACKGROUND_IMAGE = "/images/diego-ph-@jdiegoph-1920-2400.jpg";
 
+/** Stronger stagger for this section so each element is clearly sequential */
+const emailSectionStagger = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.22, delayChildren: 0.12 },
+  },
+} as const;
+
 /**
  * Email capture form for the pre-launch landing page.
  * Submits to /api/waitlist; shows success message and early bird incentive per LANDING_PAGE_BRIEF.
@@ -78,7 +87,7 @@ export default function EmailCaptureForm() {
         initial={staggerContainer.initial}
         whileInView={staggerContainer.whileInView}
         viewport={viewport}
-        variants={staggerContainer.variants}
+        variants={emailSectionStagger}
         transition={transition}
       >
         <motion.div variants={staggerItem}>
