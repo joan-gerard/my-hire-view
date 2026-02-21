@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from '@/lib/rate-limit';
 
 /**
  * POST /api/applications/[slug]/download
@@ -9,9 +10,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
  * external downloads. Uses SECURITY DEFINER RPC via service_role (same pattern as view count).
  */
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
   try {
     const supabase = await createClient();
     const { slug } = await params;

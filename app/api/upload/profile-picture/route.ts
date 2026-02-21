@@ -1,5 +1,6 @@
 import { requireAuth } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 
 const BUCKET = "profile-pictures";
@@ -13,6 +14,9 @@ function getExtension(filename: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
   try {
     const user = await requireAuth();
     const supabase = await createClient();

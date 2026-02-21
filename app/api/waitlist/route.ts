@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import { createAdminClient } from '@/lib/supabase/admin';
+
+/** 5 signup attempts per minute per IP. */
+const WAITLIST_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 
 const JOB_SEARCH_STATUSES = [
   'Actively searching',
@@ -41,6 +45,9 @@ function isValidCareerStage(value: unknown): value is (typeof CAREER_STAGES)[num
  * Email, first_name, and job_search_status are required.
  */
 export async function POST(request: NextRequest) {
+  const rate = checkRateLimit(request, WAITLIST_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
   try {
     const body = await request.json();
     const email = typeof body?.email === 'string' ? body.email.trim() : '';
