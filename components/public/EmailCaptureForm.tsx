@@ -1,6 +1,11 @@
 "use client";
 
-import { fadeUp, transition, viewport } from "@/lib/landing-animations";
+import {
+  staggerContainer,
+  staggerItem,
+  transition,
+  viewport,
+} from "@/lib/landing-animations";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { SectionBadge } from "../ui/SectionBadge";
@@ -67,28 +72,46 @@ export default function EmailCaptureForm() {
     "px-4 py-16 sm:px-6 sm:py-20 lg:px-8 min-h-[520px] flex flex-col justify-center items-center";
 
   return (
-    <motion.section
-      id="early-access"
-      className={sectionClassName}
-      initial={fadeUp.initial}
-      whileInView={fadeUp.whileInView}
-      viewport={viewport}
-      transition={transition}
-    >
-      <div className="w-full max-w-5xl text-center flex flex-col items-center gap-4">
-        <SectionBadge label="Early Sign Up" />
-        <h2 className="text-6xl font-light tracking-wide text-[var(--brand-primary)]">
+    <section id="early-access" className={sectionClassName}>
+      <motion.div
+        className="w-full max-w-5xl text-center flex flex-col items-center gap-4"
+        initial={staggerContainer.initial}
+        whileInView={staggerContainer.whileInView}
+        viewport={viewport}
+        variants={staggerContainer.variants}
+        transition={transition}
+      >
+        <motion.div variants={staggerItem}>
+          <SectionBadge label="Early Sign Up" />
+        </motion.div>
+        <motion.h2
+          className="text-6xl font-light tracking-wide text-(--brand-primary)"
+          variants={staggerItem}
+        >
           Be the first to stand out
-        </h2>
-        <p className="text-xl sm:text-2xl font-light text-[#94877c] text-balance">
+        </motion.h2>
+        <motion.p
+          className="text-xl sm:text-2xl font-light text-[#94877c] text-balance"
+          variants={staggerItem}
+        >
           Early signups get 3 months of Pro free when we launch!
-        </p>
-        <div className="grid grid-cols-2 gap-4 w-full">
-          <div
+        </motion.p>
+        <motion.div className="grid grid-cols-2 gap-4 w-full" variants={staggerItem}>
+          <motion.div
             className="rounded-3xl bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: `url(${BACKGROUND_IMAGE})` }}
+            initial={{ opacity: 0, x: -32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={viewport}
+            transition={transition}
           />
-          <div className="bg-(--brand-surface) w-full h-full min-h-[440px] p-8 rounded-3xl flex flex-col">
+          <motion.div
+            className="bg-(--brand-surface) w-full h-full min-h-[440px] p-8 rounded-3xl flex flex-col"
+            initial={{ opacity: 0, x: 32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={viewport}
+            transition={transition}
+          >
             {status === "success" ? (
               <WaitlistSuccessMessage />
             ) : (
@@ -108,9 +131,9 @@ export default function EmailCaptureForm() {
                 status={status}
               />
             )}
-          </div>
-        </div>
-      </div>
-    </motion.section>
+          </motion.div>
+        </motion.div>
+      </motion.div>
+    </section>
   );
 }
