@@ -69,7 +69,7 @@ flowchart TB
 
 - **Middleware:** Runs on each request (except static assets). Refreshes Supabase session and redirects unauthenticated users from `/admin` to `/login`.
 - **App Router:** Renders pages (public apply page, admin dashboard, login/signup, home).
-- **API Routes:** Handle CRUD for applications, auth (login/signup/logout), upload, slug generation, and view tracking. They enforce auth where needed and talk to Supabase and Vercel Blob.
+- **API Routes:** Handle CRUD for applications, auth (login/signup/logout), upload, slug generation, and view tracking. They enforce auth where needed and talk to Supabase and Vercel Blob. Rate limiting (see `lib/rate-limit.ts`) is applied per IP on write endpoints (e.g. waitlist, auth, applications, uploads) to mitigate abuse and brute force.
 
 ---
 

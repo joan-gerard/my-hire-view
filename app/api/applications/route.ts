@@ -5,6 +5,7 @@ import type {
     ApplicationUpdateInput,
 } from "@/lib/types/application";
 import { deleteBlobIfOurs } from "@/lib/utils/blob";
+import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
@@ -60,6 +61,9 @@ function resolveProfilePictureUrl(
 }
 
 export async function POST(request: NextRequest) {
+  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
   try {
     const user = await requireAuth();
     const supabase = await createClient();
@@ -118,6 +122,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
   try {
     const user = await requireAuth();
     const supabase = await createClient();
@@ -183,6 +190,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
   try {
     const user = await requireAuth();
     const supabase = await createClient();

@@ -294,7 +294,7 @@ Provide step-by-step instructions for:
 - Use Supabase RLS properly
 - Don't expose service role key on client
 - Validate YouTube URLs to prevent XSS
-- Implement rate limiting for API routes
+- Rate limiting is implemented for API routes (see `lib/rate-limit.ts`; IP-based, in-memory; consider Upstash Redis for strict cross-instance limits in production)
 - Use HTTPS for production
 
 ## Expected Output from You (Cursor)

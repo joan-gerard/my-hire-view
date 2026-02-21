@@ -2,6 +2,7 @@ import { requireAuth } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { ProfileUpdateInput } from "@/lib/types/profile";
 import { deleteProfilePictureIfOurs } from "@/lib/utils/profile-picture-storage";
+import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 
 /** Validates URL format; allows http/https only. Returns error message or null. */
@@ -55,6 +56,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
   try {
     const user = await requireAuth();
     const supabase = await createClient();

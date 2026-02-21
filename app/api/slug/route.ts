@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from '@/lib/rate-limit';
 import { generateUniqueSlug } from '@/lib/utils/slug';
 
 export async function POST(request: NextRequest) {
+  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
   try {
     const { company, role, excludeId, first_name, last_name, slugNamePosition } =
       await request.json();
