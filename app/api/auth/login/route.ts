@@ -1,11 +1,18 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import { createSupabaseRouteClient } from '@/lib/supabase/route-client';
+
+/** 5 login attempts per minute per IP to mitigate brute force. */
+const LOGIN_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 
 /**
  * Server-side login: signs in with Supabase and sets session cookies on the response.
  * This ensures the middleware can read the session on the next request.
  */
 export async function POST(request: NextRequest) {
+  const rate = checkRateLimit(request, LOGIN_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
   const body = await request.json();
   const email = body?.email;
   const password = body?.password;
