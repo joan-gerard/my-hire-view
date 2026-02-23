@@ -1,11 +1,12 @@
 "use client";
 
+import { useHeroEntrance } from "@/contexts/HeroEntranceContext";
 import { staggerContainer, staggerItem } from "@/lib/landing-animations";
-import { motion, MotionValue, useScroll, useTransform } from "framer-motion";
+import { animate, motion, MotionValue, useMotionValue, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export interface FixedBackgroundHeroProps {
   /** Main headline above the media. */
@@ -44,6 +45,30 @@ export default function FixedBackgroundHero({
   const contentY = useTransform(scrollYProgress, [0, 1], [0, 72]);
   const marginX = useTransform(scrollYProgress, [0, 1], [20, 56]);
 
+  const { heroReady, setHeroReady } = useHeroEntrance();
+
+  /** 0 on load → 1 after entrance animation; drives video "full viewport → default size" transition. */
+  const loadProgress = useMotionValue(0);
+  useEffect(() => {
+    animate(loadProgress, 1, {
+      duration: 1.2,
+      ease: "easeOut",
+      onComplete: () => setHeroReady(true),
+    });
+  }, [loadProgress, setHeroReady]);
+
+  const mediaTop = useTransform(loadProgress, [0, 1], [0, 72]);
+  const mediaBottom = useTransform(loadProgress, [0, 1], [0, 20]);
+  const mediaMarginLeft = useTransform(
+    [loadProgress, marginX],
+    (values: number[]) => (values[0] < 1 ? 20 * values[0] : values[1]),
+  );
+  const mediaMarginRight = useTransform(
+    [loadProgress, marginX],
+    (values: number[]) => (values[0] < 1 ? 20 * values[0] : values[1]),
+  );
+  const mediaBorderRadius = useTransform(loadProgress, [0, 1], [0, 16]);
+
   const useVideo = Boolean(videoSrc);
   const mediaSrc = videoSrc ?? imageSrc;
 
@@ -63,8 +88,14 @@ export default function FixedBackgroundHero({
         {/* Video or image: full area with horizontal padding (rounded), behind the content */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
-            className="absolute inset-0 mb-5 mt-[72px]"
-            style={{ marginLeft: marginX, marginRight: marginX }}
+            className="absolute left-0 right-0 overflow-hidden"
+            style={{
+              top: mediaTop,
+              bottom: mediaBottom,
+              marginLeft: mediaMarginLeft,
+              marginRight: mediaMarginRight,
+              borderRadius: mediaBorderRadius,
+            }}
           >
             {useVideo ? (
               <video
@@ -73,7 +104,8 @@ export default function FixedBackgroundHero({
                 muted
                 loop
                 playsInline
-                className="h-full w-full object-cover rounded-2xl"
+                className="h-full w-full object-cover"
+                style={{ borderRadius: "inherit" }}
                 aria-label={imageAlt}
               />
             ) : (
@@ -81,20 +113,22 @@ export default function FixedBackgroundHero({
                 src={mediaSrc}
                 alt={imageAlt}
                 fill
-                className="object-cover rounded-2xl"
+                className="object-cover"
+                style={{ borderRadius: "inherit" }}
                 sizes="100vw"
                 priority
               />
             )}
             {/* Dark overlay on bottom half of video/image for content contrast */}
-            <div
-              className="pointer-events-none absolute inset-0 rounded-2xl bg-linear-to-t from-black/70 via-black/20 to-transparent"
+            <motion.div
+              className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"
+              style={{ borderRadius: mediaBorderRadius }}
               aria-hidden
             />
           </motion.div>
         </div>
 
-        {/* Content in front of the image: title, subtitle, CTAs; moves down slightly as user scrolls */}
+        {/* Content in front of the image: title, subtitle, CTAs; appears after video entrance, moves down slightly as user scrolls */}
         <FixedBackgroundHeroContent
           title={title}
           subtitle={subtitle}
@@ -102,6 +136,7 @@ export default function FixedBackgroundHero({
           secondaryCta={secondaryCta}
           children={children}
           contentY={contentY}
+          heroReady={heroReady}
         />
       </div>
     </section>
@@ -115,6 +150,8 @@ interface FixedBackgroundHeroContentProps {
   secondaryCta?: { label: string; href: string };
   children?: ReactNode;
   contentY: MotionValue<number>;
+  /** When true, hero video has finished its entrance; content can animate in. */
+  heroReady: boolean;
 }
 
 function FixedBackgroundHeroContent({
@@ -124,13 +161,14 @@ function FixedBackgroundHeroContent({
   secondaryCta,
   children,
   contentY,
+  heroReady,
 }: FixedBackgroundHeroContentProps) {
   return (
     <div className="relative z-1 flex h-full flex-col items-center justify-center px-0">
       <motion.div
         className="mx-auto max-w-3xl text-center flex flex-col items-center gap-4"
         initial="hidden"
-        animate="visible"
+        animate={heroReady ? "visible" : "hidden"}
         variants={staggerContainer.variants}
         style={{ y: contentY }}
       >

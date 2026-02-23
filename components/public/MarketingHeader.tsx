@@ -1,6 +1,7 @@
 "use client";
 
 import { AvatarIcon } from "@/components/admin/icons";
+import { useHeroEntrance } from "@/contexts/HeroEntranceContext";
 import { headerEntrance } from "@/lib/landing-animations";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -34,6 +35,7 @@ const handleSignOut = async () => {
  * authenticated) or Sign in (when not).
  */
 export default function MarketingHeader({ user }: MarketingHeaderProps) {
+  const { heroReady } = useHeroEntrance();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -56,7 +58,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 h-[72px]"
       initial={headerEntrance.initial}
-      animate={headerEntrance.animate}
+      animate={heroReady ? headerEntrance.animate : headerEntrance.initial}
       transition={headerEntrance.transition}
     >
       {/* <div className="mx-auto py-4 px-24"> */}

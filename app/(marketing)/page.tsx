@@ -44,9 +44,7 @@ export default function Home() {
         <SocialProofSection />
         <FAQSection />
         <FinalCTASection />
-        <div className="mt-auto bg-background">
-          <Footer />
-        </div>
+        <Footer />
       </ScrollCoverSection>
     </>
   );
