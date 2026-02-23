@@ -14,7 +14,7 @@ export default function ScrollCoverSection({
   className = "",
 }: ScrollCoverSectionProps) {
   return (
-    <section className={`relative z-10 px-4 ${className}`.trim()}>
+    <section className={`relative z-10 ${className}`.trim()}>
       <div className="bg-white">{children}</div>
     </section>
   );

@@ -78,7 +78,7 @@ export default function EmailCaptureForm() {
   }
 
   const sectionClassName =
-    "px-4 py-16 sm:px-6 sm:py-8 lg:px-8 min-h-[520px] flex flex-col justify-center rounded-2xl bg-[#f4f2f1]";
+    "mx-4 px-4 py-16 sm:px-6 sm:py-8 lg:px-8 min-h-[520px] flex flex-col justify-center rounded-2xl bg-[#f4f2f1]";
 
   return (
     <section id="early-access" className={sectionClassName}>
