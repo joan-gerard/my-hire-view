@@ -1,0 +1,88 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { useRef } from "react";
+import { HOW_IT_WORKS_STEPS } from "./constants";
+import { StepCard } from "./StepCard";
+import { StepLabel } from "./StepLabel";
+import { useHowItWorksObservers } from "./useHowItWorksObservers";
+
+/**
+ * "How It Works" section: two columns.
+ * Left (1/3): sticky list "Step 1", "Step 2", "Step 3" — each animates when its card is fully in view.
+ * Right (2/3): title + 3 cards (video + text). Background turns black when section enters viewport.
+ */
+export function HowItWorksSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+  const { isMostlyInView, activeSteps, cardInView } = useHowItWorksObservers({
+    sectionRef,
+    cardRefs,
+    videoRefs,
+    stepCount: HOW_IT_WORKS_STEPS.length,
+  });
+
+  return (
+    <motion.section
+      ref={sectionRef}
+      className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8 transition-colors duration-500"
+      style={
+        isMostlyInView
+          ? {
+              backgroundColor: "#000",
+              color: "#fff",
+              ["--foreground" as string]: "#fff",
+              ["--background" as string]: "#171717",
+              ["--secondary-background" as string]: "#000",
+            }
+          : undefined
+      }
+    >
+      <div className="mx-auto">
+        <div className="grid lg:grid-cols-3 lg:gap-16 mb-24">
+          <div className="lg:col-span-1"></div>
+          <h2 className="text-3xl sm:text-7xl text-balance font-bold tracking-tight lg:col-span-2">
+            Stand Out in Three Simple Steps
+          </h2>
+        </div>
+        <div className="grid gap-12 lg:grid-cols-3 lg:gap-16">
+          {/* Left: sticky step labels (1/3) */}
+          <div className="lg:sticky lg:top-24 lg:self-start pt-20">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 lg:flex-col lg:gap-4">
+              {HOW_IT_WORKS_STEPS.map((step, index) => (
+                <StepLabel
+                  key={step.id}
+                  step={step}
+                  isActive={activeSteps[index] ?? false}
+                  isDarkMode={isMostlyInView}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Right: title + cards (2/3) */}
+          <div className="lg:col-span-2">
+            <div className="flex flex-col gap-12 sm:gap-16">
+              {HOW_IT_WORKS_STEPS.map((step, index) => (
+                <StepCard
+                  key={step.id}
+                  step={step}
+                  index={index}
+                  cardRef={(el) => {
+                    cardRefs.current[index] = el;
+                  }}
+                  videoRef={(el) => {
+                    videoRefs.current[index] = el;
+                  }}
+                  inView={cardInView[index] ?? false}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
