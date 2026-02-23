@@ -81,3 +81,15 @@ export function LogoWhite() {
     </Link>
   );
 }
+export function LogoBlack() {
+  return (
+    <Link
+      href="/"
+      id="logo"
+      className="text-xl font-medium text-black flex items-center gap-2"
+      aria-label="MyHireView home"
+    >
+      MyHireView
+    </Link>
+  );
+}

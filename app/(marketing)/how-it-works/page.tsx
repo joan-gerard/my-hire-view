@@ -10,12 +10,7 @@ import ProblemSection from "@/components/public/ProblemSection";
 import SocialProofSection from "@/components/public/SocialProofSection";
 import SolutionSection from "@/components/public/SolutionSection";
 
-const HERO_IMAGE = "/images/hassaan-here-4000-2300.jpg";
-const HERO_IMAGE_CREDIT = {
-  label: "Photo by",
-  href: "https://unsplash.com/@hassaanhre",
-  name: "Hassaan Here",
-} as const;
+const HERO_VIDEO = "/hero-video.mp4";
 
 export const metadata = {
   title: "How it Works | MyHireView",
@@ -28,11 +23,10 @@ export default function HowItWorksPage() {
     <>
       <PreventOverscrollReveal />
       <HowItWorksHero
-        title="Simple steps to stand out"
+        title="Stand out. Get Seen."
         subtitle="Create your page, share your link, and get noticed by recruiters. Your personalized job application page in minutes."
-        imageSrc={HERO_IMAGE}
+        videoSrc={HERO_VIDEO}
         imageAlt="How it works hero"
-        imageCredit={HERO_IMAGE_CREDIT}
         primaryCta={{ label: "Get started", href: "/login" }}
         secondaryCta={{ label: "See pricing", href: "/pricing" }}
       />

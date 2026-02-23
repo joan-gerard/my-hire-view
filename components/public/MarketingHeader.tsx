@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
-import { LogoGradient } from "../ui/Logo";
+import { LogoBlack } from "../ui/Logo";
 
 interface MarketingHeaderProps {
   user: User | null;
@@ -54,15 +54,15 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
 
   return (
     <motion.header
-      className="fixed top-0 left-0 right-0 z-50"
+      className="fixed top-0 left-0 right-0 z-50 h-[72px]"
       initial={headerEntrance.initial}
       animate={headerEntrance.animate}
       transition={headerEntrance.transition}
     >
       {/* <div className="mx-auto py-4 px-24"> */}
-      <div className="relative flex justify-between items-center bg-white px-4 py-2 shadow-sm shadow-black/15">
+      <div className="relative flex justify-between items-center bg-white px-10 py-2 h-full">
         <div className="">
-          <LogoGradient />
+          <LogoBlack />
         </div>
 
         <nav
@@ -74,7 +74,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
               key={href}
               href={href}
               id="marketing-nav-link"
-              className="text-base font-medium text-foreground/80 hover:text-foreground"
+              className="text-lg font-medium text-foreground/80 hover:text-foreground"
             >
               {label}
             </Link>
