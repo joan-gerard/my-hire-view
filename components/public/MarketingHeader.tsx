@@ -59,7 +59,11 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
       className="fixed top-0 left-0 right-0 z-50 h-[72px]"
       initial={headerEntrance.initial}
       animate={heroReady ? headerEntrance.animate : headerEntrance.initial}
-      transition={headerEntrance.transition}
+      transition={{
+        ...headerEntrance.transition,
+        // Header appears after FixedBackgroundHeroContent has started its stagger
+        delay: heroReady ? 0.4 : 0,
+      }}
     >
       {/* <div className="mx-auto py-4 px-24"> */}
       <div className="relative flex justify-between items-center bg-white px-10 py-2 h-full">
