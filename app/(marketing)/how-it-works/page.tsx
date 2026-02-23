@@ -1,6 +1,13 @@
+import EmailCaptureForm from "@/components/public/EmailCaptureForm";
+import FAQSection from "@/components/public/FAQSection";
+import FinalCTASection from "@/components/public/FinalCTASection";
 import Footer from "@/components/public/Footer";
-import MarketingHero from "@/components/public/MarketingHero";
-import PageHeroContent from "@/components/public/PageHeroContent";
+import HowItWorksHero from "@/components/public/HowItWorksHero";
+import HowItWorksScrollSection from "@/components/public/HowItWorksScrollSection";
+import HowItWorksSection from "@/components/public/HowItWorksSection";
+import ProblemSection from "@/components/public/ProblemSection";
+import SocialProofSection from "@/components/public/SocialProofSection";
+import SolutionSection from "@/components/public/SolutionSection";
 
 const HERO_IMAGE = "/images/hassaan-here-4000-2300.jpg";
 const HERO_IMAGE_CREDIT = {
@@ -18,28 +25,25 @@ export const metadata = {
 export default function HowItWorksPage() {
   return (
     <>
-      <MarketingHero
-        backgroundImage={HERO_IMAGE}
-        backgroundImageLabel="How it works hero background"
+      <HowItWorksHero
+        title="Simple steps to stand out"
+        subtitle="Create your page, share your link, and get noticed by recruiters. Your personalized job application page in minutes."
+        imageSrc={HERO_IMAGE}
+        imageAlt="How it works hero"
         imageCredit={HERO_IMAGE_CREDIT}
-        variant="compact"
-      >
-        <PageHeroContent
-          title="Simple steps to stand out"
-          subtitle="Create your page, share your link, get noticed by recruiters."
-        />
-      </MarketingHero>
-      <main className="flex-1 px-4 py-16 sm:px-6 lg:px-8">
-        <div id="how-it-works" className="mx-auto max-w-3xl">
-          <h2 className="font-heading text-3xl font-bold text-foreground sm:text-4xl">
-            How it Works
-          </h2>
-          <p className="mt-4 text-foreground/80">Content coming soon.</p>
-        </div>
-      </main>
-      <div className="mt-auto bg-background">
+        primaryCta={{ label: "Get started", href: "/login" }}
+        secondaryCta={{ label: "See pricing", href: "/pricing" }}
+      />
+      <HowItWorksScrollSection>
+        <EmailCaptureForm />
+        <ProblemSection />
+        <SolutionSection />
+        <HowItWorksSection />
+        <SocialProofSection />
+        <FAQSection />
+        <FinalCTASection />
         <Footer />
-      </div>
+      </HowItWorksScrollSection>
     </>
   );
 }

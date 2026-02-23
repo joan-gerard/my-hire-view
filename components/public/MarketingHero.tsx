@@ -44,7 +44,7 @@ export default function MarketingHero({
     <motion.section
       className={clsx(
         "relative overflow-hidden",
-        variant === "full" ? "h-screen" : "h-auto"
+        variant === "full" ? "h-screen" : "h-auto",
       )}
       initial="hidden"
       animate="visible"
@@ -53,13 +53,13 @@ export default function MarketingHero({
       <div
         className={clsx(
           "px-4 py-12 sm:px-6 lg:px-8 lg:pb-8 lg:pt-24 w-full",
-          variant === "full" ? "h-full" : "h-auto"
+          variant === "full" ? "h-full" : "h-auto",
         )}
       >
         <div
           className={clsx(
             "relative w-full bg-cover bg-center bg-no-repeat rounded-3xl",
-            variant === "compact" ? "h-[35vh]" : "h-full"
+            variant === "compact" ? "h-[35vh]" : "h-full",
           )}
           style={{ backgroundImage: `url(${backgroundImage})` }}
           role="img"

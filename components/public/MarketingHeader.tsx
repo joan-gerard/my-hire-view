@@ -59,35 +59,35 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
       animate={headerEntrance.animate}
       transition={headerEntrance.transition}
     >
-      <div className="mx-auto py-4 px-24">
-        <div className="relative flex justify-between items-center rounded-2xl bg-white px-4 py-2 shadow-sm shadow-black/15">
-          <div className="">
-            <LogoGradient />
-          </div>
-
-          <nav
-            className="flex flex-1 justify-end items-center gap-6"
-            aria-label="Main"
-          >
-            {MARKETING_NAV_LINKS.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                id="marketing-nav-link"
-                className="text-base font-medium text-foreground/80 hover:text-foreground"
-              >
-                {label}
-              </Link>
-            ))}
-            <UserDropdown
-              user={user}
-              dropdownOpen={dropdownOpen}
-              setDropdownOpen={setDropdownOpen}
-              dropdownRef={dropdownRef}
-            />
-          </nav>
+      {/* <div className="mx-auto py-4 px-24"> */}
+      <div className="relative flex justify-between items-center bg-white px-4 py-2 shadow-sm shadow-black/15">
+        <div className="">
+          <LogoGradient />
         </div>
+
+        <nav
+          className="flex flex-1 justify-end items-center gap-6"
+          aria-label="Main"
+        >
+          {MARKETING_NAV_LINKS.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              id="marketing-nav-link"
+              className="text-base font-medium text-foreground/80 hover:text-foreground"
+            >
+              {label}
+            </Link>
+          ))}
+          <UserDropdown
+            user={user}
+            dropdownOpen={dropdownOpen}
+            setDropdownOpen={setDropdownOpen}
+            dropdownRef={dropdownRef}
+          />
+        </nav>
       </div>
+      {/* </div> */}
     </motion.header>
   );
 }
