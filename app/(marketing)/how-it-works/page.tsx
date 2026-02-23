@@ -5,6 +5,7 @@ import Footer from "@/components/public/Footer";
 import HowItWorksHero from "@/components/public/HowItWorksHero";
 import HowItWorksScrollSection from "@/components/public/HowItWorksScrollSection";
 import HowItWorksSection from "@/components/public/HowItWorksSection";
+import PreventOverscrollReveal from "@/components/public/PreventOverscrollReveal";
 import ProblemSection from "@/components/public/ProblemSection";
 import SocialProofSection from "@/components/public/SocialProofSection";
 import SolutionSection from "@/components/public/SolutionSection";
@@ -25,6 +26,7 @@ export const metadata = {
 export default function HowItWorksPage() {
   return (
     <>
+      <PreventOverscrollReveal />
       <HowItWorksHero
         title="Simple steps to stand out"
         subtitle="Create your page, share your link, and get noticed by recruiters. Your personalized job application page in minutes."
