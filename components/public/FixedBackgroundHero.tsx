@@ -7,7 +7,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useRef } from "react";
 
-export interface HowItWorksHeroProps {
+export interface FixedBackgroundHeroProps {
   /** Main headline above the media. */
   title: string;
   /** Supporting text below the headline. */
@@ -26,13 +26,7 @@ export interface HowItWorksHeroProps {
   children?: ReactNode;
 }
 
-/**
- * Hero for the How it Works page: content (heading, text, CTAs) above a
- * full-width image. On scroll, the image stays fixed and the next section
- * scrolls over it. Use a sibling section with HowItWorksScrollSection (or
- * bg + z-10) so content covers the fixed image.
- */
-export default function HowItWorksHero({
+export default function FixedBackgroundHero({
   title,
   subtitle,
   imageSrc,
@@ -41,7 +35,7 @@ export default function HowItWorksHero({
   primaryCta,
   secondaryCta,
   children,
-}: HowItWorksHeroProps) {
+}: FixedBackgroundHeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -55,28 +49,21 @@ export default function HowItWorksHero({
 
   if (!mediaSrc) {
     throw new Error(
-      "HowItWorksHero requires either videoSrc or imageSrc to be provided.",
+      "FixedBackgroundHero requires either videoSrc or imageSrc to be provided.",
     );
   }
 
   return (
     <section ref={sectionRef} className="relative">
-      {/* Spacer: full viewport height so HowItWorksScrollSection is not visible on load */}
-      <div className="h-screen w-full" aria-hidden id="how-it-works-hero" />
+      {/* Spacer: full viewport height so FixedBackgroundHero is not visible on load */}
+      <div className="h-screen w-full" aria-hidden />
 
       {/* Fixed hero: fills viewport below header; video or image + content overlaid */}
-      <div
-        className="fixed left-0 right-0 top-0 z-0 h-screen"
-        id="how-it-works-hero-image"
-      >
+      <div className="fixed left-0 right-0 top-0 z-0 h-screen">
         {/* Video or image: full area with horizontal padding (rounded), behind the content */}
-        <div
-          className="absolute inset-0 overflow-hidden"
-          id="how-it-works-hero-image-inner"
-        >
+        <div className="absolute inset-0 overflow-hidden">
           <motion.div
             className="absolute inset-0 mb-5 mt-[72px]"
-            id="how-it-works-hero-image-inner-media"
             style={{ marginLeft: marginX, marginRight: marginX }}
           >
             {useVideo ? (
@@ -108,7 +95,7 @@ export default function HowItWorksHero({
         </div>
 
         {/* Content in front of the image: title, subtitle, CTAs; moves down slightly as user scrolls */}
-        <HowItWorksHeroContent
+        <FixedBackgroundHeroContent
           title={title}
           subtitle={subtitle}
           primaryCta={primaryCta}
@@ -121,7 +108,7 @@ export default function HowItWorksHero({
   );
 }
 
-interface HowItWorksHeroContentProps {
+interface FixedBackgroundHeroContentProps {
   title: string;
   subtitle: string;
   primaryCta?: { label: string; href: string };
@@ -130,14 +117,14 @@ interface HowItWorksHeroContentProps {
   contentY: MotionValue<number>;
 }
 
-function HowItWorksHeroContent({
+function FixedBackgroundHeroContent({
   title,
   subtitle,
   primaryCta,
   secondaryCta,
   children,
   contentY,
-}: HowItWorksHeroContentProps) {
+}: FixedBackgroundHeroContentProps) {
   return (
     <div className="relative z-1 flex h-full flex-col items-center justify-center px-0">
       <motion.div

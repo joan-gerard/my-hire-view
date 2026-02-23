@@ -33,7 +33,7 @@ export interface LandingHeroProps {
  * Use on the home page or on other marketing routes (How it Works, Pricing, Blog)
  * with different backgroundImage and children per route.
  */
-export default function MarketingHero({
+export default function MarketingHero_Old({
   backgroundImage,
   backgroundImageLabel = "Hero background",
   imageCredit = null,

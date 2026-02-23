@@ -24,7 +24,7 @@ export const CAREER_STAGE_OPTIONS = [
 
 /** Shared styles for text inputs and select to keep appearance consistent. */
 const CONTROL_CLASS =
-  "w-full rounded-xl bg-[var(--brand-accent)] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--foreground)]/50 focus:outline-none disabled:opacity-70";
+  "w-full rounded-xl bg-[#fcfaf9] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--foreground)]/50 focus:outline-none disabled:opacity-70";
 
 export type WaitlistFormStatus = "idle" | "loading" | "success" | "error";
 
@@ -64,6 +64,10 @@ export function WaitlistSignupForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-4">
+        <p className="w-full text-base text-[var(--foreground)]/80 mb-2 text-start">
+          Your details*
+        </p>
+
         <FormField id="waitlist-email" label="Email address (required)">
           <input
             id="waitlist-email"
@@ -107,7 +111,7 @@ export function WaitlistSignupForm({
       <button
         type="submit"
         disabled={isDisabled}
-        className="w-full rounded-lg bg-[var(--brand-primary)] px-6 py-4 text-lg font-semibold text-[var(--brand-primary-text)] shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 focus:ring-offset-[var(--secondary-background)] disabled:opacity-70"
+        className="w-full rounded-lg bg-black/90 hover:bg-black px-6 py-4 text-lg font-semibold text-[var(--brand-primary-text)] shadow-md transition  focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 focus:ring-offset-[var(--secondary-background)] disabled:opacity-70"
       >
         {status === "loading" ? "Joining…" : "Get Early Access"}
       </button>
@@ -240,9 +244,7 @@ function StatusRadioOption({
     <label
       htmlFor={id}
       className={`flex cursor-pointer items-center gap-2 rounded-xl px-4 py-3 transition-[background-color,box-shadow] duration-500 delay-75 ease-in-out ${
-        checked
-          ? "bg-[var(--brand-accent)]"
-          : "bg-[var(--brand-accent)]/60 hover:bg-[var(--brand-accent)]"
+        checked ? "bg-[#fcfaf9]" : "bg-[#faf8f7] hover:bg-[#faf8f7]"
       } ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
     >
       <span

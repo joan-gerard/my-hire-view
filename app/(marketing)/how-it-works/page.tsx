@@ -1,12 +1,12 @@
 import EmailCaptureForm from "@/components/public/EmailCaptureForm";
 import FAQSection from "@/components/public/FAQSection";
 import FinalCTASection from "@/components/public/FinalCTASection";
+import FixedBackgroundHero from "@/components/public/FixedBackgroundHero";
 import Footer from "@/components/public/Footer";
-import HowItWorksHero from "@/components/public/HowItWorksHero";
-import HowItWorksScrollSection from "@/components/public/HowItWorksScrollSection";
 import HowItWorksSection from "@/components/public/HowItWorksSection";
 import PreventOverscrollReveal from "@/components/public/PreventOverscrollReveal";
 import ProblemSection from "@/components/public/ProblemSection";
+import ScrollCoverSection from "@/components/public/ScrollCoverSection";
 import SocialProofSection from "@/components/public/SocialProofSection";
 import SolutionSection from "@/components/public/SolutionSection";
 
@@ -22,7 +22,7 @@ export default function HowItWorksPage() {
   return (
     <>
       <PreventOverscrollReveal />
-      <HowItWorksHero
+      <FixedBackgroundHero
         title="Stand out. Get Seen."
         subtitle="Create your page, share your link, and get noticed by recruiters. Your personalized job application page in minutes."
         videoSrc={HERO_VIDEO}
@@ -30,7 +30,7 @@ export default function HowItWorksPage() {
         primaryCta={{ label: "Get started", href: "/login" }}
         secondaryCta={{ label: "See pricing", href: "/pricing" }}
       />
-      <HowItWorksScrollSection>
+      <ScrollCoverSection>
         <EmailCaptureForm />
         <ProblemSection />
         <SolutionSection />
@@ -39,7 +39,7 @@ export default function HowItWorksPage() {
         <FAQSection />
         <FinalCTASection />
         <Footer />
-      </HowItWorksScrollSection>
+      </ScrollCoverSection>
     </>
   );
 }

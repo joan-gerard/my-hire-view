@@ -1,5 +1,5 @@
 import Footer from "@/components/public/Footer";
-import MarketingHero from "@/components/public/MarketingHero";
+import MarketingHero from "@/components/public/MarketingHero_Old";
 import PageHeroContent from "@/components/public/PageHeroContent";
 
 const HERO_IMAGE = "/images/pawel-czerwinski-2-2400-1600.jpg";
@@ -33,9 +33,7 @@ export default function BlogPage() {
           <h2 className="font-heading text-3xl font-bold text-foreground sm:text-4xl">
             Blog
           </h2>
-          <p className="mt-4 text-foreground/80">
-            Content coming soon.
-          </p>
+          <p className="mt-4 text-foreground/80">Content coming soon.</p>
         </div>
       </main>
       <div className="mt-auto bg-background">

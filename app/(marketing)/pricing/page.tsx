@@ -1,5 +1,5 @@
 import Footer from "@/components/public/Footer";
-import MarketingHero from "@/components/public/MarketingHero";
+import MarketingHero from "@/components/public/MarketingHero_Old";
 import PageHeroContent from "@/components/public/PageHeroContent";
 
 const HERO_IMAGE = "/images/milad-fakurian-2-3840-2160.jpg";

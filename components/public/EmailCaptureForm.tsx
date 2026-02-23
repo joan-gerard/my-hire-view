@@ -78,12 +78,12 @@ export default function EmailCaptureForm() {
   }
 
   const sectionClassName =
-    "px-4 py-16 sm:px-6 sm:py-20 lg:px-8 min-h-[520px] flex flex-col justify-center items-center";
+    "px-4 py-16 sm:px-6 sm:py-8 lg:px-8 min-h-[520px] flex flex-col justify-center rounded-2xl bg-[#f4f2f1]";
 
   return (
     <section id="early-access" className={sectionClassName}>
       <motion.div
-        className="w-full max-w-5xl text-center flex flex-col items-center gap-4"
+        className="w-full flex flex-col gap-4 items-start"
         initial={staggerContainer.initial}
         whileInView={staggerContainer.whileInView}
         viewport={viewport}
@@ -93,29 +93,34 @@ export default function EmailCaptureForm() {
         <motion.div variants={staggerItem}>
           <SectionBadge label="Early Sign Up" />
         </motion.div>
-        <motion.h2
-          className="text-6xl font-light tracking-wide text-(--brand-primary)"
+        <motion.div
+          className="grid grid-cols-2 gap-4 w-full"
           variants={staggerItem}
         >
-          Be the first to stand out
-        </motion.h2>
-        <motion.p
-          className="text-xl sm:text-2xl font-light text-[#94877c] text-balance"
-          variants={staggerItem}
-        >
-          Early signups get 3 months of Pro free when we launch!
-        </motion.p>
-        <motion.div className="grid grid-cols-2 gap-4 w-full" variants={staggerItem}>
-          <motion.div
+          <motion.div className="max-w-lg flex flex-col gap-4">
+            <motion.h2
+              className="text-6xl font-light tracking-wide text-(--brand-primary) text-balance"
+              variants={staggerItem}
+            >
+              Be the first to stand out
+            </motion.h2>
+            <motion.p
+              className="text-xl sm:text-2xl font-light text-black/60 text-balance"
+              variants={staggerItem}
+            >
+              Early signups get 3 months of Pro free when we launch!
+            </motion.p>
+          </motion.div>
+          {/* <motion.div
             className="rounded-3xl bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: `url(${BACKGROUND_IMAGE})` }}
             initial={{ opacity: 0, x: -32 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={viewport}
             transition={transition}
-          />
+          /> */}
           <motion.div
-            className="bg-(--brand-surface) w-full h-full min-h-[440px] p-8 rounded-3xl flex flex-col"
+            className="w-full h-full min-h-[440px] rounded-3xl flex flex-col pr-12"
             initial={{ opacity: 0, x: 32 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={viewport}
