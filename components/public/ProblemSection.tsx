@@ -106,8 +106,8 @@ function ProblemSectionHero() {
             Still sending the same old resume?
           </h2>
           <p className="relative z-10 text-white text-lg leading-normal text-balance">
-            Standing out in today’s hiring process is harder than ever. The old
-            playbook isn’t enough.
+            Standing out in today&apos;s hiring process is harder than ever. The
+            old playbook isn&apos;t enough.
           </p>
         </div>
         <div className="w-full self-stretch">
