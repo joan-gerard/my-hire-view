@@ -26,7 +26,6 @@ export function StepLabel({
       ? "text-black"
       : "text-black/90";
 
-  console.log({ isActive });
   return (
     <motion.div
       className="flex items-center gap-3"
