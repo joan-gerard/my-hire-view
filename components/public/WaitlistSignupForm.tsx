@@ -64,7 +64,7 @@ export function WaitlistSignupForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-4">
-        <p className="w-full text-base text-[var(--foreground)]/80 mb-2 text-start">
+        <p className="w-full text-base text-black/90 mb-2 text-start">
           Your details*
         </p>
 
@@ -111,7 +111,7 @@ export function WaitlistSignupForm({
       <button
         type="submit"
         disabled={isDisabled}
-        className="w-full rounded-lg bg-black/90 hover:bg-black px-6 py-4 text-lg font-semibold text-[var(--brand-primary-text)] shadow-md transition  focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 focus:ring-offset-[var(--secondary-background)] disabled:opacity-70"
+        className="mt-4 w-full rounded-lg bg-black/90 hover:bg-black px-6 py-4 text-lg font-semibold text-[var(--brand-primary-text)] shadow-md transition focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 focus:ring-offset-[var(--secondary-background)] disabled:opacity-70"
       >
         {status === "loading" ? "Joining…" : "Get Early Access"}
       </button>
@@ -203,7 +203,7 @@ function RadioFieldset({
     <FormField id={id} label={label}>
       <fieldset id={id} className="flex flex-wrap gap-2" aria-label={label}>
         <legend className="sr-only">{label}</legend>
-        <p className="w-full text-base text-[var(--foreground)]/80 mb-1 text-start">
+        <p className="w-full text-base text-black/90 mb-1 text-start">
           {visibleText}
         </p>
         {options.map((opt, index) => (
@@ -244,7 +244,7 @@ function StatusRadioOption({
     <label
       htmlFor={id}
       className={`flex cursor-pointer items-center gap-2 rounded-xl px-4 py-3 transition-[background-color,box-shadow] duration-500 delay-75 ease-in-out ${
-        checked ? "bg-[#fcfaf9]" : "bg-[#faf8f7] hover:bg-[#faf8f7]"
+        checked ? "bg-[#fcfaf9]" : "bg-[#faf8f7] hover:bg-[#f7f7fa]"
       } ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
     >
       <span
