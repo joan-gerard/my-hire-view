@@ -7,7 +7,6 @@ import HowItWorksSection from "@/components/public/HowItWorksSection";
 import PreventOverscrollReveal from "@/components/public/PreventOverscrollReveal";
 import ProblemSection from "@/components/public/ProblemSection";
 import ScrollCoverSection from "@/components/public/ScrollCoverSection";
-import SocialProofSection from "@/components/public/SocialProofSection";
 import SolutionSection from "@/components/public/SolutionSection";
 
 const HOME_HERO_IMAGE = "/images/pawel-czerwinski-2400-1600.jpg";
@@ -38,12 +37,11 @@ export default function Home() {
 
       <ScrollCoverSection>
         <EmailCaptureForm />
+        <SolutionSection />
+        <HowItWorksSection />
         <div className="bg-black">
           <ProblemSection />
         </div>
-        <HowItWorksSection />
-        <SolutionSection />
-        <SocialProofSection />
         <FAQSection />
         <FinalCTASection />
         <Footer />

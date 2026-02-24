@@ -27,7 +27,7 @@ export function HowItWorksSection() {
   return (
     <motion.section
       ref={sectionRef}
-      className="bg-white px-8 py-16 sm:px-10 sm:py-8 lg:px-14 lg:py-12 2xl:py-20 transition-colors duration-500"
+      className="bg-white transition-colors duration-500"
       style={
         isMostlyInView
           ? {
@@ -40,7 +40,7 @@ export function HowItWorksSection() {
           : undefined
       }
     >
-      <div className="mx-auto">
+      <div className="mx-auto px-10 2xl:px-12 py-16 h-full max-w-[1700px]">
         <div className="grid lg:grid-cols-3 lg:gap-16 mb-24">
           <div className="lg:col-span-1"></div>
           <div className="lg:col-span-2 flex flex-col gap-6 max-w-4xl">
