@@ -15,6 +15,10 @@ import {
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+
+/** Intersection threshold for considering the section "in view" (0–1). */
+const IN_VIEW_THRESHOLD = 0.2;
 
 /** Image for the problem section bento (left column). */
 const PROBLEM_SECTION_IMAGE = "/remote-work-2.jpg";
@@ -46,17 +50,45 @@ const PROBLEMS = [
 /**
  * "The Problem" section for the pre-launch landing page (LANDING_PAGE_BRIEF).
  * Bento layout: left hero (image + h2), right 4 problem cards (icon, label, description).
+ * Uses dark mode (black background, light text) when the section is in the viewport.
  */
 export default function ProblemSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting),
+      { threshold: IN_VIEW_THRESHOLD, rootMargin: "0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <motion.section
-      className="px-10 2xl:px-12 py-16 h-full max-w-[1700px] mx-auto"
+      ref={sectionRef}
+      className="mx-auto transition-colors duration-500 py-16"
       initial={fadeUp.initial}
       whileInView={fadeUp.whileInView}
       viewport={viewport}
       transition={fadeUp.transition}
+      style={
+        isInView
+          ? {
+              backgroundColor: "#000",
+              color: "#fff",
+              ["--foreground" as string]: "#fff",
+              ["--background" as string]: "#171717",
+              ["--secondary-background" as string]: "#000",
+            }
+          : undefined
+      }
     >
-      <div className="mx-auto">
+      <div className="mx-auto px-10 2xl:px-12 py-16 h-full max-w-[1700px]">
         {/* Bento: mobile = 1 col (hero then cards); desktop = 3 cols, 2 rows */}
         <div className="grid grid-cols-1 gap-4 md:gap-6 min-[1440px]:grid-cols-3 min-[1440px]:grid-rows-2">
           {/* Left hero: image with h2 overlay; full height on desktop (col 1, rows 1–2), first on mobile. */}
@@ -77,6 +109,7 @@ export default function ProblemSection() {
                 Icon={Icon}
                 label={label}
                 description={description}
+                isDarkMode={isInView}
               />
             ))}
           </motion.div>
@@ -127,24 +160,31 @@ function ProblemCard({
   Icon,
   label,
   description,
+  isDarkMode,
 }: {
   Icon: React.ElementType;
   label: string;
   description: string;
+  isDarkMode: boolean;
 }) {
   return (
     <motion.article
       key={label}
-      className="flex flex-col gap-4 rounded-2xl border border-(--foreground)/10 bg-[#fbfaf9] p-6 md:p-8 2xl:p-10 shadow-sm transition-shadow hover:shadow-md min-[1440px]:aspect-16/14"
+      className={`flex flex-col gap-4 rounded-2xl border-[0.5px] border-gray-200 p-6 md:p-8 2xl:p-10 shadow-sm transition duration-500 hover:shadow-md min-[1440px]:aspect-16/12 bg-white 
+      `}
       variants={staggerItem}
     >
-      <div className="flex h-10 2xl:h-14 w-10 2xl:w-14 shrink-0 items-center justify-center rounded-xl bg-[#f4f2f1] border border-(--foreground)/10">
-        <Icon className="h-6 2xl:h-8 w-6 2xl:w-8 text-foreground" />
+      <div
+        className={`flex h-10 2xl:h-14 w-10 2xl:w-14 shrink-0 items-center justify-center rounded-xl border bg-[#f4f2f1]`}
+      >
+        <Icon className={`h-6 2xl:h-8 w-6 2xl:w-8 text-black`} />
       </div>
-      <h3 className="text-2xl xl:text-3xl 2xl:text-4xl font-light text-foreground">
+      <h3 className={`text-2xl xl:text-3xl 2xl:text-4xl font-light text-black`}>
         {label}
       </h3>
-      <p className="text-lg xl:text-xl font-extralight leading-snug xl:leading-normal text-foreground/80 mb-6 min-[1440px]:mb-0">
+      <p
+        className={`text-lg xl:text-xl font-extralight leading-snug xl:leading-normal mb-6 min-[1440px]:mb-0 text-black`}
+      >
         {description}
       </p>
     </motion.article>

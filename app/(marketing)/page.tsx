@@ -1,13 +1,7 @@
-import EmailCaptureForm from "@/components/public/EmailCaptureForm";
-import FAQSection from "@/components/public/FAQSection";
-import FinalCTASection from "@/components/public/FinalCTASection";
 import FixedBackgroundHero from "@/components/public/FixedBackgroundHero";
-import Footer from "@/components/public/Footer";
-import HowItWorksSection from "@/components/public/HowItWorksSection";
+import LandingPageSections from "@/components/public/LandingPageSections";
 import PreventOverscrollReveal from "@/components/public/PreventOverscrollReveal";
-import ProblemSection from "@/components/public/ProblemSection";
 import ScrollCoverSection from "@/components/public/ScrollCoverSection";
-import SolutionSection from "@/components/public/SolutionSection";
 
 const HOME_HERO_IMAGE = "/images/pawel-czerwinski-2400-1600.jpg";
 const HOME_HERO_IMAGE_CREDIT = {
@@ -36,15 +30,7 @@ export default function Home() {
       />
 
       <ScrollCoverSection>
-        <EmailCaptureForm />
-        <SolutionSection />
-        <HowItWorksSection />
-        <div className="bg-black">
-          <ProblemSection />
-        </div>
-        <FAQSection />
-        <FinalCTASection />
-        <Footer />
+        <LandingPageSections />
       </ScrollCoverSection>
     </>
   );

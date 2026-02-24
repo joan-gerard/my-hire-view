@@ -21,6 +21,16 @@ export interface UseHowItWorksObserversArgs {
   cardRefs: RefObject<(HTMLDivElement | null)[]>;
   videoRefs: RefObject<(HTMLVideoElement | null)[]>;
   stepCount: number;
+  /**
+   * When provided, dark mode is driven by this element entering the viewport
+   * instead of the section itself (e.g. trigger when ProblemSection is visible).
+   */
+  darkModeTriggerRef?: RefObject<HTMLElement | null>;
+  /**
+   * When using darkModeTriggerRef, set to true once the trigger element has mounted
+   * so the observer can attach (refs don't trigger effect re-runs).
+   */
+  darkModeTriggerReady?: boolean;
 }
 
 export interface UseHowItWorksObserversResult {
@@ -32,7 +42,7 @@ export interface UseHowItWorksObserversResult {
 
 /**
  * Sets up intersection observers for the How It Works section:
- * - Section in view → dark theme
+ * - Dark theme when section (or darkModeTriggerRef) is in view
  * - Card fully in view → active step label
  * - Card partially in view → width/scale and video autoplay
  */
@@ -41,6 +51,8 @@ export function useHowItWorksObservers({
   cardRefs,
   videoRefs,
   stepCount,
+  darkModeTriggerRef,
+  darkModeTriggerReady = true,
 }: UseHowItWorksObserversArgs): UseHowItWorksObserversResult {
   const [isMostlyInView, setIsMostlyInView] = useState(false);
   const [activeSteps, setActiveSteps] = useState<boolean[]>(() =>
@@ -55,14 +67,14 @@ export function useHowItWorksObservers({
   );
 
   useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
+    const darkModeTarget = darkModeTriggerRef?.current ?? sectionRef.current;
+    if (!darkModeTarget) return;
 
     const sectionObserver = new IntersectionObserver(
       ([entry]) => setIsMostlyInView(entry.isIntersecting),
       { threshold: IN_VIEW_THRESHOLD, rootMargin: "0px" },
     );
-    sectionObserver.observe(el);
+    sectionObserver.observe(darkModeTarget);
 
     const updateSteps = (
       entries: IntersectionObserverEntry[],
@@ -146,7 +158,7 @@ export function useHowItWorksObservers({
         autoplayObserver.unobserve(node);
       });
     };
-  }, [sectionRef, cardRefs, videoRefs, stepCount]);
+  }, [sectionRef, darkModeTriggerRef, darkModeTriggerReady, cardRefs, videoRefs, stepCount]);
 
   return { isMostlyInView, activeSteps, cardInView };
 }

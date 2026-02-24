@@ -1,18 +1,32 @@
 "use client";
 
 import { motion } from "framer-motion";
+import type { RefObject } from "react";
 import { useRef } from "react";
 import { HOW_IT_WORKS_STEPS } from "./constants";
 import { StepCard } from "./StepCard";
 import { StepLabel } from "./StepLabel";
 import { useHowItWorksObservers } from "./useHowItWorksObservers";
 
+export interface HowItWorksSectionProps {
+  /**
+   * When provided, dark mode is triggered when this element enters the viewport
+   * instead of when this section enters (e.g. pass a ref to ProblemSection wrapper).
+   */
+  darkModeTriggerRef?: RefObject<HTMLElement | null>;
+  /** Set true once the dark mode trigger element has mounted (so the observer can attach). */
+  darkModeTriggerReady?: boolean;
+}
+
 /**
  * "How It Works" section: two columns.
  * Left (1/3): sticky list "Step 1", "Step 2", "Step 3" — each animates when its card is fully in view.
- * Right (2/3): title + 3 cards (video + text). Background turns black when section enters viewport.
+ * Right (2/3): title + 3 cards (video + text). Background turns black when section (or darkModeTriggerRef) enters viewport.
  */
-export function HowItWorksSection() {
+export function HowItWorksSection({
+  darkModeTriggerRef,
+  darkModeTriggerReady = true,
+}: HowItWorksSectionProps = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
@@ -22,12 +36,14 @@ export function HowItWorksSection() {
     cardRefs,
     videoRefs,
     stepCount: HOW_IT_WORKS_STEPS.length,
+    darkModeTriggerRef,
+    darkModeTriggerReady,
   });
 
   return (
     <motion.section
       ref={sectionRef}
-      className="bg-white transition-colors duration-500"
+      className="bg-white transition-colors duration-500 py-16"
       style={
         isMostlyInView
           ? {

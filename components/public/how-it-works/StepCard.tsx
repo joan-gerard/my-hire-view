@@ -27,7 +27,7 @@ export function StepCard({
   return (
     <motion.div
       ref={cardRef}
-      className="mx-auto flex w-full max-w-full flex-col rounded-xl bg-[var(--background)] overflow-hidden shadow-sm border border-[var(--foreground)]/10"
+      className="mx-auto flex w-full max-w-full flex-col rounded-xl bg-gray-100 overflow-hidden shadow-sm"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewport}
@@ -46,7 +46,7 @@ export function StepCard({
         transformOrigin: "center center",
       }}
     >
-      <div className="relative aspect-video w-full bg-[var(--foreground)]/5 p-12">
+      <div className="relative aspect-video w-full bg-blue-50 p-12">
         <video
           ref={videoRef}
           src={step.video}
