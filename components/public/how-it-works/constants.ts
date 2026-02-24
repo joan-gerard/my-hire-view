@@ -38,8 +38,8 @@ export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
 /** Section visibility threshold for dark theme (0–1). */
 export const IN_VIEW_THRESHOLD = 0.2;
 
-/** Card visibility threshold to mark step as active (0–1). Use 1 for fully visible. */
-export const CARD_IN_VIEW_THRESHOLD = 1;
+/** Card visibility threshold to mark step as active (0–1). Step is active when at least this fraction is visible. */
+export const CARD_IN_VIEW_THRESHOLD = 0.6;
 
 /** Card is "in viewport" for width when this fraction is visible. Below this, card shrinks to 95%. */
 export const CARD_WIDTH_VIEW_THRESHOLD = 0.15;
