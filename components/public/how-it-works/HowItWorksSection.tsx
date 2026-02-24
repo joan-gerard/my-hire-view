@@ -27,7 +27,7 @@ export function HowItWorksSection() {
   return (
     <motion.section
       ref={sectionRef}
-      className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8 transition-colors duration-500"
+      className="bg-white px-8 py-16 sm:px-10 sm:py-8 lg:px-14 lg:py-12 2xl:py-20 transition-colors duration-500"
       style={
         isMostlyInView
           ? {
@@ -49,7 +49,7 @@ export function HowItWorksSection() {
         </div>
         <div className="grid gap-12 lg:grid-cols-3 lg:gap-16">
           {/* Left: sticky step labels (1/3) */}
-          <div className="lg:sticky lg:top-24 lg:self-start pt-20">
+          <div className="lg:sticky lg:top-24 lg:self-start pt-24">
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 lg:flex-col lg:gap-4">
               {HOW_IT_WORKS_STEPS.map((step, index) => (
                 <StepLabel
@@ -64,7 +64,7 @@ export function HowItWorksSection() {
 
           {/* Right: title + cards (2/3) */}
           <div className="lg:col-span-2">
-            <div className="flex flex-col gap-12 sm:gap-16">
+            <div className="flex flex-col gap-12 sm:gap-16 pr-8 2xl:pr-20">
               {HOW_IT_WORKS_STEPS.map((step, index) => (
                 <StepCard
                   key={step.id}
