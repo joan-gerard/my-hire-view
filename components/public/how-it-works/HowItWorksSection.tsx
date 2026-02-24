@@ -43,9 +43,16 @@ export function HowItWorksSection() {
       <div className="mx-auto">
         <div className="grid lg:grid-cols-3 lg:gap-16 mb-24">
           <div className="lg:col-span-1"></div>
-          <h2 className="text-3xl sm:text-7xl text-balance font-bold tracking-tight lg:col-span-2">
-            Stand Out in Three Simple Steps
-          </h2>
+          <div className="lg:col-span-2 flex flex-col gap-6 max-w-4xl">
+            <h2 className="text-3xl sm:text-7xl text-balance tracking-tight">
+              Stand Out in <br />
+              <span className="">Three Simple Steps</span>
+            </h2>
+            <p className="text-xl text-balance leading-relaxed">
+              Our platform helps you stand out in your job search by providing
+              you with the tools and resources you need to succeed.
+            </p>
+          </div>
         </div>
         <div className="grid gap-12 lg:grid-cols-3 lg:gap-16">
           {/* Left: sticky step labels (1/3) */}

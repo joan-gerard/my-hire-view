@@ -39,8 +39,8 @@ export default function Home() {
       <ScrollCoverSection>
         <EmailCaptureForm />
         <ProblemSection />
-        <SolutionSection />
         <HowItWorksSection />
+        <SolutionSection />
         <SocialProofSection />
         <FAQSection />
         <FinalCTASection />

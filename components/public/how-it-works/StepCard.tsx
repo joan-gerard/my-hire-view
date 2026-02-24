@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { viewport } from "@/lib/landing-animations";
+import { motion } from "framer-motion";
 import type { HowItWorksStep } from "./constants";
 
 export interface StepCardProps {
@@ -46,19 +46,21 @@ export function StepCard({
         transformOrigin: "center center",
       }}
     >
-      <div className="relative aspect-video w-full bg-[var(--foreground)]/5">
+      <div className="relative aspect-video w-full bg-[var(--foreground)]/5 p-12">
         <video
           ref={videoRef}
           src={step.video}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover rounded-2xl"
           muted
           loop
           playsInline
           aria-label={step.title}
         />
       </div>
-      <div className="p-6">
-        <p className="text-[var(--foreground)]/80">{step.description}</p>
+      <div className="p-8">
+        <p className="text-[var(--foreground)]/80 text-xl">
+          {step.description}
+        </p>
       </div>
     </motion.div>
   );
