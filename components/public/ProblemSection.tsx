@@ -1,137 +1,150 @@
 "use client";
 
 import {
+  DocumentIcon,
+  InboxIcon,
+  QuestionIcon,
+  StopwatchIcon,
+} from "@/components/admin/icons";
+import {
   fadeUp,
   staggerContainer,
   staggerItem,
   viewport,
 } from "@/lib/landing-animations";
 import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+
+/** Image for the problem section bento (left column). */
+const PROBLEM_SECTION_IMAGE = "/remote-work-2.jpg";
+
+const PROBLEMS = [
+  {
+    Icon: InboxIcon,
+    label: "Inbox overflow",
+    description: "Your resume gets lost in a sea of PDFs.",
+  },
+  {
+    Icon: StopwatchIcon,
+    label: "6 seconds",
+    description: "Recruiters spend 6 seconds scanning it.",
+  },
+  {
+    Icon: QuestionIcon,
+    label: "No visibility",
+    description: "You have no idea if anyone even opened it.",
+  },
+  {
+    Icon: DocumentIcon,
+    label: "Flat document",
+    description:
+      "There's no way to show your personality, passion, or communication skills that matter most for the job.",
+  },
+] as const;
 
 /**
  * "The Problem" section for the pre-launch landing page (LANDING_PAGE_BRIEF).
- * Explains why traditional resumes fall short.
+ * Bento layout: left hero (image + h2), right 4 problem cards (icon, label, description).
  */
 export default function ProblemSection() {
-  const icons = [
-    { Icon: InboxIcon, label: "Inbox overflow" },
-    { Icon: StopwatchIcon, label: "6 seconds" },
-    { Icon: QuestionIcon, label: "No visibility" },
-    { Icon: DocumentIcon, label: "Flat document" },
-  ];
-
   return (
     <motion.section
-      className=" px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+      className="px-10 2xl:px-12 py-16 h-full max-w-[1700px] mx-auto"
       initial={fadeUp.initial}
       whileInView={fadeUp.whileInView}
       viewport={viewport}
       transition={fadeUp.transition}
     >
-      <div className="mx-auto max-w-4xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
-          Still Sending the Same Old Resume?
-        </h2>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[var(--foreground)]/90">
-          Your resume gets lost in a sea of PDFs. Recruiters spend 6 seconds
-          scanning it. You have no idea if anyone even opened it. And
-          there&apos;s no way to show your personality, passion, or
-          communication skills that matter most for the job.
-        </p>
-        <motion.div
-          className="mt-12 flex flex-wrap justify-center gap-8 sm:gap-12"
-          aria-hidden
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewport}
-          variants={staggerContainer.variants}
-        >
-          {icons.map(({ Icon, label }) => (
-            <motion.div
-              key={label}
-              className="flex flex-col items-center gap-2 text-[var(--foreground)]/70"
-              variants={staggerItem}
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--background)]">
-                <Icon className="h-6 w-6 text-[var(--foreground)]" />
-              </div>
-              <span className="text-sm font-medium">{label}</span>
-            </motion.div>
-          ))}
-        </motion.div>
+      <div className="mx-auto">
+        {/* Bento: mobile = 1 col (hero then cards); desktop = 3 cols, 2 rows */}
+        <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-3 lg:grid-rows-2">
+          {/* Left hero: image with h2 overlay; full height on desktop (col 1, rows 1–2), first on mobile. */}
+          <ProblemSectionHero />
+
+          {/* Right: 4 problem cards — 2x2 on desktop, stacked on mobile */}
+          <motion.div
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:col-span-2 lg:row-span-2 lg:grid-cols-2 lg:grid-rows-2 lg:content-stretch"
+            aria-label="Problems with traditional resumes"
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            variants={staggerContainer.variants}
+          >
+            {PROBLEMS.map(({ Icon, label, description }) => (
+              <ProblemCard
+                key={label}
+                Icon={Icon}
+                label={label}
+                description={description}
+              />
+            ))}
+          </motion.div>
+        </div>
       </div>
     </motion.section>
   );
 }
 
-function InboxIcon({ className }: { className?: string }) {
+function ProblemSectionHero() {
   return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.75V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.5m-19.5 0V6a2.25 2.25 0 012.25-2.25h15A2.25 2.25 0 0121.75 6v4.5"
+    <div className="relative min-h-[240px] overflow-hidden rounded-2xl bg-linear-to-br from-foreground/10 to-foreground/5 md:min-h-[280px] lg:col-span-1 lg:row-span-2 lg:min-h-[360px]">
+      <Image
+        src={PROBLEM_SECTION_IMAGE}
+        alt="Resume and documents on a desk"
+        fill
+        className="object-cover"
+        sizes="(max-width: 1023px) 100vw, 33vw"
       />
-    </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-between text-start p-8 2xl:p-10">
+        <div
+          className="absolute inset-0 -m-6 bg-linear-to-b from-black/70 to-transparent h-1/3"
+          aria-hidden
+        />
+        <div className="flex flex-col gap-6">
+          <h2 className="relative z-10 text-2xl 2xl:text-5xl text-balance font-light tracking-tight text-white sm:text-3xl lg:text-3xl xl:text-4xl">
+            Still sending the same old resume?
+          </h2>
+          <p className="relative z-10 text-white text-lg leading-normal">
+            Standing out in today’s hiring process is harder than ever. The old
+            playbook isn’t enough.
+          </p>
+        </div>
+        <div className="w-full self-stretch">
+          <Link
+            href="#early-access"
+            className="flex items-center justify-center w-full rounded-2xl bg-white hover:bg-white/90 text-black px-6 py-4 text-xl font-semibold text-(--brand-primary-text) shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-primary) focus:ring-offset-2 focus:ring-offset-(--secondary-background) disabled:opacity-70"
+          >
+            Get Started with MyHireView
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
 
-function StopwatchIcon({ className }: { className?: string }) {
+function ProblemCard({
+  Icon,
+  label,
+  description,
+}: {
+  Icon: React.ElementType;
+  label: string;
+  description: string;
+}) {
   return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
+    <motion.article
+      key={label}
+      className="flex flex-col gap-3 rounded-2xl border border-(--foreground)/10 bg-background p-5 shadow-sm transition-shadow hover:shadow-md aspect-16/14"
+      variants={staggerItem}
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  );
-}
-
-function QuestionIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
-      />
-    </svg>
-  );
-}
-
-function DocumentIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-      />
-    </svg>
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-(--foreground)/10">
+        <Icon className="h-6 w-6 text-foreground" />
+      </div>
+      <h3 className="text-base font-semibold text-foreground">{label}</h3>
+      <p className="text-sm leading-relaxed text-foreground/80">
+        {description}
+      </p>
+    </motion.article>
   );
 }

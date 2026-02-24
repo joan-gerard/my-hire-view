@@ -38,7 +38,9 @@ export default function Home() {
 
       <ScrollCoverSection>
         <EmailCaptureForm />
-        <ProblemSection />
+        <div className="bg-black">
+          <ProblemSection />
+        </div>
         <HowItWorksSection />
         <SolutionSection />
         <SocialProofSection />

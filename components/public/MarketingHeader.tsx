@@ -56,7 +56,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
 
   return (
     <motion.header
-      className="fixed top-0 left-0 right-0 z-50 h-[72px]"
+      className="fixed top-0 left-0 right-0 z-50 h-[72px] bg-white"
       initial={headerEntrance.initial}
       animate={heroReady ? headerEntrance.animate : headerEntrance.initial}
       transition={{
@@ -66,7 +66,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
       }}
     >
       {/* <div className="mx-auto py-4 px-24"> */}
-      <div className="relative flex justify-between items-center bg-white px-10 py-2 h-full">
+      <div className="relative flex justify-between items-center px-10 2xl:px-6 py-2 h-full max-w-[1700px] mx-auto">
         <div className="">
           <LogoBlack />
         </div>
