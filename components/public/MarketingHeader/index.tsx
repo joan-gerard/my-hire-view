@@ -8,7 +8,11 @@ import type { User } from "@supabase/supabase-js";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { MARKETING_NAV_LINKS, MOBILE_MENU_BG } from "./constants";
+import {
+  MARKETING_NAV_LINKS,
+  MOBILE_MENU_BG,
+  MOBILE_MENU_BG_TRANSPARENT,
+} from "./constants";
 import { MobileMenuContent } from "./MobileMenuContent";
 import { MobileMenuToggle } from "./MobileMenuToggle";
 import { UserDropdown } from "./UserDropdown";
@@ -84,7 +88,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
               backgroundColor: isMobileMenuExpanded
                 ? MOBILE_MENU_BG
                 : isMobileViewport
-                  ? "transparent"
+                  ? MOBILE_MENU_BG_TRANSPARENT
                   : "#ffffff",
               borderBottom: isMobileViewport
                 ? "0.5px solid #6e6d6d"
@@ -93,7 +97,9 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
           : {
               ...headerEntrance.initial,
               height: "72px",
-              backgroundColor: isMobileViewport ? "transparent" : "#ffffff",
+              backgroundColor: isMobileViewport
+                ? MOBILE_MENU_BG_TRANSPARENT
+                : "#ffffff",
               borderBottom: isMobileViewport
                 ? "1px solid black"
                 : "1px solid transparent",
@@ -105,7 +111,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
         height: { type: "tween", duration: 0.5, ease: "easeInOut" },
         backgroundColor: {
           type: "tween",
-          duration: 0.5,
+          duration: 0.3,
           ease: "easeInOut",
           delay: isMobileMenuExpanded ? 0.15 : 0,
         },
