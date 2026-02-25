@@ -1,6 +1,6 @@
 "use client";
 
-import { useMobileViewport } from "@/components/public/MarketingHeader/useMobileViewport";
+import { useMobileViewport } from "@/hooks/useMobileViewport";
 import { useHeroEntrance } from "@/contexts/HeroEntranceContext";
 import { staggerContainer, staggerItem } from "@/lib/landing-animations";
 import { animate, motion, MotionValue, useMotionValue, useScroll, useTransform } from "framer-motion";

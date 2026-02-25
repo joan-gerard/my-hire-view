@@ -1,7 +1,12 @@
 "use client";
 
-import { MOBILE_BREAKPOINT_PX } from "@/lib/constants";
 import { useEffect, useState } from "react";
+
+/**
+ * Pixel width below which the layout is considered "mobile".
+ * Matches Tailwind's md breakpoint (768px). Exported for use in media queries or layout logic.
+ */
+export const MOBILE_BREAKPOINT_PX = 768;
 
 /**
  * True when viewport width is below the mobile breakpoint (matches Tailwind md).

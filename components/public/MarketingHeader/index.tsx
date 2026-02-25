@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { MARKETING_NAV_LINKS, MOBILE_MENU_BG } from "./constants";
 import { MobileMenuContent } from "./MobileMenuContent";
 import { MobileMenuToggle } from "./MobileMenuToggle";
-import { useMobileViewport } from "./useMobileViewport";
+import { useMobileViewport } from "@/hooks/useMobileViewport";
 import { UserDropdown } from "./UserDropdown";
 
 export interface MarketingHeaderProps {

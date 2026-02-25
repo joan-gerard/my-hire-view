@@ -183,7 +183,7 @@ flowchart LR
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
-- **Marketing (`app/(marketing)/layout.tsx`):** Renders `MarketingHeader` (logo, nav: How it Works, Pricing, Blog; avatar dropdown with Sign In or Dashboard + Sign out) and `children`. Used by `/`, `/how-it-works`, `/pricing`, `/blog`. The header is implemented as a module under `components/public/MarketingHeader/` (index, constants, signOut, useMobileViewport, UserDropdown, MobileMenuContent, MobileMenuToggle).
+- **Marketing (`app/(marketing)/layout.tsx`):** Renders `MarketingHeader` (logo, nav: How it Works, Pricing, Blog; avatar dropdown with Sign In or Dashboard + Sign out) and `children`. Used by `/`, `/how-it-works`, `/pricing`, `/blog`. The header is implemented as a module under `components/public/MarketingHeader/` (index, constants, signOut, UserDropdown, MobileMenuContent, MobileMenuToggle). Mobile viewport detection uses the shared hook `hooks/useMobileViewport` (which also exports `MOBILE_BREAKPOINT_PX`).
 - **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (MyHireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
 ### 5.2 API Layer
