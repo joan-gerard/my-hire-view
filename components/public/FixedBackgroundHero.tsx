@@ -1,5 +1,6 @@
 "use client";
 
+import { useMobileViewport } from "@/components/public/MarketingHeader/useMobileViewport";
 import { useHeroEntrance } from "@/contexts/HeroEntranceContext";
 import { staggerContainer, staggerItem } from "@/lib/landing-animations";
 import { animate, motion, MotionValue, useMotionValue, useScroll, useTransform } from "framer-motion";
@@ -38,6 +39,7 @@ export default function FixedBackgroundHero({
   children,
 }: FixedBackgroundHeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
+  const isMobile = useMobileViewport();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"],
@@ -85,47 +87,75 @@ export default function FixedBackgroundHero({
 
       {/* Fixed hero: fills viewport below header; video or image + content overlaid */}
       <div className="fixed left-0 right-0 top-0 z-0 h-screen">
-        {/* Video or image: full area with horizontal padding (rounded), behind the content */}
+        {/* Video or image: full area; on mobile full viewport (no padding/margin), on desktop with horizontal padding and rounded corners */}
         <div className="absolute inset-0 overflow-hidden">
-          <motion.div
-            className="absolute left-0 right-0 overflow-hidden"
-            style={{
-              top: mediaTop,
-              bottom: mediaBottom,
-              marginLeft: mediaMarginLeft,
-              marginRight: mediaMarginRight,
-              borderRadius: mediaBorderRadius,
-            }}
-          >
-            {useVideo ? (
-              <video
-                src={mediaSrc}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="h-full w-full object-cover"
-                style={{ borderRadius: "inherit" }}
-                aria-label={imageAlt}
+          {isMobile ? (
+            <div className="absolute inset-0 overflow-hidden">
+              {useVideo ? (
+                <video
+                  src={mediaSrc}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="h-full w-full object-cover"
+                  aria-label={imageAlt}
+                />
+              ) : (
+                <Image
+                  src={mediaSrc}
+                  alt={imageAlt}
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                  priority
+                />
+              )}
+              <div
+                className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"
+                aria-hidden
               />
-            ) : (
-              <Image
-                src={mediaSrc}
-                alt={imageAlt}
-                fill
-                className="object-cover"
-                style={{ borderRadius: "inherit" }}
-                sizes="100vw"
-                priority
-              />
-            )}
-            {/* Dark overlay on bottom half of video/image for content contrast */}
+            </div>
+          ) : (
             <motion.div
-              className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"
-              style={{ borderRadius: mediaBorderRadius }}
-              aria-hidden
-            />
-          </motion.div>
+              className="absolute left-0 right-0 overflow-hidden"
+              style={{
+                top: mediaTop,
+                bottom: mediaBottom,
+                marginLeft: mediaMarginLeft,
+                marginRight: mediaMarginRight,
+                borderRadius: mediaBorderRadius,
+              }}
+            >
+              {useVideo ? (
+                <video
+                  src={mediaSrc}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="h-full w-full object-cover"
+                  style={{ borderRadius: "inherit" }}
+                  aria-label={imageAlt}
+                />
+              ) : (
+                <Image
+                  src={mediaSrc}
+                  alt={imageAlt}
+                  fill
+                  className="object-cover"
+                  style={{ borderRadius: "inherit" }}
+                  sizes="100vw"
+                  priority
+                />
+              )}
+              <motion.div
+                className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"
+                style={{ borderRadius: mediaBorderRadius }}
+                aria-hidden
+              />
+            </motion.div>
+          )}
         </div>
 
         {/* Content in front of the image: title, subtitle, CTAs; appears after video entrance, moves down slightly as user scrolls */}

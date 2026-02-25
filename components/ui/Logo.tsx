@@ -73,10 +73,9 @@ export function LogoWhite() {
     <Link
       href="/"
       id="logo"
-      className="text-4xl font-extrabold text-white flex items-center gap-2"
+      className="text-xl font-medium text-white flex items-center gap-2"
       aria-label="MyHireView home"
     >
-      <LogoIconWhite className="w-9 h-9" />
       MyHireView
     </Link>
   );

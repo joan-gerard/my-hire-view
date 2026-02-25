@@ -13,7 +13,7 @@ export function MobileMenuToggle({ open, onToggle }: MobileMenuToggleProps) {
     <button
       type="button"
       onClick={onToggle}
-      className="flex md:hidden h-10 w-10 items-center justify-center rounded-lg text-foreground hover:bg-(--foreground)/10 focus:outline-none"
+      className={`flex md:hidden h-10 w-10 items-center justify-center rounded-lg focus:outline-none ${open ? "text-foreground hover:bg-(--foreground)/10" : "text-white hover:bg-white/10"}`}
       aria-label={open ? "Close menu" : "Open menu"}
       aria-expanded={open}
     >

@@ -1,17 +1,17 @@
 "use client";
 
+import { LogoBlack, LogoWhite } from "@/components/ui/Logo";
 import { useHeroEntrance } from "@/contexts/HeroEntranceContext";
 import { headerEntrance } from "@/lib/landing-animations";
 import type { User } from "@supabase/supabase-js";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { LogoBlack } from "@/components/ui/Logo";
-import { MOBILE_MENU_BG, MARKETING_NAV_LINKS } from "./constants";
+import { MARKETING_NAV_LINKS, MOBILE_MENU_BG } from "./constants";
 import { MobileMenuContent } from "./MobileMenuContent";
 import { MobileMenuToggle } from "./MobileMenuToggle";
-import { UserDropdown } from "./UserDropdown";
 import { useMobileViewport } from "./useMobileViewport";
+import { UserDropdown } from "./UserDropdown";
 
 export interface MarketingHeaderProps {
   user: User | null;
@@ -71,7 +71,11 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
   return (
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 overflow-hidden md:overflow-visible"
-      initial={{ ...headerEntrance.initial, backgroundColor: "#ffffff" }}
+      initial={{
+        ...headerEntrance.initial,
+        backgroundColor: "#ffffff",
+        borderBottom: "1px solid transparent",
+      }}
       animate={
         heroReady
           ? {
@@ -79,20 +83,33 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
               height: headerHeight,
               backgroundColor: isMobileMenuExpanded
                 ? MOBILE_MENU_BG
-                : "#ffffff",
+                : isMobileViewport
+                  ? "transparent"
+                  : "#ffffff",
+              borderBottom: isMobileViewport
+                ? "0.5px solid #6e6d6d"
+                : "1px solid transparent",
             }
-          : { ...headerEntrance.initial, height: "72px", backgroundColor: "#ffffff" }
+          : {
+              ...headerEntrance.initial,
+              height: "72px",
+              backgroundColor: isMobileViewport ? "transparent" : "#ffffff",
+              borderBottom: isMobileViewport
+                ? "1px solid black"
+                : "1px solid transparent",
+            }
       }
       transition={{
         ...headerEntrance.transition,
         delay: heroReady ? 0.4 : 0,
         height: { type: "tween", duration: 0.3, ease: "easeInOut" },
         backgroundColor: { type: "tween", duration: 0.3, ease: "easeInOut" },
+        borderBottom: { type: "tween", duration: 0.3, ease: "easeInOut" },
       }}
     >
       <div className="relative flex h-[72px] min-h-[72px] shrink-0 justify-between items-center px-4 py-2 md:px-10 2xl:px-6 max-w-[1700px] mx-auto">
         <div className="flex items-center">
-          <LogoBlack />
+          {isMobileViewport && !mobileMenuOpen ? <LogoWhite /> : <LogoBlack />}
         </div>
 
         <nav
