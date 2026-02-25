@@ -16,6 +16,11 @@ export interface HowItWorksSectionProps {
   darkModeTriggerRef?: RefObject<HTMLElement | null>;
   /** Set true once the dark mode trigger element has mounted (so the observer can attach). */
   darkModeTriggerReady?: boolean;
+  /**
+   * When using darkModeTriggerRef, use this threshold (0–1) so dark mode stays in sync
+   * with the component that owns the trigger (e.g. same as LandingPageSections).
+   */
+  darkModeTriggerThreshold?: number;
 }
 
 /**
@@ -26,6 +31,7 @@ export interface HowItWorksSectionProps {
 export function HowItWorksSection({
   darkModeTriggerRef,
   darkModeTriggerReady = true,
+  darkModeTriggerThreshold,
 }: HowItWorksSectionProps = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -38,6 +44,7 @@ export function HowItWorksSection({
     stepCount: HOW_IT_WORKS_STEPS.length,
     darkModeTriggerRef,
     darkModeTriggerReady,
+    darkModeTriggerThreshold,
   });
 
   return (

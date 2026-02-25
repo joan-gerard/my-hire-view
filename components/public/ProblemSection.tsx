@@ -42,26 +42,37 @@ const PROBLEMS = [
   },
 ] as const;
 
+export interface ProblemSectionProps {
+  /**
+   * When provided, dark mode is driven by this value (e.g. from parent observing
+   * the section). When undefined, the section observes its own visibility.
+   */
+  isInView?: boolean;
+}
+
 /**
  * "The Problem" section for the pre-launch landing page (LANDING_PAGE_BRIEF).
  * Bento layout: left hero (image + h2), right 4 problem cards (icon, label, description).
  * Uses dark mode (black background, light text) when the section is in the viewport.
  */
-export default function ProblemSection() {
+export default function ProblemSection({ isInView: isInViewProp }: ProblemSectionProps = {}) {
   const sectionRef = useRef<HTMLElement>(null);
-  const [isInView, setIsInView] = useState(false);
+  const [internalInView, setInternalInView] = useState(false);
 
   useEffect(() => {
+    if (isInViewProp !== undefined) return;
     const el = sectionRef.current;
     if (!el) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => setIsInView(entry.isIntersecting),
+      ([entry]) => setInternalInView(entry.isIntersecting),
       { threshold: IN_VIEW_THRESHOLD, rootMargin: "0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [isInViewProp]);
+
+  const isInView = isInViewProp !== undefined ? isInViewProp : internalInView;
 
   return (
     <section

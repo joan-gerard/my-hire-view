@@ -31,6 +31,12 @@ export interface UseHowItWorksObserversArgs {
    * so the observer can attach (refs don't trigger effect re-runs).
    */
   darkModeTriggerReady?: boolean;
+  /**
+   * When using darkModeTriggerRef, use this threshold (0–1) for the trigger element
+   * so dark mode stays in sync with the component that owns the trigger (e.g. same
+   * threshold as LandingPageSections for ProblemSection).
+   */
+  darkModeTriggerThreshold?: number;
 }
 
 export interface UseHowItWorksObserversResult {
@@ -53,6 +59,7 @@ export function useHowItWorksObservers({
   stepCount,
   darkModeTriggerRef,
   darkModeTriggerReady = true,
+  darkModeTriggerThreshold,
 }: UseHowItWorksObserversArgs): UseHowItWorksObserversResult {
   const [isMostlyInView, setIsMostlyInView] = useState(false);
   const [activeSteps, setActiveSteps] = useState<boolean[]>(() =>
@@ -70,9 +77,14 @@ export function useHowItWorksObservers({
     const darkModeTarget = darkModeTriggerRef?.current ?? sectionRef.current;
     if (!darkModeTarget) return;
 
+    const darkModeThreshold =
+      darkModeTriggerRef != null && darkModeTriggerThreshold != null
+        ? darkModeTriggerThreshold
+        : IN_VIEW_THRESHOLD;
+
     const sectionObserver = new IntersectionObserver(
       ([entry]) => setIsMostlyInView(entry.isIntersecting),
-      { threshold: IN_VIEW_THRESHOLD, rootMargin: "0px" },
+      { threshold: darkModeThreshold, rootMargin: "0px" },
     );
     sectionObserver.observe(darkModeTarget);
 
@@ -158,7 +170,7 @@ export function useHowItWorksObservers({
         autoplayObserver.unobserve(node);
       });
     };
-  }, [sectionRef, darkModeTriggerRef, darkModeTriggerReady, cardRefs, videoRefs, stepCount]);
+  }, [sectionRef, darkModeTriggerRef, darkModeTriggerReady, darkModeTriggerThreshold, cardRefs, videoRefs, stepCount]);
 
   return { isMostlyInView, activeSteps, cardInView };
 }
