@@ -71,6 +71,9 @@
   --brand-surface: #f6f0e9;
   --brand-accent: #f0e7dd;
 
+  /* Header: background when mobile nav menu is open */
+  --header-mobile-menu-bg: #ffedd5;
+
   /* Typography */
   --font-faunaone: "FaunaOne", serif;
   --font-funnelsans: "FunnelSans", system-ui, sans-serif;

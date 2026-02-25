@@ -1,0 +1,45 @@
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
+import { FiMenu, FiX } from "react-icons/fi";
+
+interface MobileMenuToggleProps {
+  open: boolean;
+  onToggle: () => void;
+}
+
+export function MobileMenuToggle({ open, onToggle }: MobileMenuToggleProps) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex md:hidden h-10 w-10 items-center justify-center rounded-lg text-foreground hover:bg-(--foreground)/10 focus:outline-none"
+      aria-label={open ? "Close menu" : "Open menu"}
+      aria-expanded={open}
+    >
+      <AnimatePresence mode="wait">
+        {open ? (
+          <motion.span
+            key="close"
+            initial={{ opacity: 0, rotate: -90 }}
+            animate={{ opacity: 1, rotate: 0 }}
+            exit={{ opacity: 0, rotate: 90 }}
+            transition={{ duration: 0.2 }}
+          >
+            <FiX className="h-6 w-6" />
+          </motion.span>
+        ) : (
+          <motion.span
+            key="menu"
+            initial={{ opacity: 0, rotate: 90 }}
+            animate={{ opacity: 1, rotate: 0 }}
+            exit={{ opacity: 0, rotate: -90 }}
+            transition={{ duration: 0.2 }}
+          >
+            <FiMenu className="h-6 w-6" />
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </button>
+  );
+}

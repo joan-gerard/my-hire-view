@@ -150,6 +150,7 @@ Reuse the ViewPageFooter component but rename it Footer
 ## Implementation
 
 - **Page:** `app/page.tsx` — composes all sections in order; uses `MarketingHeader` and `Footer` (re-export of `ViewPageFooter`).
+- **MarketingHeader (mobile):** Below 768px, the header shows logo left and a hamburger icon right. Tapping the icon expands the header to full viewport height and reveals nav links (How it Works, Pricing, Blog) plus Dashboard/Sign Out or Sign In. Body scroll is locked while the menu is open.
 - **Components:** `components/public/` — `LandingHero`, `EmailCaptureForm`, `ProblemSection`, `SolutionSection`, `HowItWorksSection`, `FAQSection` (implemented in `public/faq/`: `FAQSection`, `FAQItem`, `FAQContactCard`, `constants`), `FinalCTASection`, `Footer`.
 - **API:** `POST /api/waitlist` — validates and stores signups in `waitlist_signups` (migration `018_waitlist_signups.sql`). Duplicate emails return 409.
 - **Brand colors:** Defined in `app/globals.css`: `--brand-primary` (#2e75b6), `--brand-text` (white), `--brand-accent` (dark blue #1e3a5f), `--brand-surface` (#1e293b), `--background` (#0f172a). Dark theme throughout.
