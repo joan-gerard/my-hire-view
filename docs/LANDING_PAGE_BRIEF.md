@@ -106,6 +106,21 @@ A: No! Recruiters can view your application with just a link – no login requir
 Q: What if I don’t want to record a video?
 A: Video is optional but highly recommended. Our data shows applications with video pitches get 3x more engagement.
 
+Q: Can I create different applications for different jobs?
+A: Yes. You can create custom applications for each role, each with its own shareable link. Tailor your CV, video pitch, and portfolio link so recruiters see the most relevant version of you.
+
+Q: What analytics will I see?
+A: You'll see when recruiters open your application, how they engage with it, and basic view metrics. Premium plans include advanced analytics so you can follow up at the right time.
+
+Q: Is my application and data secure?
+A: Yes. We take security seriously. Your data is stored securely, and you control who can access your application via the links you share. You can update or revoke access when needed.
+
+Q: Can I update my application after sharing the link?
+A: Yes. You can edit your CV, video, and details at any time. The same link will always show your latest version, so you don't need to resend it to recruiters.
+
+Q: How long should my video pitch be?
+A: We recommend 60–90 seconds. That's enough to introduce yourself, highlight why you're a fit, and show your communication skills without overwhelming recruiters.
+
 ### 8. Final CTA Section
 
 Headline:
