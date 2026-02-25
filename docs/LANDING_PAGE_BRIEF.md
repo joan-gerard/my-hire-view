@@ -135,9 +135,8 @@ Reuse the ViewPageFooter component but rename it Footer
 ## Implementation
 
 - **Page:** `app/page.tsx` — composes all sections in order; uses `MarketingHeader` and `Footer` (re-export of `ViewPageFooter`).
-- **Components:** `components/public/` — `LandingHero`, `EmailCaptureForm`, `ProblemSection`, `SolutionSection`, `HowItWorksSection`, `SocialProofSection`, `FAQSection`, `FinalCTASection`, `Footer`.
+- **Components:** `components/public/` — `LandingHero`, `EmailCaptureForm`, `ProblemSection`, `SolutionSection`, `HowItWorksSection`, `FAQSection`, `FinalCTASection`, `Footer`.
 - **API:** `POST /api/waitlist` — validates and stores signups in `waitlist_signups` (migration `018_waitlist_signups.sql`). Duplicate emails return 409.
 - **Brand colors:** Defined in `app/globals.css`: `--brand-primary` (#2e75b6), `--brand-text` (white), `--brand-accent` (dark blue #1e3a5f), `--brand-surface` (#1e293b), `--background` (#0f172a). Dark theme throughout.
-- **Waitlist count:** Social proof headline uses `NEXT_PUBLIC_WAITLIST_COUNT` (default `500`); can be updated for a dynamic count later.
 - **Animations:** Framer Motion is used across the homepage. Shared config in `lib/landing-animations.ts` (fadeUp, staggerContainer, staggerItem, headerEntrance). Header animates on load; hero uses staggered entrance; other sections use scroll-triggered fade-up and staggered children (problem icons, solution cards, how-it-works steps, FAQ items, final CTA). Success state of the email form uses a short scale/fade.
-- **Images:** Landing visuals live in `public/images/`. Hero uses `hero-comparison.svg` (traditional resume vs MyHireView). Solution section uses `solution-preview.svg` (app window mockup). How It Works uses `how-it-works.svg` (three-step timeline). Social proof uses `waitlist-avatars.svg` (community avatars). All served via Next.js `Image`; SVGs are used for crisp scaling and dark-theme styling. Replace with product screenshots or photos when available.
+- **Images:** Landing visuals live in `public/images/`. Hero uses `hero-comparison.svg` (traditional resume vs MyHireView). Solution section uses `solution-preview.svg` (app window mockup). How It Works uses `how-it-works.svg` (three-step timeline). All served via Next.js `Image`; SVGs are used for crisp scaling and dark-theme styling. Replace with product screenshots or photos when available.

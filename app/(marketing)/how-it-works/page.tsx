@@ -7,7 +7,6 @@ import HowItWorksSection from "@/components/public/HowItWorksSection";
 import PreventOverscrollReveal from "@/components/public/PreventOverscrollReveal";
 import ProblemSection from "@/components/public/ProblemSection";
 import ScrollCoverSection from "@/components/public/ScrollCoverSection";
-import SocialProofSection from "@/components/public/SocialProofSection";
 import SolutionSection from "@/components/public/SolutionSection";
 
 const HERO_VIDEO = "/hero-video.mp4";
@@ -35,7 +34,6 @@ export default function HowItWorksPage() {
         <ProblemSection />
         <SolutionSection />
         <HowItWorksSection />
-        <SocialProofSection />
         <FAQSection />
         <FinalCTASection />
         <Footer />

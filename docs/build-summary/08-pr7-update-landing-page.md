@@ -20,7 +20,6 @@ Commit-by-commit detail for PR #7 (improve-marketing-pahe): commits `cb07f75` th
   - `components/public/HowItWorksSection.tsx` — three-step process section with timeline visualization
   - `components/public/LandingHero.tsx` — hero section with headline, value proposition, CTA button, and hero comparison image
   - `components/public/ProblemSection.tsx` — problem statement section highlighting pain points with traditional resumes
-  - `components/public/SocialProofSection.tsx` — social proof section with waitlist count and community avatars
   - `components/public/SolutionSection.tsx` — solution section with three-column feature grid (Video Pitch, Smart Analytics, Shareable Links)
 - **Lib:** `lib/landing-animations.ts` — shared Framer Motion animation configs (fadeUp, staggerContainer, staggerItem, headerEntrance)
 - **DB:** `supabase/migrations/018_waitlist_signups.sql` — waitlist_signups table with email, first_name, job_search_status, created_at
@@ -30,11 +29,10 @@ Commit-by-commit detail for PR #7 (improve-marketing-pahe): commits `cb07f75` th
   - `public/images/hero-comparison.svg` — side-by-side comparison of traditional resume vs MyHireView
   - `public/images/how-it-works.svg` — three-step timeline visualization
   - `public/images/solution-preview.svg` — app window mockup
-  - `public/images/waitlist-avatars.svg` — community avatars for social proof
 
 **Updated:**
 
-- `app/page.tsx` — complete rewrite to compose all landing page sections in order (MarketingHeader, LandingHero, EmailCaptureForm, ProblemSection, SolutionSection, HowItWorksSection, SocialProofSection, FAQSection, FinalCTASection, Footer)
+- `app/page.tsx` — complete rewrite to compose all landing page sections in order (MarketingHeader, LandingHero, EmailCaptureForm, ProblemSection, SolutionSection, HowItWorksSection, FAQSection, FinalCTASection, Footer)
 - `app/globals.css` — brand theme CSS variables: `--brand-primary` (#2e75b6), `--brand-text` (white), `--brand-accent` (#1e3a5f), `--brand-surface` (#1e293b), `--background` (#0f172a); dark theme styling; custom font-face declarations for FunnelSans and VendSans
 - `components/admin/AdminHeader.tsx` — updated branding references
 - `components/public/MarketingHeader.tsx` — enhanced header with improved styling and navigation
