@@ -6,14 +6,21 @@ import { FiMenu, FiX } from "react-icons/fi";
 interface MobileMenuToggleProps {
   open: boolean;
   onToggle: () => void;
+  /** When true, use dark icon (e.g. when header has white background). When false, use light icon over hero. */
+  darkIcon?: boolean;
 }
 
-export function MobileMenuToggle({ open, onToggle }: MobileMenuToggleProps) {
+export function MobileMenuToggle({
+  open,
+  onToggle,
+  darkIcon = false,
+}: MobileMenuToggleProps) {
+  const iconLight = !open && !darkIcon;
   return (
     <button
       type="button"
       onClick={onToggle}
-      className={`flex md:hidden h-10 w-10 items-center justify-center rounded-lg focus:outline-none ${open ? "text-foreground hover:bg-(--foreground)/10" : "text-white hover:bg-white/10"}`}
+      className={`flex md:hidden h-10 w-10 items-center justify-center rounded-lg focus:outline-none ${iconLight ? "text-white hover:bg-white/10" : "text-foreground hover:bg-(--foreground)/10"}`}
       aria-label={open ? "Close menu" : "Open menu"}
       aria-expanded={open}
     >

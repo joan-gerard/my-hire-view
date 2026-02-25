@@ -2,6 +2,7 @@
 
 import { LogoBlack, LogoWhite } from "@/components/ui/Logo";
 import { useHeroEntrance } from "@/contexts/HeroEntranceContext";
+import { useScrollCover } from "@/contexts/ScrollCoverContext";
 import { useMobileViewport } from "@/hooks/useMobileViewport";
 import { headerEntrance } from "@/lib/landing-animations";
 import type { User } from "@supabase/supabase-js";
@@ -32,6 +33,7 @@ export interface MarketingHeaderProps {
  */
 export default function MarketingHeader({ user }: MarketingHeaderProps) {
   const { heroReady } = useHeroEntrance();
+  const { scrollCoverReachedTop } = useScrollCover();
   const isMobileViewport = useMobileViewport();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -71,6 +73,11 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
 
   const headerHeight = isMobileViewport && mobileMenuOpen ? "100vh" : "72px";
   const isMobileMenuExpanded = isMobileViewport && mobileMenuOpen;
+  const mobileHeaderBg = isMobileMenuExpanded
+    ? MOBILE_MENU_BG
+    : scrollCoverReachedTop
+      ? "#ffffff"
+      : MOBILE_MENU_BG_TRANSPARENT;
 
   return (
     <motion.header
@@ -85,23 +92,21 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
           ? {
               ...headerEntrance.animate,
               height: headerHeight,
-              backgroundColor: isMobileMenuExpanded
-                ? MOBILE_MENU_BG
-                : isMobileViewport
-                  ? MOBILE_MENU_BG_TRANSPARENT
-                  : "#ffffff",
+              backgroundColor: isMobileViewport ? mobileHeaderBg : "#ffffff",
               borderBottom: isMobileViewport
-                ? "0.5px solid #6e6d6d"
+                ? scrollCoverReachedTop
+                  ? "1px solid transparent"
+                  : "0.5px solid #6e6d6d"
                 : "1px solid transparent",
             }
           : {
               ...headerEntrance.initial,
               height: "72px",
-              backgroundColor: isMobileViewport
-                ? MOBILE_MENU_BG_TRANSPARENT
-                : "#ffffff",
+              backgroundColor: isMobileViewport ? mobileHeaderBg : "#ffffff",
               borderBottom: isMobileViewport
-                ? "1px solid black"
+                ? scrollCoverReachedTop
+                  ? "1px solid transparent"
+                  : "1px solid black"
                 : "1px solid transparent",
             }
       }
@@ -120,7 +125,11 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
     >
       <div className="relative flex h-[72px] min-h-[72px] shrink-0 justify-between items-center px-4 py-2 md:px-10 2xl:px-6 max-w-[1700px] mx-auto">
         <div className="flex items-center">
-          {isMobileViewport && !mobileMenuOpen ? <LogoWhite /> : <LogoBlack />}
+          {isMobileViewport && !mobileMenuOpen && !scrollCoverReachedTop ? (
+            <LogoWhite />
+          ) : (
+            <LogoBlack />
+          )}
         </div>
 
         <nav
@@ -148,6 +157,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
         <MobileMenuToggle
           open={mobileMenuOpen}
           onToggle={() => setMobileMenuOpen((prev) => !prev)}
+          darkIcon={scrollCoverReachedTop || mobileMenuOpen}
         />
       </div>
 
