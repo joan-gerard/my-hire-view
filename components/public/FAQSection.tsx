@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  fadeUp,
   staggerContainer,
   staggerItem,
   viewport,
@@ -37,13 +36,7 @@ const FAQ_ITEMS = [
  */
 export default function FAQSection() {
   return (
-    <motion.section
-      className="px-4 md:px-6 lg:px-10 2xl:px-12 py-16 h-full max-w-[1700px] mx-auto"
-      initial={fadeUp.initial}
-      whileInView={fadeUp.whileInView}
-      viewport={viewport}
-      transition={fadeUp.transition}
-    >
+    <section className="px-4 md:px-6 lg:px-10 2xl:px-12 py-16 h-full max-w-[1700px] mx-auto">
       <div className="mx-auto max-w-5xl flex flex-col gap-6">
         <div className="w-fit">
           <SectionBadge label="FAQ" />
@@ -81,6 +74,6 @@ export default function FAQSection() {
           </div>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 }

@@ -6,11 +6,7 @@ import {
   QuestionIcon,
   StopwatchIcon,
 } from "@/components/admin/icons";
-import {
-  staggerContainer,
-  staggerItem,
-  viewport,
-} from "@/lib/landing-animations";
+import { staggerContainer, viewport } from "@/lib/landing-animations";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -117,13 +113,15 @@ export default function ProblemSection() {
 function ProblemSectionHero() {
   return (
     <div className="relative min-h-[600px] overflow-hidden rounded-2xl bg-linear-to-br from-foreground/10 to-foreground/5 lg:col-span-1 lg:row-span-2">
-      <Image
-        src={PROBLEM_SECTION_IMAGE}
-        alt="Resume and documents on a desk"
-        fill
-        className="object-cover object-[50%_35%] min-[1440px]:object-center"
-        sizes="(max-width: 1023px) 100vw, 33vw"
-      />
+      <div>
+        <Image
+          src={PROBLEM_SECTION_IMAGE}
+          alt="Resume and documents on a desk"
+          fill
+          className="object-cover object-[50%_35%] min-[1440px]:object-center"
+          sizes="(max-width: 1023px) 100vw, 33vw"
+        />
+      </div>
       <div className="absolute inset-0 flex flex-col justify-between text-start p-8 2xl:p-10">
         <div
           className="absolute inset-0 -m-6 bg-linear-to-b from-black/70 to-transparent h-1/3"
@@ -163,11 +161,10 @@ function ProblemCard({
   isDarkMode: boolean;
 }) {
   return (
-    <motion.article
+    <article
       key={label}
       className={`flex flex-col gap-4 rounded-2xl border-[0.5px] border-gray-200 p-6 md:p-8 2xl:p-10 shadow-sm transition duration-500 hover:shadow-md min-[1440px]:aspect-16/12 bg-white 
       `}
-      variants={staggerItem}
     >
       <div
         className={`flex h-10 2xl:h-14 w-10 2xl:w-14 shrink-0 items-center justify-center rounded-xl border bg-[#f4f2f1]`}
@@ -182,6 +179,6 @@ function ProblemCard({
       >
         {description}
       </p>
-    </motion.article>
+    </article>
   );
 }
