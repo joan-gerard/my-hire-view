@@ -1,9 +1,16 @@
 "use client";
 
-import { useMobileViewport } from "@/hooks/useMobileViewport";
 import { useHeroEntrance } from "@/contexts/HeroEntranceContext";
+import { useMobileViewport } from "@/hooks/useMobileViewport";
 import { staggerContainer, staggerItem } from "@/lib/landing-animations";
-import { animate, motion, MotionValue, useMotionValue, useScroll, useTransform } from "framer-motion";
+import {
+  animate,
+  motion,
+  MotionValue,
+  useMotionValue,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -196,33 +203,33 @@ function FixedBackgroundHeroContent({
   return (
     <div className="relative z-1 flex h-full flex-col items-center justify-center px-0">
       <motion.div
-        className="mx-auto max-w-3xl text-center flex flex-col items-center gap-4"
+        className="mx-auto max-w-3xl text-center flex flex-col items-center gap-4 px-6 md:px-0"
         initial="hidden"
         animate={heroReady ? "visible" : "hidden"}
         variants={staggerContainer.variants}
         style={{ y: contentY }}
       >
         <motion.h1
-          className="font-heading text-white text-4xl sm:text-5xl lg:text-8xl font-bold tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] text-balance"
+          className="font-heading text-white text-7xl sm:text-5xl lg:text-8xl font-light lg:font-bold tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] text-balance"
           variants={staggerItem}
         >
           {title}
         </motion.h1>
         <motion.p
-          className="mx-auto mt-4 max-w-2xl text-white text-lg sm:text-xl drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+          className="mx-auto mt-4 max-w-2xl text-white text-lg sm:text-xl drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] text-balance"
           variants={staggerItem}
         >
           {subtitle}
         </motion.p>
         {(primaryCta ?? secondaryCta ?? children) && (
           <motion.div
-            className="mt-8 flex flex-wrap items-center justify-center gap-4"
+            className="mt-8 flex flex-col md:flex-wrap items-center justify-center gap-4 w-full mx-auto max-w-[300px]"
             variants={staggerItem}
           >
             {primaryCta && (
               <Link
                 href={primaryCta.href}
-                className="inline-flex items-center justify-center rounded-lg bg-black text-white px-6 py-3 text-base font-semibold text-(--brand-primary-text) shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-(--brand-primary) focus:ring-offset-2 focus:ring-offset-white"
+                className="inline-flex items-center justify-center rounded-lg bg-white text-black px-6 py-3 text-base font-semibold shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-(--brand-primary) focus:ring-offset-2 focus:ring-offset-white w-full"
               >
                 {primaryCta.label}
               </Link>
@@ -230,7 +237,7 @@ function FixedBackgroundHeroContent({
             {secondaryCta && (
               <Link
                 href={secondaryCta.href}
-                className="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/90 px-6 py-3 text-base font-semibold backdrop-blur-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-(--foreground)/20 focus:ring-offset-2 focus:ring-offset-transparent"
+                className="inline-flex items-center justify-center rounded-lg bg-white/10 px-6 py-3 text-base font-semibold text-white backdrop-blur-md transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent w-full"
               >
                 {secondaryCta.label}
               </Link>

@@ -2,6 +2,7 @@
 
 import { LogoBlack, LogoWhite } from "@/components/ui/Logo";
 import { useHeroEntrance } from "@/contexts/HeroEntranceContext";
+import { useMobileViewport } from "@/hooks/useMobileViewport";
 import { headerEntrance } from "@/lib/landing-animations";
 import type { User } from "@supabase/supabase-js";
 import { AnimatePresence, motion } from "framer-motion";
@@ -10,7 +11,6 @@ import { useEffect, useRef, useState } from "react";
 import { MARKETING_NAV_LINKS, MOBILE_MENU_BG } from "./constants";
 import { MobileMenuContent } from "./MobileMenuContent";
 import { MobileMenuToggle } from "./MobileMenuToggle";
-import { useMobileViewport } from "@/hooks/useMobileViewport";
 import { UserDropdown } from "./UserDropdown";
 
 export interface MarketingHeaderProps {
@@ -102,9 +102,14 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
       transition={{
         ...headerEntrance.transition,
         delay: heroReady ? 0.4 : 0,
-        height: { type: "tween", duration: 0.3, ease: "easeInOut" },
-        backgroundColor: { type: "tween", duration: 0.3, ease: "easeInOut" },
-        borderBottom: { type: "tween", duration: 0.3, ease: "easeInOut" },
+        height: { type: "tween", duration: 0.5, ease: "easeInOut" },
+        backgroundColor: {
+          type: "tween",
+          duration: 0.5,
+          ease: "easeInOut",
+          delay: isMobileMenuExpanded ? 0.15 : 0,
+        },
+        borderBottom: { type: "tween", duration: 0.5, ease: "easeInOut" },
       }}
     >
       <div className="relative flex h-[72px] min-h-[72px] shrink-0 justify-between items-center px-4 py-2 md:px-10 2xl:px-6 max-w-[1700px] mx-auto">
