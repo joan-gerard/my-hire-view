@@ -89,6 +89,8 @@ Short quotes from early testers with their name, role, and photo.
 
 ### 7. FAQ Section
 
+**Layout:** Two-column on large screens: decorative image on the left; on the right, an “FAQ” badge above the headline, then the Q&A list. Badge and headline are left-aligned.
+
 Headline:
 “Common Questions”
 

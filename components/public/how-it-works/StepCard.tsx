@@ -58,9 +58,7 @@ export function StepCard({
         />
       </div>
       <div className="p-8">
-        <p className="text-[var(--foreground)]/80 text-xl">
-          {step.description}
-        </p>
+        <p className="text-black text-xl">{step.description}</p>
       </div>
     </motion.div>
   );
