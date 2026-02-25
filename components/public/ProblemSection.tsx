@@ -7,10 +7,9 @@ import {
   StopwatchIcon,
 } from "@/components/admin/icons";
 import {
-  fadeUp,
   staggerContainer,
   staggerItem,
-  viewport,
+  viewport
 } from "@/lib/landing-animations";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -69,13 +68,9 @@ export default function ProblemSection() {
   }, []);
 
   return (
-    <motion.section
+    <section
       ref={sectionRef}
       className="mx-auto transition-colors duration-500 py-16"
-      initial={fadeUp.initial}
-      whileInView={fadeUp.whileInView}
-      viewport={viewport}
-      transition={fadeUp.transition}
       style={
         isInView
           ? {
@@ -115,7 +110,7 @@ export default function ProblemSection() {
           </motion.div>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 }
 
