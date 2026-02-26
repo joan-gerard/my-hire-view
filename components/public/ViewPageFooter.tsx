@@ -1,45 +1,55 @@
 "use client";
 
+import { fadeUp, viewport } from "@/lib/landing-animations";
+import { motion } from "framer-motion";
 import Link from "next/link";
 
 const SLOGAN = "Your video pitch, one link.";
 
 /**
- * Footer for the public application view page (/view/[slug]).
- * Shown only to non-owners (recruiters/visitors). Displays app branding,
- * legal links, copyright, and social links.
+ * Footer for the public application view page (/view/[slug]) and marketing
+ * landing page. Displays app branding, legal links, copyright, and social links.
+ * Uses explicit black background and white text (no CSS variables) to match
+ * the rest of the homepage (Problem, FAQ, CTA sections). Same container,
+ * typography, and motion as other landing sections.
  */
 export default function ViewPageFooter() {
   return (
-    <footer className="mt-12 border-t border-[var(--foreground)]/10 px-4 py-10 sm:px-6 lg:px-12 bg-[var(--background)]">
-      <div className="mx-auto">
-        {/* Logo and slogan — centered */}
+    <motion.footer
+      className="mt-12 border-t border-white/10 bg-black text-white"
+      initial={fadeUp.initial}
+      whileInView={fadeUp.whileInView}
+      viewport={viewport}
+      transition={fadeUp.transition}
+    >
+      <div className="px-4 md:px-6 lg:px-10 2xl:px-12 pt-12 pb-10 lg:pt-16 lg:pb-12 max-w-[1700px] mx-auto">
+        {/* Logo and slogan — centered, light typography to match landing headlines */}
         <div className="flex flex-col items-center gap-2 text-center">
           <Link
             href="/"
-            className="text-4xl font-bold text-[var(--foreground)] transition-colors hover:opacity-80"
+            className="text-3xl sm:text-4xl font-light tracking-tight text-white transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black rounded-sm"
           >
             MyHireView
           </Link>
-          <p className="text-lg text-[var(--foreground)]/70">{SLOGAN}</p>
+          <p className="text-base sm:text-lg text-white/70">{SLOGAN}</p>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-4 border-t border-[var(--foreground)]/10 pt-8 text-center lg:grid-cols-3 lg:gap-6">
+        <div className="mt-10 lg:mt-12 grid grid-cols-1 gap-6 border-t border-white/10 pt-8 lg:pt-10 text-center lg:grid-cols-3 lg:gap-8">
           {/* 1. Terms & Privacy */}
           <div className="flex flex-col items-center lg:items-start gap-2 order-3 lg:order-1">
             <nav
-              className="flex flex-wrap justify-center gap-x-4 gap-y-1"
+              className="flex flex-wrap justify-center gap-x-5 gap-y-1"
               aria-label="Legal links"
             >
               <Link
                 href="/terms"
-                className="text-sm text-[var(--foreground)]/70 hover:text-[var(--foreground)]"
+                className="text-sm text-white/70 transition-colors hover:text-white focus:outline-none focus:underline rounded-sm"
               >
                 Terms of Service
               </Link>
               <Link
                 href="/privacy"
-                className="text-sm text-[var(--foreground)]/70 hover:text-[var(--foreground)]"
+                className="text-sm text-white/70 transition-colors hover:text-white focus:outline-none focus:underline rounded-sm"
               >
                 Privacy Policy
               </Link>
@@ -48,7 +58,7 @@ export default function ViewPageFooter() {
 
           {/* 2. Copyright */}
           <div className="flex flex-col items-center justify-center order-2 sm:items-center">
-            <p className="text-sm text-[var(--foreground)]/60">
+            <p className="text-sm text-white/60">
               © 2026 MyHireView. All rights reserved.
             </p>
           </div>
@@ -56,14 +66,14 @@ export default function ViewPageFooter() {
           {/* 3. Socials */}
           <div className="flex flex-col items-center lg:items-end gap-2 order-1 sm:items-center lg:order-3">
             <nav
-              className="flex items-center justify-center gap-4"
+              className="flex items-center justify-center gap-5"
               aria-label="Social links"
             >
               <a
                 href="https://twitter.com/myhireview"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--foreground)]/60 hover:text-[var(--foreground)]"
+                className="text-white/60 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black rounded-full p-1"
                 aria-label="Twitter / X"
               >
                 <TwitterIcon className="h-5 w-5" />
@@ -72,7 +82,7 @@ export default function ViewPageFooter() {
                 href="https://www.linkedin.com/company/myhireview"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--foreground)]/60 hover:text-[var(--foreground)]"
+                className="text-white/60 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black rounded-full p-1"
                 aria-label="LinkedIn"
               >
                 <LinkedInIcon className="h-5 w-5" />
@@ -81,7 +91,7 @@ export default function ViewPageFooter() {
           </div>
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 }
 

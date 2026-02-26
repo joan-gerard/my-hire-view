@@ -134,7 +134,7 @@ Button:
 
 ### 9. Footer
 
-Reuse the ViewPageFooter component but rename it Footer
+Reuse the ViewPageFooter component but rename it Footer. Styling is aligned with the rest of the landing page: same horizontal padding and max-width container (`px-4 md:px-6 lg:px-10 2xl:px-12`, `max-w-[1700px]`), light typography and border tokens, and a scroll-triggered fade-up animation (from `lib/landing-animations.ts`) for consistency with other sections.
 
 ## Design Guidelines
 
