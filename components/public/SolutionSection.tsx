@@ -37,7 +37,7 @@ const FEATURES = [
 export default function SolutionSection() {
   return (
     <motion.section
-      className="px-4 md:px-6 lg:px-10 2xl:px-12 py-16 h-full max-w-[1700px] mx-auto"
+      className="px-4 md:px-6 lg:px-10 2xl:px-12 pt-16 pb-10 lg:pb-16 h-full max-w-[1700px] mx-auto"
       initial={fadeUp.initial}
       whileInView={fadeUp.whileInView}
       viewport={viewport}

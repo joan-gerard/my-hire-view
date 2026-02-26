@@ -46,7 +46,7 @@ export function StepCard({
         transformOrigin: "center center",
       }}
     >
-      <div className="relative aspect-video w-full bg-blue-50 p-12">
+      <div className="relative aspect-video w-full bg-blue-50 px-5 py-14 lg:px-12 lg:py-12">
         <video
           ref={videoRef}
           src={step.video}
@@ -57,8 +57,10 @@ export function StepCard({
           aria-label={step.title}
         />
       </div>
-      <div className="p-8">
-        <p className="text-black text-xl">{step.description}</p>
+      <div className="p-5 lg:p-8">
+        <p className="text-black text-lg font-light lg:text-xl">
+          {step.description}
+        </p>
       </div>
     </motion.div>
   );

@@ -50,7 +50,7 @@ export function HowItWorksSection({
   return (
     <motion.section
       ref={sectionRef}
-      className="bg-white transition-colors duration-500 py-16"
+      className="bg-white transition-colors duration-500"
       style={
         isMostlyInView
           ? {
@@ -63,15 +63,15 @@ export function HowItWorksSection({
           : undefined
       }
     >
-      <div className="mx-auto px-10 2xl:px-12 py-16 h-full max-w-[1700px]">
-        <div className="grid lg:grid-cols-3 lg:gap-16 mb-24">
+      <div className="px-4 md:px-6 lg:px-10 2xl:px-12 pt-16 pb-10 lg:pb-16 h-full max-w-[1700px] mx-auto">
+        <div className="grid lg:grid-cols-3 lg:gap-16 mb-12 lg:mb-24">
           <div className="lg:col-span-1"></div>
           <div className="lg:col-span-2 flex flex-col gap-6 max-w-4xl">
-            <h2 className="text-3xl sm:text-7xl text-balance tracking-tight">
+            <h2 className="text-4xl sm:text-7xl text-balance tracking-tight">
               Stand Out in <br />
               <span className="">Three Simple Steps</span>
             </h2>
-            <p className="text-xl text-balance leading-relaxed">
+            <p className="text-lg lg:text-xl font-light text-balance leading-normal lg:leading-relaxed">
               Our platform helps you stand out in your job search by providing
               you with the tools and resources you need to succeed.
             </p>
@@ -79,7 +79,7 @@ export function HowItWorksSection({
         </div>
         <div className="grid gap-12 lg:grid-cols-3 lg:gap-16">
           {/* Left: sticky step labels (1/3) */}
-          <div className="lg:sticky lg:top-24 lg:self-start pt-24">
+          <div className="hidden lg:block lg:sticky lg:top-24 lg:self-start pt-24">
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 lg:flex-col lg:gap-4">
               {HOW_IT_WORKS_STEPS.map((step, index) => (
                 <StepLabel
@@ -94,7 +94,7 @@ export function HowItWorksSection({
 
           {/* Right: title + cards (2/3) */}
           <div className="lg:col-span-2">
-            <div className="flex flex-col gap-12 sm:gap-16 pr-8 2xl:pr-20">
+            <div className="flex flex-col gap-12 sm:gap-16 lg:pr-8 2xl:pr-20">
               {HOW_IT_WORKS_STEPS.map((step, index) => (
                 <StepCard
                   key={step.id}
