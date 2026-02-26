@@ -69,6 +69,8 @@ export default function EmailCaptureForm() {
       setJobSearchStatus("Actively searching");
       setPrimaryGoal("");
       setCareerStage("");
+      // Scroll to section before React re-renders with WaitlistSuccessMessage
+      document.getElementById("early-access")?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch {
       setStatus("error");
       setErrorMessage("Something went wrong. Please try again.");
