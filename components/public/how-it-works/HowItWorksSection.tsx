@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { RefObject } from "react";
 import { useRef } from "react";
 import { HOW_IT_WORKS_STEPS } from "./constants";
 import { StepCard } from "./StepCard";
@@ -10,41 +9,28 @@ import { useHowItWorksObservers } from "./useHowItWorksObservers";
 
 export interface HowItWorksSectionProps {
   /**
-   * When provided, dark mode is triggered when this element enters the viewport
-   * instead of when this section enters (e.g. pass a ref to ProblemSection wrapper).
+   * When true, section uses dark background and light text (e.g. when ProblemSection
+   * is in view). Driven by parent (e.g. LandingPageSections) from a single observer.
    */
-  darkModeTriggerRef?: RefObject<HTMLElement | null>;
-  /** Set true once the dark mode trigger element has mounted (so the observer can attach). */
-  darkModeTriggerReady?: boolean;
-  /**
-   * When using darkModeTriggerRef, use this threshold (0–1) so dark mode stays in sync
-   * with the component that owns the trigger (e.g. same as LandingPageSections).
-   */
-  darkModeTriggerThreshold?: number;
+  problemSectionInView?: boolean;
 }
 
 /**
  * "How It Works" section: two columns.
  * Left (1/3): sticky list "Step 1", "Step 2", "Step 3" — each animates when its card is fully in view.
- * Right (2/3): title + 3 cards (video + text). Background turns black when section (or darkModeTriggerRef) enters viewport.
+ * Right (2/3): title + 3 cards (video + text). Background turns dark when problemSectionInView is true.
  */
 export function HowItWorksSection({
-  darkModeTriggerRef,
-  darkModeTriggerReady = true,
-  darkModeTriggerThreshold,
+  problemSectionInView = false,
 }: HowItWorksSectionProps = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
-  const { isMostlyInView, activeSteps, cardInView } = useHowItWorksObservers({
-    sectionRef,
+  const { activeSteps, cardInView } = useHowItWorksObservers({
     cardRefs,
     videoRefs,
     stepCount: HOW_IT_WORKS_STEPS.length,
-    darkModeTriggerRef,
-    darkModeTriggerReady,
-    darkModeTriggerThreshold,
   });
 
   return (
@@ -52,7 +38,7 @@ export function HowItWorksSection({
       ref={sectionRef}
       className="bg-white transition-colors duration-500"
       style={
-        isMostlyInView
+        problemSectionInView
           ? {
               backgroundColor: "#000",
               color: "#fff",
@@ -86,7 +72,7 @@ export function HowItWorksSection({
                   key={step.id}
                   step={step}
                   isActive={activeSteps[index] ?? false}
-                  isDarkMode={isMostlyInView}
+                  isDarkMode={problemSectionInView}
                 />
               ))}
             </div>

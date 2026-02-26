@@ -13,55 +13,32 @@ import {
   AUTOPLAY_VIEW_THRESHOLD,
   CARD_IN_VIEW_THRESHOLD,
   CARD_WIDTH_VIEW_THRESHOLD,
-  IN_VIEW_THRESHOLD,
 } from "./constants";
 
 export interface UseHowItWorksObserversArgs {
-  sectionRef: RefObject<HTMLElement | null>;
   cardRefs: RefObject<(HTMLDivElement | null)[]>;
   videoRefs: RefObject<(HTMLVideoElement | null)[]>;
   stepCount: number;
-  /**
-   * When provided, dark mode is driven by this element entering the viewport
-   * instead of the section itself (e.g. trigger when ProblemSection is visible).
-   */
-  darkModeTriggerRef?: RefObject<HTMLElement | null>;
-  /**
-   * When using darkModeTriggerRef, set to true once the trigger element has mounted
-   * so the observer can attach (refs don't trigger effect re-runs).
-   */
-  darkModeTriggerReady?: boolean;
-  /**
-   * When using darkModeTriggerRef, use this threshold (0–1) for the trigger element
-   * so dark mode stays in sync with the component that owns the trigger (e.g. same
-   * threshold as LandingPageSections for ProblemSection).
-   */
-  darkModeTriggerThreshold?: number;
 }
 
 export interface UseHowItWorksObserversResult {
-  isMostlyInView: boolean;
   activeSteps: boolean[];
   /** True when card has any part in viewport (drives width/scale). */
   cardInView: boolean[];
 }
 
 /**
- * Sets up intersection observers for the How It Works section:
- * - Dark theme when section (or darkModeTriggerRef) is in view
+ * Sets up intersection observers for the How It Works section cards:
  * - Card fully in view → active step label
  * - Card partially in view → width/scale and video autoplay
+ *
+ * Dark theme is driven by parent via problemSectionInView (single source of truth in LandingPageSections).
  */
 export function useHowItWorksObservers({
-  sectionRef,
   cardRefs,
   videoRefs,
   stepCount,
-  darkModeTriggerRef,
-  darkModeTriggerReady = true,
-  darkModeTriggerThreshold,
 }: UseHowItWorksObserversArgs): UseHowItWorksObserversResult {
-  const [isMostlyInView, setIsMostlyInView] = useState(false);
   const [activeSteps, setActiveSteps] = useState<boolean[]>(() =>
     Array.from({ length: stepCount }, () => false),
   );
@@ -74,20 +51,6 @@ export function useHowItWorksObservers({
   );
 
   useEffect(() => {
-    const darkModeTarget = darkModeTriggerRef?.current ?? sectionRef.current;
-    if (!darkModeTarget) return;
-
-    const darkModeThreshold =
-      darkModeTriggerRef != null && darkModeTriggerThreshold != null
-        ? darkModeTriggerThreshold
-        : IN_VIEW_THRESHOLD;
-
-    const sectionObserver = new IntersectionObserver(
-      ([entry]) => setIsMostlyInView(entry.isIntersecting),
-      { threshold: darkModeThreshold, rootMargin: "0px" },
-    );
-    sectionObserver.observe(darkModeTarget);
-
     const updateSteps = (
       entries: IntersectionObserverEntry[],
       setter: Dispatch<SetStateAction<boolean[]>>,
@@ -161,7 +124,6 @@ export function useHowItWorksObservers({
 
     return () => {
       cancelAnimationFrame(raf);
-      sectionObserver.disconnect();
       autoplayTimeoutsRef.current.forEach((t) => t != null && clearTimeout(t));
       autoplayTimeoutsRef.current = [];
       observed.forEach((node) => {
@@ -170,7 +132,7 @@ export function useHowItWorksObservers({
         autoplayObserver.unobserve(node);
       });
     };
-  }, [sectionRef, darkModeTriggerRef, darkModeTriggerReady, darkModeTriggerThreshold, cardRefs, videoRefs, stepCount]);
+  }, [cardRefs, videoRefs, stepCount]);
 
-  return { isMostlyInView, activeSteps, cardInView };
+  return { activeSteps, cardInView };
 }

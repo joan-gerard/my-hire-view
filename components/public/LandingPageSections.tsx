@@ -13,26 +13,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const PROBLEM_SECTION_IN_VIEW_THRESHOLD = 0.4;
 
 /**
- * Client-only wrapper for the main landing sections. Holds a ref to the
- * ProblemSection container so HowItWorksSection can trigger dark mode when
- * ProblemSection enters the viewport (instead of when HowItWorksSection does).
- * When ProblemSection is in view, ProblemSection and FAQSection both use dark mode;
- * when it leaves view, both revert to light.
+ * Client-only wrapper for the main landing sections. Owns the single
+ * IntersectionObserver for the ProblemSection wrapper. When ProblemSection is
+ * in view, HowItWorksSection, ProblemSection, and FAQSection all use dark styling;
+ * when it leaves view, they revert to light.
  */
 export default function LandingPageSections() {
   const problemSectionRef = useRef<HTMLDivElement>(null);
-  const [darkModeTriggerReady, setDarkModeTriggerReady] = useState(false);
+  const [problemSectionMounted, setProblemSectionMounted] = useState(false);
   const [problemSectionInView, setProblemSectionInView] = useState(false);
 
   const setProblemSectionRef = useCallback((el: HTMLDivElement | null) => {
     (
       problemSectionRef as React.MutableRefObject<HTMLDivElement | null>
     ).current = el;
-    setDarkModeTriggerReady((prev) => prev || !!el);
+    setProblemSectionMounted((prev) => prev || !!el);
   }, []);
 
   useEffect(() => {
-    if (!darkModeTriggerReady || !problemSectionRef.current) return;
+    if (!problemSectionMounted || !problemSectionRef.current) return;
     const el = problemSectionRef.current;
     const observer = new IntersectionObserver(
       ([entry]) => setProblemSectionInView(entry.isIntersecting),
@@ -40,17 +39,13 @@ export default function LandingPageSections() {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [darkModeTriggerReady]);
+  }, [problemSectionMounted]);
 
   return (
     <>
       <EmailCaptureForm />
       <SolutionSection />
-      <HowItWorksSection
-        darkModeTriggerRef={problemSectionRef}
-        darkModeTriggerReady={darkModeTriggerReady}
-        darkModeTriggerThreshold={PROBLEM_SECTION_IN_VIEW_THRESHOLD}
-      />
+      <HowItWorksSection problemSectionInView={problemSectionInView} />
       <div ref={setProblemSectionRef}>
         <ProblemSection isInView={problemSectionInView} />
       </div>
