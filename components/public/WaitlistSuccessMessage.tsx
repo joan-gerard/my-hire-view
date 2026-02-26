@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
  */
 export function WaitlistSuccessMessage() {
   return (
-    <div className="flex flex-col justify-center">
+    <div className="flex flex-col justify-center mt-4 md:mt-0">
       <motion.div
         className="mx-auto w-full rounded-3xl text-white bg-black p-8 text-center"
         initial={{ opacity: 0, scale: 0.96 }}
