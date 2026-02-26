@@ -63,7 +63,7 @@ export function WaitlistSignupForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="space-y-4">
+      <div className="space-y-4 max-w-[500px] lg:max-w-none">
         <p className="w-full text-base text-black/90 mb-2 text-start">
           Your details*
         </p>

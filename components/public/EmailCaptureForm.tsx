@@ -78,12 +78,12 @@ export default function EmailCaptureForm() {
   }
 
   const sectionClassName =
-    "mx-4 px-4 py-16 sm:px-6 sm:py-8 lg:px-10 lg:py-12 2xl:py-16 min-h-[520px] flex flex-col justify-center rounded-2xl bg-[#f4f2f1]";
+    "mx-0 md:mx-4 px-4 sm:px-6 lg:px-10 2xl:px-20 py-16 sm:py-8 lg:py-12 2xl:py-16 min-h-[520px] flex flex-col justify-center md:rounded-2xl bg-[#f4f2f1]";
 
   return (
     <section id="early-access" className={sectionClassName}>
       <motion.div
-        className="w-full flex flex-col gap-4 items-start px-4"
+        className="w-full flex flex-col gap-4 items-start mx-auto"
         initial={staggerContainer.initial}
         whileInView={staggerContainer.whileInView}
         viewport={viewport}
@@ -94,12 +94,12 @@ export default function EmailCaptureForm() {
           <SectionBadge label="Early Sign Up" />
         </motion.div>
         <motion.div
-          className="grid grid-cols-2 gap-4 w-full"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"
           variants={staggerItem}
         >
-          <motion.div className="max-w-lg flex flex-col gap-4">
+          <motion.div className="max-w-xl lg:max-w-lg flex flex-col gap-4">
             <motion.h2
-              className="text-6xl font-light tracking-wide text-(--brand-primary) text-balance"
+              className="text-4xl sm:text-5xl lg:text-6xl font-light tracking-wide text-(--brand-primary) text-balance"
               variants={staggerItem}
             >
               Be the first to stand out
@@ -120,7 +120,7 @@ export default function EmailCaptureForm() {
             transition={transition}
           /> */}
           <motion.div
-            className="w-full h-full min-h-[440px] rounded-3xl flex flex-col pr-12"
+            className="w-full h-full min-h-[440px] rounded-3xl flex flex-col lg:pr-12"
             initial={{ opacity: 0, x: 32 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={viewport}

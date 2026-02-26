@@ -25,7 +25,7 @@ export default function Home() {
         subtitle="Create your page, share your link, and get noticed by recruiters. Your personalized job application page in minutes."
         videoSrc={HERO_VIDEO}
         imageAlt="How it works hero"
-        primaryCta={{ label: "Get started", href: "/login" }}
+        primaryCta={{ label: "Join the waitlist", href: "#early-access" }}
         secondaryCta={{ label: "See pricing", href: "/pricing" }}
       />
 
