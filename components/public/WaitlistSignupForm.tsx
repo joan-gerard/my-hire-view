@@ -24,7 +24,7 @@ export const CAREER_STAGE_OPTIONS = [
 
 /** Shared styles for text inputs and select to keep appearance consistent. */
 const CONTROL_CLASS =
-  "w-full rounded-xl bg-[#fcfaf9] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--foreground)]/50 focus:outline-none disabled:opacity-70";
+  "w-full rounded-xl bg-white px-4 py-3 text-black placeholder:text-black/50 focus:outline-none disabled:opacity-70";
 
 export type WaitlistFormStatus = "idle" | "loading" | "success" | "error";
 
@@ -104,14 +104,14 @@ export function WaitlistSignupForm({
         disabled={isDisabled}
       />
       {errorMessage && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-red-600 text-center -mb-1" role="alert">
           {errorMessage}
         </p>
       )}
       <button
         type="submit"
         disabled={isDisabled}
-        className="mt-4 w-full rounded-lg bg-black/90 hover:bg-black px-6 py-4 text-lg font-semibold text-[var(--brand-primary-text)] shadow-md transition focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 focus:ring-offset-[var(--secondary-background)] disabled:opacity-70"
+        className="mt-4 w-full rounded-lg bg-black/80 hover:bg-black hover:cursor-pointer px-6 py-4 text-lg font-semibold text-(--brand-primary-text) shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-primary) focus:ring-offset-2 focus:ring-offset-(--secondary-background) disabled:opacity-70"
       >
         {status === "loading" ? "Joining…" : "Get Early Access"}
       </button>
@@ -244,12 +244,14 @@ function StatusRadioOption({
     <label
       htmlFor={id}
       className={`flex cursor-pointer items-center gap-2 rounded-xl px-4 py-3 transition-[background-color,box-shadow] duration-500 delay-75 ease-in-out ${
-        checked ? "bg-[#fcfaf9]" : "bg-[#faf8f7] hover:bg-[#f7f7fa]"
+        checked ? "bg-white" : "bg-[#faf8f7] hover:bg-white group"
       } ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
     >
       <span
         className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full transition-colors duration-500 ease-in-out ${
-          checked ? "border-0 bg-[var(--brand-primary)]" : "border-0 bg-white"
+          checked
+            ? "border-0 bg-(--brand-primary)"
+            : "border-0 bg-black/10 group-hover:bg-black/20"
         }`}
         aria-hidden
       />
@@ -264,7 +266,7 @@ function StatusRadioOption({
         required={required}
         className="sr-only"
       />
-      <span className="text-[var(--foreground)] text-sm">{label}</span>
+      <span className="text-foreground text-sm">{label}</span>
     </label>
   );
 }

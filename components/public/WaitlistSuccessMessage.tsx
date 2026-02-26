@@ -8,15 +8,15 @@ import { motion } from "framer-motion";
  */
 export function WaitlistSuccessMessage() {
   return (
-    <div className="min-h-full flex flex-col justify-center">
+    <div className="flex flex-col justify-center">
       <motion.div
-        className="mx-auto w-full max-w-md rounded-3xl border border-[var(--foreground)]/10 bg-[var(--brand-accent)]/30 p-8 text-center"
+        className="mx-auto w-full rounded-3xl text-white bg-black p-8 text-center"
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         <div
-          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[var(--brand-primary-text)]"
+          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white text-black"
           aria-hidden
         >
           <svg
@@ -31,10 +31,10 @@ export function WaitlistSuccessMessage() {
             <path d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-xl font-light tracking-wide text-[var(--brand-primary)]">
+        <h3 className="text-2xl font-light tracking-wide ">
           You&apos;re on the list!
         </h3>
-        <p className="mt-2 text-[var(--foreground)]/90">
+        <p className="mt-2 text-balance">
           Check your email for exclusive updates and be among the first to try
           MyHireView when we launch.
         </p>

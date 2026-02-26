@@ -13,8 +13,6 @@ import type { WaitlistFormStatus } from "./WaitlistSignupForm";
 import { WaitlistSignupForm } from "./WaitlistSignupForm";
 import { WaitlistSuccessMessage } from "./WaitlistSuccessMessage";
 
-const BACKGROUND_IMAGE = "/images/diego-ph-@jdiegoph-1920-2400.jpg";
-
 /** Stronger stagger for this section so each element is clearly sequential */
 const emailSectionStagger = {
   hidden: { opacity: 0 },
@@ -78,7 +76,7 @@ export default function EmailCaptureForm() {
   }
 
   const sectionClassName =
-    "mx-0 md:mx-4 px-4 sm:px-6 lg:px-10 2xl:px-20 py-16 sm:py-8 lg:py-12 2xl:py-16 min-h-[520px] flex flex-col justify-center md:rounded-2xl bg-[#f4f2f1]";
+    "mx-0 md:mx-4 px-4 sm:px-6 lg:px-10 2xl:px-20 py-16 sm:py-8 lg:py-12 2xl:py-16 flex flex-col justify-center md:rounded-2xl bg-[#f4f2f1]";
 
   return (
     <section id="early-access" className={sectionClassName}>
@@ -111,16 +109,8 @@ export default function EmailCaptureForm() {
               Early signups get 3 months of Pro free when we launch!
             </motion.p>
           </motion.div>
-          {/* <motion.div
-            className="rounded-3xl bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${BACKGROUND_IMAGE})` }}
-            initial={{ opacity: 0, x: -32 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={viewport}
-            transition={transition}
-          /> */}
           <motion.div
-            className="w-full h-full min-h-[440px] rounded-3xl flex flex-col lg:pr-12"
+            className="w-full h-full rounded-3xl flex flex-col lg:pr-12"
             initial={{ opacity: 0, x: 32 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={viewport}
