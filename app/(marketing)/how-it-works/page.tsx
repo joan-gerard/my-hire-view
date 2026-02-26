@@ -5,7 +5,6 @@ import FixedBackgroundHero from "@/components/public/FixedBackgroundHero";
 import Footer from "@/components/public/Footer";
 import HowItWorksSection from "@/components/public/HowItWorksSection";
 import PreventOverscrollReveal from "@/components/public/PreventOverscrollReveal";
-import ProblemSection from "@/components/public/ProblemSection";
 import ScrollCoverSection from "@/components/public/ScrollCoverSection";
 import SolutionSection from "@/components/public/SolutionSection";
 
@@ -31,7 +30,6 @@ export default function HowItWorksPage() {
       />
       <ScrollCoverSection>
         <EmailCaptureForm />
-        <ProblemSection />
         <SolutionSection />
         <HowItWorksSection />
         <FAQSection />

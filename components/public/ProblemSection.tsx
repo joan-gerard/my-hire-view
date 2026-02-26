@@ -10,10 +10,6 @@ import { staggerContainer, viewport } from "@/lib/landing-animations";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-
-/** Intersection threshold for considering the section "in view" (0–1). */
-const IN_VIEW_THRESHOLD = 0.2;
 
 /** Image for the problem section bento (left column). */
 const PROBLEM_SECTION_IMAGE = "/remote-work-2.jpg";
@@ -44,42 +40,20 @@ const PROBLEMS = [
 
 export interface ProblemSectionProps {
   /**
-   * When true, section uses dark background and light text. When provided by parent
-   * (e.g. LandingPageSections), drives dark mode from a single observer. When undefined,
-   * the section observes its own visibility to derive dark mode.
+   * When true, section uses dark background and light text. Driven by parent
+   * (e.g. LandingPageSections) from a single observer.
    */
-  isDarkMode?: boolean;
+  isDarkMode: boolean;
 }
 
 /**
  * "The Problem" section for the pre-launch landing page (LANDING_PAGE_BRIEF).
  * Bento layout: left hero (image + h2), right 4 problem cards (icon, label, description).
- * Uses dark mode (black background, light text) when the section is in the viewport.
+ * Uses dark mode (black background, light text) when isDarkMode is true.
  */
-export default function ProblemSection({
-  isDarkMode: isDarkModeProp,
-}: ProblemSectionProps = {}) {
-  const sectionRef = useRef<HTMLElement>(null);
-  const [internalInView, setInternalInView] = useState(false);
-
-  useEffect(() => {
-    if (isDarkModeProp !== undefined) return;
-    const el = sectionRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setInternalInView(entry.isIntersecting),
-      { threshold: IN_VIEW_THRESHOLD, rootMargin: "0px" },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [isDarkModeProp]);
-
-  const isDarkMode = isDarkModeProp !== undefined ? isDarkModeProp : internalInView;
-
+export default function ProblemSection({ isDarkMode }: ProblemSectionProps) {
   return (
     <section
-      ref={sectionRef}
       className="mx-auto transition-colors duration-500"
       style={
         isDarkMode
