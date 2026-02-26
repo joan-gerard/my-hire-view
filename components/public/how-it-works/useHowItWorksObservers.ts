@@ -32,7 +32,7 @@ export interface UseHowItWorksObserversResult {
  * - Card fully in view → active step label
  * - Card partially in view → width/scale and video autoplay
  *
- * Dark theme is driven by parent via problemSectionInView (single source of truth in LandingPageSections).
+ * Dark theme is driven by parent via isDarkMode prop (single source of truth in LandingPageSections).
  */
 export function useHowItWorksObservers({
   cardRefs,

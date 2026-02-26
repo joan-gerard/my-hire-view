@@ -12,16 +12,16 @@ export interface HowItWorksSectionProps {
    * When true, section uses dark background and light text (e.g. when ProblemSection
    * is in view). Driven by parent (e.g. LandingPageSections) from a single observer.
    */
-  problemSectionInView?: boolean;
+  isDarkMode?: boolean;
 }
 
 /**
  * "How It Works" section: two columns.
  * Left (1/3): sticky list "Step 1", "Step 2", "Step 3" — each animates when its card is fully in view.
- * Right (2/3): title + 3 cards (video + text). Background turns dark when problemSectionInView is true.
+ * Right (2/3): title + 3 cards (video + text). Background turns dark when isDarkMode is true.
  */
 export function HowItWorksSection({
-  problemSectionInView = false,
+  isDarkMode = false,
 }: HowItWorksSectionProps = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -38,7 +38,7 @@ export function HowItWorksSection({
       ref={sectionRef}
       className="bg-white transition-colors duration-500"
       style={
-        problemSectionInView
+        isDarkMode
           ? {
               backgroundColor: "#000",
               color: "#fff",
@@ -72,7 +72,7 @@ export function HowItWorksSection({
                   key={step.id}
                   step={step}
                   isActive={activeSteps[index] ?? false}
-                  isDarkMode={problemSectionInView}
+                  isDarkMode={isDarkMode}
                 />
               ))}
             </div>

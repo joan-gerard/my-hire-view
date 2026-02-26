@@ -44,10 +44,11 @@ const PROBLEMS = [
 
 export interface ProblemSectionProps {
   /**
-   * When provided, dark mode is driven by this value (e.g. from parent observing
-   * the section). When undefined, the section observes its own visibility.
+   * When true, section uses dark background and light text. When provided by parent
+   * (e.g. LandingPageSections), drives dark mode from a single observer. When undefined,
+   * the section observes its own visibility to derive dark mode.
    */
-  isInView?: boolean;
+  isDarkMode?: boolean;
 }
 
 /**
@@ -56,13 +57,13 @@ export interface ProblemSectionProps {
  * Uses dark mode (black background, light text) when the section is in the viewport.
  */
 export default function ProblemSection({
-  isInView: isInViewProp,
+  isDarkMode: isDarkModeProp,
 }: ProblemSectionProps = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   const [internalInView, setInternalInView] = useState(false);
 
   useEffect(() => {
-    if (isInViewProp !== undefined) return;
+    if (isDarkModeProp !== undefined) return;
     const el = sectionRef.current;
     if (!el) return;
 
@@ -72,16 +73,16 @@ export default function ProblemSection({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [isInViewProp]);
+  }, [isDarkModeProp]);
 
-  const isInView = isInViewProp !== undefined ? isInViewProp : internalInView;
+  const isDarkMode = isDarkModeProp !== undefined ? isDarkModeProp : internalInView;
 
   return (
     <section
       ref={sectionRef}
       className="mx-auto transition-colors duration-500"
       style={
-        isInView
+        isDarkMode
           ? {
               backgroundColor: "#000",
               color: "#fff",
@@ -113,7 +114,7 @@ export default function ProblemSection({
                 Icon={Icon}
                 label={label}
                 description={description}
-                isDarkMode={isInView}
+                isDarkMode={isDarkMode}
               />
             ))}
           </motion.div>

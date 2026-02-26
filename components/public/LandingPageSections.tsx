@@ -45,9 +45,9 @@ export default function LandingPageSections() {
     <>
       <EmailCaptureForm />
       <SolutionSection />
-      <HowItWorksSection problemSectionInView={problemSectionInView} />
+      <HowItWorksSection isDarkMode={problemSectionInView} />
       <div ref={setProblemSectionRef}>
-        <ProblemSection isInView={problemSectionInView} />
+        <ProblemSection isDarkMode={problemSectionInView} />
       </div>
       <FAQSection isDarkMode={problemSectionInView} />
       <FinalCTASection />
