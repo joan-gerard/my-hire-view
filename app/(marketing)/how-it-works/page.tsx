@@ -1,6 +1,6 @@
+import CTASection from "@/components/public/CTASection";
 import EmailCaptureForm from "@/components/public/EmailCaptureForm";
 import FAQSection from "@/components/public/FAQSection";
-import FinalCTASection from "@/components/public/FinalCTASection";
 import FixedBackgroundHero from "@/components/public/FixedBackgroundHero";
 import Footer from "@/components/public/Footer";
 import HowItWorksSection from "@/components/public/HowItWorksSection";
@@ -33,7 +33,7 @@ export default function HowItWorksPage() {
         <SolutionSection />
         <HowItWorksSection />
         <FAQSection />
-        <FinalCTASection />
+        <CTASection />
         <Footer />
       </ScrollCoverSection>
     </>
