@@ -7,21 +7,29 @@ import Footer from "@/components/public/Footer";
 import { HowItWorksSection } from "@/components/public/how-it-works/HowItWorksSection";
 import ProblemSection from "@/components/public/ProblemSection";
 import SolutionSection from "@/components/public/SolutionSection";
+import { useMobileViewport } from "@/hooks/useMobileViewport";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-/** Intersection threshold for "Problem section in view" (0–1). Must match ProblemSection. */
-const PROBLEM_SECTION_IN_VIEW_THRESHOLD = 0.4;
+/** Intersection threshold for "Problem section in view" on mobile (viewport ≤767px). */
+const PROBLEM_SECTION_IN_VIEW_THRESHOLD_MOBILE = 0.2;
+/** Intersection threshold for "Problem section in view" on desktop (viewport ≥768px). */
+const PROBLEM_SECTION_IN_VIEW_THRESHOLD_DESKTOP = 0.4;
 
 /**
  * Client-only wrapper for the main landing sections. Owns the single
  * IntersectionObserver for the ProblemSection wrapper. When ProblemSection is
  * in view, HowItWorksSection, ProblemSection, and FAQSection all use dark styling;
- * when it leaves view, they revert to light.
+ * when it leaves view, they revert to light. Uses a lower threshold on mobile (0.2)
+ * and 0.4 on desktop (≥768px).
  */
 export default function LandingPageSections() {
   const problemSectionRef = useRef<HTMLDivElement>(null);
   const [problemSectionMounted, setProblemSectionMounted] = useState(false);
   const [problemSectionInView, setProblemSectionInView] = useState(false);
+  const isMobile = useMobileViewport();
+  const threshold = isMobile
+    ? PROBLEM_SECTION_IN_VIEW_THRESHOLD_MOBILE
+    : PROBLEM_SECTION_IN_VIEW_THRESHOLD_DESKTOP;
 
   const setProblemSectionRef = useCallback((el: HTMLDivElement | null) => {
     (
@@ -35,11 +43,11 @@ export default function LandingPageSections() {
     const el = problemSectionRef.current;
     const observer = new IntersectionObserver(
       ([entry]) => setProblemSectionInView(entry.isIntersecting),
-      { threshold: PROBLEM_SECTION_IN_VIEW_THRESHOLD, rootMargin: "0px" },
+      { threshold, rootMargin: "0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [problemSectionMounted]);
+  }, [problemSectionMounted, threshold]);
 
   return (
     <>
