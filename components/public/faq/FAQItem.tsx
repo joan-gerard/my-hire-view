@@ -23,13 +23,17 @@ export function FAQItem({ item, index, isOpen, onToggle }: FAQItemProps) {
       className="border-b border-(--foreground)/10 overflow-hidden"
     >
       <dt>
-        <button
+        <motion.button
           type="button"
           onClick={onToggle}
           className="flex w-full items-center justify-between gap-4 py-6 px-5 text-left text-xl 2xl:text-2xl font-normal text-foreground"
           aria-expanded={isOpen}
           aria-controls={`faq-answer-${index}`}
           id={`faq-question-${index}`}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
         >
           <span>{item.q}</span>
           <motion.span
@@ -40,7 +44,7 @@ export function FAQItem({ item, index, isOpen, onToggle }: FAQItemProps) {
           >
             <FiChevronDown className="h-5 w-5 2xl:h-6 2xl:w-6" />
           </motion.span>
-        </button>
+        </motion.button>
       </dt>
       <AnimatePresence initial={false}>
         {isOpen && (
@@ -50,7 +54,7 @@ export function FAQItem({ item, index, isOpen, onToggle }: FAQItemProps) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
+            transition={{ duration: 0.35, ease: "easeInOut" }}
             className="overflow-hidden"
           >
             <p className="px-5 pb-4 pt-0 text-(--foreground)/90 text-lg 2xl:text-xl font-light">

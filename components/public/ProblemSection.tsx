@@ -55,7 +55,9 @@ export interface ProblemSectionProps {
  * Bento layout: left hero (image + h2), right 4 problem cards (icon, label, description).
  * Uses dark mode (black background, light text) when the section is in the viewport.
  */
-export default function ProblemSection({ isInView: isInViewProp }: ProblemSectionProps = {}) {
+export default function ProblemSection({
+  isInView: isInViewProp,
+}: ProblemSectionProps = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   const [internalInView, setInternalInView] = useState(false);
 
@@ -77,7 +79,7 @@ export default function ProblemSection({ isInView: isInViewProp }: ProblemSectio
   return (
     <section
       ref={sectionRef}
-      className="mx-auto transition-colors duration-500 py-16"
+      className="mx-auto transition-colors duration-500"
       style={
         isInView
           ? {
@@ -90,7 +92,7 @@ export default function ProblemSection({ isInView: isInViewProp }: ProblemSectio
           : undefined
       }
     >
-      <div className="mx-auto px-10 2xl:px-12 py-16 h-full max-w-[1700px]">
+      <div className="px-4 md:px-6 lg:px-10 2xl:px-12 pt-16 pb-10 lg:pb-16 h-full max-w-[1700px] mx-auto">
         {/* Bento: mobile = 1 col (hero then cards); desktop = 3 cols, 2 rows */}
         <div className="grid grid-cols-1 gap-4 md:gap-6 min-[1440px]:grid-cols-3 min-[1440px]:grid-rows-2">
           {/* Left hero: image with h2 overlay; full height on desktop (col 1, rows 1–2), first on mobile. */}
