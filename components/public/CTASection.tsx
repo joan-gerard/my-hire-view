@@ -21,14 +21,14 @@ const CTA_IMAGE = "/success.jpg";
 export default function CTASection() {
   return (
     <motion.section
-      className="px-4 md:px-6 lg:px-10 2xl:px-12 pt-16 pb-10 lg:pb-16 max-w-[1700px] mx-auto"
+      className="px-4 md:px-6 lg:px-10 2xl:px-12 pt-16 pb-10 lg:pb-16 max-w-5xl mx-auto"
       initial={fadeUp.initial}
       whileInView={fadeUp.whileInView}
       viewport={viewport}
       transition={fadeUp.transition}
     >
       <motion.div
-        className="relative min-h-[480px] sm:min-h-[500px] overflow-hidden rounded-2xl border border-(--foreground)/10"
+        className="relative min-h-[400px] overflow-hidden rounded-2xl border border-(--foreground)/10"
         initial={fadeUp.initial}
         whileInView={fadeUp.whileInView}
         viewport={viewport}

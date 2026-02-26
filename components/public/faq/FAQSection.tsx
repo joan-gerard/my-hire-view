@@ -39,8 +39,7 @@ export function FAQSection({ isDarkMode = false }: FAQSectionProps = {}) {
           <h2 className="w-fit text-5xl 2xl:text-7xl font-extralight">
             Frequently Asked Questions
           </h2>
-          <div className="flex flex-col-reverse xl:grid gap-10 xl:grid-cols-3 xl:gap-12">
-            <FAQContactCard />
+          <div className="flex flex-col xl:grid gap-10 xl:grid-cols-3 xl:gap-12">
             <div className="flex flex-col gap-6 xl:col-span-2">
               <motion.dl
                 className="space-y-2"
@@ -62,6 +61,7 @@ export function FAQSection({ isDarkMode = false }: FAQSectionProps = {}) {
                 ))}
               </motion.dl>
             </div>
+            <FAQContactCard />
           </div>
         </div>
       </div>
