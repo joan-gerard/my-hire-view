@@ -5,7 +5,10 @@
 
 export const viewport = { once: true, amount: 0.15 } as const;
 
-export const transition = { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } as const;
+export const transition = {
+  duration: 0.5,
+  ease: [0.25, 0.46, 0.45, 0.94],
+} as const;
 
 /** Fade in and slide up when in view */
 export const fadeUp = {
@@ -15,18 +18,25 @@ export const fadeUp = {
   transition,
 } as const;
 
+export const slideUp = {
+  initial: { y: 24 },
+  whileInView: { y: 0 },
+  viewport: { once: false, amount: 0.65 },
+  transition,
+} as const;
+
 /** Fade in only (no movement) */
 export const fadeIn = {
   initial: { opacity: 0 },
   whileInView: { opacity: 1 },
-  viewport,
+  viewport: { once: false, amount: 0.65 },
   transition,
 } as const;
 
 /** Stagger container: use with staggerChildren on parent */
 export const staggerContainer = {
-  initial: 'hidden',
-  whileInView: 'visible',
+  initial: "hidden",
+  whileInView: "visible",
   viewport,
   variants: {
     hidden: { opacity: 0 },
@@ -43,9 +53,14 @@ export const staggerItem = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 } as const;
 
+export const staggerY = {
+  hidden: { y: 40 },
+  visible: { y: 0, transition: { duration: 0.9 } },
+} as const;
+
 /** Header entrance (on load) */
 export const headerEntrance = {
   initial: { opacity: 0, y: -12 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, ease: 'easeOut' },
+  transition: { duration: 0.4, ease: "easeOut" },
 } as const;

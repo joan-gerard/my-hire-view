@@ -1,156 +1,145 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { fadeUp, viewport, transition } from '@/lib/landing-animations';
+import {
+  staggerContainer,
+  staggerItem,
+  transition,
+  viewport,
+} from "@/lib/landing-animations";
+import { motion } from "framer-motion";
+import { useState } from "react";
+import { SectionBadge } from "../ui/SectionBadge";
+import type { WaitlistFormStatus } from "./WaitlistSignupForm";
+import { WaitlistSignupForm } from "./WaitlistSignupForm";
+import { WaitlistSuccessMessage } from "./WaitlistSuccessMessage";
 
-const JOB_SEARCH_OPTIONS = [
-  { value: '', label: 'Select your status (optional)' },
-  { value: 'Actively searching', label: 'Actively searching' },
-  { value: 'Casually looking', label: 'Casually looking' },
-  { value: 'Career planning', label: 'Career planning' },
-  { value: 'Other', label: 'Other' },
-] as const;
+/** Stronger stagger for this section so each element is clearly sequential */
+const emailSectionStagger = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.22, delayChildren: 0.12 },
+  },
+} as const;
 
 /**
  * Email capture form for the pre-launch landing page.
  * Submits to /api/waitlist; shows success message and early bird incentive per LANDING_PAGE_BRIEF.
  */
 export default function EmailCaptureForm() {
-  const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [jobSearchStatus, setJobSearchStatus] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [jobSearchStatus, setJobSearchStatus] = useState("Actively searching");
+  const [primaryGoal, setPrimaryGoal] = useState("");
+  const [careerStage, setCareerStage] = useState("");
+  const [status, setStatus] = useState<WaitlistFormStatus>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setErrorMessage('');
-    setStatus('loading');
+    setErrorMessage("");
+    setStatus("loading");
 
     try {
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.trim(),
-          first_name: firstName.trim() || undefined,
-          job_search_status: jobSearchStatus || undefined,
+          first_name: firstName.trim(),
+          job_search_status: jobSearchStatus,
+          primary_goal: primaryGoal.trim() || undefined,
+          career_stage: careerStage.trim() || undefined,
         }),
       });
 
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setStatus('error');
-        setErrorMessage(data?.error ?? 'Something went wrong. Please try again.');
+        setStatus("error");
+        setErrorMessage(
+          data?.error ?? "Something went wrong. Please try again.",
+        );
         return;
       }
 
-      setStatus('success');
-      setEmail('');
-      setFirstName('');
-      setJobSearchStatus('');
+      setStatus("success");
+      setEmail("");
+      setFirstName("");
+      setJobSearchStatus("Actively searching");
+      setPrimaryGoal("");
+      setCareerStage("");
+      // Scroll to section before React re-renders with WaitlistSuccessMessage
+      document.getElementById("early-access")?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch {
-      setStatus('error');
-      setErrorMessage('Something went wrong. Please try again.');
+      setStatus("error");
+      setErrorMessage("Something went wrong. Please try again.");
     }
   }
 
-  if (status === 'success') {
-    return (
-      <motion.div
-        className="mx-auto max-w-xl rounded-xl bg-[var(--brand-surface)] p-8 text-center border border-white/10"
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-      >
-        <p className="text-lg font-medium text-white">
-          You&apos;re on the list! Check your email for exclusive updates and be among the first to try MyHireView when we launch.
-        </p>
-      </motion.div>
-    );
-  }
+  const sectionClassName =
+    "mx-0 md:mx-4 px-4 sm:px-6 lg:px-10 2xl:px-20 py-16 sm:py-8 lg:py-12 2xl:py-16 flex flex-col justify-center md:rounded-2xl bg-[#f4f2f1]";
 
   return (
-    <motion.section
-      id="early-access"
-      className="bg-[var(--background)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
-      initial={fadeUp.initial}
-      whileInView={fadeUp.whileInView}
-      viewport={viewport}
-      transition={transition}
-    >
-      <div className="mx-auto max-w-xl text-center">
-        <p className="text-sm font-semibold uppercase tracking-wide text-[var(--brand-primary)]">
-          Be the first to stand out
-        </p>
-        <p className="mt-4 text-2xl font-bold text-[var(--brand-text)] sm:text-3xl">
-          Early signups get 3 months of Pro free when we launch!
-        </p>
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          <div>
-            <label htmlFor="waitlist-email" className="sr-only">
-              Email address (required)
-            </label>
-            <input
-              id="waitlist-email"
-              type="email"
-              required
-              placeholder="Email address *"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={status === 'loading'}
-              className="w-full rounded-lg border border-white/20 bg-[var(--brand-surface)] px-4 py-3 text-white placeholder:text-white/50 focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 disabled:opacity-70"
-            />
-          </div>
-          <div>
-            <label htmlFor="waitlist-first-name" className="sr-only">
-              First name (optional)
-            </label>
-            <input
-              id="waitlist-first-name"
-              type="text"
-              autoComplete="given-name"
-              placeholder="First name (optional)"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              disabled={status === 'loading'}
-              className="w-full rounded-lg border border-white/20 bg-[var(--brand-surface)] px-4 py-3 text-white placeholder:text-white/50 focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 disabled:opacity-70"
-            />
-          </div>
-          <div>
-            <label htmlFor="waitlist-status" className="sr-only">
-              Current job search status (optional)
-            </label>
-            <select
-              id="waitlist-status"
-              value={jobSearchStatus}
-              onChange={(e) => setJobSearchStatus(e.target.value)}
-              disabled={status === 'loading'}
-              className="w-full rounded-lg border border-white/20 bg-[var(--brand-surface)] px-4 py-3 text-white focus:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 disabled:opacity-70"
+    <section id="early-access" className={sectionClassName}>
+      <motion.div
+        className="w-full flex flex-col gap-4 items-start mx-auto"
+        initial={staggerContainer.initial}
+        whileInView={staggerContainer.whileInView}
+        viewport={viewport}
+        variants={emailSectionStagger}
+        transition={transition}
+      >
+        <motion.div variants={staggerItem}>
+          <SectionBadge label="Early Sign Up" />
+        </motion.div>
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"
+          variants={staggerItem}
+        >
+          <motion.div className="max-w-xl lg:max-w-lg flex flex-col gap-4">
+            <motion.h2
+              className="text-4xl sm:text-5xl lg:text-6xl font-light tracking-wide text-(--brand-primary) text-balance"
+              variants={staggerItem}
             >
-              {JOB_SEARCH_OPTIONS.map((opt) => (
-                <option key={opt.value || 'empty'} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          {errorMessage && (
-            <p className="text-sm text-red-600" role="alert">
-              {errorMessage}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={status === 'loading'}
-            className="w-full rounded-lg bg-[var(--brand-primary)] px-6 py-4 text-lg font-semibold text-white shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 focus:ring-offset-[var(--background)] disabled:opacity-70"
+              Be the first to stand out
+            </motion.h2>
+            <motion.p
+              className="text-xl sm:text-2xl font-light text-black/60 text-balance"
+              variants={staggerItem}
+            >
+              Early signups get 3 months of Pro free when we launch!
+            </motion.p>
+          </motion.div>
+          <motion.div
+            className="w-full h-full rounded-3xl flex flex-col lg:pr-12"
+            initial={{ opacity: 0, x: 32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={viewport}
+            transition={transition}
           >
-            {status === 'loading' ? 'Joining…' : 'Get Early Access'}
-          </button>
-        </form>
-      </div>
-    </motion.section>
+            {status === "success" ? (
+              <WaitlistSuccessMessage />
+            ) : (
+              <WaitlistSignupForm
+                handleSubmit={handleSubmit}
+                email={email}
+                setEmail={setEmail}
+                firstName={firstName}
+                setFirstName={setFirstName}
+                jobSearchStatus={jobSearchStatus}
+                setJobSearchStatus={setJobSearchStatus}
+                primaryGoal={primaryGoal}
+                setPrimaryGoal={setPrimaryGoal}
+                careerStage={careerStage}
+                setCareerStage={setCareerStage}
+                errorMessage={errorMessage}
+                status={status}
+              />
+            )}
+          </motion.div>
+        </motion.div>
+      </motion.div>
+    </section>
   );
 }

@@ -22,11 +22,11 @@ export default function CvDownloadFilenameField({
   const generatedName = slug ? getCvDownloadFilename(slug) : "CV-Slug.pdf";
 
   return (
-    <fieldset className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
-      <legend className="px-1 text-base font-semibold text-gray-900">
+    <fieldset className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
+      <legend className="px-1 text-base font-semibold text-[var(--foreground)]">
         Download file name
       </legend>
-      <p className="mt-0.5 mb-3 text-sm text-gray-600">
+      <p className="mt-0.5 mb-3 text-sm text-[var(--foreground)]/80">
         Choose the filename recruiters will see when they download your CV.
       </p>
       <div className="flex flex-wrap gap-x-6 gap-y-3">
@@ -36,13 +36,13 @@ export default function CvDownloadFilenameField({
             name="useOriginalCvFilename"
             checked={useOriginalCvFilename !== false}
             onChange={() => onUseOriginalCvFilenameChange(true)}
-            className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600"
+            className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
           />
-          <span className="text-base font-medium text-gray-900">
+          <span className="text-base font-medium text-[var(--foreground)]">
             Use original file name
           </span>
           {displayFilename && (
-            <span className="text-sm text-gray-500">({displayFilename})</span>
+            <span className="text-sm text-[var(--foreground)]/60">({displayFilename})</span>
           )}
         </label>
         <label className="inline-flex cursor-pointer items-center gap-2.5">
@@ -51,15 +51,15 @@ export default function CvDownloadFilenameField({
             name="useOriginalCvFilename"
             checked={useOriginalCvFilename === false}
             onChange={() => onUseOriginalCvFilenameChange(false)}
-            className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600"
+            className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
           />
-          <span className="text-base font-medium text-gray-900">
+          <span className="text-base font-medium text-[var(--foreground)]">
             Use generated name
           </span>
-          <span className="text-sm text-gray-500">({generatedName})</span>
+          <span className="text-sm text-[var(--foreground)]/60">({generatedName})</span>
         </label>
       </div>
-      <p className="mt-2 text-xs text-gray-500">
+      <p className="mt-2 text-xs text-[var(--foreground)]/60">
         Downloadable file name:{" "}
         {useOriginalCvFilename !== false && displayFilename
           ? displayFilename

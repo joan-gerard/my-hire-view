@@ -164,16 +164,16 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         placeholder="https://linkedin.com/in/..."
       />
 
-      <fieldset className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
-        <legend className="px-1 text-base font-semibold text-gray-900">
+      <fieldset className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
+        <legend className="px-1 text-base font-semibold text-[var(--foreground)]">
           Profile picture
         </legend>
-        <p className="mt-0.5 mb-3 text-sm text-gray-600">
+        <p className="mt-0.5 mb-3 text-sm text-[var(--foreground)]/80">
           One picture per account. You can choose whether to show it on each
           application when creating or editing.
         </p>
         {hadProfilePictureOnLoad && (
-          <p className="mb-3 text-sm text-gray-600">
+          <p className="mb-3 text-sm text-[var(--foreground)]/80">
             When you change your profile picture and save, the new picture will
             be shown on existing applications for which you have chosen &quot;Show
             your profile picture on this application?&quot;
@@ -181,7 +181,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         )}
         {hasProfilePicture ? (
           <div className="flex flex-wrap items-center gap-4">
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-gray-100 ring-2 ring-gray-200">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--foreground)]/10 ring-2 ring-[var(--foreground)]/10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={formData.profile_picture_url!}

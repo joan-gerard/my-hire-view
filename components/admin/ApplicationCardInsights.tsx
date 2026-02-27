@@ -30,7 +30,7 @@ export default function ApplicationCardInsights({
           transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
           className="overflow-hidden"
         >
-          <div className="mt-3 grid grid-cols-1 gap-4 border-t border-gray-100 pt-3 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-3 grid grid-cols-1 gap-4 border-t border-[var(--foreground)]/10 pt-3 md:grid-cols-2 lg:grid-cols-4">
             <InsightItem label="Views:">{viewCount}</InsightItem>
             <InsightItem label="CV downloads:">{downloadCount}</InsightItem>
             <InsightItem label="Created:">

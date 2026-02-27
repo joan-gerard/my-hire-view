@@ -89,6 +89,8 @@ Short quotes from early testers with their name, role, and photo.
 
 ### 7. FAQ Section
 
+**Layout:** Two-column on large screens: decorative image on the left; on the right, an “FAQ” badge above the headline, then the Q&A list. Badge and headline are left-aligned. **Behaviour:** Accordion — only the questions are visible by default, each with a chevron on the right; clicking a question toggles the answer underneath with a short animation.
+
 Headline:
 “Common Questions”
 
@@ -104,6 +106,21 @@ A: No! Recruiters can view your application with just a link – no login requir
 Q: What if I don’t want to record a video?
 A: Video is optional but highly recommended. Our data shows applications with video pitches get 3x more engagement.
 
+Q: Can I create different applications for different jobs?
+A: Yes. You can create custom applications for each role, each with its own shareable link. Tailor your CV, video pitch, and portfolio link so recruiters see the most relevant version of you.
+
+Q: What analytics will I see?
+A: You'll see when recruiters open your application, how they engage with it, and basic view metrics. Premium plans include advanced analytics so you can follow up at the right time.
+
+Q: Is my application and data secure?
+A: Yes. We take security seriously. Your data is stored securely, and you control who can access your application via the links you share. You can update or revoke access when needed.
+
+Q: Can I update my application after sharing the link?
+A: Yes. You can edit your CV, video, and details at any time. The same link will always show your latest version, so you don't need to resend it to recruiters.
+
+Q: How long should my video pitch be?
+A: We recommend 60–90 seconds. That's enough to introduce yourself, highlight why you're a fit, and show your communication skills without overwhelming recruiters.
+
 ### 8. Final CTA Section
 
 Headline:
@@ -117,7 +134,7 @@ Button:
 
 ### 9. Footer
 
-Reuse the ViewPageFooter component but rename it Footer
+Reuse the ViewPageFooter component but rename it Footer. Styling is aligned with the rest of the landing page: same horizontal padding and max-width container (`px-4 md:px-6 lg:px-10 2xl:px-12`, `max-w-[1700px]`), light typography and border tokens, and a scroll-triggered fade-up animation (from `lib/landing-animations.ts`) for consistency with other sections.
 
 ## Design Guidelines
 
@@ -133,9 +150,9 @@ Reuse the ViewPageFooter component but rename it Footer
 ## Implementation
 
 - **Page:** `app/page.tsx` — composes all sections in order; uses `MarketingHeader` and `Footer` (re-export of `ViewPageFooter`).
-- **Components:** `components/public/` — `LandingHero`, `EmailCaptureForm`, `ProblemSection`, `SolutionSection`, `HowItWorksSection`, `SocialProofSection`, `FAQSection`, `FinalCTASection`, `Footer`.
+- **MarketingHeader (mobile):** Below 768px, the header shows logo left and a hamburger icon right. Tapping the icon expands the header to full viewport height and reveals nav links (How it Works, Pricing, Blog) plus Dashboard/Sign Out or Sign In. Body scroll is locked while the menu is open.
+- **Components:** `components/public/` — `LandingHero`, `EmailCaptureForm`, `ProblemSection`, `SolutionSection`, `HowItWorksSection`, `FAQSection` (implemented in `public/faq/`: `FAQSection`, `FAQItem`, `FAQContactCard`, `constants`), `FinalCTASection`, `Footer`.
 - **API:** `POST /api/waitlist` — validates and stores signups in `waitlist_signups` (migration `018_waitlist_signups.sql`). Duplicate emails return 409.
 - **Brand colors:** Defined in `app/globals.css`: `--brand-primary` (#2e75b6), `--brand-text` (white), `--brand-accent` (dark blue #1e3a5f), `--brand-surface` (#1e293b), `--background` (#0f172a). Dark theme throughout.
-- **Waitlist count:** Social proof headline uses `NEXT_PUBLIC_WAITLIST_COUNT` (default `500`); can be updated for a dynamic count later.
 - **Animations:** Framer Motion is used across the homepage. Shared config in `lib/landing-animations.ts` (fadeUp, staggerContainer, staggerItem, headerEntrance). Header animates on load; hero uses staggered entrance; other sections use scroll-triggered fade-up and staggered children (problem icons, solution cards, how-it-works steps, FAQ items, final CTA). Success state of the email form uses a short scale/fade.
-- **Images:** Landing visuals live in `public/images/`. Hero uses `hero-comparison.svg` (traditional resume vs MyHireView). Solution section uses `solution-preview.svg` (app window mockup). How It Works uses `how-it-works.svg` (three-step timeline). Social proof uses `waitlist-avatars.svg` (community avatars). All served via Next.js `Image`; SVGs are used for crisp scaling and dark-theme styling. Replace with product screenshots or photos when available.
+- **Images:** Landing visuals live in `public/images/`. Hero uses `hero-comparison.svg` (traditional resume vs MyHireView). Solution section uses `solution-preview.svg` (app window mockup). How It Works uses `how-it-works.svg` (three-step timeline). All served via Next.js `Image`; SVGs are used for crisp scaling and dark-theme styling. Replace with product screenshots or photos when available.

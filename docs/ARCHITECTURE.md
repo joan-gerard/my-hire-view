@@ -168,7 +168,10 @@ flowchart LR
 
 | Route               | Purpose                                                                                                                                                                                                                                                                                                            | Auth |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
-| `/`                 | Pre-launch landing page (see [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md)): hero, email capture form (waitlist), problem/solution, how it works, social proof, FAQ, final CTA, footer. Header: "Sign In" or "Dashboard" + Sign out when authenticated.                                                                                                                                 | No   |
+| `/`                 | Pre-launch landing page (see [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md)): hero, email capture form (waitlist), problem/solution, how it works, FAQ, final CTA, footer. Shares `MarketingHeader` with other marketing routes via `app/(marketing)/layout.tsx`.                                                                                                                                 | No   |
+| `/how-it-works`     | How it Works marketing page: `HowItWorksHero` (heading, subtitle, CTAs above a full-width image; image stays fixed on scroll) and `HowItWorksScrollSection` (content that scrolls over the image). Uses same `MarketingHeader` as `/`.                                                                                                               | No   |
+| `/pricing`          | Pricing marketing page: compact `MarketingHero` (image + `PageHeroContent` with title/subtitle), then main content. Uses same `MarketingHeader` as `/`.                                                                                                                                                                                            | No   |
+| `/blog`             | Blog marketing page: compact `MarketingHero` (image + `PageHeroContent` with title/subtitle), then main content. Uses same `MarketingHeader` as `/`.                                                                                                                                                                                               | No   |
 | `/login`, `/signup` | Auth forms; submit to `/api/auth/*`                                                                                                                                                                                                                                                                                | No   |
 | `/auth/callback`    | Supabase email confirmation / magic link; exchanges `code` for session                                                                                                                                                                                                                                             | No   |
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                                                                                                                                                                                                   | Yes  |
@@ -180,6 +183,7 @@ flowchart LR
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
+- **Marketing (`app/(marketing)/layout.tsx`):** Wraps with `HeroEntranceProvider` and `ScrollCoverProvider`, then renders `MarketingHeader` (logo, nav: How it Works, Pricing, Blog; avatar dropdown with Sign In or Dashboard + Sign out) and `children`. Used by `/`, `/how-it-works`, `/pricing`, `/blog`. The header is implemented as a module under `components/public/MarketingHeader/` (index, constants, signOut, UserDropdown, MobileMenuContent, MobileMenuToggle). On mobile, the header background is transparent over the hero and switches to white once the user has scrolled so that `ScrollCoverSection` has reached the top of the viewport (via `ScrollCoverContext` and a 1px sentinel in `ScrollCoverSection`). Mobile viewport detection uses the shared hook `hooks/useMobileViewport` (which also exports `MOBILE_BREAKPOINT_PX`).
 - **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (MyHireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
 ### 5.2 API Layer
@@ -356,7 +360,12 @@ View count and `last_viewed_at` are only updated when the viewer is not the appl
 my-hire-view/
 ├── app/
 │   ├── layout.tsx              # Root layout
-│   ├── page.tsx                # Home
+│   ├── (marketing)/            # Public marketing routes (shared MarketingHeader)
+│   │   ├── layout.tsx          # Marketing layout (header + children)
+│   │   ├── page.tsx            # Home (landing)
+│   │   ├── how-it-works/       # How it Works page
+│   │   ├── pricing/            # Pricing page
+│   │   └── blog/               # Blog page
 │   ├── login/, signup/         # Auth pages
 │   ├── auth/callback/          # Supabase OAuth/email callback
 │   ├── admin/                  # Dashboard, new, edit (layout uses requireAuth)
@@ -367,7 +376,7 @@ my-hire-view/
 │   ├── auth/                   # SignOutButton
 │   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, NameInUrlField, CvDownloadFilenameField, FileUpload, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
-│   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection, FinalCTASection, Footer (→ ViewPageFooter), HowItWorksSection, LandingHero, MarketingHeader, ProblemSection, SocialProofSection, SolutionSection, ViewPageFooter
+│   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection (re-export from public/faq), FinalCTASection, Footer (→ ViewPageFooter), HomeHeroContent, HowItWorksHero (How it Works page: content above + fixed image), HowItWorksScrollSection (content that scrolls over fixed hero image), HowItWorksSection (see public/how-it-works/ for StepLabel, StepCard, useHowItWorksObservers, constants; on home page receives isDarkMode from LandingPageSections), LandingPageSections (owns single IntersectionObserver for ProblemSection wrapper; passes isDarkMode to HowItWorksSection, ProblemSection, and FAQSection—one prop name, one source of truth), public/faq/ (FAQSection, FAQItem, FAQContactCard, constants; isDarkMode prop from parent), MarketingHero (reusable: backgroundImage + children + optional imageCredit), MarketingHeader, PageHeroContent (reusable title + subtitle for Pricing / Blog), ProblemSection, SolutionSection, ViewPageFooter
 │   ├── ui/                     # Button, Input, Textarea
 │   ├── video/                  # YouTubeEmbed
 │   └── view/                   # ViewPageContent, ViewTracker (public application page UI)

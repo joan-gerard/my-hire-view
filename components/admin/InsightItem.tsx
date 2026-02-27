@@ -18,10 +18,10 @@ export interface InsightItemProps {
 export default function InsightItem({ label, children, className = "" }: InsightItemProps) {
   return (
     <div
-      className={`rounded border border-gray-200 bg-gray-50/50 px-3 py-2 text-sm text-gray-500 ${className}`.trim()}
+      className={`rounded border border-[var(--foreground)]/10 bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]/60 ${className}`.trim()}
     >
       {label}{" "}
-      <strong className="font-medium text-gray-700">{children}</strong>
+      <strong className="font-medium text-[var(--foreground)]">{children}</strong>
     </div>
   );
 }

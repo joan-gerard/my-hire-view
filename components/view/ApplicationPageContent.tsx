@@ -29,7 +29,7 @@ export default function ApplicationPageContent({
     <div className="pb-12">
       <ViewTracker slug={slug} />
       <div className="space-y-12">
-        <section className="bg-white rounded-xl">
+        <section className="bg-[var(--secondary-background)] rounded-xl border border-[var(--foreground)]/10">
           {application.cv_exists === false ? (
             <CvUnavailableWithRetry onRetry={refetchApplication} />
           ) : (
