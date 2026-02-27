@@ -70,7 +70,9 @@ export default function EmailCaptureForm() {
       setPrimaryGoal("");
       setCareerStage("");
       // Scroll to section before React re-renders with WaitlistSuccessMessage
-      document.getElementById("early-access")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document
+        .getElementById("early-access")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch {
       setStatus("error");
       setErrorMessage("Something went wrong. Please try again.");
@@ -99,7 +101,7 @@ export default function EmailCaptureForm() {
         >
           <motion.div className="max-w-xl lg:max-w-lg flex flex-col gap-4">
             <motion.h2
-              className="text-4xl sm:text-5xl lg:text-6xl font-light tracking-wide text-(--brand-primary) text-balance"
+              className="text-4xl sm:text-5xl lg:text-6xl font-light tracking-wide text-black text-balance"
               variants={staggerItem}
             >
               Be the first to stand out

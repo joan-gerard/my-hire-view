@@ -229,7 +229,7 @@ function FixedBackgroundHeroContent({
             {primaryCta && (
               <Link
                 href={primaryCta.href}
-                className="inline-flex items-center justify-center rounded-lg bg-white text-black px-6 py-3 text-base font-semibold shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-(--brand-primary) focus:ring-offset-2 focus:ring-offset-white w-full"
+                className="inline-flex items-center justify-center rounded-lg bg-(--brand-accent-1) text-white px-6 py-3 text-base font-semibold shadow-md transition hover:bg-(--brand-accent-2) focus:outline-none focus:ring-2 focus:ring-(--brand-accent-1) focus:ring-offset-2 focus:ring-offset-white w-full"
               >
                 {primaryCta.label}
               </Link>

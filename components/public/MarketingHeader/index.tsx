@@ -141,7 +141,7 @@ export default function MarketingHeader({ user }: MarketingHeaderProps) {
               key={href}
               href={href}
               id="marketing-nav-link"
-              className="text-lg font-medium text-foreground/80 hover:text-foreground"
+              className="text-lg font-medium text-black hover:text-black/60 transition-colors duration-300"
             >
               {label}
             </Link>

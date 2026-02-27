@@ -4,10 +4,13 @@
  */
 export default function MarketingFeatures() {
   return (
-    <section id="features" className="bg-[var(--secondary-background)] py-24 sm:py-32">
+    <section
+      id="features"
+      className="bg-[var(--secondary-background)] py-24 sm:py-32"
+    >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
-          <h2 className="text-base font-semibold leading-7 text-[var(--brand-primary)]">
+          <h2 className="text-base font-semibold leading-7 text-(--brand-accent-1)">
             Features
           </h2>
           <p className="mt-2 text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
@@ -18,9 +21,9 @@ export default function MarketingFeatures() {
           <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
             <div className="flex flex-col">
               <dt className="text-base font-semibold leading-7 text-[var(--foreground)]">
-                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-primary)]">
+                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-(--brand-accent-1)">
                   <svg
-                    className="h-6 w-6 text-[var(--brand-primary-text)]"
+                    className="h-6 w-6 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth="1.5"
@@ -44,9 +47,9 @@ export default function MarketingFeatures() {
             </div>
             <div className="flex flex-col">
               <dt className="text-base font-semibold leading-7 text-[var(--foreground)]">
-                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-primary)]">
+                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-(--brand-accent-1)">
                   <svg
-                    className="h-6 w-6 text-[var(--brand-primary-text)]"
+                    className="h-6 w-6 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth="1.5"
@@ -69,9 +72,9 @@ export default function MarketingFeatures() {
             </div>
             <div className="flex flex-col">
               <dt className="text-base font-semibold leading-7 text-[var(--foreground)]">
-                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-primary)]">
+                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-(--brand-accent-1)">
                   <svg
-                    className="h-6 w-6 text-[var(--brand-primary-text)]"
+                    className="h-6 w-6 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth="1.5"

@@ -67,6 +67,10 @@
   --brand-surface: #f6f0e9;
   --brand-accent: #f0e7dd;
 
+  /* Homepage accent options (muted teal) – use for CTAs, highlights, focus rings on landing only */
+  --brand-accent-1: #0d9488;
+  --brand-accent-2: #0f766e;
+
   /* Dark sections (Problem, FAQ, Footer) – warm dark instead of pure #000 */
   --dark-section-bg: #1a1510;
   --dark-section-text: #faf8f6;

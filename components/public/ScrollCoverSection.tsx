@@ -24,7 +24,7 @@ function ScrollCoverSentinel({
     (node: HTMLDivElement | null) => {
       setRef(node);
     },
-    [setRef]
+    [setRef],
   );
   return (
     <div
