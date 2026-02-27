@@ -21,7 +21,7 @@ export function StepLabel({
   isDarkMode = false,
 }: StepLabelProps) {
   const textClassName = isActive
-    ? "text-black"
+    ? "text-(--brand-accent-1)"
     : isDarkMode
       ? "text-black"
       : "text-black/90";
@@ -44,7 +44,7 @@ export function StepLabel({
         <motion.span
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 1, width: 24 }}
-          className="inline-block h-0.5 shrink-0 bg-black"
+          className="inline-block h-0.5 shrink-0 bg-(--brand-accent-1)"
           aria-hidden
         />
       )}

@@ -111,7 +111,7 @@ export function WaitlistSignupForm({
       <button
         type="submit"
         disabled={isDisabled}
-        className="mt-4 w-full rounded-lg bg-black/80 hover:bg-black hover:cursor-pointer px-6 py-4 text-lg font-semibold text-(--brand-primary-text) shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-primary) focus:ring-offset-2 focus:ring-offset-(--secondary-background) disabled:opacity-70"
+        className="mt-4 w-full rounded-lg bg-(--brand-accent-1) hover:bg-(--brand-accent-2) hover:cursor-pointer px-6 py-4 text-lg font-semibold text-white shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-accent-1) focus:ring-offset-2 focus:ring-offset-[var(--secondary-background)] disabled:opacity-70"
       >
         {status === "loading" ? "Joining…" : "Get Early Access"}
       </button>
@@ -250,7 +250,7 @@ function StatusRadioOption({
       <span
         className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full transition-colors duration-500 ease-in-out ${
           checked
-            ? "border-0 bg-(--brand-primary)"
+            ? "border-0 bg-(--brand-accent-1)"
             : "border-0 bg-black/10 group-hover:bg-black/20"
         }`}
         aria-hidden

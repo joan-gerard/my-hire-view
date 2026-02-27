@@ -127,7 +127,7 @@ function ProblemSectionHero() {
         <div className="w-full self-stretch">
           <Link
             href="#early-access"
-            className="flex items-center justify-center w-full rounded-2xl bg-white hover:bg-white/90 text-black px-6 py-4 text-base xl:text-xl font-normal shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-primary) focus:ring-offset-2 focus:ring-offset-(--secondary-background) disabled:opacity-70"
+            className="flex items-center justify-center w-full rounded-2xl bg-(--brand-accent-1) hover:bg-(--brand-accent-2) text-white px-6 py-4 text-base xl:text-xl font-normal shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-accent-1) focus:ring-offset-2 focus:ring-offset-[var(--secondary-background)] disabled:opacity-70"
           >
             Get Started with MyHireView
           </Link>

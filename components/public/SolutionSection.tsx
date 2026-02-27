@@ -97,7 +97,10 @@ function SolutionHero() {
           className="relative z-10 text-2xl 2xl:text-5xl text-balance font-light tracking-tight text-white sm:text-3xl lg:text-3xl xl:text-4xl max-w-2xl"
           variants={staggerItem}
         >
-          Introducing MyHireView: Your Application, Elevated
+          Introducing{" "}
+          <span className="text-(--brand-accent-1)">MyHireView</span>s:
+          <br />
+          Your Application, Elevated
         </motion.h2>
         <motion.p
           className="relative z-10 mt-4 text-lg leading-normal text-balance text-white/90 max-w-2xl"
@@ -125,8 +128,8 @@ function SolutionFeatureCard({
       className="flex flex-col gap-4 rounded-2xl bg-[#fbfaf9] p-6 md:p-8 2xl:p-10"
       variants={staggerItem}
     >
-      <div className="flex h-10 2xl:h-14 w-10 2xl:w-14 shrink-0 items-center justify-center rounded-xl bg-[#f4f2f1] border border-(--foreground)/10">
-        <Icon className="h-6 2xl:h-8 w-6 2xl:w-8 text-foreground" />
+      <div className="flex h-10 2xl:h-14 w-10 2xl:w-14 shrink-0 items-center justify-center rounded-xl bg-(--brand-accent-1) border border-(--foreground)/10">
+        <Icon className="h-6 2xl:h-8 w-6 2xl:w-8 text-white" />
       </div>
       <h3 className="text-2xl xl:text-3xl 2xl:text-4xl font-light text-foreground">
         {title}

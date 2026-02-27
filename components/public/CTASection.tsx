@@ -72,7 +72,7 @@ export default function CTASection() {
           >
             <Link
               href="#early-access"
-              className="flex items-center justify-center w-full rounded-2xl bg-white/10 hover:bg-white/20 text-white px-6 py-4 text-base xl:text-xl font-semibold backdrop-blur-md shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-primary) focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70"
+              className="flex items-center justify-center w-full rounded-2xl bg-(--brand-accent-1)/90 hover:bg-(--brand-accent-1) text-white px-6 py-4 text-base xl:text-xl font-semibold backdrop-blur-md shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-accent-1) focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70"
             >
               Get Early Access
             </Link>
