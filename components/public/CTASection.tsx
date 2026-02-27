@@ -11,7 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 /** Unsplash: career success / ready to start theme (professional, aspirational). */
-const CTA_IMAGE = "/success.jpg";
+const CTA_IMAGE = "/solution-1-1.png";
 
 /**
  * Final CTA section for the pre-launch landing page (LANDING_PAGE_BRIEF).
@@ -21,14 +21,14 @@ const CTA_IMAGE = "/success.jpg";
 export default function CTASection() {
   return (
     <motion.section
-      className="px-4 md:px-6 lg:px-10 2xl:px-12 pt-16 pb-10 lg:pb-16 max-w-5xl mx-auto"
+      className="px-0 md:px-6 lg:px-10 2xl:px-12 pt-16 pb-10 lg:pb-16 max-w-5xl mx-auto"
       initial={fadeUp.initial}
       whileInView={fadeUp.whileInView}
       viewport={viewport}
       transition={fadeUp.transition}
     >
       <motion.div
-        className="relative min-h-[400px] overflow-hidden rounded-2xl border border-(--foreground)/10"
+        className="relative min-h-[350px] overflow-hidden md:rounded-2xl md:border md:border-(--foreground)/10"
         initial={fadeUp.initial}
         whileInView={fadeUp.whileInView}
         viewport={viewport}
@@ -38,7 +38,7 @@ export default function CTASection() {
           src={CTA_IMAGE}
           alt="Team collaboration and career success"
           fill
-          className="object-cover object-center"
+          className="object-cover object-top"
           sizes="(max-width: 1023px) 100vw, 1600px"
           priority={false}
         />
@@ -47,7 +47,7 @@ export default function CTASection() {
           aria-hidden
         />
         <motion.div
-          className="absolute inset-0 flex flex-col justify-end p-8 2xl:p-10"
+          className="absolute inset-0 flex flex-col gap-2 justify-end p-8 2xl:p-10"
           initial="hidden"
           whileInView="visible"
           viewport={viewport}
@@ -57,22 +57,22 @@ export default function CTASection() {
             className="relative z-10 text-2xl 2xl:text-5xl text-balance font-light tracking-tight text-white sm:text-3xl lg:text-3xl xl:text-4xl max-w-2xl"
             variants={staggerItem}
           >
-            Ready to Transform Your Job Search?
+            Ready to Transform <br /> Your Job Search?
           </motion.h2>
           <motion.p
-            className="relative z-10 mt-4 text-lg leading-normal text-balance text-white/90 max-w-2xl"
+            className="relative z-10 text-lg leading-normal text-balance text-white/90 max-w-2xl"
             variants={staggerItem}
           >
             Join the waitlist now and be among the first to create applications
             that actually get noticed.
           </motion.p>
           <motion.div
-            className="relative z-10 mt-8 w-full max-w-md"
+            className="relative z-10 w-full max-w-md mt-2"
             variants={staggerItem}
           >
             <Link
               href="#early-access"
-              className="flex items-center justify-center w-full rounded-2xl bg-(--brand-accent-1)/90 hover:bg-(--brand-accent-1) text-white px-6 py-4 text-base xl:text-xl font-semibold backdrop-blur-md shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-accent-1) focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70"
+              className="flex items-center justify-center w-fit rounded-2xl bg-(--brand-accent-1)/90 hover:bg-(--brand-accent-1) text-white px-6 py-3 text-base xl:text-xl font-semibold backdrop-blur-md shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-accent-1) focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70"
             >
               Get Early Access
             </Link>

@@ -98,7 +98,7 @@ function SolutionHero() {
           variants={staggerItem}
         >
           Introducing{" "}
-          <span className="text-(--brand-accent-1)">MyHireView</span>s:
+          <span className="text-(--brand-accent-1)">MyHireView</span>:
           <br />
           Your Application, Elevated
         </motion.h2>
