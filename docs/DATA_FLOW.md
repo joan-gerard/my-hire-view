@@ -40,6 +40,7 @@ This document describes how data moves through the system using Mermaid diagrams
 ## 1. High-level data flow
 
 ```mermaid
+%%{init: {'flowchart': {'rankSpacing': 120, 'nodeSpacing': 50, 'curve': 'linear'}}}%%
 flowchart LR
   subgraph Actors
     Candidate[Candidate]
@@ -55,27 +56,31 @@ flowchart LR
   subgraph APIs[API routes]
     ProfileAPI["/api/profile"]
     AppsAPI["/api/applications"]
-    SlugAPI["GET /api/applications/slug"]
+    SlugAPIs["/api/slug &amp; /api/slug/validate"]
+    ViewSlugAPI["GET /api/applications/[slug]"]
     ViewAPI["POST .../view"]
   end
 
   subgraph Data[Data]
-    Profiles[profiles]
-    Applications[applications]
+    Profiles[(profiles)]
+    Applications[(applications)]
   end
 
   Candidate --> ProfilePage
   Candidate --> NewEdit
+  Recruiter --> ViewPage
+
   ProfilePage --> ProfileAPI
   NewEdit --> AppsAPI
-  Recruiter --> ViewPage
-  ViewPage --> SlugAPI
+  NewEdit --> SlugAPIs
+  ViewPage --> ViewSlugAPI
   ViewPage --> ViewAPI
 
   ProfileAPI --> Profiles
   AppsAPI --> Profiles
   AppsAPI --> Applications
-  SlugAPI --> Applications
+  SlugAPIs --> Applications
+  ViewSlugAPI --> Applications
   ViewAPI --> Applications
 ```
 

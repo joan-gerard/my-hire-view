@@ -145,11 +145,23 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 ## 7. Testing & CI
 
-- **No test files exist** — no Jest, Vitest, or any test runner is configured.
-- **No `test` or `test:ci` script** in `package.json`.
-- **No CI/CD pipeline** — no GitHub Actions or equivalent.
+- **Vitest** is configured as the test runner (`vitest.config.ts`).
+- `pnpm test` — interactive watch mode; `pnpm test:ci` — single run (used in CI).
+- Test files live in `__tests__/unit/` and a shared helper in `__tests__/helpers/`.
 
-This is the most significant gap before a production launch.
+### What is covered
+
+| Area | File(s) |
+|------|---------|
+| Pure slug utilities (`generateSlug`, `buildSlug`, `validateSlugFormat`) | `__tests__/unit/lib/utils/slug-generate.test.ts` |
+| Server-side slug helpers (`checkSlugUniqueness`, `validateSlugForApplication`, `reserveBaseSlug`) | `__tests__/unit/lib/utils/slug.test.ts` |
+| In-memory rate limiter (`rateLimit`, `checkRateLimit`, `rateLimit429`, `getClientIdentifier`) | `__tests__/unit/lib/rate-limit.test.ts` |
+| Profile flow (GET + PUT `/api/profile`) | `__tests__/unit/api/profile.test.ts` |
+| Create-application flow (POST `/api/applications`, POST `/api/slug`, POST `/api/slug/validate`) | `__tests__/unit/api/applications-create.test.ts`, `slug.test.ts` |
+| Edit-application flow (PUT `/api/applications`, GET `/api/applications/by-id/[id]`) | `__tests__/unit/api/applications-edit.test.ts` |
+| Public-view flow (GET `/api/applications/[slug]`, POST `/api/applications/[slug]/view`) | `__tests__/unit/api/applications-public-view.test.ts` |
+
+- **No CI/CD pipeline** — no GitHub Actions or equivalent (still a gap).
 
 ---
 
@@ -178,9 +190,7 @@ This is the most significant gap before a production launch.
 | ------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------- |
 | `/api/slug` has no auth check   | `app/api/slug/`     | Lower risk but worth tightening.                                                                         |
 | In-memory rate limiting         | `lib/rate-limit.ts` | Resets per serverless instance; not safe across concurrent Vercel instances. Replace with Redis/Upstash. |
-| No automated tests              | —                   | No test runner configured at all.                                                                        |
-| No CI/CD                        | —                   | No automated pipeline on push/PR.                                                                        |
-
+| No CI/CD                        | —                   | Tests exist (`pnpm test:ci`) but no automated pipeline runs them on push/PR. |
 
 ### Nice to have before launch
 
