@@ -1,7 +1,37 @@
 /**
  * Pure slug generation – safe to use in client components.
- * For server-only helpers (uniqueness check, unique slug), use lib/utils/slug.ts.
+ * For server-only helpers (`reserveBaseSlug`, validate), use lib/utils/slug.ts.
  */
+
+/** Matches slugs produced by {@link generateSlug} / {@link buildSlug} (lowercase, hyphen-separated segments). */
+export const SLUG_MAX_LENGTH = 128;
+
+const SLUG_SEGMENT_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/**
+ * Validates a user-facing slug string (format only). Shared by client preview and server.
+ */
+export function validateSlugFormat(
+  slug: string,
+): { ok: true } | { ok: false; error: string } {
+  const s = slug.trim();
+  if (!s) return { ok: false, error: "Slug is required" };
+  if (s.length > SLUG_MAX_LENGTH) {
+    return {
+      ok: false,
+      error: `Slug must be at most ${SLUG_MAX_LENGTH} characters`,
+    };
+  }
+  if (!SLUG_SEGMENT_PATTERN.test(s)) {
+    return {
+      ok: false,
+      error:
+        "Use lowercase letters, numbers, and single hyphens between words (e.g. volvo-frontend-engineer).",
+    };
+  }
+  return { ok: true };
+}
+
 export function generateSlug(company: string, role: string): string {
   const combined = `${company} ${role}`.toLowerCase();
   return combined

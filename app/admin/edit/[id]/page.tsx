@@ -82,7 +82,7 @@ export default function EditApplicationPage() {
     try {
       setLoading(true);
 
-      // Generate unique slug if slug or name position in URL changed
+      // Re-check derived slug via API if slug or name position in URL changed
       const slugOrPreferenceChanged =
         data.slug !== application?.slug ||
         data.slugNamePosition !== slugNamePositionFromDb(application?.include_name_in_slug);
@@ -106,7 +106,10 @@ export default function EditApplicationPage() {
         });
 
         if (!slugResponse.ok) {
-          throw new Error('Failed to generate slug');
+          const errJson: { error?: string } = await slugResponse
+            .json()
+            .catch(() => ({}));
+          throw new Error(errJson.error || 'Failed to generate slug');
         }
 
         const { slug: uniqueSlug } = await slugResponse.json();
@@ -181,6 +184,7 @@ export default function EditApplicationPage() {
           loading={loading}
           onRetryCvCheck={refetchCvCheck}
           profilePictureUrl={profile?.profile_picture_url ?? null}
+          slugExcludeApplicationId={id}
         />
       </div>
     </div>

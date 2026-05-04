@@ -53,6 +53,10 @@ export interface ApplicationFormData {
   use_original_cv_filename?: boolean;
   /** When preference is per_application: whether to show profile picture for this application. Server copies profile URL when true. */
   show_profile_picture?: boolean;
+  /**
+   * Set by ApplicationForm on submit. When true, create flow may keep the typed slug if it passes format + availability checks.
+   */
+  slugManuallyEdited?: boolean;
 }
 
 export interface ApplicationCreateInput {

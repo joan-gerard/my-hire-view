@@ -3,6 +3,7 @@
 import ApplicationForm from "@/components/forms/ApplicationForm";
 import type { ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
+import { validateSlugFormat } from "@/lib/utils/slug-generate";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -36,29 +37,67 @@ export default function NewApplicationPage() {
     try {
       setLoading(true);
 
-      // Generate unique slug via API (optionally include name in URL)
-      const slugResponse = await fetch("/api/slug", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          company: data.company,
-          role: data.role,
-          slugNamePosition: data.slugNamePosition ?? null,
-          ...((data.slugNamePosition === "start" ||
-            data.slugNamePosition === "end") && {
-            first_name: data.first_name ?? undefined,
-            last_name: data.last_name ?? undefined,
-          }),
+      const slugBody = {
+        company: data.company,
+        role: data.role,
+        slugNamePosition: data.slugNamePosition ?? null,
+        ...((data.slugNamePosition === "start" ||
+          data.slugNamePosition === "end") && {
+          first_name: data.first_name ?? undefined,
+          last_name: data.last_name ?? undefined,
         }),
-      });
+      };
 
-      if (!slugResponse.ok) {
-        throw new Error("Failed to generate slug");
+      async function reserveSlugFromRole(): Promise<string> {
+        const slugResponse = await fetch("/api/slug", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(slugBody),
+        });
+        if (!slugResponse.ok) {
+          const errJson: { error?: string } = await slugResponse
+            .json()
+            .catch(() => ({}));
+          throw new Error(errJson.error || "Failed to generate slug");
+        }
+        const { slug: generated } = await slugResponse.json();
+        if (typeof generated !== "string" || !generated.trim()) {
+          throw new Error("Failed to generate slug");
+        }
+        return generated.trim();
       }
 
-      const { slug: uniqueSlug } = await slugResponse.json();
+      let finalSlug: string;
+
+      if (data.slugManuallyEdited === true) {
+        const trimmed = data.slug.trim();
+        const format = validateSlugFormat(trimmed);
+        if (format.ok) {
+          const validateRes = await fetch("/api/slug/validate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ slug: trimmed }),
+          });
+          const validateJson: { ok?: boolean } = await validateRes
+            .json()
+            .catch(() => ({}));
+          if (validateRes.ok && validateJson.ok === true) {
+            finalSlug = trimmed;
+          } else {
+            finalSlug = await reserveSlugFromRole();
+          }
+        } else {
+          finalSlug = await reserveSlugFromRole();
+        }
+      } else {
+        finalSlug = await reserveSlugFromRole();
+      }
+
+      const { slugManuallyEdited, ...dataForApi } = data;
+      void slugManuallyEdited;
 
       const response = await fetch("/api/applications", {
         method: "POST",
@@ -66,8 +105,8 @@ export default function NewApplicationPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...data,
-          slug: uniqueSlug,
+          ...dataForApi,
+          slug: finalSlug,
         }),
       });
 
@@ -117,6 +156,7 @@ export default function NewApplicationPage() {
             onSubmit={handleSubmit}
             loading={loading}
             profilePictureUrl={profile?.profile_picture_url ?? null}
+            resolveSlugOnCreate
           />
         )}
       </div>

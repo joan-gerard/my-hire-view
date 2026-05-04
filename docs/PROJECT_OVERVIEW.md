@@ -1,6 +1,6 @@
 # MyHireView — Project Overview
 
-> Last updated: May 2, 2026
+> Last updated: May 4, 2026
 
 A high-level catch-up document covering the product, tech stack, architecture, business logic, data model, and pre-launch gaps.
 
@@ -192,6 +192,7 @@ This is the most significant gap before a production launch.
 - **Blog** has no real content yet.
 - **How It Works page** (`/how-it-works`) is nearly a duplicate of the homepage content — needs its own dedicated, more detailed content.
 - **Branding on `/admin` and `/view` pages** is outdated — both still use the previous brand; needs updating to match the current visual identity.
+- **Support for technical issues** — add a support button or section (marketing, dashboard, and/or public view) so users can report bugs or other technical problems (e.g. mailto link, simple feedback form, or a lightweight third-party tool).
 - **Payment / membership system** — no payment integration exists yet. Need to integrate a payment provider (e.g. Stripe) to gate features behind a paid membership, covering plan management, checkout flow, webhooks, and Supabase subscription state.
 - **In-app video recording** — currently only a YouTube URL can be provided. Users should be able to record a video pitch directly in the browser (via `MediaRecorder` API). Needs a decision on storage: generic object storage is possible for small raw files, but a dedicated video platform (e.g. **Mux**, **Cloudflare Stream**) is usually better for encoding, adaptive streaming, and bandwidth at scale. The recorded video URL would replace the current `video_url` field, or the two could coexist as separate source types.
 - **Teleprompter UI for recording** — when recording in-app, display a scrolling script overlay so the user can read their pitch while looking at the camera. Needs a script input field on the application form, auto-scroll speed control, and a fullscreen/overlay mode that doesn't obscure the webcam feed.

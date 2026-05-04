@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import { generateSlug, buildSlug } from './slug-generate';
+import { generateSlug, buildSlug, validateSlugFormat } from './slug-generate';
 
-export { generateSlug, buildSlug };
+export { generateSlug, buildSlug, validateSlugFormat };
 
 export async function checkSlugUniqueness(
   slug: string,
@@ -23,25 +23,63 @@ export async function checkSlugUniqueness(
   return (data?.length || 0) === 0;
 }
 
-export async function generateUniqueSlug(
+/**
+ * Format + DB uniqueness for a proposed application slug.
+ * @param excludeId — application row id to ignore (edit flow).
+ */
+/** Shown when the derived base slug is already taken (no numeric suffix fallback). */
+export const SLUG_COLLISION_USER_MESSAGE =
+  "This slug is already in use. Add your name to the URL, change the text slightly, or pick another slug.";
+
+export class SlugCollisionError extends Error {
+  readonly code = "SLUG_COLLISION" as const;
+
+  constructor(message: string = SLUG_COLLISION_USER_MESSAGE) {
+    super(message);
+    this.name = "SlugCollisionError";
+  }
+}
+
+export async function validateSlugForApplication(
+  slug: string,
+  excludeId?: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const format = validateSlugFormat(slug);
+  if (!format.ok) return format;
+
+  const trimmed = slug.trim();
+  const unique = await checkSlugUniqueness(trimmed, excludeId);
+  if (!unique) {
+    return {
+      ok: false,
+      error: SLUG_COLLISION_USER_MESSAGE,
+    };
+  }
+  return { ok: true };
+}
+
+/**
+ * Returns the slug derived from company/role (and name-in-URL rules when `position` and names are set)
+ * if it is not already used in the database. Otherwise throws {@link SlugCollisionError}.
+ * `excludeId` ignores that application row when checking (edit flow).
+ */
+export async function reserveBaseSlug(
   company: string,
   role: string,
   excludeId?: string,
   first_name?: string | null,
   last_name?: string | null,
-  position?: 'start' | 'end' | null
+  position?: "start" | "end" | null,
 ): Promise<string> {
   const baseSlug =
     position && (first_name?.trim() || last_name?.trim())
       ? buildSlug(company, role, first_name, last_name, position)
       : generateSlug(company, role);
-  let slug = baseSlug;
-  let counter = 1;
 
-  while (!(await checkSlugUniqueness(slug, excludeId))) {
-    slug = `${baseSlug}-${counter}`;
-    counter++;
+  const unique = await checkSlugUniqueness(baseSlug, excludeId);
+  if (!unique) {
+    throw new SlugCollisionError();
   }
 
-  return slug;
+  return baseSlug;
 }
