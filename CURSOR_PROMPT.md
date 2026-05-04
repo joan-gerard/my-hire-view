@@ -15,7 +15,7 @@ I need you to help me build a web application that generates unique, personalize
 - **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth
-- **File Storage**: Vercel Blob Storage (for PDFs)
+- **File Storage**: Cloudflare R2 (for CV PDFs; S3-compatible API)
 - **Video Hosting**: YouTube (unlisted videos - user will provide embed URLs)
 - **Deployment**: Vercel
 
@@ -30,7 +30,7 @@ First, help me set up the Supabase database with the following schema:
 - slug: text (unique, URL-safe identifier for the application)
 - company: text (company name)
 - role: text (job title/position)
-- cv_url: text (Vercel Blob URL for the PDF)
+- cv_url: text (public HTTPS URL for the PDF on R2)
 - video_url: text (YouTube unlisted video embed URL)
 - description: text (legacy; no longer editable by candidates; column retained for backward compatibility)
 - created_at: timestamp with time zone
@@ -68,7 +68,7 @@ Create the following route structure:
   ├── login/page.tsx                    # Login page
   ├── api/
   │   ├── applications/route.ts         # CRUD operations
-  │   └── upload/route.ts               # File upload to Vercel Blob
+  │   └── upload/route.ts               # File upload to Cloudflare R2
   └── layout.tsx                        # Root layout
 ```
 
@@ -95,7 +95,7 @@ Create the following route structure:
   - Company name (text input)
   - Role/position (text input)
   - Slug (auto-generate from company-role, allow manual override, validate uniqueness)
-  - CV upload (PDF only, max 10MB, upload to Vercel Blob)
+  - CV upload (PDF only, max 10MB, upload to Cloudflare R2)
   - YouTube video URL (text input, validate YouTube URL format)
   - Description (textarea, optional)
 - Form validation
@@ -114,18 +114,18 @@ Create the following route structure:
 - Extract video ID from YouTube URL
 - Handle different YouTube URL formats (watch?v=, youtu.be/, embed/, shorts/)
 
-### 5. File Upload Flow (Vercel Blob)
+### 5. File Upload Flow (Cloudflare R2)
 
 Implement the following workflow:
 1. User selects PDF file in admin form
 2. Client-side validation (file type, size)
-3. Upload to Vercel Blob via API route
-4. Store returned Blob URL in Supabase
+3. Upload to R2 via API route (`PutObject`)
+4. Store returned public URL in Supabase
 5. Display upload progress
 6. Handle upload errors gracefully
 
 Provide clear instructions on:
-- How to set up Vercel Blob storage
+- How to set up Cloudflare R2 (`docs/PDF_AND_R2.md`)
 - Required environment variables
 - Token generation steps
 
@@ -136,7 +136,11 @@ Create `.env.local` file structure with:
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-BLOB_READ_WRITE_TOKEN=
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=
+R2_PUBLIC_BASE_URL=
 NEXT_PUBLIC_SITE_URL=
 ```
 
@@ -229,7 +233,7 @@ Please help me build this in the following order:
 
 **Phase 4: Application Form**
 1. Create form component
-2. Implement file upload to Vercel Blob
+2. Implement file upload to Cloudflare R2
 3. Add form validation
 4. Handle create/update operations
 5. Test slug generation
@@ -254,7 +258,7 @@ Please help me build this in the following order:
 After building, help me test:
 - [ ] User can register and login
 - [ ] User can create new application
-- [ ] PDF uploads successfully to Vercel Blob
+- [ ] PDF uploads successfully to Cloudflare R2
 - [ ] YouTube URL validation works
 - [ ] Slug generation is unique
 - [ ] Public page displays correctly
@@ -272,7 +276,7 @@ After building, help me test:
 Provide step-by-step instructions for:
 1. Connecting Next.js project to Vercel
 2. Setting environment variables in Vercel
-3. Configuring Vercel Blob storage
+3. Configuring Cloudflare R2 storage
 4. Setting up custom domain (optional)
 5. Testing production deployment
 

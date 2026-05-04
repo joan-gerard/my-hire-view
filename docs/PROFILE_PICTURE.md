@@ -1,6 +1,6 @@
 # Profile pictures
 
-Profile pictures are stored in **Supabase Storage** (not Vercel Blob). One picture per user; it can be included or hidden per application.
+Profile pictures are stored in **Supabase Storage** (CV PDFs use Cloudflare R2). One picture per user; it can be included or hidden per application.
 
 ## Storage bucket
 

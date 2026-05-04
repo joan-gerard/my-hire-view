@@ -4,7 +4,7 @@ import Input from "@/components/ui/Input";
 import type { ApplicationFormData } from "@/lib/types/application";
 import { buildSlug } from "@/lib/utils/slug-generate";
 import { getApplicationUrl } from "@/lib/utils/url";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
 import type { CandidateFieldKey } from "./CandidateFieldsSection";
 import CandidateFieldsSection from "./CandidateFieldsSection";
@@ -95,6 +95,16 @@ export default function ApplicationForm({
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
+  const isSubmittingRef = useRef(false);
+  const uploadedPendingFileRef = useRef<{
+    signature: string;
+    url: string;
+  } | null>(null);
+  /** One key per selected CV file; server dedupes uploads / retries to the same R2 object. */
+  const cvUploadIdempotencyKeyRef = useRef<string | null>(null);
+
+  const getFileSignature = (file: File): string =>
+    `${file.name}:${file.size}:${file.lastModified}`;
 
   useEffect(() => {
     if (!slugManuallyEdited && formData.company && formData.role) {
@@ -118,64 +128,83 @@ export default function ApplicationForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (loading || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setErrors({});
 
-    const newErrors: Partial<Record<keyof ApplicationFormData, string>> = {};
-    if (!formData.company.trim())
-      newErrors.company = "Company name is required";
-    if (!formData.role.trim()) newErrors.role = "Role is required";
-    if (!formData.slug.trim()) newErrors.slug = "Slug is required";
-    const hasCv = cvPendingFile || (formData.cv_url && formData.cv_url.trim());
-    if (!hasCv) newErrors.cv_url = "CV file is required";
-    if (!formData.video_url.trim())
-      newErrors.video_url = "YouTube URL is required";
+    try {
+      const newErrors: Partial<Record<keyof ApplicationFormData, string>> = {};
+      if (!formData.company.trim())
+        newErrors.company = "Company name is required";
+      if (!formData.role.trim()) newErrors.role = "Role is required";
+      if (!formData.slug.trim()) newErrors.slug = "Slug is required";
+      const hasCv = cvPendingFile || (formData.cv_url && formData.cv_url.trim());
+      if (!hasCv) newErrors.cv_url = "CV file is required";
+      if (!formData.video_url.trim())
+        newErrors.video_url = "YouTube URL is required";
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    let cvUrl = formData.cv_url.trim();
-    if (cvPendingFile) {
-      const formDataUpload = new FormData();
-      formDataUpload.append("file", cvPendingFile);
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formDataUpload,
-      });
-      if (!response.ok) {
-        const { error } = await response.json();
-        setErrors({ cv_url: error || "Upload failed" });
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
         return;
       }
-      const { url } = await response.json();
-      cvUrl = url;
+
+      let cvUrl = formData.cv_url.trim();
+      if (cvPendingFile) {
+        const signature = getFileSignature(cvPendingFile);
+        const cachedUpload = uploadedPendingFileRef.current;
+        if (cachedUpload?.signature === signature) {
+          cvUrl = cachedUpload.url;
+        } else {
+          if (!cvUploadIdempotencyKeyRef.current) {
+            cvUploadIdempotencyKeyRef.current = crypto.randomUUID();
+          }
+          const formDataUpload = new FormData();
+          formDataUpload.append("file", cvPendingFile);
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            headers: {
+              "Idempotency-Key": cvUploadIdempotencyKeyRef.current,
+            },
+            body: formDataUpload,
+          });
+          if (!response.ok) {
+            const { error } = await response.json();
+            setErrors({ cv_url: error || "Upload failed" });
+            return;
+          }
+          const { url } = await response.json();
+          cvUrl = url;
+          uploadedPendingFileRef.current = { signature, url };
+        }
+      }
+
+      const includePicture = hasProfilePicture && showProfilePicture;
+
+      const payload: ApplicationFormData = {
+        ...formData,
+        cv_url: cvUrl,
+        first_name: include.first_name
+          ? formData.first_name?.trim() || null
+          : null,
+        last_name: include.last_name ? formData.last_name?.trim() || null : null,
+        location: include.location ? formData.location?.trim() || null : null,
+        portfolio_url: include.portfolio_url
+          ? formData.portfolio_url?.trim() || null
+          : null,
+        linkedin_url: include.linkedin_url
+          ? formData.linkedin_url?.trim() || null
+          : null,
+        slugNamePosition,
+        cv_filename: cvPendingFile
+          ? cvPendingFile.name
+          : (formData.cv_filename ?? null),
+        use_original_cv_filename: formData.use_original_cv_filename ?? true,
+        show_profile_picture: includePicture,
+      };
+      await onSubmit(payload);
+    } finally {
+      isSubmittingRef.current = false;
     }
-
-    const includePicture = hasProfilePicture && showProfilePicture;
-
-    const payload: ApplicationFormData = {
-      ...formData,
-      cv_url: cvUrl,
-      first_name: include.first_name
-        ? formData.first_name?.trim() || null
-        : null,
-      last_name: include.last_name ? formData.last_name?.trim() || null : null,
-      location: include.location ? formData.location?.trim() || null : null,
-      portfolio_url: include.portfolio_url
-        ? formData.portfolio_url?.trim() || null
-        : null,
-      linkedin_url: include.linkedin_url
-        ? formData.linkedin_url?.trim() || null
-        : null,
-      slugNamePosition,
-      cv_filename: cvPendingFile
-        ? cvPendingFile.name
-        : (formData.cv_filename ?? null),
-      use_original_cv_filename: formData.use_original_cv_filename ?? true,
-      show_profile_picture: includePicture,
-    };
-    await onSubmit(payload);
   };
 
   const candidateValues: Record<CandidateFieldKey, string> = {
@@ -251,7 +280,7 @@ export default function ApplicationForm({
         placeholder="auto-generated-slug"
         required
       />
-      <p className="text-xs text-[var(--foreground)]/60">
+      <p className="text-xs text-(--foreground)/60">
         This will be used in the URL: {shareableUrl || "..."}
       </p>
 
@@ -260,8 +289,13 @@ export default function ApplicationForm({
         pendingFile={cvPendingFile}
         onPendingFileChange={(file) => {
           setCvPendingFile(file);
-          if (file)
+          uploadedPendingFileRef.current = null;
+          if (file) {
+            cvUploadIdempotencyKeyRef.current = crypto.randomUUID();
             setFormData((prev) => ({ ...prev, cv_filename: file.name }));
+          } else {
+            cvUploadIdempotencyKeyRef.current = null;
+          }
         }}
         cvUrlExists={initialData?.cvUrlExists}
         onRetryCvCheck={onRetryCvCheck}

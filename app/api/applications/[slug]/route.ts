@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { checkBlobExists } from '@/lib/utils/blob';
+import { checkCvObjectExists } from '@/lib/utils/cv-storage';
 import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 
 /** Public GET: 120 requests per minute per IP to allow normal viewing while limiting scraping. */
@@ -31,7 +31,7 @@ export async function GET(
     }
 
     const cv_exists = data.cv_url
-      ? await checkBlobExists(data.cv_url)
+      ? await checkCvObjectExists(data.cv_url)
       : undefined;
 
     return NextResponse.json({

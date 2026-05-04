@@ -8,7 +8,7 @@ interface FileUploadProps {
   /** Called when user selects a file (not uploaded yet; upload happens on form submit). */
   pendingFile?: File | null;
   onPendingFileChange: (file: File | null) => void;
-  /** When false, hide the View link (e.g. blob missing). When true or undefined, show View if value is set. */
+  /** When false, hide the View link (e.g. CV missing in storage). When true or undefined, show View if value is set. */
   cvUrlExists?: boolean;
   /** When provided and cvUrlExists is false, show a "Check again" button to re-run the existence check. */
   onRetryCvCheck?: () => Promise<void>;
@@ -182,8 +182,8 @@ export default function FileUpload({
           >
             <p className="font-semibold">CV file not found in storage</p>
             <p className="mt-0.5 text-amber-800">
-              The file may have been removed from Vercel. Please upload a new CV
-              below to replace it.
+              The file may have been removed from storage (e.g. Cloudflare R2).
+              Please upload a new CV below to replace it.
             </p>
             {onRetryCvCheck && (
               <>

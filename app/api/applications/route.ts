@@ -4,7 +4,7 @@ import type {
     ApplicationCreateInput,
     ApplicationUpdateInput,
 } from "@/lib/types/application";
-import { deleteBlobIfOurs } from "@/lib/utils/blob";
+import { deleteCvIfOurs } from "@/lib/utils/cv-storage";
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -162,7 +162,7 @@ export async function PUT(request: NextRequest) {
       existing.cv_url &&
       newCvUrl !== existing.cv_url
     ) {
-      await deleteBlobIfOurs(existing.cv_url);
+      await deleteCvIfOurs(existing.cv_url);
     }
 
     const snapshot = await getProfileSnapshot(supabase, user.id);
@@ -206,7 +206,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Verify the application belongs to the user and get cv_url for blob cleanup
+    // Verify the application belongs to the user and get cv_url for R2 cleanup
     const { data: existing } = await supabase
       .from("applications")
       .select("user_id, cv_url")
@@ -220,7 +220,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await deleteBlobIfOurs(existing.cv_url);
+    await deleteCvIfOurs(existing.cv_url);
 
     const { error } = await supabase.from("applications").delete().eq("id", id);
 

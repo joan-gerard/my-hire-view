@@ -76,7 +76,7 @@ Standard Next.js app bootstrap; no MyHireView-specific logic yet.
 - `app/layout.tsx`, `app/page.tsx` — integrated auth and landing
 - `CURSOR_PROMPT.md`, `README.md`, `package.json`, `pnpm-lock.yaml` — deps and project description
 
-Result: end-to-end flow: sign up/in, create/edit applications (slug, CV, video, description), shareable `/apply/[slug]` page with view tracking, Supabase + Vercel Blob.
+Result: end-to-end flow: sign up/in, create/edit applications (slug, CV, video, description), shareable `/apply/[slug]` page with view tracking, Supabase + CV storage (now Cloudflare R2; was Vercel Blob in early commits).
 
 ---
 

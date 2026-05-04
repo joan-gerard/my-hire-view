@@ -42,7 +42,7 @@ Personalized recruiter landing pages: create shareable pages with your CV (PDF) 
 ## Setup
 
 1. Install dependencies: `pnpm install`
-2. Copy `.env.local.example` to `.env.local` and fill in Supabase and Vercel Blob values.
+2. Copy `.env.local.example` to `.env.local` and fill in Supabase and Cloudflare R2 values.
 3. Run the SQL migrations in the Supabase SQL Editor (in order): `001_initial_schema.sql`, `002_add_application_is_active.sql`, `003_profiles_table.sql`, `004_application_candidate_fields.sql`, `005_application_include_name_in_slug.sql`, `006_slug_name_position_text.sql`
 4. **Configure Supabase Auth**: see [docs/SUPABASE_AUTH_SETUP.md](docs/SUPABASE_AUTH_SETUP.md) to enable the Email provider and optional email templates.
 5. Ensure Supabase **Redirect URLs** include `/auth/callback` for email links.
@@ -73,4 +73,4 @@ So **yes** — the current Supabase implementation and RLS policies allow for **
 - **[User guide](docs/USER_GUIDE.md)** — What candidates and recruiters can do with the app.
 - **[Supabase Auth setup](docs/SUPABASE_AUTH_SETUP.md)** — Email provider and email templates.
 - **[Code review notes](docs/CODE_REVIEW.md)** — Refactors and best practices.
-- **[PDFs and Vercel Blob](docs/PDF_AND_VERCEL_BLOB.md)** — How CV PDFs are uploaded, stored, and deleted.
+- **[PDFs and Cloudflare R2](docs/PDF_AND_R2.md)** — How CV PDFs are uploaded, stored, and deleted.

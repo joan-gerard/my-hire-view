@@ -115,7 +115,7 @@ sequenceDiagram
   participant SlugAPI as POST /api/slug
   participant UploadAPI as POST /api/upload
   participant AppsAPI as POST /api/applications
-  participant Blob as Vercel Blob
+  participant R2 as Cloudflare R2
   participant Profiles as profiles
   participant Applications as applications
 
@@ -129,8 +129,8 @@ sequenceDiagram
   U->>Form: Fill company, role, candidate toggles, CV (file held in memory), video
   U->>Form: Save
   Form->>UploadAPI: POST PDF (only on save)
-  UploadAPI->>Blob: put(file)
-  Blob-->>UploadAPI: url
+  UploadAPI->>R2: PutObject (PDF)
+  R2-->>UploadAPI: url
   UploadAPI-->>Form: cv_url
   Form->>SlugAPI: POST company, role (optional: first_name, last_name if include name in URL)
   SlugAPI->>Applications: check slug (with optional name prefix)
@@ -172,7 +172,7 @@ sequenceDiagram
   Note over Form: If new CV selected: upload to /api/upload on save, then PUT with new cv_url
   Form->>AppsAPI: PUT (id, all fields including candidate)
   Note over Form,Applications: If slug changed, slug API called with company, role, optional first/last name
-  AppsAPI->>AppsAPI: requireAuth(), verify ownership; if cv_url changed, delete old blob
+  AppsAPI->>AppsAPI: requireAuth(), verify ownership; if cv_url changed, delete old R2 object
   AppsAPI->>Applications: update row (no profile merge)
   Applications-->>AppsAPI: data
   AppsAPI-->>Form: 200

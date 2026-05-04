@@ -11,8 +11,8 @@ Commit-by-commit detail for PR #3 (bug-cv-in-blob): commits `c19c88e` and `a5da3
 
 **Created:**
 
-- `lib/utils/blob.ts` — `isVercelBlobUrl()`, `deleteBlobIfOurs()` for safe Vercel Blob URL checks and deletion.
-- `docs/PDF_AND_VERCEL_BLOB.md` — documentation for PDF and Vercel Blob behavior.
+- `lib/utils/cv-storage.ts` — URL checks and `deleteCvIfOurs()` for safe CV storage deletion (historically Vercel Blob; app now uses Cloudflare R2 — see `docs/PDF_AND_R2.md`).
+- `docs/PDF_AND_R2.md` — CV PDF storage (replaced earlier `PDF_AND_VERCEL_BLOB.md`).
 - `docs/my-docs/VERCEL_BLOB.md` — Vercel Blob reference notes.
 
 **Updated:**
@@ -29,7 +29,7 @@ Commit-by-commit detail for PR #3 (bug-cv-in-blob): commits `c19c88e` and `a5da3
 ## 28. fix: handle missing CV blob with existence check and retry UI
 
 **Commit:** `a5da3f6`  
-**Intent:** When the stored CV URL points to a missing Vercel Blob (e.g. deleted or expired), check existence and show appropriate UI instead of a broken viewer or link.
+**Intent:** When the stored CV URL points to missing storage (e.g. deleted object), check existence and show appropriate UI instead of a broken viewer or link.
 
 **Created:**
 
@@ -38,9 +38,9 @@ Commit-by-commit detail for PR #3 (bug-cv-in-blob): commits `c19c88e` and `a5da3
 
 **Updated:**
 
-- `lib/utils/blob.ts` — added `checkBlobExists()` (HEAD request) to verify a Vercel Blob URL exists.
+- `lib/utils/cv-storage.ts` — added existence check (`checkCvObjectExists`) to verify the CV object exists (HEAD / HeadObject).
 - `lib/types/application.ts` — optional `cv_exists` on `Application` (set by APIs when they run the check).
-- `app/api/applications/[slug]/route.ts`, `app/api/applications/by-id/[id]/route.ts` — compute `cv_exists` via `checkBlobExists(cv_url)` and include in response.
+- `app/api/applications/[slug]/route.ts`, `app/api/applications/by-id/[id]/route.ts` — compute `cv_exists` via storage head check on `cv_url` and include in response.
 - `app/view/[slug]/page.tsx` — fetches application server-side and renders `ViewPageContent`; when `cv_exists === false`, view shows unavailable message and retry instead of loading PDF.
 - `components/pdf/PDFViewer.tsx` — clearer error handling for missing/unavailable PDFs (fetch/404/network).
 - `components/forms/ApplicationForm.tsx` — accepts `cvUrlExists` and `onRetryCvCheck`; passes to FileUpload so edit form can hide View link when blob is missing.

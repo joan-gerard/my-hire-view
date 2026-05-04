@@ -25,7 +25,7 @@ export interface Application {
   cv_filename?: string | null;
   /** When true, public download uses cv_filename; when false, uses generated name CV-{Slug}.pdf. Default true. Omitted before migration 011. */
   use_original_cv_filename?: boolean;
-  /** Set by GET by-id when cv_url is a Blob URL: true if file exists, false if missing. Omitted when not checked. */
+  /** Set by GET by-id / public slug when `cv_url` is checked: true if the CV file exists (e.g. in R2), false if missing. Omitted when not checked. */
   cv_exists?: boolean;
   /** Profile picture URL copied from profile at save when user chose to show picture for this application. Null when user has no picture or removed it; view page only shows avatar when this is set. */
   profile_picture_url?: string | null;

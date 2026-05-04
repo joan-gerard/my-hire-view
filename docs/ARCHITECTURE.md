@@ -24,14 +24,14 @@ This document describes the architecture and design of **MyHireView**, an applic
 | **Backend**      | Next.js API Routes (serverless)                            |
 | **Database**     | Supabase (PostgreSQL)                                      |
 | **Auth**         | Supabase Auth (email/password)                             |
-| **File storage** | Vercel Blob (CV PDFs), Supabase Storage (profile pictures) |
+| **File storage** | Cloudflare R2 (CV PDFs), Supabase Storage (profile pictures) |
 | **Video**        | YouTube (embed only; URLs stored)                          |
 
 ---
 
 ## 3. High-Level Architecture
 
-The system is a single Next.js application that uses Supabase for auth and data, and Vercel Blob for CV storage. All user-facing and API logic lives in the same deployment.
+The system is a single Next.js application that uses Supabase for auth and data, and Cloudflare R2 for CV storage. All user-facing and API logic lives in the same deployment.
 
 ```mermaid
 flowchart TB
@@ -53,7 +53,7 @@ flowchart TB
 
   subgraph External["External Services"]
     Supabase[(Supabase<br>PostgreSQL + Auth)]
-    Blob[Vercel Blob<br>PDF storage]
+    R2CV[Cloudflare R2<br>PDF storage]
     YouTube[YouTube<br>Embed]
   end
 
@@ -62,14 +62,14 @@ flowchart TB
   Recruiter --> App
 
   API --> Supabase
-  API --> Blob
+  API --> R2CV
   App --> Supabase
   App --> YouTube
 ```
 
 - **Middleware:** Runs on each request (except static assets). Refreshes Supabase session and redirects unauthenticated users from `/admin` to `/login`.
 - **App Router:** Renders pages (public apply page, admin dashboard, login/signup, home).
-- **API Routes:** Handle CRUD for applications, auth (login/signup/logout), upload, slug generation, and view tracking. They enforce auth where needed and talk to Supabase and Vercel Blob. Rate limiting (see `lib/rate-limit.ts`) is applied per IP on write endpoints (e.g. waitlist, auth, applications, uploads) to mitigate abuse and brute force.
+- **API Routes:** Handle CRUD for applications, auth (login/signup/logout), upload, slug generation, and view tracking. They enforce auth where needed and talk to Supabase and Cloudflare R2 (S3 API). Rate limiting (see `lib/rate-limit.ts`) is applied per IP on write endpoints (e.g. waitlist, auth, applications, uploads) to mitigate abuse and brute force.
 
 ---
 
@@ -105,7 +105,7 @@ flowchart LR
     DB[(applications table)]
     ProfilesTable[(profiles table)]
     AuthUsers[(auth.users)]
-    BlobStore[(Vercel Blob)]
+    R2Store[(Cloudflare R2)]
   end
 
   Public --> SlugAPI
@@ -132,7 +132,7 @@ flowchart LR
   SlugAPI --> DB
   ViewAPI --> DB
   SlugGenAPI --> DB
-  UploadAPI --> BlobStore
+  UploadAPI --> R2Store
   AuthUsers --> SupabaseClients
 
   style Public fill:#dbeafe,stroke:#1d4ed8,stroke-width:2px
@@ -153,7 +153,7 @@ flowchart LR
   style DB fill:#d1fae5,stroke:#047857,stroke-width:2px
   style ProfilesTable fill:#d1fae5,stroke:#047857,stroke-width:2px
   style AuthUsers fill:#d1fae5,stroke:#047857,stroke-width:2px
-  style BlobStore fill:#d1fae5,stroke:#047857,stroke-width:2px
+  style R2Store fill:#d1fae5,stroke:#047857,stroke-width:2px
   style Frontend fill:#eff6ff,stroke:#1d4ed8,stroke-width:2px
   style API fill:#f5f3ff,stroke:#6b21a8,stroke-width:2px
   style Lib fill:#fffbeb,stroke:#b45309,stroke-width:2px
@@ -203,7 +203,7 @@ All under `app/api/`:
 | `/api/auth/login`                   | POST                   | Sign in; sets session cookies via route client                                                                                                                                            | No                                                |
 | `/api/auth/signup`                  | POST                   | Sign up; sets session cookies                                                                                                                                                             | No                                                |
 | `/api/auth/logout`                  | POST                   | Sign out; clears session                                                                                                                                                                  | No                                                |
-| `/api/upload`                       | POST                   | Accept PDF `FormData`, upload to Vercel Blob, return URL                                                                                                                                  | No (consider protecting in production)            |
+| `/api/upload`                       | POST                   | Accept PDF `FormData` + **`Idempotency-Key`** (or `idempotency_key`); R2 key `cvs/idempotency/<key>.pdf`, replay-safe via `HeadObject`                                                                                                            | No (consider protecting in production)            |
 | `/api/slug`                         | POST                   | Generate unique slug from company + role; optional `slugNamePosition` ('start' or 'end') and `first_name`, `last_name` to place name in URL; optional `excludeId` for edit                | No (slug generation is idempotent; consider auth) |
 
 Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which uses the Supabase server client and redirects to `/login` when used in pages; in API routes it returns 401.
@@ -235,10 +235,10 @@ Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which u
 
 Types are mirrored in `lib/types/application.ts`, `lib/types/profile.ts`, and `lib/types/database.ts`.
 
-### 5.5 File Storage (Vercel Blob)
+### 5.5 File Storage (Cloudflare R2)
 
 - **Use case:** CV PDFs only.
-- **Flow (upload on save):** The form keeps the selected PDF in memory until the user saves. On submit, the client uploads to `/api/upload` → API validates type (PDF) and size (10MB max) → `put()` to Vercel Blob with public access → returned URL is stored in `applications.cv_url`. When editing, if the user replaces the CV, the new file is uploaded on save and the previous blob is deleted. When an application is deleted, its CV blob is also deleted. See **docs/PDF_AND_VERCEL_BLOB.md** for full details.
+- **Flow (upload on save):** The form keeps the selected PDF in memory until the user saves. On submit, the client uploads to `/api/upload` → API validates type (PDF) and size (10MB max) → `PutObject` to R2 → returned public URL is stored in `applications.cv_url`. When editing, if the user replaces the CV, the new file is uploaded on save and the previous object is deleted. When an application is deleted, its CV object is also deleted. See **docs/PDF_AND_R2.md** for full details.
 
 Video is not stored; only YouTube URLs are stored and embedded via `YouTubeEmbed` and `lib/utils/youtube.ts`.
 
@@ -283,13 +283,13 @@ sequenceDiagram
   participant AppsAPI as /api/applications
   participant UploadAPI as /api/upload
   participant Supa as Supabase
-  participant Blob as Vercel Blob
+  participant R2 as Cloudflare R2
 
   U->>Form: Fill company, role, select PDF (held in memory), YouTube URL
   U->>Form: Submit
   Form->>UploadAPI: POST FormData (file) on submit
-  UploadAPI->>Blob: put(file)
-  Blob-->>UploadAPI: url
+  UploadAPI->>R2: PutObject (PDF)
+  R2-->>UploadAPI: url
   UploadAPI-->>Form: { url }
   Form->>SlugAPI: POST { company, role }
   SlugAPI->>Supa: check uniqueness, generate slug
@@ -401,7 +401,7 @@ my-hire-view/
 | Next.js App Router              | Single codebase for SSR, API, and client components; good fit for auth and public/private routes.                                                                                                                                                            |
 | Supabase                        | Managed Postgres + Auth + RLS in one product; reduces custom backend code.                                                                                                                                                                                   |
 | Slug-based public URLs          | Stable, shareable links that don’t expose internal IDs; uniqueness enforced in DB and slug API. Users can optionally include their name at the start (name-company-role) or end (company-role-name) of the slug.                                             |
-| Vercel Blob for PDFs            | Simple serverless storage; no need to run or scale file servers.                                                                                                                                                                                             |
+| Cloudflare R2 for PDFs        | S3-compatible object storage with no egress fees from R2; pairs well with Next.js on Vercel.                                                                                                                                                               |
 | View count in DB                | Simple and accurate; one increment per view (deduplicated per session in ViewTracker).                                                                                                                                                                       |
 | Last viewed at in DB            | Set to current time whenever view_count is incremented (non-owner only); null if never viewed.                                                                                                                                                               |
 | Download count in DB            | Same pattern as view count; one increment per download (per session), owner downloads not counted.                                                                                                                                                           |
