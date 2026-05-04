@@ -110,10 +110,10 @@ Then each route only contains the business logic. Same idea can be applied to ot
 
 **Issue:**
 
-- `POST /api/upload` – no auth; any client can upload files.
+- `POST /api/upload` – fixed: handler calls `requireAuth()` (dedicated try/catch → 401 JSON) before accepting the PDF.
 - `POST /api/slug` – no auth; any client can request slug generation.
 
-**Recommendation:** Require authentication for both (e.g. call `requireAuth()` at the start of each handler). This avoids abuse (e.g. anonymous uploads or slug probing) and aligns with the fact that only logged-in admins create applications.
+**Recommendation:** Require authentication for slug as well (e.g. call `requireAuth()` at the start of the handler). This avoids abuse (e.g. slug probing) and aligns with the fact that only logged-in admins create applications.
 
 ---
 

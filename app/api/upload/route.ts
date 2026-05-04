@@ -2,6 +2,7 @@ import {
   HeadObjectCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
+import { requireAuth } from "@/lib/auth";
 import {
   getR2Bucket,
   getR2PublicBaseUrl,
@@ -37,6 +38,12 @@ export async function POST(request: NextRequest) {
       { error: "File upload is not configured" },
       { status: 500 },
     );
+  }
+
+  try {
+    await requireAuth();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {

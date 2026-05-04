@@ -34,7 +34,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 
 | Piece | Role |
 |-------|------|
-| `POST /api/upload` | Accepts a PDF (`FormData`), validates type (PDF) and size (max 10MB). Requires **`Idempotency-Key`** (HTTP header) or **`idempotency_key`** (form field): 8–128 chars, `[a-zA-Z0-9_-]` only (e.g. a UUID). Object key is `cvs/idempotency/<key>.pdf`. If that object already exists, returns the same `{ url }` without uploading again (`idempotent: true`). Otherwise `PutObject` and returns `{ url, idempotent: false }`. |
+| `POST /api/upload` | **Requires a signed-in session** (`requireAuth()`; **401** without). Accepts a PDF (`FormData`), validates type (PDF) and size (max 10MB). Requires **`Idempotency-Key`** (HTTP header) or **`idempotency_key`** (form field): 8–128 chars, `[a-zA-Z0-9_-]` only (e.g. a UUID). Object key is `cvs/idempotency/<key>.pdf`. If that object already exists, returns the same `{ url }` without uploading again (`idempotent: true`). Otherwise `PutObject` and returns `{ url, idempotent: false }`. |
 | `lib/storage/r2-client.ts` | Builds S3-compatible client (`endpoint`: `https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`, region `auto`). |
 | `lib/utils/cv-storage.ts` | `isCvStorageUrl(url)` — true only for URLs under `R2_PUBLIC_BASE_URL`. `deleteCvIfOurs` / `checkCvObjectExists` — `DeleteObject` / `HeadObject` when the URL is ours. |
 
@@ -64,4 +64,4 @@ Object keys are stored as `cvs/<uuid>.pdf`.
 
 ## Local development
 
-Copy `.env.local.example` to `.env.local` and set all `R2_*` variables. Without them, `POST /api/upload` responds with 500 (“File upload is not configured”).
+Copy `.env.local.example` to `.env.local` and set all `R2_*` variables. Without them, `POST /api/upload` responds with 500 (“File upload is not configured”). Without a session, it responds with **401** (“Unauthorized”).

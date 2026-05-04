@@ -176,7 +176,6 @@ This is the most significant gap before a production launch.
 
 | Issue                           | Location            | Notes                                                                                                    |
 | ------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------- |
-| `/api/upload` has no auth check | `app/api/upload/`   | Anyone can upload to your R2 bucket. Add `requireAuth()`.                                                |
 | `/api/slug` has no auth check   | `app/api/slug/`     | Lower risk but worth tightening.                                                                         |
 | In-memory rate limiting         | `lib/rate-limit.ts` | Resets per serverless instance; not safe across concurrent Vercel instances. Replace with Redis/Upstash. |
 | No automated tests              | —                   | No test runner configured at all.                                                                        |
@@ -211,4 +210,4 @@ This is the most significant gap before a production launch.
 
 ## Summary
 
-The **core product loop** (create application → share link → recruiter views page with PDF + video) is **functionally complete and well-architected**. The main blockers before a real production launch are the **upload endpoint auth gap**, **rate limiting durability**, and the **complete absence of automated testing and CI**. The marketing site is in good shape for a waitlist/early-access launch as-is.
+The **core product loop** (create application → share link → recruiter views page with PDF + video) is **functionally complete and well-architected**. The main blockers before a real production launch are **rate limiting durability** and the **complete absence of automated testing and CI**, alongside the remaining rows in the pre-launch table above. The marketing site is in good shape for a waitlist/early-access launch as-is.
