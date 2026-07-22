@@ -160,7 +160,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 - Validate the body with a schema (required strings, URL formats for `cv_url` / `video_url` / portfolio / LinkedIn, slug format) before insert; return clear **400**s instead of relying on DB errors.
 - Re-check slug uniqueness (or call the same helper as `/api/slug/validate`) inside this handler to close race windows between client validate and create.
-- Ensure `cv_url` belongs to this app’s R2 public base (reject arbitrary URLs).
+- Ensure `cv_url` belongs to this app’s R2 public base **and** is an object the current user is allowed to attach (today any HTTPS string is stored; that enables later cross-user R2 deletes via PUT/DELETE — see those sections).
 - Same auth vs non-auth error handling as GET (don’t treat all thrown errors as **401**).
 - Map unique-constraint failures to **409** with a stable message.
 
@@ -170,7 +170,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 `PUT /api/applications`
 
-Update an application owned by the current user. Replacing `cv_url` deletes the previous R2 object when it belongs to this app. `profile_picture_url` is re-resolved from the profile using `show_profile_picture`.
+Update an application owned by the current user. Replacing `cv_url` deletes the previous R2 object when the URL is under this app’s public R2 base (`deleteCvIfOurs`). `profile_picture_url` is re-resolved from the profile using `show_profile_picture`.
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -184,7 +184,7 @@ Note: `description` in the body is ignored (column removed in migration 017).
 
 - Auth + ownership check before update; **404** when missing or not owned (no existence leak across users beyond that).
 - Rate limited.
-- Replaces CV safely: deletes previous R2 object only when URL changes and `deleteCvIfOurs` confirms it is ours.
+- On `cv_url` change, deletes the **previous** R2 object only when `deleteCvIfOurs` confirms the URL is under `R2_PUBLIC_BASE_URL` (blocks deleting arbitrary non-R2 URLs).
 - Re-resolves `profile_picture_url` from the profile using the show-picture preference.
 - Maps `slugNamePosition` → `include_name_in_slug` instead of exposing the DB column name as the only contract.
 
@@ -193,6 +193,9 @@ Note: `description` in the body is ignored (column removed in migration 017).
 - Avoid spreading the raw body into the update payload (mass-assignment risk for fields like `user_id`, `view_count`, `download_count`). Whitelist allowed keys explicitly.
 - Schema-validate partial updates; require `id` as a UUID.
 - Validate new `cv_url` against the R2 public base when present.
+- **CV object ownership:** `deleteCvIfOurs` only checks the public URL prefix, not whether the object belongs to this user/application. An authenticated user can set another user’s public CV URL on their own row (POST/PUT accept arbitrary `cv_url`), then replace or delete that application and remove the other user’s R2 object. Fix by tying uploads to the user (e.g. key prefix `cvs/{userId}/…`), rejecting `cv_url` values the caller did not upload, and/or authorizing the object key before `DeleteObject`.
+- **Shared CV references:** the same R2 URL can appear on more than one application (idempotent upload reuse, or copying a URL). Replacing/deleting one row still `DeleteObject`s that key, so other apps that still reference it show a missing file (`cv_exists: false`). Before delete, count remaining `applications.cv_url` references (or use per-application / reference-counted objects).
+- **Delete-before-update ordering:** on CV replacement the handler calls `deleteCvIfOurs(existing.cv_url)` **before** the Supabase update. If the update then fails (**400**), the row still points at `existing.cv_url` but the object is already gone. Persist the new `cv_url` first, then delete the old object only after a successful update.
 - Improve error handling / logging (same catch-all **401** issue).
 - Optionally return **409** on slug collisions instead of a generic **400**.
 
@@ -202,7 +205,7 @@ Note: `description` in the body is ignored (column removed in migration 017).
 
 `DELETE /api/applications`
 
-Hard-delete an application and its CV object in R2 (when the URL is ours).
+Hard-delete an application and its CV object in R2 (when the URL is under this app’s public R2 base).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -214,12 +217,13 @@ Hard-delete an application and its CV object in R2 (when the URL is ours).
 
 - Auth + ownership check before delete.
 - Rate limited.
-- Cleans up the CV in R2 when the URL belongs to this app (`deleteCvIfOurs`).
+- Cleans up the CV in R2 when the URL is under `R2_PUBLIC_BASE_URL` (`deleteCvIfOurs`).
 - Requires an explicit `id` query param (fails closed if missing).
 
 **Improvement opportunities**
 
 - Validate `id` as a UUID before querying.
+- Same CV risks as PUT: prefix-only `deleteCvIfOurs` allows deleting another user’s object if its public URL was stored on this row; shared URLs can orphan other applications. See PUT improvements (object ownership + reference checks).
 - If R2 delete fails, log and decide whether to fail the request or proceed (today delete continues after `deleteCvIfOurs`; document or harden that policy).
 - Same auth-vs-500 catch handling as other handlers.
 - Consider soft-delete-only for some clients if hard delete is irreversible by design (archive already covers soft hide).
