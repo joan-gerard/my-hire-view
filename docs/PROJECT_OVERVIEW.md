@@ -19,7 +19,6 @@ There are two distinct surfaces:
 
 ## 2. Tech Stack
 
-
 | Area              | Choice                                              |
 | ----------------- | --------------------------------------------------- |
 | Framework         | Next.js 16 (App Router)                             |
@@ -31,7 +30,6 @@ There are two distinct surfaces:
 | Language          | TypeScript 5 (strict mode)                          |
 | Package manager   | pnpm                                                |
 | Deployment target | Vercel                                              |
-
 
 ---
 
@@ -112,13 +110,11 @@ docs/                — internal documentation
 
 ## 5. Data Model (Supabase PostgreSQL)
 
-
 | Table              | Key fields                                                                                                                                                                                                 |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `applications`     | `slug`, `company`, `role`, `cv_url`, `video_url`, `view_count`, `download_count`, `last_viewed_at`, `is_active`, `user_id`, candidate snapshot fields, profile picture visibility, CV filename preferences |
 | `profiles`         | One row per user: `first_name`, `last_name`, `location`, `linkedin_url`, `portfolio_url`, `profile_picture_url`                                                                                            |
 | `waitlist_signups` | `email`, `name`, job search status, segmentation fields                                                                                                                                                    |
-
 
 **State management:**
 
@@ -134,7 +130,7 @@ RLS policies protect all tables. The service-role Supabase client is used server
 ## 6. Authentication & Authorization
 
 - **Supabase Auth** with email/password; sessions stored in HTTP cookies via `@supabase/ssr`.
-- `**proxy.ts`** refreshes the session and guards all `/admin` routes.
+- `**proxy.ts`\*\* refreshes the session and guards all `/admin` routes.
 - `**requireAuth()**` in `lib/auth.ts` is used inside API route handlers to get the authenticated user.
 - **RLS** on `applications` and `profiles` enforces data isolation at the database level.
 - **Public read** of applications by slug is permitted (recruiter view requires no login).
@@ -151,22 +147,21 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 ### What is covered
 
-| Area | File(s) |
-|------|---------|
-| Pure slug utilities (`generateSlug`, `buildSlug`, `validateSlugFormat`) | `__tests__/unit/lib/utils/slug-generate.test.ts` |
-| Server-side slug helpers (`checkSlugUniqueness`, `validateSlugForApplication`, `reserveBaseSlug`) | `__tests__/unit/lib/utils/slug.test.ts` |
-| In-memory rate limiter (`rateLimit`, `checkRateLimit`, `rateLimit429`, `getClientIdentifier`) | `__tests__/unit/lib/rate-limit.test.ts` |
-| Profile flow (GET + PUT `/api/profile`) | `__tests__/unit/api/profile.test.ts` |
-| Create-application flow (POST `/api/applications`, POST `/api/slug`, POST `/api/slug/validate`) | `__tests__/unit/api/applications-create.test.ts`, `slug.test.ts` |
-| Edit-application flow (PUT `/api/applications`, GET `/api/applications/by-id/[id]`) | `__tests__/unit/api/applications-edit.test.ts` |
-| Public-view flow (GET `/api/applications/[slug]`, POST `/api/applications/[slug]/view`) | `__tests__/unit/api/applications-public-view.test.ts` |
+| Area                                                                                              | File(s)                                                          |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Pure slug utilities (`generateSlug`, `buildSlug`, `validateSlugFormat`)                           | `__tests__/unit/lib/utils/slug-generate.test.ts`                 |
+| Server-side slug helpers (`checkSlugUniqueness`, `validateSlugForApplication`, `reserveBaseSlug`) | `__tests__/unit/lib/utils/slug.test.ts`                          |
+| In-memory rate limiter (`rateLimit`, `checkRateLimit`, `rateLimit429`, `getClientIdentifier`)     | `__tests__/unit/lib/rate-limit.test.ts`                          |
+| Profile flow (GET + PUT `/api/profile`)                                                           | `__tests__/unit/api/profile.test.ts`                             |
+| Create-application flow (POST `/api/applications`, POST `/api/slug`, POST `/api/slug/validate`)   | `__tests__/unit/api/applications-create.test.ts`, `slug.test.ts` |
+| Edit-application flow (PUT `/api/applications`, GET `/api/applications/by-id/[id]`)               | `__tests__/unit/api/applications-edit.test.ts`                   |
+| Public-view flow (GET `/api/applications/[slug]`, POST `/api/applications/[slug]/view`)           | `__tests__/unit/api/applications-public-view.test.ts`            |
 
 - **No CI/CD pipeline** — no GitHub Actions or equivalent (still a gap).
 
 ---
 
 ## 8. Environment Variables
-
 
 | Variable                                                                                            | Purpose                                                                     |
 | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -176,7 +171,6 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL` | Cloudflare R2 for CV PDFs (server-only); see [PDF_AND_R2.md](PDF_AND_R2.md) |
 | `NEXT_PUBLIC_SITE_URL`                                                                              | Optional; falls back to localhost in `lib/utils/url.ts`                     |
 
-
 > Note: `.env.local.example` lists required variables including R2 credentials for CV uploads.
 
 ---
@@ -185,27 +179,28 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 ### Must fix (production hardening)
 
-
-| Issue                           | Location            | Notes                                                                                                    |
-| ------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------- |
-| `/api/slug` has no auth check   | `app/api/slug/`     | Lower risk but worth tightening.                                                                         |
-| In-memory rate limiting         | `lib/rate-limit.ts` | Resets per serverless instance; not safe across concurrent Vercel instances. Replace with Redis/Upstash. |
-| No CI/CD                        | —                   | Tests exist (`pnpm test:ci`) but no automated pipeline runs them on push/PR. |
+| Issue                         | Location            | Notes                                                                                                    |
+| ----------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------- |
+| `/api/slug` has no auth check | `app/api/slug/`     | Lower risk but worth tightening.                                                                         |
+| In-memory rate limiting       | `lib/rate-limit.ts` | Resets per serverless instance; not safe across concurrent Vercel instances. Replace with Redis/Upstash. |
+| No CI/CD                      | —                   | Tests exist (`pnpm test:ci`) but no automated pipeline runs them on push/PR.                             |
 
 ### Nice to have before launch
 
-- **README is outdated** — still contains create-next-app boilerplate at the top; migration list only covers `001–006` but the repo is now at `019`.
-- **Pricing and Blog pages** are placeholders — fine for a waitlist launch, not for full public launch.
-- **Pricing & membership tiers** — think through plan structure (what stays free vs paid), per-tier limits, price points, and how `/pricing` presents tiers so it matches the real offering once billing exists (pairs with the payment integration item below).
-- `**.env.local.example`** is missing — add it back for onboarding clarity.
-- `**MarketingHero_Old.tsx**` is still referenced on pricing/blog — clean up or replace.
-- **Blog** has no real content yet.
-- **How It Works page** (`/how-it-works`) is nearly a duplicate of the homepage content — needs its own dedicated, more detailed content.
-- **Branding on `/admin` and `/view` pages** is outdated — both still use the previous brand; needs updating to match the current visual identity.
-- **Support for technical issues** — add a support button or section (marketing, dashboard, and/or public view) so users can report bugs or other technical problems (e.g. mailto link, simple feedback form, or a lightweight third-party tool).
-- **Payment / membership system** — no payment integration exists yet. Need to integrate a payment provider (e.g. Stripe) to gate features behind a paid membership, covering plan management, checkout flow, webhooks, and Supabase subscription state.
-- **In-app video recording** — currently only a YouTube URL can be provided. Users should be able to record a video pitch directly in the browser (via `MediaRecorder` API). Needs a decision on storage: generic object storage is possible for small raw files, but a dedicated video platform (e.g. **Mux**, **Cloudflare Stream**) is usually better for encoding, adaptive streaming, and bandwidth at scale. The recorded video URL would replace the current `video_url` field, or the two could coexist as separate source types.
-- **Teleprompter UI for recording** — when recording in-app, display a scrolling script overlay so the user can read their pitch while looking at the camera. Needs a script input field on the application form, auto-scroll speed control, and a fullscreen/overlay mode that doesn't obscure the webcam feed.
+- ✅ **README is outdated** — still contains create-next-app boilerplate at the top; migration list only covers `001–006` but the repo is now at `019`.
+- ✅ **Remove `/how-it-works` and `/blog` routes** — placeholder/duplicate pages should not ship; drop nav links and unused page-only components. Rebuilding content is post-launch.
+- ✅ `**MarketingHero_Old.tsx**` is still referenced on pricing/blog — clean up or replace.
+- ✅ **Branding on `/admin` and `/view` pages** is outdated — both still use the previous brand; needs updating to match the current visual identity.
+- ✅ **Support for technical issues** — add a support button or section (marketing, dashboard, and/or public view) so users can report bugs or other technical problems (e.g. mailto link, simple feedback form, or a lightweight third-party tool).
+- ✅ **Pricing & membership tiers** — define plan structure (paid plans plus optional free tier / trial only — not unlimited free app access), per-tier limits, price points, and a real `/pricing` page that matches billing.
+- ✅ **Payment / membership system** — integrate a payment provider (e.g. Stripe) before launch: plan management, checkout, webhooks, Supabase subscription state, and gating application create/use behind an active plan or trial.
+- ✅ **In-app video recording** — currently only a YouTube URL can be provided. Users should be able to record a video pitch directly in the browser (via `MediaRecorder` API). Needs a decision on storage: generic object storage is possible for small raw files, but a dedicated video platform (e.g. **Mux**, **Cloudflare Stream**) is usually better for encoding, adaptive streaming, and bandwidth at scale. The recorded video URL would replace the current `video_url` field, or the two could coexist as separate source types.
+- ✅ **Teleprompter UI for recording** — when recording in-app, display a scrolling script overlay so the user can read their pitch while looking at the camera. Needs a script input field on the application form, auto-scroll speed control, and a fullscreen/overlay mode that doesn't obscure the webcam feed.
+
+### After launch (content)
+
+- ✅ **Rebuild `/how-it-works`** with dedicated, more detailed content (not a homepage duplicate).
+- ✅ **Rebuild `/blog`** with real posts (route restored + content).
 
 ---
 
@@ -221,4 +216,4 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 ## Summary
 
-The **core product loop** (create application → share link → recruiter views page with PDF + video) is **functionally complete and well-architected**. The main blockers before a real production launch are **rate limiting durability** and the **complete absence of automated testing and CI**, alongside the remaining rows in the pre-launch table above. The marketing site is in good shape for a waitlist/early-access launch as-is.
+The **core product loop** (create application → share link → recruiter views page with PDF + video) is **functionally complete and well-architected**. Main blockers before production launch include **payment / membership gating** (no unlimited free app access), **rate limiting durability**, and **CI**, alongside the remaining pre-launch items above.
