@@ -1,31 +1,100 @@
 import { requireAuth } from "@/lib/auth";
+import {
+  checkRateLimit,
+  DEFAULT_API_RATE_LIMIT,
+  rateLimit429,
+} from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
-import type {
-    ApplicationCreateInput,
-    ApplicationUpdateInput,
+import {
+  APPLICATION_LIST_DEFAULT_LIMIT,
+  APPLICATION_LIST_MAX_LIMIT,
+  APPLICATION_LIST_SELECT,
+  type ApplicationCreateInput,
+  type ApplicationUpdateInput,
 } from "@/lib/types/application";
 import { deleteCvIfOurs } from "@/lib/utils/cv-storage";
-import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+function parseLimit(raw: string | null): number {
+  if (raw === null || raw === "") return APPLICATION_LIST_DEFAULT_LIMIT;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 1) return APPLICATION_LIST_DEFAULT_LIMIT;
+  return Math.min(n, APPLICATION_LIST_MAX_LIMIT);
+}
+
+function parseOffset(raw: string | null): number {
+  if (raw === null || raw === "") return 0;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return n;
+}
+
+/** Strip characters that break PostgREST `or`/`ilike` filters; cap length. */
+function normalizeListSearchQuery(raw: string | null): string | null {
+  if (raw === null) return null;
+  const cleaned = raw
+    .trim()
+    .slice(0, 100)
+    .replace(/[%_,.()\\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+export async function GET(request: NextRequest) {
+  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
+  let user;
   try {
-    const user = await requireAuth();
+    user = await requireAuth();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const limit = parseLimit(searchParams.get("limit"));
+    const offset = parseOffset(searchParams.get("offset"));
+    const q = normalizeListSearchQuery(searchParams.get("q"));
+
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("applications")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+      .select(APPLICATION_LIST_SELECT, { count: "exact" })
+      .eq("user_id", user.id);
+
+    if (q) {
+      const pattern = `%${q}%`;
+      query = query.or(
+        `company.ilike."${pattern}",role.ilike."${pattern}",slug.ilike."${pattern}"`,
+      );
+    }
+
+    const { data, error, count } = await query
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) {
+      console.error("GET /api/applications:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    return NextResponse.json({
+      data: data ?? [],
+      meta: {
+        limit,
+        offset,
+        total: count ?? 0,
+      },
+    });
   } catch (error) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    console.error("GET /api/applications:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch applications" },
+      { status: 500 },
+    );
   }
 }
 

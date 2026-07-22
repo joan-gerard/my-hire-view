@@ -36,6 +36,7 @@ __tests__/
       slug.test.ts
       applications-create.test.ts
       applications-edit.test.ts
+      applications-list.test.ts
       applications-public-view.test.ts
 ```
 
@@ -51,6 +52,7 @@ __tests__/
 | `__tests__/unit/api/profile.test.ts` | **Flow #3 — Profile read and update** — `GET /api/profile`: existing profile, auto-create on `PGRST116`, DB error → 500, 401. `PUT /api/profile`: success, invalid portfolio URL → 400, invalid LinkedIn URL → 400, upsert failure → 400, rate limit → 429, 401, profile picture deletion triggered when URL changes |
 | `__tests__/unit/api/slug.test.ts` | **Flow #4 — Live slug feedback** — `POST /api/slug`: derived slug available → 200, name-in-URL variants, missing company/role → 400, `SlugCollisionError` → 409, unexpected error → 500, rate limit → 429. `POST /api/slug/validate`: valid + available → `{ok:true}`, invalid format → `{ok:false}`, taken → `{ok:false}`, `excludeId` forwarded to helper, non-string `excludeId` ignored, 401, 429 |
 | `__tests__/unit/api/applications-create.test.ts` | **Flow #4 — Create application** — `POST /api/applications`: 201 on success, candidate fields fall back to profile when absent from body, explicit body fields override profile, `show_profile_picture: true` copies URL from profile snapshot, `show_profile_picture: false` sets URL to null, DB insert failure → 400, 429, 401 |
+| `__tests__/unit/api/applications-list.test.ts` | **Dashboard list** — `GET /api/applications`: default limit 20 + `meta.total`, custom `limit`/`offset`, max limit cap, `q` search filter, 401, 429, 500 |
 | `__tests__/unit/api/applications-edit.test.ts` | **Flow #5 — Edit application** — `PUT /api/applications`: 200 on success, 404 when application not found, 404 when owned by another user, old CV deleted from R2 when `cv_url` changes, no deletion when `cv_url` unchanged, DB update failure → 400, 429, 401. `GET /api/applications/by-id/[id]`: 200 + `cv_exists: true/false`, 404 when not found or DB errors, 401 |
 | `__tests__/unit/api/applications-public-view.test.ts` | **Flow #6 — Public view and view count** — `GET /api/applications/[slug]`: 200 + `cv_exists`, `cv_exists: false` when file missing, `cv_exists` omitted when no `cv_url`, 404, 429. `POST /api/applications/[slug]/view`: RPC called for external viewer → 200, RPC skipped for owner (self-view guard), 404 when slug not found, 500 when RPC fails, 429 |
 
@@ -62,4 +64,4 @@ __tests__/
 
 **Shared Supabase mock helper (`__tests__/helpers/supabase-mock.ts`).** Provides `makeChain`, `ok`, and `dbError` factories that build a fluent Supabase query-chain mock, and `makeSupabaseClient` which accepts an ordered list of chains so each sequential `from()` call in a route handler returns the next configured response.
 
-**Full suite runs in under 600 ms.** With mocks in place no I/O occurs; all 116 tests complete in one fast Node.js process.
+**Full suite runs in under 600 ms.** With mocks in place no I/O occurs; all tests complete in one fast Node.js process.

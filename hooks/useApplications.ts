@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Application } from '@/lib/types/application';
+import { useCallback, useEffect, useState } from 'react';
+import type { ApplicationListItem } from '@/lib/types/application';
+import { APPLICATION_LIST_DEFAULT_LIMIT } from '@/lib/types/application';
 import {
   fetchApplications as fetchApplicationsApi,
   deleteApplication as deleteApplicationApi,
@@ -7,30 +8,24 @@ import {
   restoreApplication as restoreApplicationApi,
 } from '@/lib/api/applications';
 
-/**
- * Filters applications by search query (company, role, or slug).
- */
-function filterBySearch(
-  applications: Application[],
-  query: string
-): Application[] {
-  const q = query.trim().toLowerCase();
-  if (q === '') return applications;
-  return applications.filter(
-    (app) =>
-      app.company.toLowerCase().includes(q) ||
-      app.role.toLowerCase().includes(q) ||
-      app.slug.toLowerCase().includes(q)
-  );
-}
+const SEARCH_DEBOUNCE_MS = 300;
 
 export interface UseApplicationsResult {
-  applications: Application[];
-  filteredApplications: Application[];
+  applications: ApplicationListItem[];
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   loading: boolean;
+  isFetching: boolean;
   error: string | null;
+  limit: number;
+  offset: number;
+  total: number;
+  page: number;
+  totalPages: number;
+  hasPrevPage: boolean;
+  hasNextPage: boolean;
+  goToPrevPage: () => void;
+  goToNextPage: () => void;
   refetch: () => Promise<void>;
   handleDelete: (id: string) => Promise<void>;
   handleArchive: (id: string) => Promise<void>;
@@ -38,56 +33,97 @@ export interface UseApplicationsResult {
 }
 
 /**
- * Hook for the admin dashboard: fetches applications, filters by search,
- * and exposes mutation handlers (delete, archive, restore).
+ * Hook for the admin dashboard: fetches a paginated applications list,
+ * debounced server search, and mutation handlers (delete, archive, restore).
  */
 export function useApplications(): UseApplicationsResult {
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [offset, setOffset] = useState(0);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const limit = APPLICATION_LIST_DEFAULT_LIMIT;
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setDebouncedQuery(searchQuery.trim());
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(handle);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setOffset(0);
+  }, [debouncedQuery]);
 
   const fetchApplications = useCallback(async () => {
     try {
-      setLoading(true);
+      setIsFetching(true);
       setError(null);
-      const data = await fetchApplicationsApi();
+      const { data, meta } = await fetchApplicationsApi({
+        limit,
+        offset,
+        q: debouncedQuery || undefined,
+      });
       setApplications(data);
+      setTotal(meta.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+      setIsFetching(false);
     }
-  }, []);
+  }, [limit, offset, debouncedQuery]);
 
   useEffect(() => {
     fetchApplications();
   }, [fetchApplications]);
 
-  const filteredApplications = useMemo(
-    () => filterBySearch(applications, searchQuery),
-    [applications, searchQuery]
-  );
+  const totalPages = Math.max(1, Math.ceil(total / limit) || 1);
+  const page = Math.floor(offset / limit) + 1;
+  const hasPrevPage = offset > 0;
+  const hasNextPage = offset + limit < total;
+
+  const goToPrevPage = useCallback(() => {
+    setOffset((prev) => Math.max(0, prev - limit));
+  }, [limit]);
+
+  const goToNextPage = useCallback(() => {
+    setOffset((prev) => prev + limit);
+  }, [limit]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       try {
         await deleteApplicationApi(id);
-        setApplications((prev) => prev.filter((app) => app.id !== id));
+        const nextTotal = Math.max(0, total - 1);
+        const lastPageStart =
+          nextTotal === 0 ? 0 : Math.floor((nextTotal - 1) / limit) * limit;
+        if (offset > lastPageStart) {
+          setOffset(lastPageStart);
+        } else {
+          await fetchApplications();
+        }
+        setTotal(nextTotal);
       } catch (err) {
         alert(
           err instanceof Error ? err.message : 'Failed to delete application'
         );
       }
     },
-    []
+    [fetchApplications, limit, offset, total]
   );
 
   const handleArchive = useCallback(async (id: string) => {
     try {
       const data = await archiveApplicationApi(id);
       setApplications((prev) =>
-        prev.map((app) => (app.id === id ? { ...app, ...data } : app))
+        prev.map((app) =>
+          app.id === id ? { ...app, is_active: data.is_active } : app
+        )
       );
     } catch (err) {
       alert(
@@ -100,7 +136,9 @@ export function useApplications(): UseApplicationsResult {
     try {
       const data = await restoreApplicationApi(id);
       setApplications((prev) =>
-        prev.map((app) => (app.id === id ? { ...app, ...data } : app))
+        prev.map((app) =>
+          app.id === id ? { ...app, is_active: data.is_active } : app
+        )
       );
     } catch (err) {
       alert(
@@ -111,11 +149,20 @@ export function useApplications(): UseApplicationsResult {
 
   return {
     applications,
-    filteredApplications,
     searchQuery,
     setSearchQuery,
     loading,
+    isFetching,
     error,
+    limit,
+    offset,
+    total,
+    page,
+    totalPages,
+    hasPrevPage,
+    hasNextPage,
+    goToPrevPage,
+    goToNextPage,
     refetch: fetchApplications,
     handleDelete,
     handleArchive,

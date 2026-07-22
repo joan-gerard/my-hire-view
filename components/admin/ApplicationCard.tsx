@@ -1,6 +1,6 @@
 'use client';
 
-import { Application } from '@/lib/types/application';
+import type { ApplicationListItem } from '@/lib/types/application';
 import { getApplicationUrl } from '@/lib/utils/url';
 import { copyToClipboard } from '@/lib/utils/clipboard';
 import Link from 'next/link';
@@ -19,7 +19,7 @@ import {
 } from '@/components/admin/icons';
 
 interface ApplicationCardProps {
-  application: Application;
+  application: ApplicationListItem;
   onDelete: (id: string) => void;
   onArchive?: (id: string) => void;
   onRestore?: (id: string) => void;

@@ -1,16 +1,37 @@
-import type { Application } from '@/lib/types/application';
+import type {
+  Application,
+  ApplicationListItem,
+  ApplicationListParams,
+  ApplicationListResponse,
+} from '@/lib/types/application';
+import {
+  APPLICATION_LIST_DEFAULT_LIMIT,
+} from '@/lib/types/application';
 
 /**
- * Fetches the current user's applications from the API.
+ * Fetches a page of the current user's applications (dashboard list fields).
  * @throws Error with message on non-OK response
  */
-export async function fetchApplications(): Promise<Application[]> {
-  const response = await fetch('/api/applications');
+export async function fetchApplications(
+  params: ApplicationListParams = {},
+): Promise<ApplicationListResponse> {
+  const searchParams = new URLSearchParams();
+  const limit = params.limit ?? APPLICATION_LIST_DEFAULT_LIMIT;
+  const offset = params.offset ?? 0;
+  searchParams.set('limit', String(limit));
+  searchParams.set('offset', String(offset));
+  const q = params.q?.trim();
+  if (q) searchParams.set('q', q);
+
+  const response = await fetch(`/api/applications?${searchParams.toString()}`);
   if (!response.ok) {
     throw new Error('Failed to fetch applications');
   }
-  const { data } = await response.json();
-  return data ?? [];
+  const json = await response.json();
+  return {
+    data: (json.data as ApplicationListItem[] | undefined) ?? [],
+    meta: json.meta ?? { limit, offset, total: 0 },
+  };
 }
 
 /**

@@ -33,6 +33,51 @@ export interface Application {
   show_profile_picture?: boolean;
 }
 
+/**
+ * Fields returned by `GET /api/applications` for the admin dashboard list.
+ * Omits candidate/CV/video/profile fields that the list UI does not use.
+ */
+export type ApplicationListItem = Pick<
+  Application,
+  | "id"
+  | "slug"
+  | "company"
+  | "role"
+  | "is_active"
+  | "view_count"
+  | "download_count"
+  | "created_at"
+  | "last_viewed_at"
+>;
+
+/** Supabase `.select()` projection for `ApplicationListItem`. */
+export const APPLICATION_LIST_SELECT =
+  "id, slug, company, role, is_active, view_count, download_count, created_at, last_viewed_at" as const;
+
+/** Default page size for `GET /api/applications`. */
+export const APPLICATION_LIST_DEFAULT_LIMIT = 20;
+
+/** Maximum allowed `limit` for `GET /api/applications`. */
+export const APPLICATION_LIST_MAX_LIMIT = 50;
+
+export interface ApplicationListMeta {
+  limit: number;
+  offset: number;
+  total: number;
+}
+
+export interface ApplicationListResponse {
+  data: ApplicationListItem[];
+  meta: ApplicationListMeta;
+}
+
+export interface ApplicationListParams {
+  limit?: number;
+  offset?: number;
+  /** Case-insensitive match on company, role, or slug. */
+  q?: string;
+}
+
 export interface ApplicationFormData {
   company: string;
   role: string;

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import ApplicationCard from '@/components/admin/ApplicationCard';
+import ApplicationsPagination from '@/components/admin/ApplicationsPagination';
 import SearchBar from '@/components/admin/SearchBar';
 import AdminDashboardSkeleton from '@/components/admin/AdminDashboardSkeleton';
 import AdminDashboardError from '@/components/admin/AdminDashboardError';
@@ -10,11 +11,21 @@ import { useApplications } from '@/hooks/useApplications';
 
 export default function AdminDashboard() {
   const {
-    filteredApplications,
+    applications,
     searchQuery,
     setSearchQuery,
     loading,
+    isFetching,
     error,
+    limit,
+    offset,
+    total,
+    page,
+    totalPages,
+    hasPrevPage,
+    hasNextPage,
+    goToPrevPage,
+    goToNextPage,
     handleDelete,
     handleArchive,
     handleRestore,
@@ -44,20 +55,36 @@ export default function AdminDashboard() {
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
       </div>
 
-      {filteredApplications.length === 0 ? (
+      {applications.length === 0 ? (
         <AdminDashboardEmpty hasSearchQuery={searchQuery.trim() !== ''} />
       ) : (
-        <div className="flex flex-col gap-4">
-          {filteredApplications.map((application) => (
-            <ApplicationCard
-              key={application.id}
-              application={application}
-              onDelete={handleDelete}
-              onArchive={handleArchive}
-              onRestore={handleRestore}
-            />
-          ))}
-        </div>
+        <>
+          <div
+            className={`flex flex-col gap-4 transition-opacity ${isFetching ? 'opacity-60' : ''}`}
+          >
+            {applications.map((application) => (
+              <ApplicationCard
+                key={application.id}
+                application={application}
+                onDelete={handleDelete}
+                onArchive={handleArchive}
+                onRestore={handleRestore}
+              />
+            ))}
+          </div>
+          <ApplicationsPagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            offset={offset}
+            limit={limit}
+            hasPrevPage={hasPrevPage}
+            hasNextPage={hasNextPage}
+            isFetching={isFetching}
+            onPrev={goToPrevPage}
+            onNext={goToNextPage}
+          />
+        </>
       )}
     </div>
   );

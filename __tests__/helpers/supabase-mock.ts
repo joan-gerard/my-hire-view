@@ -10,7 +10,11 @@
  */
 import { vi } from "vitest";
 
-export type DbResult<T = unknown> = { data: T; error: null | { message: string; code?: string } };
+export type DbResult<T = unknown> = {
+  data: T;
+  error: null | { message: string; code?: string };
+  count?: number | null;
+};
 
 /**
  * Creates a chainable mock builder that resolves to `result` when awaited
@@ -25,7 +29,11 @@ export function makeChain<T = unknown>(result: DbResult<T>) {
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     neq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockResolvedValue(result),
+    or: vi.fn().mockReturnThis(),
+    ilike: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(result),
     rpc: vi.fn().mockResolvedValue(result),
     // Make the chain itself awaitable for cases like `await supabase.from(...).update(...).eq(...)`
@@ -44,12 +52,22 @@ export function makeChain<T = unknown>(result: DbResult<T>) {
   (self.delete as ReturnType<typeof vi.fn>).mockReturnValue(self);
   (self.eq as ReturnType<typeof vi.fn>).mockReturnValue(self);
   (self.neq as ReturnType<typeof vi.fn>).mockReturnValue(self);
+  (self.or as ReturnType<typeof vi.fn>).mockReturnValue(self);
+  (self.ilike as ReturnType<typeof vi.fn>).mockReturnValue(self);
+  (self.range as ReturnType<typeof vi.fn>).mockReturnValue(self);
+  (self.limit as ReturnType<typeof vi.fn>).mockReturnValue(self);
+  (self.order as ReturnType<typeof vi.fn>).mockReturnValue(self);
   return self;
 }
 
 /** Shorthand: chain that resolves successfully with `data`. */
 export function ok<T>(data: T) {
   return makeChain<T>({ data, error: null });
+}
+
+/** Shorthand: list/query chain that also returns a `count` (for `{ count: "exact" }`). */
+export function okWithCount<T>(data: T, count: number) {
+  return makeChain<T>({ data, error: null, count });
 }
 
 /** Shorthand: chain that resolves with a DB error. */
