@@ -103,4 +103,4 @@ If the application was **archived**, you will see a message that it is no longer
 | **Candidate** | Sign up, sign in, edit profile (name, location, portfolio, LinkedIn), create applications (company, role, CV, video, candidate toggles), edit or archive or delete applications, copy shareable links, see view counts. |
 | **Recruiter** | Open shareable link (no login), see candidate name/location/portfolio/LinkedIn when shared, view CV and video pitch. |
 
-For setup and technical details, see [README.md](../README.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
+For setup and technical details, see [README.md](../README.md), [ARCHITECTURE.md](ARCHITECTURE.md), and [API_REFERENCE.md](API_REFERENCE.md).

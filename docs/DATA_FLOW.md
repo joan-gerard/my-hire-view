@@ -1,6 +1,6 @@
 # MyHireView — Data Flow
 
-This document describes how data moves through the system using Mermaid diagrams. For system architecture and design, see [ARCHITECTURE.md](ARCHITECTURE.md).
+This document describes how data moves through the system using Mermaid diagrams. For system architecture and design, see [ARCHITECTURE.md](ARCHITECTURE.md). For the full API catalog, see [API_REFERENCE.md](API_REFERENCE.md).
 
 ---
 

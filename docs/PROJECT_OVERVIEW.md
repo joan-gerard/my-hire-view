@@ -211,7 +211,7 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 ## 10. Notable Strengths
 
-- Well-structured internal docs in `docs/` (ARCHITECTURE, DATA_FLOW, BUILD_SUMMARY, CODE_REVIEW, etc.).
+- Well-structured internal docs in `docs/` (ARCHITECTURE, API_REFERENCE, DATA_FLOW, BUILD_SUMMARY, CODE_REVIEW, etc.).
 - Clear separation between marketing and product surfaces.
 - Security-conscious patterns: RLS, owner exclusion from analytics, URL validation, PDF type/size validation.
 - CSS design system with CSS variables (warm neutrals, brand colors) and consistent typography.

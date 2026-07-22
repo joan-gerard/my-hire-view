@@ -186,29 +186,9 @@ Layouts:
 - **Marketing (`app/(marketing)/layout.tsx`):** Wraps with `HeroEntranceProvider` and `ScrollCoverProvider`, then renders `MarketingHeader` (logo, nav: How it Works, Pricing, Blog; avatar dropdown with Sign In or Dashboard + Sign out) and `children`. Used by `/`, `/how-it-works`, `/pricing`, `/blog`. The header is implemented as a module under `components/public/MarketingHeader/` (index, constants, signOut, UserDropdown, MobileMenuContent, MobileMenuToggle). On mobile, the header background is transparent over the hero and switches to white once the user has scrolled so that `ScrollCoverSection` has reached the top of the viewport (via `ScrollCoverContext` and a 1px sentinel in `ScrollCoverSection`). Mobile viewport detection uses the shared hook `hooks/useMobileViewport` (which also exports `MOBILE_BREAKPOINT_PX`).
 - **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (MyHireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
-### 5.2 API Layer
+API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE.md)** (endpoint index, request/response shapes, auth, and rate limits).
 
-All under `app/api/`:
-
-| Endpoint                            | Methods                | Purpose                                                                                                                                                                                   | Auth                                              |
-| ----------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `/api/applications`                 | GET, POST, PUT, DELETE | List (user’s), create, update, delete application. On POST/PUT, server snapshots current profile (first name, last name, location, portfolio URL, LinkedIn URL) into the application row. | Required (except N/A for unauthenticated)         |
-| `/api/applications/[slug]`          | GET                    | Fetch one application by slug (public); response includes candidate snapshot fields for recruiter view.                                                                                   | No                                                |
-| `/api/profile`                      | GET, PUT               | Get or update current user’s profile (first name, last name, location, portfolio URL, LinkedIn URL). GET creates a profile row if missing.                                                | Required                                          |
-| `/api/waitlist`                     | POST                   | Add waitlist signup (email required; first name, job search status optional). Pre-launch landing page; inserts into `waitlist_signups` via service role.                                  | No                                                |
-| `/api/applications/[slug]/view`         | POST                   | Increment `view_count` and set `last_viewed_at` for slug (owner views not counted). Uses SECURITY DEFINER RPC via service_role; see [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).               | No                                                |
-| `/api/applications/[slug]/viewer-status` | GET                    | Returns `{ isOwner: boolean }` for the current viewer (used to show footer on `/view/[slug]` only to non-owners).                                                                          | No                                                |
-| `/api/applications/[slug]/download` | POST                   | Increment `download_count` for slug (owner downloads not counted). Uses SECURITY DEFINER RPC via service_role; see [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).                                | No                                                |
-| `/api/applications/by-id/[id]`      | GET                    | Fetch one by id (for edit page)                                                                                                                                                           | Required                                          |
-| `/api/auth/login`                   | POST                   | Sign in; sets session cookies via route client                                                                                                                                            | No                                                |
-| `/api/auth/signup`                  | POST                   | Sign up; sets session cookies                                                                                                                                                             | No                                                |
-| `/api/auth/logout`                  | POST                   | Sign out; clears session                                                                                                                                                                  | No                                                |
-| `/api/upload`                       | POST                   | Accept PDF `FormData` + **`Idempotency-Key`** (or `idempotency_key`); R2 key `cvs/idempotency/<key>.pdf`, replay-safe via `HeadObject`. **`requireAuth()`** before processing (401 if not signed in).                                                                                                            | Required                                          |
-| `/api/slug`                         | POST                   | `reserveBaseSlug`: slug from company/role (+ optional name in URL) if not taken; 409 otherwise; optional `excludeId` for edit                                                             | No (consider auth)                               |
-
-Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which uses the Supabase server client and redirects to `/login` when used in pages; in API routes it returns 401.
-
-### 5.3 Auth & Session
+### 5.2 Auth & Session
 
 - **Provider:** Supabase Auth (email/password). Config and email templates are described in `docs/SUPABASE_AUTH_SETUP.md`.
 - **Session:** Cookie-based. Supabase SSR helpers read/write cookies.
@@ -219,7 +199,7 @@ Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which u
   - **Middleware:** `lib/supabase/middleware.ts` — `updateSession(request)`: refreshes session and redirects unauthenticated users from `/admin` to `/login`. Intended to be invoked from root middleware (e.g. `middleware.ts` that re-exports or calls this; current entry is `proxy.ts` with matcher config).
   - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, redirects to `next` (default `/admin`).
 
-### 5.4 Data (Supabase)
+### 5.3 Data (Supabase)
 
 - **Table: `applications`**
   - `id` (UUID, PK), `slug` (unique), `company`, `role`, `cv_url`, `video_url`, `description`, `created_at`, `updated_at`, `view_count`, `download_count` (CV downloads from public page; owner not counted), `last_viewed_at` (timestamptz, last time a non-owner viewed the page; null if never viewed), `user_id` (FK to `auth.users`), `is_active` (default true; archiving = soft hide).
@@ -235,14 +215,14 @@ Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which u
 
 Types are mirrored in `lib/types/application.ts`, `lib/types/profile.ts`, and `lib/types/database.ts`.
 
-### 5.5 File Storage (Cloudflare R2)
+### 5.4 File Storage (Cloudflare R2)
 
 - **Use case:** CV PDFs only.
 - **Flow (upload on save):** The form keeps the selected PDF in memory until the user saves. On submit, the client uploads to `/api/upload` → API validates type (PDF) and size (10MB max) → `PutObject` to R2 → returned public URL is stored in `applications.cv_url`. When editing, if the user replaces the CV, the new file is uploaded on save and the previous object is deleted. When an application is deleted, its CV object is also deleted. See **docs/PDF_AND_R2.md** for full details.
 
 Video is not stored; only YouTube URLs are stored and embedded via `YouTubeEmbed` and `lib/utils/youtube.ts`.
 
-### 5.6 Profile pictures (Supabase Storage)
+### 5.5 Profile pictures (Supabase Storage)
 
 - **Use case:** One profile picture per user, uploaded in admin/profile. When creating or editing an application, a single checkbox “Show profile picture for this application” controls whether the profile URL is copied onto the application; the view page reads from the application only. If the user has no profile picture, the checkbox is disabled. See **docs/PROFILE_PICTURE.md** for bucket setup, RLS, and behaviour.
 
@@ -349,8 +329,8 @@ View count and `last_viewed_at` are only updated when the viewer is not the appl
 
 - **Auth:** Supabase handles passwords and sessions; middleware protects `/admin`; API routes use `requireAuth()` where needed.
 - **Data:** RLS ensures users only modify their own applications; public read by slug is allowed by policy.
-- **Upload:** PDF-only, size limit; upload route does not currently require auth (adding auth is recommended for production).
-- **Slug:** Unique per application; generation is deterministic from company/role with collision handling; no sensitive data in slug.
+- **Upload:** PDF-only, size limit; `POST /api/upload` requires auth and an idempotency key. Profile pictures use a separate authenticated upload to Supabase Storage.
+- **Slug:** Unique per application; generation is deterministic from company/role with collision handling; no sensitive data in slug. `POST /api/slug` is currently unauthenticated (consider tightening); `POST /api/slug/validate` requires auth.
 
 ---
 
@@ -370,7 +350,7 @@ my-hire-view/
 │   ├── auth/callback/          # Supabase OAuth/email callback
 │   ├── admin/                  # Dashboard, new, edit (layout uses requireAuth)
 │   ├── view/[slug]/            # Public application route (page, loading, not-found)
-│   └── api/                    # All API routes (see section 5.2)
+│   └── api/                    # All API routes (see docs/API_REFERENCE.md)
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── auth/                   # SignOutButton
@@ -389,7 +369,7 @@ my-hire-view/
 │   └── utils/                  # url, slug, slug-generate, youtube, clipboard
 ├── supabase/migrations/        # 001 schema, 002 is_active, 003 profiles, 004 application candidate fields
 ├── proxy.ts                    # Middleware entry (session + /admin guard)
-└── docs/                       # ARCHITECTURE, CODE_REVIEW, SUPABASE_AUTH_SETUP
+└── docs/                       # ARCHITECTURE, API_REFERENCE, CODE_REVIEW, SUPABASE_AUTH_SETUP
 ```
 
 ---
@@ -411,4 +391,4 @@ my-hire-view/
 
 ---
 
-For setup and auth configuration, see [README.md](../README.md) and [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md). For code quality and refactors, see [CODE_REVIEW.md](CODE_REVIEW.md).
+For setup and auth configuration, see [README.md](../README.md) and [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md). For the full API catalog, see [API_REFERENCE.md](API_REFERENCE.md). For code quality and refactors, see [CODE_REVIEW.md](CODE_REVIEW.md).
