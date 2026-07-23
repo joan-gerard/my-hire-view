@@ -125,6 +125,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
             setFormData((prev) => ({ ...prev, first_name: e.target.value }))
           }
           placeholder="Your first name"
+          required
         />
         <Input
           label="Last name"
@@ -134,6 +135,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
             setFormData((prev) => ({ ...prev, last_name: e.target.value }))
           }
           placeholder="Your last name"
+          required
         />
       </div>
       <Input

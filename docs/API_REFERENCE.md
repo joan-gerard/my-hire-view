@@ -6,6 +6,38 @@ Each endpoint lists **What works** (practices already in place) and **Improvemen
 
 ---
 
+## Table of contents
+
+- [Conventions](#conventions)
+- [Applications](#applications)
+  - [GET applications](#get-applications) — `GET /api/applications`
+  - [POST applications](#post-applications) — `POST /api/applications`
+  - [PUT applications](#put-applications) — `PUT /api/applications`
+  - [DELETE applications](#delete-applications) — `DELETE /api/applications`
+  - [GET application by slug](#get-application-by-slug) — `GET /api/applications/[slug]`
+  - [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]`
+  - [POST application view](#post-application-view) — `POST /api/applications/[slug]/view`
+  - [POST application download](#post-application-download) — `POST /api/applications/[slug]/download`
+  - [GET application viewer status](#get-application-viewer-status) — `GET /api/applications/[slug]/viewer-status`
+- [Profile](#profile)
+  - [GET profile](#get-profile) — `GET /api/profile`
+  - [PUT profile](#put-profile) — `PUT /api/profile`
+- [Slugs](#slugs)
+  - [POST slug](#post-slug) — `POST /api/slug`
+  - [POST slug validate](#post-slug-validate) — `POST /api/slug/validate`
+- [Uploads](#uploads)
+  - [POST upload CV](#post-upload-cv) — `POST /api/upload`
+  - [POST upload profile picture](#post-upload-profile-picture) — `POST /api/upload/profile-picture`
+- [Auth](#auth)
+  - [POST auth login](#post-auth-login) — `POST /api/auth/login`
+  - [POST auth signup](#post-auth-signup) — `POST /api/auth/signup`
+  - [POST auth logout](#post-auth-logout) — `POST /api/auth/logout`
+- [Waitlist](#waitlist)
+  - [POST waitlist](#post-waitlist) — `POST /api/waitlist`
+- [Types](#types)
+
+---
+
 ## Conventions
 
 - **Base path** — All routes are under `/api/…` on the same origin as the app.
@@ -19,49 +51,6 @@ Each endpoint lists **What works** (practices already in place) and **Improvemen
 Related deep-dives: [PDF_AND_R2.md](PDF_AND_R2.md) (CV upload), [PROFILE_PICTURE.md](PROFILE_PICTURE.md), [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
 
 Cross-cutting improvements that apply to many routes: schema validation at the boundary (e.g. Zod), a shared `withAuth` / `handleApiError` helper so auth failures are not confused with other errors, and structured server-side logging without leaking internals to clients. See also [CODE_REVIEW.md](CODE_REVIEW.md).
-
----
-
-## Endpoint index
-
-Standard Markdown TOC links: `[Heading text](#heading-text)`. Open **Markdown Preview** and click a link to jump to that section.
-
-**Applications**
-
-- [GET applications](#get-applications) — `GET /api/applications` · auth required · default rate limit · paginated list (default 20)
-- [POST applications](#post-applications) — `POST /api/applications` · auth required · default rate limit · create
-- [PUT applications](#put-applications) — `PUT /api/applications` · auth required · default rate limit · update
-- [DELETE applications](#delete-applications) — `DELETE /api/applications` · auth required · default rate limit · delete
-- [GET application by slug](#get-application-by-slug) — `GET /api/applications/[slug]` · public · 120/min · fetch by slug (+ `cv_exists`)
-- [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]` · auth required · owner fetch (+ `cv_exists`)
-- [POST application view](#post-application-view) — `POST /api/applications/[slug]/view` · public · default rate limit · increment view count (non-owners)
-- [POST application download](#post-application-download) — `POST /api/applications/[slug]/download` · public · default rate limit · increment download count (non-owners)
-- [GET application viewer status](#get-application-viewer-status) — `GET /api/applications/[slug]/viewer-status` · public · `{ isOwner }` for current viewer
-
-**Profile**
-
-- [GET profile](#get-profile) — `GET /api/profile` · auth required · get or auto-create profile
-- [PUT profile](#put-profile) — `PUT /api/profile` · auth required · default rate limit · upsert profile
-
-**Slugs**
-
-- [POST slug](#post-slug) — `POST /api/slug` · **no auth** · default rate limit · derive slug; 409 if taken
-- [POST slug validate](#post-slug-validate) — `POST /api/slug/validate` · auth required · default rate limit · format + uniqueness check
-
-**Uploads**
-
-- [POST upload CV](#post-upload-cv) — `POST /api/upload` · auth required · default rate limit · CV PDF to R2
-- [POST upload profile picture](#post-upload-profile-picture) — `POST /api/upload/profile-picture` · auth required · default rate limit · profile image
-
-**Auth**
-
-- [POST auth login](#post-auth-login) — `POST /api/auth/login` · public · 5/min · sign in
-- [POST auth signup](#post-auth-signup) — `POST /api/auth/signup` · public · 5/min · sign up
-- [POST auth logout](#post-auth-logout) — `POST /api/auth/logout` · public · 20/min · sign out
-
-**Waitlist**
-
-- [POST waitlist](#post-waitlist) — `POST /api/waitlist` · public · 5/min · pre-launch waitlist signup
 
 ---
 
@@ -389,18 +378,19 @@ Return the current user’s profile. If no row exists (`PGRST116`), inserts an e
 
 `PUT /api/profile`
 
-Upsert profile fields. Validates `portfolio_url` and `linkedin_url` (http/https only). When `profile_picture_url` changes, deletes the previous Supabase Storage object (if ours) and syncs `applications.profile_picture_url` for rows where `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upsert profile fields. Requires non-empty `first_name` and `last_name` (after merge with existing). Validates `portfolio_url` and `linkedin_url` (http/https only). When `profile_picture_url` changes, deletes the previous Supabase Storage object (if ours) and syncs `applications.profile_picture_url` for rows where `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ProfileUpdateInput`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url`
+- **Body** (`ProfileUpdateInput`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` — merged result must still have first and last name
 - **Success:** `200` `{ data: Profile }`
-- **Errors:** `400` invalid URL / upsert error; `401`; `429`
+- **Errors:** `400` missing names / invalid URL / upsert error; `401`; `429`
 
 **What works**
 
 - Auth required; upsert keyed by `user_id`.
 - Rate limited.
+- Keeps first/last name required after signup (editable on the profile page, not clearable to empty).
 - Validates portfolio/LinkedIn URLs (http/https only) before write.
 - Cleans up the previous profile picture in Storage when the URL changes (`deleteProfilePictureIfOurs`).
 - Syncs `applications.profile_picture_url` for apps that opted into showing the picture.
@@ -546,7 +536,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - **Auth:** Not required
 - **Rate limit:** **5 / minute / IP**
 - **Body:** `{ email, password }`
-- **Success:** `200` `{ success: true }` (+ session cookies)
+- **Success:** `200` `{ success: true }` (+ session cookies). Also upserts a `profiles` row from Auth `user_metadata` first/last name when present (covers users whose confirmation callback missed profile creation).
 - **Errors:** `400` missing fields; `401` bad credentials; `429`; `500` no session
 
 **What works**
@@ -554,6 +544,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - Strict per-IP rate limit (**5/min**) to blunt brute force.
 - Requires both email and password before calling Supabase.
 - Uses the route client so session cookies land on the response (middleware can read them next request).
+- Ensures a profiles row after login when signup names exist in `user_metadata`.
 - Distinguishes missing fields (**400**), auth failure (**401**), and missing session (**500**).
 
 **Improvement opportunities**
@@ -571,22 +562,27 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 
 - **Auth:** Not required
 - **Rate limit:** **5 / minute / IP**
-- **Body:** `{ email, password }`
+- **Body:** `{ email, password, confirmPassword, first_name, last_name }` — all required; `password` and `confirmPassword` must match; password min length **6**; names trimmed and non-empty
 - **Success:** `200` `{ success: true, requiresConfirmation: false }` with cookies when a session is created immediately; or `200` `{ success: true, requiresConfirmation: true }` when email confirmation is required
-- **Errors:** `400`; `429`
+- **Errors:** `400` (missing fields, password mismatch, too-short password, Supabase error); `429`
 
-`emailRedirectTo` is set to `{origin}/auth/callback`.
+`emailRedirectTo` is set to `{origin}/auth/callback`. First/last name are stored in Auth `user_metadata` so they survive email confirmation. When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code.
+
+**Side effects**
+
+- When a session is issued immediately (Confirm email OFF), upserts a `profiles` row with `user_id`, `first_name`, and `last_name`.
+- When confirmation is required (no session), profile creation is deferred to `GET /auth/callback` after the user confirms (reads names from `user_metadata`).
 
 **What works**
 
 - Same tight **5/min** rate limit as login.
-- Requires email and password; uses the route client for cookies when a session exists.
+- Requires email, password confirmation, and first/last name; uses the route client for cookies when a session exists.
 - Explicit `requiresConfirmation` flag so the UI can guide email-confirm flows.
 - Sets `emailRedirectTo` to `/auth/callback` on the current origin.
+- Seeds the profiles table with names at signup or confirmation so new users are not blank on the profile page.
 
 **Improvement opportunities**
 
-- Validate email + password strength (min length / complexity) before `signUp`.
 - Prefer generic errors for “user already exists” vs other failures to reduce enumeration (align with Supabase project settings).
 - Handle malformed JSON safely; log unexpected Auth API failures.
 - Optional CAPTCHA / bot protection if signup spam appears.

@@ -25,12 +25,16 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | Product | Pricing & membership tiers | Define plans (paid + optional free tier / trial), per-tier limits, price points. Do **not** launch with unlimited free app access. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | Product | Payment / membership system | Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | Marketing | Pricing page beyond placeholder | Ship real tiers on `/pricing` aligned with billing — not a stub. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
+| Security | Confirm email required in production Supabase | In Auth → Providers → Email, ensure **Confirm email** is ON so Supabase does not issue a session for unconfirmed users once live. | [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md) |
 
 ### Should
 
 | Subcategory | Item | Notes | Source |
 | ----------- | ---- | ----- | ------ |
 | Branding | Update `/admin` and `/view` branding | Still on previous visual identity. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
+| Branding | Update login and signup branding | Match `/login` and `/signup` to the main homepage visual identity. | — |
+| Legal | Create legal pages | Terms of Service, Privacy Policy, and Cookies (`/terms`, `/privacy`, cookies). Footer and waitlist already link to `/terms` and `/privacy` with no pages. | — |
+| Product | Delete account from profile | On the profile page, let users delete their account: remove Supabase Auth user, `profiles` row, and associated applications (and related storage: CVs in R2, profile picture). | — |
 | Docs / DX | Refresh README | Still create-next-app boilerplate; migrations list outdated. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | Support | Technical support entry point | Mailto, simple form, or lightweight tool on marketing / dashboard / view. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | Marketing | Clean up `MarketingHero_Old.tsx` | Still referenced on pricing/blog — remove or replace (ties to route cleanup above). | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
@@ -48,6 +52,7 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | ----------- | ---- | ----- | ------ |
 | Code quality | FileUpload progress UX | Shows “0%” without real progress — simplify or implement. | [CODE_REVIEW.md](CODE_REVIEW.md) |
 | Code quality | Login / signup DRY | Shared layout, fields, and/or submit hook. | [CODE_REVIEW.md](CODE_REVIEW.md) |
+| UX | Show password on login / signup | Toggle to reveal/hide password on `/login` and `/signup`. | — |
 | Infrastructure | Middleware entry clarity | Ensure Next picks up session middleware (`proxy.ts` vs `middleware.ts`). | [CODE_REVIEW.md](CODE_REVIEW.md) |
 
 ---

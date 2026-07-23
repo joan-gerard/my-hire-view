@@ -10,7 +10,7 @@ This guide describes what you can do with MyHireView as a **candidate** (job see
 
 ### Getting started
 
-- **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your email and a password. Confirm your email if your Supabase project requires it.
+- **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your first name, last name, email, password, and confirm password. Confirm your email if your Supabase project requires it. Your name is saved to your profile and can be edited later on the profile page.
 - **Sign in:** Use **Sign in** and enter your email and password. After signing in, you are taken to your **Dashboard** (`/admin`).
 
 ### Profile

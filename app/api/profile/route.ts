@@ -120,6 +120,19 @@ export async function PUT(request: NextRequest) {
       profile_picture_url: newPictureUrl,
     };
 
+    const firstName =
+      typeof merged.first_name === "string" ? merged.first_name.trim() : "";
+    const lastName =
+      typeof merged.last_name === "string" ? merged.last_name.trim() : "";
+    if (!firstName || !lastName) {
+      return NextResponse.json(
+        { error: "First name and last name are required" },
+        { status: 400 },
+      );
+    }
+    merged.first_name = firstName;
+    merged.last_name = lastName;
+
     const { data, error } = await supabase
       .from("profiles")
       .upsert(merged, { onConflict: "user_id" })

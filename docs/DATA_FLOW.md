@@ -84,7 +84,7 @@ flowchart LR
   ViewAPI --> Applications
 ```
 
-- **Profiles** are read/updated only via the profile page and `/api/profile`.
+- **Profiles** are seeded at signup (or auth callback) with first/last name, then read/updated via the profile page and `/api/profile`.
 - **Applications** are created/updated via the application form; candidate fields can come from the form (with toggles) or, on create, from a profile fallback. Recruiters read only from the application row.
 
 ---
@@ -111,7 +111,7 @@ sequenceDiagram
   MW-->>U: Allow /admin
 ```
 
-Sign-up works the same way via `/api/auth/signup`. Session is stored in cookies; middleware refreshes it and protects `/admin` routes.
+Sign-up works via `/api/auth/signup` with **first name, last name, email, password, and confirm password**. Names are stored in Auth `user_metadata`. When a session is issued immediately, a `profiles` row is created with those names; when email confirmation is required, `/auth/callback` creates the profile after confirmation. Session is stored in cookies; middleware refreshes it and protects `/admin` routes.
 
 ---
 
@@ -474,7 +474,7 @@ All data shown to the recruiter (including candidate name, location, and links) 
 
 | Data        | Written by                    | Read by                          |
 | ----------- | ----------------------------- | --------------------------------- |
-| **profiles** | Profile page → `/api/profile` | Profile page; applications API (create fallback) |
+| **profiles** | Signup / auth callback (names); profile page → `/api/profile` | Profile page; applications API (create fallback) |
 | **applications** | New/Edit form → `/api/applications` | Dashboard, edit page, public `/view/[slug]` |
 | **auth**    | Login/signup → Supabase Auth  | Middleware, requireAuth(), profile/dashboard |
 

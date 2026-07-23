@@ -210,6 +210,19 @@ describe("PUT /api/profile", () => {
     expect(response.status).toBe(200);
   });
 
+  it("returns 400 when first or last name would be empty", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_PROFILE, first_name: "Jane", last_name: "Doe" }),
+      ]),
+    );
+
+    const response = await PUT(makePutRequest({ first_name: "  ", last_name: "Doe" }));
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("First name and last name");
+  });
+
   it("returns 400 when the upsert fails", async () => {
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([

@@ -41,10 +41,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user && request.nextUrl.pathname.startsWith('/admin')) {
-    // no user, potentially respond by redirecting the user to the login page
+    // no user — redirect to login, preserving any cookie clears/refreshes
+    // from getUser() so stale auth cookies do not stick around
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    for (const cookie of supabaseResponse.cookies.getAll()) {
+      redirectResponse.cookies.set(cookie);
+    }
+    return redirectResponse;
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
