@@ -57,7 +57,7 @@ flowchart LR
     ProfileAPI["/api/profile"]
     AppsAPI["/api/applications"]
     SlugAPIs["/api/slug &amp; /api/slug/validate"]
-    ViewSlugAPI["GET /api/applications/[slug]"]
+    ViewSlugAPI["GET /api/applications/[publicId]/[slug]"]
     ViewAPI["POST .../view"]
   end
 
@@ -84,8 +84,8 @@ flowchart LR
   ViewAPI --> Applications
 ```
 
-- **Profiles** are seeded at signup (or auth callback) with first/last name, then read/updated via the profile page and `/api/profile`.
-- **Applications** are created/updated via the application form; candidate fields can come from the form (with toggles) or, on create, from a profile fallback. Recruiters read only from the application row.
+- **Profiles** — Signup stores first/last name and opaque `public_id` in Auth `user_metadata`. A `profiles` row is created on first `PUT /api/profile` (or a minimal row with `public_id` on first application create). Until a full profile exists, `/admin/profile` and `/admin/new` seed names from metadata. GET `/api/profile` is read-only (`404` if missing).
+- **Applications** are created/updated via the application form; candidate fields can come from the form (with toggles) or, on create, from a profile fallback when a row exists. Recruiters read only from the application row. Share URLs are `/view/{public_id}/{slug}`; slugs are unique per user, not globally.
 
 ---
 
@@ -111,7 +111,7 @@ sequenceDiagram
   MW-->>U: Allow /admin
 ```
 
-Sign-up works via `/api/auth/signup` with **first name, last name, email, password, and confirm password**. Names are stored in Auth `user_metadata`. When a session is issued immediately, a `profiles` row is created with those names; when email confirmation is required, `/auth/callback` creates the profile after confirmation. Session is stored in cookies; middleware refreshes it and protects `/admin` routes.
+Sign-up works via `/api/auth/signup` with **first name, last name, email, password, and confirm password**. Names are stored in Auth `user_metadata` only (no `profiles` row yet). Session is stored in cookies; middleware refreshes it and protects `/admin` routes.
 
 ---
 
@@ -123,16 +123,22 @@ sequenceDiagram
   participant Page as /admin/profile
   participant API as /api/profile
   participant DB as profiles table
+  participant Auth as Auth user_metadata
 
   U->>Page: Open profile
   Page->>DB: select by user_id (server)
   DB-->>Page: profile or none
+  alt no profiles row
+    Page->>Auth: read first/last name from user_metadata
+    Auth-->>Page: names (signup seed)
+  end
   Page->>U: Show form (email, profile fields)
 
   U->>Page: Edit name, location, URLs, Save
-  Page->>API: PUT profile (partial)
-  API->>API: requireAuth, validate URLs
-  API->>DB: upsert by user_id
+  Page->>API: PUT profile
+  API->>API: requireAuth, validate URLs + required names
+  API->>DB: upsert by user_id (creates on first save)
+  API->>Auth: updateUser metadata when names change
   DB-->>API: updated row
   API-->>Page: 200 + data
   Page->>U: Refresh / success
@@ -175,16 +181,24 @@ sequenceDiagram
   participant U as User
   participant NewPage as /admin/new
   participant ProfileAPI as GET /api/profile
+  participant Auth as Auth getUser
   participant Form as ApplicationForm
   participant Profiles as profiles
 
   U->>NewPage: Navigate to /admin/new
   NewPage->>ProfileAPI: GET profile
   ProfileAPI->>Profiles: select by user_id
-  Profiles-->>ProfileAPI: profile row
-  ProfileAPI-->>NewPage: profile data
-  NewPage->>Form: initialData (profile fields pre-fill candidate section)
-  Form->>U: Render empty form with profile defaults
+  alt profile exists
+    Profiles-->>ProfileAPI: profile row
+    ProfileAPI-->>NewPage: 200 + data
+    NewPage->>Form: initialData from profile
+  else no profile (404)
+    ProfileAPI-->>NewPage: 404
+    NewPage->>Auth: getUser user_metadata
+    Auth-->>NewPage: first/last name seed
+    NewPage->>Form: initialData names from metadata
+  end
+  Form->>U: Render form (+ optional “complete your profile” nudge)
 ```
 
 ---
@@ -443,7 +457,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   participant R as Recruiter
-  participant Page as /view/[slug]
+  participant Page as /view/[publicId]/[slug]
   participant SlugAPI as GET /api/applications/[slug]
   participant ViewAPI as POST .../view
   participant VT as ViewTracker
@@ -474,8 +488,8 @@ All data shown to the recruiter (including candidate name, location, and links) 
 
 | Data        | Written by                    | Read by                          |
 | ----------- | ----------------------------- | --------------------------------- |
-| **profiles** | Signup / auth callback (names); profile page → `/api/profile` | Profile page; applications API (create fallback) |
-| **applications** | New/Edit form → `/api/applications` | Dashboard, edit page, public `/view/[slug]` |
+| **profiles** | First `PUT /api/profile` (create); later profile page updates | Profile page; `/admin/new` prefill; applications API (create fallback when row exists) |
+| **applications** | New/Edit form → `/api/applications` | Dashboard, edit page, public `/view/[publicId]/[slug]` |
 | **auth**    | Login/signup → Supabase Auth  | Middleware, requireAuth(), profile/dashboard |
 
 Candidate fields on the application are either supplied by the form (with toggles) or, on create only, taken from the profile when not in the request body. The recruiter view never reads from the profile table.
@@ -541,7 +555,7 @@ Candidate fields on the application are either supplied by the form (with toggle
 
 | # | Scenario | Behaviour |
 |---|---|---|
-| 29 | User has no profile (first-time user) | `getProfileSnapshot` returns all-null fields; candidate fields in the DB row are null unless the user explicitly fills them in the form. |
+| 29 | User has no profile row yet | GET `/api/profile` → **404**; profile page and `/admin/new` seed names from Auth `user_metadata`; `getProfileSnapshot` returns all-null fields — create trusts client body from the form. |
 | 30 | User disables all candidate toggles | All candidate fields sent as `null`; the recruiter view shows no name, location, or links. |
 | 31 | User enables name toggle but leaves first/last name blank | `trim() || null` evaluates to `null`; stored as null in DB. |
 | 32 | User enables Name in URL with position `start` or `end` but has no first or last name | `buildSlug` / `reserveBaseSlug` falls back to company-role only (name segment is omitted). The slug does not include a name even though the preference is set. |

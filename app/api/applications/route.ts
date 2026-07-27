@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/auth";
+import { ensureProfilePublicId } from "@/lib/auth/ensure-public-id";
 import {
   checkRateLimit,
   DEFAULT_API_RATE_LIMIT,
@@ -81,8 +82,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const publicId = await ensureProfilePublicId(supabase, user);
+    const items = (data ?? []).map((row) => ({ ...row, public_id: publicId }));
+
     return NextResponse.json({
-      data: data ?? [],
+      data: items,
       meta: {
         limit,
         offset,
@@ -136,6 +140,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
     const supabase = await createClient();
+    await ensureProfilePublicId(supabase, user);
     const body: ApplicationCreateInput = await request.json();
     const snapshot = await getProfileSnapshot(supabase, user.id);
 

@@ -1,18 +1,13 @@
 /**
  * Tests for /api/profile — flow #3 (Profile read and update).
  *
- * GET  — returns existing profile; auto-creates one on first visit; handles
- *        DB errors and unauthenticated requests.
- * PUT  — upserts profile, validates URL fields, enforces rate limiting, and
- *        rejects unauthenticated callers.
+ * GET  — returns existing profile or 404 when missing (read-only; no insert).
+ * PUT  — upserts profile (creates on first save), syncs Auth user_metadata names,
+ *        validates URL fields, enforces rate limiting, rejects unauthenticated callers.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-// ---------------------------------------------------------------------------
-// Mocks — declared with vi.hoisted so they are available when vi.mock
-// factories are executed (vi.mock is hoisted to the top of the file).
-// ---------------------------------------------------------------------------
 const {
   mockRequireAuth,
   mockCreateClient,
@@ -43,12 +38,10 @@ vi.mock("@/lib/utils/profile-picture-storage", () => ({
 import { GET, PUT } from "@/app/api/profile/route";
 import { ok, dbError, makeSupabaseClient } from "../../helpers/supabase-mock";
 
-// ---------------------------------------------------------------------------
-// Shared fixtures
-// ---------------------------------------------------------------------------
 const MOCK_USER = { id: "user-123" };
 const EXISTING_PROFILE = {
   user_id: "user-123",
+  public_id: "k7x2m9ab",
   first_name: "Jane",
   last_name: "Doe",
   location: "Stockholm",
@@ -56,10 +49,6 @@ const EXISTING_PROFILE = {
   linkedin_url: null,
   profile_picture_url: null,
 };
-
-function makeGetRequest(): NextRequest {
-  return new NextRequest("http://localhost/api/profile", { method: "GET" });
-}
 
 function makePutRequest(body: object): NextRequest {
   return new NextRequest("http://localhost/api/profile", {
@@ -71,9 +60,7 @@ function makePutRequest(body: object): NextRequest {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Default: authenticated user
   mockRequireAuth.mockResolvedValue(MOCK_USER);
-  // Default: rate limit not exceeded
   mockCheckRateLimit.mockReturnValue({
     success: true,
     remaining: 59,
@@ -81,9 +68,6 @@ beforeEach(() => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// GET /api/profile
-// ---------------------------------------------------------------------------
 describe("GET /api/profile", () => {
   it("returns 200 with the existing profile", async () => {
     mockCreateClient.mockResolvedValue(
@@ -96,31 +80,15 @@ describe("GET /api/profile", () => {
     expect(json.data).toMatchObject({ user_id: "user-123", first_name: "Jane" });
   });
 
-  it("creates and returns a new profile row when none exists (PGRST116)", async () => {
-    const newProfile = { user_id: "user-123", first_name: null };
+  it("returns 404 when no profile row exists (PGRST116)", async () => {
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([
-        dbError("No rows found", "PGRST116"), // first select: no profile
-        ok(newProfile),                        // insert: returns new profile
-      ]),
+      makeSupabaseClient([dbError("No rows found", "PGRST116")]),
     );
 
     const response = await GET();
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(404);
     const json = await response.json();
-    expect(json.data).toMatchObject({ user_id: "user-123" });
-  });
-
-  it("returns 400 when the insert after PGRST116 fails", async () => {
-    mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([
-        dbError("No rows found", "PGRST116"),
-        dbError("Insert failed"),
-      ]),
-    );
-
-    const response = await GET();
-    expect(response.status).toBe(400);
+    expect(json.error).toBe("Profile not found");
   });
 
   it("returns 500 for unexpected DB errors", async () => {
@@ -142,30 +110,59 @@ describe("GET /api/profile", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// PUT /api/profile
-// ---------------------------------------------------------------------------
 describe("PUT /api/profile", () => {
   it("returns 200 with updated profile data on success", async () => {
     const updatedProfile = { ...EXISTING_PROFILE, first_name: "Updated" };
-    mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([
-        ok(EXISTING_PROFILE), // select existing
-        ok(updatedProfile),   // upsert result
-        ok(null),             // applications sync (update)
-      ]),
-    );
+    const client = makeSupabaseClient([
+      ok(EXISTING_PROFILE),
+      ok(updatedProfile),
+      ok(null),
+    ]);
+    mockCreateClient.mockResolvedValue(client);
 
-    const response = await PUT(
-      makePutRequest({ first_name: "Updated" }),
-    );
+    const response = await PUT(makePutRequest({ first_name: "Updated" }));
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.data).toMatchObject({ first_name: "Updated" });
+    expect(client.auth.updateUser).toHaveBeenCalledWith({
+      data: {
+        first_name: "Updated",
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+      },
+    });
+  });
+
+  it("creates a profile on first PUT when none exists and syncs metadata", async () => {
+    const created = {
+      user_id: "user-123",
+      first_name: "Jane",
+      last_name: "Doe",
+      location: null,
+      portfolio_url: null,
+      linkedin_url: null,
+      profile_picture_url: null,
+    };
+    const client = makeSupabaseClient([
+      dbError("No rows found", "PGRST116"),
+      ok(created),
+    ]);
+    mockCreateClient.mockResolvedValue(client);
+
+    const response = await PUT(
+      makePutRequest({ first_name: "Jane", last_name: "Doe" }),
+    );
+    expect(response.status).toBe(200);
+    expect(client.auth.updateUser).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: expect.stringMatching(/^[a-z0-9]{8}$/),
+      }),
+    });
   });
 
   it("returns 400 for an invalid portfolio URL", async () => {
-    // No DB call should happen — validation is synchronous
     const response = await PUT(
       makePutRequest({ portfolio_url: "not-a-url" }),
     );
@@ -204,9 +201,7 @@ describe("PUT /api/profile", () => {
       makeSupabaseClient([ok(EXISTING_PROFILE), ok(updatedProfile), ok(null)]),
     );
 
-    const response = await PUT(
-      makePutRequest({ portfolio_url: null }),
-    );
+    const response = await PUT(makePutRequest({ portfolio_url: null }));
     expect(response.status).toBe(200);
   });
 
@@ -217,7 +212,9 @@ describe("PUT /api/profile", () => {
       ]),
     );
 
-    const response = await PUT(makePutRequest({ first_name: "  ", last_name: "Doe" }));
+    const response = await PUT(
+      makePutRequest({ first_name: "  ", last_name: "Doe" }),
+    );
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toContain("First name and last name");
@@ -226,8 +223,8 @@ describe("PUT /api/profile", () => {
   it("returns 400 when the upsert fails", async () => {
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([
-        ok(EXISTING_PROFILE),      // select existing
-        dbError("Upsert failed"),  // upsert fails
+        ok(EXISTING_PROFILE),
+        dbError("Upsert failed"),
       ]),
     );
 

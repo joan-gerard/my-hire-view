@@ -9,11 +9,13 @@ import ArchivedApplicationAlert from "./ArchivedApplicationAlert";
 
 interface ViewPageContentProps {
   initialApplication: Application;
+  publicId: string;
   slug: string;
 }
 
 export default function ViewPageContent({
   initialApplication,
+  publicId,
   slug,
 }: ViewPageContentProps) {
   const [application, setApplication] =
@@ -32,16 +34,18 @@ export default function ViewPageContent({
   }, [isVideoModalOpen]);
 
   const refetchApplication = useCallback(async () => {
-    const response = await fetch(`/api/applications/${slug}`);
+    const response = await fetch(`/api/applications/${publicId}/${slug}`);
     if (!response.ok) return;
     const { data } = await response.json();
     setApplication(data);
-  }, [slug]);
+  }, [publicId, slug]);
 
   // Footer is shown only to non-owners (recruiters/visitors)
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/applications/${slug}/viewer-status`, { credentials: "include" })
+    fetch(`/api/applications/${publicId}/${slug}/viewer-status`, {
+      credentials: "include",
+    })
       .then((res) => (res.ok ? res.json() : { isOwner: false }))
       .then((data) => {
         if (!cancelled) setShowFooter(data.isOwner === false);
@@ -52,7 +56,7 @@ export default function ViewPageContent({
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [publicId, slug]);
 
   const isArchived = application.is_active === false;
 
@@ -69,6 +73,7 @@ export default function ViewPageContent({
         profileImageUrl={application.profile_picture_url?.trim() || undefined}
         onWatchVideo={!isArchived ? () => setIsVideoModalOpen(true) : undefined}
         cvUrl={application.cv_url}
+        publicId={publicId}
         slug={slug}
         cvFilename={application.cv_filename}
         useOriginalCvFilename={application.use_original_cv_filename}
@@ -79,6 +84,7 @@ export default function ViewPageContent({
           <ArchivedApplicationAlert />
         ) : (
           <ApplicationPageContent
+            publicId={publicId}
             slug={slug}
             application={application}
             refetchApplication={refetchApplication}

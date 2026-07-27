@@ -14,11 +14,11 @@ Each endpoint lists **What works** (practices already in place) and **Improvemen
   - [POST applications](#post-applications) — `POST /api/applications`
   - [PUT applications](#put-applications) — `PUT /api/applications`
   - [DELETE applications](#delete-applications) — `DELETE /api/applications`
-  - [GET application by slug](#get-application-by-slug) — `GET /api/applications/[slug]`
+  - [GET application by public path](#get-application-by-public-path) — `GET /api/applications/[publicId]/[slug]`
   - [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]`
-  - [POST application view](#post-application-view) — `POST /api/applications/[slug]/view`
-  - [POST application download](#post-application-download) — `POST /api/applications/[slug]/download`
-  - [GET application viewer status](#get-application-viewer-status) — `GET /api/applications/[slug]/viewer-status`
+  - [POST application view](#post-application-view) — `POST /api/applications/[publicId]/[slug]/view`
+  - [POST application download](#post-application-download) — `POST /api/applications/[publicId]/[slug]/download`
+  - [GET application viewer status](#get-application-viewer-status) — `GET /api/applications/[publicId]/[slug]/viewer-status`
 - [Profile](#profile)
   - [GET profile](#get-profile) — `GET /api/profile`
   - [PUT profile](#put-profile) — `PUT /api/profile`
@@ -60,7 +60,7 @@ Cross-cutting improvements that apply to many routes: schema validation at the b
 
 `GET /api/applications`
 
-List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links) — not CV/video/candidate/profile columns.
+List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) — not CV/video/candidate/profile columns. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -77,6 +77,7 @@ List the authenticated user’s applications (newest first), paginated. Returns 
   "data": [
     {
       "id": "uuid",
+      "public_id": "k7x2m9ab",
       "slug": "acme-frontend-engineer",
       "company": "Acme",
       "role": "Frontend Engineer",
@@ -219,11 +220,11 @@ Hard-delete an application and its CV object in R2 (when the URL is under this a
 
 ---
 
-### GET application by slug
+### GET application by public path
 
-`GET /api/applications/[slug]`
+`GET /api/applications/[publicId]/[slug]`
 
-Public fetch of one application by slug. Adds `cv_exists` when `cv_url` is set (R2 `HeadObject` check).
+Public fetch of one application by the owner’s opaque `public_id` and per-user `slug`. Adds `cv_exists` when `cv_url` is set (R2 `HeadObject` check). See [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md).
 
 - **Auth:** Not required
 - **Rate limit:** **120 requests / minute / IP**
@@ -235,7 +236,7 @@ Public fetch of one application by slug. Adds `cv_exists` when `cv_url` is set (
 - Public by design for shareable recruiter links; no login required.
 - Per-IP rate limit (120/min) tuned for viewing while limiting scraping.
 - `cv_exists` helps the UI avoid broken “View CV” links when the object is missing.
-- Clear **404** when the slug does not exist.
+- Clear **404** when the public id + slug pair does not resolve.
 
 **Improvement opportunities**
 
@@ -273,9 +274,9 @@ Owner-only fetch for the edit page. Same `cv_exists` behaviour as the public slu
 
 ### POST application view
 
-`POST /api/applications/[slug]/view`
+`POST /api/applications/[publicId]/[slug]/view`
 
-Record a page view. Owner views are acknowledged but **not** counted. Non-owner increments use the `increment_application_view_count` SECURITY DEFINER RPC via the service-role admin client (updates `view_count` and `last_viewed_at`). See [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
+Record a page view. Owner views are acknowledged but **not** counted. Non-owner increments use the `increment_application_view_count(p_public_id, p_slug)` SECURITY DEFINER RPC via the service-role admin client (updates `view_count` and `last_viewed_at`). See [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
 
 - **Auth:** Not required (session used only to detect owner)
 - **Rate limit:** Default (60/min)
@@ -300,9 +301,9 @@ Record a page view. Owner views are acknowledged but **not** counted. Non-owner 
 
 ### POST application download
 
-`POST /api/applications/[slug]/download`
+`POST /api/applications/[publicId]/[slug]/download`
 
-Record a CV download. Same owner-exclusion and RPC pattern as view (`increment_application_download_count`).
+Record a CV download. Same owner-exclusion and RPC pattern as view (`increment_application_download_count(p_public_id, p_slug)`).
 
 - **Auth:** Not required (session used only to detect owner)
 - **Rate limit:** Default (60/min)
@@ -324,7 +325,7 @@ Record a CV download. Same owner-exclusion and RPC pattern as view (`increment_a
 
 ### GET application viewer status
 
-`GET /api/applications/[slug]/viewer-status`
+`GET /api/applications/[publicId]/[slug]/viewer-status`
 
 Whether the current viewer owns the application (used to show the public-view footer only to non-owners). Unauthenticated viewers get `isOwner: false`.
 
@@ -353,24 +354,22 @@ Whether the current viewer owns the application (used to show the public-view fo
 
 `GET /api/profile`
 
-Return the current user’s profile. If no row exists (`PGRST116`), inserts an empty profile and returns it.
+Return the current user’s profile. **Read-only** — does not create a row. If no profile exists (`PGRST116`), returns **404**.
 
 - **Auth:** Required
 - **Rate limit:** None
 - **Success:** `200` `{ data: Profile }`
-- **Errors:** `400` insert failed; `401`; `500`
+- **Errors:** `404` profile not found; `401`; `500`
 
 **What works**
 
-- Auth required; selects/inserts only by session `user_id`.
-- Auto-creates a row when missing so the profile page never depends on a separate “init” call.
-- Distinguishes “no row” (`PGRST116`) from other DB errors.
+- Auth required; selects only by session `user_id`.
+- Distinguishes “no row” (`404`) from other DB errors (`500`).
+- Profiles are created on first successful `PUT`, not on GET.
 
 **Improvement opportunities**
 
-- GET with insert side effect is surprising; prefer a dedicated ensure/create path or upsert on first PUT, and keep GET read-only.
 - Add a rate limit; fix catch-all **401** vs **500**.
-- Handle concurrent first-GET races (two inserts) more explicitly if unique violations appear.
 
 ---
 
@@ -378,7 +377,7 @@ Return the current user’s profile. If no row exists (`PGRST116`), inserts an e
 
 `PUT /api/profile`
 
-Upsert profile fields. Requires non-empty `first_name` and `last_name` (after merge with existing). Validates `portfolio_url` and `linkedin_url` (http/https only). When `profile_picture_url` changes, deletes the previous Supabase Storage object (if ours) and syncs `applications.profile_picture_url` for rows where `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upsert profile fields (creates the row on first save). Requires non-empty `first_name` and `last_name` (after merge with existing). Assigns or preserves `public_id` (from existing row, Auth `user_metadata`, or a newly generated opaque id). Validates `portfolio_url` and `linkedin_url` (http/https only). When first/last name or `public_id` change (including first save), syncs Auth `user_metadata`. When `profile_picture_url` changes, deletes the previous Supabase Storage object (if ours) and syncs `applications.profile_picture_url` for rows where `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -388,9 +387,10 @@ Upsert profile fields. Requires non-empty `first_name` and `last_name` (after me
 
 **What works**
 
-- Auth required; upsert keyed by `user_id`.
+- Auth required; upsert keyed by `user_id` (create-on-first-save).
 - Rate limited.
-- Keeps first/last name required after signup (editable on the profile page, not clearable to empty).
+- Keeps first/last name required (editable on the profile page, not clearable to empty).
+- Syncs Auth `user_metadata` when names change so signup seed stays aligned.
 - Validates portfolio/LinkedIn URLs (http/https only) before write.
 - Cleans up the previous profile picture in Storage when the URL changes (`deleteProfilePictureIfOurs`).
 - Syncs `applications.profile_picture_url` for apps that opted into showing the picture.
@@ -410,9 +410,9 @@ Upsert profile fields. Requires non-empty `first_name` and `last_name` (after me
 
 `POST /api/slug`
 
-Derive a slug from company/role (and optional name-in-URL rules) via `reserveBaseSlug`. Returns **409** if that exact slug is already taken (no numeric suffix). Optional `excludeId` ignores the current row when editing.
+Derive a slug from company/role (and optional name-in-URL rules) via `reserveBaseSlug`. Returns **409** if that exact slug is already taken **for the current user** (no numeric suffix). Optional `excludeId` ignores the current row when editing. Slugs are unique per user (`UNIQUE (user_id, slug)`), not globally.
 
-- **Auth:** **Not required** (consider tightening for production)
+- **Auth:** Required
 - **Rate limit:** Default (60/min)
 - **Body:** `company`, `role` (required); optional `excludeId`, `first_name`, `last_name`, `slugNamePosition` (`"start"` | `"end"`)
 - **Success:** `200` `{ slug: string }`
@@ -427,7 +427,6 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 
 **Improvement opportunities**
 
-- **Require auth** (highest priority): aligns with `/api/slug/validate` and stops anonymous slug probing / enumeration.
 - Validate and sanitize inputs (non-empty trimmed strings, max lengths, allowed `slugNamePosition` values, UUID `excludeId`).
 - When authenticated + `excludeId`, verify the excluded application belongs to the current user.
 - Log unexpected failures before returning **500**.
@@ -438,7 +437,7 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 
 `POST /api/slug/validate`
 
-Check format and uniqueness of a proposed slug (used when the user edits the slug field manually). Invalid or taken slugs return **200** with `{ ok: false, error }` (not 4xx), so the client can show inline feedback.
+Check format and uniqueness of a proposed slug **for the current user** (used when the user edits the slug field manually). Invalid or taken slugs return **200** with `{ ok: false, error }` (not 4xx), so the client can show inline feedback.
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -534,18 +533,18 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 `POST /api/auth/login`
 
 - **Auth:** Not required
-- **Rate limit:** **5 / minute / IP**
+- **Rate limit:** **15 / minute / IP**
 - **Body:** `{ email, password }`
-- **Success:** `200` `{ success: true }` (+ session cookies). Also upserts a `profiles` row from Auth `user_metadata` first/last name when present (covers users whose confirmation callback missed profile creation).
+- **Success:** `200` `{ success: true }` (+ session cookies)
 - **Errors:** `400` missing fields; `401` bad credentials; `429`; `500` no session
 
 **What works**
 
-- Strict per-IP rate limit (**5/min**) to blunt brute force.
+- Per-IP rate limit (**15/min**) to blunt brute force while allowing typo retries.
 - Requires both email and password before calling Supabase.
 - Uses the route client so session cookies land on the response (middleware can read them next request).
-- Ensures a profiles row after login when signup names exist in `user_metadata`.
 - Distinguishes missing fields (**400**), auth failure (**401**), and missing session (**500**).
+- Does **not** create a `profiles` row (first profile PUT does).
 
 **Improvement opportunities**
 
@@ -566,20 +565,19 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - **Success:** `200` `{ success: true, requiresConfirmation: false }` with cookies when a session is created immediately; or `200` `{ success: true, requiresConfirmation: true }` when email confirmation is required
 - **Errors:** `400` (missing fields, password mismatch, too-short password, Supabase error); `429`
 
-`emailRedirectTo` is set to `{origin}/auth/callback`. First/last name are stored in Auth `user_metadata` so they survive email confirmation. When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code.
+`emailRedirectTo` is set to `{origin}/auth/callback`. First/last name are stored in Auth `user_metadata` (seed for the profile page and new-application form until first profile save). When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code.
 
 **Side effects**
 
-- When a session is issued immediately (Confirm email OFF), upserts a `profiles` row with `user_id`, `first_name`, and `last_name`.
-- When confirmation is required (no session), profile creation is deferred to `GET /auth/callback` after the user confirms (reads names from `user_metadata`).
+- Does **not** create a `profiles` row. The row is created on first `PUT /api/profile`.
 
 **What works**
 
-- Same tight **5/min** rate limit as login.
+- Tight **5/min** rate limit (stricter than login’s **15/min**).
 - Requires email, password confirmation, and first/last name; uses the route client for cookies when a session exists.
 - Explicit `requiresConfirmation` flag so the UI can guide email-confirm flows.
 - Sets `emailRedirectTo` to `/auth/callback` on the current origin.
-- Seeds the profiles table with names at signup or confirmation so new users are not blank on the profile page.
+- Seeds Auth `user_metadata` with names for later profile / form prefill.
 
 **Improvement opportunities**
 

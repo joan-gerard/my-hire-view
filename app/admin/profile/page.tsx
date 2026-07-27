@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { requireAuth } from '@/lib/auth';
+import { namesFromUserMetadata } from '@/lib/auth/ensure-profile';
 import { createClient } from '@/lib/supabase/server';
 import ProfileForm from '@/components/forms/ProfileForm';
 import type { Profile } from '@/lib/types/profile';
@@ -7,8 +8,10 @@ import type { Profile } from '@/lib/types/profile';
 /**
  * Profile page for the account owner. Shows identity from Supabase Auth,
  * editable profile details (name, location, portfolio, LinkedIn), and a
- * summary of their applications. All data is retrieved server-side with
- * requireAuth() and RLS-scoped queries (user_id = auth.uid()).
+ * summary of their applications.
+ *
+ * If no profiles row exists yet, the form is seeded from Auth user_metadata
+ * (first/last name from signup). First save creates the profiles row.
  */
 export default async function AdminProfilePage() {
   const user = await requireAuth();
@@ -19,6 +22,20 @@ export default async function AdminProfilePage() {
     .select('*')
     .eq('user_id', user.id)
     .single();
+
+  const metaNames = namesFromUserMetadata(user);
+  const initialData: Profile | null = profile
+    ? (profile as Profile)
+    : {
+        user_id: user.id,
+        first_name: metaNames?.first_name ?? null,
+        last_name: metaNames?.last_name ?? null,
+        location: null,
+        portfolio_url: null,
+        linkedin_url: null,
+        updated_at: new Date().toISOString(),
+        profile_picture_url: null,
+      };
 
   const { count } = await supabase
     .from('applications')
@@ -63,8 +80,17 @@ export default async function AdminProfilePage() {
         <p className="mt-1 text-sm text-[var(--foreground)]/60">
           This info is used when you create or update applications so recruiters see your name and links.
         </p>
+        {!profile && (
+          <p className="mt-2 rounded-md bg-[var(--brand-secondary)]/40 px-3 py-2 text-sm text-[var(--foreground)]">
+            Your name is prefilled from signup. Save your profile to store location, links, and
+            picture for use on new applications.
+          </p>
+        )}
         <div className="mt-4">
-          <ProfileForm initialData={profile as Profile | null} />
+          <ProfileForm
+            initialData={initialData}
+            hasExistingProfile={Boolean(profile)}
+          />
         </div>
       </section>
 

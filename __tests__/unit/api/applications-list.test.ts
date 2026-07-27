@@ -28,6 +28,9 @@ vi.mock("@/lib/rate-limit", () => ({
 vi.mock("@/lib/utils/cv-storage", () => ({
   deleteCvIfOurs: vi.fn(),
 }));
+vi.mock("@/lib/auth/ensure-public-id", () => ({
+  ensureProfilePublicId: vi.fn().mockResolvedValue("k7x2m9ab"),
+}));
 
 import { GET } from "@/app/api/applications/route";
 import {
@@ -75,7 +78,7 @@ describe("GET /api/applications", () => {
     const response = await GET(makeGetRequest());
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.data).toEqual([LIST_ITEM]);
+    expect(json.data).toEqual([{ ...LIST_ITEM, public_id: "k7x2m9ab" }]);
     expect(json.meta).toEqual({
       limit: APPLICATION_LIST_DEFAULT_LIMIT,
       offset: 0,

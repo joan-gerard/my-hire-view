@@ -82,6 +82,7 @@ export interface Database {
       profiles: {
         Row: {
           user_id: string;
+          public_id: string;
           first_name: string | null;
           last_name: string | null;
           location: string | null;
@@ -92,6 +93,7 @@ export interface Database {
         };
         Insert: {
           user_id: string;
+          public_id: string;
           first_name?: string | null;
           last_name?: string | null;
           location?: string | null;
@@ -101,6 +103,7 @@ export interface Database {
           profile_picture_url?: string | null;
         };
         Update: {
+          public_id?: string;
           first_name?: string | null;
           last_name?: string | null;
           location?: string | null;

@@ -2,57 +2,56 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from '@/lib/rate-limit';
+import { resolvePublicApplication } from '@/lib/utils/resolve-public-application';
 
+/**
+ * POST /api/applications/[publicId]/[slug]/download
+ * Increments download_count for the application. Skips increment when the
+ * applicant (owner) is downloading their own CV.
+ */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ publicId: string; slug: string }> }
 ) {
   const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   try {
     const supabase = await createClient();
-    const { slug } = await params;
+    const { publicId, slug } = await params;
 
-    // Get application with owner for self-view check (using cookie-based client)
-    const { data: application, error: fetchError } = await supabase
-      .from('applications')
-      .select('user_id')
-      .eq('slug', slug)
-      .single();
-
-    if (fetchError || !application) {
+    const resolved = await resolvePublicApplication(supabase, publicId, slug);
+    if (!resolved) {
       return NextResponse.json(
         { error: 'Application not found' },
         { status: 404 }
       );
     }
 
-    // Don't increment when the applicant (owner) views their own application
     const {
       data: { user: viewer },
     } = await supabase.auth.getUser();
-    if (viewer?.id === application.user_id) {
+    if (viewer?.id === resolved.ownerUserId) {
       return NextResponse.json({ success: true });
     }
 
-    // Increment view count and last_viewed_at via SECURITY DEFINER RPC (service_role only)
     const admin = createAdminClient();
-    const { error: rpcError } = await admin.rpc('increment_application_view_count', {
+    const { error: rpcError } = await admin.rpc('increment_application_download_count', {
+      p_public_id: publicId,
       p_slug: slug,
     });
 
     if (rpcError) {
       return NextResponse.json(
-        { error: 'Failed to update view count' },
+        { error: 'Failed to update download count' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: 'Failed to track view' },
+      { error: 'Failed to track download' },
       { status: 500 }
     );
   }

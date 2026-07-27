@@ -4,6 +4,8 @@
  */
 export interface Profile {
   user_id: string;
+  /** Opaque id for public share URLs (/view/{public_id}/{slug}). */
+  public_id?: string;
   first_name: string | null;
   last_name: string | null;
   location: string | null;

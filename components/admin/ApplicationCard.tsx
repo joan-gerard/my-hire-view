@@ -71,7 +71,7 @@ export default function ApplicationCard({
 }: ApplicationCardProps) {
   const [copied, setCopied] = useState(false);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
-  const shareableUrl = getApplicationUrl(application.slug);
+  const shareableUrl = getApplicationUrl(application.public_id, application.slug);
 
   const handleCopyLink = async () => {
     const success = await copyToClipboard(shareableUrl);
@@ -126,7 +126,7 @@ export default function ApplicationCard({
 
           {/* 6. View Link button */}
           <Link
-            href={`/view/${application.slug}`}
+            href={`/view/${application.public_id}/${application.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"

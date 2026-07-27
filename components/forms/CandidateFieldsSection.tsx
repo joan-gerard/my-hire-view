@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDownIcon, ChevronUpIcon } from '@/components/admin/icons';
 import CandidateFieldRow from './CandidateFieldRow';
 
 const STORAGE_KEY = 'myhireview:candidate-fields-expanded';
@@ -64,22 +65,34 @@ export default function CandidateFieldsSection({
 
   return (
     <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
-      <h3 className="text-sm font-semibold text-[var(--foreground)]">
-        Info shown to recruiters{' '}
-        <span className="font-normal text-[var(--foreground)]/60">
-          ({includedCount}/{TOTAL_FIELDS})
-        </span>
-      </h3>
-      <p className="mt-1 text-xs text-[var(--foreground)]/60">
-        Toggle off any field you do not want to share. Edits here apply only to this application.
-      </p>
-      <button
-        type="button"
-        onClick={toggleExpanded}
-        className="mt-2 text-xs font-medium text-[var(--brand-primary)] hover:opacity-80 focus:outline-none focus:underline"
-      >
-        {expanded ? 'Hide fields' : 'Show fields'}
-      </button>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold text-[var(--foreground)]">
+            Info shown to recruiters{' '}
+            <span className="font-normal text-[var(--foreground)]/60">
+              ({includedCount}/{TOTAL_FIELDS})
+            </span>
+          </h3>
+          <p className="mt-1 text-xs text-[var(--foreground)]/60">
+            Toggle off any field you do not want to share. Edits here apply only to this
+            application.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          className="inline-flex shrink-0 cursor-pointer rounded p-1 text-[var(--foreground)]/70 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]"
+          aria-expanded={expanded}
+          aria-label={expanded ? 'Hide recruiter info fields' : 'Show recruiter info fields'}
+          title={expanded ? 'Hide fields' : 'Show fields'}
+        >
+          {expanded ? (
+            <ChevronUpIcon className="h-5 w-5" />
+          ) : (
+            <ChevronDownIcon className="h-5 w-5" />
+          )}
+        </button>
+      </div>
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div

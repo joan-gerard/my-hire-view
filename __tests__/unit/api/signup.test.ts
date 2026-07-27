@@ -131,7 +131,11 @@ describe("POST /api/auth/signup", () => {
         email: "jane@example.com",
         password: "secret1",
         options: expect.objectContaining({
-          data: { first_name: "Jane", last_name: "Doe" },
+          data: expect.objectContaining({
+            first_name: "Jane",
+            last_name: "Doe",
+            public_id: expect.stringMatching(/^[a-z0-9]{8}$/),
+          }),
         }),
       }),
     );
@@ -159,7 +163,7 @@ describe("POST /api/auth/signup", () => {
     );
   });
 
-  it("creates a profile when a session is issued immediately", async () => {
+  it("does not create a profiles row when a session is issued immediately", async () => {
     mockSignUp.mockResolvedValue({
       data: {
         user: { id: "user-1" },
@@ -172,7 +176,7 @@ describe("POST /api/auth/signup", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json).toEqual({ success: true, requiresConfirmation: false });
-    expect(mockFrom).toHaveBeenCalledWith("profiles");
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
   it("returns 400 when Supabase signUp fails", async () => {

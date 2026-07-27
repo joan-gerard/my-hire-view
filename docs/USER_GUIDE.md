@@ -10,7 +10,7 @@ This guide describes what you can do with MyHireView as a **candidate** (job see
 
 ### Getting started
 
-- **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your first name, last name, email, password, and confirm password. Confirm your email if your Supabase project requires it. Your name is saved to your profile and can be edited later on the profile page.
+- **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your first name, last name, email, password, and confirm password. Confirm your email if your Supabase project requires it. Your name is stored with your account and shown when you open **Profile** or create an application; saving your profile stores the full profile record for better prefills later.
 - **Sign in:** Use **Sign in** and enter your email and password. After signing in, you are taken to your **Dashboard** (`/admin`).
 
 ### Profile
@@ -19,13 +19,14 @@ From the header, open **Profile** (`/admin/profile`). You can:
 
 - See your **account email** and **member since** date.
 - Edit **profile details** used as defaults when you create applications:
-  - First name  
-  - Last name  
+  - First name (required; prefilled from signup until you save)
+  - Last name (required; prefilled from signup until you save)
   - Location  
   - Portfolio URL  
   - LinkedIn URL  
+  - Profile picture  
 
-Saving updates only your profile. These values are not changed when you edit an application. You can leave any field blank.
+The first time you **Save**, a profile record is created. Changing your name also updates the name stored on your account. Location and URLs can be left blank. These values are not changed when you edit an application.
 
 - See how many **applications** you have in total and how many are **active** vs **archived**. A link takes you back to the dashboard.
 
@@ -44,27 +45,29 @@ At **Dashboard** (`/admin`) you can:
 ### Creating an application
 
 1. Click **New Application** (`/admin/new`).
-2. **Info shown to recruiters** (at the top):
-   - Your profile details are shown as a preview. You can **toggle each field on or off** (off means recruiters will not see it).
+2. If you have not saved a profile yet, a short notice recommends completing your profile for richer prefills (arrow icon opens Profile); your signup name is still used for the name fields.
+3. **Info shown to recruiters** (at the top):
+   - Your profile details are shown as a preview (from your saved profile when available, otherwise name from signup). You can **toggle each field on or off** (off means recruiters will not see it).
    - You can **edit** any value here; changes apply only to this application, not to your profile.
-   - You can **show or hide** the whole list of fields; that preference is remembered for next time.
-3. Fill in the **application form**:
+   - You can collapse or expand the whole list with the arrow control in the top-right of that section; that preference is remembered for next time.
+4. Fill in the **application form**:
    - **Company name** and **Role/Position** (required).
    - **Name in URL** (optional): choose **None**, **At start** (e.g. `john-doe-acme-software-engineer`), or **At end** (e.g. `acme-software-engineer-john-doe`). The slug preview updates as you type.
    - **Slug** (used in the URL; auto-generated from company and role, and from your name and position if you chose; you can change it manually).
    - **CV**: upload a PDF (stored securely).
    - **YouTube URL** for your video pitch.
-4. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy Link** to share it.
+5. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy Link** to share it.
 
 ### Editing an application
 
 1. On the dashboard, open the **3-dot menu** on the application card and click **Edit**.
-2. The form is pre-filled from **that application only** (including which candidate fields are on or off and their values). You can change **Name in URL** (None / At start / At end) when you save. Your profile is not changed when you save.
-3. Change any fields or toggles, then click **Save Application**.
+2. A notice reminds you that candidate details come from when this application was saved — not from your live profile. Changing your profile does not update existing applications.
+3. The form is pre-filled from **that application only** (including which candidate fields are on or off and their values). You can change **Name in URL** (None / At start / At end) when you save. Your profile is not changed when you save.
+4. Change any fields or toggles, then click **Save Application**.
 
 ### Sharing with recruiters
 
-- Each application has a **unique link**. It can be based on company and role (e.g. `https://yoursite.com/view/acme-software-engineer`) or, if you chose to include your name when creating or editing, on your name plus company and role (e.g. `https://yoursite.com/view/john-doe-acme-software-engineer`).
+- Each application has a **unique link** for that user. The shape is `https://yoursite.com/view/{publicId}/{slug}` — for example `https://yoursite.com/view/k7x2m9ab/acme-software-engineer`. The middle segment is an opaque id assigned to your account (not your name). The last segment is based on company and role, or — if you chose **Name in URL** — includes your name at the start or end (e.g. `john-doe-acme-software-engineer`).
 - Use **Copy Link** on the dashboard card and send it by email, LinkedIn, or job portal.
 - Recruiters can open the link without signing in. You can see how many times the page was viewed and when it was last viewed (view count and last viewed date in View Insights; one count per recruiter session).
 
@@ -79,7 +82,7 @@ At **Dashboard** (`/admin`) you can:
 
 ### Viewing an application
 
-- Open the **shareable link** the candidate sent (e.g. `https://yoursite.com/view/acme-software-engineer`).
+- Open the **shareable link** the candidate sent (e.g. `https://yoursite.com/view/k7x2m9ab/acme-software-engineer`).
 - You do **not** need to sign in.
 
 You will see:

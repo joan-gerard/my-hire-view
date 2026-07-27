@@ -48,7 +48,10 @@ export type ApplicationListItem = Pick<
   | "download_count"
   | "created_at"
   | "last_viewed_at"
->;
+> & {
+  /** Opaque candidate id for public share URLs. */
+  public_id: string;
+};
 
 /** Supabase `.select()` projection for `ApplicationListItem`. */
 export const APPLICATION_LIST_SELECT =

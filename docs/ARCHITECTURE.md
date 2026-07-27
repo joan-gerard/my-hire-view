@@ -10,7 +10,7 @@ This document describes the architecture and design of **MyHireView**, an applic
 
 **High-level behavior:**
 
-- **Public:** Anyone with a link can view an application at `/view/[slug]`. Views are tracked (once per session).
+- **Public:** Anyone with a link can view an application at `/view/[publicId]/[slug]` (e.g. `/view/k7x2m9ab/acme-software-engineer`). Views are tracked (once per session). See [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md).
 - **Authenticated:** Users sign up / sign in, then create, edit, archive, and delete applications. They get shareable URLs and see view counts.
 
 ---
@@ -78,7 +78,7 @@ flowchart TB
 ```mermaid
 flowchart LR
   subgraph Frontend["Frontend (React)"]
-    Public[Public: /view/slug]
+    Public[Public: /view/publicId/slug]
     Admin[Admin: /admin, /admin/new, /admin/edit/id]
     AuthPages[Auth: /login, /signup]
   end
@@ -178,7 +178,7 @@ flowchart LR
 | `/admin/new`        | Create application form (slug, company, role, CV upload, YouTube URL)                                                                                                                                                                                                                                               | Yes  |
 | `/admin/edit/[id]`  | Edit existing application (same form, load by id)                                                                                                                                                                                                                                                                  | Yes  |
 | `/admin/profile`    | Profile: account email, member since; editable profile details (first name, last name, location, portfolio URL, LinkedIn URL); application counts                                                                                                                                                                  | Yes  |
-| `/view/[slug]`      | Public application page: header (company, role, candidate name, location, portfolio/LinkedIn buttons), PDF viewer, YouTube embed; shows “archived” state if `is_active = false`. A footer (MyHireView logo, slogan, Terms/Privacy links, © MyHireView, socials) is shown only to non-owners. Candidate name, location, and links come from the application row (snapshot from profile at create/update). | No   |
+| `/view/[publicId]/[slug]` | Public application page: header (company, role, candidate name, location, portfolio/LinkedIn buttons), PDF viewer, YouTube embed; shows “archived” state if `is_active = false`. A footer (MyHireView logo, slogan, Terms/Privacy links, © MyHireView, socials) is shown only to non-owners. Candidate name, location, and links come from the application row (snapshot from profile at create/update). `noindex` and strict referrer policy apply. | No   |
 
 Layouts:
 
@@ -197,7 +197,7 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
   - **Route handler (login/signup/logout):** `lib/supabase/route-client.ts` — `createSupabaseRouteClient({ request, response })` so the response carries `Set-Cookie` headers.
   - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used only for operations that must bypass RLS (e.g. view count and download count increment RPCs). Never used from the client.
   - **Middleware:** `lib/supabase/middleware.ts` — `updateSession(request)`: refreshes session and redirects unauthenticated users from `/admin` to `/login`. Intended to be invoked from root middleware (e.g. `middleware.ts` that re-exports or calls this; current entry is `proxy.ts` with matcher config).
-  - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, upserts a `profiles` row from Auth `user_metadata` (first/last name set at signup), redirects to `next` (default `/admin`).
+  - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, redirects to `next` (default `/admin`). Does not create a profiles row.
 
 ### 5.3 Data (Supabase)
 
@@ -208,7 +208,8 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
   - **`include_name_in_slug`** (TEXT, nullable): Name position in the slug: `null` (not included), `'start'` (name-company-role), or `'end'` (company-role-name). Persisted so the edit form shows the correct choice and users can change it on save.
 - **Table: `profiles`**
   - One row per user: `user_id` (PK, FK to `auth.users`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `updated_at`. DB columns remain nullable; product rules require first/last name at signup and on profile save. Users edit this on the profile page; the applications API does not expose profile directly to the public.
-  - **Snapshot rule:** On POST or PUT to `/api/applications`, the server loads the current user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the insert or update. The recruiter-facing page at `/view/[slug]` uses only data from the application row.
+  - **Snapshot rule:** On POST or PUT to `/api/applications`, the server loads the current user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the insert or update. The recruiter-facing page at `/view/[publicId]/[slug]` uses only data from the application row.
+  - **Public URLs:** Each user has an opaque `profiles.public_id` (assigned at signup). Application slugs are unique per user (`UNIQUE (user_id, slug)`), not globally. Share links are `/view/{public_id}/{slug}`.
 - **Indexes (applications):** `slug`, `user_id`, `created_at DESC`.
 - **RLS:** Enabled on both tables. Applications: users can SELECT/INSERT/UPDATE/DELETE their own rows; public can SELECT any row by slug. Profiles: users can SELECT/INSERT/UPDATE their own row only.
 - **Triggers:** `updated_at` maintained on update for both tables.
@@ -290,13 +291,13 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   participant R as Recruiter
-  participant Page as /view/[slug]
+  participant Page as /view/[publicId]/[slug]
   participant SlugAPI as GET /api/applications/[slug]
   participant ViewAPI as POST /api/.../view
   participant VT as ViewTracker
   participant Supa as Supabase
 
-  R->>Page: Open /view/my-company-role
+  R->>Page: Open /view/k7x2m9ab/my-company-role
   Page->>SlugAPI: fetch(slug)
   SlugAPI->>Supa: select by slug (full row, includes candidate name, location, portfolio_url, linkedin_url)
   Supa-->>SlugAPI: application

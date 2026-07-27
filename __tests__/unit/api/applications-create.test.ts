@@ -41,6 +41,9 @@ vi.mock("@/lib/rate-limit", () => ({
 vi.mock("@/lib/utils/cv-storage", () => ({
   deleteCvIfOurs: mockDeleteCvIfOurs,
 }));
+vi.mock("@/lib/auth/ensure-public-id", () => ({
+  ensureProfilePublicId: vi.fn().mockResolvedValue("k7x2m9ab"),
+}));
 
 import { POST } from "@/app/api/applications/route";
 import { ok, dbError, makeSupabaseClient } from "../../helpers/supabase-mock";

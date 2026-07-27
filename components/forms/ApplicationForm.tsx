@@ -55,6 +55,8 @@ interface ApplicationFormProps {
   onRetryCvCheck?: () => Promise<void>;
   /** Profile picture URL; when set, Yes/No toggle is enabled; when null, toggle is disabled with No selected. */
   profilePictureUrl?: string | null;
+  /** Opaque public id for share URL preview (from profile or auth metadata). */
+  publicId?: string;
   /**
    * Current application id on edit — slug uniqueness ignores this row.
    * When set, format + availability are checked before save.
@@ -73,6 +75,7 @@ export default function ApplicationForm({
   loading = false,
   onRetryCvCheck,
   profilePictureUrl,
+  publicId,
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
 }: ApplicationFormProps) {
@@ -131,6 +134,43 @@ export default function ApplicationForm({
 
   const getFileSignature = (file: File): string =>
     `${file.name}:${file.size}:${file.lastModified}`;
+
+  const hasCompany = Boolean(formData.company.trim());
+  const hasRole = Boolean(formData.role.trim());
+  const hasSlug = Boolean(formData.slug.trim());
+  const hasCv = Boolean(
+    cvPendingFile || (formData.cv_url && formData.cv_url.trim()),
+  );
+  const hasVideo = Boolean(formData.video_url.trim());
+  const slugReady =
+    slugLiveStatus.kind === "available" && hasSlug;
+
+  const requiredReady =
+    hasCompany && hasRole && hasCv && hasVideo && slugReady;
+
+  const canSubmit = requiredReady && !loading;
+
+  const disabledReason = (() => {
+    if (canSubmit || loading) return null;
+    if (!hasCompany) return "Company name is required.";
+    if (!hasRole) return "Role is required.";
+    if (!hasCv) return "A CV file is required.";
+    if (!hasVideo) return "YouTube URL is required.";
+    if (slugLiveStatus.kind === "checking") {
+      return "Please wait until the slug has finished updating.";
+    }
+    if (slugLiveStatus.kind === "invalid") {
+      return slugLiveStatus.message || "Fix the slug before saving.";
+    }
+    if (slugLiveStatus.kind === "unavailable") {
+      return (
+        slugLiveStatus.message ||
+        "This slug is not available. Change it before saving."
+      );
+    }
+    if (!hasSlug) return "Slug is required.";
+    return "Fill in all required fields to save.";
+  })();
 
   /** Drop slug field errors when inputs that affect slug change so live status can show success again. */
   useEffect(() => {
@@ -362,7 +402,7 @@ export default function ApplicationForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (loading || isSubmittingRef.current) return;
+    if (loading || isSubmittingRef.current || !canSubmit) return;
     isSubmittingRef.current = true;
     setErrors({});
 
@@ -525,7 +565,10 @@ export default function ApplicationForm({
     setInclude((prev) => ({ ...prev, [field]: included }));
   };
 
-  const shareableUrl = formData.slug ? getApplicationUrl(formData.slug) : "";
+  const shareableUrl =
+    publicId && formData.slug
+      ? getApplicationUrl(publicId, formData.slug)
+      : "";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -664,6 +707,8 @@ export default function ApplicationForm({
       <ApplicationFormActions
         loading={loading}
         submitLabel="Save Application"
+        canSubmit={canSubmit}
+        disabledReason={disabledReason}
       />
     </form>
   );

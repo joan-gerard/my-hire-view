@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/auth";
+import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
+import { generatePublicId } from "@/lib/utils/public-id";
 import { createClient } from "@/lib/supabase/server";
 import type { ProfileUpdateInput } from "@/lib/types/profile";
 import { deleteProfilePictureIfOurs } from "@/lib/utils/profile-picture-storage";
@@ -19,6 +21,10 @@ function validateUrl(value: string | null | undefined): string | null {
   }
 }
 
+/**
+ * Read-only: returns the current user's profiles row, or 404 if none exists.
+ * Profiles are created on first PUT (not on GET).
+ */
 export async function GET() {
   try {
     const user = await requireAuth();
@@ -32,19 +38,10 @@ export async function GET() {
 
     if (error) {
       if (error.code === "PGRST116") {
-        // No row: create one and return
-        const { data: inserted, error: insertError } = await supabase
-          .from("profiles")
-          .insert({ user_id: user.id })
-          .select()
-          .single();
-        if (insertError) {
-          return NextResponse.json(
-            { error: insertError.message },
-            { status: 400 },
-          );
-        }
-        return NextResponse.json({ data: inserted });
+        return NextResponse.json(
+          { error: "Profile not found" },
+          { status: 404 },
+        );
       }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
@@ -95,8 +92,14 @@ export async function PUT(request: NextRequest) {
       await deleteProfilePictureIfOurs(supabase, oldPictureUrl);
     }
 
+    const publicId =
+      existing?.public_id ??
+      publicIdFromUserMetadata(user) ??
+      generatePublicId();
+
     const merged = {
       user_id: user.id,
+      public_id: publicId,
       first_name:
         body.first_name !== undefined
           ? (body.first_name ?? null)
@@ -141,6 +144,23 @@ export async function PUT(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    // Keep Auth user_metadata in sync when names or public_id change (or on first save).
+    const prevFirst = existing?.first_name ?? null;
+    const prevLast = existing?.last_name ?? null;
+    const metaPublicId = publicIdFromUserMetadata(user);
+    if (
+      prevFirst !== firstName ||
+      prevLast !== lastName ||
+      metaPublicId !== publicId
+    ) {
+      const { error: metaError } = await supabase.auth.updateUser({
+        data: { first_name: firstName, last_name: lastName, public_id: publicId },
+      });
+      if (metaError) {
+        console.error("Failed to sync name to user_metadata:", metaError.message);
+      }
     }
 
     // When profile picture URL changed, sync applications where user chose to show picture

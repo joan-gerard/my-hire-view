@@ -1,26 +1,21 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { resolvePublicApplication } from '@/lib/utils/resolve-public-application';
 
 /**
- * GET /api/applications/[slug]/viewer-status
+ * GET /api/applications/[publicId]/[slug]/viewer-status
  * Returns whether the current authenticated user is the owner of the application.
- * Used to show/hide the footer on the public view page (footer shown only to non-owners).
  */
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ publicId: string; slug: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { slug } = await params;
+    const { publicId, slug } = await params;
 
-    const { data: application, error: fetchError } = await supabase
-      .from('applications')
-      .select('user_id')
-      .eq('slug', slug)
-      .single();
-
-    if (fetchError || !application) {
+    const resolved = await resolvePublicApplication(supabase, publicId, slug);
+    if (!resolved) {
       return NextResponse.json(
         { error: 'Application not found' },
         { status: 404 }
@@ -30,10 +25,10 @@ export async function GET(
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    const isOwner = user?.id === application.user_id;
+    const isOwner = user?.id === resolved.ownerUserId;
 
     return NextResponse.json({ isOwner });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to get viewer status' },
       { status: 500 }

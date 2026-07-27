@@ -22,8 +22,9 @@ export async function POST(request: NextRequest) {
   const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
+  let user;
   try {
-    await requireAuth();
+    user = await requireAuth();
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     const slug = typeof body.slug === "string" ? body.slug : "";
     const excludeId = sanitizeExcludeId(body.excludeId);
 
-    const result = await validateSlugForApplication(slug, excludeId);
+    const result = await validateSlugForApplication(slug, user.id, excludeId);
     if (!result.ok) {
       return NextResponse.json({ ok: false, error: result.error }, { status: 200 });
     }

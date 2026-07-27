@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { ensureProfileWithNames } from '@/lib/auth/ensure-profile';
 import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import {
   copyResponseCookies,
   createSupabaseRouteClient,
 } from '@/lib/supabase/route-client';
+import { generatePublicId } from '@/lib/utils/public-id';
 
 /** 5 signup attempts per minute per IP to mitigate abuse. */
 const SIGNUP_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
@@ -12,9 +12,9 @@ const SIGNUP_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 const MIN_PASSWORD_LENGTH = 6;
 
 /**
- * Server-side signup: creates a user, stores first/last name in user_metadata,
- * creates a profiles row when a session is issued immediately, and sets session
- * cookies on the response when email confirmation is not required.
+ * Server-side signup: creates a user, stores first/last name in Auth
+ * user_metadata (profiles row is created later on first profile PUT), and
+ * sets session cookies when email confirmation is not required.
  *
  * When confirmation is required, PKCE cookies written during signUp must still
  * be returned so /auth/callback can exchange the email link code later.
@@ -69,12 +69,14 @@ export async function POST(request: NextRequest) {
   });
   const origin = request.nextUrl.origin;
 
+  const public_id = generatePublicId();
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${origin}/auth/callback`,
-      data: { first_name, last_name },
+      data: { first_name, last_name, public_id },
     },
   });
 
@@ -90,17 +92,6 @@ export async function POST(request: NextRequest) {
     });
     copyResponseCookies(cookieJar, confirmResponse);
     return confirmResponse;
-  }
-
-  // Session issued immediately (Confirm email OFF): create profiles row now.
-  if (data.user) {
-    const profileResult = await ensureProfileWithNames(supabase, data.user.id, {
-      first_name,
-      last_name,
-    });
-    if (profileResult.error) {
-      console.error('Profile create after signup failed:', profileResult.error);
-    }
   }
 
   const successResponse = NextResponse.json({

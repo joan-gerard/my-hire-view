@@ -1,18 +1,14 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import {
-  ensureProfileWithNames,
-  namesFromUserMetadata,
-} from '@/lib/auth/ensure-profile';
 import { getSupabaseEnv } from '@/lib/supabase/env';
 
 type CookieOptions = Parameters<NextResponse['cookies']['set']>[2];
 
 /**
- * Exchanges the email confirmation (or magic-link) code for a session, then
- * ensures a profiles row exists using first/last name from user_metadata
- * (set at signup when Confirm email is ON and no session was issued yet).
+ * Exchanges the email confirmation (or magic-link) code for a session and
+ * redirects to next (default /admin). Does not create a profiles row —
+ * that happens on first profile PUT.
  */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -36,7 +32,6 @@ export async function GET(request: Request) {
         return cookieStore.get(name)?.value;
       },
       set(name: string, value: string, options: CookieOptions) {
-        // Persist for this request and for the browser via the redirect response.
         try {
           cookieStore.set(name, value, options);
         } catch {
@@ -55,35 +50,13 @@ export async function GET(request: Request) {
     },
   });
 
-  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     console.error('Auth callback exchangeCodeForSession failed:', error.message);
     return NextResponse.redirect(
       new URL('/login?error=confirmation', requestUrl.origin),
     );
-  }
-
-  const user = data.user;
-  if (user) {
-    const names = namesFromUserMetadata(user);
-    if (names) {
-      const profileResult = await ensureProfileWithNames(
-        supabase,
-        user.id,
-        names,
-      );
-      if (profileResult.error) {
-        console.error(
-          'Profile create after auth callback failed:',
-          profileResult.error,
-        );
-      }
-    } else {
-      console.warn(
-        'Auth callback: user has no first/last name in user_metadata; skipping profile create',
-      );
-    }
   }
 
   return response;

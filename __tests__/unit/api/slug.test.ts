@@ -24,17 +24,14 @@ const {
   mockCheckRateLimit: vi.fn(),
 }));
 
-vi.mock("@/lib/utils/slug", () => ({
-  reserveBaseSlug: mockReserveBaseSlug,
-  validateSlugForApplication: mockValidateSlugForApplication,
-  SlugCollisionError: class SlugCollisionError extends Error {
-    readonly code = "SLUG_COLLISION" as const;
-    constructor(msg?: string) {
-      super(msg ?? "This slug is already in use.");
-      this.name = "SlugCollisionError";
-    }
-  },
-}));
+vi.mock("@/lib/utils/slug", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/utils/slug")>();
+  return {
+    ...actual,
+    reserveBaseSlug: mockReserveBaseSlug,
+    validateSlugForApplication: mockValidateSlugForApplication,
+  };
+});
 vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
@@ -150,6 +147,17 @@ describe("POST /api/slug", () => {
     expect(response.status).toBe(500);
   });
 
+  it("returns 401 when not authenticated", async () => {
+    mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
+
+    const req = makeRequest("http://localhost/api/slug", {
+      company: "Volvo",
+      role: "Engineer",
+    });
+    const response = await slugPost(req);
+    expect(response.status).toBe(401);
+  });
+
   it("returns 429 when rate limited", async () => {
     mockCheckRateLimit.mockReturnValue({
       success: false,
@@ -223,6 +231,7 @@ describe("POST /api/slug/validate", () => {
     await validatePost(req);
     expect(mockValidateSlugForApplication).toHaveBeenCalledWith(
       "volvo-engineer",
+      "user-123",
       "app-id-42",
     );
   });
@@ -237,6 +246,7 @@ describe("POST /api/slug/validate", () => {
     await validatePost(req);
     expect(mockValidateSlugForApplication).toHaveBeenCalledWith(
       "volvo-engineer",
+      "user-123",
       undefined,
     );
   });

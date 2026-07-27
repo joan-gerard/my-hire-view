@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import ApplicationForm, { type ApplicationFormInitialData } from '@/components/forms/ApplicationForm';
 import type { ApplicationFormData, Application } from '@/lib/types/application';
 import type { Profile } from '@/lib/types/profile';
+import { publicIdFromUserMetadata } from '@/lib/auth/ensure-public-id';
+import { createClient } from '@/lib/supabase/client';
 
 /** Normalize DB value (legacy boolean or 'start'|'end'|null) to form slugNamePosition. */
 function slugNamePositionFromDb(
@@ -21,6 +23,7 @@ export default function EditApplicationPage() {
   const id = params.id as string;
   const [application, setApplication] = useState<Application | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [publicId, setPublicId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -34,7 +37,19 @@ export default function EditApplicationPage() {
       try {
         const res = await fetch('/api/profile', { credentials: 'include' });
         const json = await res.json().catch(() => ({}));
-        if (!cancelled && json.data) setProfile(json.data);
+        if (!cancelled && json.data) {
+          setProfile(json.data);
+          if (typeof json.data.public_id === 'string') {
+            setPublicId(json.data.public_id);
+          }
+          return;
+        }
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!cancelled && user) {
+          const pid = publicIdFromUserMetadata(user);
+          if (pid) setPublicId(pid);
+        }
       } catch {
         // ignore
       }
@@ -177,6 +192,11 @@ export default function EditApplicationPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-[var(--foreground)]">Edit Application</h1>
+      <p className="rounded-md border border-[var(--foreground)]/10 bg-[var(--brand-secondary)]/40 px-4 py-3 text-sm text-[var(--foreground)]">
+        The candidate details below are from when this application was saved, not from your
+        current profile. Updating your profile does not change existing applications — edit
+        the fields here if you want this application updated.
+      </p>
       <div className="rounded-lg bg-[var(--secondary-background)] p-6 shadow border border-[var(--foreground)]/10">
         <ApplicationForm
           initialData={initialData}
@@ -184,6 +204,7 @@ export default function EditApplicationPage() {
           loading={loading}
           onRetryCvCheck={refetchCvCheck}
           profilePictureUrl={profile?.profile_picture_url ?? null}
+          publicId={publicId ?? undefined}
           slugExcludeApplicationId={id}
         />
       </div>

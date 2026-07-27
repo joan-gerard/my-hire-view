@@ -16,7 +16,7 @@ Work needed before a public launch with paid access (free tier / trial only — 
 
 | Subcategory | Item | Notes | Source |
 | ----------- | ---- | ----- | ------ |
-| Security | Auth on `POST /api/slug` | No auth today; align with `/api/slug/validate`. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md), [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
+| Security | Auth on `POST /api/slug` | ~~No auth today~~ **Done** — requires auth; uniqueness is per user. | [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md) |
 | Infrastructure | Durable rate limiting | Replace in-memory `lib/rate-limit.ts` with Redis/Upstash (or similar). | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | Infrastructure | CI/CD | Run `pnpm test:ci` automatically on push/PR. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | API | Whitelist `PUT /api/applications` fields | Avoid mass-assignment risk (`user_id`, counts, etc.). | [API_REFERENCE.md](API_REFERENCE.md) |
@@ -26,6 +26,7 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | Product | Payment / membership system | Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | Marketing | Pricing page beyond placeholder | Ship real tiers on `/pricing` aligned with billing — not a stub. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | Security | Confirm email required in production Supabase | In Auth → Providers → Email, ensure **Confirm email** is ON so Supabase does not issue a session for unconfirmed users once live. | [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md) |
+| Security | Auth security review — follow-ups (2026-07-27) | **Fix first:** open redirect in `app/auth/callback/route.ts` — `next=//evil.com` passes `startsWith('/')` and redirects off-site; allow only safe relative paths (reject `//`, `\\`, absolute URLs). **Also address:** tighten `applications` public SELECT RLS (`USING (true)` lets anon clients enumerate all rows via PostgREST, not only public URL access). **Already tracked elsewhere:** durable rate limits, confirm email in prod, signup password rules (≥8 + special), generic login/signup errors. **Could add later:** in-app forgot-password flow wired to Supabase reset emails + `/auth/callback`. **Solid today:** server-side login/signup with session cookies via route client; `getUser()` (not client `getSession()`); `/admin` middleware gate; protected APIs use `requireAuth()`; service role key server-only; password only in HTTPS request body (visible in DevTools is expected). | — |
 
 ### Should
 
@@ -44,7 +45,11 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | Security | Waitlist bot protection | CAPTCHA, honeypot, or Turnstile — IP limits alone are weak. | [API_REFERENCE.md](API_REFERENCE.md) |
 | Security | PDF magic-byte check on upload | Don’t rely on `Content-Type` alone. | [API_REFERENCE.md](API_REFERENCE.md) |
 | Security | Harden auth login/signup responses | Validate email/password; prefer generic errors (less enumeration). | [API_REFERENCE.md](API_REFERENCE.md) |
+| Security | Enforce signup password rules | Require ≥ 8 characters and ≥ 1 special character on signup (client + `POST /api/auth/signup`). | — |
 | Marketing | Landing product screenshots | Replace SVG placeholders when real shots exist. | [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) |
+| UX | New-user onboarding checklist | Checklist / workflow for new users (e.g. fill profile, upload photo, create first application) — shown until steps are complete. | — |
+| UX | Persist create-application form draft | Keep create-application form data until submit so refresh / navigation doesn’t lose progress (e.g. local draft or autosave). | — |
+| Product | Preview before submitting an application | Decide UX on `/admin/new`: (1) Preview next to Save (optional); (2) Preview replaces Save — modal or route e.g. `/admin/preview/[id]` before submit; or (3) Save draft to DB and replace `is_active` boolean with `status` (`active` \| `draft` \| `archived`). Relates to local form-draft persistence above. | — |
 
 ### Could
 
@@ -79,13 +84,13 @@ Work to tackle once the product is live.
 | API | Ownership checks on `excludeId` (slug routes) | Don’t let users exclude another user’s application id. | [API_REFERENCE.md](API_REFERENCE.md) |
 | API | Rate-limit remaining public/auth’d reads | e.g. by-id GET, viewer-status; optional tighter per-slug limits. | [API_REFERENCE.md](API_REFERENCE.md) |
 | API | Image magic-byte / safe decode on avatar upload | Same idea as PDF upload hardening. | [API_REFERENCE.md](API_REFERENCE.md) |
-| API | Read-only GET profile | Move ensure/create off GET (upsert on first PUT or dedicated path). | [API_REFERENCE.md](API_REFERENCE.md) |
 | Code quality | Single source of truth for DB types | Derive/generate from schema; stop dual `application` / `database` shapes. | [CODE_REVIEW.md](CODE_REVIEW.md) |
 
 ### Could
 
 | Subcategory | Item | Notes | Source |
 | ----------- | ---- | ----- | ------ |
+| Product | Custom vanity public id (premium) | Let users choose a branded public id (LinkedIn-style) instead of opaque id only. See [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md#future-custom-public-id-vanity-handle). | [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md) |
 | Product | Admin dashboard stats section | Above the search bar on `/admin`: total applications, active, archived, viewed at least once, etc. | — |
 | Marketing | Rebuild `/how-it-works` with dedicated content | Not a homepage duplicate — deeper, page-specific content. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | Marketing | Rebuild `/blog` with real posts | Restore route + shipping content (not an empty placeholder). | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |

@@ -5,10 +5,15 @@ export { generateSlug, buildSlug, validateSlugFormat };
 
 export async function checkSlugUniqueness(
   slug: string,
-  excludeId?: string
+  userId: string,
+  excludeId?: string,
 ): Promise<boolean> {
   const supabase = await createClient();
-  let query = supabase.from('applications').select('id').eq('slug', slug);
+  let query = supabase
+    .from('applications')
+    .select('id')
+    .eq('slug', slug)
+    .eq('user_id', userId);
 
   if (excludeId) {
     query = query.neq('id', excludeId);
@@ -27,9 +32,9 @@ export async function checkSlugUniqueness(
  * Format + DB uniqueness for a proposed application slug.
  * @param excludeId — application row id to ignore (edit flow).
  */
-/** Shown when the derived base slug is already taken (no numeric suffix fallback). */
+/** Shown when the slug is already used by another application for this user. */
 export const SLUG_COLLISION_USER_MESSAGE =
-  "This slug is already in use. Add your name to the URL, change the text slightly, or pick another slug.";
+  "You already have an application with this slug. Change the text slightly or pick another slug.";
 
 export class SlugCollisionError extends Error {
   readonly code = "SLUG_COLLISION" as const;
@@ -42,13 +47,14 @@ export class SlugCollisionError extends Error {
 
 export async function validateSlugForApplication(
   slug: string,
+  userId: string,
   excludeId?: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const format = validateSlugFormat(slug);
   if (!format.ok) return format;
 
   const trimmed = slug.trim();
-  const unique = await checkSlugUniqueness(trimmed, excludeId);
+  const unique = await checkSlugUniqueness(trimmed, userId, excludeId);
   if (!unique) {
     return {
       ok: false,
@@ -66,6 +72,7 @@ export async function validateSlugForApplication(
 export async function reserveBaseSlug(
   company: string,
   role: string,
+  userId: string,
   excludeId?: string,
   first_name?: string | null,
   last_name?: string | null,
@@ -76,7 +83,7 @@ export async function reserveBaseSlug(
       ? buildSlug(company, role, first_name, last_name, position)
       : generateSlug(company, role);
 
-  const unique = await checkSlugUniqueness(baseSlug, excludeId);
+  const unique = await checkSlugUniqueness(baseSlug, userId, excludeId);
   if (!unique) {
     throw new SlugCollisionError();
   }

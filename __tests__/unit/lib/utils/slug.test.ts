@@ -47,6 +47,8 @@ import {
   SLUG_COLLISION_USER_MESSAGE,
 } from "@/lib/utils/slug";
 
+const MOCK_USER_ID = "user-abc";
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -57,7 +59,7 @@ beforeEach(() => {
 describe("checkSlugUniqueness", () => {
   it("returns true when no row matches (slug is unique)", async () => {
     mockFrom.mockReturnValue(buildChain({ data: [], error: null }));
-    const unique = await checkSlugUniqueness("volvo-engineer");
+    const unique = await checkSlugUniqueness("volvo-engineer", MOCK_USER_ID);
     expect(unique).toBe(true);
   });
 
@@ -65,7 +67,7 @@ describe("checkSlugUniqueness", () => {
     mockFrom.mockReturnValue(
       buildChain({ data: [{ id: "existing-id" }], error: null }),
     );
-    const unique = await checkSlugUniqueness("volvo-engineer");
+    const unique = await checkSlugUniqueness("volvo-engineer", MOCK_USER_ID);
     expect(unique).toBe(false);
   });
 
@@ -73,9 +75,9 @@ describe("checkSlugUniqueness", () => {
     mockFrom.mockReturnValue(
       buildChain({ data: null, error: { message: "DB error" } }),
     );
-    await expect(checkSlugUniqueness("volvo-engineer")).rejects.toThrow(
-      "Failed to check slug uniqueness",
-    );
+    await expect(
+      checkSlugUniqueness("volvo-engineer", MOCK_USER_ID),
+    ).rejects.toThrow("Failed to check slug uniqueness");
   });
 });
 
@@ -99,7 +101,7 @@ describe("validateSlugForApplication", () => {
 
   it("returns ok:true for a valid and available slug", async () => {
     mockFrom.mockReturnValue(buildChain({ data: [], error: null }));
-    const result = await validateSlugForApplication("volvo-engineer");
+    const result = await validateSlugForApplication("volvo-engineer", MOCK_USER_ID);
     expect(result).toEqual({ ok: true });
   });
 
@@ -107,7 +109,7 @@ describe("validateSlugForApplication", () => {
     mockFrom.mockReturnValue(
       buildChain({ data: [{ id: "x" }], error: null }),
     );
-    const result = await validateSlugForApplication("volvo-engineer");
+    const result = await validateSlugForApplication("volvo-engineer", MOCK_USER_ID);
     expect(result.ok).toBe(false);
     expect((result as { ok: false; error: string }).error).toBe(
       SLUG_COLLISION_USER_MESSAGE,
@@ -119,7 +121,7 @@ describe("validateSlugForApplication", () => {
     // We verify that the query chain was set up with the from call at all — the
     // important thing is the mock is called, meaning no short-circuit.
     mockFrom.mockReturnValue(buildChain({ data: [], error: null }));
-    await validateSlugForApplication("volvo-engineer", "some-id-123");
+    await validateSlugForApplication("volvo-engineer", MOCK_USER_ID, "some-id-123");
     expect(mockFrom).toHaveBeenCalledWith("applications");
   });
 });
@@ -130,7 +132,7 @@ describe("validateSlugForApplication", () => {
 describe("reserveBaseSlug", () => {
   it("returns the derived slug when it is unique", async () => {
     mockFrom.mockReturnValue(buildChain({ data: [], error: null }));
-    const slug = await reserveBaseSlug("Volvo", "Engineer");
+    const slug = await reserveBaseSlug("Volvo", "Engineer", MOCK_USER_ID);
     expect(slug).toBe("volvo-engineer");
   });
 
@@ -138,7 +140,7 @@ describe("reserveBaseSlug", () => {
     mockFrom.mockReturnValue(
       buildChain({ data: [{ id: "taken" }], error: null }),
     );
-    await expect(reserveBaseSlug("Volvo", "Engineer")).rejects.toThrow(
+    await expect(reserveBaseSlug("Volvo", "Engineer", MOCK_USER_ID)).rejects.toThrow(
       SlugCollisionError,
     );
   });
@@ -148,6 +150,7 @@ describe("reserveBaseSlug", () => {
     const slug = await reserveBaseSlug(
       "Volvo",
       "Engineer",
+      MOCK_USER_ID,
       undefined,
       "John",
       "Doe",
@@ -161,6 +164,7 @@ describe("reserveBaseSlug", () => {
     const slug = await reserveBaseSlug(
       "Volvo",
       "Engineer",
+      MOCK_USER_ID,
       undefined,
       "John",
       "Doe",
@@ -174,6 +178,7 @@ describe("reserveBaseSlug", () => {
     const slug = await reserveBaseSlug(
       "Volvo",
       "Engineer",
+      MOCK_USER_ID,
       undefined,
       "",
       "",

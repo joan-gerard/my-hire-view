@@ -7,6 +7,7 @@ import ViewTracker from "@/components/view/ViewTracker";
 import type { Application } from "@/lib/types/application";
 
 interface ApplicationPageContentProps {
+  publicId: string;
   slug: string;
   application: Application;
   refetchApplication: () => Promise<void>;
@@ -19,6 +20,7 @@ interface ApplicationPageContentProps {
  * video pitch modal, and optional about section.
  */
 export default function ApplicationPageContent({
+  publicId,
   slug,
   application,
   refetchApplication,
@@ -27,7 +29,7 @@ export default function ApplicationPageContent({
 }: ApplicationPageContentProps) {
   return (
     <div className="pb-12">
-      <ViewTracker slug={slug} />
+      <ViewTracker publicId={publicId} slug={slug} />
       <div className="space-y-12">
         <section className="bg-[var(--secondary-background)] rounded-xl border border-[var(--foreground)]/10">
           {application.cv_exists === false ? (
@@ -35,6 +37,7 @@ export default function ApplicationPageContent({
           ) : (
             <PDFViewer
               url={application.cv_url}
+              publicId={publicId}
               slug={slug}
               cvFilename={application.cv_filename}
               useOriginalCvFilename={application.use_original_cv_filename}

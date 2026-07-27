@@ -1,9 +1,14 @@
 "use client";
 
 import ApplicationForm from "@/components/forms/ApplicationForm";
+import { ArrowRightIcon } from "@/components/admin/icons";
+import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
+import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
+import { createClient } from "@/lib/supabase/client";
 import type { ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
 import { validateSlugFormat } from "@/lib/utils/slug-generate";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -12,6 +17,11 @@ export default function NewApplicationPage() {
   const isSubmittingRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [metaNames, setMetaNames] = useState<{
+    first_name: string;
+    last_name: string;
+  } | null>(null);
+  const [publicId, setPublicId] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +30,26 @@ export default function NewApplicationPage() {
       try {
         const res = await fetch("/api/profile", { credentials: "include" });
         const json = await res.json().catch(() => ({}));
-        if (!cancelled && json.data) setProfile(json.data);
+        if (cancelled) return;
+
+        if (res.ok && json.data) {
+          setProfile(json.data);
+          if (typeof json.data.public_id === "string") {
+            setPublicId(json.data.public_id);
+          }
+          return;
+        }
+
+        // No profiles row yet — seed names and public id from Auth user_metadata.
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!cancelled && user) {
+          setMetaNames(namesFromUserMetadata(user));
+          const pid = publicIdFromUserMetadata(user);
+          if (pid) setPublicId(pid);
+        }
       } finally {
         if (!cancelled) setProfileLoading(false);
       }
@@ -54,6 +83,7 @@ export default function NewApplicationPage() {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify(slugBody),
         });
         if (!slugResponse.ok) {
@@ -126,14 +156,15 @@ export default function NewApplicationPage() {
     }
   };
 
+  const hasSavedProfile = Boolean(profile);
   const initialData: Partial<ApplicationFormData> = {
     company: "",
     role: "",
     slug: "",
     cv_url: "",
     video_url: "",
-    first_name: profile?.first_name ?? "",
-    last_name: profile?.last_name ?? "",
+    first_name: profile?.first_name ?? metaNames?.first_name ?? "",
+    last_name: profile?.last_name ?? metaNames?.last_name ?? "",
     location: profile?.location ?? "",
     portfolio_url: profile?.portfolio_url ?? "",
     linkedin_url: profile?.linkedin_url ?? "",
@@ -144,6 +175,22 @@ export default function NewApplicationPage() {
       <h1 className="text-3xl font-bold text-[var(--foreground)]">
         Create New Application
       </h1>
+      {!profileLoading && !hasSavedProfile && (
+        <p className="flex items-start gap-2 rounded-md border border-[var(--foreground)]/10 bg-[var(--brand-secondary)]/40 px-4 py-3 text-sm text-[var(--foreground)]">
+          <span className="min-w-0 flex-1">
+            Complete your profile to prefill location, links, and picture on new
+            applications. Your name from signup is used below until then.
+          </span>
+          <Link
+            href="/admin/profile"
+            className="mt-0.5 inline-flex shrink-0 rounded p-0.5 text-[var(--brand-primary)] hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]"
+            aria-label="Go to profile"
+            title="Go to profile"
+          >
+            <ArrowRightIcon className="h-4 w-4" />
+          </Link>
+        </p>
+      )}
       <div className="rounded-lg bg-[var(--secondary-background)] p-6 shadow border border-[var(--foreground)]/10">
         {profileLoading ? (
           <div className="space-y-4">
@@ -156,6 +203,7 @@ export default function NewApplicationPage() {
             onSubmit={handleSubmit}
             loading={loading}
             profilePictureUrl={profile?.profile_picture_url ?? null}
+            publicId={publicId ?? undefined}
             resolveSlugOnCreate
           />
         )}

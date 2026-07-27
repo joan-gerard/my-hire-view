@@ -10,9 +10,25 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 interface ProfileFormProps {
   initialData: Profile | null;
+  /**
+   * True when a profiles row already exists in the DB.
+   * When false (metadata seed only), Save stays enabled so the first PUT can create the row.
+   */
+  hasExistingProfile: boolean;
 }
 
-export default function ProfileForm({ initialData }: ProfileFormProps) {
+function normalizeText(value: string | null | undefined): string {
+  return (value ?? "").trim();
+}
+
+function normalizePictureUrl(value: string | null | undefined): string | null {
+  return value?.trim() || null;
+}
+
+export default function ProfileForm({
+  initialData,
+  hasExistingProfile,
+}: ProfileFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -34,6 +50,33 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
   const hadProfilePictureOnLoad = Boolean(
     initialData?.profile_picture_url?.trim()
   );
+
+  const firstName = normalizeText(formData.first_name);
+  const lastName = normalizeText(formData.last_name);
+  const namesValid = Boolean(firstName && lastName);
+
+  const isDirty =
+    !hasExistingProfile ||
+    firstName !== normalizeText(initialData?.first_name) ||
+    lastName !== normalizeText(initialData?.last_name) ||
+    normalizeText(formData.location) !==
+      normalizeText(initialData?.location) ||
+    normalizeText(formData.portfolio_url) !==
+      normalizeText(initialData?.portfolio_url) ||
+    normalizeText(formData.linkedin_url) !==
+      normalizeText(initialData?.linkedin_url) ||
+    normalizePictureUrl(formData.profile_picture_url) !==
+      normalizePictureUrl(initialData?.profile_picture_url);
+
+  const canSave = namesValid && isDirty && !loading && !uploading;
+
+  const disabledReason = (() => {
+    if (canSave || loading) return null;
+    if (uploading) return "Wait for the picture upload to finish.";
+    if (!namesValid) return "First name and last name are required.";
+    if (!isDirty) return "No changes to save.";
+    return null;
+  })();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -78,6 +121,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!canSave) return;
     setError(null);
     setLoading(true);
     try {
@@ -85,12 +129,12 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          first_name: formData.first_name.trim() || null,
-          last_name: formData.last_name.trim() || null,
-          location: formData.location.trim() || null,
-          portfolio_url: formData.portfolio_url.trim() || null,
-          linkedin_url: formData.linkedin_url.trim() || null,
-          profile_picture_url: formData.profile_picture_url?.trim() || null,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          location: normalizeText(formData.location) || null,
+          portfolio_url: normalizeText(formData.portfolio_url) || null,
+          linkedin_url: normalizeText(formData.linkedin_url) || null,
+          profile_picture_url: normalizePictureUrl(formData.profile_picture_url),
         }),
       });
       const json = await response.json();
@@ -239,9 +283,29 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         )}
       </fieldset>
 
-      <Button type="submit" variant="primary" loading={loading}>
-        Save profile
-      </Button>
+      <div
+        className="group relative inline-flex"
+        title={disabledReason ?? undefined}
+      >
+        <Button
+          type="submit"
+          variant="primary"
+          loading={loading}
+          disabled={!canSave}
+          aria-describedby={disabledReason ? "save-profile-disabled-reason" : undefined}
+        >
+          Save profile
+        </Button>
+        {disabledReason && (
+          <span
+            id="save-profile-disabled-reason"
+            role="tooltip"
+            className="pointer-events-none absolute bottom-full left-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--foreground)] px-2.5 py-1.5 text-xs text-[var(--background)] shadow-lg group-hover:block group-focus-within:block"
+          >
+            {disabledReason}
+          </span>
+        )}
+      </div>
     </form>
   );
 }
