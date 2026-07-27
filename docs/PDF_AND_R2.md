@@ -4,39 +4,44 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 
 ## Overview
 
-- **What we store:** One PDF per application (the CV), referenced by `applications.cv_url`.
-- **Where:** Cloudflare R2. Objects are uploaded with a **public URL** (custom domain or [R2.dev public bucket URL](https://developers.cloudflare.com/r2/buckets/public-buckets/)) so the shareable application page can load the PDF.
-- **Policy:** We use **upload on save**. The file is only sent to R2 when the user saves the application. Replacing or deleting an application deletes the previous object so we avoid orphan files.
+- **What we store:** CV PDFs in Cloudflare R2.
+  - **Master CVs** — up to 5 per user, managed on the profile (`master_cvs` table, keys `cvs/masters/{userId}/…`).
+  - **Custom CVs** — one optional per-application upload (keys via idempotent upload).
+- **Where:** Cloudflare R2. Objects are uploaded with a **public URL** so the shareable application page can load the PDF.
+- **Policy:** Upload on save for custom CVs. Application delete/replace removes **custom** objects only; master CVs are deleted only from the profile library. See [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md).
 
 ## Flow
 
 ### Create application
 
-1. User fills the form and selects a PDF in the CV field. The file is kept in memory (browser `File` object); nothing is uploaded yet.
-2. User sees a **preview** of the PDF via a blob URL (`URL.createObjectURL(file)`). They can change the file (or remove the selection) without touching R2.
-3. When the user clicks **Save Application**, the form:
-   - If a file is selected: uploads it once to `POST /api/upload`, receives a public HTTPS URL, then sends that URL in `POST /api/applications` with the rest of the data.
-   - If editing an existing application and no new file was selected: the existing `cv_url` is sent as-is.
-4. The application row is created with `cv_url` pointing to the new object. Only one CV object exists per saved application.
+1. Prefer selecting a **master CV** from the profile library (default when any exist).
+2. Or choose **custom**: select a PDF (held in memory until Save), then upload on submit via `POST /api/upload`.
+3. Application row stores `cv_url`, `cv_kind` (`master` | `custom`), and optional `master_cv_id`.
 
 ### Edit application
 
-1. The form loads with the existing `cv_url`. User can open it via the “View” link.
-2. If the user selects a **new** PDF, that file is held in memory and a preview is shown. On **Save**:
-   - The new file is uploaded to `/api/upload`; the API returns the new URL.
-   - `PUT /api/applications` updates the row with the new `cv_url` and **deletes the previous object** in R2 when the URL changes.
+1. Form shows current mode (master vs custom) and filename.
+2. Switching **custom → master** shows a confirm modal; the custom R2 object is deleted on save when `cv_url` changes.
+3. Switching **master → custom** uploads a new custom file; the master library entry is unchanged.
 
 ### Delete application
 
-1. `DELETE /api/applications?id=...` reads `cv_url`, deletes the object if it belongs to our public base URL (`deleteCvIfOurs`), then deletes the database row.
+1. If `cv_kind = custom`, delete the R2 object (`deleteApplicationCvIfCustom`).
+2. If `cv_kind = master`, leave the R2 object (still in the library).
+
+### Delete master CV (profile)
+
+1. Confirm dialog (allowed even when applications still reference it).
+2. Delete library row + R2 object. Applications keep the old URL and show **CV missing** on the dashboard until edited.
 
 ## API and code
 
 | Piece | Role |
 |-------|------|
-| `POST /api/upload` | **Requires a signed-in session** (`requireAuth()`; **401** without). Accepts a PDF (`FormData`), validates type (PDF) and size (max 10MB). Requires **`Idempotency-Key`** (HTTP header) or **`idempotency_key`** (form field): 8–128 chars, `[a-zA-Z0-9_-]` only (e.g. a UUID). Object key is `cvs/idempotency/<key>.pdf`. If that object already exists, returns the same `{ url }` without uploading again (`idempotent: true`). Otherwise `PutObject` and returns `{ url, idempotent: false }`. |
-| `lib/storage/r2-client.ts` | Builds S3-compatible client (`endpoint`: `https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`, region `auto`). |
-| `lib/utils/cv-storage.ts` | `isCvStorageUrl(url)` — true only for URLs under `R2_PUBLIC_BASE_URL`. `deleteCvIfOurs` / `checkCvObjectExists` — `DeleteObject` / `HeadObject` when the URL is ours. |
+| `POST /api/upload` | Custom CV upload (auth + idempotency). Keys `cvs/idempotency/<key>.pdf`. |
+| `GET/POST/DELETE /api/profile/master-cvs` | Master CV library (max 5). Keys `cvs/masters/{userId}/{id}.pdf`. |
+| `lib/storage/r2-client.ts` | S3-compatible R2 client. |
+| `lib/utils/cv-storage.ts` | `deleteCvIfOurs`, `deleteApplicationCvIfCustom`, `checkCvObjectExists`. |
 
 ## Idempotency
 

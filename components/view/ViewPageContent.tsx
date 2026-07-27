@@ -58,7 +58,7 @@ export default function ViewPageContent({
     };
   }, [publicId, slug]);
 
-  const isArchived = application.is_active === false;
+  const isArchived = application.status === "archived";
 
   return (
     <div className="min-h-screen bg-[var(--background)]">

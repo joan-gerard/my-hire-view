@@ -122,7 +122,13 @@ export function useApplications(): UseApplicationsResult {
       const data = await archiveApplicationApi(id);
       setApplications((prev) =>
         prev.map((app) =>
-          app.id === id ? { ...app, is_active: data.is_active } : app
+          app.id === id
+            ? {
+                ...app,
+                status: data.status,
+                archived_at: data.archived_at ?? null,
+              }
+            : app
         )
       );
     } catch (err) {
@@ -137,7 +143,13 @@ export function useApplications(): UseApplicationsResult {
       const data = await restoreApplicationApi(id);
       setApplications((prev) =>
         prev.map((app) =>
-          app.id === id ? { ...app, is_active: data.is_active } : app
+          app.id === id
+            ? {
+                ...app,
+                status: data.status,
+                archived_at: data.archived_at ?? null,
+              }
+            : app
         )
       );
     } catch (err) {

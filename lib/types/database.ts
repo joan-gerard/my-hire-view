@@ -16,7 +16,8 @@ export interface Database {
           /** Last time the page was viewed by a non-owner (null if never viewed). */
           last_viewed_at: string | null;
           user_id: string;
-          is_active: boolean;
+          status: "active" | "draft" | "archived";
+          archived_at: string | null;
           first_name: string | null;
           last_name: string | null;
           location: string | null;
@@ -27,6 +28,8 @@ export interface Database {
           use_original_cv_filename: boolean;
           profile_picture_url: string | null;
           show_profile_picture: boolean;
+          cv_kind: "master" | "custom";
+          master_cv_id: string | null;
         };
         Insert: {
           id?: string;
@@ -41,7 +44,8 @@ export interface Database {
           download_count?: number;
           last_viewed_at?: string | null;
           user_id: string;
-          is_active?: boolean;
+          status?: "active" | "draft" | "archived";
+          archived_at?: string | null;
           first_name?: string | null;
           last_name?: string | null;
           location?: string | null;
@@ -52,6 +56,8 @@ export interface Database {
           use_original_cv_filename?: boolean;
           profile_picture_url?: string | null;
           show_profile_picture?: boolean;
+          cv_kind?: "master" | "custom";
+          master_cv_id?: string | null;
         };
         Update: {
           id?: string;
@@ -66,7 +72,8 @@ export interface Database {
           download_count?: number;
           last_viewed_at?: string | null;
           user_id?: string;
-          is_active?: boolean;
+          status?: "active" | "draft" | "archived";
+          archived_at?: string | null;
           first_name?: string | null;
           last_name?: string | null;
           location?: string | null;
@@ -77,6 +84,31 @@ export interface Database {
           use_original_cv_filename?: boolean;
           profile_picture_url?: string | null;
           show_profile_picture?: boolean;
+          cv_kind?: "master" | "custom";
+          master_cv_id?: string | null;
+        };
+      };
+      master_cvs: {
+        Row: {
+          id: string;
+          user_id: string;
+          url: string;
+          filename: string;
+          label: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          url: string;
+          filename: string;
+          label?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          url?: string;
+          filename?: string;
+          label?: string | null;
         };
       };
       profiles: {

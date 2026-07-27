@@ -15,8 +15,30 @@ export function publicIdFromUserMetadata(user: AuthUserLike): string | null {
 }
 
 /**
+ * Read-only: profiles.public_id if present, else Auth user_metadata.
+ * Does not create or update a profiles row (use ensureProfilePublicId for that).
+ */
+export async function resolvePublicIdReadOnly(
+  supabase: SupabaseClient,
+  user: AuthUserLike,
+): Promise<string | null> {
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("public_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existing?.public_id) {
+    return existing.public_id;
+  }
+
+  return publicIdFromUserMetadata(user);
+}
+
+/**
  * Ensures the user has a profiles.public_id (and metadata copy when newly generated).
  * Creates or updates a minimal profiles row when needed so public URLs can resolve.
+ * Call on application create (not on dashboard list GET).
  */
 export async function ensureProfilePublicId(
   supabase: SupabaseClient,

@@ -48,7 +48,7 @@ export async function deleteApplication(id: string): Promise<void> {
 }
 
 /**
- * Archives an application (sets is_active to false).
+ * Archives an application (`status = archived`, sets `archived_at`).
  * @returns The updated application from the API
  * @throws Error with message on non-OK response
  */
@@ -56,7 +56,7 @@ export async function archiveApplication(id: string): Promise<Application> {
   const response = await fetch('/api/applications', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, is_active: false }),
+    body: JSON.stringify({ id, status: 'archived' }),
   });
   if (!response.ok) {
     const { error } = await response.json().catch(() => ({}));
@@ -67,7 +67,7 @@ export async function archiveApplication(id: string): Promise<Application> {
 }
 
 /**
- * Restores an archived application (sets is_active to true).
+ * Restores an archived application (`status = active`, clears `archived_at`).
  * @returns The updated application from the API
  * @throws Error with message on non-OK response
  */
@@ -75,7 +75,7 @@ export async function restoreApplication(id: string): Promise<Application> {
   const response = await fetch('/api/applications', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, is_active: true }),
+    body: JSON.stringify({ id, status: 'active' }),
   });
   if (!response.ok) {
     const { error } = await response.json().catch(() => ({}));

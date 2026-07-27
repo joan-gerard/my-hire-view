@@ -61,6 +61,18 @@ export async function deleteCvIfOurs(
 }
 
 /**
+ * Deletes an application CV from R2 only when it is app-owned (`custom`).
+ * Master library CVs stay in R2 until removed from the profile.
+ */
+export async function deleteApplicationCvIfCustom(
+  url: string | null | undefined,
+  cvKind: "master" | "custom" | null | undefined,
+): Promise<void> {
+  if (cvKind === "master") return;
+  await deleteCvIfOurs(url);
+}
+
+/**
  * Returns true if the URL is ours and HeadObject succeeds.
  * Returns false for non-storage URLs or missing objects.
  */

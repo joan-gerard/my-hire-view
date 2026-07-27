@@ -1,9 +1,10 @@
-import Link from 'next/link';
-import { requireAuth } from '@/lib/auth';
-import { namesFromUserMetadata } from '@/lib/auth/ensure-profile';
-import { createClient } from '@/lib/supabase/server';
-import ProfileForm from '@/components/forms/ProfileForm';
-import type { Profile } from '@/lib/types/profile';
+import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
+import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
+import { createClient } from "@/lib/supabase/server";
+import MasterCvLibrarySection from "@/components/forms/MasterCvLibrarySection";
+import ProfileForm from "@/components/forms/ProfileForm";
+import type { Profile } from "@/lib/types/profile";
 
 /**
  * Profile page for the account owner. Shows identity from Supabase Auth,
@@ -18,10 +19,10 @@ export default async function AdminProfilePage() {
   const supabase = await createClient();
 
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
+    .from("profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
   const metaNames = namesFromUserMetadata(user);
   const initialData: Profile | null = profile
@@ -38,36 +39,51 @@ export default async function AdminProfilePage() {
       };
 
   const { count } = await supabase
-    .from('applications')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id);
+    .from("applications")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
 
   const activeCountResult = await supabase
-    .from('applications')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('is_active', true);
+    .from("applications")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("status", "active");
+
+  const archivedCountResult = await supabase
+    .from("applications")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("status", "archived");
 
   const applicationCount = count ?? 0;
   const activeCount = activeCountResult.count ?? 0;
+  const archivedCount = archivedCountResult.count ?? 0;
 
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-[var(--foreground)]">Profile</h1>
 
       <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-[var(--foreground)]">Account</h2>
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">
+          Account
+        </h2>
         <dl className="mt-4 space-y-3">
           <div>
-            <dt className="text-sm font-medium text-[var(--foreground)]/60">Email</dt>
-            <dd className="mt-1 text-sm text-[var(--foreground)]">{user.email ?? '—'}</dd>
+            <dt className="text-sm font-medium text-[var(--foreground)]/60">
+              Email
+            </dt>
+            <dd className="mt-1 text-sm text-[var(--foreground)]">
+              {user.email ?? "—"}
+            </dd>
           </div>
           {user.created_at && (
             <div>
-              <dt className="text-sm font-medium text-[var(--foreground)]/60">Member since</dt>
+              <dt className="text-sm font-medium text-[var(--foreground)]/60">
+                Member since
+              </dt>
               <dd className="mt-1 text-sm text-[var(--foreground)]">
                 {new Date(user.created_at).toLocaleDateString(undefined, {
-                  dateStyle: 'long',
+                  dateStyle: "long",
                 })}
               </dd>
             </div>
@@ -76,14 +92,17 @@ export default async function AdminProfilePage() {
       </section>
 
       <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-[var(--foreground)]">Profile details</h2>
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">
+          Profile details
+        </h2>
         <p className="mt-1 text-sm text-[var(--foreground)]/60">
-          This info is used when you create or update applications so recruiters see your name and links.
+          This info is used when you create or update applications so recruiters
+          see your name and links.
         </p>
         {!profile && (
           <p className="mt-2 rounded-md bg-[var(--brand-secondary)]/40 px-3 py-2 text-sm text-[var(--foreground)]">
-            Your name is prefilled from signup. Save your profile to store location, links, and
-            picture for use on new applications.
+            Your name is prefilled from signup. Save your profile to store
+            location, links, and picture for use on new applications.
           </p>
         )}
         <div className="mt-4">
@@ -94,14 +113,22 @@ export default async function AdminProfilePage() {
         </div>
       </section>
 
+      <MasterCvLibrarySection />
+
       <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-[var(--foreground)]">Applications</h2>
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">
+          Applications
+        </h2>
         <p className="mt-2 text-sm text-[var(--foreground)]/80">
           You have <strong>{applicationCount}</strong> application
-          {applicationCount !== 1 ? 's' : ''} in total
+          {applicationCount !== 1 ? "s" : ""} in total
           {applicationCount > 0 && (
-            <> ({activeCount} active, {applicationCount - activeCount} archived)</>
-          )}.
+            <>
+              {" "}
+              ({activeCount} active, {archivedCount} archived)
+            </>
+          )}
+          .
         </p>
         <Link
           href="/admin"

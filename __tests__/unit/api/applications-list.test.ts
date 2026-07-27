@@ -27,8 +27,11 @@ vi.mock("@/lib/rate-limit", () => ({
 }));
 vi.mock("@/lib/utils/cv-storage", () => ({
   deleteCvIfOurs: vi.fn(),
+  deleteApplicationCvIfCustom: vi.fn(),
+  checkCvObjectExists: vi.fn().mockResolvedValue(true),
 }));
 vi.mock("@/lib/auth/ensure-public-id", () => ({
+  resolvePublicIdReadOnly: vi.fn().mockResolvedValue("k7x2m9ab"),
   ensureProfilePublicId: vi.fn().mockResolvedValue("k7x2m9ab"),
 }));
 
@@ -46,11 +49,13 @@ const LIST_ITEM = {
   slug: "acme-engineer",
   company: "Acme",
   role: "Engineer",
-  is_active: true,
+  status: "active",
+  archived_at: null,
   view_count: 2,
   download_count: 1,
   created_at: "2026-07-01T12:00:00.000Z",
   last_viewed_at: null,
+  cv_url: "https://r2.example.com/cv.pdf",
 };
 
 function makeGetRequest(query = ""): NextRequest {
@@ -78,7 +83,9 @@ describe("GET /api/applications", () => {
     const response = await GET(makeGetRequest());
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.data).toEqual([{ ...LIST_ITEM, public_id: "k7x2m9ab" }]);
+    expect(json.data).toEqual([
+      { ...LIST_ITEM, public_id: "k7x2m9ab", cv_exists: true },
+    ]);
     expect(json.meta).toEqual({
       limit: APPLICATION_LIST_DEFAULT_LIMIT,
       offset: 0,

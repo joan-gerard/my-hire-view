@@ -1,15 +1,18 @@
 "use client";
 
 import Input from "@/components/ui/Input";
-import type { ApplicationFormData } from "@/lib/types/application";
+import type {
+  ApplicationCvKind,
+  ApplicationFormData,
+} from "@/lib/types/application";
+import type { MasterCv } from "@/lib/types/master-cv";
 import { buildSlug, validateSlugFormat } from "@/lib/utils/slug-generate";
 import { getApplicationUrl } from "@/lib/utils/url";
 import { useEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
 import type { CandidateFieldKey } from "./CandidateFieldsSection";
 import CandidateFieldsSection from "./CandidateFieldsSection";
-import CvDownloadFilenameField from "./CvDownloadFilenameField";
-import FileUpload from "./FileUpload";
+import CvSourceField from "./CvSourceField";
 import NameInUrlField, { type SlugNamePosition } from "./NameInUrlField";
 import ProfilePictureField from "./ProfilePictureField";
 import YouTubeUrlInput from "./YouTubeUrlInput";
@@ -38,6 +41,8 @@ export type ApplicationFormInitialData = Partial<ApplicationFormData> & {
   show_profile_picture?: boolean;
   /** Current application profile picture URL (for edit); fallback for checkbox default when show_profile_picture not set. */
   profile_picture_url?: string | null;
+  cv_kind?: ApplicationCvKind;
+  master_cv_id?: string | null;
 };
 
 type SlugLiveStatus =
@@ -80,6 +85,7 @@ export default function ApplicationForm({
   resolveSlugOnCreate = false,
 }: ApplicationFormProps) {
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
+  const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
   const showProfilePictureDefault =
     initialData?.show_profile_picture !== undefined
@@ -104,6 +110,8 @@ export default function ApplicationForm({
     linkedin_url: initialData?.linkedin_url ?? "",
     cv_filename: initialData?.cv_filename ?? null,
     use_original_cv_filename: initialData?.use_original_cv_filename ?? true,
+    cv_kind: initialData?.cv_kind,
+    master_cv_id: initialData?.master_cv_id ?? null,
   });
 
   const [include, setInclude] = useState<Record<CandidateFieldKey, boolean>>(
@@ -132,15 +140,83 @@ export default function ApplicationForm({
   /** One key per selected CV file; server dedupes uploads / retries to the same R2 object. */
   const cvUploadIdempotencyKeyRef = useRef<string | null>(null);
 
+  const [masterCvs, setMasterCvs] = useState<MasterCv[]>([]);
+  const [mastersLoading, setMastersLoading] = useState(true);
+  const [cvMode, setCvMode] = useState<ApplicationCvKind>(() => {
+    if (initialData?.cv_kind === "master" || initialData?.cv_kind === "custom") {
+      return initialData.cv_kind;
+    }
+    return "master";
+  });
+  const [selectedMasterId, setSelectedMasterId] = useState<string | null>(
+    initialData?.master_cv_id ?? null,
+  );
+  const [switchToMasterConfirmOpen, setSwitchToMasterConfirmOpen] =
+    useState(false);
+  /** Tracks whether the current edit still has an unsaved custom file that would be abandoned. */
+  const hadCustomCvOnLoad =
+    initialData?.cv_kind === "custom" && Boolean(initialData?.cv_url?.trim());
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadMasters() {
+      try {
+        const res = await fetch("/api/profile/master-cvs", {
+          credentials: "include",
+        });
+        const json = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        const list = (json.data as MasterCv[] | undefined) ?? [];
+        setMasterCvs(list);
+        if (!initialData?.cv_kind) {
+          if (list.length > 0) {
+            setCvMode("master");
+            setSelectedMasterId((prev) => prev ?? list[0]!.id);
+            setFormData((prev) => ({
+              ...prev,
+              cv_url: list[0]!.url,
+              cv_filename: list[0]!.filename,
+              master_cv_id: list[0]!.id,
+              cv_kind: "master",
+            }));
+          } else {
+            setCvMode("custom");
+          }
+        } else if (
+          initialData.cv_kind === "master" &&
+          initialData.master_cv_id &&
+          !list.some((m) => m.id === initialData.master_cv_id)
+        ) {
+          // Master was deleted; keep URL for display but force re-pick
+          setSelectedMasterId(null);
+        }
+      } finally {
+        if (!cancelled) setMastersLoading(false);
+      }
+    }
+    void loadMasters();
+    return () => {
+      cancelled = true;
+    };
+    // Only on mount / when initial identity changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const getFileSignature = (file: File): string =>
     `${file.name}:${file.size}:${file.lastModified}`;
 
   const hasCompany = Boolean(formData.company.trim());
   const hasRole = Boolean(formData.role.trim());
   const hasSlug = Boolean(formData.slug.trim());
-  const hasCv = Boolean(
-    cvPendingFile || (formData.cv_url && formData.cv_url.trim()),
-  );
+  const hasCv =
+    cvMode === "master"
+      ? Boolean(selectedMasterId)
+      : Boolean(
+          cvPendingFile ||
+            (formData.cv_url &&
+              formData.cv_url.trim() &&
+              initialData?.cv_kind === "custom"),
+        );
   const hasVideo = Boolean(formData.video_url.trim());
   const slugReady =
     slugLiveStatus.kind === "available" && hasSlug;
@@ -154,7 +230,10 @@ export default function ApplicationForm({
     if (canSubmit || loading) return null;
     if (!hasCompany) return "Company name is required.";
     if (!hasRole) return "Role is required.";
-    if (!hasCv) return "A CV file is required.";
+    if (!hasCv)
+      return cvMode === "master"
+        ? "Select a master CV, or upload a custom CV."
+        : "Upload a CV file for this application.";
     if (!hasVideo) return "YouTube URL is required.";
     if (slugLiveStatus.kind === "checking") {
       return "Please wait until the slug has finished updating.";
@@ -413,8 +492,18 @@ export default function ApplicationForm({
       if (!formData.role.trim()) newErrors.role = "Role is required";
       const slugTrimmed = formData.slug.trim();
       if (!slugTrimmed) newErrors.slug = "Slug is required";
-      const hasCv = cvPendingFile || (formData.cv_url && formData.cv_url.trim());
-      if (!hasCv) newErrors.cv_url = "CV file is required";
+      if (cvMode === "master") {
+        if (!selectedMasterId) newErrors.cv_url = "Select a master CV";
+      } else {
+        const hasCustomCv =
+          cvPendingFile ||
+          (initialData?.cv_kind === "custom" &&
+            formData.cv_url &&
+            formData.cv_url.trim());
+        if (!hasCustomCv) {
+          newErrors.cv_url = "Upload a CV file for this application";
+        }
+      }
       if (!formData.video_url.trim())
         newErrors.video_url = "YouTube URL is required";
 
@@ -423,25 +512,7 @@ export default function ApplicationForm({
         return;
       }
 
-      if (resolveSlugOnCreate && !slugManuallyEdited) {
-        if (slugLiveStatus.kind === "checking") {
-          newErrors.slug = "Please wait until the slug has finished updating.";
-          setErrors(newErrors);
-          return;
-        }
-        if (slugLiveStatus.kind === "unavailable") {
-          newErrors.slug =
-            slugLiveStatus.message ||
-            "Could not reserve a slug. Fix company/role or try again.";
-          setErrors(newErrors);
-          return;
-        }
-        if (slugLiveStatus.kind === "invalid") {
-          newErrors.slug = slugLiveStatus.message;
-          setErrors(newErrors);
-          return;
-        }
-      }
+      // canSubmit already requires slugLiveStatus === available; server validation below for races.
 
       if (serverSlugValidation || (resolveSlugOnCreate && slugManuallyEdited)) {
         const formatCheck = validateSlugFormat(slugTrimmed);
@@ -483,7 +554,19 @@ export default function ApplicationForm({
       }
 
       let cvUrl = formData.cv_url.trim();
-      if (cvPendingFile) {
+      let cvFilename = formData.cv_filename ?? null;
+      let masterCvId: string | null = null;
+
+      if (cvMode === "master") {
+        const master = masterCvs.find((m) => m.id === selectedMasterId);
+        if (!master) {
+          setErrors({ cv_url: "Select a master CV" });
+          return;
+        }
+        cvUrl = master.url;
+        cvFilename = master.filename;
+        masterCvId = master.id;
+      } else if (cvPendingFile) {
         const signature = getFileSignature(cvPendingFile);
         const cachedUpload = uploadedPendingFileRef.current;
         if (cachedUpload?.signature === signature) {
@@ -510,6 +593,7 @@ export default function ApplicationForm({
           cvUrl = url;
           uploadedPendingFileRef.current = { signature, url };
         }
+        cvFilename = cvPendingFile.name;
       }
 
       const includePicture = hasProfilePicture && showProfilePicture;
@@ -530,11 +614,11 @@ export default function ApplicationForm({
           ? formData.linkedin_url?.trim() || null
           : null,
         slugNamePosition,
-        cv_filename: cvPendingFile
-          ? cvPendingFile.name
-          : (formData.cv_filename ?? null),
+        cv_filename: cvFilename,
         use_original_cv_filename: formData.use_original_cv_filename ?? true,
         show_profile_picture: includePicture,
+        cv_kind: cvMode,
+        master_cv_id: masterCvId,
         ...(resolveSlugOnCreate ? { slugManuallyEdited } : {}),
       };
       await onSubmit(payload);
@@ -670,32 +754,138 @@ export default function ApplicationForm({
         This will be used in the URL: {shareableUrl || "..."}
       </p>
 
-      <FileUpload
-        value={formData.cv_url}
+      <CvSourceField
+        isEdit={isEdit}
+        currentFilename={initialData?.cv_filename ?? null}
+        currentKind={initialData?.cv_kind ?? null}
+        currentUrl={initialData?.cv_url ?? ""}
+        cvUrlExists={initialData?.cvUrlExists}
+        onRetryCvCheck={onRetryCvCheck}
+        mode={cvMode}
+        masterCvs={masterCvs}
+        mastersLoading={mastersLoading}
+        selectedMasterId={selectedMasterId}
         pendingFile={cvPendingFile}
+        error={errors.cv_url}
+        onSelectMaster={(masterId) => {
+          const master = masterCvs.find((m) => m.id === masterId);
+          if (!master) return;
+          setSelectedMasterId(masterId);
+          setFormData((prev) => ({
+            ...prev,
+            cv_url: master.url,
+            cv_filename: master.filename,
+            master_cv_id: master.id,
+            cv_kind: "master",
+          }));
+          setErrors((prev) => ({ ...prev, cv_url: undefined }));
+        }}
+        onSwitchToCustom={() => {
+          setCvMode("custom");
+          setSelectedMasterId(null);
+          setCvPendingFile(null);
+          uploadedPendingFileRef.current = null;
+          cvUploadIdempotencyKeyRef.current = null;
+          // Keep saved custom URL until a new file is chosen; clear if leaving a master.
+          if (initialData?.cv_kind === "custom" && isEdit) {
+            setFormData((prev) => ({
+              ...prev,
+              cv_url: initialData.cv_url ?? prev.cv_url,
+              cv_filename: initialData.cv_filename ?? prev.cv_filename,
+              master_cv_id: null,
+              cv_kind: "custom",
+            }));
+          } else {
+            setFormData((prev) => ({
+              ...prev,
+              cv_url: "",
+              cv_filename: null,
+              master_cv_id: null,
+              cv_kind: "custom",
+            }));
+          }
+        }}
+        onSwitchToMaster={() => {
+          const leavingSavedCustom =
+            cvMode === "custom" &&
+            hadCustomCvOnLoad &&
+            !cvPendingFile;
+          if (leavingSavedCustom) {
+            setSwitchToMasterConfirmOpen(true);
+            return;
+          }
+          setCvMode("master");
+          setCvPendingFile(null);
+          uploadedPendingFileRef.current = null;
+          const first = masterCvs[0];
+          if (first) {
+            setSelectedMasterId(first.id);
+            setFormData((prev) => ({
+              ...prev,
+              cv_url: first.url,
+              cv_filename: first.filename,
+              master_cv_id: first.id,
+              cv_kind: "master",
+            }));
+          } else {
+            setSelectedMasterId(null);
+            setFormData((prev) => ({
+              ...prev,
+              master_cv_id: null,
+              cv_kind: "master",
+            }));
+          }
+        }}
         onPendingFileChange={(file) => {
           setCvPendingFile(file);
           uploadedPendingFileRef.current = null;
           if (file) {
             cvUploadIdempotencyKeyRef.current = crypto.randomUUID();
-            setFormData((prev) => ({ ...prev, cv_filename: file.name }));
+            setFormData((prev) => ({
+              ...prev,
+              cv_filename: file.name,
+              cv_kind: "custom",
+              master_cv_id: null,
+            }));
           } else {
             cvUploadIdempotencyKeyRef.current = null;
+            // Restored saved custom URL after clearing a new selection
+            if (isEdit && initialData?.cv_kind === "custom") {
+              setFormData((prev) => ({
+                ...prev,
+                cv_url: initialData.cv_url ?? "",
+                cv_filename: initialData.cv_filename ?? null,
+                cv_kind: "custom",
+                master_cv_id: null,
+              }));
+            }
           }
         }}
-        cvUrlExists={initialData?.cvUrlExists}
-        onRetryCvCheck={onRetryCvCheck}
-        error={errors.cv_url}
-      />
-
-      <CvDownloadFilenameField
+        switchToMasterConfirmOpen={switchToMasterConfirmOpen}
+        onConfirmSwitchToMaster={() => {
+          setSwitchToMasterConfirmOpen(false);
+          setCvMode("master");
+          setCvPendingFile(null);
+          uploadedPendingFileRef.current = null;
+          cvUploadIdempotencyKeyRef.current = null;
+          const first = masterCvs[0];
+          if (first) {
+            setSelectedMasterId(first.id);
+            setFormData((prev) => ({
+              ...prev,
+              cv_url: first.url,
+              cv_filename: first.filename,
+              master_cv_id: first.id,
+              cv_kind: "master",
+            }));
+          }
+        }}
+        onCancelSwitchToMaster={() => setSwitchToMasterConfirmOpen(false)}
         useOriginalCvFilename={formData.use_original_cv_filename ?? true}
         onUseOriginalCvFilenameChange={(use) =>
           setFormData((prev) => ({ ...prev, use_original_cv_filename: use }))
         }
         slug={formData.slug}
-        cvFilename={formData.cv_filename ?? null}
-        cvPendingFileName={cvPendingFile?.name ?? null}
       />
 
       <YouTubeUrlInput

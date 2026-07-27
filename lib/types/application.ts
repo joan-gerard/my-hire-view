@@ -1,3 +1,7 @@
+export type ApplicationStatus = "active" | "draft" | "archived";
+
+export type ApplicationCvKind = "master" | "custom";
+
 export interface Application {
   id: string;
   slug: string;
@@ -13,7 +17,10 @@ export interface Application {
   /** Last time the application page was viewed by someone other than the owner (null if never viewed). */
   last_viewed_at: string | null;
   user_id: string;
-  is_active: boolean;
+  /** active = live; draft = unpublished; archived = soft-hidden on public view. */
+  status: ApplicationStatus;
+  /** Set when status becomes archived; cleared on restore. Re-archiving resets retention clock. */
+  archived_at: string | null;
   first_name: string | null;
   last_name: string | null;
   location: string | null;
@@ -31,6 +38,10 @@ export interface Application {
   profile_picture_url?: string | null;
   /** User chose to show profile picture on this application. When true, profile_picture_url is synced from profile; when user has no picture, URL stays null and view shows no avatar. */
   show_profile_picture?: boolean;
+  /** master = profile library CV (do not delete R2 on app delete); custom = app-owned upload. */
+  cv_kind?: ApplicationCvKind;
+  /** When cv_kind is master, the library row id (may be null if master was deleted). */
+  master_cv_id?: string | null;
 }
 
 /**
@@ -43,19 +54,23 @@ export type ApplicationListItem = Pick<
   | "slug"
   | "company"
   | "role"
-  | "is_active"
+  | "status"
+  | "archived_at"
   | "view_count"
   | "download_count"
   | "created_at"
   | "last_viewed_at"
+  | "cv_url"
 > & {
   /** Opaque candidate id for public share URLs. */
   public_id: string;
+  /** True when cv_url points at an existing R2 object (checked on list). */
+  cv_exists: boolean;
 };
 
-/** Supabase `.select()` projection for `ApplicationListItem`. */
+/** Supabase `.select()` projection for `ApplicationListItem` (before attaching public_id / cv_exists). */
 export const APPLICATION_LIST_SELECT =
-  "id, slug, company, role, is_active, view_count, download_count, created_at, last_viewed_at" as const;
+  "id, slug, company, role, status, archived_at, view_count, download_count, created_at, last_viewed_at, cv_url" as const;
 
 /** Default page size for `GET /api/applications`. */
 export const APPLICATION_LIST_DEFAULT_LIMIT = 20;
@@ -105,6 +120,10 @@ export interface ApplicationFormData {
    * Set by ApplicationForm on submit. When true, create flow may keep the typed slug if it passes format + availability checks.
    */
   slugManuallyEdited?: boolean;
+  /** master = selected from library; custom = uploaded for this application. */
+  cv_kind?: ApplicationCvKind;
+  /** When cv_kind is master, the selected library id. */
+  master_cv_id?: string | null;
 }
 
 export interface ApplicationCreateInput {
@@ -123,6 +142,10 @@ export interface ApplicationCreateInput {
   use_original_cv_filename?: boolean;
   /** When preference is per_application: whether to show profile picture. Server copies profile URL when true. */
   show_profile_picture?: boolean;
+  cv_kind?: ApplicationCvKind;
+  master_cv_id?: string | null;
+  /** Optional; defaults to active. */
+  status?: ApplicationStatus;
 }
 
 export interface ApplicationUpdateInput {
@@ -131,7 +154,7 @@ export interface ApplicationUpdateInput {
   slug?: string;
   cv_url?: string;
   video_url?: string;
-  is_active?: boolean;
+  status?: ApplicationStatus;
   first_name?: string | null;
   last_name?: string | null;
   location?: string | null;
@@ -141,4 +164,6 @@ export interface ApplicationUpdateInput {
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;
   show_profile_picture?: boolean;
+  cv_kind?: ApplicationCvKind;
+  master_cv_id?: string | null;
 }

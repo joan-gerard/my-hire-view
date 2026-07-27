@@ -116,7 +116,7 @@ We implemented **Option B**:
 
 - Signup writes `public_id` into `user_metadata` via `generatePublicId()`
 - `PUT /api/profile` stores `public_id` on the profile row and syncs metadata
-- `ensureProfilePublicId()` runs before creating an application so public resolution works even before a full profile save
+- `ensureProfilePublicId()` runs before creating an application so public resolution works even before a full profile save. Dashboard list (`GET /api/applications`) only **reads** `public_id` (profiles, then Auth metadata) and does not create a profiles row.
 
 ### Routing & APIs
 

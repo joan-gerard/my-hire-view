@@ -40,6 +40,8 @@ vi.mock("@/lib/rate-limit", () => ({
 }));
 vi.mock("@/lib/utils/cv-storage", () => ({
   deleteCvIfOurs: mockDeleteCvIfOurs,
+  deleteApplicationCvIfCustom: mockDeleteCvIfOurs,
+  checkCvObjectExists: vi.fn().mockResolvedValue(true),
 }));
 vi.mock("@/lib/auth/ensure-public-id", () => ({
   ensureProfilePublicId: vi.fn().mockResolvedValue("k7x2m9ab"),

@@ -13,6 +13,10 @@ interface FileUploadProps {
   /** When provided and cvUrlExists is false, show a "Check again" button to re-run the existence check. */
   onRetryCvCheck?: () => Promise<void>;
   error?: string;
+  /** Hide the top "CV (PDF)" label when nested in CvSourceField. */
+  hideLabel?: boolean;
+  /** Custom label for the file input affordance (accessibility / helper text). */
+  chooseLabel?: string;
 }
 
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
@@ -24,6 +28,8 @@ export default function FileUpload({
   cvUrlExists = true,
   onRetryCvCheck,
   error,
+  hideLabel = false,
+  chooseLabel = "CV (PDF)",
 }: FileUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [checkingCv, setCheckingCv] = useState(false);
@@ -90,16 +96,19 @@ export default function FileUpload({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-[var(--foreground)]">
-        CV (PDF)
-      </label>
-      <div className="mt-1 flex flex-col gap-2">
+      {!hideLabel && (
+        <label className="block text-sm font-medium text-[var(--foreground)]">
+          {chooseLabel}
+        </label>
+      )}
+      <div className={hideLabel ? "flex flex-col gap-2" : "mt-1 flex flex-col gap-2"}>
         <div className="flex items-center gap-4">
           <input
             ref={fileInputRef}
             type="file"
             accept="application/pdf"
             onChange={handleFileChange}
+            aria-label={chooseLabel}
             className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-md file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90"
           />
           {showPending && (

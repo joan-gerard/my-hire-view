@@ -60,7 +60,7 @@ Cross-cutting improvements that apply to many routes: schema validation at the b
 
 `GET /api/applications`
 
-List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) — not CV/video/candidate/profile columns. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`).
+List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) — not CV/video/candidate/profile columns. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`). `public_id` is resolved read-only (profiles row, then Auth `user_metadata`); this endpoint does **not** create a profiles row.
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -81,7 +81,10 @@ List the authenticated user’s applications (newest first), paginated. Returns 
       "slug": "acme-frontend-engineer",
       "company": "Acme",
       "role": "Frontend Engineer",
-      "is_active": true,
+      "status": "active",
+      "archived_at": null,
+      "cv_url": "https://pub.example/cvs/…",
+      "cv_exists": true,
       "view_count": 12,
       "download_count": 3,
       "created_at": "2026-07-01T12:00:00.000Z",
@@ -102,7 +105,10 @@ List the authenticated user’s applications (newest first), paginated. Returns 
 | `data[].slug` | `string` | Public URL + search |
 | `data[].company` | `string` | Card title + search |
 | `data[].role` | `string` | Card title + search |
-| `data[].is_active` | `boolean` | Active vs archived status |
+| `data[].status` | `"active"` \| `"draft"` \| `"archived"` | Card status |
+| `data[].archived_at` | `string` (ISO) \| `null` | Set when archived; retention clock |
+| `data[].cv_url` | `string` | Used for `cv_exists` check |
+| `data[].cv_exists` | `boolean` | Dashboard “CV missing” badge when false |
 | `data[].view_count` | `number` | Status icon + insights |
 | `data[].download_count` | `number` | Insights |
 | `data[].created_at` | `string` (ISO) | Insights |
@@ -164,7 +170,7 @@ Update an application owned by the current user. Replacing `cv_url` deletes the 
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body:** `id` (required) plus partial `ApplicationUpdateInput` (`company`, `role`, `slug`, `cv_url`, `video_url`, `is_active`, candidate fields, `slugNamePosition`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`)
+- **Body:** `id` (required) plus partial `ApplicationUpdateInput` (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_kind`, `master_cv_id`, candidate fields, `slugNamePosition`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
 - **Success:** `200` `{ data: Application }`
 - **Errors:** `400`; `401`; `404` if missing or not owned; `429`
 
@@ -242,7 +248,7 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 
 - Return a public DTO: omit `user_id` and any other owner-only fields from the response.
 - Cache `cv_exists` or skip the HeadObject on every request if latency / R2 cost becomes an issue.
-- For archived applications (`is_active = false`), consider a dedicated response shape vs full payload (page already handles archived UI).
+- For archived applications (`status = archived`), consider a dedicated response shape vs full payload (page already handles archived UI).
 - Log unexpected errors server-side before returning **500**.
 
 ---

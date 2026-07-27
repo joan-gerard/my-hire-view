@@ -1,5 +1,8 @@
 import { requireAuth } from "@/lib/auth";
-import { ensureProfilePublicId } from "@/lib/auth/ensure-public-id";
+import {
+  ensureProfilePublicId,
+  resolvePublicIdReadOnly,
+} from "@/lib/auth/ensure-public-id";
 import {
   checkRateLimit,
   DEFAULT_API_RATE_LIMIT,
@@ -11,9 +14,14 @@ import {
   APPLICATION_LIST_MAX_LIMIT,
   APPLICATION_LIST_SELECT,
   type ApplicationCreateInput,
+  type ApplicationCvKind,
+  type ApplicationStatus,
   type ApplicationUpdateInput,
 } from "@/lib/types/application";
-import { deleteCvIfOurs } from "@/lib/utils/cv-storage";
+import {
+  checkCvObjectExists,
+  deleteApplicationCvIfCustom,
+} from "@/lib/utils/cv-storage";
 import { NextRequest, NextResponse } from "next/server";
 
 function parseLimit(raw: string | null): number {
@@ -40,6 +48,14 @@ function normalizeListSearchQuery(raw: string | null): string | null {
     .replace(/\s+/g, " ")
     .trim();
   return cleaned.length > 0 ? cleaned : null;
+}
+
+function isValidStatus(value: unknown): value is ApplicationStatus {
+  return value === "active" || value === "draft" || value === "archived";
+}
+
+function isValidCvKind(value: unknown): value is ApplicationCvKind {
+  return value === "master" || value === "custom";
 }
 
 export async function GET(request: NextRequest) {
@@ -82,8 +98,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const publicId = await ensureProfilePublicId(supabase, user);
-    const items = (data ?? []).map((row) => ({ ...row, public_id: publicId }));
+    const publicId = (await resolvePublicIdReadOnly(supabase, user)) ?? "";
+    const rows = data ?? [];
+    const existence = await Promise.all(
+      rows.map((row) => checkCvObjectExists(row.cv_url)),
+    );
+    const items = rows.map((row, i) => ({
+      ...row,
+      public_id: publicId,
+      cv_exists: existence[i] ?? false,
+    }));
 
     return NextResponse.json({
       data: items,
@@ -133,6 +157,21 @@ function resolveProfilePictureUrl(
   return url;
 }
 
+async function resolveMasterCvForUser(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  masterCvId: string,
+): Promise<{ url: string; filename: string } | null> {
+  const { data } = await supabase
+    .from("master_cvs")
+    .select("url, filename")
+    .eq("id", masterCvId)
+    .eq("user_id", userId)
+    .single();
+  if (!data?.url) return null;
+  return { url: data.url, filename: data.filename };
+}
+
 export async function POST(request: NextRequest) {
   const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
@@ -166,21 +205,58 @@ export async function POST(request: NextRequest) {
       showProfilePicture,
     );
 
+    const cvKind: ApplicationCvKind =
+      body.cv_kind === "master" ? "master" : "custom";
+    let cvUrl = body.cv_url;
+    let cvFilename = body.cv_filename ?? null;
+    let masterCvId: string | null = null;
+
+    if (cvKind === "master") {
+      if (!body.master_cv_id) {
+        return NextResponse.json(
+          { error: "master_cv_id is required when cv_kind is master" },
+          { status: 400 },
+        );
+      }
+      const master = await resolveMasterCvForUser(
+        supabase,
+        user.id,
+        body.master_cv_id,
+      );
+      if (!master) {
+        return NextResponse.json(
+          { error: "Master CV not found" },
+          { status: 400 },
+        );
+      }
+      cvUrl = master.url;
+      cvFilename = master.filename;
+      masterCvId = body.master_cv_id;
+    }
+
+    const status: ApplicationStatus = isValidStatus(body.status)
+      ? body.status
+      : "active";
+
     const { data, error } = await supabase
       .from("applications")
       .insert({
         company: body.company,
         role: body.role,
         slug: body.slug,
-        cv_url: body.cv_url,
+        cv_url: cvUrl,
         video_url: body.video_url,
         user_id: user.id,
+        status,
+        archived_at: status === "archived" ? new Date().toISOString() : null,
         ...candidateFields,
         include_name_in_slug: body.slugNamePosition ?? null,
-        cv_filename: body.cv_filename ?? null,
+        cv_filename: cvFilename,
         use_original_cv_filename: body.use_original_cv_filename ?? true,
         profile_picture_url: profilePictureUrl,
         show_profile_picture: showProfilePicture,
+        cv_kind: cvKind,
+        master_cv_id: masterCvId,
       })
       .select()
       .single();
@@ -203,23 +279,37 @@ export async function PUT(request: NextRequest) {
     const user = await requireAuth();
     const supabase = await createClient();
     const body: ApplicationUpdateInput & { id: string } = await request.json();
-    const { id, slugNamePosition, show_profile_picture, ...rest } = body;
+    const {
+      id,
+      slugNamePosition,
+      show_profile_picture,
+      status,
+      cv_kind,
+      master_cv_id,
+      cv_url,
+      cv_filename,
+      ...rest
+    } = body;
 
-    const updatePayload: Record<string, unknown> = {
-      ...rest,
-      ...(slugNamePosition !== undefined && {
-        include_name_in_slug: slugNamePosition,
-      }),
-      ...(show_profile_picture !== undefined && {
-        show_profile_picture: show_profile_picture === true,
-      }),
-    };
+    if (!id) {
+      return NextResponse.json(
+        { error: "Application ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const updatePayload: Record<string, unknown> = { ...rest };
     delete updatePayload.description; // Column removed in migration 017
+    delete updatePayload.is_active; // Replaced by status (migration 021)
+    delete updatePayload.archived_at; // Server-managed with status
 
-    // Verify the application belongs to the user and get current cv_url
+    if (slugNamePosition !== undefined) {
+      updatePayload.include_name_in_slug = slugNamePosition;
+    }
+
     const { data: existing } = await supabase
       .from("applications")
-      .select("user_id, cv_url")
+      .select("user_id, cv_url, cv_kind, status")
       .eq("id", id)
       .single();
 
@@ -230,21 +320,99 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const newCvUrl = updatePayload.cv_url as string | undefined;
-    if (
-      newCvUrl !== undefined &&
-      existing.cv_url &&
-      newCvUrl !== existing.cv_url
-    ) {
-      await deleteCvIfOurs(existing.cv_url);
+    if (status !== undefined) {
+      if (!isValidStatus(status)) {
+        return NextResponse.json(
+          { error: "Invalid status" },
+          { status: 400 },
+        );
+      }
+      updatePayload.status = status;
+      if (status === "archived") {
+        // Always reset the retention clock when (re-)archiving
+        updatePayload.archived_at = new Date().toISOString();
+      } else {
+        updatePayload.archived_at = null;
+      }
     }
 
-    const snapshot = await getProfileSnapshot(supabase, user.id);
-    const showProfilePicture = show_profile_picture === true;
-    updatePayload.profile_picture_url = resolveProfilePictureUrl(
-      snapshot,
-      showProfilePicture,
-    );
+    const cvFieldsTouched =
+      cv_kind !== undefined ||
+      master_cv_id !== undefined ||
+      cv_url !== undefined ||
+      cv_filename !== undefined;
+
+    if (cvFieldsTouched) {
+      let nextCvKind: ApplicationCvKind =
+        cv_kind !== undefined
+          ? cv_kind
+          : ((existing.cv_kind as ApplicationCvKind) ?? "custom");
+
+      if (cv_kind !== undefined) {
+        if (!isValidCvKind(cv_kind)) {
+          return NextResponse.json(
+            { error: "Invalid cv_kind" },
+            { status: 400 },
+          );
+        }
+        updatePayload.cv_kind = cv_kind;
+      }
+
+      let nextCvUrl = existing.cv_url as string;
+
+      if (nextCvKind === "master") {
+        const masterId = master_cv_id ?? null;
+        if (!masterId) {
+          return NextResponse.json(
+            { error: "master_cv_id is required when cv_kind is master" },
+            { status: 400 },
+          );
+        }
+        const master = await resolveMasterCvForUser(
+          supabase,
+          user.id,
+          masterId,
+        );
+        if (!master) {
+          return NextResponse.json(
+            { error: "Master CV not found" },
+            { status: 400 },
+          );
+        }
+        nextCvUrl = master.url;
+        updatePayload.cv_url = master.url;
+        updatePayload.cv_filename = master.filename;
+        updatePayload.master_cv_id = masterId;
+        updatePayload.cv_kind = "master";
+      } else {
+        if (cv_url !== undefined) {
+          nextCvUrl = cv_url;
+          updatePayload.cv_url = cv_url;
+        }
+        if (cv_filename !== undefined) {
+          updatePayload.cv_filename = cv_filename;
+        }
+        updatePayload.master_cv_id = null;
+        updatePayload.cv_kind = "custom";
+      }
+
+      if (nextCvUrl !== existing.cv_url) {
+        await deleteApplicationCvIfCustom(
+          existing.cv_url,
+          existing.cv_kind as ApplicationCvKind,
+        );
+      }
+    }
+
+    if (show_profile_picture !== undefined) {
+      const snapshot = await getProfileSnapshot(supabase, user.id);
+      const showProfilePicture = show_profile_picture === true;
+      updatePayload.show_profile_picture = showProfilePicture;
+      updatePayload.profile_picture_url = resolveProfilePictureUrl(
+        snapshot,
+        showProfilePicture,
+      );
+    }
 
     const { data, error } = await supabase
       .from("applications")
@@ -280,10 +448,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Verify the application belongs to the user and get cv_url for R2 cleanup
     const { data: existing } = await supabase
       .from("applications")
-      .select("user_id, cv_url")
+      .select("user_id, cv_url, cv_kind")
       .eq("id", id)
       .single();
 
@@ -294,7 +461,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await deleteCvIfOurs(existing.cv_url);
+    await deleteApplicationCvIfCustom(
+      existing.cv_url,
+      existing.cv_kind as ApplicationCvKind,
+    );
 
     const { error } = await supabase.from("applications").delete().eq("id", id);
 
