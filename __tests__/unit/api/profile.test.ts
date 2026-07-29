@@ -1,7 +1,8 @@
 /**
  * Tests for /api/profile — flow #3 (Profile read and update).
  *
- * GET  — returns existing profile or 404 when missing (read-only; no insert).
+ * GET  — returns existing profile or 404 when missing (read-only; no insert),
+ *        enforces rate limiting, rejects unauthenticated callers.
  * PUT  — upserts profile (creates on first save), syncs Auth user_metadata names,
  *        validates URL fields, enforces rate limiting, rejects unauthenticated callers.
  */
@@ -50,6 +51,10 @@ const EXISTING_PROFILE = {
   profile_picture_url: null,
 };
 
+function makeGetRequest(): NextRequest {
+  return new NextRequest("http://localhost/api/profile", { method: "GET" });
+}
+
 function makePutRequest(body: object): NextRequest {
   return new NextRequest("http://localhost/api/profile", {
     method: "PUT",
@@ -74,7 +79,7 @@ describe("GET /api/profile", () => {
       makeSupabaseClient([ok(EXISTING_PROFILE)]),
     );
 
-    const response = await GET();
+    const response = await GET(makeGetRequest());
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.data).toMatchObject({ user_id: "user-123", first_name: "Jane" });
@@ -85,7 +90,7 @@ describe("GET /api/profile", () => {
       makeSupabaseClient([dbError("No rows found", "PGRST116")]),
     );
 
-    const response = await GET();
+    const response = await GET(makeGetRequest());
     expect(response.status).toBe(404);
     const json = await response.json();
     expect(json.error).toBe("Profile not found");
@@ -96,14 +101,36 @@ describe("GET /api/profile", () => {
       makeSupabaseClient([dbError("Internal DB error")]),
     );
 
-    const response = await GET();
+    const response = await GET(makeGetRequest());
     expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Internal DB error");
+  });
+
+  it("returns 500 when an unexpected error is thrown after auth", async () => {
+    mockCreateClient.mockRejectedValue(new Error("client boom"));
+
+    const response = await GET(makeGetRequest());
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Failed to fetch profile");
+  });
+
+  it("returns 429 when the rate limit is exceeded", async () => {
+    mockCheckRateLimit.mockReturnValue({
+      success: false,
+      remaining: 0,
+      resetAt: Date.now() + 30_000,
+    });
+
+    const response = await GET(makeGetRequest());
+    expect(response.status).toBe(429);
   });
 
   it("returns 401 when not authenticated", async () => {
     mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
 
-    const response = await GET();
+    const response = await GET(makeGetRequest());
     expect(response.status).toBe(401);
     const json = await response.json();
     expect(json.error).toBe("Unauthorized");

@@ -363,19 +363,17 @@ Whether the current viewer owns the application (used to show the public-view fo
 Return the current user’s profile. **Read-only** — does not create a row. If no profile exists (`PGRST116`), returns **404**.
 
 - **Auth:** Required
-- **Rate limit:** None
+- **Rate limit:** Default (60/min)
 - **Success:** `200` `{ data: Profile }`
-- **Errors:** `404` profile not found; `401`; `500`
+- **Errors:** `404` profile not found; `401`; `429`; `500`
 
 **What works**
 
 - Auth required; selects only by session `user_id`.
 - Distinguishes “no row” (`404`) from other DB errors (`500`).
 - Profiles are created on first successful `PUT`, not on GET.
-
-**Improvement opportunities**
-
-- Add a rate limit; fix catch-all **401** vs **500**.
+- Rate limited (default 60/min) before auth/query work.
+- Dedicated auth try/catch → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
 
 ---
 

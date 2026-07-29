@@ -25,9 +25,18 @@ function validateUrl(value: string | null | undefined): string | null {
  * Read-only: returns the current user's profiles row, or 404 if none exists.
  * Profiles are created on first PUT (not on GET).
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
+  let user;
   try {
-    const user = await requireAuth();
+    user = await requireAuth();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -43,12 +52,17 @@ export async function GET() {
           { status: 404 },
         );
       }
+      console.error("GET /api/profile:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ data });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    console.error("GET /api/profile:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch profile" },
+      { status: 500 },
+    );
   }
 }
 
