@@ -3,6 +3,11 @@
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import type { Profile } from "@/lib/types/profile";
+import {
+  PROFILE_LOCATION_MAX_LENGTH,
+  PROFILE_NAME_MAX_LENGTH,
+  PROFILE_URL_MAX_LENGTH,
+} from "@/lib/types/profile";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -170,6 +175,7 @@ export default function ProfileForm({
           }
           placeholder="Your first name"
           required
+          maxLength={PROFILE_NAME_MAX_LENGTH}
         />
         <Input
           label="Last name"
@@ -180,6 +186,7 @@ export default function ProfileForm({
           }
           placeholder="Your last name"
           required
+          maxLength={PROFILE_NAME_MAX_LENGTH}
         />
       </div>
       <Input
@@ -190,6 +197,7 @@ export default function ProfileForm({
           setFormData((prev) => ({ ...prev, location: e.target.value }))
         }
         placeholder="e.g. London, UK"
+        maxLength={PROFILE_LOCATION_MAX_LENGTH}
       />
       <Input
         label="Portfolio URL"
@@ -199,6 +207,7 @@ export default function ProfileForm({
           setFormData((prev) => ({ ...prev, portfolio_url: e.target.value }))
         }
         placeholder="https://..."
+        maxLength={PROFILE_URL_MAX_LENGTH}
       />
       <Input
         label="LinkedIn URL"
@@ -208,6 +217,7 @@ export default function ProfileForm({
           setFormData((prev) => ({ ...prev, linkedin_url: e.target.value }))
         }
         placeholder="https://linkedin.com/in/..."
+        maxLength={PROFILE_URL_MAX_LENGTH}
       />
 
       <fieldset className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">

@@ -16,14 +16,9 @@ export interface Profile {
   profile_picture_url?: string | null;
 }
 
-/**
- * Input for updating profile (PATCH/PUT). All fields optional.
- */
-export interface ProfileUpdateInput {
-  first_name?: string | null;
-  last_name?: string | null;
-  location?: string | null;
-  portfolio_url?: string | null;
-  linkedin_url?: string | null;
-  profile_picture_url?: string | null;
-}
+export type { ProfileUpdateInput } from "@/lib/validation/profile";
+export {
+  PROFILE_NAME_MAX_LENGTH,
+  PROFILE_LOCATION_MAX_LENGTH,
+  PROFILE_URL_MAX_LENGTH,
+} from "@/lib/validation/profile";

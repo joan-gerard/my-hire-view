@@ -30,3 +30,7 @@ RLS policies for this bucket are in migration `014_storage_profile_pictures_poli
 ## Cleanup
 
 When the user removes or replaces their profile picture in admin/profile, the API should delete the previous object from the `profile-pictures` bucket (derive path from the old URL) to avoid orphan files. Application rows: `profile_picture_url` is set to null (or the new URL) for applications with `show_profile_picture` true; `show_profile_picture` is left unchanged. No Storage delete when clearing `profile_picture_url` on an application.
+
+## Ownership on profile PUT
+
+`PUT /api/profile` accepts `profile_picture_url` only when it is `null` (clear) or a public URL whose Storage path is under the authenticated user’s folder (`{user_id}/…` in the `profile-pictures` bucket). Arbitrary https URLs and other users’ objects are rejected with **400**. Upload (`POST /api/upload/profile-picture`) already writes only under the caller’s folder; this check ensures the profile row can only *point* at those objects.

@@ -22,6 +22,21 @@ export function getProfilePictureStoragePath(
 }
 
 /**
+ * True when `url` is a public profile-pictures object under this user's folder
+ * (`{userId}/…`). Used to reject arbitrary or other users' URLs on profile PUT.
+ */
+export function isOwnedProfilePictureUrl(
+  url: string,
+  userId: string,
+): boolean {
+  if (!userId) return false;
+  const path = getProfilePictureStoragePath(url);
+  if (!path) return false;
+  const prefix = `${userId}/`;
+  return path.startsWith(prefix) && path.length > prefix.length;
+}
+
+/**
  * Deletes the object at the given profile picture URL if it is from our Supabase profile-pictures bucket.
  * Logs and swallows errors so callers can continue (e.g. profile update still succeeds).
  */

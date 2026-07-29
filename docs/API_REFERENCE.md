@@ -381,28 +381,27 @@ Return the current user’s profile. **Read-only** — does not create a row. If
 
 `PUT /api/profile`
 
-Upsert profile fields (creates the row on first save). Requires non-empty `first_name` and `last_name` (after merge with existing). Assigns or preserves `public_id` (from existing row, Auth `user_metadata`, or a newly generated opaque id). Validates `portfolio_url` and `linkedin_url` (http/https only). When first/last name or `public_id` change (including first save), syncs Auth `user_metadata`. When `profile_picture_url` changes, deletes the previous Supabase Storage object (if ours) and syncs `applications.profile_picture_url` for rows where `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upsert profile fields (creates the row on first save). Requires non-empty `first_name` and `last_name` (after merge with existing). Assigns or preserves `public_id` (from existing row, Auth `user_metadata`, or a newly generated opaque id). Body is schema-validated with Zod (strict keys, max lengths, http/https URLs). When first/last name or `public_id` change (including first save), syncs Auth `user_metadata`. When `profile_picture_url` changes, deletes the previous Supabase Storage object (if ours) and syncs `applications.profile_picture_url` for rows where `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ProfileUpdateInput`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` — merged result must still have first and last name
+- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` — merged result must still have first and last name. Unexpected keys → **400**. Max lengths: names **100**, location **200**, URLs **2048**. Empty URL strings are treated as `null`. Portfolio / LinkedIn / picture URLs must be http(s). Non-null `profile_picture_url` must be a Supabase `profile-pictures` public URL under the caller’s `{user_id}/…` folder.
 - **Success:** `200` `{ data: Profile }`
-- **Errors:** `400` missing names / invalid URL / upsert error; `401`; `429`
+- **Errors:** `400` schema / unowned picture URL / missing names / upsert error; `401`; `429`
 
 **What works**
 
 - Auth required; upsert keyed by `user_id` (create-on-first-save).
 - Rate limited.
+- Zod schema validation at the boundary (types, max lengths, strict keys, http(s) URLs).
+- Rejects arbitrary or other users’ `profile_picture_url` values (must be under this user’s Storage folder).
 - Keeps first/last name required (editable on the profile page, not clearable to empty).
 - Syncs Auth `user_metadata` when names change so signup seed stays aligned.
-- Validates portfolio/LinkedIn URLs (http/https only) before write.
 - Cleans up the previous profile picture in Storage when the URL changes (`deleteProfilePictureIfOurs`).
 - Syncs `applications.profile_picture_url` for apps that opted into showing the picture.
 
 **Improvement opportunities**
 
-- Schema-validate all fields: max lengths for names/location, reject unexpected keys.
-- When accepting `profile_picture_url`, require it to be under this user’s `profile-pictures` path (not an arbitrary URL).
 - If Storage delete or applications sync fails, log and surface a partial-failure strategy instead of silent continuation.
 - Same auth-vs-500 error handling improvement.
 

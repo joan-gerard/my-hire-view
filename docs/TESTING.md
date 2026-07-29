@@ -30,7 +30,9 @@ __tests__/
       utils/
         slug-generate.test.ts
         slug.test.ts
+        profile-picture-storage.test.ts
       rate-limit.test.ts
+      profile-validation.test.ts
     api/
       profile.test.ts
       slug.test.ts
@@ -48,8 +50,10 @@ __tests__/
 |------|---------------|
 | `__tests__/unit/lib/utils/slug-generate.test.ts` | **Pure slug utilities** — `validateSlugFormat` (empty input, too long, invalid chars, valid slugs), `generateSlug` (normalisation, special-char stripping, space collapsing), `buildSlug` (position `start`/`end`, partial and missing names) |
 | `__tests__/unit/lib/utils/slug.test.ts` | **Server-side slug helpers** — `checkSlugUniqueness` (unique, taken, DB error), `validateSlugForApplication` (format short-circuits DB call, available, taken), `reserveBaseSlug` (name positions, collision throws `SlugCollisionError`), `SlugCollisionError` (shape and default message) |
+| `__tests__/unit/lib/utils/profile-picture-storage.test.ts` | **Profile picture Storage URLs** — `getProfilePictureStoragePath`, `isOwnedProfilePictureUrl` (owned path, other user, arbitrary URL, empty user id) |
 | `__tests__/unit/lib/rate-limit.test.ts` | **In-memory rate limiter** — `getClientIdentifier` (x-forwarded-for, x-real-ip, fallback to "unknown"), `rateLimit` (counting, window reset via fake timers, per-client isolation), `checkRateLimit`, `rateLimit429` (429 status + Retry-After ≥ 1s) |
-| `__tests__/unit/api/profile.test.ts` | **Flow #3 — Profile read and update** — `GET /api/profile`: existing profile, missing row → 404 (`PGRST116`), DB error → 500, unexpected throw after auth → 500, rate limit → 429, 401. `PUT /api/profile`: success, invalid portfolio URL → 400, invalid LinkedIn URL → 400, upsert failure → 400, rate limit → 429, 401, profile picture deletion triggered when URL changes |
+| `__tests__/unit/lib/profile-validation.test.ts` | **Profile PUT body schema** — empty object ok, http(s) URLs, blank URL → null, unrecognized keys, max lengths for names/location/URLs, reject non-http(s) |
+| `__tests__/unit/api/profile.test.ts` | **Flow #3 — Profile read and update** — `GET /api/profile`: existing profile, missing row → 404 (`PGRST116`), DB error → 500, unexpected throw after auth → 500, rate limit → 429, 401. `PUT /api/profile`: success, invalid portfolio/LinkedIn URL → 400, overlong name/location → 400, unexpected keys → 400, wrong type → 400, empty-string URL cleared, unowned / other-user picture URL → 400, owned picture URL → 200, clear picture with null, upsert failure → 400, rate limit → 429, 401, profile picture deletion triggered when URL changes |
 | `__tests__/unit/api/slug.test.ts` | **Flow #4 — Live slug feedback** — `POST /api/slug`: derived slug available → 200, name-in-URL variants, missing company/role → 400, `SlugCollisionError` → 409, unexpected error → 500, rate limit → 429. `POST /api/slug/validate`: valid + available → `{ok:true}`, invalid format → `{ok:false}`, taken → `{ok:false}`, `excludeId` forwarded to helper, non-string `excludeId` ignored, 401, 429 |
 | `__tests__/unit/api/applications-create.test.ts` | **Flow #4 — Create application** — `POST /api/applications`: 201 on success, candidate fields fall back to profile when absent from body, explicit body fields override profile, `show_profile_picture: true` copies URL from profile snapshot, `show_profile_picture: false` sets URL to null, DB insert failure → 400, 429, 401 |
 | `__tests__/unit/api/applications-list.test.ts` | **Dashboard list** — `GET /api/applications`: default limit 20 + `meta.total`, custom `limit`/`offset`, max limit cap, `q` search filter, 401, 429, 500 |

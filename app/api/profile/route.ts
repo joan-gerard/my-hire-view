@@ -2,24 +2,16 @@ import { requireAuth } from "@/lib/auth";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { generatePublicId } from "@/lib/utils/public-id";
 import { createClient } from "@/lib/supabase/server";
-import type { ProfileUpdateInput } from "@/lib/types/profile";
-import { deleteProfilePictureIfOurs } from "@/lib/utils/profile-picture-storage";
+import {
+  deleteProfilePictureIfOurs,
+  isOwnedProfilePictureUrl,
+} from "@/lib/utils/profile-picture-storage";
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from "@/lib/rate-limit";
+import {
+  formatProfileUpdateZodError,
+  profileUpdateSchema,
+} from "@/lib/validation/profile";
 import { NextRequest, NextResponse } from "next/server";
-
-/** Validates URL format; allows http/https only. Returns error message or null. */
-function validateUrl(value: string | null | undefined): string | null {
-  if (value == null || value.trim() === "") return null;
-  try {
-    const url = new URL(value.trim());
-    if (!["http:", "https:"].includes(url.protocol)) {
-      return "URL must use http or https";
-    }
-    return null;
-  } catch {
-    return "Please enter a valid URL";
-  }
-}
 
 /**
  * Read-only: returns the current user's profiles row, or 404 if none exists.
@@ -73,19 +65,26 @@ export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth();
     const supabase = await createClient();
-    const body: ProfileUpdateInput = await request.json();
-
-    const portfolioError = validateUrl(body.portfolio_url);
-    if (portfolioError) {
+    const raw: unknown = await request.json();
+    const parsed = profileUpdateSchema.safeParse(raw);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: `Portfolio URL: ${portfolioError}` },
+        { error: formatProfileUpdateZodError(parsed.error) },
         { status: 400 },
       );
     }
-    const linkedinError = validateUrl(body.linkedin_url);
-    if (linkedinError) {
+    const body = parsed.data;
+
+    if (
+      body.profile_picture_url !== undefined &&
+      body.profile_picture_url !== null &&
+      !isOwnedProfilePictureUrl(body.profile_picture_url, user.id)
+    ) {
       return NextResponse.json(
-        { error: `LinkedIn URL: ${linkedinError}` },
+        {
+          error:
+            "Profile picture URL must be an image you uploaded to profile storage",
+        },
         { status: 400 },
       );
     }

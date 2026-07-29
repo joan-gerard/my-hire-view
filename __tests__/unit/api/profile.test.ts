@@ -32,9 +32,14 @@ vi.mock("@/lib/rate-limit", () => ({
     }),
   ),
 }));
-vi.mock("@/lib/utils/profile-picture-storage", () => ({
-  deleteProfilePictureIfOurs: mockDeleteProfilePicture,
-}));
+vi.mock("@/lib/utils/profile-picture-storage", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/utils/profile-picture-storage")>();
+  return {
+    ...actual,
+    deleteProfilePictureIfOurs: mockDeleteProfilePicture,
+  };
+});
 
 import { GET, PUT } from "@/app/api/profile/route";
 import { ok, dbError, makeSupabaseClient } from "../../helpers/supabase-mock";
@@ -207,6 +212,41 @@ describe("PUT /api/profile", () => {
     expect(json.error).toContain("LinkedIn URL");
   });
 
+  it("returns 400 when first_name exceeds max length", async () => {
+    const response = await PUT(
+      makePutRequest({ first_name: "A".repeat(101) }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("First name");
+    expect(json.error).toMatch(/100/);
+  });
+
+  it("returns 400 when location exceeds max length", async () => {
+    const response = await PUT(
+      makePutRequest({ location: "L".repeat(201) }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("Location");
+  });
+
+  it("returns 400 for unexpected body keys", async () => {
+    const response = await PUT(
+      makePutRequest({ first_name: "Jane", public_id: "hacked" }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/unrecognized key/i);
+  });
+
+  it("returns 400 when a field has the wrong type", async () => {
+    const response = await PUT(makePutRequest({ first_name: 123 }));
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("First name");
+  });
+
   it("accepts valid http and https URLs", async () => {
     const updatedProfile = { ...EXISTING_PROFILE };
     mockCreateClient.mockResolvedValue(
@@ -228,7 +268,7 @@ describe("PUT /api/profile", () => {
       makeSupabaseClient([ok(EXISTING_PROFILE), ok(updatedProfile), ok(null)]),
     );
 
-    const response = await PUT(makePutRequest({ portfolio_url: null }));
+    const response = await PUT(makePutRequest({ portfolio_url: "" }));
     expect(response.status).toBe(200);
   });
 
@@ -280,13 +320,17 @@ describe("PUT /api/profile", () => {
   });
 
   it("calls deleteProfilePicture when the picture URL changes", async () => {
+    const oldUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/old.jpg";
+    const newUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/new.jpg";
     const existingWithPicture = {
       ...EXISTING_PROFILE,
-      profile_picture_url: "https://r2.example.com/old.jpg",
+      profile_picture_url: oldUrl,
     };
     const updatedProfile = {
       ...existingWithPicture,
-      profile_picture_url: "https://r2.example.com/new.jpg",
+      profile_picture_url: newUrl,
     };
     mockDeleteProfilePicture.mockResolvedValue(undefined);
     mockCreateClient.mockResolvedValue(
@@ -299,10 +343,73 @@ describe("PUT /api/profile", () => {
 
     await PUT(
       makePutRequest({
-        profile_picture_url: "https://r2.example.com/new.jpg",
+        profile_picture_url: newUrl,
       }),
     );
 
     expect(mockDeleteProfilePicture).toHaveBeenCalledOnce();
+  });
+
+  it("returns 400 when profile_picture_url is not an owned storage URL", async () => {
+    const response = await PUT(
+      makePutRequest({
+        profile_picture_url: "https://cdn.example.com/hotlink.jpg",
+      }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/profile picture/i);
+  });
+
+  it("returns 400 when profile_picture_url belongs to another user", async () => {
+    const response = await PUT(
+      makePutRequest({
+        profile_picture_url:
+          "https://abc.supabase.co/storage/v1/object/public/profile-pictures/other-user/x.jpg",
+      }),
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it("accepts a profile_picture_url under the current user's folder", async () => {
+    const ownedUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/abc.jpg";
+    const updatedProfile = {
+      ...EXISTING_PROFILE,
+      profile_picture_url: ownedUrl,
+    };
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(EXISTING_PROFILE), ok(updatedProfile), ok(null)]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: ownedUrl }),
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it("allows clearing profile_picture_url with null", async () => {
+    const existingWithPicture = {
+      ...EXISTING_PROFILE,
+      profile_picture_url:
+        "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/old.jpg",
+    };
+    const updatedProfile = {
+      ...existingWithPicture,
+      profile_picture_url: null,
+    };
+    mockDeleteProfilePicture.mockResolvedValue(undefined);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(existingWithPicture),
+        ok(updatedProfile),
+        ok(null),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: null }),
+    );
+    expect(response.status).toBe(200);
   });
 });
