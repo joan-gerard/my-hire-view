@@ -186,7 +186,6 @@ export default function EditApplicationPage() {
     use_original_cv_filename: application.use_original_cv_filename ?? true,
     cvUrlExists: application.cv_exists,
     show_profile_picture: application.show_profile_picture ?? false,
-    profile_picture_url: application.profile_picture_url,
     cv_kind: application.cv_kind ?? 'custom',
     master_cv_id: application.master_cv_id ?? null,
   };
@@ -195,9 +194,11 @@ export default function EditApplicationPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-[var(--foreground)]">Edit Application</h1>
       <p className="rounded-md border border-[var(--foreground)]/10 bg-[var(--brand-secondary)]/40 px-4 py-3 text-sm text-[var(--foreground)]">
-        The candidate details below are from when this application was saved, not from your
-        current profile. Updating your profile does not change existing applications — edit
-        the fields here if you want this application updated.
+        The candidate details below (name, location, links) are from when this
+        application was saved, not from your current profile. Updating your
+        profile does not change those fields here. Your profile picture is
+        live: if this application shows it, recruiters see the current picture
+        from your profile.
       </p>
       <div className="rounded-lg bg-[var(--secondary-background)] p-6 shadow border border-[var(--foreground)]/10">
         <ApplicationForm

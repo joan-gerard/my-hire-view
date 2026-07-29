@@ -34,9 +34,12 @@ export interface Application {
   use_original_cv_filename?: boolean;
   /** Set by GET by-id / public slug when `cv_url` is checked: true if the CV file exists (e.g. in R2), false if missing. Omitted when not checked. */
   cv_exists?: boolean;
-  /** Profile picture URL copied from profile at save when user chose to show picture for this application. Null when user has no picture or removed it; view page only shows avatar when this is set. */
+  /**
+   * Display-only avatar URL resolved at read time from `profiles.profile_picture_url`
+   * when `show_profile_picture` is true. Not stored on `applications`.
+   */
   profile_picture_url?: string | null;
-  /** User chose to show profile picture on this application. When true, profile_picture_url is synced from profile; when user has no picture, URL stays null and view shows no avatar. */
+  /** User chose to show the live profile picture on this application. */
   show_profile_picture?: boolean;
   /** master = profile library CV (do not delete R2 on app delete); custom = app-owned upload. */
   cv_kind?: ApplicationCvKind;
@@ -114,7 +117,7 @@ export interface ApplicationFormData {
   cv_filename?: string | null;
   /** When true, download uses cv_filename; when false, uses generated name CV-{Slug}.pdf. */
   use_original_cv_filename?: boolean;
-  /** When preference is per_application: whether to show profile picture for this application. Server copies profile URL when true. */
+  /** When true, public view shows the live profile picture from profiles. */
   show_profile_picture?: boolean;
   /**
    * Set by ApplicationForm on submit. When true, create flow may keep the typed slug if it passes format + availability checks.
@@ -140,7 +143,7 @@ export interface ApplicationCreateInput {
   slugNamePosition?: "start" | "end" | null;
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;
-  /** When preference is per_application: whether to show profile picture. Server copies profile URL when true. */
+  /** When true, public view shows the live profile picture from profiles. */
   show_profile_picture?: boolean;
   cv_kind?: ApplicationCvKind;
   master_cv_id?: string | null;

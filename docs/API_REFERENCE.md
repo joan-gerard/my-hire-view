@@ -136,7 +136,7 @@ TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_
 
 `POST /api/applications`
 
-Create an application. Candidate fields fall back to the user’s profile when omitted. When `show_profile_picture` is true, `profile_picture_url` is copied from the profile (otherwise null).
+Create an application. Candidate fields fall back to the user’s profile when omitted. Stores `show_profile_picture` only (avatar URL is read live from the profile on public view).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -149,7 +149,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 - Auth required; inserts always set `user_id` from the session (not the client body).
 - Rate limited.
 - Profile snapshot / fallback for candidate fields keeps recruiter data on the application row.
-- Profile picture URL is derived server-side from `show_profile_picture` + profile, not trusted raw from the client.
+- Avatar preference is a boolean only — no denormalized picture URL on the application row.
 - Returns **201** with the created row.
 
 **Improvement opportunities**
@@ -166,7 +166,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 `PUT /api/applications`
 
-Update an application owned by the current user. Replacing `cv_url` deletes the previous R2 object when the URL is under this app’s public R2 base (`deleteCvIfOurs`). `profile_picture_url` is re-resolved from the profile using `show_profile_picture`.
+Update an application owned by the current user. Replacing `cv_url` deletes the previous R2 object when the URL is under this app’s public R2 base (`deleteCvIfOurs`). Updates `show_profile_picture` when provided (avatar still comes from the profile at view time).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -181,7 +181,7 @@ Note: `description` in the body is ignored (column removed in migration 017).
 - Auth + ownership check before update; **404** when missing or not owned (no existence leak across users beyond that).
 - Rate limited.
 - On `cv_url` change, deletes the **previous** R2 object only when `deleteCvIfOurs` confirms the URL is under `R2_PUBLIC_BASE_URL` (blocks deleting arbitrary non-R2 URLs).
-- Re-resolves `profile_picture_url` from the profile using the show-picture preference.
+- Persists `show_profile_picture` when provided (public view uses live profile picture).
 - Maps `slugNamePosition` → `include_name_in_slug` instead of exposing the DB column name as the only contract.
 
 **Improvement opportunities**
@@ -381,28 +381,23 @@ Return the current user’s profile. **Read-only** — does not create a row. If
 
 `PUT /api/profile`
 
-Upsert profile fields (creates the row on first save). Requires non-empty `first_name` and `last_name` (after merge with existing). Assigns or preserves `public_id` (from existing row, Auth `user_metadata`, or a newly generated opaque id). Body is schema-validated with Zod (strict keys, max lengths, http/https URLs). When first/last name or `public_id` change (including first save), syncs Auth `user_metadata`. When `profile_picture_url` changes, deletes the previous Supabase Storage object (if ours) and syncs `applications.profile_picture_url` for rows where `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upsert profile fields (creates the row on first save). Requires non-empty `first_name` and `last_name` (after merge with existing). Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change, syncs Auth `user_metadata`. When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` — merged result must still have first and last name. Unexpected keys → **400**. Max lengths: names **100**, location **200**, URLs **2048**. Empty URL strings are treated as `null`. Portfolio / LinkedIn / picture URLs must be http(s). Non-null `profile_picture_url` must be a Supabase `profile-pictures` public URL under the caller’s `{user_id}/…` folder.
-- **Success:** `200` `{ data: Profile }`
+- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` — omit picture field to leave unchanged; `null` to clear. Unexpected keys → **400**. Max lengths: names **100**, location **200**, URLs **2048**. Non-null picture URL must be under the caller’s Storage folder.
+- **Success:** `200` `{ data: Profile }` optionally with `warnings: string[]` (e.g. Storage delete or metadata sync failed)
 - **Errors:** `400` schema / unowned picture URL / missing names / upsert error; `401`; `429`
 
 **What works**
 
 - Auth required; upsert keyed by `user_id` (create-on-first-save).
-- Rate limited.
-- Zod schema validation at the boundary (types, max lengths, strict keys, http(s) URLs).
-- Rejects arbitrary or other users’ `profile_picture_url` values (must be under this user’s Storage folder).
-- Keeps first/last name required (editable on the profile page, not clearable to empty).
-- Syncs Auth `user_metadata` when names change so signup seed stays aligned.
-- Cleans up the previous profile picture in Storage when the URL changes (`deleteProfilePictureIfOurs`).
-- Syncs `applications.profile_picture_url` for apps that opted into showing the picture.
+- Rate limited; Zod validation; ownership check on picture URLs.
+- Deletes previous Storage object after successful write when the URL changes; surfaces partial failures as `warnings`.
+- No applications fan-out for picture URLs (live profile read on view).
 
 **Improvement opportunities**
 
-- If Storage delete or applications sync fails, log and surface a partial-failure strategy instead of silent continuation.
 - Same auth-vs-500 error handling improvement.
 
 ---
@@ -502,27 +497,23 @@ Upload a CV PDF to Cloudflare R2. Requires an idempotency key so retries reuse t
 
 `POST /api/upload/profile-picture`
 
-Upload a profile image to the Supabase Storage bucket `profile-pictures` at `{user_id}/{uuid}.{ext}`. Returns a public URL; the client typically then PUTs it to `/api/profile`. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png|webp}` in the `profile-pictures` bucket, purge other objects in that folder, and return the public URL. Intended to be called from profile **Save** (upload-on-save), not on file pick. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
 - **Body:** `multipart/form-data` with `file` (JPEG, PNG, or WebP; max **5 MB**)
-- **Success:** `200` `{ url: string }`
+- **Success:** `200` `{ url: string }` optionally `{ warning }` if purge of older files failed
 - **Errors:** `400` missing/invalid file; `401`; `429`; `500`
 
 **What works**
 
-- Auth required; object path is prefixed with the session `user_id` (matches Storage RLS expectations).
-- Rate limited.
-- Allows only JPEG/PNG/WebP and enforces a **5 MB** cap.
-- Uses a random UUID filename to avoid predictable overwrites.
-- Returns the public URL for a follow-up profile PUT.
+- Canonical path + upsert enforces one picture per user; removes leftover folder objects after upload.
+- Auth required; path under session `user_id` (Storage RLS).
+- Rate limited; JPEG/PNG/WebP; **5 MB** cap.
 
 **Improvement opportunities**
 
-- Validate image magic bytes / decode with a safe image library, not MIME alone.
-- Optionally delete previous avatar as part of this upload (today cleanup happens on profile PUT) to avoid orphan objects if the client never saves.
-- Enforce a single canonical filename (e.g. `avatar.webp`) with overwrite, or a retention policy for old UUIDs.
+- Validate image magic bytes / safe decode, not MIME alone.
 - Fix catch-all **401** vs **500**; log Storage errors with codes.
 
 ---

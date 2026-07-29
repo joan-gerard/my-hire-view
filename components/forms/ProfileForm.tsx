@@ -9,7 +9,7 @@ import {
   PROFILE_URL_MAX_LENGTH,
 } from "@/lib/types/profile";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -26,10 +26,6 @@ function normalizeText(value: string | null | undefined): string {
   return (value ?? "").trim();
 }
 
-function normalizePictureUrl(value: string | null | undefined): string | null {
-  return value?.trim() || null;
-}
-
 export default function ProfileForm({
   initialData,
   hasExistingProfile,
@@ -37,7 +33,6 @@ export default function ProfileForm({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     first_name: initialData?.first_name ?? "",
@@ -45,20 +40,37 @@ export default function ProfileForm({
     location: initialData?.location ?? "",
     portfolio_url: initialData?.portfolio_url ?? "",
     linkedin_url: initialData?.linkedin_url ?? "",
-    profile_picture_url:
-      initialData?.profile_picture_url ?? (null as string | null),
   });
+  /** File chosen locally; uploaded only on Save. */
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
+  /** True when user cleared the picture (will send null on Save). */
+  const [pictureRemoved, setPictureRemoved] = useState(false);
 
-  const hasProfilePicture = Boolean(formData.profile_picture_url?.trim());
+  const savedPictureUrl = initialData?.profile_picture_url?.trim() || null;
 
-  /** True when the profile had a picture when the page loaded (from DB). Used to show the "new picture will sync to applications" message only then. */
-  const hadProfilePictureOnLoad = Boolean(
-    initialData?.profile_picture_url?.trim()
-  );
+  useEffect(() => {
+    if (!pendingFile) {
+      setPreviewObjectUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(pendingFile);
+    setPreviewObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pendingFile]);
+
+  const displayPictureUrl = pictureRemoved
+    ? null
+    : (previewObjectUrl ?? savedPictureUrl);
+  const hasProfilePicture = Boolean(displayPictureUrl);
+
+  const hadProfilePictureOnLoad = Boolean(savedPictureUrl);
 
   const firstName = normalizeText(formData.first_name);
   const lastName = normalizeText(formData.last_name);
   const namesValid = Boolean(firstName && lastName);
+
+  const pictureDirty = Boolean(pendingFile) || pictureRemoved;
 
   const isDirty =
     !hasExistingProfile ||
@@ -70,21 +82,20 @@ export default function ProfileForm({
       normalizeText(initialData?.portfolio_url) ||
     normalizeText(formData.linkedin_url) !==
       normalizeText(initialData?.linkedin_url) ||
-    normalizePictureUrl(formData.profile_picture_url) !==
-      normalizePictureUrl(initialData?.profile_picture_url);
+    pictureDirty;
 
-  const canSave = namesValid && isDirty && !loading && !uploading;
+  const canSave = namesValid && isDirty && !loading;
 
   const disabledReason = (() => {
     if (canSave || loading) return null;
-    if (uploading) return "Wait for the picture upload to finish.";
     if (!namesValid) return "First name and last name are required.";
     if (!isDirty) return "No changes to save.";
     return null;
   })();
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setError("Please choose a JPEG, PNG or WebP image.");
@@ -95,33 +106,13 @@ export default function ProfileForm({
       return;
     }
     setError(null);
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload/profile-picture", {
-        method: "POST",
-        body: fd,
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error ?? "Upload failed");
-        return;
-      }
-      setFormData((prev) => ({
-        ...prev,
-        profile_picture_url: json.url ?? null,
-      }));
-    } catch {
-      setError("Upload failed");
-    } finally {
-      setUploading(false);
-      e.target.value = "";
-    }
+    setPictureRemoved(false);
+    setPendingFile(file);
   };
 
   const handleRemovePicture = () => {
-    setFormData((prev) => ({ ...prev, profile_picture_url: null }));
+    setPendingFile(null);
+    setPictureRemoved(true);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -130,23 +121,54 @@ export default function ProfileForm({
     setError(null);
     setLoading(true);
     try {
+      let profilePictureUrl: string | null | undefined = undefined;
+      if (pictureRemoved && !pendingFile) {
+        profilePictureUrl = null;
+      } else if (pendingFile) {
+        const fd = new FormData();
+        fd.append("file", pendingFile);
+        const uploadRes = await fetch("/api/upload/profile-picture", {
+          method: "POST",
+          body: fd,
+        });
+        const uploadJson = await uploadRes.json().catch(() => ({}));
+        if (!uploadRes.ok) {
+          setError(uploadJson.error ?? "Upload failed");
+          return;
+        }
+        profilePictureUrl = uploadJson.url ?? null;
+        if (!profilePictureUrl) {
+          setError("Upload failed");
+          return;
+        }
+      }
+
+      const body: Record<string, string | null> = {
+        first_name: firstName || null,
+        last_name: lastName || null,
+        location: normalizeText(formData.location) || null,
+        portfolio_url: normalizeText(formData.portfolio_url) || null,
+        linkedin_url: normalizeText(formData.linkedin_url) || null,
+      };
+      if (profilePictureUrl !== undefined) {
+        body.profile_picture_url = profilePictureUrl;
+      }
+
       const response = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          first_name: firstName || null,
-          last_name: lastName || null,
-          location: normalizeText(formData.location) || null,
-          portfolio_url: normalizeText(formData.portfolio_url) || null,
-          linkedin_url: normalizeText(formData.linkedin_url) || null,
-          profile_picture_url: normalizePictureUrl(formData.profile_picture_url),
-        }),
+        body: JSON.stringify(body),
       });
       const json = await response.json();
       if (!response.ok) {
         setError(json.error ?? "Failed to save profile");
         return;
       }
+      if (Array.isArray(json.warnings) && json.warnings.length > 0) {
+        setError(json.warnings.join(" "));
+      }
+      setPendingFile(null);
+      setPictureRemoved(false);
       router.refresh();
     } catch {
       setError("Failed to save profile");
@@ -225,14 +247,14 @@ export default function ProfileForm({
           Profile picture
         </legend>
         <p className="mt-0.5 mb-3 text-sm text-[var(--foreground)]/80">
-          One picture per account. You can choose whether to show it on each
-          application when creating or editing.
+          One picture per account. The file is uploaded when you save. You can
+          choose whether to show it on each application when creating or
+          editing.
         </p>
         {hadProfilePictureOnLoad && (
           <p className="mb-3 text-sm text-[var(--foreground)]/80">
-            When you change your profile picture and save, the new picture will
-            be shown on existing applications for which you have chosen &quot;Show
-            your profile picture on this application?&quot;
+            When you change your profile picture and save, applications that
+            show your picture will use the new image automatically.
           </p>
         )}
         {hasProfilePicture ? (
@@ -240,7 +262,7 @@ export default function ProfileForm({
             <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--foreground)]/10 ring-2 ring-[var(--foreground)]/10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={formData.profile_picture_url!}
+                src={displayPictureUrl!}
                 alt=""
                 className="h-full w-full object-cover"
                 width={80}
@@ -258,14 +280,15 @@ export default function ProfileForm({
               <Button
                 type="button"
                 variant="secondary"
-                disabled={uploading}
+                disabled={loading}
                 onClick={() => fileInputRef.current?.click()}
               >
-                {uploading ? "Uploading…" : "Change"}
+                Change
               </Button>
               <Button
                 type="button"
                 variant="secondary"
+                disabled={loading}
                 onClick={handleRemovePicture}
               >
                 Remove
@@ -284,10 +307,10 @@ export default function ProfileForm({
             <Button
               type="button"
               variant="secondary"
-              disabled={uploading}
+              disabled={loading}
               onClick={() => fileInputRef.current?.click()}
             >
-              {uploading ? "Uploading…" : "Upload picture"}
+              Choose picture
             </Button>
           </div>
         )}
@@ -302,7 +325,9 @@ export default function ProfileForm({
           variant="primary"
           loading={loading}
           disabled={!canSave}
-          aria-describedby={disabledReason ? "save-profile-disabled-reason" : undefined}
+          aria-describedby={
+            disabledReason ? "save-profile-disabled-reason" : undefined
+          }
         >
           Save profile
         </Button>

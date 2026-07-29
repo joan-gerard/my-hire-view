@@ -4,7 +4,7 @@
  * Covers:
  * - Happy path: inserts new application row and returns 201.
  * - Profile fallback: candidate fields pulled from profile when not in body.
- * - Profile picture: resolved from snapshot when show_profile_picture is true.
+ * - Profile picture preference: persists show_profile_picture (URL comes from profile at view time).
  * - Auth / rate-limit guards.
  * - DB insert failure → 400.
  */
@@ -61,7 +61,6 @@ const PROFILE_SNAPSHOT = {
   location: "Stockholm",
   portfolio_url: "https://janedoe.dev",
   linkedin_url: null,
-  profile_picture_url: "https://r2.example.com/avatar.jpg",
 };
 
 const BASE_APP_INPUT = {
@@ -149,12 +148,12 @@ describe("POST /api/applications", () => {
     expect(json.data.first_name).toBe("Custom");
   });
 
-  it("sets profile_picture_url when show_profile_picture is true", async () => {
+  it("persists show_profile_picture true without a stored picture URL", async () => {
     const newApp = {
       ...BASE_APP_INPUT,
       id: "app-4",
       user_id: MOCK_USER.id,
-      profile_picture_url: PROFILE_SNAPSHOT.profile_picture_url,
+      show_profile_picture: true,
     };
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([ok(PROFILE_SNAPSHOT), ok(newApp)]),
@@ -165,17 +164,16 @@ describe("POST /api/applications", () => {
     );
     expect(response.status).toBe(201);
     const json = await response.json();
-    expect(json.data.profile_picture_url).toBe(
-      PROFILE_SNAPSHOT.profile_picture_url,
-    );
+    expect(json.data.show_profile_picture).toBe(true);
+    expect(json.data.profile_picture_url).toBeUndefined();
   });
 
-  it("sets profile_picture_url to null when show_profile_picture is false", async () => {
+  it("persists show_profile_picture false", async () => {
     const newApp = {
       ...BASE_APP_INPUT,
       id: "app-5",
       user_id: MOCK_USER.id,
-      profile_picture_url: null,
+      show_profile_picture: false,
     };
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([ok(PROFILE_SNAPSHOT), ok(newApp)]),
@@ -186,7 +184,7 @@ describe("POST /api/applications", () => {
     );
     expect(response.status).toBe(201);
     const json = await response.json();
-    expect(json.data.profile_picture_url).toBeNull();
+    expect(json.data.show_profile_picture).toBe(false);
   });
 
   it("returns 400 when the DB insert fails", async () => {

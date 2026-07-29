@@ -37,10 +37,8 @@ function defaultInclude(
 /** initialData can include application row fields used to seed form state. */
 export type ApplicationFormInitialData = Partial<ApplicationFormData> & {
   cvUrlExists?: boolean;
-  /** Stored preference: show profile picture on this application. Used for checkbox default when present. */
+  /** Stored preference: show profile picture on this application. */
   show_profile_picture?: boolean;
-  /** Current application profile picture URL (for edit); fallback for checkbox default when show_profile_picture not set. */
-  profile_picture_url?: string | null;
   cv_kind?: ApplicationCvKind;
   master_cv_id?: string | null;
 };
@@ -90,9 +88,7 @@ export default function ApplicationForm({
   const showProfilePictureDefault =
     initialData?.show_profile_picture !== undefined
       ? initialData.show_profile_picture === true
-      : initialData?.profile_picture_url !== undefined
-        ? Boolean(initialData.profile_picture_url?.trim())
-        : true;
+      : true;
   const [showProfilePicture, setShowProfilePicture] = useState(
     showProfilePictureDefault,
   );

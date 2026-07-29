@@ -132,9 +132,7 @@ async function getProfileSnapshot(
 ) {
   const { data } = await supabase
     .from("profiles")
-    .select(
-      "first_name, last_name, location, portfolio_url, linkedin_url, profile_picture_url",
-    )
+    .select("first_name, last_name, location, portfolio_url, linkedin_url")
     .eq("user_id", userId)
     .single();
   return {
@@ -143,18 +141,7 @@ async function getProfileSnapshot(
     location: data?.location ?? null,
     portfolio_url: data?.portfolio_url ?? null,
     linkedin_url: data?.linkedin_url ?? null,
-    profile_picture_url: data?.profile_picture_url ?? null,
   };
-}
-
-/** Set application profile_picture_url from profile when user chose to show it. */
-function resolveProfilePictureUrl(
-  snapshot: { profile_picture_url: string | null },
-  showProfilePicture: boolean,
-): string | null {
-  const url = snapshot.profile_picture_url?.trim() || null;
-  if (!url || !showProfilePicture) return null;
-  return url;
 }
 
 async function resolveMasterCvForUser(
@@ -200,10 +187,6 @@ export async function POST(request: NextRequest) {
     };
 
     const showProfilePicture = body.show_profile_picture === true;
-    const profilePictureUrl = resolveProfilePictureUrl(
-      snapshot,
-      showProfilePicture,
-    );
 
     const cvKind: ApplicationCvKind =
       body.cv_kind === "master" ? "master" : "custom";
@@ -253,7 +236,6 @@ export async function POST(request: NextRequest) {
         include_name_in_slug: body.slugNamePosition ?? null,
         cv_filename: cvFilename,
         use_original_cv_filename: body.use_original_cv_filename ?? true,
-        profile_picture_url: profilePictureUrl,
         show_profile_picture: showProfilePicture,
         cv_kind: cvKind,
         master_cv_id: masterCvId,
@@ -405,13 +387,7 @@ export async function PUT(request: NextRequest) {
     }
 
     if (show_profile_picture !== undefined) {
-      const snapshot = await getProfileSnapshot(supabase, user.id);
-      const showProfilePicture = show_profile_picture === true;
-      updatePayload.show_profile_picture = showProfilePicture;
-      updatePayload.profile_picture_url = resolveProfilePictureUrl(
-        snapshot,
-        showProfilePicture,
-      );
+      updatePayload.show_profile_picture = show_profile_picture === true;
     }
 
     const { data, error } = await supabase

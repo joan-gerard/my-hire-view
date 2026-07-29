@@ -26,7 +26,6 @@ export interface Database {
           include_name_in_slug: "start" | "end" | null;
           cv_filename: string | null;
           use_original_cv_filename: boolean;
-          profile_picture_url: string | null;
           show_profile_picture: boolean;
           cv_kind: "master" | "custom";
           master_cv_id: string | null;
@@ -54,7 +53,6 @@ export interface Database {
           include_name_in_slug?: "start" | "end" | null;
           cv_filename?: string | null;
           use_original_cv_filename?: boolean;
-          profile_picture_url?: string | null;
           show_profile_picture?: boolean;
           cv_kind?: "master" | "custom";
           master_cv_id?: string | null;
@@ -82,7 +80,6 @@ export interface Database {
           include_name_in_slug?: "start" | "end" | null;
           cv_filename?: string | null;
           use_original_cv_filename?: boolean;
-          profile_picture_url?: string | null;
           show_profile_picture?: boolean;
           cv_kind?: "master" | "custom";
           master_cv_id?: string | null;

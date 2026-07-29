@@ -10,6 +10,8 @@ export type ResolvedPublicApplication = {
 
 /**
  * Resolves a public application by opaque public_id and per-user slug.
+ * When show_profile_picture is true, attaches profiles.profile_picture_url
+ * onto the application as a display-only profile_picture_url (not a DB column).
  */
 export async function resolvePublicApplication(
   supabase: SupabaseClient,
@@ -23,7 +25,7 @@ export async function resolvePublicApplication(
   const admin = createAdminClient();
   const { data: profile, error: profileError } = await admin
     .from("profiles")
-    .select("user_id")
+    .select("user_id, profile_picture_url")
     .eq("public_id", publicId)
     .maybeSingle();
 
@@ -42,8 +44,14 @@ export async function resolvePublicApplication(
     return null;
   }
 
+  const showPicture = application.show_profile_picture === true;
+  const liveUrl = profile.profile_picture_url?.trim() || null;
+
   return {
-    application: application as Application,
+    application: {
+      ...(application as Application),
+      profile_picture_url: showPicture ? liveUrl : null,
+    },
     ownerUserId: profile.user_id,
   };
 }

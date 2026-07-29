@@ -101,9 +101,6 @@ export async function PUT(request: NextRequest) {
         : (existing?.profile_picture_url ?? null);
 
     const oldPictureUrl = existing?.profile_picture_url ?? null;
-    if (oldPictureUrl && oldPictureUrl !== newPictureUrl) {
-      await deleteProfilePictureIfOurs(supabase, oldPictureUrl);
-    }
 
     const publicId =
       existing?.public_id ??
@@ -159,6 +156,8 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    const warnings: string[] = [];
+
     // Keep Auth user_metadata in sync when names or public_id change (or on first save).
     const prevFirst = existing?.first_name ?? null;
     const prevLast = existing?.last_name ?? null;
@@ -169,23 +168,35 @@ export async function PUT(request: NextRequest) {
       metaPublicId !== publicId
     ) {
       const { error: metaError } = await supabase.auth.updateUser({
-        data: { first_name: firstName, last_name: lastName, public_id: publicId },
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          public_id: publicId,
+        },
       });
       if (metaError) {
-        console.error("Failed to sync name to user_metadata:", metaError.message);
+        console.error(
+          "Failed to sync name to user_metadata:",
+          metaError.message,
+        );
+        warnings.push("Saved profile but failed to sync name to account metadata");
       }
     }
 
-    // When profile picture URL changed, sync applications where user chose to show picture
-    if (oldPictureUrl !== newPictureUrl) {
-      await supabase
-        .from("applications")
-        .update({ profile_picture_url: newPictureUrl })
-        .eq("user_id", user.id)
-        .eq("show_profile_picture", true);
+    // After successful write: delete previous Storage object when the URL changed.
+    // Applications no longer store a copy — they read profiles.profile_picture_url live.
+    if (oldPictureUrl && oldPictureUrl !== newPictureUrl) {
+      const deleted = await deleteProfilePictureIfOurs(supabase, oldPictureUrl);
+      if (!deleted.ok) {
+        warnings.push(
+          "Saved profile but failed to delete the previous profile picture from storage",
+        );
+      }
     }
 
-    return NextResponse.json({ data });
+    return NextResponse.json(
+      warnings.length > 0 ? { data, warnings } : { data },
+    );
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

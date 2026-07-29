@@ -3,31 +3,67 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  canonicalProfilePicturePath,
   getProfilePictureStoragePath,
+  isCanonicalProfilePicturePath,
   isOwnedProfilePictureUrl,
 } from "@/lib/utils/profile-picture-storage";
 
 const USER_ID = "user-123";
-const OWNED_URL =
+const CANONICAL_URL =
+  "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+const LEGACY_URL =
   "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/abc.jpg";
 const OTHER_USER_URL =
-  "https://abc.supabase.co/storage/v1/object/public/profile-pictures/other-user/abc.jpg";
+  "https://abc.supabase.co/storage/v1/object/public/profile-pictures/other-user/avatar.jpg";
 
 describe("getProfilePictureStoragePath", () => {
   it("extracts the object path from a profile-pictures public URL", () => {
-    expect(getProfilePictureStoragePath(OWNED_URL)).toBe("user-123/abc.jpg");
+    expect(getProfilePictureStoragePath(CANONICAL_URL)).toBe(
+      "user-123/avatar.jpg",
+    );
   });
 
   it("returns null for non-storage or non-bucket URLs", () => {
     expect(getProfilePictureStoragePath("https://evil.example/x.jpg")).toBeNull();
-    expect(getProfilePictureStoragePath("http://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/a.jpg")).toBeNull();
+    expect(
+      getProfilePictureStoragePath(
+        "http://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg",
+      ),
+    ).toBeNull();
     expect(getProfilePictureStoragePath(null)).toBeNull();
   });
 });
 
+describe("canonicalProfilePicturePath", () => {
+  it("builds userId/avatar.ext and normalizes jpeg to jpg", () => {
+    expect(canonicalProfilePicturePath(USER_ID, "png")).toBe(
+      "user-123/avatar.png",
+    );
+    expect(canonicalProfilePicturePath(USER_ID, "jpeg")).toBe(
+      "user-123/avatar.jpg",
+    );
+  });
+});
+
+describe("isCanonicalProfilePicturePath", () => {
+  it("accepts avatar with allowed extensions", () => {
+    expect(isCanonicalProfilePicturePath("user-123/avatar.webp", USER_ID)).toBe(
+      true,
+    );
+  });
+
+  it("rejects legacy UUID filenames", () => {
+    expect(isCanonicalProfilePicturePath("user-123/abc.jpg", USER_ID)).toBe(
+      false,
+    );
+  });
+});
+
 describe("isOwnedProfilePictureUrl", () => {
-  it("returns true for a URL under the user's folder", () => {
-    expect(isOwnedProfilePictureUrl(OWNED_URL, USER_ID)).toBe(true);
+  it("returns true for canonical and legacy URLs under the user's folder", () => {
+    expect(isOwnedProfilePictureUrl(CANONICAL_URL, USER_ID)).toBe(true);
+    expect(isOwnedProfilePictureUrl(LEGACY_URL, USER_ID)).toBe(true);
   });
 
   it("returns false for another user's folder", () => {
@@ -47,6 +83,6 @@ describe("isOwnedProfilePictureUrl", () => {
   });
 
   it("returns false for an empty user id", () => {
-    expect(isOwnedProfilePictureUrl(OWNED_URL, "")).toBe(false);
+    expect(isOwnedProfilePictureUrl(CANONICAL_URL, "")).toBe(false);
   });
 });
