@@ -546,7 +546,7 @@ Candidate fields on the application are either supplied by the form (with toggle
 | # | Scenario | Behaviour |
 |---|---|---|
 | 24 | User selects a file, saves, then selects the same file again before the next save | Upload is deduplicated via file signature (`name:size:lastModified`); the cached R2 URL is reused — no duplicate upload. |
-| 25 | User selects a file, save fails (e.g. slug error), then retries save | The same idempotency key is reused; R2 `PutObject` is idempotent so no duplicate object is created. |
+| 25 | User selects a file, save fails (e.g. slug error), then retries save | The same idempotency key is reused; `HeadObject` / conditional `PutObject` (`IfNoneMatch: "*"`) reuse the same per-user R2 object when size/type match. |
 | 26 | User selects a different file before retrying | A new idempotency key is generated; the old cached upload is invalidated. |
 | 27 | Upload to R2 fails | `setErrors({ cv_url: error || "Upload failed" })`; submit halts before slug resolution. Application not created. |
 | 28 | User provides a `cv_url` directly (e.g. existing URL on edit) rather than selecting a file | No upload is triggered; the existing URL is passed as-is. |

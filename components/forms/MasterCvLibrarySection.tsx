@@ -81,8 +81,8 @@ export default function MasterCvLibrarySection({
       setError("Only PDF files are allowed.");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      setError("File size must be less than 10MB.");
+    if (file.size > 3 * 1024 * 1024) {
+      setError("File size must be less than 3MB.");
       return;
     }
     setUploading(true);

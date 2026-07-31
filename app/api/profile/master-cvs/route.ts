@@ -18,6 +18,7 @@ import {
   type MasterCvApplicationPreview,
 } from "@/lib/types/master-cv";
 import { deleteCvIfOurs } from "@/lib/utils/cv-storage";
+import { hasPdfMagicBytes } from "@/lib/utils/pdf";
 import { NextRequest, NextResponse } from "next/server";
 
 const APPLICATION_STATUSES = new Set<ApplicationStatus>([
@@ -163,9 +164,9 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 3 * 1024 * 1024) {
       return NextResponse.json(
-        { error: "File size must be less than 10MB" },
+        { error: "File size must be less than 3MB" },
         { status: 400 },
       );
     }
@@ -175,6 +176,12 @@ export async function POST(request: NextRequest) {
     const publicBase = getR2PublicBaseUrl();
     const url = `${publicBase}/${objectKey}`;
     const body = Buffer.from(await file.arrayBuffer());
+    if (!hasPdfMagicBytes(body)) {
+      return NextResponse.json(
+        { error: "Only PDF files are allowed" },
+        { status: 400 },
+      );
+    }
 
     await getR2S3Client().send(
       new PutObjectCommand({

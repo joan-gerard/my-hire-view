@@ -39,7 +39,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 
 | Piece | Role |
 |-------|------|
-| `POST /api/upload` | Custom CV upload (auth + idempotency). Keys `cvs/idempotency/<key>.pdf`. |
+| `POST /api/upload` | Custom CV upload (auth + idempotency). Keys `cvs/{userId}/idempotency/<key>.pdf`. |
 | `GET/POST/DELETE /api/profile/master-cvs` | Master CV library (max 5). Keys `cvs/masters/{userId}/{id}.pdf`. GET includes `applications_count` and a `used_by` preview per row. |
 | `lib/storage/r2-client.ts` | S3-compatible R2 client. |
 | `lib/utils/cv-storage.ts` | `deleteCvIfOurs`, `deleteApplicationCvIfCustom`, `checkCvObjectExists`. |
@@ -47,10 +47,14 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 ## Idempotency
 
 - Send **`Idempotency-Key: <opaque>`** on each CV upload (the application form uses a new UUID whenever the user picks a PDF).
-- Retries or duplicate submits with the **same** key reuse the **same** R2 object URL; the server short-circuits with `HeadObject` when the object already exists.
+- Object keys are scoped per user: `cvs/{userId}/idempotency/<key>.pdf`.
+- Retries or duplicate submits with the **same** key reuse the **same** R2 object URL; the server short-circuits with `HeadObject` when the object already exists and its size/content-type match the request (mismatch → **409**).
+- Creates use a conditional `PutObject` (`IfNoneMatch: "*"`). If another request already created the object, R2 returns **412** and the API re-checks HeadObject, then responds with `{ url, idempotent: true }` or **409** instead of overwriting.
+- Upload rate limit is **10/min** per IP and per user; at most **2** concurrent uploads per user (in-memory, per instance).
 
 ## Safety
 
+- **PDF content:** Upload routes check MIME type and that the body starts with `%PDF` before writing to R2.
 - **URL check:** Deletes run only when the URL prefix matches `R2_PUBLIC_BASE_URL`, so arbitrary URLs in `cv_url` are not passed to the delete API.
 - **Errors:** Delete failures are logged and do not block DB updates or deletes.
 

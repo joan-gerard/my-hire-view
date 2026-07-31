@@ -19,7 +19,7 @@ interface FileUploadProps {
   chooseLabel?: string;
 }
 
-const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_SIZE_BYTES = 3 * 1024 * 1024; // 3MB
 
 export default function FileUpload({
   value,
@@ -67,7 +67,7 @@ export default function FileUpload({
     }
 
     if (file.size > MAX_SIZE_BYTES) {
-      alert('File size must be less than 10MB');
+      alert('File size must be less than 3MB');
       e.target.value = '';
       return;
     }

@@ -101,6 +101,40 @@ describe("rateLimit", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Concurrent upload slots
+// ---------------------------------------------------------------------------
+describe("tryAcquireUserUploadSlot / releaseUserUploadSlot", () => {
+  it("allows up to two concurrent slots per user", async () => {
+    const { tryAcquireUserUploadSlot, releaseUserUploadSlot } = await import(
+      "@/lib/rate-limit"
+    );
+    const userId = `concurrent-user-${uniqueId()}`;
+    expect(tryAcquireUserUploadSlot(userId)).toBe(true);
+    expect(tryAcquireUserUploadSlot(userId)).toBe(true);
+    expect(tryAcquireUserUploadSlot(userId)).toBe(false);
+    releaseUserUploadSlot(userId);
+    expect(tryAcquireUserUploadSlot(userId)).toBe(true);
+    releaseUserUploadSlot(userId);
+    releaseUserUploadSlot(userId);
+  });
+
+  it("tracks users independently", async () => {
+    const { tryAcquireUserUploadSlot, releaseUserUploadSlot } = await import(
+      "@/lib/rate-limit"
+    );
+    const a = `concurrent-a-${uniqueId()}`;
+    const b = `concurrent-b-${uniqueId()}`;
+    expect(tryAcquireUserUploadSlot(a)).toBe(true);
+    expect(tryAcquireUserUploadSlot(a)).toBe(true);
+    expect(tryAcquireUserUploadSlot(a)).toBe(false);
+    expect(tryAcquireUserUploadSlot(b)).toBe(true);
+    releaseUserUploadSlot(a);
+    releaseUserUploadSlot(a);
+    releaseUserUploadSlot(b);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // checkRateLimit
 // ---------------------------------------------------------------------------
 describe("checkRateLimit", () => {

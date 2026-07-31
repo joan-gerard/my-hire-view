@@ -467,26 +467,24 @@ Check format and uniqueness of a proposed slug **for the current user** (used wh
 Upload a CV PDF to Cloudflare R2. Requires an idempotency key so retries reuse the same object. Full details: [PDF_AND_R2.md](PDF_AND_R2.md).
 
 - **Auth:** Required
-- **Rate limit:** Default (60/min)
-- **Body:** `multipart/form-data` with `file` (PDF, max **10 MB**)
-- **Idempotency:** Header `Idempotency-Key` / `idempotency-key`, or form field `idempotency_key`: 8–128 chars, `[a-zA-Z0-9_-]` only. Object key: `cvs/idempotency/<key>.pdf`. If the object already exists → `{ url, idempotent: true }` without re-upload.
+- **Rate limit:** **10 / minute** per IP and per user; max **2** concurrent uploads per user (best-effort per instance)
+- **Body:** `multipart/form-data` with `file` (PDF, max **3 MB**)
+- **Idempotency:** Header `Idempotency-Key` / `idempotency-key`, or form field `idempotency_key`: 8–128 chars, `[a-zA-Z0-9_-]` only. Object key: `cvs/{userId}/idempotency/<key>.pdf`. If the object already exists and size/content-type match the request → `{ url, idempotent: true }` without re-upload; size/type mismatch → **409**.
 - **Success:** `200` `{ url: string, idempotent: boolean }`
-- **Errors:** `400` missing/invalid file or key; `401`; `429`; `500` (R2 not configured / upload failure)
+- **Errors:** `400` missing/invalid file or key; `401`; `409` idempotency key reused with a different file; `429`; `500` (R2 not configured / upload failure)
 
 **What works**
 
 - Auth required (dedicated check before processing).
-- Rate limited.
-- Restricts to PDF MIME type and **10 MB** max size.
-- Idempotency key normalized and validated; HeadObject replay returns the same URL without re-upload.
+- Stricter rate limit than general writes (**10/min** IP + user) and a concurrent upload cap (**2** per user, in-memory / per instance).
+- Restricts to PDF MIME type and **3 MB** max size; rejects bodies that do not start with `%PDF` (magic bytes), not MIME alone.
+- Idempotency keys scoped per user (`cvs/{userId}/idempotency/<key>.pdf`); HeadObject replay returns the same URL without re-upload when size and content type match.
+- **Atomic create:** `PutObject` uses `IfNoneMatch: "*"` so concurrent creates with the same key cannot overwrite; **412** (and a single **409** retry) re-checks HeadObject and returns `{ url, idempotent: true }` or **409** on mismatch.
 - Fails clearly when R2 is not configured; logs upload/config errors server-side.
 
 **Improvement opportunities**
 
-- Verify PDF magic bytes (`%PDF`), not only `Content-Type`, to block disguised uploads.
-- Scope idempotency keys per user (e.g. `cvs/{userId}/idempotency/<key>.pdf`) so one user cannot overwrite/replay another’s key if keys collide.
-- Cap concurrent uploads per user; consider a lower rate limit than general writes.
-- On idempotent hit, optionally verify the existing object size/type matches expectations.
+- Application-level **CV object ownership** / shared-URL deletes (PUT/DELETE above) remain relevant: per-user upload keys stop cross-user key collision at upload time, but an arbitrary `cv_url` on an application row can still target another user’s object.
 
 ---
 

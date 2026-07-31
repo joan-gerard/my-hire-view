@@ -95,7 +95,7 @@ Create the following route structure:
   - Company name (text input)
   - Role/position (text input)
   - Slug (auto-generate from company-role, allow manual override, validate uniqueness)
-  - CV upload (PDF only, max 10MB, upload to Cloudflare R2)
+  - CV upload (PDF only, max 3MB, upload to Cloudflare R2)
   - YouTube video URL (text input, validate YouTube URL format)
   - Description (textarea, optional)
 - Form validation

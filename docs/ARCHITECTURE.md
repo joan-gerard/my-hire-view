@@ -220,7 +220,7 @@ Types are mirrored in `lib/types/application.ts`, `lib/types/profile.ts`, and `l
 ### 5.4 File Storage (Cloudflare R2)
 
 - **Use case:** CV PDFs only.
-- **Flow (upload on save):** The form keeps the selected PDF in memory until the user saves. On submit, the client uploads to `/api/upload` → API validates type (PDF) and size (10MB max) → `PutObject` to R2 → returned public URL is stored in `applications.cv_url`. When editing, if the user replaces the CV, the new file is uploaded on save and the previous object is deleted. When an application is deleted, its CV object is also deleted. See **docs/PDF_AND_R2.md** for full details.
+- **Flow (upload on save):** The form keeps the selected PDF in memory until the user saves. On submit, the client uploads to `/api/upload` → API validates type (PDF) and size (3MB max) → `PutObject` to R2 → returned public URL is stored in `applications.cv_url`. When editing, if the user replaces the CV, the new file is uploaded on save and the previous object is deleted. When an application is deleted, its CV object is also deleted. See **docs/PDF_AND_R2.md** for full details.
 
 Video is not stored; only YouTube URLs are stored and embedded via `YouTubeEmbed` and `lib/utils/youtube.ts`.
 
