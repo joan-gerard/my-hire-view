@@ -11,12 +11,31 @@ import {
   getR2S3Client,
 } from "@/lib/storage/r2-client";
 import { createClient } from "@/lib/supabase/server";
-import { MASTER_CV_MAX_PER_USER } from "@/lib/types/master-cv";
+import type { ApplicationStatus } from "@/lib/types/application";
+import {
+  MASTER_CV_DELETE_PREVIEW_LIMIT,
+  MASTER_CV_MAX_PER_USER,
+  type MasterCvApplicationPreview,
+} from "@/lib/types/master-cv";
 import { deleteCvIfOurs } from "@/lib/utils/cv-storage";
 import { NextRequest, NextResponse } from "next/server";
 
+const APPLICATION_STATUSES = new Set<ApplicationStatus>([
+  "active",
+  "draft",
+  "archived",
+]);
+
+function toApplicationStatus(value: unknown): ApplicationStatus {
+  if (typeof value === "string" && APPLICATION_STATUSES.has(value as ApplicationStatus)) {
+    return value as ApplicationStatus;
+  }
+  return "active";
+}
+
 /**
- * GET /api/profile/master-cvs — list the current user's master CV library.
+ * GET /api/profile/master-cvs — list the current user's master CV library
+ * (includes `applications_count` and a `used_by` preview per row for delete UX).
  */
 export async function GET(request: NextRequest) {
   const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
@@ -35,7 +54,47 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ data: data ?? [] });
+    const masters = data ?? [];
+    const usedBy = new Map<string, MasterCvApplicationPreview[]>();
+    const counts = new Map<string, number>();
+
+    if (masters.length > 0) {
+      const { data: refs, error: refsError } = await supabase
+        .from("applications")
+        .select("id, company, role, status, master_cv_id")
+        .eq("user_id", user.id)
+        .not("master_cv_id", "is", null)
+        .order("updated_at", { ascending: false });
+
+      if (refsError) {
+        return NextResponse.json({ error: refsError.message }, { status: 400 });
+      }
+
+      for (const row of refs ?? []) {
+        const masterId = row.master_cv_id;
+        if (typeof masterId !== "string" || !masterId) continue;
+        counts.set(masterId, (counts.get(masterId) ?? 0) + 1);
+
+        const list = usedBy.get(masterId) ?? [];
+        if (list.length < MASTER_CV_DELETE_PREVIEW_LIMIT) {
+          list.push({
+            id: String(row.id),
+            company: typeof row.company === "string" ? row.company : "",
+            role: typeof row.role === "string" ? row.role : "",
+            status: toApplicationStatus(row.status),
+          });
+          usedBy.set(masterId, list);
+        }
+      }
+    }
+
+    const withUsage = masters.map((row) => ({
+      ...row,
+      applications_count: counts.get(row.id) ?? 0,
+      used_by: usedBy.get(row.id) ?? [],
+    }));
+
+    return NextResponse.json({ data: withUsage });
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -142,7 +201,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ data }, { status: 201 });
+    return NextResponse.json(
+      { data: { ...data, applications_count: 0, used_by: [] } },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Master CV upload error:", error);
     return NextResponse.json(

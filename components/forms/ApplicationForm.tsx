@@ -207,6 +207,67 @@ export default function ApplicationForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /** Sync form selection after library modal upload/delete. */
+  const handleMasterLibraryChange = (list: MasterCv[]) => {
+    const hadMasters = masterCvs.length > 0;
+    const prevSelected = selectedMasterId;
+    setMasterCvs(list);
+    setMastersLoading(false);
+
+    const stillSelected =
+      prevSelected != null && list.some((m) => m.id === prevSelected);
+    if (stillSelected) return;
+
+    if (list.length === 0) {
+      setSelectedMasterId(null);
+      if (cvMode === "master") {
+        setCvMode("custom");
+        setFormData((prev) => ({
+          ...prev,
+          cv_url: "",
+          cv_filename: null,
+          master_cv_id: null,
+          cv_kind: "custom",
+        }));
+      }
+      return;
+    }
+
+    // Selected master was deleted while in master mode — pick another.
+    if (cvMode === "master" && prevSelected) {
+      const pick = list[0]!;
+      setSelectedMasterId(pick.id);
+      setFormData((prev) => ({
+        ...prev,
+        cv_url: pick.url,
+        cv_filename: pick.filename,
+        master_cv_id: pick.id,
+        cv_kind: "master",
+      }));
+      setErrors((prev) => ({ ...prev, cv_url: undefined }));
+      return;
+    }
+
+    // First master(s) added while empty — prefer master mode (create-form default).
+    // Skip while the form's own initial fetch is still in flight to avoid racing edit mode.
+    if (!hadMasters && !mastersLoading) {
+      const pick = list[0]!;
+      setCvMode("master");
+      setSelectedMasterId(pick.id);
+      setCvPendingFile(null);
+      uploadedPendingFileRef.current = null;
+      cvUploadIdempotencyKeyRef.current = null;
+      setFormData((prev) => ({
+        ...prev,
+        cv_url: pick.url,
+        cv_filename: pick.filename,
+        master_cv_id: pick.id,
+        cv_kind: "master",
+      }));
+      setErrors((prev) => ({ ...prev, cv_url: undefined }));
+    }
+  };
+
   const getFileSignature = (file: File): string =>
     `${file.name}:${file.size}:${file.lastModified}`;
 
@@ -868,6 +929,7 @@ export default function ApplicationForm({
             }
           }
         }}
+        onMasterLibraryChange={handleMasterLibraryChange}
         switchToMasterConfirmOpen={switchToMasterConfirmOpen}
         onConfirmSwitchToMaster={() => {
           setSwitchToMasterConfirmOpen(false);

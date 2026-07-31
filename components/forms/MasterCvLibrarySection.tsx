@@ -2,20 +2,53 @@
 
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
-import type { MasterCv } from "@/lib/types/master-cv";
-import { MASTER_CV_MAX_PER_USER } from "@/lib/types/master-cv";
+import MasterCvUsedByPreview from "@/components/forms/MasterCvUsedByPreview";
+import type { MasterCv, MasterCvApplicationPreview } from "@/lib/types/master-cv";
+import {
+  MASTER_CV_MAX_PER_USER,
+  masterCvDeleteConfirmMessage,
+} from "@/lib/types/master-cv";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+export type MasterCvLibrarySectionProps = {
+  /** Called whenever the library list is refreshed after load/upload/delete. */
+  onLibraryChange?: (items: MasterCv[]) => void;
+  /**
+   * Omit the outer card chrome (for embedding in a modal).
+   * Also uses an inline delete confirm so we do not nest native dialogs.
+   */
+  embedded?: boolean;
+};
+
+type PendingDelete = {
+  cv: MasterCv;
+  applicationsCount: number;
+  usedBy: MasterCvApplicationPreview[];
+};
+
 /**
- * Profile section: upload and manage up to 5 master CVs.
+ * Upload and manage up to 5 master CVs (profile page or application-form modal).
  */
-export default function MasterCvLibrarySection() {
+export default function MasterCvLibrarySection({
+  onLibraryChange,
+  embedded = false,
+}: MasterCvLibrarySectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const onLibraryChangeRef = useRef(onLibraryChange);
+  onLibraryChangeRef.current = onLibraryChange;
   const [items, setItems] = useState<MasterCv[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<MasterCv | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(
+    null,
+  );
+  const [deleting, setDeleting] = useState(false);
+
+  const applyItems = useCallback((next: MasterCv[]) => {
+    setItems(next);
+    onLibraryChangeRef.current?.(next);
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -28,13 +61,13 @@ export default function MasterCvLibrarySection() {
         setError(json.error ?? "Failed to load master CVs");
         return;
       }
-      setItems((json.data as MasterCv[]) ?? []);
+      applyItems((json.data as MasterCv[]) ?? []);
     } catch {
       setError("Failed to load master CVs");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyItems]);
 
   useEffect(() => {
     void load();
@@ -75,15 +108,9 @@ export default function MasterCvLibrarySection() {
     }
   };
 
-  const requestDelete = (cv: MasterCv) => {
-    setPendingDelete(cv);
-  };
-
-  const confirmDelete = async () => {
-    if (!pendingDelete) return;
-    const cv = pendingDelete;
-    setPendingDelete(null);
+  const performDelete = async (cv: MasterCv) => {
     setError(null);
+    setDeleting(true);
     try {
       const res = await fetch(`/api/profile/master-cvs?id=${cv.id}`, {
         method: "DELETE",
@@ -103,25 +130,55 @@ export default function MasterCvLibrarySection() {
       await load();
     } catch {
       setError("Failed to delete master CV");
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const atLimit = items.length >= MASTER_CV_MAX_PER_USER;
+  const requestDelete = (cv: MasterCv) => {
+    const applicationsCount = Math.max(0, cv.applications_count ?? 0);
+    if (applicationsCount === 0) {
+      void performDelete(cv);
+      return;
+    }
+    setPendingDelete({
+      cv,
+      applicationsCount,
+      usedBy: cv.used_by ?? [],
+    });
+  };
 
-  return (
-    <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-[var(--foreground)]">
-        Master CVs
-      </h2>
-      <p className="mt-1 text-sm text-[var(--foreground)]/60">
-        Upload up to {MASTER_CV_MAX_PER_USER} résumé PDFs to reuse on new
-        applications. Deleting a master CV removes it from storage; applications
-        that still pointed at it will show a missing-CV warning on the dashboard.
-      </p>
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const { cv } = pendingDelete;
+    setPendingDelete(null);
+    await performDelete(cv);
+  };
+
+  const atLimit = items.length >= MASTER_CV_MAX_PER_USER;
+  const deleteMessage = pendingDelete
+    ? masterCvDeleteConfirmMessage(pendingDelete.applicationsCount)
+    : "";
+
+  const body = (
+    <>
+      {!embedded && (
+        <>
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">
+            Master CVs
+          </h2>
+          <p className="mt-1 text-sm text-[var(--foreground)]/60">
+            Upload up to {MASTER_CV_MAX_PER_USER} résumé PDFs to reuse on new
+            applications. Deleting a master CV removes it from storage;
+            applications that still pointed at it will show a missing-CV warning
+            on the dashboard.
+          </p>
+        </>
+      )}
 
       {error && (
         <p
-          className="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-900"
+          className={`${embedded ? "mt-0" : "mt-3"} rounded-md bg-amber-50 p-3 text-sm text-amber-900`}
           role="status"
         >
           {error}
@@ -129,9 +186,13 @@ export default function MasterCvLibrarySection() {
       )}
 
       {loading ? (
-        <p className="mt-4 text-sm text-[var(--foreground)]/60">Loading…</p>
+        <p
+          className={`${embedded && !error ? "mt-0" : "mt-4"} text-sm text-[var(--foreground)]/60`}
+        >
+          Loading…
+        </p>
       ) : (
-        <ul className="mt-4 space-y-2">
+        <ul className={`${embedded && !error ? "mt-0" : "mt-4"} space-y-2`}>
           {items.length === 0 && (
             <li className="text-sm text-[var(--foreground)]/70">
               No master CVs yet. Upload one to reuse it on applications.
@@ -164,6 +225,7 @@ export default function MasterCvLibrarySection() {
                 <Button
                   type="button"
                   variant="secondary"
+                  disabled={deleting}
                   onClick={() => requestDelete(cv)}
                 >
                   Delete
@@ -172,6 +234,48 @@ export default function MasterCvLibrarySection() {
             </li>
           ))}
         </ul>
+      )}
+
+      {embedded && pendingDelete && (
+        <div
+          className="mt-4 space-y-3 rounded-md border border-amber-300 bg-amber-50 p-3"
+          role="alertdialog"
+          aria-labelledby="master-cv-delete-title"
+          aria-describedby="master-cv-delete-desc"
+        >
+          <p
+            id="master-cv-delete-title"
+            className="text-sm font-semibold text-amber-950"
+          >
+            Delete master CV?
+          </p>
+          <p id="master-cv-delete-desc" className="text-sm text-amber-900">
+            {deleteMessage}
+          </p>
+          <MasterCvUsedByPreview
+            applications={pendingDelete.usedBy}
+            totalCount={pendingDelete.applicationsCount}
+            tone="warning"
+          />
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={deleting}
+              onClick={() => setPendingDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              loading={deleting}
+              onClick={() => void confirmDelete()}
+            >
+              I Understand — Delete
+            </Button>
+          </div>
+        </div>
       )}
 
       <div className="mt-4">
@@ -185,7 +289,7 @@ export default function MasterCvLibrarySection() {
         <Button
           type="button"
           variant="secondary"
-          disabled={uploading || atLimit}
+          disabled={uploading || atLimit || deleting || pendingDelete !== null}
           onClick={() => fileInputRef.current?.click()}
           title={
             atLimit
@@ -203,15 +307,34 @@ export default function MasterCvLibrarySection() {
         )}
       </div>
 
-      <ConfirmDialog
-        open={pendingDelete !== null}
-        title="Delete master CV?"
-        message="If any applications still use this CV, they will keep the old link but the file will be gone — the dashboard will show “CV missing” until you pick another CV on those applications. This cannot be undone."
-        confirmLabel="I Understand — Delete"
-        cancelLabel="Cancel"
-        onConfirm={() => void confirmDelete()}
-        onCancel={() => setPendingDelete(null)}
-      />
+      {!embedded && (
+        <ConfirmDialog
+          open={pendingDelete !== null}
+          title="Delete master CV?"
+          message={deleteMessage}
+          confirmLabel="I Understand — Delete"
+          cancelLabel="Cancel"
+          onConfirm={() => void confirmDelete()}
+          onCancel={() => setPendingDelete(null)}
+        >
+          {pendingDelete && (
+            <MasterCvUsedByPreview
+              applications={pendingDelete.usedBy}
+              totalCount={pendingDelete.applicationsCount}
+            />
+          )}
+        </ConfirmDialog>
+      )}
+    </>
+  );
+
+  if (embedded) {
+    return <div className="space-y-0">{body}</div>;
+  }
+
+  return (
+    <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+      {body}
     </section>
   );
 }

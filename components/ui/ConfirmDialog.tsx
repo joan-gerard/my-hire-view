@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
   message: string;
+  /** Optional extra content below the message (e.g. a preview list). */
+  children?: ReactNode;
   /** Primary button label (destructive / confirm). */
   confirmLabel?: string;
   cancelLabel?: string;
@@ -22,6 +24,7 @@ export default function ConfirmDialog({
   open,
   title,
   message,
+  children,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   confirmOnly = false,
@@ -57,7 +60,7 @@ export default function ConfirmDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,24rem)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,28rem)] max-h-[min(90vh,36rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       aria-describedby={messageId}
       onClick={(e) => {
@@ -74,6 +77,7 @@ export default function ConfirmDialog({
         <p id={messageId} className="text-sm text-[var(--foreground)]/80">
           {message}
         </p>
+        {children}
         <div className="flex flex-wrap justify-end gap-2">
           {!confirmOnly && (
             <button

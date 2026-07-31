@@ -1,11 +1,13 @@
 "use client";
 
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Button from "@/components/ui/Button";
 import FileUpload from "@/components/forms/FileUpload";
+import MasterCvLibraryModal from "@/components/forms/MasterCvLibraryModal";
 import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
 import type { ApplicationCvKind } from "@/lib/types/application";
 import type { MasterCv } from "@/lib/types/master-cv";
-import Link from "next/link";
+import { useState } from "react";
 
 interface CvSourceFieldProps {
   /** Create form vs edit form — controls the "Current" summary. */
@@ -29,6 +31,8 @@ interface CvSourceFieldProps {
   onSwitchToCustom: () => void;
   onSwitchToMaster: () => void;
   onPendingFileChange: (file: File | null) => void;
+  /** When set, users can manage the master library from this form (modal). */
+  onMasterLibraryChange?: (items: MasterCv[]) => void;
 
   switchToMasterConfirmOpen: boolean;
   onConfirmSwitchToMaster: () => void;
@@ -59,6 +63,7 @@ export default function CvSourceField({
   onSwitchToCustom,
   onSwitchToMaster,
   onPendingFileChange,
+  onMasterLibraryChange,
   switchToMasterConfirmOpen,
   onConfirmSwitchToMaster,
   onCancelSwitchToMaster,
@@ -66,8 +71,10 @@ export default function CvSourceField({
   onUseOriginalCvFilenameChange,
   slug,
 }: CvSourceFieldProps) {
+  const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const selectedMaster = masterCvs.find((m) => m.id === selectedMasterId);
   const hasMasters = masterCvs.length > 0;
+  const canManageLibrary = typeof onMasterLibraryChange === "function";
 
   const pendingOrCurrentName =
     pendingFile?.name ??
@@ -141,12 +148,23 @@ export default function CvSourceField({
 
       {/* Change CV */}
       <div className="space-y-3">
-        <p className="text-sm font-medium text-[var(--foreground)]">
-          {isEdit ? "Change CV" : "Choose a CV"}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-medium text-[var(--foreground)]">
+            {isEdit ? "Change CV" : "Choose a CV"}
+          </p>
+          {canManageLibrary && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setLibraryModalOpen(true)}
+            >
+              Manage library
+            </Button>
+          )}
+        </div>
         {!isEdit && (
           <p className="text-sm text-[var(--foreground)]/70">
-            Prefer a master CV from your profile so you can reuse it across
+            Prefer a master CV from your library so you can reuse it across
             applications.
           </p>
         )}
@@ -171,13 +189,19 @@ export default function CvSourceField({
               </span>
               {!hasMasters && !mastersLoading && (
                 <span className="mt-0.5 block text-xs text-[var(--foreground)]/60">
-                  No masters yet.{" "}
-                  <Link
-                    href="/admin/profile"
-                    className="font-medium text-[var(--brand-primary)] hover:opacity-80"
-                  >
-                    Upload one on your profile
-                  </Link>
+                  No masters yet.
+                  {canManageLibrary ? (
+                    <>
+                      {" "}
+                      <button
+                        type="button"
+                        onClick={() => setLibraryModalOpen(true)}
+                        className="font-medium text-[var(--brand-primary)] hover:opacity-80"
+                      >
+                        Upload one to your library
+                      </button>
+                    </>
+                  ) : null}
                 </span>
               )}
             </span>
@@ -219,16 +243,17 @@ export default function CvSourceField({
                       >
                         View
                       </a>
-                      {" · "}
-                      <Link
-                        href="/admin/profile"
-                        className="font-medium text-[var(--brand-primary)] hover:opacity-80"
-                      >
-                        Manage library
-                      </Link>
                     </p>
                   )}
                 </>
+              ) : canManageLibrary ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setLibraryModalOpen(true)}
+                >
+                  Upload master CV
+                </Button>
               ) : null}
             </div>
           )}
@@ -332,6 +357,14 @@ export default function CvSourceField({
         onConfirm={onConfirmSwitchToMaster}
         onCancel={onCancelSwitchToMaster}
       />
+
+      {canManageLibrary && (
+        <MasterCvLibraryModal
+          open={libraryModalOpen}
+          onClose={() => setLibraryModalOpen(false)}
+          onLibraryChange={onMasterLibraryChange!}
+        />
+      )}
     </fieldset>
   );
 }

@@ -5,16 +5,16 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 ## Overview
 
 - **What we store:** CV PDFs in Cloudflare R2.
-  - **Master CVs** — up to 5 per user, managed on the profile (`master_cvs` table, keys `cvs/masters/{userId}/…`).
+  - **Master CVs** — up to 5 per user, managed from the profile or from **New** / **Edit application** (`master_cvs` table, keys `cvs/masters/{userId}/…`).
   - **Custom CVs** — one optional per-application upload (keys via idempotent upload).
 - **Where:** Cloudflare R2. Objects are uploaded with a **public URL** so the shareable application page can load the PDF.
-- **Policy:** Upload on save for custom CVs. Application delete/replace removes **custom** objects only; master CVs are deleted only from the profile library. See [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md).
+- **Policy:** Upload on save for custom CVs. Application delete/replace removes **custom** objects only; master CVs are deleted only from the library (profile or in-form modal). See [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md).
 
 ## Flow
 
 ### Create application
 
-1. Prefer selecting a **master CV** from the profile library (default when any exist).
+1. Prefer selecting a **master CV** from the library (default when any exist). Upload or manage masters via **Manage library** without leaving the form.
 2. Or choose **custom**: select a PDF (held in memory until Save), then upload on submit via `POST /api/upload`.
 3. Application row stores `cv_url`, `cv_kind` (`master` | `custom`), and optional `master_cv_id`.
 
@@ -29,17 +29,18 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 1. If `cv_kind = custom`, delete the R2 object (`deleteApplicationCvIfCustom`).
 2. If `cv_kind = master`, leave the R2 object (still in the library).
 
-### Delete master CV (profile)
+### Delete master CV (library)
 
-1. Confirm dialog (allowed even when applications still reference it).
-2. Delete library row + R2 object. Applications keep the old URL and show **CV missing** on the dashboard until edited.
+1. If **no** applications reference it (`applications_count = 0`), delete immediately (no confirm).
+2. If **N ≥ 1** applications reference it, confirm with a message that includes **N** plus a preview list of those applications (company — role, status; links to edit), then delete.
+3. Delete library row + R2 object. Affected applications keep the old URL and show **CV missing** on the dashboard until edited.
 
 ## API and code
 
 | Piece | Role |
 |-------|------|
 | `POST /api/upload` | Custom CV upload (auth + idempotency). Keys `cvs/idempotency/<key>.pdf`. |
-| `GET/POST/DELETE /api/profile/master-cvs` | Master CV library (max 5). Keys `cvs/masters/{userId}/{id}.pdf`. |
+| `GET/POST/DELETE /api/profile/master-cvs` | Master CV library (max 5). Keys `cvs/masters/{userId}/{id}.pdf`. GET includes `applications_count` and a `used_by` preview per row. |
 | `lib/storage/r2-client.ts` | S3-compatible R2 client. |
 | `lib/utils/cv-storage.ts` | `deleteCvIfOurs`, `deleteApplicationCvIfCustom`, `checkCvObjectExists`. |
 

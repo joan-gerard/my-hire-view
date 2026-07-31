@@ -56,14 +56,14 @@ Prefill `cv_url` from the user’s most recent application.
 
 | Piece | Behaviour |
 |-------|-----------|
-| **Master CVs** | Up to **5** PDFs managed on the **profile** only. Stored under a master key prefix; URLs listed on the profile (or `master_cvs` table). |
+| **Master CVs** | Up to **5** PDFs managed from the **profile** or from **New** / **Edit application** (same library). Stored under a master key prefix; URLs listed via `master_cvs`. |
 | **Custom CVs** | Per-application upload when the candidate needs a one-off version. |
 | **Create UX** | Default: pick from master library. Override: “Upload a different CV for this application.” |
 | **Edit UX** | Show current mode (master vs custom) and filename; allow switching either way. |
 | **Switch custom → master** | Confirm modal (“I Understand”) → delete the custom R2 object. |
 | **Switch master → custom** | Upload custom; do **not** delete the master. |
 | **Delete application** | Custom → delete R2 object. Master → leave object (still owned by profile). |
-| **Delete master from profile** | Warn if applications still reference it; allow delete after confirm. Those apps then show **missing CV** on the dashboard. |
+| **Delete master from profile / New / Edit** | If unused, delete immediately. If applications still reference it, confirm with the **count** of those apps; after delete they show **missing CV** on the dashboard. |
 
 **Chosen** — balances storage, UX, and clear ownership (profile owns masters; applications own customs).
 

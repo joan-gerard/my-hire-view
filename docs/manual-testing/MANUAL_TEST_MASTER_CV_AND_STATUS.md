@@ -31,7 +31,9 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 ---
 
-## 2. Master CV library on profile (max 5)
+## 2. Master CV library (max 5)
+
+**On profile**
 
 - [ ] Open `/admin/profile`
 - [ ] See **Master CVs** section
@@ -44,12 +46,23 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] Sixth upload is blocked (button disabled and/or API error about limit 5)
 - [ ] Delete one master → upload again works
 
-**Delete master with confirm**
+**Delete master (profile or Manage library modal)**
 
-- [ ] Click **Delete** on a master CV → confirm dialog appears
+- [ ] Delete a master **not** used by any application → removed immediately (no confirm modal)
+- [ ] Attach a master to 1+ applications, then Delete → confirm shows the **exact count** and a preview list (company — role, status; links to edit)
+- [ ] If more than 10 apps use it, preview shows the first 10 plus “and N more”
 - [ ] Cancel → CV still in list and in R2
 - [ ] Confirm (**I Understand — Delete**) → removed from list; R2 object gone (optional check)
-- [ ] If applications still referenced it: status/message about affected apps / “CV missing” (see §5)
+- [ ] Affected apps: status/message about “CV missing” (see §5)
+
+**From New / Edit application (same library)**
+
+- [ ] Open `/admin/new` (or edit) → CV section shows **Manage library**
+- [ ] With empty library: **Upload one to your library** / **Upload master CV** opens the modal
+- [ ] Upload a PDF in the modal → list updates; create form switches to **master** and selects the new file
+- [ ] Close modal (**Done**) → dropdown includes the new master
+- [ ] Delete a selected master in the modal → if unused, gone immediately; if used, inline confirm with count → selection moves to another master (or switches to custom if none left)
+- [ ] Library on `/admin/profile` matches what you changed from New/Edit
 
 ---
 
@@ -74,11 +87,10 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 **No masters yet**
 
 - [ ] (Optional) Delete all masters (or use a fresh user)
-- [ ] `/admin/new` → Master tab disabled or empty with link to profile; can use **Custom** instead
+- [ ] `/admin/new` → Master option disabled until you upload via **Manage library**; can use **Custom** instead
 - [ ] Creating with custom still works
 
 ---
-
 ## 4. Edit application — show mode, switch master ↔ custom
 
 - [ ] Open edit for an app that uses a **master** CV
@@ -143,8 +155,8 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 ## 8. API smoke (optional Network tab)
 
-- [ ] `GET /api/profile/master-cvs` → list for current user
-- [ ] `POST /api/profile/master-cvs` (multipart PDF) → **201**
+- [ ] `GET /api/profile/master-cvs` → list for current user; each row includes `applications_count` and `used_by` (preview apps)
+- [ ] `POST /api/profile/master-cvs` (multipart PDF) → **201** with `applications_count: 0`, `used_by: []`
 - [ ] `DELETE /api/profile/master-cvs?id=…` → `{ success: true, applications_affected: N }`
 - [ ] `GET /api/applications` → items include `status`, `archived_at`, `cv_url`, `cv_exists`
 - [ ] Archive via `PUT /api/applications` `{ id, status: "archived" }` → response has `archived_at`
