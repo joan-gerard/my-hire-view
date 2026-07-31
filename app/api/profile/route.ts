@@ -62,8 +62,14 @@ export async function PUT(request: NextRequest) {
   const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
+  let user;
   try {
-    const user = await requireAuth();
+    user = await requireAuth();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
     const supabase = await createClient();
     const raw: unknown = await request.json();
     const parsed = profileUpdateSchema.safeParse(raw);
@@ -197,7 +203,11 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(
       warnings.length > 0 ? { data, warnings } : { data },
     );
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    console.error("PUT /api/profile:", error);
+    return NextResponse.json(
+      { error: "Failed to update profile" },
+      { status: 500 },
+    );
   }
 }

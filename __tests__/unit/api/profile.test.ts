@@ -319,6 +319,15 @@ describe("PUT /api/profile", () => {
     expect(json.error).toBe("Unauthorized");
   });
 
+  it("returns 500 when an unexpected error is thrown after auth", async () => {
+    mockCreateClient.mockRejectedValue(new Error("client boom"));
+
+    const response = await PUT(makePutRequest({ first_name: "X" }));
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Failed to update profile");
+  });
+
   it("calls deleteProfilePicture after a successful picture URL change", async () => {
     const oldUrl =
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
