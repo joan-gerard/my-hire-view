@@ -371,7 +371,7 @@ Return the current user’s profile. **Read-only** — does not create a row. If
 
 - Auth required; selects only by session `user_id`.
 - Distinguishes “no row” (`404`) from other DB errors (`500`).
-- Profiles are created on first successful `PUT`, not on GET.
+- Profiles are normally created at signup; GET never creates a row.
 - Rate limited (default 60/min) before auth/query work.
 - Dedicated auth try/catch → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
 
@@ -381,7 +381,7 @@ Return the current user’s profile. **Read-only** — does not create a row. If
 
 `PUT /api/profile`
 
-Upsert profile fields (creates the row on first save). Requires non-empty `first_name` and `last_name` (after merge with existing). Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change, syncs Auth `user_metadata`. When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upsert profile fields (row usually already exists from signup). Requires non-empty `first_name` and `last_name` (after merge with existing — so picture-only updates work). Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change, syncs Auth `user_metadata`. When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -538,7 +538,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - Requires both email and password before calling Supabase.
 - Uses the route client so session cookies land on the response (middleware can read them next request).
 - Distinguishes missing fields (**400**), auth failure (**401**), and missing session (**500**).
-- Does **not** create a `profiles` row (first profile PUT does).
+- Does **not** create a `profiles` row (signup / auth callback does).
 
 **Improvement opportunities**
 
@@ -559,11 +559,11 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - **Success:** `200` `{ success: true, requiresConfirmation: false }` with cookies when a session is created immediately; or `200` `{ success: true, requiresConfirmation: true }` when email confirmation is required
 - **Errors:** `400` (missing fields, password mismatch, too-short password, Supabase error); `429`
 
-`emailRedirectTo` is set to `{origin}/auth/callback`. First/last name are stored in Auth `user_metadata` (seed for the profile page and new-application form until first profile save). When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code.
+`emailRedirectTo` is set to `{origin}/auth/callback`. First/last name and `public_id` are stored in Auth `user_metadata` and a `profiles` row is created via the service-role helper (`createInitialProfile`) — works with or without an immediate session. When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code. The callback also retries `createInitialProfile` idempotently.
 
 **Side effects**
 
-- Does **not** create a `profiles` row. The row is created on first `PUT /api/profile`.
+- Creates a `profiles` row (`user_id`, `public_id`, `first_name`, `last_name`; other columns null). Failures are logged; signup still succeeds so the auth callback can retry.
 
 **What works**
 
@@ -571,7 +571,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - Requires email, password confirmation, and first/last name; uses the route client for cookies when a session exists.
 - Explicit `requiresConfirmation` flag so the UI can guide email-confirm flows.
 - Sets `emailRedirectTo` to `/auth/callback` on the current origin.
-- Seeds Auth `user_metadata` with names for later profile / form prefill.
+- Seeds Auth `user_metadata` and inserts the initial profiles row (service role; idempotent).
 
 **Improvement opportunities**
 

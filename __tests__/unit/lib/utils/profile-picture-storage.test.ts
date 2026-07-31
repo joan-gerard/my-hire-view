@@ -3,6 +3,7 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  cacheBustProfilePictureUrl,
   canonicalProfilePicturePath,
   getProfilePictureStoragePath,
   isCanonicalProfilePicturePath,
@@ -78,11 +79,39 @@ describe("isOwnedProfilePictureUrl", () => {
 
   it("returns false when the path is only the user id with no object", () => {
     const bare =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123";
+    expect(isOwnedProfilePictureUrl(bare, USER_ID)).toBe(false);
+  });
+
+  it("returns false when the path is the user folder with a trailing slash", () => {
+    const bare =
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/";
     expect(isOwnedProfilePictureUrl(bare, USER_ID)).toBe(false);
   });
 
   it("returns false for an empty user id", () => {
     expect(isOwnedProfilePictureUrl(CANONICAL_URL, "")).toBe(false);
+  });
+});
+
+describe("cacheBustProfilePictureUrl", () => {
+  it("appends v query from version", () => {
+    expect(
+      cacheBustProfilePictureUrl(CANONICAL_URL, "2026-01-01T00:00:00Z"),
+    ).toBe(`${CANONICAL_URL}?v=2026-01-01T00%3A00%3A00Z`);
+  });
+
+  it("replaces an existing v param", () => {
+    expect(cacheBustProfilePictureUrl(`${CANONICAL_URL}?v=old`, "new")).toBe(
+      `${CANONICAL_URL}?v=new`,
+    );
+  });
+
+  it("leaves blob URLs and empty version unchanged", () => {
+    expect(cacheBustProfilePictureUrl("blob:http://localhost/x", "1")).toBe(
+      "blob:http://localhost/x",
+    );
+    expect(cacheBustProfilePictureUrl(CANONICAL_URL, "")).toBe(CANONICAL_URL);
+    expect(cacheBustProfilePictureUrl(null, "1")).toBeNull();
   });
 });

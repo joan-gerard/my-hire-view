@@ -195,9 +195,9 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
 - **Clients:**
   - **Server (Server Components, server-side logic):** `lib/supabase/server.ts` — `createClient()` using `cookies()` from `next/headers`.
   - **Route handler (login/signup/logout):** `lib/supabase/route-client.ts` — `createSupabaseRouteClient({ request, response })` so the response carries `Set-Cookie` headers.
-  - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used only for operations that must bypass RLS (e.g. view count and download count increment RPCs). Never used from the client.
+  - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used for RLS-bypass ops (view/download count RPCs) and creating the initial `profiles` row at signup when there may be no session yet. Never used from the client.
   - **Middleware:** `lib/supabase/middleware.ts` — `updateSession(request)`: refreshes session and redirects unauthenticated users from `/admin` to `/login`. Intended to be invoked from root middleware (e.g. `middleware.ts` that re-exports or calls this; current entry is `proxy.ts` with matcher config).
-  - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, redirects to `next` (default `/admin`). Does not create a profiles row.
+  - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, ensures a profiles row exists (`createInitialProfile`, idempotent), redirects to a safe same-origin `next` (default `/admin`).
 
 ### 5.3 Data (Supabase)
 
@@ -208,7 +208,7 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
   - **Candidate snapshot fields** (nullable): `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`. These are copied from the user’s **profile** when an application is created or updated, so the recruiter view always reads from the application row (no join to profile). Existing rows may have NULLs until the next edit or a backfill.
   - **`include_name_in_slug`** (TEXT, nullable): Name position in the slug: `null` (not included), `'start'` (name-company-role), or `'end'` (company-role-name). Persisted so the edit form shows the correct choice and users can change it on save.
 - **Table: `profiles`**
-  - One row per user: `user_id` (PK, FK to `auth.users`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `updated_at`. DB columns remain nullable; product rules require first/last name at signup and on profile save. Users edit this on the profile page; the applications API does not expose profile directly to the public.
+  - One row per user: `user_id` (PK, FK to `auth.users`), `public_id`, `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url`, `updated_at`. Created at signup (`createInitialProfile`) with names + `public_id`; other columns null until the user fills them. DB columns remain nullable; product rules require first/last name at signup and on profile save. Users edit this on the profile page (and can change the picture from new/edit via a shared modal); the applications API does not expose profile directly to the public.
   - **Snapshot rule:** On POST or PUT to `/api/applications`, the server loads the current user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the insert or update. The recruiter-facing page at `/view/[publicId]/[slug]` uses only data from the application row.
   - **Public URLs:** Each user has an opaque `profiles.public_id` (assigned at signup). Application slugs are unique per user (`UNIQUE (user_id, slug)`), not globally. Share links are `/view/{public_id}/{slug}`.
 - **Indexes (applications):** `slug`, `user_id`, `created_at DESC`.
@@ -356,7 +356,7 @@ my-hire-view/
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── auth/                   # SignOutButton
-│   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, NameInUrlField, CvSourceField, FileUpload, MasterCvLibrarySection, ProfileForm, YouTubeUrlInput
+│   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, NameInUrlField, CvSourceField, FileUpload, MasterCvLibrarySection, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
 │   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection (re-export from public/faq), FinalCTASection, Footer (→ ViewPageFooter), HomeHeroContent, HowItWorksHero (How it Works page: content above + fixed image), HowItWorksScrollSection (content that scrolls over fixed hero image), HowItWorksSection (see public/how-it-works/ for StepLabel, StepCard, useHowItWorksObservers, constants; on home page receives isDarkMode from LandingPageSections), LandingPageSections (owns single IntersectionObserver for ProblemSection wrapper; passes isDarkMode to HowItWorksSection, ProblemSection, and FAQSection—one prop name, one source of truth), public/faq/ (FAQSection, FAQItem, FAQContactCard, constants; isDarkMode prop from parent), MarketingHero (reusable: backgroundImage + children + optional imageCredit), MarketingHeader, PageHeroContent (reusable title + subtitle for Pricing / Blog), ProblemSection, SolutionSection, ViewPageFooter
 │   ├── ui/                     # Button, Input, Textarea

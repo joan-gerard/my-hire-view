@@ -29,8 +29,12 @@ Public and enriched reads set a display-only `profile_picture_url` on the applic
 ## Behaviour
 
 - **admin/profile (upload-on-save):** Choosing a file shows a local preview only. On **Save profile**, the client uploads to the canonical path, then `PUT /api/profile` with the new URL (or `null` to remove). After a successful profile write, the previous Storage object is deleted when the URL changed. Side-effect failures (Storage delete, Auth metadata sync) are returned as `warnings` while still returning **200** + `data`.
-- **admin/new and admin/edit:** Checkbox “Show profile picture for this application”. Enabled when the live profile has a picture. Server stores only `show_profile_picture`.
+- **admin/new and admin/edit:** “Show profile picture for this application” Yes/No (enabled when the live profile has a picture). Users can **Add / Change picture** via a shared `ProfilePictureModal` (upload-on-save → `PUT` picture URL only — works because names already exist from signup). Server stores only `show_profile_picture` on the application.
 - **view/[publicId]/[slug]:** Resolves the application and, when `show_profile_picture` is true, attaches the current `profiles.profile_picture_url` for the avatar. Changing the profile picture updates all such applications immediately (no fan-out sync).
+
+### Display cache-busting
+
+Canonical uploads overwrite the same Storage path, so the public URL string often does not change. UI and public views render with `cacheBustProfilePictureUrl(url, profiles.updated_at)` (query `?v=…`) so browsers fetch the new bytes. The value stored in `profiles.profile_picture_url` stays the clean Storage URL (no query string).
 
 ## Ownership on profile PUT
 

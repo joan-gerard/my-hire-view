@@ -1,21 +1,24 @@
 /**
  * Tests for /api/auth/signup — required names, password confirmation, and
- * profile creation when a session is issued immediately.
+ * profiles row creation (service role) after successful signUp.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-const { mockCheckRateLimit, mockCreateSupabaseRouteClient, mockSignUp, mockFrom } =
-  vi.hoisted(() => {
-    const mockSignUp = vi.fn();
-    const mockFrom = vi.fn();
-    return {
-      mockCheckRateLimit: vi.fn(),
-      mockCreateSupabaseRouteClient: vi.fn(),
-      mockSignUp,
-      mockFrom,
-    };
-  });
+const {
+  mockCheckRateLimit,
+  mockCreateSupabaseRouteClient,
+  mockSignUp,
+  mockCreateInitialProfile,
+} = vi.hoisted(() => {
+  const mockSignUp = vi.fn();
+  return {
+    mockCheckRateLimit: vi.fn(),
+    mockCreateSupabaseRouteClient: vi.fn(),
+    mockSignUp,
+    mockCreateInitialProfile: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
@@ -27,12 +30,17 @@ vi.mock("@/lib/rate-limit", () => ({
 }));
 
 vi.mock("@/lib/supabase/route-client", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/supabase/route-client")>();
+  const actual =
+    await importOriginal<typeof import("@/lib/supabase/route-client")>();
   return {
     ...actual,
     createSupabaseRouteClient: mockCreateSupabaseRouteClient,
   };
 });
+
+vi.mock("@/lib/auth/create-initial-profile", () => ({
+  createInitialProfile: mockCreateInitialProfile,
+}));
 
 import { POST } from "@/app/api/auth/signup/route";
 
@@ -52,12 +60,6 @@ function makeRequest(body: object): NextRequest {
   });
 }
 
-function mockUpsertOk() {
-  mockFrom.mockReturnValue({
-    upsert: vi.fn().mockResolvedValue({ error: null }),
-  });
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
   mockCheckRateLimit.mockReturnValue({
@@ -67,9 +69,8 @@ beforeEach(() => {
   });
   mockCreateSupabaseRouteClient.mockReturnValue({
     auth: { signUp: mockSignUp },
-    from: mockFrom,
   });
-  mockUpsertOk();
+  mockCreateInitialProfile.mockResolvedValue({ error: null });
 });
 
 describe("POST /api/auth/signup", () => {
@@ -115,7 +116,7 @@ describe("POST /api/auth/signup", () => {
     expect(mockSignUp).not.toHaveBeenCalled();
   });
 
-  it("returns requiresConfirmation when signUp has no session", async () => {
+  it("creates a profiles row when confirmation is required (no session)", async () => {
     mockSignUp.mockResolvedValue({
       data: { user: { id: "user-1" }, session: null },
       error: null,
@@ -125,7 +126,12 @@ describe("POST /api/auth/signup", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json).toEqual({ success: true, requiresConfirmation: true });
-    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockCreateInitialProfile).toHaveBeenCalledWith({
+      userId: "user-1",
+      first_name: "Jane",
+      last_name: "Doe",
+      public_id: expect.stringMatching(/^[a-z0-9]{8}$/),
+    });
     expect(mockSignUp).toHaveBeenCalledWith(
       expect.objectContaining({
         email: "jane@example.com",
@@ -143,11 +149,14 @@ describe("POST /api/auth/signup", () => {
 
   it("preserves cookies set during signUp when confirmation is required", async () => {
     mockCreateSupabaseRouteClient.mockImplementation(
-      ({ response }: { response: { cookies: { set: (n: string, v: string) => void } } }) => {
+      ({
+        response,
+      }: {
+        response: { cookies: { set: (n: string, v: string) => void } };
+      }) => {
         response.cookies.set("sb-test-code-verifier", "pkce-secret");
         return {
           auth: { signUp: mockSignUp },
-          from: mockFrom,
         };
       },
     );
@@ -163,7 +172,7 @@ describe("POST /api/auth/signup", () => {
     );
   });
 
-  it("does not create a profiles row when a session is issued immediately", async () => {
+  it("creates a profiles row when a session is issued immediately", async () => {
     mockSignUp.mockResolvedValue({
       data: {
         user: { id: "user-1" },
@@ -176,7 +185,28 @@ describe("POST /api/auth/signup", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json).toEqual({ success: true, requiresConfirmation: false });
-    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockCreateInitialProfile).toHaveBeenCalledWith({
+      userId: "user-1",
+      first_name: "Jane",
+      last_name: "Doe",
+      public_id: expect.stringMatching(/^[a-z0-9]{8}$/),
+    });
+  });
+
+  it("still returns success if profile create fails (callback can retry)", async () => {
+    mockSignUp.mockResolvedValue({
+      data: {
+        user: { id: "user-1" },
+        session: { access_token: "tok" },
+      },
+      error: null,
+    });
+    mockCreateInitialProfile.mockResolvedValue({ error: "db down" });
+
+    const response = await POST(makeRequest(VALID_BODY));
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json).toEqual({ success: true, requiresConfirmation: false });
   });
 
   it("returns 400 when Supabase signUp fails", async () => {
@@ -189,6 +219,7 @@ describe("POST /api/auth/signup", () => {
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toBe("User already registered");
+    expect(mockCreateInitialProfile).not.toHaveBeenCalled();
   });
 
   it("returns 429 when rate limited", async () => {

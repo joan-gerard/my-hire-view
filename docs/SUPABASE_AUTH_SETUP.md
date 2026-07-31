@@ -15,7 +15,7 @@ This guide walks you through configuring Supabase Authentication for MyHireView:
    - **Secure email change**: Turn **ON** to require confirmation when users change their email.
 6. Click **Save** (or ensure the page has auto-saved).
 
-Your app can now use **Sign up** and **Sign in with password** (email + password). Sign up also collects first and last name (stored in Auth `user_metadata` along with an opaque `public_id` for share URLs; a `profiles` row is created later on first profile save).
+Your app can now use **Sign up** and **Sign in with password** (email + password). Sign up collects first and last name (stored in Auth `user_metadata` along with an opaque `public_id` for share URLs) and creates a `profiles` row via the service-role helper (see [PROFILES_AT_SIGNUP.md](retrospectives/PROFILES_AT_SIGNUP.md)).
 
 ---
 

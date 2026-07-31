@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { createInitialProfile } from '@/lib/auth/create-initial-profile';
 import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import {
   copyResponseCookies,
@@ -12,9 +13,9 @@ const SIGNUP_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 const MIN_PASSWORD_LENGTH = 6;
 
 /**
- * Server-side signup: creates a user, stores first/last name in Auth
- * user_metadata (profiles row is created later on first profile PUT), and
- * sets session cookies when email confirmation is not required.
+ * Server-side signup: creates a user, stores first/last name + public_id in Auth
+ * user_metadata, creates a profiles row (service role; works with or without a
+ * session), and sets session cookies when email confirmation is not required.
  *
  * When confirmation is required, PKCE cookies written during signUp must still
  * be returned so /auth/callback can exchange the email link code later.
@@ -82,6 +83,23 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  const userId = data.user?.id;
+  if (userId) {
+    const profileResult = await createInitialProfile({
+      userId,
+      first_name,
+      last_name,
+      public_id,
+    });
+    if (profileResult.error) {
+      console.error(
+        'Signup succeeded but profiles row failed:',
+        profileResult.error,
+      );
+      // Do not fail signup — auth callback can retry createInitialProfile.
+    }
   }
 
   if (!data.session) {

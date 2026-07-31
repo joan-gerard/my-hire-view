@@ -58,6 +58,13 @@ interface ApplicationFormProps {
   onRetryCvCheck?: () => Promise<void>;
   /** Profile picture URL; when set, Yes/No toggle is enabled; when null, toggle is disabled with No selected. */
   profilePictureUrl?: string | null;
+  /** Cache-bust key for the live profile picture (e.g. profiles.updated_at). */
+  profilePictureVersion?: string | null;
+  /** When set, the field offers Add/Change picture via a modal (new/edit flows). */
+  onProfilePictureSaved?: (result: {
+    url: string | null;
+    updated_at?: string | null;
+  }) => void;
   /** Opaque public id for share URL preview (from profile or auth metadata). */
   publicId?: string;
   /**
@@ -78,6 +85,8 @@ export default function ApplicationForm({
   loading = false,
   onRetryCvCheck,
   profilePictureUrl,
+  profilePictureVersion,
+  onProfilePictureSaved,
   publicId,
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
@@ -660,7 +669,9 @@ export default function ApplicationForm({
       />
 
       <ProfilePictureField
-        hasProfilePicture={hasProfilePicture}
+        profilePictureUrl={profilePictureUrl}
+        profilePictureVersion={profilePictureVersion}
+        onProfilePictureSaved={onProfilePictureSaved}
         showProfilePicture={showProfilePicture}
         onShowProfilePictureChange={setShowProfilePicture}
       />

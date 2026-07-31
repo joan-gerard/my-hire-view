@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Application } from "@/lib/types/application";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { isValidPublicId } from "@/lib/utils/public-id";
 
 export type ResolvedPublicApplication = {
@@ -11,7 +12,8 @@ export type ResolvedPublicApplication = {
 /**
  * Resolves a public application by opaque public_id and per-user slug.
  * When show_profile_picture is true, attaches profiles.profile_picture_url
- * onto the application as a display-only profile_picture_url (not a DB column).
+ * onto the application as a display-only profile_picture_url (not a DB column),
+ * cache-busted with profiles.updated_at so avatar replaces are visible.
  */
 export async function resolvePublicApplication(
   supabase: SupabaseClient,
@@ -25,7 +27,7 @@ export async function resolvePublicApplication(
   const admin = createAdminClient();
   const { data: profile, error: profileError } = await admin
     .from("profiles")
-    .select("user_id, profile_picture_url")
+    .select("user_id, profile_picture_url, updated_at")
     .eq("public_id", publicId)
     .maybeSingle();
 
@@ -50,7 +52,9 @@ export async function resolvePublicApplication(
   return {
     application: {
       ...(application as Application),
-      profile_picture_url: showPicture ? liveUrl : null,
+      profile_picture_url: showPicture
+        ? cacheBustProfilePictureUrl(liveUrl, profile.updated_at)
+        : null,
     },
     ownerUserId: profile.user_id,
   };

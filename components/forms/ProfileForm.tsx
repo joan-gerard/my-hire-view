@@ -8,6 +8,7 @@ import {
   PROFILE_NAME_MAX_LENGTH,
   PROFILE_URL_MAX_LENGTH,
 } from "@/lib/types/profile";
+import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -17,7 +18,7 @@ interface ProfileFormProps {
   initialData: Profile | null;
   /**
    * True when a profiles row already exists in the DB.
-   * When false (metadata seed only), Save stays enabled so the first PUT can create the row.
+   * When false (rare: signup insert failed), Save stays enabled so PUT can create the row.
    */
   hasExistingProfile: boolean;
 }
@@ -46,8 +47,24 @@ export default function ProfileForm({
   const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
   /** True when user cleared the picture (will send null on Save). */
   const [pictureRemoved, setPictureRemoved] = useState(false);
+  /** After save, prefer response URL until router.refresh updates initialData. */
+  const [savedUrlOverride, setSavedUrlOverride] = useState<
+    string | null | undefined
+  >(undefined);
+  const [pictureCacheKey, setPictureCacheKey] = useState(
+    initialData?.updated_at ?? "",
+  );
 
-  const savedPictureUrl = initialData?.profile_picture_url?.trim() || null;
+  const savedPictureUrl =
+    savedUrlOverride !== undefined
+      ? savedUrlOverride
+      : initialData?.profile_picture_url?.trim() || null;
+
+  useEffect(() => {
+    if (savedUrlOverride === undefined && initialData?.updated_at) {
+      setPictureCacheKey(initialData.updated_at);
+    }
+  }, [initialData?.updated_at, savedUrlOverride]);
 
   useEffect(() => {
     if (!pendingFile) {
@@ -59,9 +76,12 @@ export default function ProfileForm({
     return () => URL.revokeObjectURL(url);
   }, [pendingFile]);
 
-  const displayPictureUrl = pictureRemoved
+  const rawDisplayUrl = pictureRemoved
     ? null
     : (previewObjectUrl ?? savedPictureUrl);
+  const displayPictureUrl = previewObjectUrl
+    ? previewObjectUrl
+    : cacheBustProfilePictureUrl(rawDisplayUrl, pictureCacheKey);
   const hasProfilePicture = Boolean(displayPictureUrl);
 
   const hadProfilePictureOnLoad = Boolean(savedPictureUrl);
@@ -166,6 +186,14 @@ export default function ProfileForm({
       }
       if (Array.isArray(json.warnings) && json.warnings.length > 0) {
         setError(json.warnings.join(" "));
+      }
+      if (profilePictureUrl !== undefined) {
+        setSavedUrlOverride(profilePictureUrl);
+        setPictureCacheKey(
+          typeof json.data?.updated_at === "string"
+            ? json.data.updated_at
+            : String(Date.now()),
+        );
       }
       setPendingFile(null);
       setPictureRemoved(false);

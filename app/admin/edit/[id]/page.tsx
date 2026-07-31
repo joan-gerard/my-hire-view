@@ -207,6 +207,18 @@ export default function EditApplicationPage() {
           loading={loading}
           onRetryCvCheck={refetchCvCheck}
           profilePictureUrl={profile?.profile_picture_url ?? null}
+          profilePictureVersion={profile?.updated_at ?? null}
+          onProfilePictureSaved={({ url, updated_at }) =>
+            setProfile((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    profile_picture_url: url,
+                    updated_at: updated_at ?? prev.updated_at,
+                  }
+                : prev,
+            )
+          }
           publicId={publicId ?? undefined}
           slugExcludeApplicationId={id}
         />

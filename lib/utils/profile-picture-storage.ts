@@ -138,4 +138,29 @@ export async function deleteProfilePictureIfOurs(
   }
 }
 
+/**
+ * Appends a display-only cache-bust query (`v`) so browsers reload the image when
+ * the canonical Storage path is overwritten but the URL string is unchanged.
+ * Does not alter blob: previews. Pass profiles.updated_at (or a client timestamp).
+ */
+export function cacheBustProfilePictureUrl(
+  url: string | null | undefined,
+  version: string | number | null | undefined,
+): string | null {
+  const trimmed = typeof url === "string" ? url.trim() : "";
+  if (!trimmed) return null;
+  if (trimmed.startsWith("blob:")) return trimmed;
+  if (version === null || version === undefined || version === "") {
+    return trimmed;
+  }
+  try {
+    const u = new URL(trimmed);
+    u.searchParams.set("v", String(version));
+    return u.toString();
+  } catch {
+    const sep = trimmed.includes("?") ? "&" : "?";
+    return `${trimmed}${sep}v=${encodeURIComponent(String(version))}`;
+  }
+}
+
 export { BUCKET as PROFILE_PICTURES_BUCKET };

@@ -94,7 +94,7 @@ We implemented **Option B**:
 
 | Piece | Behaviour |
 |-------|-----------|
-| **`profiles.public_id`** | Short random opaque id (8 chars, lowercase alphanumeric). Assigned at signup in Auth `user_metadata`, persisted on `profiles` on first profile save or first application create. |
+| **`profiles.public_id`** | Short random opaque id (8 chars, lowercase alphanumeric). Assigned at signup in Auth `user_metadata` and persisted on `profiles` at signup (`createInitialProfile`). Safety nets: first profile save / `ensureProfilePublicId` on application create if missing. |
 | **`applications.slug`** | Still `company-role` (optionally with name at start/end via **Name in URL**). |
 | **Uniqueness** | `UNIQUE (user_id, slug)` — not global. |
 | **Public URL** | `/view/{publicId}/{slug}` |

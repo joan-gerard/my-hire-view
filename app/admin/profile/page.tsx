@@ -11,8 +11,8 @@ import type { Profile } from "@/lib/types/profile";
  * editable profile details (name, location, portfolio, LinkedIn), and a
  * summary of their applications.
  *
- * If no profiles row exists yet, the form is seeded from Auth user_metadata
- * (first/last name from signup). First save creates the profiles row.
+ * A profiles row is normally created at signup. If missing (failed insert),
+ * the form is seeded from Auth user_metadata and Save upserts the row.
  */
 export default async function AdminProfilePage() {
   const user = await requireAuth();
@@ -101,8 +101,8 @@ export default async function AdminProfilePage() {
         </p>
         {!profile && (
           <p className="mt-2 rounded-md bg-[var(--brand-secondary)]/40 px-3 py-2 text-sm text-[var(--foreground)]">
-            Your name is prefilled from signup. Save your profile to store
-            location, links, and picture for use on new applications.
+            Your name is prefilled from signup. Save your profile to finish
+            creating your profile record (location, links, and picture).
           </p>
         )}
         <div className="mt-4">

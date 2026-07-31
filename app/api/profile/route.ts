@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Read-only: returns the current user's profiles row, or 404 if none exists.
- * Profiles are created on first PUT (not on GET).
+ * Profiles are normally created at signup; GET never creates a row.
  */
 export async function GET(request: NextRequest) {
   const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);

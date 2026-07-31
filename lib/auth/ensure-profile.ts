@@ -1,6 +1,6 @@
 /**
  * Helpers for reading signup names from Auth user_metadata.
- * Profiles rows are created on first PUT /api/profile, not at signup/login.
+ * Profiles rows are created at signup (see createInitialProfile); metadata remains a sync/seed cache.
  */
 
 type ProfileNames = {

@@ -84,7 +84,7 @@ flowchart LR
   ViewAPI --> Applications
 ```
 
-- **Profiles** — Signup stores first/last name and opaque `public_id` in Auth `user_metadata`. A `profiles` row is created on first `PUT /api/profile` (or a minimal row with `public_id` on first application create). Until a full profile exists, `/admin/profile` and `/admin/new` seed names from metadata. GET `/api/profile` is read-only (`404` if missing).
+- **Profiles** — Signup stores first/last name and opaque `public_id` in Auth `user_metadata` and inserts a `profiles` row (service role; idempotent retry on `/auth/callback`). Optional fields stay null until the user saves them. GET `/api/profile` is read-only (`404` if missing — rare). `/admin/profile` and `/admin/new` still seed from metadata if the row is missing.
 - **Applications** are created/updated via the application form; candidate fields can come from the form (with toggles) or, on create, from a profile fallback when a row exists. Recruiters read only from the application row. Share URLs are `/view/{public_id}/{slug}`; slugs are unique per user, not globally.
 
 ---
@@ -111,7 +111,7 @@ sequenceDiagram
   MW-->>U: Allow /admin
 ```
 
-Sign-up works via `/api/auth/signup` with **first name, last name, email, password, and confirm password**. Names are stored in Auth `user_metadata` only (no `profiles` row yet). Session is stored in cookies; middleware refreshes it and protects `/admin` routes.
+Sign-up works via `/api/auth/signup` with **first name, last name, email, password, and confirm password**. Names and `public_id` go into Auth `user_metadata`, and a `profiles` row is created (service role). Session is stored in cookies when issued; middleware refreshes it and protects `/admin` routes. Email confirmation uses `/auth/callback`, which also ensures the profiles row exists.
 
 ---
 
@@ -137,14 +137,14 @@ sequenceDiagram
   U->>Page: Edit name, location, URLs, Save
   Page->>API: PUT profile
   API->>API: requireAuth, validate URLs + required names
-  API->>DB: upsert by user_id (creates on first save)
+  API->>DB: upsert by user_id
   API->>Auth: updateUser metadata when names change
   DB-->>API: updated row
   API-->>Page: 200 + data
   Page->>U: Refresh / success
 ```
 
-Profile data is used as the default source for candidate fields when creating a new application; it is not updated from the application form.
+Profile data is used as the default source for candidate fields when creating a new application; it is not updated from the application form. The row is normally created at signup; PUT merges with the existing row (picture-only updates are valid).
 
 ---
 
@@ -555,7 +555,7 @@ Candidate fields on the application are either supplied by the form (with toggle
 
 | # | Scenario | Behaviour |
 |---|---|---|
-| 29 | User has no profile row yet | GET `/api/profile` → **404**; profile page and `/admin/new` seed names from Auth `user_metadata`; `getProfileSnapshot` returns all-null fields — create trusts client body from the form. |
+| 29 | User has no profile row yet (signup insert failed) | GET `/api/profile` → **404**; profile page and `/admin/new` seed names from Auth `user_metadata`; `getProfileSnapshot` returns all-null fields — create trusts client body from the form. Auth callback / next PUT can create the row. |
 | 30 | User disables all candidate toggles | All candidate fields sent as `null`; the recruiter view shows no name, location, or links. |
 | 31 | User enables name toggle but leaves first/last name blank | `trim() || null` evaluates to `null`; stored as null in DB. |
 | 32 | User enables Name in URL with position `start` or `end` but has no first or last name | `buildSlug` / `reserveBaseSlug` falls back to company-role only (name segment is omitted). The slug does not include a name even though the preference is set. |

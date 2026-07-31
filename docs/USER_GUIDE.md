@@ -10,7 +10,7 @@ This guide describes what you can do with MyHireView as a **candidate** (job see
 
 ### Getting started
 
-- **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your first name, last name, email, password, and confirm password. Confirm your email if your Supabase project requires it. Your name is stored with your account and shown when you open **Profile** or create an application; saving your profile stores the full profile record for better prefills later.
+- **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your first name, last name, email, password, and confirm password. Confirm your email if your Supabase project requires it. Your name is stored on your account and a profile record is created with that name (you can add location, links, and a picture later).
 - **Sign in:** Use **Sign in** and enter your email and password. After signing in, you are taken to your **Dashboard** (`/admin`).
 
 ### Profile
@@ -19,14 +19,14 @@ From the header, open **Profile** (`/admin/profile`). You can:
 
 - See your **account email** and **member since** date.
 - Edit **profile details** used as defaults when you create applications:
-  - First name (required; prefilled from signup until you save)
-  - Last name (required; prefilled from signup until you save)
-  - Location  
-  - Portfolio URL  
-  - LinkedIn URL  
+  - First name (required)
+  - Last name (required)
+  - Location
+  - Portfolio URL
+  - LinkedIn URL
   - Profile picture  
 
-The first time you **Save**, a profile record is created. Changing your name also updates the name stored on your account. Location and URLs can be left blank. These values are not changed when you edit an application.
+Changing your name also updates the name stored on your account. Location and URLs can be left blank. These values are not changed when you edit an application. You can also add or change your profile picture from **New** / **Edit application** without leaving those pages.
 
 - See how many **applications** you have in total and how many are **active** vs **archived**. A link takes you back to the dashboard.
 
@@ -45,10 +45,11 @@ At **Dashboard** (`/admin`) you can:
 ### Creating an application
 
 1. Click **New Application** (`/admin/new`).
-2. If you have not saved a profile yet, a short notice recommends completing your profile for richer prefills (arrow icon opens Profile); your signup name is still used for the name fields.
+2. If optional profile fields (location, links) are still empty, a short notice recommends completing your profile for richer prefills (arrow icon opens Profile).
 3. **Info shown to recruiters** (at the top):
-   - Your profile details are shown as a preview (from your saved profile when available, otherwise name from signup). You can **toggle each field on or off** (off means recruiters will not see it).
+   - Your profile details are shown as a preview. You can **toggle each field on or off** (off means recruiters will not see it).
    - You can **edit** any value here; changes apply only to this application, not to your profile.
+   - **Profile picture:** choose whether to show it on this application. Use **Add / Change picture** to update your account avatar without leaving the page.
    - You can collapse or expand the whole list with the arrow control in the top-right of that section; that preference is remembered for next time.
 4. Fill in the **application form**:
    - **Company name** and **Role/Position** (required).

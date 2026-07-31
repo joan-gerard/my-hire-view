@@ -157,6 +157,14 @@ export default function NewApplicationPage() {
   };
 
   const hasSavedProfile = Boolean(profile);
+  const profileNeedsOptionalFields =
+    hasSavedProfile &&
+    !profile?.location?.trim() &&
+    !profile?.portfolio_url?.trim() &&
+    !profile?.linkedin_url?.trim() &&
+    !profile?.profile_picture_url?.trim();
+  const showProfileNudge =
+    !profileLoading && (!hasSavedProfile || profileNeedsOptionalFields);
   const initialData: Partial<ApplicationFormData> = {
     company: "",
     role: "",
@@ -175,11 +183,12 @@ export default function NewApplicationPage() {
       <h1 className="text-3xl font-bold text-[var(--foreground)]">
         Create New Application
       </h1>
-      {!profileLoading && !hasSavedProfile && (
+      {showProfileNudge && (
         <p className="flex items-start gap-2 rounded-md border border-[var(--foreground)]/10 bg-[var(--brand-secondary)]/40 px-4 py-3 text-sm text-[var(--foreground)]">
           <span className="min-w-0 flex-1">
-            Complete your profile to prefill location, links, and picture on new
-            applications. Your name from signup is used below until then.
+            {hasSavedProfile
+              ? "Add location, links, or a picture on your profile for richer prefills — or use Add picture below."
+              : "Complete your profile to prefill location, links, and picture on new applications. Your name from signup is used below until then."}
           </span>
           <Link
             href="/admin/profile"
@@ -203,6 +212,29 @@ export default function NewApplicationPage() {
             onSubmit={handleSubmit}
             loading={loading}
             profilePictureUrl={profile?.profile_picture_url ?? null}
+            profilePictureVersion={profile?.updated_at ?? null}
+            onProfilePictureSaved={({ url, updated_at }) =>
+              setProfile((prev) => {
+                if (prev) {
+                  return {
+                    ...prev,
+                    profile_picture_url: url,
+                    updated_at: updated_at ?? prev.updated_at,
+                  };
+                }
+                return {
+                  user_id: "",
+                  public_id: publicId ?? undefined,
+                  first_name: metaNames?.first_name ?? null,
+                  last_name: metaNames?.last_name ?? null,
+                  location: null,
+                  portfolio_url: null,
+                  linkedin_url: null,
+                  updated_at: updated_at ?? new Date().toISOString(),
+                  profile_picture_url: url,
+                };
+              })
+            }
             publicId={publicId ?? undefined}
             resolveSlugOnCreate
           />
