@@ -20,11 +20,13 @@ const {
   mockCreateClient,
   mockCheckRateLimit,
   mockDeleteCvIfOurs,
+  mockIsOwnedCvUrl,
 } = vi.hoisted(() => ({
   mockRequireAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockDeleteCvIfOurs: vi.fn(),
+  mockIsOwnedCvUrl: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
@@ -42,6 +44,7 @@ vi.mock("@/lib/utils/cv-storage", () => ({
   deleteCvIfOurs: mockDeleteCvIfOurs,
   deleteApplicationCvIfCustom: mockDeleteCvIfOurs,
   checkCvObjectExists: vi.fn().mockResolvedValue(true),
+  isOwnedCvUrl: mockIsOwnedCvUrl,
 }));
 vi.mock("@/lib/auth/ensure-public-id", () => ({
   ensureProfilePublicId: vi.fn().mockResolvedValue("k7x2m9ab"),
@@ -185,6 +188,18 @@ describe("POST /api/applications", () => {
     expect(response.status).toBe(201);
     const json = await response.json();
     expect(json.data.show_profile_picture).toBe(false);
+  });
+
+  it("returns 400 when custom cv_url is not owned by the caller", async () => {
+    mockIsOwnedCvUrl.mockReturnValue(false);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(PROFILE_SNAPSHOT)]),
+    );
+
+    const response = await POST(makePostRequest(BASE_APP_INPUT));
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toBe("CV URL must be an object you uploaded");
   });
 
   it("returns 400 when the DB insert fails", async () => {

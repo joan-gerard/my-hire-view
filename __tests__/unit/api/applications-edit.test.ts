@@ -25,12 +25,14 @@ const {
   mockCheckRateLimit,
   mockDeleteCvIfOurs,
   mockCheckCvObjectExists,
+  mockIsOwnedCvUrl,
 } = vi.hoisted(() => ({
   mockRequireAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockDeleteCvIfOurs: vi.fn(),
   mockCheckCvObjectExists: vi.fn(),
+  mockIsOwnedCvUrl: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
@@ -48,6 +50,7 @@ vi.mock("@/lib/utils/cv-storage", () => ({
   deleteCvIfOurs: mockDeleteCvIfOurs,
   deleteApplicationCvIfCustom: mockDeleteCvIfOurs,
   checkCvObjectExists: mockCheckCvObjectExists,
+  isOwnedCvUrl: mockIsOwnedCvUrl,
 }));
 
 import { PUT } from "@/app/api/applications/route";
@@ -161,6 +164,7 @@ describe("PUT /api/applications", () => {
     expect(mockDeleteCvIfOurs).toHaveBeenCalledWith(
       EXISTING_APP.cv_url,
       "custom",
+      MOCK_USER.id,
     );
   });
 
@@ -191,6 +195,7 @@ describe("PUT /api/applications", () => {
     expect(mockDeleteCvIfOurs).toHaveBeenCalledWith(
       EXISTING_APP.cv_url,
       "master",
+      MOCK_USER.id,
     );
   });
 
@@ -202,6 +207,24 @@ describe("PUT /api/applications", () => {
     await PUT(
       makePutRequest({ id: "app-42", cv_url: EXISTING_APP.cv_url }),
     );
+    expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when the new custom cv_url is not owned by the caller", async () => {
+    mockIsOwnedCvUrl.mockReturnValue(false);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(ownershipRow())]),
+    );
+
+    const response = await PUT(
+      makePutRequest({
+        id: "app-42",
+        cv_url: "https://r2.example.com/cvs/other-user/idempotency/x.pdf",
+      }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toBe("CV URL must be an object you uploaded");
     expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
   });
 

@@ -29,6 +29,7 @@ vi.mock("@/lib/utils/cv-storage", () => ({
   deleteCvIfOurs: vi.fn(),
   deleteApplicationCvIfCustom: vi.fn(),
   checkCvObjectExists: vi.fn().mockResolvedValue(true),
+  isOwnedCvUrl: vi.fn().mockReturnValue(true),
 }));
 vi.mock("@/lib/auth/ensure-public-id", () => ({
   resolvePublicIdReadOnly: vi.fn().mockResolvedValue("k7x2m9ab"),

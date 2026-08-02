@@ -35,21 +35,52 @@ function getCvObjectKeyFromPublicUrl(
 }
 
 /**
- * Returns true if the URL is served from our R2 public base (safe to delete via API).
+ * True when the R2 object key is under this user's custom or master CV prefix:
+ * - `cvs/{userId}/…` (custom / idempotent uploads)
+ * - `cvs/masters/{userId}/…` (master library)
+ */
+export function isOwnedCvObjectKey(
+  key: string | null | undefined,
+  userId: string,
+): boolean {
+  if (!key || !userId || userId.includes("/")) return false;
+  const customPrefix = `cvs/${userId}/`;
+  const masterPrefix = `cvs/masters/${userId}/`;
+  return (
+    (key.startsWith(customPrefix) && key.length > customPrefix.length) ||
+    (key.startsWith(masterPrefix) && key.length > masterPrefix.length)
+  );
+}
+
+/**
+ * True when `url` is under our R2 public base and the object key belongs to `userId`.
+ */
+export function isOwnedCvUrl(
+  url: string | null | undefined,
+  userId: string,
+): boolean {
+  return isOwnedCvObjectKey(getCvObjectKeyFromPublicUrl(url), userId);
+}
+
+/**
+ * Returns true if the URL is served from our R2 public base (safe host check only).
+ * Prefer {@link isOwnedCvUrl} before mutating (delete) or attaching a CV URL.
  */
 export function isCvStorageUrl(url: string | null | undefined): boolean {
   return getCvObjectKeyFromPublicUrl(url) !== null;
 }
 
 /**
- * Deletes the CV object at the given URL if it belongs to our R2 public base.
+ * Deletes the CV object at the given URL only when it is under our R2 public base
+ * **and** the object key belongs to `userId`.
  * Logs and swallows errors so callers can continue (e.g. DB delete still succeeds).
  */
 export async function deleteCvIfOurs(
   url: string | null | undefined,
+  userId: string,
 ): Promise<void> {
   const key = getCvObjectKeyFromPublicUrl(url);
-  if (!key) return;
+  if (!isOwnedCvObjectKey(key, userId) || !key) return;
   try {
     const client = getR2S3Client();
     await client.send(
@@ -61,15 +92,17 @@ export async function deleteCvIfOurs(
 }
 
 /**
- * Deletes an application CV from R2 only when it is app-owned (`custom`).
+ * Deletes an application CV from R2 only when it is app-owned (`custom`)
+ * and the object belongs to `userId`.
  * Master library CVs stay in R2 until removed from the profile.
  */
 export async function deleteApplicationCvIfCustom(
   url: string | null | undefined,
   cvKind: "master" | "custom" | null | undefined,
+  userId: string,
 ): Promise<void> {
   if (cvKind === "master") return;
-  await deleteCvIfOurs(url);
+  await deleteCvIfOurs(url, userId);
 }
 
 /**

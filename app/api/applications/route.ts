@@ -21,6 +21,7 @@ import {
 import {
   checkCvObjectExists,
   deleteApplicationCvIfCustom,
+  isOwnedCvUrl,
 } from "@/lib/utils/cv-storage";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -215,6 +216,11 @@ export async function POST(request: NextRequest) {
       cvUrl = master.url;
       cvFilename = master.filename;
       masterCvId = body.master_cv_id;
+    } else if (!isOwnedCvUrl(cvUrl, user.id)) {
+      return NextResponse.json(
+        { error: "CV URL must be an object you uploaded" },
+        { status: 400 },
+      );
     }
 
     const status: ApplicationStatus = isValidStatus(body.status)
@@ -368,6 +374,12 @@ export async function PUT(request: NextRequest) {
         updatePayload.cv_kind = "master";
       } else {
         if (cv_url !== undefined) {
+          if (!isOwnedCvUrl(cv_url, user.id)) {
+            return NextResponse.json(
+              { error: "CV URL must be an object you uploaded" },
+              { status: 400 },
+            );
+          }
           nextCvUrl = cv_url;
           updatePayload.cv_url = cv_url;
         }
@@ -382,6 +394,7 @@ export async function PUT(request: NextRequest) {
         await deleteApplicationCvIfCustom(
           existing.cv_url,
           existing.cv_kind as ApplicationCvKind,
+          user.id,
         );
       }
     }
@@ -440,6 +453,7 @@ export async function DELETE(request: NextRequest) {
     await deleteApplicationCvIfCustom(
       existing.cv_url,
       existing.cv_kind as ApplicationCvKind,
+      user.id,
     );
 
     const { error } = await supabase.from("applications").delete().eq("id", id);

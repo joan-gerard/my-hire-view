@@ -42,7 +42,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 | `POST /api/upload` | Custom CV upload (auth + idempotency). Keys `cvs/{userId}/idempotency/<key>.pdf`. |
 | `GET/POST/DELETE /api/profile/master-cvs` | Master CV library (max 5). Keys `cvs/masters/{userId}/{id}.pdf`. GET includes `applications_count` and a `used_by` preview per row. |
 | `lib/storage/r2-client.ts` | S3-compatible R2 client. |
-| `lib/utils/cv-storage.ts` | `deleteCvIfOurs`, `deleteApplicationCvIfCustom`, `checkCvObjectExists`. |
+| `lib/utils/cv-storage.ts` | `isOwnedCvUrl`, `deleteCvIfOurs(url, userId)`, `deleteApplicationCvIfCustom`, `checkCvObjectExists`. |
 
 ## Idempotency
 
@@ -55,7 +55,8 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 ## Safety
 
 - **PDF content:** Upload routes check MIME type and that the body starts with `%PDF` before writing to R2.
-- **URL check:** Deletes run only when the URL prefix matches `R2_PUBLIC_BASE_URL`, so arbitrary URLs in `cv_url` are not passed to the delete API.
+- **URL check:** Deletes run only when the URL prefix matches `R2_PUBLIC_BASE_URL` **and** the object key belongs to the authenticated user (`cvs/{userId}/…` or `cvs/masters/{userId}/…`), so another user’s public CV URL cannot be deleted via your application row.
+- **Attach check:** Creating/updating a custom application CV rejects `cv_url` values that fail the same ownership check.
 - **Errors:** Delete failures are logged and do not block DB updates or deletes.
 
 ## Environment variables
@@ -70,7 +71,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 
 Create an R2 bucket, enable **public access** on that bucket (custom hostname or r2.dev), and create an **API token** with permission to read/write objects in that bucket. See [Cloudflare R2 documentation](https://developers.cloudflare.com/r2/).
 
-Object keys are stored as `cvs/<uuid>.pdf`.
+Object keys use per-user prefixes: `cvs/{userId}/idempotency/<key>.pdf` (custom) and `cvs/masters/{userId}/{id}.pdf` (master library).
 
 ## Local development
 

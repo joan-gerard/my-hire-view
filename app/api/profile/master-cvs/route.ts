@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      await deleteCvIfOurs(url);
+      await deleteCvIfOurs(url, user.id);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
@@ -273,7 +273,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: deleteError.message }, { status: 400 });
     }
 
-    await deleteCvIfOurs(existing.url);
+    await deleteCvIfOurs(existing.url, user.id);
 
     return NextResponse.json({
       success: true,
