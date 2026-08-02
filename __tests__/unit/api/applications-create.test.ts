@@ -20,13 +20,13 @@ const {
   mockCreateClient,
   mockCheckRateLimit,
   mockDeleteCvIfOurs,
-  mockIsOwnedCvUrl,
+  mockIsOwnedTailoredCvUrl,
 } = vi.hoisted(() => ({
   mockRequireAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockDeleteCvIfOurs: vi.fn(),
-  mockIsOwnedCvUrl: vi.fn().mockReturnValue(true),
+  mockIsOwnedTailoredCvUrl: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
@@ -42,16 +42,21 @@ vi.mock("@/lib/rate-limit", () => ({
 }));
 vi.mock("@/lib/utils/cv-storage", () => ({
   deleteCvIfOurs: mockDeleteCvIfOurs,
-  deleteApplicationCvIfCustom: mockDeleteCvIfOurs,
+  deleteApplicationCvIfTailored: mockDeleteCvIfOurs,
   checkCvObjectExists: vi.fn().mockResolvedValue(true),
-  isOwnedCvUrl: mockIsOwnedCvUrl,
+  isOwnedTailoredCvUrl: mockIsOwnedTailoredCvUrl,
 }));
 vi.mock("@/lib/auth/ensure-public-id", () => ({
   ensureProfilePublicId: vi.fn().mockResolvedValue("k7x2m9ab"),
 }));
 
 import { POST } from "@/app/api/applications/route";
-import { ok, dbError, makeSupabaseClient } from "../../helpers/supabase-mock";
+import {
+  ok,
+  okWithCount,
+  dbError,
+  makeSupabaseClient,
+} from "../../helpers/supabase-mock";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -82,9 +87,17 @@ function makePostRequest(body: object): NextRequest {
   });
 }
 
+/** Chains for tailored create: profile → uniqueness (free) → insert result */
+function tailoredCreateChains(
+  insertResult: ReturnType<typeof ok> | ReturnType<typeof dbError>,
+) {
+  return [ok(PROFILE_SNAPSHOT), okWithCount(null, 0), insertResult];
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockRequireAuth.mockResolvedValue(MOCK_USER);
+  mockIsOwnedTailoredCvUrl.mockReturnValue(true);
   mockCheckRateLimit.mockReturnValue({
     success: true,
     remaining: 59,
@@ -99,10 +112,7 @@ describe("POST /api/applications", () => {
   it("returns 201 with the created application on success", async () => {
     const newApp = { id: "app-1", ...BASE_APP_INPUT, user_id: MOCK_USER.id };
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([
-        ok(PROFILE_SNAPSHOT), // getProfileSnapshot
-        ok(newApp),           // insert
-      ]),
+      makeSupabaseClient(tailoredCreateChains(ok(newApp))),
     );
 
     const response = await POST(makePostRequest(BASE_APP_INPUT));
@@ -120,7 +130,7 @@ describe("POST /api/applications", () => {
       last_name: "Doe",
     };
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([ok(PROFILE_SNAPSHOT), ok(newApp)]),
+      makeSupabaseClient(tailoredCreateChains(ok(newApp))),
     );
 
     // Do NOT send any candidate fields — they should come from the profile
@@ -140,7 +150,7 @@ describe("POST /api/applications", () => {
       last_name: null,
     };
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([ok(PROFILE_SNAPSHOT), ok(newApp)]),
+      makeSupabaseClient(tailoredCreateChains(ok(newApp))),
     );
 
     const response = await POST(
@@ -159,7 +169,7 @@ describe("POST /api/applications", () => {
       show_profile_picture: true,
     };
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([ok(PROFILE_SNAPSHOT), ok(newApp)]),
+      makeSupabaseClient(tailoredCreateChains(ok(newApp))),
     );
 
     const response = await POST(
@@ -179,7 +189,7 @@ describe("POST /api/applications", () => {
       show_profile_picture: false,
     };
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([ok(PROFILE_SNAPSHOT), ok(newApp)]),
+      makeSupabaseClient(tailoredCreateChains(ok(newApp))),
     );
 
     const response = await POST(
@@ -190,8 +200,8 @@ describe("POST /api/applications", () => {
     expect(json.data.show_profile_picture).toBe(false);
   });
 
-  it("returns 400 when custom cv_url is not owned by the caller", async () => {
-    mockIsOwnedCvUrl.mockReturnValue(false);
+  it("returns 400 when tailored cv_url is not a caller-owned tailored upload", async () => {
+    mockIsOwnedTailoredCvUrl.mockReturnValue(false);
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([ok(PROFILE_SNAPSHOT)]),
     );
@@ -199,12 +209,27 @@ describe("POST /api/applications", () => {
     const response = await POST(makePostRequest(BASE_APP_INPUT));
     expect(response.status).toBe(400);
     const json = await response.json();
-    expect(json.error).toBe("CV URL must be an object you uploaded");
+    expect(json.error).toBe(
+      "CV URL must be a tailored upload you created for this application",
+    );
+  });
+
+  it("returns 409 when tailored cv_url is already used by another application", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(PROFILE_SNAPSHOT), okWithCount(null, 1)]),
+    );
+
+    const response = await POST(makePostRequest(BASE_APP_INPUT));
+    expect(response.status).toBe(409);
+    const json = await response.json();
+    expect(json.error).toBe(
+      "This tailored CV is already used by another application",
+    );
   });
 
   it("returns 400 when the DB insert fails", async () => {
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([ok(PROFILE_SNAPSHOT), dbError("Unique constraint")]),
+      makeSupabaseClient(tailoredCreateChains(dbError("Unique constraint"))),
     );
 
     const response = await POST(makePostRequest(BASE_APP_INPUT));

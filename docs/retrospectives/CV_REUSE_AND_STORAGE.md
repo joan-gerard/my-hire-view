@@ -1,12 +1,14 @@
 # CV reuse and storage design
 
-This document records why MyHireView moved from **one uploaded PDF per application** to a **master CV library + optional custom CV**, what problem that solves, alternatives we considered, and what we ship now versus later (archive retention).
+This document records why MyHireView moved from **one uploaded PDF per application** to a **primary CV library + optional tailored CV**, what problem that solves, alternatives we considered, and what we ship now versus later (archive retention).
+
+> **Terminology:** Current product language is **primary** / **tailored** (`cv_type`, `primary_cvs`, keys under `cvs/{userId}/primary/…` and `cvs/{userId}/tailored/…`). Historical option labels below may still say “master” / “custom” where they reflect the original decision record; migrations `022_master_cvs.sql` → `024_primary_cvs_rename.sql` performed the rename.
 
 ---
 
 ## The problem
 
-Each application stores a `cv_url` pointing at a PDF in Cloudflare R2. On create, the form always started with an empty CV field: the user had to select a file again, and `POST /api/upload` wrote a **new** object keyed by a fresh idempotency UUID (`cvs/idempotency/<key>.pdf`).
+Each application stores a `cv_url` pointing at a PDF in Cloudflare R2. On create, the form always started with an empty CV field: the user had to select a file again, and `POST /api/upload` wrote a **new** object keyed by a fresh idempotency UUID.
 
 That meant:
 
@@ -52,20 +54,22 @@ Prefill `cv_url` from the user’s most recent application.
 
 **Rejected** as the sole solution — too thin for multi-version CVs.
 
-### Option D — Master CV library + optional custom CV (chosen)
+### Option D — Primary CV library + optional tailored CV (chosen)
+
+*(Originally discussed as “Master CV library + optional custom CV.”)*
 
 | Piece | Behaviour |
 |-------|-----------|
-| **Master CVs** | Up to **5** PDFs managed from the **profile** or from **New** / **Edit application** (same library). Stored under a master key prefix; URLs listed via `master_cvs`. |
-| **Custom CVs** | Per-application upload when the candidate needs a one-off version. |
-| **Create UX** | Default: pick from master library. Override: “Upload a different CV for this application.” |
-| **Edit UX** | Show current mode (master vs custom) and filename; allow switching either way. |
-| **Switch custom → master** | Confirm modal (“I Understand”) → delete the custom R2 object. |
-| **Switch master → custom** | Upload custom; do **not** delete the master. |
-| **Delete application** | Custom → delete R2 object. Master → leave object (still owned by profile). |
-| **Delete master from profile / New / Edit** | If unused, delete immediately. If applications still reference it, confirm with the **count** of those apps; after delete they show **missing CV** on the dashboard. |
+| **Primary CVs** | Up to **5** PDFs managed from the **profile** or from **New** / **Edit application** (same library). Stored under `cvs/{userId}/primary/…`; URLs listed via `primary_cvs`. |
+| **Tailored CVs** | Per-application upload when the candidate needs a one-off version (`cvs/{userId}/tailored/…`). |
+| **Create UX** | Default: pick from primary library. Override: “Upload a different CV for this application.” |
+| **Edit UX** | Show current mode (primary vs tailored) and filename; allow switching either way. |
+| **Switch tailored → primary** | Confirm modal (“I Understand”) → delete the tailored R2 object. |
+| **Switch primary → tailored** | Upload tailored; do **not** delete the primary library entry. |
+| **Delete application** | Tailored → delete R2 object. Primary → leave object (still owned by profile). |
+| **Delete primary from profile / New / Edit** | If unused, delete immediately. If applications still reference it, confirm with the **count** of those apps; after delete they show **missing CV** on the dashboard. |
 
-**Chosen** — balances storage, UX, and clear ownership (profile owns masters; applications own customs).
+**Chosen** — balances storage, UX, and clear ownership (profile owns primaries; applications own tailored uploads).
 
 ### Option E — Single profile CV only (like profile picture)
 
@@ -76,7 +80,7 @@ One CV on the profile, copied to every application.
 | Matches picture model | Too rigid for tailored résumés |
 | | No room for role-specific PDFs without breaking the model |
 
-**Rejected** — five masters + custom override is more realistic for job search.
+**Rejected** — five primaries + tailored override is more realistic for job search.
 
 ---
 
@@ -100,12 +104,15 @@ This prepares for a future hard-delete of long-archived applications without enc
 
 | Area | Ship now |
 |------|----------|
-| Schema | `applications.status`, `applications.archived_at`; master CV storage on profile; `cv_kind` (`master` \| `custom`) and optional `master_cv_id` on applications |
-| Profile UI | Upload / list / delete masters (max 5); confirm when in use |
-| Application form | Master picker by default; custom override; edit shows mode + name; custom→master confirmation + R2 cleanup |
-| Delete rules | Master-aware `deleteCvIfOurs` / application DELETE and CV replace |
-| Dashboard | Missing-CV signal when the object is gone (e.g. master deleted while apps still point at it) |
+| Schema | `applications.status`, `applications.archived_at`; primary CV storage on profile (`primary_cvs`); `cv_type` (`primary` \| `tailored`) and optional `primary_cv_id` on applications |
+| Profile UI | Upload / list / delete primaries (max 5); confirm when in use (`PrimaryCvLibrarySection`, modal, used-by preview) |
+| Application form | Primary picker by default; tailored override; edit shows mode + name; tailored→primary confirmation + R2 cleanup |
+| Delete rules | Primary-aware `deleteCvIfOurs` / `deleteApplicationCvIfTailored` on application DELETE and CV replace |
+| Dashboard | Missing-CV signal when the object is gone (e.g. primary deleted while apps still point at it) |
+| API | `GET/POST/DELETE /api/profile/primary-cvs` |
 | Docs | This retrospective + backlog tickets for retention |
+
+**Migrations:** `021_application_status_and_archived_at.sql`, `022_master_cvs.sql`, `024_primary_cvs_rename.sql`.
 
 ---
 
@@ -123,23 +130,23 @@ Until then: archive remains soft-hide; hard delete stays a user action (or futur
 
 ---
 
-## Technical summary (target shape)
+## Technical summary (current shape)
 
 ### Storage keys
 
-- Masters: `cvs/masters/{userId}/{id}.pdf`
-- Customs: keep idempotent upload path (or `cvs/custom/{userId}/…`) so custom objects are distinguishable
+- **Primary library:** `cvs/{userId}/primary/{id}.pdf`
+- **Tailored uploads:** `cvs/{userId}/tailored/{id}.pdf` (via `POST /api/upload`)
 
 ### Delete helper
 
 On application delete or CV replace:
 
-1. If `cv_kind === 'master'` (or `cv_url` is in the user’s master list) → **do not** delete the R2 object.
-2. If `cv_kind === 'custom'` → `deleteCvIfOurs(cv_url)`.
+1. If `cv_type === 'primary'` (or `cv_url` is in the user’s primary library) → **do not** delete the R2 object.
+2. If `cv_type === 'tailored'` → `deleteApplicationCvIfTailored` → `deleteCvIfOurs(cv_url, userId)`.
 
-### Master delete from profile
+### Primary delete from profile
 
-1. Count applications referencing that master.
+1. Count applications referencing that primary (`primary_cv_id`).
 2. If count > 0 → confirm dialog, then delete R2 + remove from library; apps keep the URL but dashboard/`cv_exists` show missing.
 3. If count = 0 → delete immediately.
 
@@ -149,14 +156,15 @@ Extend dashboard list with a CV existence signal (HeadObject or equivalent) so c
 
 ### Application form UX
 
-One **CV** fieldset (`CvSourceField`): on edit, a **Current** summary (filename, master/custom badge, View / missing); **Change CV** via radios with progressive disclosure (master dropdown or custom upload); **Download name** for recruiters in the same section. Switching custom → master confirms before the custom object is dropped on save.
+One **CV** fieldset (`CvSourceField`): on edit, a **Current** summary (filename, primary/tailored badge, View / missing); **Change CV** via radios with progressive disclosure (primary dropdown or tailored upload); **Download name** for recruiters in the same section. Switching tailored → primary confirms before the tailored object is dropped on save.
 
 ---
 
 ## Related docs
 
-- [PDF_AND_R2.md](PDF_AND_R2.md) — upload/delete mechanics
-- [PROFILE_PICTURE.md](PROFILE_PICTURE.md) — analogous profile-owned asset pattern
-- [API_REFERENCE.md](API_REFERENCE.md) — endpoints
-- [Backlog.md](Backlog.md) — after-launch retention tickets
-- [DATA_FLOW.md](DATA_FLOW.md) — create/edit flows
+- [PDF_AND_R2.md](../PDF_AND_R2.md) — upload/delete mechanics
+- [PROFILE_PICTURE.md](../PROFILE_PICTURE.md) — analogous profile-owned asset pattern
+- [API_REFERENCE.md](../API_REFERENCE.md) — endpoints
+- [Backlog.md](../Backlog.md) — after-launch retention tickets
+- [DATA_FLOW.md](../DATA_FLOW.md) — create/edit flows
+- [manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md](../manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md) — manual QA checklist

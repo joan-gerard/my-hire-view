@@ -2,10 +2,10 @@
 
 import Input from "@/components/ui/Input";
 import type {
-  ApplicationCvKind,
+  ApplicationCvType,
   ApplicationFormData,
 } from "@/lib/types/application";
-import type { MasterCv } from "@/lib/types/master-cv";
+import type { PrimaryCv } from "@/lib/types/primary-cv";
 import { buildSlug, validateSlugFormat } from "@/lib/utils/slug-generate";
 import { getApplicationUrl } from "@/lib/utils/url";
 import { useEffect, useRef, useState } from "react";
@@ -39,8 +39,8 @@ export type ApplicationFormInitialData = Partial<ApplicationFormData> & {
   cvUrlExists?: boolean;
   /** Stored preference: show profile picture on this application. */
   show_profile_picture?: boolean;
-  cv_kind?: ApplicationCvKind;
-  master_cv_id?: string | null;
+  cv_type?: ApplicationCvType;
+  primary_cv_id?: string | null;
 };
 
 type SlugLiveStatus =
@@ -115,8 +115,8 @@ export default function ApplicationForm({
     linkedin_url: initialData?.linkedin_url ?? "",
     cv_filename: initialData?.cv_filename ?? null,
     use_original_cv_filename: initialData?.use_original_cv_filename ?? true,
-    cv_kind: initialData?.cv_kind,
-    master_cv_id: initialData?.master_cv_id ?? null,
+    cv_type: initialData?.cv_type,
+    primary_cv_id: initialData?.primary_cv_id ?? null,
   });
 
   const [include, setInclude] = useState<Record<CandidateFieldKey, boolean>>(
@@ -145,61 +145,61 @@ export default function ApplicationForm({
   /** One key per selected CV file; server dedupes uploads / retries to the same R2 object. */
   const cvUploadIdempotencyKeyRef = useRef<string | null>(null);
 
-  const [masterCvs, setMasterCvs] = useState<MasterCv[]>([]);
-  const [mastersLoading, setMastersLoading] = useState(true);
-  const [cvMode, setCvMode] = useState<ApplicationCvKind>(() => {
-    if (initialData?.cv_kind === "master" || initialData?.cv_kind === "custom") {
-      return initialData.cv_kind;
+  const [primaryCvs, setPrimaryCvs] = useState<PrimaryCv[]>([]);
+  const [primaryCvsLoading, setPrimaryCvsLoading] = useState(true);
+  const [cvMode, setCvMode] = useState<ApplicationCvType>(() => {
+    if (initialData?.cv_type === "primary" || initialData?.cv_type === "tailored") {
+      return initialData.cv_type;
     }
-    return "master";
+    return "primary";
   });
-  const [selectedMasterId, setSelectedMasterId] = useState<string | null>(
-    initialData?.master_cv_id ?? null,
+  const [selectedPrimaryId, setSelectedPrimaryId] = useState<string | null>(
+    initialData?.primary_cv_id ?? null,
   );
-  const [switchToMasterConfirmOpen, setSwitchToMasterConfirmOpen] =
+  const [switchToPrimaryConfirmOpen, setSwitchToPrimaryConfirmOpen] =
     useState(false);
-  /** Tracks whether the current edit still has an unsaved custom file that would be abandoned. */
-  const hadCustomCvOnLoad =
-    initialData?.cv_kind === "custom" && Boolean(initialData?.cv_url?.trim());
+  /** Tracks whether the current edit still has an unsaved tailored file that would be abandoned. */
+  const hadTailoredCvOnLoad =
+    initialData?.cv_type === "tailored" && Boolean(initialData?.cv_url?.trim());
 
   useEffect(() => {
     let cancelled = false;
-    async function loadMasters() {
+    async function loadPrimaryCvs() {
       try {
-        const res = await fetch("/api/profile/master-cvs", {
+        const res = await fetch("/api/profile/primary-cvs", {
           credentials: "include",
         });
         const json = await res.json().catch(() => ({}));
         if (cancelled) return;
-        const list = (json.data as MasterCv[] | undefined) ?? [];
-        setMasterCvs(list);
-        if (!initialData?.cv_kind) {
+        const list = (json.data as PrimaryCv[] | undefined) ?? [];
+        setPrimaryCvs(list);
+        if (!initialData?.cv_type) {
           if (list.length > 0) {
-            setCvMode("master");
-            setSelectedMasterId((prev) => prev ?? list[0]!.id);
+            setCvMode("primary");
+            setSelectedPrimaryId((prev) => prev ?? list[0]!.id);
             setFormData((prev) => ({
               ...prev,
               cv_url: list[0]!.url,
               cv_filename: list[0]!.filename,
-              master_cv_id: list[0]!.id,
-              cv_kind: "master",
+              primary_cv_id: list[0]!.id,
+              cv_type: "primary",
             }));
           } else {
-            setCvMode("custom");
+            setCvMode("tailored");
           }
         } else if (
-          initialData.cv_kind === "master" &&
-          initialData.master_cv_id &&
-          !list.some((m) => m.id === initialData.master_cv_id)
+          initialData.cv_type === "primary" &&
+          initialData.primary_cv_id &&
+          !list.some((m) => m.id === initialData.primary_cv_id)
         ) {
-          // Master was deleted; keep URL for display but force re-pick
-          setSelectedMasterId(null);
+          // Primary CV was deleted; keep URL for display but force re-pick
+          setSelectedPrimaryId(null);
         }
       } finally {
-        if (!cancelled) setMastersLoading(false);
+        if (!cancelled) setPrimaryCvsLoading(false);
       }
     }
-    void loadMasters();
+    void loadPrimaryCvs();
     return () => {
       cancelled = true;
     };
@@ -208,52 +208,52 @@ export default function ApplicationForm({
   }, []);
 
   /** Sync form selection after library modal upload/delete. */
-  const handleMasterLibraryChange = (list: MasterCv[]) => {
-    const hadMasters = masterCvs.length > 0;
-    const prevSelected = selectedMasterId;
-    setMasterCvs(list);
-    setMastersLoading(false);
+  const handlePrimaryLibraryChange = (list: PrimaryCv[]) => {
+    const hadPrimaryCvs = primaryCvs.length > 0;
+    const prevSelected = selectedPrimaryId;
+    setPrimaryCvs(list);
+    setPrimaryCvsLoading(false);
 
     const stillSelected =
       prevSelected != null && list.some((m) => m.id === prevSelected);
     if (stillSelected) return;
 
     if (list.length === 0) {
-      setSelectedMasterId(null);
-      if (cvMode === "master") {
-        setCvMode("custom");
+      setSelectedPrimaryId(null);
+      if (cvMode === "primary") {
+        setCvMode("tailored");
         setFormData((prev) => ({
           ...prev,
           cv_url: "",
           cv_filename: null,
-          master_cv_id: null,
-          cv_kind: "custom",
+          primary_cv_id: null,
+          cv_type: "tailored",
         }));
       }
       return;
     }
 
-    // Selected master was deleted while in master mode — pick another.
-    if (cvMode === "master" && prevSelected) {
+    // Selected primary was deleted while in primary mode — pick another.
+    if (cvMode === "primary" && prevSelected) {
       const pick = list[0]!;
-      setSelectedMasterId(pick.id);
+      setSelectedPrimaryId(pick.id);
       setFormData((prev) => ({
         ...prev,
         cv_url: pick.url,
         cv_filename: pick.filename,
-        master_cv_id: pick.id,
-        cv_kind: "master",
+        primary_cv_id: pick.id,
+        cv_type: "primary",
       }));
       setErrors((prev) => ({ ...prev, cv_url: undefined }));
       return;
     }
 
-    // First master(s) added while empty — prefer master mode (create-form default).
+    // First primary CV(s) added while empty — prefer primary mode (create-form default).
     // Skip while the form's own initial fetch is still in flight to avoid racing edit mode.
-    if (!hadMasters && !mastersLoading) {
+    if (!hadPrimaryCvs && !primaryCvsLoading) {
       const pick = list[0]!;
-      setCvMode("master");
-      setSelectedMasterId(pick.id);
+      setCvMode("primary");
+      setSelectedPrimaryId(pick.id);
       setCvPendingFile(null);
       uploadedPendingFileRef.current = null;
       cvUploadIdempotencyKeyRef.current = null;
@@ -261,8 +261,8 @@ export default function ApplicationForm({
         ...prev,
         cv_url: pick.url,
         cv_filename: pick.filename,
-        master_cv_id: pick.id,
-        cv_kind: "master",
+        primary_cv_id: pick.id,
+        cv_type: "primary",
       }));
       setErrors((prev) => ({ ...prev, cv_url: undefined }));
     }
@@ -275,13 +275,13 @@ export default function ApplicationForm({
   const hasRole = Boolean(formData.role.trim());
   const hasSlug = Boolean(formData.slug.trim());
   const hasCv =
-    cvMode === "master"
-      ? Boolean(selectedMasterId)
+    cvMode === "primary"
+      ? Boolean(selectedPrimaryId)
       : Boolean(
           cvPendingFile ||
             (formData.cv_url &&
               formData.cv_url.trim() &&
-              initialData?.cv_kind === "custom"),
+              initialData?.cv_type === "tailored"),
         );
   const hasVideo = Boolean(formData.video_url.trim());
   const slugReady =
@@ -297,8 +297,8 @@ export default function ApplicationForm({
     if (!hasCompany) return "Company name is required.";
     if (!hasRole) return "Role is required.";
     if (!hasCv)
-      return cvMode === "master"
-        ? "Select a master CV, or upload a custom CV."
+      return cvMode === "primary"
+        ? "Select a primary CV, or upload a tailored CV."
         : "Upload a CV file for this application.";
     if (!hasVideo) return "YouTube URL is required.";
     if (slugLiveStatus.kind === "checking") {
@@ -558,15 +558,15 @@ export default function ApplicationForm({
       if (!formData.role.trim()) newErrors.role = "Role is required";
       const slugTrimmed = formData.slug.trim();
       if (!slugTrimmed) newErrors.slug = "Slug is required";
-      if (cvMode === "master") {
-        if (!selectedMasterId) newErrors.cv_url = "Select a master CV";
+      if (cvMode === "primary") {
+        if (!selectedPrimaryId) newErrors.cv_url = "Select a primary CV";
       } else {
-        const hasCustomCv =
+        const hasTailoredCv =
           cvPendingFile ||
-          (initialData?.cv_kind === "custom" &&
+          (initialData?.cv_type === "tailored" &&
             formData.cv_url &&
             formData.cv_url.trim());
-        if (!hasCustomCv) {
+        if (!hasTailoredCv) {
           newErrors.cv_url = "Upload a CV file for this application";
         }
       }
@@ -621,17 +621,17 @@ export default function ApplicationForm({
 
       let cvUrl = formData.cv_url.trim();
       let cvFilename = formData.cv_filename ?? null;
-      let masterCvId: string | null = null;
+      let primaryCvId: string | null = null;
 
-      if (cvMode === "master") {
-        const master = masterCvs.find((m) => m.id === selectedMasterId);
-        if (!master) {
-          setErrors({ cv_url: "Select a master CV" });
+      if (cvMode === "primary") {
+        const primary = primaryCvs.find((m) => m.id === selectedPrimaryId);
+        if (!primary) {
+          setErrors({ cv_url: "Select a primary CV" });
           return;
         }
-        cvUrl = master.url;
-        cvFilename = master.filename;
-        masterCvId = master.id;
+        cvUrl = primary.url;
+        cvFilename = primary.filename;
+        primaryCvId = primary.id;
       } else if (cvPendingFile) {
         const signature = getFileSignature(cvPendingFile);
         const cachedUpload = uploadedPendingFileRef.current;
@@ -683,8 +683,8 @@ export default function ApplicationForm({
         cv_filename: cvFilename,
         use_original_cv_filename: formData.use_original_cv_filename ?? true,
         show_profile_picture: includePicture,
-        cv_kind: cvMode,
-        master_cv_id: masterCvId,
+        cv_type: cvMode,
+        primary_cv_id: primaryCvId,
         ...(resolveSlugOnCreate ? { slugManuallyEdited } : {}),
       };
       await onSubmit(payload);
@@ -825,82 +825,82 @@ export default function ApplicationForm({
       <CvSourceField
         isEdit={isEdit}
         currentFilename={initialData?.cv_filename ?? null}
-        currentKind={initialData?.cv_kind ?? null}
+        currentType={initialData?.cv_type ?? null}
         currentUrl={initialData?.cv_url ?? ""}
         cvUrlExists={initialData?.cvUrlExists}
         onRetryCvCheck={onRetryCvCheck}
         mode={cvMode}
-        masterCvs={masterCvs}
-        mastersLoading={mastersLoading}
-        selectedMasterId={selectedMasterId}
+        primaryCvs={primaryCvs}
+        primaryCvsLoading={primaryCvsLoading}
+        selectedPrimaryId={selectedPrimaryId}
         pendingFile={cvPendingFile}
         error={errors.cv_url}
-        onSelectMaster={(masterId) => {
-          const master = masterCvs.find((m) => m.id === masterId);
-          if (!master) return;
-          setSelectedMasterId(masterId);
+        onSelectPrimary={(primaryId) => {
+          const primary = primaryCvs.find((m) => m.id === primaryId);
+          if (!primary) return;
+          setSelectedPrimaryId(primaryId);
           setFormData((prev) => ({
             ...prev,
-            cv_url: master.url,
-            cv_filename: master.filename,
-            master_cv_id: master.id,
-            cv_kind: "master",
+            cv_url: primary.url,
+            cv_filename: primary.filename,
+            primary_cv_id: primary.id,
+            cv_type: "primary",
           }));
           setErrors((prev) => ({ ...prev, cv_url: undefined }));
         }}
-        onSwitchToCustom={() => {
-          setCvMode("custom");
-          setSelectedMasterId(null);
+        onSwitchToTailored={() => {
+          setCvMode("tailored");
+          setSelectedPrimaryId(null);
           setCvPendingFile(null);
           uploadedPendingFileRef.current = null;
           cvUploadIdempotencyKeyRef.current = null;
-          // Keep saved custom URL until a new file is chosen; clear if leaving a master.
-          if (initialData?.cv_kind === "custom" && isEdit) {
+          // Keep saved tailored URL until a new file is chosen; clear if leaving primary.
+          if (initialData?.cv_type === "tailored" && isEdit) {
             setFormData((prev) => ({
               ...prev,
               cv_url: initialData.cv_url ?? prev.cv_url,
               cv_filename: initialData.cv_filename ?? prev.cv_filename,
-              master_cv_id: null,
-              cv_kind: "custom",
+              primary_cv_id: null,
+              cv_type: "tailored",
             }));
           } else {
             setFormData((prev) => ({
               ...prev,
               cv_url: "",
               cv_filename: null,
-              master_cv_id: null,
-              cv_kind: "custom",
+              primary_cv_id: null,
+              cv_type: "tailored",
             }));
           }
         }}
-        onSwitchToMaster={() => {
-          const leavingSavedCustom =
-            cvMode === "custom" &&
-            hadCustomCvOnLoad &&
+        onSwitchToPrimary={() => {
+          const leavingSavedTailored =
+            cvMode === "tailored" &&
+            hadTailoredCvOnLoad &&
             !cvPendingFile;
-          if (leavingSavedCustom) {
-            setSwitchToMasterConfirmOpen(true);
+          if (leavingSavedTailored) {
+            setSwitchToPrimaryConfirmOpen(true);
             return;
           }
-          setCvMode("master");
+          setCvMode("primary");
           setCvPendingFile(null);
           uploadedPendingFileRef.current = null;
-          const first = masterCvs[0];
+          const first = primaryCvs[0];
           if (first) {
-            setSelectedMasterId(first.id);
+            setSelectedPrimaryId(first.id);
             setFormData((prev) => ({
               ...prev,
               cv_url: first.url,
               cv_filename: first.filename,
-              master_cv_id: first.id,
-              cv_kind: "master",
+              primary_cv_id: first.id,
+              cv_type: "primary",
             }));
           } else {
-            setSelectedMasterId(null);
+            setSelectedPrimaryId(null);
             setFormData((prev) => ({
               ...prev,
-              master_cv_id: null,
-              cv_kind: "master",
+              primary_cv_id: null,
+              cv_type: "primary",
             }));
           }
         }}
@@ -912,44 +912,44 @@ export default function ApplicationForm({
             setFormData((prev) => ({
               ...prev,
               cv_filename: file.name,
-              cv_kind: "custom",
-              master_cv_id: null,
+              cv_type: "tailored",
+              primary_cv_id: null,
             }));
           } else {
             cvUploadIdempotencyKeyRef.current = null;
-            // Restored saved custom URL after clearing a new selection
-            if (isEdit && initialData?.cv_kind === "custom") {
+            // Restored saved tailored URL after clearing a new selection
+            if (isEdit && initialData?.cv_type === "tailored") {
               setFormData((prev) => ({
                 ...prev,
                 cv_url: initialData.cv_url ?? "",
                 cv_filename: initialData.cv_filename ?? null,
-                cv_kind: "custom",
-                master_cv_id: null,
+                cv_type: "tailored",
+                primary_cv_id: null,
               }));
             }
           }
         }}
-        onMasterLibraryChange={handleMasterLibraryChange}
-        switchToMasterConfirmOpen={switchToMasterConfirmOpen}
-        onConfirmSwitchToMaster={() => {
-          setSwitchToMasterConfirmOpen(false);
-          setCvMode("master");
+        onPrimaryLibraryChange={handlePrimaryLibraryChange}
+        switchToPrimaryConfirmOpen={switchToPrimaryConfirmOpen}
+        onConfirmSwitchToPrimary={() => {
+          setSwitchToPrimaryConfirmOpen(false);
+          setCvMode("primary");
           setCvPendingFile(null);
           uploadedPendingFileRef.current = null;
           cvUploadIdempotencyKeyRef.current = null;
-          const first = masterCvs[0];
+          const first = primaryCvs[0];
           if (first) {
-            setSelectedMasterId(first.id);
+            setSelectedPrimaryId(first.id);
             setFormData((prev) => ({
               ...prev,
               cv_url: first.url,
               cv_filename: first.filename,
-              master_cv_id: first.id,
-              cv_kind: "master",
+              primary_cv_id: first.id,
+              cv_type: "primary",
             }));
           }
         }}
-        onCancelSwitchToMaster={() => setSwitchToMasterConfirmOpen(false)}
+        onCancelSwitchToPrimary={() => setSwitchToPrimaryConfirmOpen(false)}
         useOriginalCvFilename={formData.use_original_cv_filename ?? true}
         onUseOriginalCvFilenameChange={(use) =>
           setFormData((prev) => ({ ...prev, use_original_cv_filename: use }))

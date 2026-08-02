@@ -4,8 +4,8 @@
  *
  * PUT covers:
  * - Happy path: ownership check passes → updates row → 200.
- * - Old custom CV deleted from R2 when cv_url changes.
- * - Master CVs are not deleted from R2 when switching away.
+ * - Old tailored CV deleted from R2 when cv_url changes.
+ * - Primary CVs are not deleted from R2 when switching away.
  * - 404 when application not found or belongs to another user.
  * - DB update error → 400.
  * - Auth / rate-limit guards.
@@ -25,14 +25,14 @@ const {
   mockCheckRateLimit,
   mockDeleteCvIfOurs,
   mockCheckCvObjectExists,
-  mockIsOwnedCvUrl,
+  mockIsOwnedTailoredCvUrl,
 } = vi.hoisted(() => ({
   mockRequireAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockDeleteCvIfOurs: vi.fn(),
   mockCheckCvObjectExists: vi.fn(),
-  mockIsOwnedCvUrl: vi.fn().mockReturnValue(true),
+  mockIsOwnedTailoredCvUrl: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
@@ -48,14 +48,19 @@ vi.mock("@/lib/rate-limit", () => ({
 }));
 vi.mock("@/lib/utils/cv-storage", () => ({
   deleteCvIfOurs: mockDeleteCvIfOurs,
-  deleteApplicationCvIfCustom: mockDeleteCvIfOurs,
+  deleteApplicationCvIfTailored: mockDeleteCvIfOurs,
   checkCvObjectExists: mockCheckCvObjectExists,
-  isOwnedCvUrl: mockIsOwnedCvUrl,
+  isOwnedTailoredCvUrl: mockIsOwnedTailoredCvUrl,
 }));
 
 import { PUT } from "@/app/api/applications/route";
 import { GET as getById } from "@/app/api/applications/by-id/[id]/route";
-import { ok, dbError, makeSupabaseClient } from "../../helpers/supabase-mock";
+import {
+  ok,
+  okWithCount,
+  dbError,
+  makeSupabaseClient,
+} from "../../helpers/supabase-mock";
 
 const MOCK_USER = { id: "user-abc" };
 
@@ -66,7 +71,7 @@ const EXISTING_APP = {
   role: "Engineer",
   slug: "volvo-engineer",
   cv_url: "https://r2.example.com/old-cv.pdf",
-  cv_kind: "custom",
+  cv_type: "tailored",
   video_url: "https://youtube.com/watch?v=old",
   status: "active",
 };
@@ -75,14 +80,14 @@ function ownershipRow(
   overrides: Partial<{
     user_id: string;
     cv_url: string;
-    cv_kind: string;
+    cv_type: string;
     status: string;
   }> = {},
 ) {
   return {
     user_id: MOCK_USER.id,
     cv_url: EXISTING_APP.cv_url,
-    cv_kind: "custom",
+    cv_type: "tailored",
     status: "active",
     ...overrides,
   };
@@ -105,6 +110,7 @@ function makeGetRequest(): NextRequest {
 beforeEach(() => {
   vi.clearAllMocks();
   mockRequireAuth.mockResolvedValue(MOCK_USER);
+  mockIsOwnedTailoredCvUrl.mockReturnValue(true);
   mockCheckRateLimit.mockReturnValue({
     success: true,
     remaining: 59,
@@ -151,11 +157,12 @@ describe("PUT /api/applications", () => {
     expect(response.status).toBe(404);
   });
 
-  it("deletes the old custom CV from R2 when cv_url changes", async () => {
+  it("deletes the old tailored CV from R2 when cv_url changes", async () => {
     const newCvUrl = "https://r2.example.com/new-cv.pdf";
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([
         ok(ownershipRow()),
+        okWithCount(null, 0),
         ok({ ...EXISTING_APP, cv_url: newCvUrl }),
       ]),
     );
@@ -163,23 +170,23 @@ describe("PUT /api/applications", () => {
     await PUT(makePutRequest({ id: "app-42", cv_url: newCvUrl }));
     expect(mockDeleteCvIfOurs).toHaveBeenCalledWith(
       EXISTING_APP.cv_url,
-      "custom",
+      "tailored",
       MOCK_USER.id,
     );
   });
 
-  it("does not delete R2 when leaving a master CV (deleteApplicationCvIfCustom no-ops)", async () => {
+  it("does not delete R2 when leaving a primary CV (deleteApplicationCvIfTailored no-ops)", async () => {
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([
-        ok(ownershipRow({ cv_kind: "master" })),
+        ok(ownershipRow({ cv_type: "primary" })),
         ok({
-          url: "https://r2.example.com/master2.pdf",
-          filename: "master2.pdf",
+          url: "https://r2.example.com/cvs/user-abc/primary/cv-2.pdf",
+          filename: "primary2.pdf",
         }),
         ok({
           ...EXISTING_APP,
-          cv_kind: "master",
-          cv_url: "https://r2.example.com/master2.pdf",
+          cv_type: "primary",
+          cv_url: "https://r2.example.com/cvs/user-abc/primary/cv-2.pdf",
         }),
       ]),
     );
@@ -187,21 +194,25 @@ describe("PUT /api/applications", () => {
     await PUT(
       makePutRequest({
         id: "app-42",
-        cv_kind: "master",
-        master_cv_id: "master-2",
+        cv_type: "primary",
+        primary_cv_id: "primary-2",
       }),
     );
-    // Helper is still invoked with kind=master; implementation skips DeleteObject
+    // Helper is still invoked with type=primary; implementation skips DeleteObject
     expect(mockDeleteCvIfOurs).toHaveBeenCalledWith(
       EXISTING_APP.cv_url,
-      "master",
+      "primary",
       MOCK_USER.id,
     );
   });
 
   it("does NOT delete the CV when cv_url is unchanged", async () => {
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([ok(ownershipRow()), ok(EXISTING_APP)]),
+      makeSupabaseClient([
+        ok(ownershipRow()),
+        okWithCount(null, 0),
+        ok(EXISTING_APP),
+      ]),
     );
 
     await PUT(
@@ -210,8 +221,8 @@ describe("PUT /api/applications", () => {
     expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
   });
 
-  it("returns 400 when the new custom cv_url is not owned by the caller", async () => {
-    mockIsOwnedCvUrl.mockReturnValue(false);
+  it("returns 400 when the new tailored cv_url is not a caller-owned tailored upload", async () => {
+    mockIsOwnedTailoredCvUrl.mockReturnValue(false);
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([ok(ownershipRow())]),
     );
@@ -219,12 +230,33 @@ describe("PUT /api/applications", () => {
     const response = await PUT(
       makePutRequest({
         id: "app-42",
-        cv_url: "https://r2.example.com/cvs/other-user/idempotency/x.pdf",
+        cv_url: "https://r2.example.com/cvs/other-user/tailored/x.pdf",
       }),
     );
     expect(response.status).toBe(400);
     const json = await response.json();
-    expect(json.error).toBe("CV URL must be an object you uploaded");
+    expect(json.error).toBe(
+      "CV URL must be a tailored upload you created for this application",
+    );
+    expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 when tailored cv_url is already used by another application", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(ownershipRow()), okWithCount(null, 1)]),
+    );
+
+    const response = await PUT(
+      makePutRequest({
+        id: "app-42",
+        cv_url: "https://r2.example.com/cvs/user-abc/tailored/shared.pdf",
+      }),
+    );
+    expect(response.status).toBe(409);
+    const json = await response.json();
+    expect(json.error).toBe(
+      "This tailored CV is already used by another application",
+    );
     expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
   });
 

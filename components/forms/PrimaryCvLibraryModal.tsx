@@ -1,27 +1,27 @@
 "use client";
 
 import Button from "@/components/ui/Button";
-import MasterCvLibrarySection from "@/components/forms/MasterCvLibrarySection";
-import type { MasterCv } from "@/lib/types/master-cv";
-import { MASTER_CV_MAX_PER_USER } from "@/lib/types/master-cv";
+import PrimaryCvLibrarySection from "@/components/forms/PrimaryCvLibrarySection";
+import type { PrimaryCv } from "@/lib/types/primary-cv";
+import { PRIMARY_CV_MAX_PER_USER } from "@/lib/types/primary-cv";
 import { useEffect, useId, useRef } from "react";
 
-export interface MasterCvLibraryModalProps {
+export interface PrimaryCvLibraryModalProps {
   open: boolean;
   onClose: () => void;
   /** Fired when the library list changes (load / upload / delete). */
-  onLibraryChange: (items: MasterCv[]) => void;
+  onLibraryChange: (items: PrimaryCv[]) => void;
 }
 
 /**
- * Modal to manage the master CV library from application new/edit flows
+ * Modal to manage the primary CV library from application new/edit flows
  * so users need not leave for /admin/profile.
  */
-export default function MasterCvLibraryModal({
+export default function PrimaryCvLibraryModal({
   open,
   onClose,
   onLibraryChange,
-}: MasterCvLibraryModalProps) {
+}: PrimaryCvLibraryModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
@@ -48,16 +48,16 @@ export default function MasterCvLibraryModal({
       <div className="space-y-4 p-5">
         <div>
           <h2 id={titleId} className="text-lg font-semibold">
-            Master CV library
+            Primary CV library
           </h2>
           <p className="mt-1 text-sm text-[var(--foreground)]/80">
-            Upload up to {MASTER_CV_MAX_PER_USER} résumé PDFs to reuse across
+            Upload up to {PRIMARY_CV_MAX_PER_USER} résumé PDFs to reuse across
             applications. Changes are saved to your library immediately.
           </p>
         </div>
 
         {open && (
-          <MasterCvLibrarySection
+          <PrimaryCvLibrarySection
             embedded
             onLibraryChange={onLibraryChange}
           />

@@ -22,6 +22,9 @@ Each endpoint lists **What works** (practices already in place) and **Improvemen
 - [Profile](#profile)
   - [GET profile](#get-profile) — `GET /api/profile`
   - [PUT profile](#put-profile) — `PUT /api/profile`
+  - [GET profile primary CVs](#get-profile-primary-cvs) — `GET /api/profile/primary-cvs`
+  - [POST profile primary CV](#post-profile-primary-cv) — `POST /api/profile/primary-cvs`
+  - [DELETE profile primary CV](#delete-profile-primary-cv) — `DELETE /api/profile/primary-cvs`
 - [Slugs](#slugs)
   - [POST slug](#post-slug) — `POST /api/slug`
   - [POST slug validate](#post-slug-validate) — `POST /api/slug/validate`
@@ -140,9 +143,9 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug`, `cv_url`, `video_url` (required); optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugNamePosition` (`"start"` | `"end"` | `null` → stored as `include_name_in_slug`), `cv_filename`, `use_original_cv_filename` (default `true`), `show_profile_picture`
+- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug`, `cv_url`, `video_url` (required); optional `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugNamePosition` (`"start"` | `"end"` | `null` → stored as `include_name_in_slug`), `cv_filename`, `use_original_cv_filename` (default `true`), `show_profile_picture`
 - **Success:** `201` `{ data: Application }`
-- **Errors:** `400` insert/validation; `401`; `429`
+- **Errors:** `400` insert/validation; `401`; `409` tailored `cv_url` already used by another application; `429`
 
 **What works**
 
@@ -150,7 +153,8 @@ Create an application. Candidate fields fall back to the user’s profile when o
 - Rate limited.
 - Profile snapshot / fallback for candidate fields keeps recruiter data on the application row.
 - Avatar preference is a boolean only — no denormalized picture URL on the application row.
-- Custom `cv_url` must be an R2 object owned by the caller (`cvs/{userId}/…`); master rows resolve URL from the caller’s library.
+- **Primary CV:** when `cv_type` is `"primary"`, `primary_cv_id` must reference a row in the caller’s `primary_cvs` library; `cv_url` is resolved from that library row (client may send the same URL for convenience).
+- **Tailored CV:** when `cv_type` is `"tailored"` (default), `cv_url` must be a caller-owned tailored upload (`cvs/{userId}/tailored/…`); not a primary library key. Reusing another application’s tailored URL returns **409**.
 - Returns **201** with the created row.
 
 **Improvement opportunities**
@@ -166,13 +170,13 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 `PUT /api/applications`
 
-Update an application owned by the current user. Replacing `cv_url` deletes the previous custom R2 object when it belongs to the caller (`deleteApplicationCvIfCustom` / `deleteCvIfOurs`). Updates `show_profile_picture` when provided (avatar still comes from the profile at view time).
+Update an application owned by the current user. Replacing a tailored `cv_url` deletes the previous tailored R2 object when it belongs to the caller (`deleteApplicationCvIfTailored` / `deleteCvIfOurs`). Primary library objects are never deleted here. Updates `show_profile_picture` when provided (avatar still comes from the profile at view time).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body:** `id` (required) plus partial `ApplicationUpdateInput` (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_kind`, `master_cv_id`, candidate fields, `slugNamePosition`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
+- **Body:** `id` (required) plus partial `ApplicationUpdateInput` (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields, `slugNamePosition`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
 - **Success:** `200` `{ data: Application }`
-- **Errors:** `400`; `401`; `404` if missing or not owned; `429`
+- **Errors:** `400`; `401`; `404` if missing or not owned; `409` tailored `cv_url` already used by another application; `429`
 
 Note: `description` in the body is ignored (column removed in migration 017).
 
@@ -180,8 +184,8 @@ Note: `description` in the body is ignored (column removed in migration 017).
 
 - Auth + ownership check before update; **404** when missing or not owned (no existence leak across users beyond that).
 - Rate limited.
-- On `cv_url` change, deletes the **previous** R2 object only when it is a **custom** CV and `deleteCvIfOurs` confirms the URL is under `R2_PUBLIC_BASE_URL` **and** the object key belongs to the caller (`cvs/{userId}/…` or `cvs/masters/{userId}/…`).
-- Rejects a new custom `cv_url` that is not an object owned by the caller (**400**).
+- On `cv_url` change, deletes the **previous** R2 object only when `cv_type` is **tailored** and `deleteApplicationCvIfTailored` / `deleteCvIfOurs` confirms the URL is under `R2_PUBLIC_BASE_URL` **and** the object key belongs to the caller (`cvs/{userId}/tailored/…` or `cvs/{userId}/primary/…` for ownership; only tailored objects are deleted on replace).
+- Rejects a new tailored `cv_url` that is not a caller-owned tailored upload (**400**), or that is already used by another of the caller’s applications (**409**). Keeping the same `cv_url` on the current row is allowed. Switching to **primary** resolves URL from the caller’s `primary_cvs` library via `primary_cv_id`.
 - Persists `show_profile_picture` when provided (public view uses live profile picture).
 - Maps `slugNamePosition` → `include_name_in_slug` instead of exposing the DB column name as the only contract.
 
@@ -189,8 +193,7 @@ Note: `description` in the body is ignored (column removed in migration 017).
 
 - Avoid spreading the raw body into the update payload (mass-assignment risk for fields like `user_id`, `view_count`, `download_count`). Whitelist allowed keys explicitly.
 - Schema-validate partial updates; require `id` as a UUID.
-- **Shared CV references:** the same R2 URL can appear on more than one application (idempotent upload reuse, or copying a URL). Replacing/deleting one row still `DeleteObject`s that key, so other apps that still reference it show a missing file (`cv_exists: false`). Before delete, count remaining `applications.cv_url` references (or use per-application / reference-counted objects).
-- **Delete-before-update ordering:** on CV replacement the handler calls `deleteApplicationCvIfCustom(existing.cv_url, …)` **before** the Supabase update. If the update then fails (**400**), the row still points at `existing.cv_url` but the object is already gone. Persist the new `cv_url` first, then delete the old object only after a successful update.
+- **Delete-before-update ordering:** on tailored CV replacement the handler calls `deleteApplicationCvIfTailored(existing.cv_url, existing.cv_type, …)` **before** the Supabase update. If the update then fails (**400**), the row still points at `existing.cv_url` but the object is already gone. Persist the new `cv_url` first, then delete the old object only after a successful update.
 - Improve error handling / logging (same catch-all **401** issue).
 - Optionally return **409** on slug collisions instead of a generic **400**.
 
@@ -200,7 +203,7 @@ Note: `description` in the body is ignored (column removed in migration 017).
 
 `DELETE /api/applications`
 
-Hard-delete an application and its custom CV object in R2 (when the URL belongs to the caller).
+Hard-delete an application and its tailored CV object in R2 (when the URL belongs to the caller).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -212,13 +215,12 @@ Hard-delete an application and its custom CV object in R2 (when the URL belongs 
 
 - Auth + ownership check before delete.
 - Rate limited.
-- Cleans up the CV in R2 when the URL is under `R2_PUBLIC_BASE_URL` **and** the object key belongs to the caller (`deleteApplicationCvIfCustom` → `deleteCvIfOurs`).
+- Cleans up the CV in R2 when the URL is under `R2_PUBLIC_BASE_URL` **and** the object key belongs to the caller (`deleteApplicationCvIfTailored` → `deleteCvIfOurs`). Safe with the one-tailored-CV-per-application attach rule (primary library objects are never deleted here).
 - Requires an explicit `id` query param (fails closed if missing).
 
 **Improvement opportunities**
 
 - Validate `id` as a UUID before querying.
-- **Shared CV references:** deleting one row that shares a custom R2 URL with another of the caller’s apps still `DeleteObject`s that key. See PUT improvements (reference checks).
 - If R2 delete fails, log and decide whether to fail the request or proceed (today delete continues after `deleteCvIfOurs`; document or harden that policy).
 - Same auth-vs-500 catch handling as other handlers.
 - Consider soft-delete-only for some clients if hard delete is irreversible by design (archive already covers soft hide).
@@ -398,6 +400,66 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 
 ---
 
+### GET profile primary CVs
+
+`GET /api/profile/primary-cvs`
+
+List the authenticated user’s primary CV library (newest first). Each row includes usage metadata for delete UX.
+
+- **Auth:** Required
+- **Rate limit:** Default (60/min)
+- **Success:** `200` `{ data: PrimaryCv[] }` — each item includes `applications_count` and `used_by` (preview of applications referencing that primary; capped for UI)
+- **Errors:** `400` DB error; `401`; `429`
+
+**What works**
+
+- Auth required; scoped to session `user_id`.
+- Rate limited.
+- Joins application references so delete flows can show count + preview without extra round trips.
+
+---
+
+### POST profile primary CV
+
+`POST /api/profile/primary-cvs`
+
+Upload a PDF to the primary CV library (max **5** per user). Object key: `cvs/{userId}/primary/{id}.pdf`. See [PDF_AND_R2.md](PDF_AND_R2.md).
+
+- **Auth:** Required
+- **Rate limit:** Default (60/min)
+- **Body:** `multipart/form-data` with `file` (PDF, max **3 MB**); optional `label` (max **120** chars)
+- **Success:** `201` `{ data: PrimaryCv & { applications_count: 0, used_by: [] } }`
+- **Errors:** `400` missing file / library at max / validation; `401`; `429`; `500` (R2 not configured / upload failure)
+
+**What works**
+
+- Auth required; enforces **5** primaries per user before upload.
+- PDF-only, **3 MB** max, `%PDF` magic-byte check.
+- Writes R2 object then inserts `primary_cvs` row; rolls back R2 on insert failure.
+- Returns usage fields (`applications_count: 0`, `used_by: []`) for consistent client shape.
+
+---
+
+### DELETE profile primary CV
+
+`DELETE /api/profile/primary-cvs?id=…`
+
+Remove a primary CV from the library and delete its R2 object. Applications that still reference it keep the URL but show **CV missing** on the dashboard until edited.
+
+- **Auth:** Required
+- **Rate limit:** Default (60/min)
+- **Query:** `id` (required, primary CV UUID)
+- **Success:** `200` `{ success: true, applications_affected: number }`
+- **Errors:** `400` missing id / DB error; `401`; `404` not found or not owned; `429`
+
+**What works**
+
+- Auth + ownership check before delete.
+- Deletes `primary_cvs` row and R2 object (`deleteCvIfOurs`).
+- Returns `applications_affected` count for confirm UX (client may show this before calling DELETE).
+
+---
+
 ## Slugs
 
 ### POST slug
@@ -463,12 +525,12 @@ Check format and uniqueness of a proposed slug **for the current user** (used wh
 
 `POST /api/upload`
 
-Upload a CV PDF to Cloudflare R2. Requires an idempotency key so retries reuse the same object. Full details: [PDF_AND_R2.md](PDF_AND_R2.md).
+Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retries reuse the same object. Full details: [PDF_AND_R2.md](PDF_AND_R2.md).
 
 - **Auth:** Required
 - **Rate limit:** **10 / minute** per IP and per user; max **2** concurrent uploads per user (best-effort per instance)
 - **Body:** `multipart/form-data` with `file` (PDF, max **3 MB**)
-- **Idempotency:** Header `Idempotency-Key` / `idempotency-key`, or form field `idempotency_key`: 8–128 chars, `[a-zA-Z0-9_-]` only. Object key: `cvs/{userId}/idempotency/<key>.pdf`. If the object already exists and size/content-type match the request → `{ url, idempotent: true }` without re-upload; size/type mismatch → **409**.
+- **Idempotency:** Header `Idempotency-Key` / `idempotency-key`, or form field `idempotency_key`: 8–128 chars, `[a-zA-Z0-9_-]` only. Object key: `cvs/{userId}/tailored/<key>.pdf`. If the object already exists and size/content-type match the request → `{ url, idempotent: true }` without re-upload; size/type mismatch → **409**.
 - **Success:** `200` `{ url: string, idempotent: boolean }`
 - **Errors:** `400` missing/invalid file or key; `401`; `409` idempotency key reused with a different file; `429`; `500` (R2 not configured / upload failure)
 
@@ -477,14 +539,14 @@ Upload a CV PDF to Cloudflare R2. Requires an idempotency key so retries reuse t
 - Auth required (dedicated check before processing).
 - Stricter rate limit than general writes (**10/min** IP + user) and a concurrent upload cap (**2** per user, in-memory / per instance).
 - Restricts to PDF MIME type and **3 MB** max size; rejects bodies that do not start with `%PDF` (magic bytes), not MIME alone.
-- Idempotency keys scoped per user (`cvs/{userId}/idempotency/<key>.pdf`); HeadObject replay returns the same URL without re-upload when size and content type match.
+- Idempotency keys scoped per user (`cvs/{userId}/tailored/<key>.pdf`); HeadObject replay returns the same URL without re-upload when size and content type match.
 - **Atomic create:** `PutObject` uses `IfNoneMatch: "*"` so concurrent creates with the same key cannot overwrite; **412** (and a single **409** retry) re-checks HeadObject and returns `{ url, idempotent: true }` or **409** on mismatch.
 - Fails clearly when R2 is not configured; logs upload/config errors server-side.
-- Application attach/delete paths authorize object keys per user (`isOwnedCvUrl` / `deleteCvIfOurs(url, userId)`), so a foreign public CV URL cannot be attached or deleted via another user’s application row.
+- Application attach/delete paths authorize object keys per user (`isOwnedTailoredCvUrl` on attach / `deleteCvIfOurs(url, userId)` on delete). Tailored `cv_url` values must be unique across the caller’s applications (**409** if reused); re-uploading the same PDF for another app creates a new object key. Primary CVs are shared via `cv_type: "primary"` and are not subject to the one-URL-per-app rule.
 
 **Improvement opportunities**
 
-- **Shared CV references** across a user’s own applications still apply (see PUT/DELETE): one delete can remove an object still referenced by another row.
+- None specific to this route beyond general upload UX / observability.
 
 ---
 
@@ -634,7 +696,8 @@ Pre-launch landing-page signup. Inserts into `waitlist_signups` via the service-
 
 Canonical TypeScript shapes live in:
 
-- `lib/types/application.ts` — `Application`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`
+- `lib/types/application.ts` — `Application`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
 - `lib/types/profile.ts` — `Profile`, `ProfileUpdateInput`
+- `lib/types/primary-cv.ts` — `PrimaryCv`, `PrimaryCvApplicationPreview`, `PRIMARY_CV_MAX_PER_USER`
 
 Client helpers for some application calls: `lib/api/applications.ts`.

@@ -7,6 +7,7 @@ import {
   getR2PublicBaseUrl,
   getR2S3Client,
 } from "@/lib/storage/r2-client";
+import type { ApplicationCvType } from "@/lib/types/application";
 
 /**
  * Returns the object key for our CV bucket if `url` is under our public R2 base URL.
@@ -34,21 +35,44 @@ function getCvObjectKeyFromPublicUrl(
   }
 }
 
+function keyHasPrefix(key: string, prefix: string): boolean {
+  return key.startsWith(prefix) && key.length > prefix.length;
+}
+
 /**
- * True when the R2 object key is under this user's custom or master CV prefix:
- * - `cvs/{userId}/…` (custom / idempotent uploads)
- * - `cvs/masters/{userId}/…` (master library)
+ * True when the R2 object key is a tailored (per-application) upload for `userId`:
+ * `cvs/{userId}/tailored/…`
+ */
+export function isOwnedTailoredCvObjectKey(
+  key: string | null | undefined,
+  userId: string,
+): boolean {
+  if (!key || !userId || userId.includes("/")) return false;
+  return keyHasPrefix(key, `cvs/${userId}/tailored/`);
+}
+
+/**
+ * True when the R2 object key is a primary (library) CV for `userId`:
+ * `cvs/{userId}/primary/…`
+ */
+export function isOwnedPrimaryCvObjectKey(
+  key: string | null | undefined,
+  userId: string,
+): boolean {
+  if (!key || !userId || userId.includes("/")) return false;
+  return keyHasPrefix(key, `cvs/${userId}/primary/`);
+}
+
+/**
+ * True when the R2 object key is under this user's primary or tailored CV prefixes.
  */
 export function isOwnedCvObjectKey(
   key: string | null | undefined,
   userId: string,
 ): boolean {
-  if (!key || !userId || userId.includes("/")) return false;
-  const customPrefix = `cvs/${userId}/`;
-  const masterPrefix = `cvs/masters/${userId}/`;
   return (
-    (key.startsWith(customPrefix) && key.length > customPrefix.length) ||
-    (key.startsWith(masterPrefix) && key.length > masterPrefix.length)
+    isOwnedTailoredCvObjectKey(key, userId) ||
+    isOwnedPrimaryCvObjectKey(key, userId)
   );
 }
 
@@ -60,6 +84,17 @@ export function isOwnedCvUrl(
   userId: string,
 ): boolean {
   return isOwnedCvObjectKey(getCvObjectKeyFromPublicUrl(url), userId);
+}
+
+/**
+ * True when `url` is a tailored (per-application) upload owned by `userId`.
+ * Primary library URLs return false — attach those via `cv_type: "primary"`.
+ */
+export function isOwnedTailoredCvUrl(
+  url: string | null | undefined,
+  userId: string,
+): boolean {
+  return isOwnedTailoredCvObjectKey(getCvObjectKeyFromPublicUrl(url), userId);
 }
 
 /**
@@ -92,16 +127,16 @@ export async function deleteCvIfOurs(
 }
 
 /**
- * Deletes an application CV from R2 only when it is app-owned (`custom`)
+ * Deletes an application CV from R2 only when it is app-owned (`tailored`)
  * and the object belongs to `userId`.
- * Master library CVs stay in R2 until removed from the profile.
+ * Primary library CVs stay in R2 until removed from the profile.
  */
-export async function deleteApplicationCvIfCustom(
+export async function deleteApplicationCvIfTailored(
   url: string | null | undefined,
-  cvKind: "master" | "custom" | null | undefined,
+  cvType: ApplicationCvType | null | undefined,
   userId: string,
 ): Promise<void> {
-  if (cvKind === "master") return;
+  if (cvType === "primary") return;
   await deleteCvIfOurs(url, userId);
 }
 

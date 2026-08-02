@@ -1,25 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import type { MasterCvApplicationPreview } from "@/lib/types/master-cv";
-import { masterCvApplicationPreviewLabel } from "@/lib/types/master-cv";
+import type { PrimaryCvApplicationPreview } from "@/lib/types/primary-cv";
+import { primaryCvApplicationPreviewLabel } from "@/lib/types/primary-cv";
 
-type MasterCvUsedByPreviewProps = {
-  applications: MasterCvApplicationPreview[];
-  /** Full count of apps using the master (may exceed `applications.length`). */
+type PrimaryCvUsedByPreviewProps = {
+  applications: PrimaryCvApplicationPreview[];
+  /** Full count of apps using the primary CV (may exceed `applications.length`). */
   totalCount: number;
   /** Tighter styling for the amber inline confirm inside the library modal. */
   tone?: "default" | "warning";
 };
 
 /**
- * Scrollable preview of applications that still reference a master CV.
+ * Scrollable preview of applications that still reference a primary CV.
  */
-export default function MasterCvUsedByPreview({
+export default function PrimaryCvUsedByPreview({
   applications,
   totalCount,
   tone = "default",
-}: MasterCvUsedByPreviewProps) {
+}: PrimaryCvUsedByPreviewProps) {
   if (applications.length === 0) return null;
 
   const remaining = Math.max(0, totalCount - applications.length);
@@ -60,7 +60,7 @@ export default function MasterCvUsedByPreview({
               rel="noopener noreferrer"
               className={linkClass}
             >
-              {masterCvApplicationPreviewLabel(app)}
+              {primaryCvApplicationPreviewLabel(app)}
             </Link>
             <span className={metaClass}>{app.status}</span>
           </li>

@@ -1,6 +1,6 @@
 export type ApplicationStatus = "active" | "draft" | "archived";
 
-export type ApplicationCvKind = "master" | "custom";
+export type ApplicationCvType = "primary" | "tailored";
 
 export interface Application {
   id: string;
@@ -41,10 +41,10 @@ export interface Application {
   profile_picture_url?: string | null;
   /** User chose to show the live profile picture on this application. */
   show_profile_picture?: boolean;
-  /** master = profile library CV (do not delete R2 on app delete); custom = app-owned upload. */
-  cv_kind?: ApplicationCvKind;
-  /** When cv_kind is master, the library row id (may be null if master was deleted). */
-  master_cv_id?: string | null;
+  /** primary = profile library CV (do not delete R2 on app delete); tailored = app-owned upload. */
+  cv_type?: ApplicationCvType;
+  /** When cv_type is primary, the library row id (may be null if primary was deleted). */
+  primary_cv_id?: string | null;
 }
 
 /**
@@ -123,10 +123,10 @@ export interface ApplicationFormData {
    * Set by ApplicationForm on submit. When true, create flow may keep the typed slug if it passes format + availability checks.
    */
   slugManuallyEdited?: boolean;
-  /** master = selected from library; custom = uploaded for this application. */
-  cv_kind?: ApplicationCvKind;
-  /** When cv_kind is master, the selected library id. */
-  master_cv_id?: string | null;
+  /** primary = selected from library; tailored = uploaded for this application. */
+  cv_type?: ApplicationCvType;
+  /** When cv_type is primary, the selected library id. */
+  primary_cv_id?: string | null;
 }
 
 export interface ApplicationCreateInput {
@@ -145,8 +145,8 @@ export interface ApplicationCreateInput {
   use_original_cv_filename?: boolean;
   /** When true, public view shows the live profile picture from profiles. */
   show_profile_picture?: boolean;
-  cv_kind?: ApplicationCvKind;
-  master_cv_id?: string | null;
+  cv_type?: ApplicationCvType;
+  primary_cv_id?: string | null;
   /** Optional; defaults to active. */
   status?: ApplicationStatus;
 }
@@ -167,6 +167,6 @@ export interface ApplicationUpdateInput {
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;
   show_profile_picture?: boolean;
-  cv_kind?: ApplicationCvKind;
-  master_cv_id?: string | null;
+  cv_type?: ApplicationCvType;
+  primary_cv_id?: string | null;
 }

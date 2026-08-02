@@ -14,14 +14,14 @@ import {
   APPLICATION_LIST_MAX_LIMIT,
   APPLICATION_LIST_SELECT,
   type ApplicationCreateInput,
-  type ApplicationCvKind,
+  type ApplicationCvType,
   type ApplicationStatus,
   type ApplicationUpdateInput,
 } from "@/lib/types/application";
 import {
   checkCvObjectExists,
-  deleteApplicationCvIfCustom,
-  isOwnedCvUrl,
+  deleteApplicationCvIfTailored,
+  isOwnedTailoredCvUrl,
 } from "@/lib/utils/cv-storage";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -55,8 +55,8 @@ function isValidStatus(value: unknown): value is ApplicationStatus {
   return value === "active" || value === "draft" || value === "archived";
 }
 
-function isValidCvKind(value: unknown): value is ApplicationCvKind {
-  return value === "master" || value === "custom";
+function isValidCvType(value: unknown): value is ApplicationCvType {
+  return value === "primary" || value === "tailored";
 }
 
 export async function GET(request: NextRequest) {
@@ -145,19 +145,61 @@ async function getProfileSnapshot(
   };
 }
 
-async function resolveMasterCvForUser(
+async function resolvePrimaryCvForUser(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
-  masterCvId: string,
+  primaryCvId: string,
 ): Promise<{ url: string; filename: string } | null> {
   const { data } = await supabase
-    .from("master_cvs")
+    .from("primary_cvs")
     .select("url, filename")
-    .eq("id", masterCvId)
+    .eq("id", primaryCvId)
     .eq("user_id", userId)
     .single();
   if (!data?.url) return null;
   return { url: data.url, filename: data.filename };
+}
+
+/**
+ * Tailored CVs are one application ↔ one R2 object. Returns true when another
+ * of this user's applications already stores `cvUrl`.
+ */
+async function isTailoredCvUrlInUse(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  cvUrl: string,
+  excludeApplicationId?: string,
+): Promise<{ inUse: boolean; error: string | null }> {
+  let query = supabase
+    .from("applications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("cv_url", cvUrl);
+
+  if (excludeApplicationId) {
+    query = query.neq("id", excludeApplicationId);
+  }
+
+  const { count, error } = await query;
+  if (error) {
+    console.error("isTailoredCvUrlInUse:", error);
+    return { inUse: true, error: error.message };
+  }
+  return { inUse: (count ?? 0) > 0, error: null };
+}
+
+function invalidTailoredCvResponse() {
+  return NextResponse.json(
+    { error: "CV URL must be a tailored upload you created for this application" },
+    { status: 400 },
+  );
+}
+
+function tailoredCvInUseResponse() {
+  return NextResponse.json(
+    { error: "This tailored CV is already used by another application" },
+    { status: 409 },
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -189,38 +231,44 @@ export async function POST(request: NextRequest) {
 
     const showProfilePicture = body.show_profile_picture === true;
 
-    const cvKind: ApplicationCvKind =
-      body.cv_kind === "master" ? "master" : "custom";
+    const cvType: ApplicationCvType =
+      body.cv_type === "primary" ? "primary" : "tailored";
     let cvUrl = body.cv_url;
     let cvFilename = body.cv_filename ?? null;
-    let masterCvId: string | null = null;
+    let primaryCvId: string | null = null;
 
-    if (cvKind === "master") {
-      if (!body.master_cv_id) {
+    if (cvType === "primary") {
+      if (!body.primary_cv_id) {
         return NextResponse.json(
-          { error: "master_cv_id is required when cv_kind is master" },
+          { error: "primary_cv_id is required when cv_type is primary" },
           { status: 400 },
         );
       }
-      const master = await resolveMasterCvForUser(
+      const primary = await resolvePrimaryCvForUser(
         supabase,
         user.id,
-        body.master_cv_id,
+        body.primary_cv_id,
       );
-      if (!master) {
+      if (!primary) {
         return NextResponse.json(
-          { error: "Master CV not found" },
+          { error: "Primary CV not found" },
           { status: 400 },
         );
       }
-      cvUrl = master.url;
-      cvFilename = master.filename;
-      masterCvId = body.master_cv_id;
-    } else if (!isOwnedCvUrl(cvUrl, user.id)) {
-      return NextResponse.json(
-        { error: "CV URL must be an object you uploaded" },
-        { status: 400 },
-      );
+      cvUrl = primary.url;
+      cvFilename = primary.filename;
+      primaryCvId = body.primary_cv_id;
+    } else {
+      if (!isOwnedTailoredCvUrl(cvUrl, user.id)) {
+        return invalidTailoredCvResponse();
+      }
+      const usage = await isTailoredCvUrlInUse(supabase, user.id, cvUrl);
+      if (usage.error) {
+        return NextResponse.json({ error: usage.error }, { status: 500 });
+      }
+      if (usage.inUse) {
+        return tailoredCvInUseResponse();
+      }
     }
 
     const status: ApplicationStatus = isValidStatus(body.status)
@@ -243,8 +291,8 @@ export async function POST(request: NextRequest) {
         cv_filename: cvFilename,
         use_original_cv_filename: body.use_original_cv_filename ?? true,
         show_profile_picture: showProfilePicture,
-        cv_kind: cvKind,
-        master_cv_id: masterCvId,
+        cv_type: cvType,
+        primary_cv_id: primaryCvId,
       })
       .select()
       .single();
@@ -272,8 +320,8 @@ export async function PUT(request: NextRequest) {
       slugNamePosition,
       show_profile_picture,
       status,
-      cv_kind,
-      master_cv_id,
+      cv_type,
+      primary_cv_id,
       cv_url,
       cv_filename,
       ...rest
@@ -297,7 +345,7 @@ export async function PUT(request: NextRequest) {
 
     const { data: existing } = await supabase
       .from("applications")
-      .select("user_id, cv_url, cv_kind, status")
+      .select("user_id, cv_url, cv_type, status")
       .eq("id", id)
       .single();
 
@@ -325,75 +373,85 @@ export async function PUT(request: NextRequest) {
     }
 
     const cvFieldsTouched =
-      cv_kind !== undefined ||
-      master_cv_id !== undefined ||
+      cv_type !== undefined ||
+      primary_cv_id !== undefined ||
       cv_url !== undefined ||
       cv_filename !== undefined;
 
     if (cvFieldsTouched) {
-      let nextCvKind: ApplicationCvKind =
-        cv_kind !== undefined
-          ? cv_kind
-          : ((existing.cv_kind as ApplicationCvKind) ?? "custom");
+      let nextCvType: ApplicationCvType =
+        cv_type !== undefined
+          ? cv_type
+          : ((existing.cv_type as ApplicationCvType) ?? "tailored");
 
-      if (cv_kind !== undefined) {
-        if (!isValidCvKind(cv_kind)) {
+      if (cv_type !== undefined) {
+        if (!isValidCvType(cv_type)) {
           return NextResponse.json(
-            { error: "Invalid cv_kind" },
+            { error: "Invalid cv_type" },
             { status: 400 },
           );
         }
-        updatePayload.cv_kind = cv_kind;
+        updatePayload.cv_type = cv_type;
       }
 
       let nextCvUrl = existing.cv_url as string;
 
-      if (nextCvKind === "master") {
-        const masterId = master_cv_id ?? null;
-        if (!masterId) {
+      if (nextCvType === "primary") {
+        const primaryId = primary_cv_id ?? null;
+        if (!primaryId) {
           return NextResponse.json(
-            { error: "master_cv_id is required when cv_kind is master" },
+            { error: "primary_cv_id is required when cv_type is primary" },
             { status: 400 },
           );
         }
-        const master = await resolveMasterCvForUser(
+        const primary = await resolvePrimaryCvForUser(
           supabase,
           user.id,
-          masterId,
+          primaryId,
         );
-        if (!master) {
+        if (!primary) {
           return NextResponse.json(
-            { error: "Master CV not found" },
+            { error: "Primary CV not found" },
             { status: 400 },
           );
         }
-        nextCvUrl = master.url;
-        updatePayload.cv_url = master.url;
-        updatePayload.cv_filename = master.filename;
-        updatePayload.master_cv_id = masterId;
-        updatePayload.cv_kind = "master";
+        nextCvUrl = primary.url;
+        updatePayload.cv_url = primary.url;
+        updatePayload.cv_filename = primary.filename;
+        updatePayload.primary_cv_id = primaryId;
+        updatePayload.cv_type = "primary";
       } else {
         if (cv_url !== undefined) {
-          if (!isOwnedCvUrl(cv_url, user.id)) {
-            return NextResponse.json(
-              { error: "CV URL must be an object you uploaded" },
-              { status: 400 },
-            );
-          }
           nextCvUrl = cv_url;
           updatePayload.cv_url = cv_url;
         }
         if (cv_filename !== undefined) {
           updatePayload.cv_filename = cv_filename;
         }
-        updatePayload.master_cv_id = null;
-        updatePayload.cv_kind = "custom";
+        updatePayload.primary_cv_id = null;
+        updatePayload.cv_type = "tailored";
+
+        if (!isOwnedTailoredCvUrl(nextCvUrl, user.id)) {
+          return invalidTailoredCvResponse();
+        }
+        const usage = await isTailoredCvUrlInUse(
+          supabase,
+          user.id,
+          nextCvUrl,
+          id,
+        );
+        if (usage.error) {
+          return NextResponse.json({ error: usage.error }, { status: 500 });
+        }
+        if (usage.inUse) {
+          return tailoredCvInUseResponse();
+        }
       }
 
       if (nextCvUrl !== existing.cv_url) {
-        await deleteApplicationCvIfCustom(
+        await deleteApplicationCvIfTailored(
           existing.cv_url,
-          existing.cv_kind as ApplicationCvKind,
+          existing.cv_type as ApplicationCvType,
           user.id,
         );
       }
@@ -439,7 +497,7 @@ export async function DELETE(request: NextRequest) {
 
     const { data: existing } = await supabase
       .from("applications")
-      .select("user_id, cv_url, cv_kind")
+      .select("user_id, cv_url, cv_type")
       .eq("id", id)
       .single();
 
@@ -450,9 +508,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await deleteApplicationCvIfCustom(
+    await deleteApplicationCvIfTailored(
       existing.cv_url,
-      existing.cv_kind as ApplicationCvKind,
+      existing.cv_type as ApplicationCvType,
       user.id,
     );
 

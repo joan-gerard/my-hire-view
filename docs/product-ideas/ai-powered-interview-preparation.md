@@ -60,7 +60,7 @@ flowchart LR
 
 ### Phase 1 — Core MVP
 
-- **Profile management** — Upload and parse a master CV/resume (PDF or markdown text).
+- **Profile management** — Upload and parse a primary CV/resume (PDF or markdown text).
 - **Q&A vault** — Manual interface to log past interview questions and highly rated answers, structured around the STAR method.
 - **Job ingestion** — Simple dashboard text area to paste a new job title and description.
 - **RAG generator** — Pipeline that pulls the top 3–5 most relevant text blocks from the user's experience and feeds them into the LLM to generate 10 tailored interview questions and target answers.

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireAuth } from "@/lib/auth";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import { createClient } from "@/lib/supabase/server";
-import MasterCvLibrarySection from "@/components/forms/MasterCvLibrarySection";
+import PrimaryCvLibrarySection from "@/components/forms/PrimaryCvLibrarySection";
 import ProfileForm from "@/components/forms/ProfileForm";
 import type { Profile } from "@/lib/types/profile";
 
@@ -113,7 +113,7 @@ export default async function AdminProfilePage() {
         </div>
       </section>
 
-      <MasterCvLibrarySection />
+      <PrimaryCvLibrarySection />
 
       <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-[var(--foreground)]">

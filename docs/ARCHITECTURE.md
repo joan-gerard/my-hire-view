@@ -1,6 +1,6 @@
 # MyHireView — System Architecture & Design
 
-This document describes the architecture and design of **MyHireView**, an application that lets users create personalized recruiter landing pages: one shareable page per job application, with a custom CV (PDF) and video pitch (YouTube).
+This document describes the architecture and design of **MyHireView**, an application that lets users create personalized recruiter landing pages: one shareable page per job application, with a tailored CV (PDF) and video pitch (YouTube).
 
 ---
 
@@ -202,8 +202,8 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
 ### 5.3 Data (Supabase)
 
 - **Table: `applications`**
-  - `id` (UUID, PK), `slug` (unique per user), `company`, `role`, `cv_url`, `cv_kind` (`master` \| `custom`), `master_cv_id` (nullable FK), `video_url`, `created_at`, `updated_at`, `view_count`, `download_count`, `last_viewed_at`, `user_id`, `status` (`active` \| `draft` \| `archived`), `archived_at` (set when archived; cleared on restore).
-  - **`master_cvs`:** profile-owned CV library (max 5 per user in API); see [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md).
+  - `id` (UUID, PK), `slug` (unique per user), `company`, `role`, `cv_url`, `cv_type` (`primary` \| `tailored`), `primary_cv_id` (nullable FK), `video_url`, `created_at`, `updated_at`, `view_count`, `download_count`, `last_viewed_at`, `user_id`, `status` (`active` \| `draft` \| `archived`), `archived_at` (set when archived; cleared on restore).
+  - **`primary_cvs`:** profile-owned CV library (max 5 per user in API); see [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md).
   - **CV download filename:** `cv_filename` (TEXT, nullable) stores the original uploaded file name; `use_original_cv_filename` (BOOLEAN, default true) controls whether the public download uses that name or the generated `CV-{Slug}.pdf`. Set on create/update from the application form.
   - **Candidate snapshot fields** (nullable): `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`. These are copied from the user’s **profile** when an application is created or updated, so the recruiter view always reads from the application row (no join to profile). Existing rows may have NULLs until the next edit or a backfill.
   - **`include_name_in_slug`** (TEXT, nullable): Name position in the slug: `null` (not included), `'start'` (name-company-role), or `'end'` (company-role-name). Persisted so the edit form shows the correct choice and users can change it on save.
@@ -356,7 +356,7 @@ my-hire-view/
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── auth/                   # SignOutButton
-│   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, NameInUrlField, CvSourceField, FileUpload, MasterCvLibrarySection, MasterCvLibraryModal, MasterCvUsedByPreview, ProfileForm, YouTubeUrlInput
+│   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, NameInUrlField, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
 │   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection (re-export from public/faq), FinalCTASection, Footer (→ ViewPageFooter), HomeHeroContent, HowItWorksHero (How it Works page: content above + fixed image), HowItWorksScrollSection (content that scrolls over fixed hero image), HowItWorksSection (see public/how-it-works/ for StepLabel, StepCard, useHowItWorksObservers, constants; on home page receives isDarkMode from LandingPageSections), LandingPageSections (owns single IntersectionObserver for ProblemSection wrapper; passes isDarkMode to HowItWorksSection, ProblemSection, and FAQSection—one prop name, one source of truth), public/faq/ (FAQSection, FAQItem, FAQContactCard, constants; isDarkMode prop from parent), MarketingHero (reusable: backgroundImage + children + optional imageCredit), MarketingHeader, PageHeroContent (reusable title + subtitle for Pricing / Blog), ProblemSection, SolutionSection, ViewPageFooter
 │   ├── ui/                     # Button, Input, Textarea
@@ -387,7 +387,7 @@ my-hire-view/
 | View count in DB                | Simple and accurate; one increment per view (deduplicated per session in ViewTracker).                                                                                                                                                                       |
 | Last viewed at in DB            | Set to current time whenever view_count is incremented (non-owner only); null if never viewed.                                                                                                                                                               |
 | Download count in DB            | Same pattern as view count; one increment per download (per session), owner downloads not counted.                                                                                                                                                           |
-| `status` + `archived_at` for archive | Soft hide via `status = archived`; `archived_at` resets when re-archiving (90-day retention clock). Hard purge deferred. See [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md). |
+| `status` + `archived_at` for archive | Soft hide via `status = archived`; `archived_at` resets when re-archiving (90-day retention clock). Hard purge deferred. See [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md). |
 | Route client for auth APIs      | Login/signup/logout must write cookies on the response; route client is the pattern recommended by Supabase for Next.js.                                                                                                                                     |
 | Profile snapshot on application | Candidate name, location, portfolio URL, and LinkedIn URL are stored in `profiles` and copied into each application row on create/update. Recruiters read only from the application row, giving a stable snapshot and no auth dependency on the public view. |
 

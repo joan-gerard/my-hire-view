@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: idem.error }, { status: 400 });
     }
 
-    const objectKey = `cvs/${user.id}/idempotency/${idem.key}.pdf`;
+    const objectKey = `cvs/${user.id}/tailored/${idem.key}.pdf`;
     const publicBase = getR2PublicBaseUrl();
     const url = `${publicBase}/${objectKey}`;
     const client = getR2S3Client();

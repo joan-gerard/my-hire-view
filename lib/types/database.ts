@@ -27,8 +27,8 @@ export interface Database {
           cv_filename: string | null;
           use_original_cv_filename: boolean;
           show_profile_picture: boolean;
-          cv_kind: "master" | "custom";
-          master_cv_id: string | null;
+          cv_type: "primary" | "tailored";
+          primary_cv_id: string | null;
         };
         Insert: {
           id?: string;
@@ -54,8 +54,8 @@ export interface Database {
           cv_filename?: string | null;
           use_original_cv_filename?: boolean;
           show_profile_picture?: boolean;
-          cv_kind?: "master" | "custom";
-          master_cv_id?: string | null;
+          cv_type?: "primary" | "tailored";
+          primary_cv_id?: string | null;
         };
         Update: {
           id?: string;
@@ -81,11 +81,11 @@ export interface Database {
           cv_filename?: string | null;
           use_original_cv_filename?: boolean;
           show_profile_picture?: boolean;
-          cv_kind?: "master" | "custom";
-          master_cv_id?: string | null;
+          cv_type?: "primary" | "tailored";
+          primary_cv_id?: string | null;
         };
       };
-      master_cvs: {
+      primary_cvs: {
         Row: {
           id: string;
           user_id: string;

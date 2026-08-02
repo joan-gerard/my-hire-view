@@ -3,10 +3,10 @@
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
 import FileUpload from "@/components/forms/FileUpload";
-import MasterCvLibraryModal from "@/components/forms/MasterCvLibraryModal";
+import PrimaryCvLibraryModal from "@/components/forms/PrimaryCvLibraryModal";
 import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
-import type { ApplicationCvKind } from "@/lib/types/application";
-import type { MasterCv } from "@/lib/types/master-cv";
+import type { ApplicationCvType } from "@/lib/types/application";
+import type { PrimaryCv } from "@/lib/types/primary-cv";
 import { useState } from "react";
 
 interface CvSourceFieldProps {
@@ -14,29 +14,29 @@ interface CvSourceFieldProps {
   isEdit: boolean;
   /** Saved / initial CV filename (not the in-progress selection). */
   currentFilename: string | null;
-  currentKind: ApplicationCvKind | null;
+  currentType: ApplicationCvType | null;
   currentUrl: string;
   cvUrlExists?: boolean;
   onRetryCvCheck?: () => Promise<void>;
 
-  mode: ApplicationCvKind;
-  masterCvs: MasterCv[];
-  mastersLoading: boolean;
-  selectedMasterId: string | null;
-  /** In-progress custom upload (not saved yet). */
+  mode: ApplicationCvType;
+  primaryCvs: PrimaryCv[];
+  primaryCvsLoading: boolean;
+  selectedPrimaryId: string | null;
+  /** In-progress tailored upload (not saved yet). */
   pendingFile: File | null;
   error?: string;
 
-  onSelectMaster: (masterId: string) => void;
-  onSwitchToCustom: () => void;
-  onSwitchToMaster: () => void;
+  onSelectPrimary: (primaryId: string) => void;
+  onSwitchToTailored: () => void;
+  onSwitchToPrimary: () => void;
   onPendingFileChange: (file: File | null) => void;
-  /** When set, users can manage the master library from this form (modal). */
-  onMasterLibraryChange?: (items: MasterCv[]) => void;
+  /** When set, users can manage the primary library from this form (modal). */
+  onPrimaryLibraryChange?: (items: PrimaryCv[]) => void;
 
-  switchToMasterConfirmOpen: boolean;
-  onConfirmSwitchToMaster: () => void;
-  onCancelSwitchToMaster: () => void;
+  switchToPrimaryConfirmOpen: boolean;
+  onConfirmSwitchToPrimary: () => void;
+  onCancelSwitchToPrimary: () => void;
 
   useOriginalCvFilename: boolean;
   onUseOriginalCvFilenameChange: (use: boolean) => void;
@@ -49,37 +49,37 @@ interface CvSourceFieldProps {
 export default function CvSourceField({
   isEdit,
   currentFilename,
-  currentKind,
+  currentType,
   currentUrl,
   cvUrlExists = true,
   onRetryCvCheck,
   mode,
-  masterCvs,
-  mastersLoading,
-  selectedMasterId,
+  primaryCvs,
+  primaryCvsLoading,
+  selectedPrimaryId,
   pendingFile,
   error,
-  onSelectMaster,
-  onSwitchToCustom,
-  onSwitchToMaster,
+  onSelectPrimary,
+  onSwitchToTailored,
+  onSwitchToPrimary,
   onPendingFileChange,
-  onMasterLibraryChange,
-  switchToMasterConfirmOpen,
-  onConfirmSwitchToMaster,
-  onCancelSwitchToMaster,
+  onPrimaryLibraryChange,
+  switchToPrimaryConfirmOpen,
+  onConfirmSwitchToPrimary,
+  onCancelSwitchToPrimary,
   useOriginalCvFilename,
   onUseOriginalCvFilenameChange,
   slug,
 }: CvSourceFieldProps) {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
-  const selectedMaster = masterCvs.find((m) => m.id === selectedMasterId);
-  const hasMasters = masterCvs.length > 0;
-  const canManageLibrary = typeof onMasterLibraryChange === "function";
+  const selectedPrimary = primaryCvs.find((cv) => cv.id === selectedPrimaryId);
+  const hasPrimaryCvs = primaryCvs.length > 0;
+  const canManageLibrary = typeof onPrimaryLibraryChange === "function";
 
   const pendingOrCurrentName =
     pendingFile?.name ??
-    (mode === "master"
-      ? (selectedMaster?.filename ?? currentFilename)
+    (mode === "primary"
+      ? (selectedPrimary?.filename ?? currentFilename)
       : currentFilename);
   const generatedName = slug ? getCvDownloadFilename(slug) : "CV-Slug.pdf";
 
@@ -96,9 +96,9 @@ export default function CvSourceField({
           {currentUrl.trim() || currentFilename ? (
             <div className="rounded-md border border-[var(--foreground)]/10 bg-[var(--secondary-background)] px-3 py-2.5">
               <div className="flex flex-wrap items-center gap-2">
-                {currentKind && (
+                {currentType && (
                   <span className="shrink-0 rounded border border-[var(--foreground)]/15 px-1.5 py-0.5 text-xs text-[var(--foreground)]/70">
-                    {currentKind === "master" ? "Master library" : "Custom"}
+                    {currentType === "primary" ? "Primary library" : "Tailored"}
                   </span>
                 )}
                 {cvUrlExists !== false && currentUrl.trim() ? (
@@ -123,8 +123,8 @@ export default function CvSourceField({
                 >
                   <p className="font-semibold">CV file missing</p>
                   <p className="mt-0.5 text-amber-800">
-                    The file is no longer in storage. Choose a master CV or
-                    upload a new custom PDF below.
+                    The file is no longer in storage. Choose a primary CV or
+                    upload a new tailored PDF below.
                   </p>
                   {onRetryCvCheck && (
                     <button
@@ -164,7 +164,7 @@ export default function CvSourceField({
         </div>
         {!isEdit && (
           <p className="text-sm text-[var(--foreground)]/70">
-            Prefer a master CV from your library so you can reuse it across
+            Prefer a primary CV from your library so you can reuse it across
             applications.
           </p>
         )}
@@ -175,21 +175,21 @@ export default function CvSourceField({
               type="radio"
               name="cvSource"
               className="mt-1 h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
-              checked={mode === "master"}
-              disabled={!hasMasters && !mastersLoading}
-              onChange={() => onSwitchToMaster()}
+              checked={mode === "primary"}
+              disabled={!hasPrimaryCvs && !primaryCvsLoading}
+              onChange={() => onSwitchToPrimary()}
             />
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-[var(--foreground)]">
-                {isEdit && currentKind === "custom"
-                  ? "Replace with a master CV"
-                  : isEdit && currentKind === "master"
-                    ? "Use a different master CV"
-                    : "Use a master CV"}
+                {isEdit && currentType === "tailored"
+                  ? "Replace with a primary CV"
+                  : isEdit && currentType === "primary"
+                    ? "Use a different primary CV"
+                    : "Use a primary CV"}
               </span>
-              {!hasMasters && !mastersLoading && (
+              {!hasPrimaryCvs && !primaryCvsLoading && (
                 <span className="mt-0.5 block text-xs text-[var(--foreground)]/60">
-                  No masters yet.
+                  No primary CVs yet.
                   {canManageLibrary ? (
                     <>
                       {" "}
@@ -207,36 +207,36 @@ export default function CvSourceField({
             </span>
           </label>
 
-          {mode === "master" && (
+          {mode === "primary" && (
             <div className="ml-6 space-y-2">
-              {mastersLoading ? (
+              {primaryCvsLoading ? (
                 <p className="text-sm text-[var(--foreground)]/60">
-                  Loading master CVs…
+                  Loading primary CVs…
                 </p>
-              ) : hasMasters ? (
+              ) : hasPrimaryCvs ? (
                 <>
                   <label className="block text-sm text-[var(--foreground)]/80">
                     Choose from your library
                   </label>
                   <select
                     className="w-full rounded-md border border-[var(--foreground)]/20 bg-[var(--secondary-background)] px-3 py-2 text-sm"
-                    value={selectedMasterId ?? ""}
-                    onChange={(e) => onSelectMaster(e.target.value)}
+                    value={selectedPrimaryId ?? ""}
+                    onChange={(e) => onSelectPrimary(e.target.value)}
                   >
                     <option value="" disabled>
                       Select…
                     </option>
-                    {masterCvs.map((cv) => (
+                    {primaryCvs.map((cv) => (
                       <option key={cv.id} value={cv.id}>
                         {cv.label?.trim() || cv.filename}
                       </option>
                     ))}
                   </select>
-                  {selectedMaster && (
+                  {selectedPrimary && (
                     <p className="text-xs text-[var(--foreground)]/60">
-                      {selectedMaster.filename}{" "}
+                      {selectedPrimary.filename}{" "}
                       <a
-                        href={selectedMaster.url}
+                        href={selectedPrimary.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-medium text-[var(--brand-primary)]"
@@ -252,7 +252,7 @@ export default function CvSourceField({
                   variant="secondary"
                   onClick={() => setLibraryModalOpen(true)}
                 >
-                  Upload master CV
+                  Upload primary CV
                 </Button>
               ) : null}
             </div>
@@ -263,21 +263,21 @@ export default function CvSourceField({
               type="radio"
               name="cvSource"
               className="mt-1 h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
-              checked={mode === "custom"}
-              onChange={() => onSwitchToCustom()}
+              checked={mode === "tailored"}
+              onChange={() => onSwitchToTailored()}
             />
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-[var(--foreground)]">
                 Upload a different CV
               </span>
               <span className="mt-0.5 block text-xs text-[var(--foreground)]/60">
-                Custom files are removed from storage when you delete this
-                application or switch back to a master CV.
+                Tailored files are removed from storage when you delete this
+                application or switch back to a primary CV.
               </span>
             </span>
           </label>
 
-          {mode === "custom" && (
+          {mode === "tailored" && (
             <div className="ml-6">
               <FileUpload
                 pendingFile={pendingFile}
@@ -349,20 +349,20 @@ export default function CvSourceField({
       </div>
 
       <ConfirmDialog
-        open={switchToMasterConfirmOpen}
-        title="Replace custom CV with a master CV?"
-        message="Saving with a master CV will remove this application’s custom PDF from storage. Your profile master library is unchanged."
-        confirmLabel="Choose a master CV"
-        cancelLabel="Keep custom CV"
-        onConfirm={onConfirmSwitchToMaster}
-        onCancel={onCancelSwitchToMaster}
+        open={switchToPrimaryConfirmOpen}
+        title="Replace tailored CV with a primary CV?"
+        message="Saving with a primary CV will remove this application’s tailored PDF from storage. Your profile primary library is unchanged."
+        confirmLabel="Choose a primary CV"
+        cancelLabel="Keep tailored CV"
+        onConfirm={onConfirmSwitchToPrimary}
+        onCancel={onCancelSwitchToPrimary}
       />
 
       {canManageLibrary && (
-        <MasterCvLibraryModal
+        <PrimaryCvLibraryModal
           open={libraryModalOpen}
           onClose={() => setLibraryModalOpen(false)}
-          onLibraryChange={onMasterLibraryChange!}
+          onLibraryChange={onPrimaryLibraryChange!}
         />
       )}
     </fieldset>

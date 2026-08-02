@@ -186,8 +186,8 @@ export default function EditApplicationPage() {
     use_original_cv_filename: application.use_original_cv_filename ?? true,
     cvUrlExists: application.cv_exists,
     show_profile_picture: application.show_profile_picture ?? false,
-    cv_kind: application.cv_kind ?? 'custom',
-    master_cv_id: application.master_cv_id ?? null,
+    cv_type: application.cv_type ?? 'tailored',
+    primary_cv_id: application.primary_cv_id ?? null,
   };
 
   return (

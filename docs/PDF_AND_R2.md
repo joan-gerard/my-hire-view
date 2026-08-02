@@ -5,31 +5,31 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 ## Overview
 
 - **What we store:** CV PDFs in Cloudflare R2.
-  - **Master CVs** — up to 5 per user, managed from the profile or from **New** / **Edit application** (`master_cvs` table, keys `cvs/masters/{userId}/…`).
-  - **Custom CVs** — one optional per-application upload (keys via idempotent upload).
+  - **Primary CVs** — up to 5 per user, managed from the profile or from **New** / **Edit application** (`primary_cvs` table, keys `cvs/{userId}/primary/…`).
+  - **Tailored CVs** — one optional per-application upload (keys `cvs/{userId}/tailored/…` via idempotent upload).
 - **Where:** Cloudflare R2. Objects are uploaded with a **public URL** so the shareable application page can load the PDF.
-- **Policy:** Upload on save for custom CVs. Application delete/replace removes **custom** objects only; master CVs are deleted only from the library (profile or in-form modal). See [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md).
+- **Policy:** Upload on save for tailored CVs. Application delete/replace removes **tailored** objects only; primary CVs are deleted only from the library (profile or in-form modal). See [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md).
 
 ## Flow
 
 ### Create application
 
-1. Prefer selecting a **master CV** from the library (default when any exist). Upload or manage masters via **Manage library** without leaving the form.
-2. Or choose **custom**: select a PDF (held in memory until Save), then upload on submit via `POST /api/upload`.
-3. Application row stores `cv_url`, `cv_kind` (`master` | `custom`), and optional `master_cv_id`.
+1. Prefer selecting a **primary CV** from the library (default when any exist). Upload or manage primaries via **Manage library** without leaving the form.
+2. Or choose **tailored**: select a PDF (held in memory until Save), then upload on submit via `POST /api/upload`.
+3. Application row stores `cv_url`, `cv_type` (`primary` | `tailored`), and optional `primary_cv_id`.
 
 ### Edit application
 
-1. Form shows current mode (master vs custom) and filename.
-2. Switching **custom → master** shows a confirm modal; the custom R2 object is deleted on save when `cv_url` changes.
-3. Switching **master → custom** uploads a new custom file; the master library entry is unchanged.
+1. Form shows current mode (primary vs tailored) and filename.
+2. Switching **tailored → primary** shows a confirm modal; the tailored R2 object is deleted on save when `cv_url` changes.
+3. Switching **primary → tailored** uploads a new tailored file; the primary library entry is unchanged.
 
 ### Delete application
 
-1. If `cv_kind = custom`, delete the R2 object (`deleteApplicationCvIfCustom`).
-2. If `cv_kind = master`, leave the R2 object (still in the library).
+1. If `cv_type = tailored`, delete the R2 object (`deleteApplicationCvIfTailored`).
+2. If `cv_type = primary`, leave the R2 object (still in the library).
 
-### Delete master CV (library)
+### Delete primary CV (library)
 
 1. If **no** applications reference it (`applications_count = 0`), delete immediately (no confirm).
 2. If **N ≥ 1** applications reference it, confirm with a message that includes **N** plus a preview list of those applications (company — role, status; links to edit), then delete.
@@ -39,15 +39,15 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 
 | Piece | Role |
 |-------|------|
-| `POST /api/upload` | Custom CV upload (auth + idempotency). Keys `cvs/{userId}/idempotency/<key>.pdf`. |
-| `GET/POST/DELETE /api/profile/master-cvs` | Master CV library (max 5). Keys `cvs/masters/{userId}/{id}.pdf`. GET includes `applications_count` and a `used_by` preview per row. |
+| `POST /api/upload` | Tailored CV upload (auth + idempotency). Keys `cvs/{userId}/tailored/<key>.pdf`. |
+| `GET/POST/DELETE /api/profile/primary-cvs` | Primary CV library (max 5). Keys `cvs/{userId}/primary/{id}.pdf`. GET includes `applications_count` and a `used_by` preview per row. |
 | `lib/storage/r2-client.ts` | S3-compatible R2 client. |
-| `lib/utils/cv-storage.ts` | `isOwnedCvUrl`, `deleteCvIfOurs(url, userId)`, `deleteApplicationCvIfCustom`, `checkCvObjectExists`. |
+| `lib/utils/cv-storage.ts` | `isOwnedTailoredCvUrl`, `isOwnedCvUrl`, `deleteCvIfOurs(url, userId)`, `deleteApplicationCvIfTailored`, `checkCvObjectExists`. |
 
 ## Idempotency
 
-- Send **`Idempotency-Key: <opaque>`** on each CV upload (the application form uses a new UUID whenever the user picks a PDF).
-- Object keys are scoped per user: `cvs/{userId}/idempotency/<key>.pdf`.
+- Send **`Idempotency-Key: <opaque>`** on each tailored CV upload (the application form uses a new UUID whenever the user picks a PDF).
+- Object keys are scoped per user: `cvs/{userId}/tailored/<key>.pdf`.
 - Retries or duplicate submits with the **same** key reuse the **same** R2 object URL; the server short-circuits with `HeadObject` when the object already exists and its size/content-type match the request (mismatch → **409**).
 - Creates use a conditional `PutObject` (`IfNoneMatch: "*"`). If another request already created the object, R2 returns **412** and the API re-checks HeadObject, then responds with `{ url, idempotent: true }` or **409** instead of overwriting.
 - Upload rate limit is **10/min** per IP and per user; at most **2** concurrent uploads per user (in-memory, per instance).
@@ -55,8 +55,8 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 ## Safety
 
 - **PDF content:** Upload routes check MIME type and that the body starts with `%PDF` before writing to R2.
-- **URL check:** Deletes run only when the URL prefix matches `R2_PUBLIC_BASE_URL` **and** the object key belongs to the authenticated user (`cvs/{userId}/…` or `cvs/masters/{userId}/…`), so another user’s public CV URL cannot be deleted via your application row.
-- **Attach check:** Creating/updating a custom application CV rejects `cv_url` values that fail the same ownership check.
+- **URL check:** Deletes run only when the URL prefix matches `R2_PUBLIC_BASE_URL` **and** the object key belongs to the authenticated user (`cvs/{userId}/primary/…` or `cvs/{userId}/tailored/…`).
+- **Attach check:** Creating/updating a tailored application CV rejects `cv_url` values that are not under `cvs/{userId}/tailored/…`, and rejects URLs already used by another of the user’s applications (**409**). Re-uploading the same PDF for a second app creates a distinct object. Primary CVs remain intentionally shareable via `cv_type: "primary"`.
 - **Errors:** Delete failures are logged and do not block DB updates or deletes.
 
 ## Environment variables
@@ -71,7 +71,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 
 Create an R2 bucket, enable **public access** on that bucket (custom hostname or r2.dev), and create an **API token** with permission to read/write objects in that bucket. See [Cloudflare R2 documentation](https://developers.cloudflare.com/r2/).
 
-Object keys use per-user prefixes: `cvs/{userId}/idempotency/<key>.pdf` (custom) and `cvs/masters/{userId}/{id}.pdf` (master library).
+Object keys use per-user prefixes: `cvs/{userId}/tailored/<key>.pdf` (tailored) and `cvs/{userId}/primary/{id}.pdf` (primary library).
 
 ## Local development
 
