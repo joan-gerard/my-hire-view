@@ -565,13 +565,12 @@ Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png
 **What works**
 
 - Canonical path + upsert enforces one picture per user; removes leftover folder objects after upload.
-- Auth required; path under session `user_id` (Storage RLS).
-- Rate limited; JPEG/PNG/WebP; **5 MB** cap.
+- Auth required (dedicated check → **401**); unexpected/Storage failures → **500** with generic client message; Storage errors logged with `status` / `statusCode`.
+- Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
 
 **Improvement opportunities**
 
-- Validate image magic bytes / safe decode, not MIME alone.
-- Fix catch-all **401** vs **500**; log Storage errors with codes.
+- None specific to this route beyond general upload UX / observability.
 
 ---
 

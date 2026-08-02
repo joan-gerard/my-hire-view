@@ -34,6 +34,7 @@ __tests__/
         cv-storage.test.ts
         upload-idempotency.test.ts
         pdf.test.ts
+        image.test.ts
         public-id.test.ts
       types/
         primary-cv.test.ts
@@ -42,6 +43,7 @@ __tests__/
       ensure-profile.test.ts
     api/
       profile.test.ts
+      profile-picture-upload.test.ts
       slug.test.ts
       applications-create.test.ts
       applications-edit.test.ts
@@ -64,6 +66,8 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 | `__tests__/unit/lib/utils/cv-storage.test.ts` | **CV R2 ownership & delete** — `isOwnedTailoredCvUrl`, `isOwnedPrimaryCvObjectKey`, `deleteApplicationCvIfTailored`, `deleteCvIfOurs` |
 | `__tests__/unit/lib/utils/upload-idempotency.test.ts` | **Tailored upload idempotency** — HeadObject replay, size/type mismatch |
 | `__tests__/unit/lib/utils/pdf.test.ts` | **PDF magic bytes** — `%PDF` detection |
+| `__tests__/unit/lib/utils/image.test.ts` | **Image magic bytes** — JPEG / PNG / WebP detection + light header checks |
+| `__tests__/unit/api/profile-picture-upload.test.ts` | **Profile picture upload** — auth **401** vs unexpected **500**, MIME + magic-byte rejects, Storage error logging without leaking messages, purge warning |
 | `__tests__/unit/lib/utils/public-id.test.ts` | **Public id generation** |
 | `__tests__/unit/lib/types/primary-cv.test.ts` | **Primary CV types** — `PRIMARY_CV_MAX_PER_USER`, preview limit constants |
 | `__tests__/unit/lib/ensure-profile.test.ts` | **Profile bootstrap** — `createInitialProfile` idempotency |

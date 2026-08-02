@@ -6,6 +6,12 @@ import {
   rateLimit429,
 } from "@/lib/rate-limit";
 import {
+  ALLOWED_IMAGE_MIMES,
+  detectAllowedImageMime,
+  extensionForImageMime,
+  type AllowedImageMime,
+} from "@/lib/utils/image";
+import {
   PROFILE_PICTURES_BUCKET,
   canonicalProfilePicturePath,
   removeOtherProfilePicturesInFolder,
@@ -13,12 +19,20 @@ import {
 import { NextRequest, NextResponse } from "next/server";
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
-function extensionForMime(mime: string): string {
-  if (mime === "image/png") return "png";
-  if (mime === "image/webp") return "webp";
-  return "jpg";
+function logStorageError(context: string, error: unknown): void {
+  const e = error as {
+    message?: string;
+    name?: string;
+    status?: number;
+    statusCode?: string | number;
+  };
+  console.error(context, {
+    message: e.message,
+    name: e.name,
+    status: e.status,
+    statusCode: e.statusCode,
+  });
 }
 
 /**
@@ -30,8 +44,14 @@ export async function POST(request: NextRequest) {
   const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
+  let user;
   try {
-    const user = await requireAuth();
+    user = await requireAuth();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
     const supabase = await createClient();
 
     const formData = await request.formData();
@@ -41,7 +61,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.includes(file.type as (typeof ALLOWED_TYPES)[number])) {
+    if (
+      !ALLOWED_IMAGE_MIMES.includes(file.type as AllowedImageMime)
+    ) {
       return NextResponse.json(
         { error: "Only JPEG, PNG and WebP images are allowed" },
         { status: 400 },
@@ -55,17 +77,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ext = extensionForMime(file.type);
+    const body = Buffer.from(await file.arrayBuffer());
+    const detected = detectAllowedImageMime(body);
+    if (!detected) {
+      return NextResponse.json(
+        { error: "Only JPEG, PNG and WebP images are allowed" },
+        { status: 400 },
+      );
+    }
+
+    const ext = extensionForImageMime(detected);
     const path = canonicalProfilePicturePath(user.id, ext);
 
     const { data, error } = await supabase.storage
       .from(PROFILE_PICTURES_BUCKET)
-      .upload(path, file, { contentType: file.type, upsert: true });
+      .upload(path, body, { contentType: detected, upsert: true });
 
     if (error) {
-      console.error("Profile picture upload error:", error);
+      logStorageError("Profile picture upload error:", error);
       return NextResponse.json(
-        { error: error.message || "Failed to upload" },
+        { error: "Failed to upload" },
         { status: 500 },
       );
     }
@@ -89,7 +120,11 @@ export async function POST(request: NextRequest) {
       url: urlData.publicUrl,
       ...(purge.ok ? {} : { warning: "Uploaded but could not remove older files" }),
     });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    console.error("Profile picture upload unexpected error:", error);
+    return NextResponse.json(
+      { error: "Failed to upload" },
+      { status: 500 },
+    );
   }
 }

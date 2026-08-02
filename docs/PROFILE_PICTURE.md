@@ -17,7 +17,7 @@ RLS policies for this bucket are in migration `014_storage_profile_pictures_poli
 
 ### Canonical object path
 
-Uploads write `{user_id}/avatar.{jpg|png|webp}` with `upsert: true`, then remove any other objects in that folder so only one file remains.
+Uploads write `{user_id}/avatar.{jpg|png|webp}` with `upsert: true`, then remove any other objects in that folder so only one file remains. `POST /api/upload/profile-picture` checks allowed MIME types and validates JPEG / PNG / WebP magic bytes (plus light headers: PNG IHDR, WebP VP8*); the stored extension and `contentType` follow the detected bytes. Auth failures return **401**; Storage / unexpected failures return **500** (Storage `status` / `statusCode` logged server-side only).
 
 ## Data model
 
