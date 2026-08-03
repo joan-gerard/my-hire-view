@@ -32,6 +32,7 @@ import {
   formatApplicationUpdateZodError,
 } from "@/lib/validation/application";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 function parseLimit(raw: string | null): number {
   if (raw === null || raw === "") return APPLICATION_LIST_DEFAULT_LIMIT;
@@ -528,10 +529,13 @@ export async function PUT(request: NextRequest) {
     }
 
     if (previousCvToDelete) {
+      // Best-effort: row already points at the new URL; do not fail the request
+      // if the old tailored object cannot be removed.
       await deleteApplicationCvIfTailored(
         previousCvToDelete.url,
         previousCvToDelete.cvType,
         user.id,
+        { onError: "log" },
       );
     }
 
@@ -549,19 +553,36 @@ export async function DELETE(request: NextRequest) {
   const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
+  let user;
   try {
-    const user = await requireAuth();
-    const supabase = await createClient();
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    user = await requireAuth();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    if (!id) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const rawId = searchParams.get("id");
+
+    if (!rawId) {
       return NextResponse.json(
         { error: "Application ID is required" },
         { status: 400 },
       );
     }
 
+    const idParsed = z.uuid({ error: "Application ID must be a valid UUID" }).safeParse(
+      rawId.trim(),
+    );
+    if (!idParsed.success) {
+      return NextResponse.json(
+        { error: "Application ID must be a valid UUID" },
+        { status: 400 },
+      );
+    }
+    const id = idParsed.data;
+
+    const supabase = await createClient();
     const { data: existing } = await supabase
       .from("applications")
       .select("user_id, cv_url, cv_type")
@@ -575,20 +596,33 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await deleteApplicationCvIfTailored(
-      existing.cv_url,
-      existing.cv_type as ApplicationCvType,
-      user.id,
-    );
+    try {
+      await deleteApplicationCvIfTailored(
+        existing.cv_url,
+        existing.cv_type as ApplicationCvType,
+        user.id,
+      );
+    } catch (error) {
+      console.error("DELETE /api/applications R2 cleanup:", error);
+      return NextResponse.json(
+        { error: "Failed to delete CV file. Please try again." },
+        { status: 500 },
+      );
+    }
 
     const { error } = await supabase.from("applications").delete().eq("id", id);
 
     if (error) {
+      console.error("DELETE /api/applications:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    console.error("DELETE /api/applications:", error);
+    return NextResponse.json(
+      { error: "Failed to delete application" },
+      { status: 500 },
+    );
   }
 }

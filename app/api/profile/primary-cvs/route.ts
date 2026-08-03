@@ -266,6 +266,16 @@ export async function DELETE(request: NextRequest) {
       .eq("user_id", user.id)
       .eq("primary_cv_id", id);
 
+    try {
+      await deleteCvIfOurs(existing.url, user.id);
+    } catch (error) {
+      console.error("DELETE /api/profile/primary-cvs R2 cleanup:", error);
+      return NextResponse.json(
+        { error: "Failed to delete CV file. Please try again." },
+        { status: 500 },
+      );
+    }
+
     const { error: deleteError } = await supabase
       .from("primary_cvs")
       .delete()
@@ -275,8 +285,6 @@ export async function DELETE(request: NextRequest) {
     if (deleteError) {
       return NextResponse.json({ error: deleteError.message }, { status: 400 });
     }
-
-    await deleteCvIfOurs(existing.url, user.id);
 
     return NextResponse.json({
       success: true,

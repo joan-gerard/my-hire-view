@@ -206,16 +206,18 @@ describe("PUT /api/applications", () => {
       okWithCount(null, 0),
       ok({ ...EXISTING_APP, cv_url: newCvUrl }),
     ]);
-    const originalFrom = client.from.bind(client);
+    const originalFrom = client.from as (
+      table: string,
+    ) => ReturnType<typeof ok>;
     client.from = vi.fn((table: string) => {
       const chain = originalFrom(table);
-      const originalUpdate = chain.update as ReturnType<typeof vi.fn>;
+      const originalUpdate = chain.update as (payload: unknown) => unknown;
       chain.update = vi.fn((payload: unknown) => {
         callOrder.push("update");
         return originalUpdate(payload);
       });
       return chain;
-    });
+    }) as typeof client.from;
     mockCreateClient.mockResolvedValue(client);
 
     await PUT(makePutRequest({ id: APP_ID, cv_url: newCvUrl }));
@@ -223,6 +225,7 @@ describe("PUT /api/applications", () => {
       EXISTING_APP.cv_url,
       "tailored",
       MOCK_USER.id,
+      { onError: "log" },
     );
     expect(callOrder.indexOf("update")).toBeLessThan(
       callOrder.indexOf("delete"),
@@ -275,6 +278,7 @@ describe("PUT /api/applications", () => {
       EXISTING_APP.cv_url,
       "primary",
       MOCK_USER.id,
+      { onError: "log" },
     );
   });
 

@@ -106,16 +106,28 @@ export function isCvStorageUrl(url: string | null | undefined): boolean {
 }
 
 /**
+ * How to handle R2 DeleteObject failures.
+ * - `throw` (default): fail closed — caller should not continue with DB deletes.
+ * - `log`: best-effort — log and continue (e.g. after a successful DB update when
+ *   removing a replaced tailored object).
+ */
+export type DeleteCvErrorMode = "throw" | "log";
+
+/**
  * Deletes the CV object at the given URL only when it is under our R2 public base
  * **and** the object key belongs to `userId`.
- * Logs and swallows errors so callers can continue (e.g. DB delete still succeeds).
+ * By default, R2 errors are logged and rethrown (fail closed). Pass
+ * `{ onError: "log" }` only when the caller intentionally continues (e.g. PUT
+ * after a successful row update).
  */
 export async function deleteCvIfOurs(
   url: string | null | undefined,
   userId: string,
+  options?: { onError?: DeleteCvErrorMode },
 ): Promise<void> {
   const key = getCvObjectKeyFromPublicUrl(url);
   if (!isOwnedCvObjectKey(key, userId) || !key) return;
+  const onError = options?.onError ?? "throw";
   try {
     const client = getR2S3Client();
     await client.send(
@@ -123,6 +135,7 @@ export async function deleteCvIfOurs(
     );
   } catch (err) {
     console.error("Failed to delete CV object from R2:", url, err);
+    if (onError === "throw") throw err;
   }
 }
 
@@ -135,9 +148,10 @@ export async function deleteApplicationCvIfTailored(
   url: string | null | undefined,
   cvType: ApplicationCvType | null | undefined,
   userId: string,
+  options?: { onError?: DeleteCvErrorMode },
 ): Promise<void> {
   if (cvType === "primary") return;
-  await deleteCvIfOurs(url, userId);
+  await deleteCvIfOurs(url, userId, options);
 }
 
 /**

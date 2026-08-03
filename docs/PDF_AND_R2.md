@@ -26,8 +26,8 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 
 ### Delete application
 
-1. If `cv_type = tailored`, delete the R2 object (`deleteApplicationCvIfTailored`).
-2. If `cv_type = primary`, leave the R2 object (still in the library).
+1. If `cv_type = tailored`, delete the R2 object (`deleteApplicationCvIfTailored`). **Fail closed:** if R2 delete fails, the API returns **500** and does **not** delete the applications row (avoids “deleted” apps that still have a PDF in storage).
+2. If R2 succeeds (or `cv_type = primary`, leave the library object), delete the applications row.
 
 ### Delete primary CV (library)
 
@@ -57,7 +57,16 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 - **PDF content:** Upload routes check MIME type and that the body starts with `%PDF` before writing to R2.
 - **URL check:** Deletes run only when the URL prefix matches `R2_PUBLIC_BASE_URL` **and** the object key belongs to the authenticated user (`cvs/{userId}/primary/…` or `cvs/{userId}/tailored/…`).
 - **Attach check:** Creating/updating a tailored application CV rejects `cv_url` values that are not under `cvs/{userId}/tailored/…`, and rejects URLs already used by another of the user’s applications (**409**). Re-uploading the same PDF for a second app creates a distinct object. Primary CVs remain intentionally shareable via `cv_type: "primary"`.
-- **Errors:** Delete failures are logged and do not block DB updates or deletes.
+- **Delete errors (fail closed):** `deleteCvIfOurs` logs and **rethrows** by default. Application delete and primary-library delete remove the R2 object **before** the DB row; if R2 fails, the API returns **500** and leaves the row. After a successful application **update** that replaces a tailored CV, cleanup of the *previous* object uses `{ onError: "log" }` so a stuck old file does not fail the save.
+
+## Future option: middle ground + orphan cleanup
+
+Today we prefer fail-closed deletes so a “deleted” application never leaves its tailored PDF behind while the row is gone. A possible later alternative:
+
+1. **Middle ground on delete** — always delete the applications row (and return success) even if R2 cleanup fails.
+2. **Orphan tailored CV cron** — periodically list/delete R2 objects under `cvs/{userId}/tailored/…` that are not referenced by any `applications.cv_url` (and never touch `primary/…`).
+
+That improves delete UX during R2 outages at the cost of temporary orphans and a scheduled job. Keep fail-closed until that cron exists.
 
 ## Environment variables
 

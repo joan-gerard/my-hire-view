@@ -18,7 +18,7 @@ In the table of contents, endpoint status is marked with a colored dot:
   - 🟢 [GET applications](#get-applications) — `GET /api/applications`
   - 🟢 [POST applications](#post-applications) — `POST /api/applications`
   - 🟢 [PUT applications](#put-applications) — `PUT /api/applications`
-  - 🔴 [DELETE applications](#delete-applications) — `DELETE /api/applications`
+  - 🟢 [DELETE applications](#delete-applications) — `DELETE /api/applications`
   - 🔴 [GET application by public path](#get-application-by-public-path) — `GET /api/applications/[publicId]/[slug]`
   - 🔴 [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]`
   - 🔴 [POST application view](#post-application-view) — `POST /api/applications/[publicId]/[slug]/view`
@@ -201,23 +201,19 @@ Hard-delete an application and its tailored CV object in R2 (when the URL belong
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Query:** `id` (required)
+- **Query:** `id` (UUID, required)
 - **Success:** `200` `{ success: true }`
-- **Errors:** `400` missing id / DB error; `401`; `404` if missing or not owned; `429`
+- **Errors:** `400` missing/invalid id / DB error; `401`; `404` if missing or not owned; `429`; `500` R2 cleanup failure or unexpected errors
 
 **What works**
 
-- Auth + ownership check before delete.
+- Auth required; dedicated auth try/catch → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
 - Rate limited.
-- Cleans up the CV in R2 when the URL is under `R2_PUBLIC_BASE_URL` **and** the object key belongs to the caller (`deleteApplicationCvIfTailored` → `deleteCvIfOurs`). Safe with the one-tailored-CV-per-application attach rule (primary library objects are never deleted here).
-- Requires an explicit `id` query param (fails closed if missing).
-
-**Improvement opportunities**
-
-- Validate `id` as a UUID before querying.
-- If R2 delete fails, log and decide whether to fail the request or proceed (today delete continues after `deleteCvIfOurs`; document or harden that policy).
-- Same auth-vs-500 catch handling as other handlers.
-- Consider soft-delete-only for some clients if hard delete is irreversible by design (archive already covers soft hide).
+- Validates `id` as a UUID before querying (**400** if missing or malformed).
+- Ownership check before delete; **404** when missing or not owned.
+- **Fail-closed R2 cleanup:** for tailored CVs, deletes the R2 object first (`deleteApplicationCvIfTailored` → `deleteCvIfOurs`). If R2 delete fails → **500** and the DB row is **not** removed (no orphaned “deleted” apps with leftover PDFs). Primary library objects are never deleted here.
+- Only then deletes the applications row.
+- Archive (`PUT` `status: archived`) remains the reversible soft-hide; hard `DELETE` is intentional and irreversible. A possible later alternative (middle-ground delete + orphan tailored-CV cron) is noted in [PDF_AND_R2.md](PDF_AND_R2.md).
 
 ---
 
@@ -444,12 +440,12 @@ Remove a primary CV from the library and delete its R2 object. Applications that
 - **Rate limit:** Default (60/min)
 - **Query:** `id` (required, primary CV UUID)
 - **Success:** `200` `{ success: true, applications_affected: number }`
-- **Errors:** `400` missing id / DB error; `401`; `404` not found or not owned; `429`
+- **Errors:** `400` missing id / DB error; `401`; `404` not found or not owned; `429`; `500` if R2 cleanup fails
 
 **What works**
 
 - Auth + ownership check before delete.
-- Deletes `primary_cvs` row and R2 object (`deleteCvIfOurs`).
+- **Fail closed:** deletes the R2 object first (`deleteCvIfOurs`); on R2 failure → **500** and the library row is left intact. Then deletes the `primary_cvs` row.
 - Returns `applications_affected` count for confirm UX (client may show this before calling DELETE).
 
 ---

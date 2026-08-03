@@ -16,7 +16,10 @@ import {
   isOwnedCvUrl,
   isOwnedTailoredCvUrl,
   isCvStorageUrl,
+  deleteCvIfOurs,
+  deleteApplicationCvIfTailored,
 } from "@/lib/utils/cv-storage";
+import { getR2S3Client } from "@/lib/storage/r2-client";
 
 const USER_ID = "user-abc";
 const TAILORED_URL = `https://r2.example.com/cvs/${USER_ID}/tailored/key123.pdf`;
@@ -100,5 +103,37 @@ describe("isOwnedCvUrl / isOwnedTailoredCvUrl / isCvStorageUrl", () => {
   it("returns false for non-R2 URLs", () => {
     expect(isOwnedCvUrl("https://evil.example/cv.pdf", USER_ID)).toBe(false);
     expect(isCvStorageUrl("https://evil.example/cv.pdf")).toBe(false);
+  });
+});
+
+describe("deleteCvIfOurs / deleteApplicationCvIfTailored", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("rethrows R2 errors by default (fail closed)", async () => {
+    const send = vi.fn().mockRejectedValue(new Error("R2 down"));
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await expect(deleteCvIfOurs(TAILORED_URL, USER_ID)).rejects.toThrow(
+      "R2 down",
+    );
+  });
+
+  it("swallows R2 errors when onError is log", async () => {
+    const send = vi.fn().mockRejectedValue(new Error("R2 down"));
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await expect(
+      deleteCvIfOurs(TAILORED_URL, USER_ID, { onError: "log" }),
+    ).resolves.toBeUndefined();
+  });
+
+  it("skips R2 for primary application CVs", async () => {
+    const send = vi.fn();
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await deleteApplicationCvIfTailored(PRIMARY_URL, "primary", USER_ID);
+    expect(send).not.toHaveBeenCalled();
   });
 });
