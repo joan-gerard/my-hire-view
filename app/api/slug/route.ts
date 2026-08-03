@@ -4,7 +4,12 @@ import {
   DEFAULT_API_RATE_LIMIT,
   rateLimit429,
 } from "@/lib/rate-limit";
+import { createClient } from "@/lib/supabase/server";
 import { reserveBaseSlug, SlugCollisionError } from "@/lib/utils/slug";
+import {
+  formatSlugReserveZodError,
+  slugReserveSchema,
+} from "@/lib/validation/slug";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -22,41 +27,64 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const {
-      company,
-      role,
-      excludeId,
-      first_name,
-      last_name,
-      slugNamePosition,
-    } = await request.json();
-
-    if (!company || !role) {
+    let raw: unknown;
+    try {
+      raw = await request.json();
+    } catch {
       return NextResponse.json(
-        { error: "Company and role are required" },
+        { error: "Invalid JSON body" },
         { status: 400 },
       );
     }
 
-    const position =
-      slugNamePosition === "start" || slugNamePosition === "end"
-        ? slugNamePosition
-        : null;
+    const parsed = slugReserveSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: formatSlugReserveZodError(parsed.error) },
+        { status: 400 },
+      );
+    }
+    const body = parsed.data;
+
+    if (body.excludeId) {
+      const supabase = await createClient();
+      const { data: owned, error: ownershipError } = await supabase
+        .from("applications")
+        .select("id")
+        .eq("id", body.excludeId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (ownershipError) {
+        console.error("POST /api/slug excludeId ownership:", ownershipError);
+        return NextResponse.json(
+          { error: "Failed to generate slug" },
+          { status: 500 },
+        );
+      }
+      if (!owned) {
+        return NextResponse.json(
+          { error: "Application not found" },
+          { status: 404 },
+        );
+      }
+    }
 
     const slug = await reserveBaseSlug(
-      company,
-      role,
+      body.company,
+      body.role,
       user.id,
-      excludeId,
-      first_name ?? null,
-      last_name ?? null,
-      position,
+      body.excludeId,
+      body.first_name ?? null,
+      body.last_name ?? null,
+      body.slugNamePosition ?? null,
     );
     return NextResponse.json({ slug });
   } catch (error) {
     if (error instanceof SlugCollisionError) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
+    console.error("POST /api/slug:", error);
     return NextResponse.json(
       { error: "Failed to generate slug" },
       { status: 500 },

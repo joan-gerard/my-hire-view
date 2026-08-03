@@ -17,11 +17,13 @@ const {
   mockValidateSlugForApplication,
   mockRequireAuth,
   mockCheckRateLimit,
+  mockCreateClient,
 } = vi.hoisted(() => ({
   mockReserveBaseSlug: vi.fn(),
   mockValidateSlugForApplication: vi.fn(),
   mockRequireAuth: vi.fn(),
   mockCheckRateLimit: vi.fn(),
+  mockCreateClient: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/slug", async (importOriginal) => {
@@ -33,6 +35,7 @@ vi.mock("@/lib/utils/slug", async (importOriginal) => {
   };
 });
 vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: mockCreateClient }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
   DEFAULT_API_RATE_LIMIT: { limit: 60, windowMs: 60_000 },
@@ -48,17 +51,28 @@ import { POST as validatePost } from "@/app/api/slug/validate/route";
 
 // Also import the real SlugCollisionError for instanceof checks
 import { SlugCollisionError } from "@/lib/utils/slug";
+import { ok, makeSupabaseClient } from "../../helpers/supabase-mock";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function makeRequest(url: string, body: object): NextRequest {
+function makeRequest(url: string, body: unknown): NextRequest {
   return new NextRequest(url, {
     method: "POST",
     body: JSON.stringify(body),
     headers: { "Content-Type": "application/json" },
   });
 }
+
+function makeRawRequest(url: string, body: string): NextRequest {
+  return new NextRequest(url, {
+    method: "POST",
+    body,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+const OWNED_EXCLUDE_ID = "11111111-1111-4111-8111-111111111111";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -85,6 +99,7 @@ describe("POST /api/slug", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.slug).toBe("volvo-software-engineer");
+    expect(mockCreateClient).not.toHaveBeenCalled();
   });
 
   it("includes name in slug when slugNamePosition and names are provided", async () => {
@@ -101,6 +116,15 @@ describe("POST /api/slug", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.slug).toBe("john-doe-volvo-software-engineer");
+    expect(mockReserveBaseSlug).toHaveBeenCalledWith(
+      "Volvo",
+      "Software Engineer",
+      "user-123",
+      undefined,
+      "John",
+      "Doe",
+      "start",
+    );
   });
 
   it("returns 400 when company is missing", async () => {
@@ -119,6 +143,82 @@ describe("POST /api/slug", () => {
     });
     const response = await slugPost(req);
     expect(response.status).toBe(400);
+  });
+
+  it("returns 400 for malformed JSON", async () => {
+    const req = makeRawRequest("http://localhost/api/slug", "{not-json");
+    const response = await slugPost(req);
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toBe("Invalid JSON body");
+  });
+
+  it("returns 400 for a JSON null body", async () => {
+    const req = makeRequest("http://localhost/api/slug", null);
+    const response = await slugPost(req);
+    expect(response.status).toBe(400);
+    expect(mockReserveBaseSlug).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for invalid slugNamePosition", async () => {
+    const req = makeRequest("http://localhost/api/slug", {
+      company: "Volvo",
+      role: "Engineer",
+      slugNamePosition: "middle",
+    });
+    const response = await slugPost(req);
+    expect(response.status).toBe(400);
+  });
+
+  it("returns 400 when excludeId is not a UUID", async () => {
+    const req = makeRequest("http://localhost/api/slug", {
+      company: "Volvo",
+      role: "Engineer",
+      excludeId: "app-id-42",
+    });
+    const response = await slugPost(req);
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/UUID/i);
+  });
+
+  it("passes owned excludeId to reserveBaseSlug", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok({ id: OWNED_EXCLUDE_ID })]),
+    );
+    mockReserveBaseSlug.mockResolvedValue("volvo-engineer");
+
+    const req = makeRequest("http://localhost/api/slug", {
+      company: "Volvo",
+      role: "Engineer",
+      excludeId: OWNED_EXCLUDE_ID,
+    });
+    const response = await slugPost(req);
+    expect(response.status).toBe(200);
+    expect(mockReserveBaseSlug).toHaveBeenCalledWith(
+      "Volvo",
+      "Engineer",
+      "user-123",
+      OWNED_EXCLUDE_ID,
+      null,
+      null,
+      null,
+    );
+  });
+
+  it("returns 404 when excludeId is not owned by the current user", async () => {
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([ok(null)]));
+
+    const req = makeRequest("http://localhost/api/slug", {
+      company: "Volvo",
+      role: "Engineer",
+      excludeId: OWNED_EXCLUDE_ID,
+    });
+    const response = await slugPost(req);
+    expect(response.status).toBe(404);
+    const json = await response.json();
+    expect(json.error).toBe("Application not found");
+    expect(mockReserveBaseSlug).not.toHaveBeenCalled();
   });
 
   it("returns 409 when the slug is already taken (SlugCollisionError)", async () => {

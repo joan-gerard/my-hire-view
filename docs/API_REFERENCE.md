@@ -466,22 +466,19 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body:** `company`, `role` (required); optional `excludeId`, `first_name`, `last_name`, `slugNamePosition` (`"start"` | `"end"`)
+- **Body:** `company`, `role` (required); optional `excludeId` (UUID), `first_name`, `last_name`, `slugNamePosition` (`"start"` | `"end"` | `null`)
 - **Success:** `200` `{ slug: string }`
-- **Errors:** `400` missing company/role; `409` collision; `429`; `500`
+- **Errors:** `400` invalid JSON / schema; `401`; `404` `excludeId` missing or not owned; `409` collision; `429`; `500`
 
 **What works**
 
+- Auth required; dedicated auth try/catch → **401**.
 - Rate limited.
-- Requires `company` and `role` before generating.
+- **Schema validation** (`slugReserveSchema` in `lib/validation/slug.ts`): trimmed non-empty `company` / `role` (max length); optional names; `slugNamePosition` enum or null; UUID `excludeId`; rejects unexpected keys; malformed JSON / non-object bodies → clear **400**.
+- When `excludeId` is present, verifies the application belongs to the current user before reserving (**404** otherwise).
 - Uses shared `reserveBaseSlug` / `SlugCollisionError` for consistent slug rules and a clear **409** when taken.
 - Supports name-in-URL positions and `excludeId` for edit flows without inventing numeric suffixes.
-
-**Improvement opportunities**
-
-- Validate and sanitize inputs (non-empty trimmed strings, max lengths, allowed `slugNamePosition` values, UUID `excludeId`).
-- When authenticated + `excludeId`, verify the excluded application belongs to the current user.
-- Log unexpected failures before returning **500**.
+- Logs unexpected failures before returning **500**.
 
 ---
 
@@ -508,6 +505,7 @@ Check format and uniqueness of a proposed slug **for the current user** (used wh
 
 **Improvement opportunities**
 
+- Parse/validate the body as an object before reading fields: malformed JSON or a JSON `null` body currently throws and returns **500** `{ ok: false, error: "Failed to validate slug" }` instead of a client **400**. Require a string `slug` (and optional `excludeId`) up front.
 - When `excludeId` is present, verify ownership so users cannot use another user’s id to “exclude” a collision check.
 - Tighten `excludeId` to UUID format (not only length ≤ 64).
 - Optionally rate-limit more tightly (debounced UI still fires often).
@@ -693,6 +691,7 @@ Canonical TypeScript shapes live in:
 
 - `lib/types/application.ts` — `Application`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
 - `lib/validation/application.ts` — `applicationCreateSchema` / `formatApplicationCreateZodError` for `POST /api/applications`
+- `lib/validation/slug.ts` — `slugReserveSchema` / `formatSlugReserveZodError` for `POST /api/slug`
 - `lib/types/profile.ts` — `Profile`, `ProfileUpdateInput`
 - `lib/types/primary-cv.ts` — `PrimaryCv`, `PrimaryCvApplicationPreview`, `PRIMARY_CV_MAX_PER_USER`
 

@@ -35,6 +35,7 @@ export function makeChain<T = unknown>(result: DbResult<T>) {
     limit: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(result),
+    maybeSingle: vi.fn().mockResolvedValue(result),
     rpc: vi.fn().mockResolvedValue(result),
     // Make the chain itself awaitable for cases like `await supabase.from(...).update(...).eq(...)`
     then: (resolve: (v: DbResult<T>) => unknown) =>
