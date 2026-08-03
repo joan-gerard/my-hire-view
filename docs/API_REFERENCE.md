@@ -102,23 +102,23 @@ List the authenticated user’s applications (newest first), paginated. Returns 
 }
 ```
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `data[].id` | `string` (UUID) | Edit / archive / delete |
-| `data[].slug` | `string` | Public URL + search |
-| `data[].company` | `string` | Card title + search |
-| `data[].role` | `string` | Card title + search |
-| `data[].status` | `"active"` \| `"draft"` \| `"archived"` | Card status |
-| `data[].archived_at` | `string` (ISO) \| `null` | Set when archived; retention clock |
-| `data[].cv_url` | `string` | Used for `cv_exists` check |
-| `data[].cv_exists` | `boolean` | Dashboard “CV missing” badge when false |
-| `data[].view_count` | `number` | Status icon + insights |
-| `data[].download_count` | `number` | Insights |
-| `data[].created_at` | `string` (ISO) | Insights |
-| `data[].last_viewed_at` | `string` (ISO) \| `null` | Insights; null if never viewed by a non-owner |
-| `meta.limit` | `number` | Echo of applied page size |
-| `meta.offset` | `number` | Echo of applied offset |
-| `meta.total` | `number` | Total matching rows (after `q`, before page slice) |
+| Field                   | Type                                    | Notes                                              |
+| ----------------------- | --------------------------------------- | -------------------------------------------------- |
+| `data[].id`             | `string` (UUID)                         | Edit / archive / delete                            |
+| `data[].slug`           | `string`                                | Public URL + search                                |
+| `data[].company`        | `string`                                | Card title + search                                |
+| `data[].role`           | `string`                                | Card title + search                                |
+| `data[].status`         | `"active"` \| `"draft"` \| `"archived"` | Card status                                        |
+| `data[].archived_at`    | `string` (ISO) \| `null`                | Set when archived; retention clock                 |
+| `data[].cv_url`         | `string`                                | Used for `cv_exists` check                         |
+| `data[].cv_exists`      | `boolean`                               | Dashboard “CV missing” badge when false            |
+| `data[].view_count`     | `number`                                | Status icon + insights                             |
+| `data[].download_count` | `number`                                | Insights                                           |
+| `data[].created_at`     | `string` (ISO)                          | Insights                                           |
+| `data[].last_viewed_at` | `string` (ISO) \| `null`                | Insights; null if never viewed by a non-owner      |
+| `meta.limit`            | `number`                                | Echo of applied page size                          |
+| `meta.offset`           | `number`                                | Echo of applied offset                             |
+| `meta.total`            | `number`                                | Total matching rows (after `q`, before page slice) |
 
 TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_DEFAULT_LIMIT` / `APPLICATION_LIST_MAX_LIMIT` in `lib/types/application.ts` (projection: `APPLICATION_LIST_SELECT`).
 
@@ -145,24 +145,20 @@ Create an application. Candidate fields fall back to the user’s profile when o
 - **Rate limit:** Default (60/min)
 - **Body** (`ApplicationCreateInput`): `company`, `role`, `slug`, `cv_url`, `video_url` (required); optional `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugNamePosition` (`"start"` | `"end"` | `null` → stored as `include_name_in_slug`), `cv_filename`, `use_original_cv_filename` (default `true`), `show_profile_picture`
 - **Success:** `201` `{ data: Application }`
-- **Errors:** `400` insert/validation; `401`; `409` tailored `cv_url` already used by another application; `429`
+- **Errors:** `400` schema validation / insert / primary CV missing; `401`; `409` slug taken (`validateSlugForApplication` or unique constraint) or tailored `cv_url` already used; `429`; `500` unexpected failures
 
 **What works**
 
 - Auth required; inserts always set `user_id` from the session (not the client body).
 - Rate limited.
+- Dedicated auth try/catch → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
+- **Schema validation** (`applicationCreateSchema` in `lib/validation/application.ts`): required trimmed strings; http(s) URLs for `cv_url` / `video_url` / optional portfolio / LinkedIn; slug format via `validateSlugFormat`; enums/booleans; rejects unexpected keys; `primary_cv_id` UUID required when `cv_type` is `"primary"`. Invalid bodies return clear **400** `{ error }` before any insert.
 - Profile snapshot / fallback for candidate fields keeps recruiter data on the application row.
 - Avatar preference is a boolean only — no denormalized picture URL on the application row.
 - **Primary CV:** when `cv_type` is `"primary"`, `primary_cv_id` must reference a row in the caller’s `primary_cvs` library; `cv_url` is resolved from that library row (client may send the same URL for convenience).
 - **Tailored CV:** when `cv_type` is `"tailored"` (default), `cv_url` must be a caller-owned tailored upload (`cvs/{userId}/tailored/…`); not a primary library key. Reusing another application’s tailored URL returns **409**.
+- **Slug uniqueness:** calls `validateSlugForApplication` (same helper as `POST /api/slug/validate`) before insert so a taken slug returns **409** with `SLUG_COLLISION_USER_MESSAGE` without relying only on the DB. Postgres unique violations (`23505`) remain a race backstop with the same **409** message.
 - Returns **201** with the created row.
-
-**Improvement opportunities**
-
-- Validate the body with a schema (required strings, URL formats for `cv_url` / `video_url` / portfolio / LinkedIn, slug format) before insert; return clear **400**s instead of relying on DB errors.
-- Re-check slug uniqueness (or call the same helper as `/api/slug/validate`) inside this handler to close race windows between client validate and create.
-- Same auth vs non-auth error handling as GET (don’t treat all thrown errors as **401**).
-- Map unique-constraint failures to **409** with a stable message.
 
 ---
 
@@ -566,7 +562,7 @@ Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png
 
 - Canonical path + upsert enforces one picture per user; removes leftover folder objects after upload.
 - Auth required (dedicated check → **401**); unexpected/Storage failures → **500** with generic client message; Storage errors logged with `status` / `statusCode`.
-- Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
+- Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8\*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
 
 **Improvement opportunities**
 
@@ -696,6 +692,7 @@ Pre-launch landing-page signup. Inserts into `waitlist_signups` via the service-
 Canonical TypeScript shapes live in:
 
 - `lib/types/application.ts` — `Application`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
+- `lib/validation/application.ts` — `applicationCreateSchema` / `formatApplicationCreateZodError` for `POST /api/applications`
 - `lib/types/profile.ts` — `Profile`, `ProfileUpdateInput`
 - `lib/types/primary-cv.ts` — `PrimaryCv`, `PrimaryCvApplicationPreview`, `PRIMARY_CV_MAX_PER_USER`
 

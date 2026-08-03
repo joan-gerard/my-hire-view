@@ -5,8 +5,10 @@
  * - Happy path: inserts new application row and returns 201.
  * - Profile fallback: candidate fields pulled from profile when not in body.
  * - Profile picture preference: persists show_profile_picture (URL comes from profile at view time).
- * - Auth / rate-limit guards.
- * - DB insert failure → 400.
+ * - Schema validation → clear 400s before insert.
+ * - Auth / rate-limit guards; unexpected errors → 500 (not 401).
+ * - Slug uniqueness re-check (validateSlugForApplication) → 409 when taken.
+ * - Unique constraint (slug) → 409; other DB insert failures → 400.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
@@ -21,12 +23,17 @@ const {
   mockCheckRateLimit,
   mockDeleteCvIfOurs,
   mockIsOwnedTailoredCvUrl,
+  mockValidateSlugForApplication,
+  SLUG_COLLISION_USER_MESSAGE,
 } = vi.hoisted(() => ({
   mockRequireAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockDeleteCvIfOurs: vi.fn(),
   mockIsOwnedTailoredCvUrl: vi.fn().mockReturnValue(true),
+  mockValidateSlugForApplication: vi.fn(),
+  SLUG_COLLISION_USER_MESSAGE:
+    "You already have an application with this slug. Change the text slightly or pick another slug.",
 }));
 
 vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
@@ -48,6 +55,10 @@ vi.mock("@/lib/utils/cv-storage", () => ({
 }));
 vi.mock("@/lib/auth/ensure-public-id", () => ({
   ensureProfilePublicId: vi.fn().mockResolvedValue("k7x2m9ab"),
+}));
+vi.mock("@/lib/utils/slug", () => ({
+  SLUG_COLLISION_USER_MESSAGE,
+  validateSlugForApplication: mockValidateSlugForApplication,
 }));
 
 import { POST } from "@/app/api/applications/route";
@@ -98,6 +109,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockRequireAuth.mockResolvedValue(MOCK_USER);
   mockIsOwnedTailoredCvUrl.mockReturnValue(true);
+  mockValidateSlugForApplication.mockResolvedValue({ ok: true });
   mockCheckRateLimit.mockReturnValue({
     success: true,
     remaining: 59,
@@ -200,6 +212,47 @@ describe("POST /api/applications", () => {
     expect(json.data.show_profile_picture).toBe(false);
   });
 
+  it("returns 400 when required fields are missing", async () => {
+    const response = await POST(
+      makePostRequest({ company: "Volvo", role: "Engineer" }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(typeof json.error).toBe("string");
+    expect(json.error.length).toBeGreaterThan(0);
+    expect(mockCreateClient).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when slug format is invalid", async () => {
+    const response = await POST(
+      makePostRequest({ ...BASE_APP_INPUT, slug: "Volvo Engineer" }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/lowercase|hyphen/i);
+    expect(mockCreateClient).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when video_url is not a valid http(s) URL", async () => {
+    const response = await POST(
+      makePostRequest({ ...BASE_APP_INPUT, video_url: "not-a-url" }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/Video URL/i);
+    expect(mockCreateClient).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when body includes unexpected keys", async () => {
+    const response = await POST(
+      makePostRequest({ ...BASE_APP_INPUT, user_id: "attacker" }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/unrecognized key/i);
+    expect(mockCreateClient).not.toHaveBeenCalled();
+  });
+
   it("returns 400 when tailored cv_url is not a caller-owned tailored upload", async () => {
     mockIsOwnedTailoredCvUrl.mockReturnValue(false);
     mockCreateClient.mockResolvedValue(
@@ -227,13 +280,45 @@ describe("POST /api/applications", () => {
     );
   });
 
-  it("returns 400 when the DB insert fails", async () => {
+  it("returns 409 when validateSlugForApplication reports the slug is taken", async () => {
+    mockValidateSlugForApplication.mockResolvedValue({
+      ok: false,
+      error: SLUG_COLLISION_USER_MESSAGE,
+    });
+
+    const response = await POST(makePostRequest(BASE_APP_INPUT));
+    expect(response.status).toBe(409);
+    const json = await response.json();
+    expect(json.error).toBe(SLUG_COLLISION_USER_MESSAGE);
+    expect(mockValidateSlugForApplication).toHaveBeenCalledWith(
+      BASE_APP_INPUT.slug,
+      MOCK_USER.id,
+    );
+    expect(mockCreateClient).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 with a stable message when slug unique constraint fails", async () => {
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient(tailoredCreateChains(dbError("Unique constraint"))),
+      makeSupabaseClient(
+        tailoredCreateChains(dbError("duplicate key value", "23505")),
+      ),
+    );
+
+    const response = await POST(makePostRequest(BASE_APP_INPUT));
+    expect(response.status).toBe(409);
+    const json = await response.json();
+    expect(json.error).toBe(SLUG_COLLISION_USER_MESSAGE);
+  });
+
+  it("returns 400 when the DB insert fails for a non-unique reason", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient(tailoredCreateChains(dbError("check constraint"))),
     );
 
     const response = await POST(makePostRequest(BASE_APP_INPUT));
     expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toBe("check constraint");
   });
 
   it("returns 429 when rate limited", async () => {
@@ -254,5 +339,14 @@ describe("POST /api/applications", () => {
     expect(response.status).toBe(401);
     const json = await response.json();
     expect(json.error).toBe("Unauthorized");
+  });
+
+  it("returns 500 when an unexpected error occurs after auth", async () => {
+    mockCreateClient.mockRejectedValue(new Error("supabase down"));
+
+    const response = await POST(makePostRequest(BASE_APP_INPUT));
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Failed to create application");
   });
 });

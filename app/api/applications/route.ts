@@ -13,7 +13,6 @@ import {
   APPLICATION_LIST_DEFAULT_LIMIT,
   APPLICATION_LIST_MAX_LIMIT,
   APPLICATION_LIST_SELECT,
-  type ApplicationCreateInput,
   type ApplicationCvType,
   type ApplicationStatus,
   type ApplicationUpdateInput,
@@ -23,6 +22,14 @@ import {
   deleteApplicationCvIfTailored,
   isOwnedTailoredCvUrl,
 } from "@/lib/utils/cv-storage";
+import {
+  SLUG_COLLISION_USER_MESSAGE,
+  validateSlugForApplication,
+} from "@/lib/utils/slug";
+import {
+  applicationCreateSchema,
+  formatApplicationCreateZodError,
+} from "@/lib/validation/application";
 import { NextRequest, NextResponse } from "next/server";
 
 function parseLimit(raw: string | null): number {
@@ -206,11 +213,36 @@ export async function POST(request: NextRequest) {
   const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
+  let user;
   try {
-    const user = await requireAuth();
+    user = await requireAuth();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const raw: unknown = await request.json();
+    const parsed = applicationCreateSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: formatApplicationCreateZodError(parsed.error) },
+        { status: 400 },
+      );
+    }
+    const body = parsed.data;
+
+    // Same helper as POST /api/slug/validate — closes races between client
+    // validate/reserve and this create. UNIQUE (user_id, slug) remains the
+    // final backstop (mapped to 409 below).
+    const slugCheck = await validateSlugForApplication(body.slug, user.id);
+    if (!slugCheck.ok) {
+      const status =
+        slugCheck.error === SLUG_COLLISION_USER_MESSAGE ? 409 : 400;
+      return NextResponse.json({ error: slugCheck.error }, { status });
+    }
+
     const supabase = await createClient();
     await ensureProfilePublicId(supabase, user);
-    const body: ApplicationCreateInput = await request.json();
     const snapshot = await getProfileSnapshot(supabase, user.id);
 
     const candidateFields = {
@@ -271,9 +303,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const status: ApplicationStatus = isValidStatus(body.status)
-      ? body.status
-      : "active";
+    const status: ApplicationStatus = body.status ?? "active";
 
     const { data, error } = await supabase
       .from("applications")
@@ -298,12 +328,24 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      // UNIQUE (user_id, slug) — race after client validate / reserve.
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: SLUG_COLLISION_USER_MESSAGE },
+          { status: 409 },
+        );
+      }
+      console.error("POST /api/applications:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     return NextResponse.json({ data }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    console.error("POST /api/applications:", error);
+    return NextResponse.json(
+      { error: "Failed to create application" },
+      { status: 500 },
+    );
   }
 }
 
