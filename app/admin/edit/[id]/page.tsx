@@ -114,8 +114,8 @@ export default function EditApplicationPage() {
             excludeId: id,
             slugNamePosition: data.slugNamePosition ?? null,
             ...((data.slugNamePosition === 'start' || data.slugNamePosition === 'end') && {
-              first_name: data.first_name ?? undefined,
-              last_name: data.last_name ?? undefined,
+              first_name: data.slugFirstName ?? data.first_name ?? undefined,
+              last_name: data.slugLastName ?? data.last_name ?? undefined,
             }),
           }),
         });
@@ -131,6 +131,12 @@ export default function EditApplicationPage() {
         slug = uniqueSlug;
       }
 
+      const { slugFirstName, slugLastName, slugManuallyEdited, ...dataForApi } =
+        data;
+      void slugFirstName;
+      void slugLastName;
+      void slugManuallyEdited;
+
       const response = await fetch('/api/applications', {
         method: 'PUT',
         headers: {
@@ -138,7 +144,7 @@ export default function EditApplicationPage() {
         },
         body: JSON.stringify({
           id,
-          ...data,
+          ...dataForApi,
           slug,
         }),
       });

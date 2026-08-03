@@ -285,11 +285,23 @@ sequenceDiagram
   UploadAPI->>R2: PutObject
   R2-->>UploadAPI: cv_url
   UploadAPI-->>Form: cv_url
-  Form->>NewPage: onSubmit(payload + slugManuallyEdited flag)
+  Form->>NewPage: onSubmit(payload + slugManuallyEdited + slug name inputs)
   alt slugManuallyEdited && available (already validated)
     NewPage->>NewPage: use typed slug directly
-  else auto slug (or manual failed)
-    NewPage->>SlugAPI: POST { company, role, slugNamePosition, first/last name? }
+  else auto slug
+    NewPage->>ValidateAPI: POST { slug } (previewed value)
+    alt available
+      ValidateAPI-->>NewPage: { ok: true }
+      NewPage->>NewPage: use previewed slug
+    else taken (race)
+      ValidateAPI-->>NewPage: { ok: false }
+      NewPage->>U: show collision error
+    else invalid format
+      NewPage->>SlugAPI: POST { company, role, slugNamePosition, typed first/last name? }
+      SlugAPI-->>NewPage: 200 { slug } or 409
+    end
+  else manual failed format/validate
+    NewPage->>SlugAPI: POST { company, role, slugNamePosition, typed first/last name? }
     SlugAPI->>Applications: checkSlugUniqueness(derivedSlug)
     alt available
       SlugAPI-->>NewPage: 200 { slug }
@@ -315,7 +327,9 @@ sequenceDiagram
 
 **Live slug feedback** — As the user fills in company, role, or changes the **Name in URL** preference, the form debounces a `POST /api/slug` call to check whether the derived slug is already taken. The slug field is updated with the result and a green or red status line appears immediately. When the user edits the slug field manually, the debounce instead calls `POST /api/slug/validate` (requires auth; checks format and uniqueness for that specific string).
 
-**Slug on Save** — The form makes a final server-side check before submitting. For a **manually edited slug**, `POST /api/slug/validate` is called once more to prevent race conditions. The page then decides which slug to persist: if the typed slug passed format + validate it is used directly (no call to `POST /api/slug`); otherwise `POST /api/slug` (`reserveBaseSlug`) is called for the derived company/role slug. If that slug is taken the API returns **409** — no numeric suffix is appended, and the user is asked to add their name to the URL or change the slug.
+**Slug on Save** — The form makes a final server-side check before submitting. For a **manually edited slug**, `POST /api/slug/validate` is called once more to prevent race conditions. The page then decides which slug to persist: if the typed slug passed format + validate it is used directly (no call to `POST /api/slug`); otherwise `POST /api/slug` (`reserveBaseSlug`) is called for the derived company/role slug using the **typed** name fields (same source as the live preview — not visibility-filtered candidate toggles). If that slug is taken the API returns **409** — no numeric suffix is appended, and the user is asked to add their name to the URL or change the slug.
+
+For **auto slug** mode, the page keeps the **previewed** slug from the form after a final `POST /api/slug/validate` uniqueness check, so the saved URL matches what the user saw even when candidate name include toggles are off.
 
 **Candidate fields** — First name, last name, location, portfolio URL, and LinkedIn URL are sent from the form; toggles determine which are stored or set to null. If the client does not send them, the API falls back to the current profile. If the user chooses **Name in URL** (At start or At end), both the live slug call and the final save call include `slugNamePosition` and first/last name so the shareable link becomes `firstname-lastname-company-role` or `company-role-firstname-lastname`.
 
@@ -527,6 +541,7 @@ Candidate fields on the application are either supplied by the form (with toggle
 |---|---|---|
 | 8 | User types invalid characters (e.g. uppercase, spaces, trailing hyphen) | `validateSlugFormat` fires immediately (no debounce, no network call); red error shown inline. |
 | 9 | Slug exceeds 128 characters | Same as above — format rejection, no network call. |
+| 9b | Auto-derived company/role(/name) slug would exceed 128 characters | `generateSlug` / `buildSlug` clamp to 128 (no trailing hyphen); live preview and `POST /api/slug` return the clamped value, which passes `validateSlugFormat`. |
 | 10 | User types a slug that is already taken | `POST /api/slug/validate` returns `{ ok: false }`; red collision message shown. |
 | 11 | User types a slug that is available | Green "This slug is available." shown. |
 | 12 | Session expires while user is filling the form | `POST /api/slug/validate` returns 401; red "Sign in again to check slug availability." shown. |
@@ -538,9 +553,9 @@ Candidate fields on the application are either supplied by the form (with toggle
 |---|---|---|
 | 14 | User clicks Save while slug is still `checking` | Form blocks submit: "Please wait until the slug has finished updating." |
 | 15 | User clicks Save while slug is `unavailable` | Form blocks submit with the current unavailable message. |
-| 16 | User clicks Save while slug is `available` | Form proceeds to CV upload and then `onSubmit`. The page calls `reserveSlugFromRole()` as a final check; if the slug became taken in the interim (race), 409 is surfaced via `alert()`. |
-| 17 | `POST /api/slug` returns 409 at save time (race condition) | `alert()` shows the collision message. The application is **not** created. The user must change the slug or add their name. |
-| 18 | `POST /api/slug` returns an empty or malformed `slug` field on 200 | `throw new Error("Failed to generate slug")` → `alert()`. Application not created. |
+| 16 | User clicks Save while slug is `available` | Form proceeds to CV upload and then `onSubmit`. The page re-checks the **previewed** slug via `POST /api/slug/validate`; if it became taken in the interim (race), the error is surfaced via `alert()`. |
+| 17 | Previewed slug is taken at save time (race condition) | `alert()` shows the collision message. The application is **not** created. The user must change the slug or add their name. |
+| 18 | Previewed slug fails format at save time | Page falls back to `POST /api/slug` (`reserveSlugFromRole`) using typed name inputs; empty/malformed 200 → `alert()`. |
 
 ### 8.4 Slug: on Save (manual mode)
 

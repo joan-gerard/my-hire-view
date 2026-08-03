@@ -225,6 +225,12 @@ export interface ApplicationFormData {
    * Set by ApplicationForm on submit. When true, create flow may keep the typed slug if it passes format + availability checks.
    */
   slugManuallyEdited?: boolean;
+  /**
+   * Typed candidate names for slug generation (Name in URL), even when first/last
+   * are toggled off for the public page. Stripped before POST/PUT applications.
+   */
+  slugFirstName?: string | null;
+  slugLastName?: string | null;
   /** primary = selected from library; tailored = uploaded for this application. */
   cv_type?: ApplicationCvType;
   /** When cv_type is primary, the selected library id. */

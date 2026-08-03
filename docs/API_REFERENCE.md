@@ -430,7 +430,7 @@ Remove a primary CV from the library and delete its R2 object. Applications that
 
 `POST /api/slug`
 
-Derive a slug from company/role (and optional name-in-URL rules) via `reserveBaseSlug`. Returns **409** if that exact slug is already taken **for the current user** (no numeric suffix). Optional `excludeId` ignores the current row when editing. Slugs are unique per user (`UNIQUE (user_id, slug)`), not globally.
+Derive a slug from company/role (and optional name-in-URL rules) via `reserveBaseSlug`. Generated slugs are clamped to **128** characters (same limit as `validateSlugFormat`). Returns **409** if that exact slug is already taken **for the current user** (no numeric suffix). Optional `excludeId` ignores the current row when editing. Slugs are unique per user (`UNIQUE (user_id, slug)`), not globally.
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)

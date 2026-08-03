@@ -138,6 +138,24 @@ describe("generateSlug", () => {
   it("handles numeric company and role", () => {
     expect(generateSlug("42", "5g")).toBe("42-5g");
   });
+
+  it("clamps output to SLUG_MAX_LENGTH", () => {
+    const company = "a".repeat(100);
+    const role = "b".repeat(100);
+    const slug = generateSlug(company, role);
+    expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
+    expect(validateSlugFormat(slug).ok).toBe(true);
+  });
+
+  it("does not leave a trailing hyphen after clamping", () => {
+    // Construct input so the uncapped slug would end near a hyphen boundary at max length.
+    const company = "a".repeat(SLUG_MAX_LENGTH - 1);
+    const role = "bb";
+    const slug = generateSlug(company, role);
+    expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
+    expect(slug).not.toMatch(/-$/);
+    expect(validateSlugFormat(slug).ok).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -188,5 +206,15 @@ describe("buildSlug", () => {
     expect(buildSlug("Volvo", "Engineer", null, null, "end")).toBe(
       "volvo-engineer",
     );
+  });
+
+  it("clamps name+company+role combinations to SLUG_MAX_LENGTH", () => {
+    const company = "a".repeat(80);
+    const role = "b".repeat(80);
+    const first = "c".repeat(40);
+    const last = "d".repeat(40);
+    const slug = buildSlug(company, role, first, last, "start");
+    expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
+    expect(validateSlugFormat(slug).ok).toBe(true);
   });
 });

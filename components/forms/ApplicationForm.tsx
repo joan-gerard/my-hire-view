@@ -685,6 +685,9 @@ export default function ApplicationForm({
         show_profile_picture: includePicture,
         cv_type: cvMode,
         primary_cv_id: primaryCvId,
+        // Name-in-URL uses typed values; include toggles only affect public-page fields.
+        slugFirstName: formData.first_name?.trim() || null,
+        slugLastName: formData.last_name?.trim() || null,
         ...(resolveSlugOnCreate ? { slugManuallyEdited } : {}),
       };
       await onSubmit(payload);

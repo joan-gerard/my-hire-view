@@ -67,6 +67,7 @@ export async function validateSlugForApplication(
 /**
  * Returns the slug derived from company/role (and name-in-URL rules when `position` and names are set)
  * if it is not already used in the database. Otherwise throws {@link SlugCollisionError}.
+ * Output is capped at {@link SLUG_MAX_LENGTH} via `generateSlug` / `buildSlug`.
  * `excludeId` ignores that application row when checking (edit flow).
  */
 export async function reserveBaseSlug(

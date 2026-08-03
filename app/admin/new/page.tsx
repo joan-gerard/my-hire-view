@@ -66,14 +66,16 @@ export default function NewApplicationPage() {
     try {
       setLoading(true);
 
+      // Same name source as live preview (typed form values), not visibility-filtered
+      // candidate fields — so Name in URL stays consistent when include toggles are off.
       const slugBody = {
         company: data.company,
         role: data.role,
         slugNamePosition: data.slugNamePosition ?? null,
         ...((data.slugNamePosition === "start" ||
           data.slugNamePosition === "end") && {
-          first_name: data.first_name ?? undefined,
-          last_name: data.last_name ?? undefined,
+          first_name: data.slugFirstName ?? data.first_name ?? undefined,
+          last_name: data.slugLastName ?? data.last_name ?? undefined,
         }),
       };
 
@@ -97,6 +99,26 @@ export default function NewApplicationPage() {
           throw new Error("Failed to generate slug");
         }
         return generated.trim();
+      }
+
+      async function confirmPreviewedSlug(trimmed: string): Promise<string> {
+        const format = validateSlugFormat(trimmed);
+        if (!format.ok) {
+          return reserveSlugFromRole();
+        }
+        const validateRes = await fetch("/api/slug/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ slug: trimmed }),
+        });
+        const validateJson: { ok?: boolean; error?: string } = await validateRes
+          .json()
+          .catch(() => ({}));
+        if (validateRes.ok && validateJson.ok === true) {
+          return trimmed;
+        }
+        throw new Error(validateJson.error || "Failed to generate slug");
       }
 
       let finalSlug: string;
@@ -123,11 +145,16 @@ export default function NewApplicationPage() {
           finalSlug = await reserveSlugFromRole();
         }
       } else {
-        finalSlug = await reserveSlugFromRole();
+        // Auto: keep the previewed slug (same derivation as the live form), after a
+        // final uniqueness check — do not re-derive from visibility-filtered names.
+        finalSlug = await confirmPreviewedSlug(data.slug.trim());
       }
 
-      const { slugManuallyEdited, ...dataForApi } = data;
+      const { slugManuallyEdited, slugFirstName, slugLastName, ...dataForApi } =
+        data;
       void slugManuallyEdited;
+      void slugFirstName;
+      void slugLastName;
 
       const response = await fetch("/api/applications", {
         method: "POST",
