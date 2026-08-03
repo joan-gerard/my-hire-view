@@ -1,6 +1,5 @@
 "use client";
 
-import ViewPageFooter from "@/components/public/ViewPageFooter";
 import {
   headerEntrance,
   staggerContainer,
@@ -9,6 +8,7 @@ import {
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import ApplicationViewFooter from "./ApplicationViewFooter";
 
 const BACKGROUND_IMAGE = "/hero-image.jpg";
 
@@ -16,7 +16,7 @@ const BACKGROUND_IMAGE = "/hero-image.jpg";
  * Single recruiter-facing empty state for archived, draft, deleted, or
  * otherwise missing public application links. Matches homepage branding:
  * wordmark top bar, full-bleed atmosphere, light display type, teal CTA,
- * black footer.
+ * compact dark footer.
  */
 export default function UnavailableApplicationView() {
   return (
@@ -101,7 +101,7 @@ export default function UnavailableApplicationView() {
         </div>
       </section>
 
-      <ViewPageFooter />
+      <ApplicationViewFooter variant="dark" />
     </div>
   );
 }

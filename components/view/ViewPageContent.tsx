@@ -1,7 +1,6 @@
 "use client";
 
 import ApplicationPageHeader from "@/components/public/ApplicationPageHeader";
-import ViewPageFooter from "@/components/public/ViewPageFooter";
 import type {
   PublicApplication,
   PublicApplicationResponse,
@@ -9,6 +8,7 @@ import type {
 import { isUnavailablePublicApplication } from "@/lib/types/application";
 import { useCallback, useEffect, useState } from "react";
 import ApplicationPageContent from "./ApplicationPageContent";
+import ApplicationViewFooter from "./ApplicationViewFooter";
 import UnavailableApplicationView from "./UnavailableApplicationView";
 
 interface ViewPageContentProps {
@@ -25,7 +25,6 @@ export default function ViewPageContent({
   const [application, setApplication] =
     useState<PublicApplicationResponse>(initialApplication);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [showFooter, setShowFooter] = useState<boolean | null>(null);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -50,32 +49,12 @@ export default function ViewPageContent({
     setApplication(data);
   }, [publicId, slug]);
 
-  // Footer is shown only to non-owners (recruiters/visitors)
-  useEffect(() => {
-    if (isUnavailablePublicApplication(application)) return;
-
-    let cancelled = false;
-    fetch(`/api/applications/${publicId}/${slug}/viewer-status`, {
-      credentials: "include",
-    })
-      .then((res) => (res.ok ? res.json() : { isOwner: false }))
-      .then((data) => {
-        if (!cancelled) setShowFooter(data.isOwner === false);
-      })
-      .catch(() => {
-        if (!cancelled) setShowFooter(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [publicId, slug, application]);
-
   if (isUnavailablePublicApplication(application)) {
     return <UnavailableApplicationView />;
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <div className="flex min-h-screen flex-col bg-background">
       <ApplicationPageHeader
         company={application.company}
         role={application.role}
@@ -93,7 +72,7 @@ export default function ViewPageContent({
         useOriginalCvFilename={application.use_original_cv_filename}
       />
 
-      <div className="mx-auto max-w-6xl mt-6">
+      <div className="mx-auto w-full max-w-6xl flex-1 mt-6">
         <ApplicationPageContent
           publicId={publicId}
           slug={slug}
@@ -104,7 +83,7 @@ export default function ViewPageContent({
         />
       </div>
 
-      {showFooter === true && <ViewPageFooter />}
+      <ApplicationViewFooter />
     </div>
   );
 }

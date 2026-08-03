@@ -24,7 +24,6 @@ In the table of contents, endpoint status is marked with a colored dot:
   - 🟢 [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]`
   - 🟠 [POST application view](#post-application-view) — `POST /api/applications/[publicId]/[slug]/view`
   - 🟠 [POST application download](#post-application-download) — `POST /api/applications/[publicId]/[slug]/download`
-  - 🔴 [GET application viewer status](#get-application-viewer-status) — `GET /api/applications/[publicId]/[slug]/viewer-status`
 - [Profile](#profile)
   - 🟢 [GET profile](#get-profile) — `GET /api/profile`
   - 🟢 [PUT profile](#put-profile) — `PUT /api/profile`
@@ -237,7 +236,7 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 - **Unavailable stub:** archived and draft apps return `{ status: "unavailable" }` only (no PII or media). Skips R2 `HeadObject`. The public view page shows one empty state for unavailable **and** for **404** (deleted / unknown URL).
 - `cv_exists` helps the UI avoid broken “View CV” links when the object is missing (active apps only).
 - Clear **404** when the public id + slug pair does not resolve.
-- Invalid `publicId` or slug format is rejected in `resolvePublicApplication` before any DB query (same helper as view / download / viewer-status).
+- Invalid `publicId` or slug format is rejected in `resolvePublicApplication` before any DB query (same helper as view / download).
 
 ---
 
@@ -317,32 +316,6 @@ Record a CV download. Same owner-exclusion and RPC pattern as view (`increment_a
 **Deferred / known limitations**
 
 - Same cookie / in-memory rate-limit caveats as view. **Not planned for now.**
-
----
-
-### GET application viewer status
-
-`GET /api/applications/[publicId]/[slug]/viewer-status`
-
-Whether the current viewer owns the application (used to show the public-view footer only to non-owners). Unauthenticated viewers get `isOwner: false`.
-
-- **Auth:** Not required
-- **Rate limit:** None
-- **Success:** `200` `{ isOwner: boolean }`
-- **Errors:** `404`; `500`
-
-**What works**
-
-- Minimal payload (`{ isOwner }`) — does not leak application content.
-- Works for anonymous and signed-in viewers; owners are detected from session.
-- Supports UI that should differ for recruiters vs the applicant without a full page refetch.
-- Invalid `publicId` or slug format returns **404** without querying the database (same early check as view).
-
-**Improvement opportunities**
-
-- Add a light rate limit (this is a cheap ownership probe and currently unlimited).
-- Log unexpected errors.
-- Could fold into the public GET payload (e.g. `isOwner`) to save a round trip, if the view page always needs both.
 
 ---
 
