@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from '@/lib/rate-limit';
 import { resolvePublicApplication } from '@/lib/utils/resolve-public-application';
+import { handleApiError } from '@/lib/api/handle-api-error';
 
 export async function POST(
   request: NextRequest,
@@ -37,17 +38,19 @@ export async function POST(
     });
 
     if (rpcError) {
-      return NextResponse.json(
-        { error: 'Failed to update view count' },
-        { status: 500 }
+      return handleApiError(
+        'POST /api/applications/[publicId]/[slug]/view RPC',
+        rpcError,
+        { message: 'Failed to update view count' },
       );
     }
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json(
-      { error: 'Failed to track view' },
-      { status: 500 }
+  } catch (error) {
+    return handleApiError(
+      'POST /api/applications/[publicId]/[slug]/view',
+      error,
+      { message: 'Failed to track view' },
     );
   }
 }

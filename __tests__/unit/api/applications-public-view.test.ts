@@ -197,6 +197,18 @@ describe("GET /api/applications/[publicId]/[slug]", () => {
     const response = await GET(makeGetRequest(), { params: ROUTE_PARAMS });
     expect(response.status).toBe(429);
   });
+
+  it("returns 500 when an unexpected error occurs", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockResolvePublicApplication.mockRejectedValue(new Error("supabase down"));
+
+    const response = await GET(makeGetRequest(), { params: ROUTE_PARAMS });
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Failed to fetch application");
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
 });
 
 describe("POST /api/applications/[publicId]/[slug]/view", () => {

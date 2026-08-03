@@ -482,4 +482,18 @@ describe("GET /api/applications/by-id/[id]", () => {
     });
     expect(response.status).toBe(401);
   });
+
+  it("returns 500 when an unexpected error occurs after auth", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockCreateClient.mockRejectedValue(new Error("supabase down"));
+
+    const response = await getById(makeGetRequest(), {
+      params: Promise.resolve({ id: APP_ID }),
+    });
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Failed to fetch application");
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
 });

@@ -4,6 +4,7 @@ import { checkCvObjectExists } from '@/lib/utils/cv-storage';
 import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import { resolvePublicApplication } from '@/lib/utils/resolve-public-application';
 import { toPublicApplication } from '@/lib/types/application';
+import { handleApiError } from '@/lib/api/handle-api-error';
 
 /** Public GET: 120 requests per minute per IP to allow normal viewing while limiting scraping. */
 const PUBLIC_APPLICATION_GET_LIMIT = { limit: 120, windowMs: 60_000 };
@@ -35,10 +36,11 @@ export async function GET(
     return NextResponse.json({
       data: toPublicApplication(data, cv_exists),
     });
-  } catch {
-    return NextResponse.json(
-      { error: 'Failed to fetch application' },
-      { status: 500 }
+  } catch (error) {
+    return handleApiError(
+      'GET /api/applications/[publicId]/[slug]',
+      error,
+      { message: 'Failed to fetch application' },
     );
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { resolvePublicApplication } from '@/lib/utils/resolve-public-application';
+import { handleApiError } from '@/lib/api/handle-api-error';
 
 /**
  * GET /api/applications/[publicId]/[slug]/viewer-status
@@ -28,10 +29,11 @@ export async function GET(
     const isOwner = user?.id === resolved.ownerUserId;
 
     return NextResponse.json({ isOwner });
-  } catch {
-    return NextResponse.json(
-      { error: 'Failed to get viewer status' },
-      { status: 500 }
+  } catch (error) {
+    return handleApiError(
+      'GET /api/applications/[publicId]/[slug]/viewer-status',
+      error,
+      { message: 'Failed to get viewer status' },
     );
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import { checkCvObjectExists } from '@/lib/utils/cv-storage';
+import { handleApiError } from '@/lib/api/handle-api-error';
 
 /**
  * GET a single application by id. Requires auth; returns 404 if not found or not owned by user.
@@ -11,8 +12,14 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let user;
   try {
-    const user = await requireAuth();
+    user = await requireAuth();
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
     const supabase = await createClient();
     const { id } = await params;
 
@@ -37,7 +44,11 @@ export async function GET(
     return NextResponse.json({
       data: { ...data, cv_exists },
     });
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    return handleApiError(
+      'GET /api/applications/by-id/[id]',
+      error,
+      { message: 'Failed to fetch application' },
+    );
   }
 }

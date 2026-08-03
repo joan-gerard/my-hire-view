@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from '@/lib/rate-limit';
 import { resolvePublicApplication } from '@/lib/utils/resolve-public-application';
+import { handleApiError } from '@/lib/api/handle-api-error';
 
 /**
  * POST /api/applications/[publicId]/[slug]/download
@@ -42,17 +43,19 @@ export async function POST(
     });
 
     if (rpcError) {
-      return NextResponse.json(
-        { error: 'Failed to update download count' },
-        { status: 500 }
+      return handleApiError(
+        'POST /api/applications/[publicId]/[slug]/download RPC',
+        rpcError,
+        { message: 'Failed to update download count' },
       );
     }
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json(
-      { error: 'Failed to track download' },
-      { status: 500 }
+  } catch (error) {
+    return handleApiError(
+      'POST /api/applications/[publicId]/[slug]/download',
+      error,
+      { message: 'Failed to track download' },
     );
   }
 }

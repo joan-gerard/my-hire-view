@@ -58,7 +58,7 @@ In the table of contents, endpoint status is marked with a colored dot:
 
 Related deep-dives: [PDF_AND_R2.md](PDF_AND_R2.md) (CV upload), [PROFILE_PICTURE.md](PROFILE_PICTURE.md), [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
 
-Cross-cutting improvements that apply to many routes: schema validation at the boundary (e.g. Zod), a shared `withAuth` / `handleApiError` helper so auth failures are not confused with other errors, and structured server-side logging without leaking internals to clients. See also [CODE_REVIEW.md](CODE_REVIEW.md).
+Cross-cutting: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` logs unexpected failures server-side and returns a generic JSON error (used on public application routes and by-id GET); a shared `withAuth` wrapper is still open so auth failures are not confused with other errors. See also [CODE_REVIEW.md](CODE_REVIEW.md).
 
 ---
 
@@ -238,9 +238,7 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 
 **Improvement opportunities**
 
-- Cache `cv_exists` or skip the HeadObject on every request if latency / R2 cost becomes an issue.
 - For archived applications (`status = archived`), consider a dedicated response shape vs full payload (page already handles archived UI).
-- Log unexpected errors server-side before returning **500**.
 
 ---
 
@@ -253,18 +251,19 @@ Owner-only fetch for the edit page. Same `cv_exists` behaviour as the public slu
 - **Auth:** Required
 - **Rate limit:** None
 - **Success:** `200` `{ data: Application & { cv_exists?: boolean } }`
-- **Errors:** `401`; `404` if missing or not owned
+- **Errors:** `401`; `404` if missing or not owned; `500` `{ error: "Failed to fetch application" }`
 
 **What works**
 
 - Auth required; filters by both `id` and `user_id` so owners cannot load another user’s row.
 - Dedicated by-id endpoint avoids fetching the full list just to edit one application.
 - Same `cv_exists` enrichment as the public slug GET for consistent edit UX.
+- Auth failures stay **401**; unexpected errors are logged via `handleApiError` and return **500**.
 
 **Improvement opportunities**
 
 - Add a rate limit consistent with other authenticated reads.
-- Validate `id` as a UUID; distinguish **401** from **500** in the catch path.
+- Validate `id` as a UUID.
 - Optionally make `cv_exists` lazy/opt-in if HeadObject slows the edit page.
 
 ---
