@@ -4,39 +4,44 @@ Standalone catalog of Next.js App Router API routes under `app/api/`. For archit
 
 Each endpoint lists **What works** (practices already in place) and **Improvement opportunities** (follow-ups). When an improvement is shipped, move it into **What works** so this doc stays a living checklist.
 
+In the table of contents, endpoint status is marked with a colored dot:
+
+- 🟢 — no open improvement opportunities
+- 🔴 — one or more improvements still to implement
+
 ---
 
 ## Table of contents
 
 - [Conventions](#conventions)
 - [Applications](#applications)
-  - [GET applications](#get-applications) — `GET /api/applications`
-  - [POST applications](#post-applications) — `POST /api/applications`
-  - [PUT applications](#put-applications) — `PUT /api/applications`
-  - [DELETE applications](#delete-applications) — `DELETE /api/applications`
-  - [GET application by public path](#get-application-by-public-path) — `GET /api/applications/[publicId]/[slug]`
-  - [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]`
-  - [POST application view](#post-application-view) — `POST /api/applications/[publicId]/[slug]/view`
-  - [POST application download](#post-application-download) — `POST /api/applications/[publicId]/[slug]/download`
-  - [GET application viewer status](#get-application-viewer-status) — `GET /api/applications/[publicId]/[slug]/viewer-status`
+  - 🟢 [GET applications](#get-applications) — `GET /api/applications`
+  - 🟢 [POST applications](#post-applications) — `POST /api/applications`
+  - 🟢 [PUT applications](#put-applications) — `PUT /api/applications`
+  - 🔴 [DELETE applications](#delete-applications) — `DELETE /api/applications`
+  - 🔴 [GET application by public path](#get-application-by-public-path) — `GET /api/applications/[publicId]/[slug]`
+  - 🔴 [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]`
+  - 🔴 [POST application view](#post-application-view) — `POST /api/applications/[publicId]/[slug]/view`
+  - 🔴 [POST application download](#post-application-download) — `POST /api/applications/[publicId]/[slug]/download`
+  - 🔴 [GET application viewer status](#get-application-viewer-status) — `GET /api/applications/[publicId]/[slug]/viewer-status`
 - [Profile](#profile)
-  - [GET profile](#get-profile) — `GET /api/profile`
-  - [PUT profile](#put-profile) — `PUT /api/profile`
-  - [GET profile primary CVs](#get-profile-primary-cvs) — `GET /api/profile/primary-cvs`
-  - [POST profile primary CV](#post-profile-primary-cv) — `POST /api/profile/primary-cvs`
-  - [DELETE profile primary CV](#delete-profile-primary-cv) — `DELETE /api/profile/primary-cvs`
+  - 🟢 [GET profile](#get-profile) — `GET /api/profile`
+  - 🟢 [PUT profile](#put-profile) — `PUT /api/profile`
+  - 🟢 [GET profile primary CVs](#get-profile-primary-cvs) — `GET /api/profile/primary-cvs`
+  - 🟢 [POST profile primary CV](#post-profile-primary-cv) — `POST /api/profile/primary-cvs`
+  - 🟢 [DELETE profile primary CV](#delete-profile-primary-cv) — `DELETE /api/profile/primary-cvs`
 - [Slugs](#slugs)
-  - [POST slug](#post-slug) — `POST /api/slug`
-  - [POST slug validate](#post-slug-validate) — `POST /api/slug/validate`
+  - 🟢 [POST slug](#post-slug) — `POST /api/slug`
+  - 🟢 [POST slug validate](#post-slug-validate) — `POST /api/slug/validate`
 - [Uploads](#uploads)
-  - [POST upload CV](#post-upload-cv) — `POST /api/upload`
-  - [POST upload profile picture](#post-upload-profile-picture) — `POST /api/upload/profile-picture`
+  - 🔴 [POST upload CV](#post-upload-cv) — `POST /api/upload`
+  - 🔴 [POST upload profile picture](#post-upload-profile-picture) — `POST /api/upload/profile-picture`
 - [Auth](#auth)
-  - [POST auth login](#post-auth-login) — `POST /api/auth/login`
-  - [POST auth signup](#post-auth-signup) — `POST /api/auth/signup`
-  - [POST auth logout](#post-auth-logout) — `POST /api/auth/logout`
+  - 🔴 [POST auth login](#post-auth-login) — `POST /api/auth/login`
+  - 🔴 [POST auth signup](#post-auth-signup) — `POST /api/auth/signup`
+  - 🔴 [POST auth logout](#post-auth-logout) — `POST /api/auth/logout`
 - [Waitlist](#waitlist)
-  - [POST waitlist](#post-waitlist) — `POST /api/waitlist`
+  - 🔴 [POST waitlist](#post-waitlist) — `POST /api/waitlist`
 - [Types](#types)
 
 ---
@@ -170,28 +175,21 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body:** `id` (required) plus partial `ApplicationUpdateInput` (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields, `slugNamePosition`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
+- **Body** (`ApplicationUpdateInput`, Zod `applicationUpdateSchema`): `id` (UUID, required) plus optional partial fields (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields, `slugNamePosition`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Unexpected keys → **400**. Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
 - **Success:** `200` `{ data: Application }`
-- **Errors:** `400`; `401`; `404` if missing or not owned; `409` tailored `cv_url` already used by another application; `429`
-
-Note: `description` in the body is ignored (column removed in migration 017).
+- **Errors:** `400` schema / insert-style validation / primary CV missing; `401`; `404` if missing or not owned; `409` slug collision or tailored `cv_url` already used; `429`; `500` unexpected failures
 
 **What works**
 
-- Auth + ownership check before update; **404** when missing or not owned (no existence leak across users beyond that).
+- Auth required; dedicated auth try/catch → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
 - Rate limited.
-- On `cv_url` change, deletes the **previous** R2 object only when `cv_type` is **tailored** and `deleteApplicationCvIfTailored` / `deleteCvIfOurs` confirms the URL is under `R2_PUBLIC_BASE_URL` **and** the object key belongs to the caller (`cvs/{userId}/tailored/…` or `cvs/{userId}/primary/…` for ownership; only tailored objects are deleted on replace).
+- **Schema validation** (`applicationUpdateSchema`): UUID `id`; optional trimmed fields / http(s) URLs / slug format; enums; rejects unexpected keys (blocks mass-assignment of `user_id`, counters, etc.).
+- Ownership check before update; **404** when missing or not owned.
+- When `slug` is provided, re-checks uniqueness via `validateSlugForApplication` (exclude current id); Postgres `23505` → **409** with `SLUG_COLLISION_USER_MESSAGE`.
+- On tailored `cv_url` change: persists the new URL first, then deletes the previous R2 object only after a successful update (`deleteApplicationCvIfTailored`). Primary library objects are never deleted here.
 - Rejects a new tailored `cv_url` that is not a caller-owned tailored upload (**400**), or that is already used by another of the caller’s applications (**409**). Keeping the same `cv_url` on the current row is allowed. Switching to **primary** resolves URL from the caller’s `primary_cvs` library via `primary_cv_id`.
 - Persists `show_profile_picture` when provided (public view uses live profile picture).
 - Maps `slugNamePosition` → `include_name_in_slug` instead of exposing the DB column name as the only contract.
-
-**Improvement opportunities**
-
-- Avoid spreading the raw body into the update payload (mass-assignment risk for fields like `user_id`, `view_count`, `download_count`). Whitelist allowed keys explicitly.
-- Schema-validate partial updates; require `id` as a UUID.
-- **Delete-before-update ordering:** on tailored CV replacement the handler calls `deleteApplicationCvIfTailored(existing.cv_url, existing.cv_type, …)` **before** the Supabase update. If the update then fails (**400**), the row still points at `existing.cv_url` but the object is already gone. Persist the new `cv_url` first, then delete the old object only after a successful update.
-- Improve error handling / logging (same catch-all **401** issue).
-- Optionally return **409** on slug collisions instead of a generic **400**.
 
 ---
 
@@ -683,7 +681,7 @@ Pre-launch landing-page signup. Inserts into `waitlist_signups` via the service-
 Canonical TypeScript shapes live in:
 
 - `lib/types/application.ts` — `Application`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
-- `lib/validation/application.ts` — `applicationCreateSchema` / `formatApplicationCreateZodError` for `POST /api/applications`
+- `lib/validation/application.ts` — `applicationCreateSchema` / `formatApplicationCreateZodError` for `POST /api/applications`; `applicationUpdateSchema` / `formatApplicationUpdateZodError` for `PUT /api/applications`
 - `lib/validation/slug.ts` — `slugReserveSchema` / `formatSlugReserveZodError` for `POST /api/slug`; `slugValidateSchema` / `formatSlugValidateZodError` for `POST /api/slug/validate`
 - `lib/types/profile.ts` — `Profile`, `ProfileUpdateInput`
 - `lib/types/primary-cv.ts` — `PrimaryCv`, `PrimaryCvApplicationPreview`, `PRIMARY_CV_MAX_PER_USER`

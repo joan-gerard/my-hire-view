@@ -15,7 +15,6 @@ import {
   APPLICATION_LIST_SELECT,
   type ApplicationCvType,
   type ApplicationStatus,
-  type ApplicationUpdateInput,
 } from "@/lib/types/application";
 import {
   checkCvObjectExists,
@@ -28,7 +27,9 @@ import {
 } from "@/lib/utils/slug";
 import {
   applicationCreateSchema,
+  applicationUpdateSchema,
   formatApplicationCreateZodError,
+  formatApplicationUpdateZodError,
 } from "@/lib/validation/application";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -56,14 +57,6 @@ function normalizeListSearchQuery(raw: string | null): string | null {
     .replace(/\s+/g, " ")
     .trim();
   return cleaned.length > 0 ? cleaned : null;
-}
-
-function isValidStatus(value: unknown): value is ApplicationStatus {
-  return value === "active" || value === "draft" || value === "archived";
-}
-
-function isValidCvType(value: unknown): value is ApplicationCvType {
-  return value === "primary" || value === "tailored";
 }
 
 export async function GET(request: NextRequest) {
@@ -353,36 +346,62 @@ export async function PUT(request: NextRequest) {
   const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
+  let user;
   try {
-    const user = await requireAuth();
-    const supabase = await createClient();
-    const body: ApplicationUpdateInput & { id: string } = await request.json();
-    const {
-      id,
-      slugNamePosition,
-      show_profile_picture,
-      status,
-      cv_type,
-      primary_cv_id,
-      cv_url,
-      cv_filename,
-      ...rest
-    } = body;
+    user = await requireAuth();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    if (!id) {
+  try {
+    const raw: unknown = await request.json();
+    const parsed = applicationUpdateSchema.safeParse(raw);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Application ID is required" },
+        { error: formatApplicationUpdateZodError(parsed.error) },
         { status: 400 },
       );
     }
+    const body = parsed.data;
+    const { id } = body;
 
-    const updatePayload: Record<string, unknown> = { ...rest };
-    delete updatePayload.description; // Column removed in migration 017
-    delete updatePayload.is_active; // Replaced by status (migration 021)
-    delete updatePayload.archived_at; // Server-managed with status
+    if (body.slug !== undefined) {
+      const slugCheck = await validateSlugForApplication(
+        body.slug,
+        user.id,
+        id,
+      );
+      if (!slugCheck.ok) {
+        const status =
+          slugCheck.error === SLUG_COLLISION_USER_MESSAGE ? 409 : 400;
+        return NextResponse.json({ error: slugCheck.error }, { status });
+      }
+    }
 
-    if (slugNamePosition !== undefined) {
-      updatePayload.include_name_in_slug = slugNamePosition;
+    const supabase = await createClient();
+
+    const updatePayload: Record<string, unknown> = {};
+    if (body.company !== undefined) updatePayload.company = body.company;
+    if (body.role !== undefined) updatePayload.role = body.role;
+    if (body.slug !== undefined) updatePayload.slug = body.slug;
+    if (body.video_url !== undefined) updatePayload.video_url = body.video_url;
+    if (body.first_name !== undefined) updatePayload.first_name = body.first_name;
+    if (body.last_name !== undefined) updatePayload.last_name = body.last_name;
+    if (body.location !== undefined) updatePayload.location = body.location;
+    if (body.portfolio_url !== undefined) {
+      updatePayload.portfolio_url = body.portfolio_url;
+    }
+    if (body.linkedin_url !== undefined) {
+      updatePayload.linkedin_url = body.linkedin_url;
+    }
+    if (body.use_original_cv_filename !== undefined) {
+      updatePayload.use_original_cv_filename = body.use_original_cv_filename;
+    }
+    if (body.slugNamePosition !== undefined) {
+      updatePayload.include_name_in_slug = body.slugNamePosition;
+    }
+    if (body.show_profile_picture !== undefined) {
+      updatePayload.show_profile_picture = body.show_profile_picture === true;
     }
 
     const { data: existing } = await supabase
@@ -398,16 +417,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (status !== undefined) {
-      if (!isValidStatus(status)) {
-        return NextResponse.json(
-          { error: "Invalid status" },
-          { status: 400 },
-        );
-      }
-      updatePayload.status = status;
-      if (status === "archived") {
-        // Always reset the retention clock when (re-)archiving
+    if (body.status !== undefined) {
+      updatePayload.status = body.status;
+      if (body.status === "archived") {
         updatePayload.archived_at = new Date().toISOString();
       } else {
         updatePayload.archived_at = null;
@@ -415,31 +427,30 @@ export async function PUT(request: NextRequest) {
     }
 
     const cvFieldsTouched =
-      cv_type !== undefined ||
-      primary_cv_id !== undefined ||
-      cv_url !== undefined ||
-      cv_filename !== undefined;
+      body.cv_type !== undefined ||
+      body.primary_cv_id !== undefined ||
+      body.cv_url !== undefined ||
+      body.cv_filename !== undefined;
+
+    /** Old tailored object to delete only after a successful DB update. */
+    let previousCvToDelete: {
+      url: string;
+      cvType: ApplicationCvType;
+    } | null = null;
 
     if (cvFieldsTouched) {
       let nextCvType: ApplicationCvType =
-        cv_type !== undefined
-          ? cv_type
-          : ((existing.cv_type as ApplicationCvType) ?? "tailored");
+        (existing.cv_type as ApplicationCvType) ?? "tailored";
 
-      if (cv_type !== undefined) {
-        if (!isValidCvType(cv_type)) {
-          return NextResponse.json(
-            { error: "Invalid cv_type" },
-            { status: 400 },
-          );
-        }
-        updatePayload.cv_type = cv_type;
+      if (body.cv_type !== undefined) {
+        updatePayload.cv_type = body.cv_type;
+        nextCvType = body.cv_type;
       }
 
       let nextCvUrl = existing.cv_url as string;
 
       if (nextCvType === "primary") {
-        const primaryId = primary_cv_id ?? null;
+        const primaryId = body.primary_cv_id ?? null;
         if (!primaryId) {
           return NextResponse.json(
             { error: "primary_cv_id is required when cv_type is primary" },
@@ -463,12 +474,12 @@ export async function PUT(request: NextRequest) {
         updatePayload.primary_cv_id = primaryId;
         updatePayload.cv_type = "primary";
       } else {
-        if (cv_url !== undefined) {
-          nextCvUrl = cv_url;
-          updatePayload.cv_url = cv_url;
+        if (body.cv_url !== undefined) {
+          nextCvUrl = body.cv_url;
+          updatePayload.cv_url = body.cv_url;
         }
-        if (cv_filename !== undefined) {
-          updatePayload.cv_filename = cv_filename;
+        if (body.cv_filename !== undefined) {
+          updatePayload.cv_filename = body.cv_filename;
         }
         updatePayload.primary_cv_id = null;
         updatePayload.cv_type = "tailored";
@@ -491,16 +502,11 @@ export async function PUT(request: NextRequest) {
       }
 
       if (nextCvUrl !== existing.cv_url) {
-        await deleteApplicationCvIfTailored(
-          existing.cv_url,
-          existing.cv_type as ApplicationCvType,
-          user.id,
-        );
+        previousCvToDelete = {
+          url: existing.cv_url,
+          cvType: (existing.cv_type as ApplicationCvType) ?? "tailored",
+        };
       }
-    }
-
-    if (show_profile_picture !== undefined) {
-      updatePayload.show_profile_picture = show_profile_picture === true;
     }
 
     const { data, error } = await supabase
@@ -511,12 +517,31 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: SLUG_COLLISION_USER_MESSAGE },
+          { status: 409 },
+        );
+      }
+      console.error("PUT /api/applications:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    if (previousCvToDelete) {
+      await deleteApplicationCvIfTailored(
+        previousCvToDelete.url,
+        previousCvToDelete.cvType,
+        user.id,
+      );
     }
 
     return NextResponse.json({ data });
   } catch (error) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    console.error("PUT /api/applications:", error);
+    return NextResponse.json(
+      { error: "Failed to update application" },
+      { status: 500 },
+    );
   }
 }
 

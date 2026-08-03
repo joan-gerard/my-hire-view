@@ -6,7 +6,9 @@ import {
   APPLICATION_COMPANY_ROLE_MAX_LENGTH,
   APPLICATION_CV_FILENAME_MAX_LENGTH,
   applicationCreateSchema,
+  applicationUpdateSchema,
   formatApplicationCreateZodError,
+  formatApplicationUpdateZodError,
 } from "@/lib/validation/application";
 import {
   PROFILE_NAME_MAX_LENGTH,
@@ -189,5 +191,59 @@ describe("applicationCreateSchema", () => {
       show_profile_picture: true,
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("applicationUpdateSchema", () => {
+  const APP_ID = "22222222-2222-4222-8222-222222222222";
+
+  it("requires a UUID id and accepts partial fields", () => {
+    expect(applicationUpdateSchema.safeParse({ company: "Acme" }).success).toBe(
+      false,
+    );
+    const result = applicationUpdateSchema.safeParse({
+      id: APP_ID,
+      company: "Acme",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects non-UUID id and unexpected keys", () => {
+    expect(
+      applicationUpdateSchema.safeParse({ id: "app-42", company: "Acme" })
+        .success,
+    ).toBe(false);
+    const extra = applicationUpdateSchema.safeParse({
+      id: APP_ID,
+      user_id: "x",
+    });
+    expect(extra.success).toBe(false);
+    if (!extra.success) {
+      expect(formatApplicationUpdateZodError(extra.error)).toMatch(
+        /unrecognized key/i,
+      );
+    }
+  });
+
+  it("validates optional slug format and primary_cv_id when cv_type is primary", () => {
+    expect(
+      applicationUpdateSchema.safeParse({
+        id: APP_ID,
+        slug: "Bad Slug",
+      }).success,
+    ).toBe(false);
+    expect(
+      applicationUpdateSchema.safeParse({
+        id: APP_ID,
+        cv_type: "primary",
+      }).success,
+    ).toBe(false);
+    expect(
+      applicationUpdateSchema.safeParse({
+        id: APP_ID,
+        cv_type: "primary",
+        primary_cv_id: "11111111-1111-4111-8111-111111111111",
+      }).success,
+    ).toBe(true);
   });
 });

@@ -4,11 +4,12 @@
  *
  * PUT covers:
  * - Happy path: ownership check passes → updates row → 200.
- * - Old tailored CV deleted from R2 when cv_url changes.
+ * - Schema validation (UUID id, strict keys).
+ * - Old tailored CV deleted from R2 only after a successful update.
  * - Primary CVs are not deleted from R2 when switching away.
  * - 404 when application not found or belongs to another user.
- * - DB update error → 400.
- * - Auth / rate-limit guards.
+ * - Slug collision → 409; other DB update errors → 400.
+ * - Auth / rate-limit guards; unexpected errors → 500.
  * - Archive sets status + archived_at.
  *
  * GET by-id covers:
@@ -26,6 +27,8 @@ const {
   mockDeleteCvIfOurs,
   mockCheckCvObjectExists,
   mockIsOwnedTailoredCvUrl,
+  mockValidateSlugForApplication,
+  SLUG_COLLISION_USER_MESSAGE,
 } = vi.hoisted(() => ({
   mockRequireAuth: vi.fn(),
   mockCreateClient: vi.fn(),
@@ -33,6 +36,9 @@ const {
   mockDeleteCvIfOurs: vi.fn(),
   mockCheckCvObjectExists: vi.fn(),
   mockIsOwnedTailoredCvUrl: vi.fn().mockReturnValue(true),
+  mockValidateSlugForApplication: vi.fn(),
+  SLUG_COLLISION_USER_MESSAGE:
+    "You already have an application with this slug. Change the text slightly or pick another slug.",
 }));
 
 vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
@@ -52,6 +58,10 @@ vi.mock("@/lib/utils/cv-storage", () => ({
   checkCvObjectExists: mockCheckCvObjectExists,
   isOwnedTailoredCvUrl: mockIsOwnedTailoredCvUrl,
 }));
+vi.mock("@/lib/utils/slug", () => ({
+  SLUG_COLLISION_USER_MESSAGE,
+  validateSlugForApplication: mockValidateSlugForApplication,
+}));
 
 import { PUT } from "@/app/api/applications/route";
 import { GET as getById } from "@/app/api/applications/by-id/[id]/route";
@@ -63,9 +73,11 @@ import {
 } from "../../helpers/supabase-mock";
 
 const MOCK_USER = { id: "user-abc" };
+const APP_ID = "22222222-2222-4222-8222-222222222222";
+const PRIMARY_CV_ID = "33333333-3333-4333-8333-333333333333";
 
 const EXISTING_APP = {
-  id: "app-42",
+  id: APP_ID,
   user_id: MOCK_USER.id,
   company: "Volvo",
   role: "Engineer",
@@ -102,7 +114,7 @@ function makePutRequest(body: object): NextRequest {
 }
 
 function makeGetRequest(): NextRequest {
-  return new NextRequest("http://localhost/api/applications/by-id/app-42", {
+  return new NextRequest(`http://localhost/api/applications/by-id/${APP_ID}`, {
     method: "GET",
   });
 }
@@ -111,6 +123,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockRequireAuth.mockResolvedValue(MOCK_USER);
   mockIsOwnedTailoredCvUrl.mockReturnValue(true);
+  mockValidateSlugForApplication.mockResolvedValue({ ok: true });
   mockCheckRateLimit.mockReturnValue({
     success: true,
     remaining: 59,
@@ -128,18 +141,42 @@ describe("PUT /api/applications", () => {
     );
 
     const response = await PUT(
-      makePutRequest({ id: "app-42", company: "Scania" }),
+      makePutRequest({ id: APP_ID, company: "Scania" }),
     );
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.data).toMatchObject({ company: "Scania" });
   });
 
+  it("returns 400 for unrecognized keys (mass-assignment blocked by schema)", async () => {
+    const response = await PUT(
+      makePutRequest({
+        id: APP_ID,
+        company: "Scania",
+        user_id: "attacker",
+        view_count: 99999,
+      }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/unrecognized key/i);
+    expect(mockCreateClient).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when id is not a UUID", async () => {
+    const response = await PUT(
+      makePutRequest({ id: "app-42", company: "Scania" }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/UUID/i);
+  });
+
   it("returns 404 when the application does not exist", async () => {
     mockCreateClient.mockResolvedValue(makeSupabaseClient([ok(null)]));
 
     const response = await PUT(
-      makePutRequest({ id: "nonexistent", company: "X" }),
+      makePutRequest({ id: APP_ID, company: "X" }),
     );
     expect(response.status).toBe(404);
     const json = await response.json();
@@ -152,27 +189,63 @@ describe("PUT /api/applications", () => {
     );
 
     const response = await PUT(
-      makePutRequest({ id: "app-42", company: "X" }),
+      makePutRequest({ id: APP_ID, company: "X" }),
     );
     expect(response.status).toBe(404);
   });
 
-  it("deletes the old tailored CV from R2 when cv_url changes", async () => {
+  it("deletes the old tailored CV from R2 only after a successful update", async () => {
     const newCvUrl = "https://r2.example.com/new-cv.pdf";
-    mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([
-        ok(ownershipRow()),
-        okWithCount(null, 0),
-        ok({ ...EXISTING_APP, cv_url: newCvUrl }),
-      ]),
-    );
+    const callOrder: string[] = [];
+    mockDeleteCvIfOurs.mockImplementation(async () => {
+      callOrder.push("delete");
+    });
 
-    await PUT(makePutRequest({ id: "app-42", cv_url: newCvUrl }));
+    const client = makeSupabaseClient([
+      ok(ownershipRow()),
+      okWithCount(null, 0),
+      ok({ ...EXISTING_APP, cv_url: newCvUrl }),
+    ]);
+    const originalFrom = client.from.bind(client);
+    client.from = vi.fn((table: string) => {
+      const chain = originalFrom(table);
+      const originalUpdate = chain.update as ReturnType<typeof vi.fn>;
+      chain.update = vi.fn((payload: unknown) => {
+        callOrder.push("update");
+        return originalUpdate(payload);
+      });
+      return chain;
+    });
+    mockCreateClient.mockResolvedValue(client);
+
+    await PUT(makePutRequest({ id: APP_ID, cv_url: newCvUrl }));
     expect(mockDeleteCvIfOurs).toHaveBeenCalledWith(
       EXISTING_APP.cv_url,
       "tailored",
       MOCK_USER.id,
     );
+    expect(callOrder.indexOf("update")).toBeLessThan(
+      callOrder.indexOf("delete"),
+    );
+  });
+
+  it("does not delete R2 when the DB update fails after a CV change", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(ownershipRow()),
+        okWithCount(null, 0),
+        dbError("Update failed"),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({
+        id: APP_ID,
+        cv_url: "https://r2.example.com/new-cv.pdf",
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
   });
 
   it("does not delete R2 when leaving a primary CV (deleteApplicationCvIfTailored no-ops)", async () => {
@@ -193,12 +266,11 @@ describe("PUT /api/applications", () => {
 
     await PUT(
       makePutRequest({
-        id: "app-42",
+        id: APP_ID,
         cv_type: "primary",
-        primary_cv_id: "primary-2",
+        primary_cv_id: PRIMARY_CV_ID,
       }),
     );
-    // Helper is still invoked with type=primary; implementation skips DeleteObject
     expect(mockDeleteCvIfOurs).toHaveBeenCalledWith(
       EXISTING_APP.cv_url,
       "primary",
@@ -216,7 +288,7 @@ describe("PUT /api/applications", () => {
     );
 
     await PUT(
-      makePutRequest({ id: "app-42", cv_url: EXISTING_APP.cv_url }),
+      makePutRequest({ id: APP_ID, cv_url: EXISTING_APP.cv_url }),
     );
     expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
   });
@@ -229,7 +301,7 @@ describe("PUT /api/applications", () => {
 
     const response = await PUT(
       makePutRequest({
-        id: "app-42",
+        id: APP_ID,
         cv_url: "https://r2.example.com/cvs/other-user/tailored/x.pdf",
       }),
     );
@@ -248,7 +320,7 @@ describe("PUT /api/applications", () => {
 
     const response = await PUT(
       makePutRequest({
-        id: "app-42",
+        id: APP_ID,
         cv_url: "https://r2.example.com/cvs/user-abc/tailored/shared.pdf",
       }),
     );
@@ -260,12 +332,48 @@ describe("PUT /api/applications", () => {
     expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
   });
 
-  it("returns 400 when the DB update fails", async () => {
+  it("returns 409 when validateSlugForApplication reports a collision", async () => {
+    mockValidateSlugForApplication.mockResolvedValue({
+      ok: false,
+      error: SLUG_COLLISION_USER_MESSAGE,
+    });
+
+    const response = await PUT(
+      makePutRequest({ id: APP_ID, slug: "taken-slug" }),
+    );
+    expect(response.status).toBe(409);
+    const json = await response.json();
+    expect(json.error).toBe(SLUG_COLLISION_USER_MESSAGE);
+    expect(mockValidateSlugForApplication).toHaveBeenCalledWith(
+      "taken-slug",
+      MOCK_USER.id,
+      APP_ID,
+    );
+    expect(mockCreateClient).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 when the DB unique constraint fails", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(ownershipRow()),
+        dbError("duplicate key value", "23505"),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ id: APP_ID, company: "X" }),
+    );
+    expect(response.status).toBe(409);
+    const json = await response.json();
+    expect(json.error).toBe(SLUG_COLLISION_USER_MESSAGE);
+  });
+
+  it("returns 400 when the DB update fails for a non-unique reason", async () => {
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([ok(ownershipRow()), dbError("Update failed")]),
     );
 
-    const response = await PUT(makePutRequest({ id: "app-42", company: "X" }));
+    const response = await PUT(makePutRequest({ id: APP_ID, company: "X" }));
     expect(response.status).toBe(400);
   });
 
@@ -282,7 +390,7 @@ describe("PUT /api/applications", () => {
     );
 
     const response = await PUT(
-      makePutRequest({ id: "app-42", status: "archived" }),
+      makePutRequest({ id: APP_ID, status: "archived" }),
     );
     expect(response.status).toBe(200);
     const json = await response.json();
@@ -296,15 +404,24 @@ describe("PUT /api/applications", () => {
       resetAt: Date.now() + 30_000,
     });
 
-    const response = await PUT(makePutRequest({ id: "app-42" }));
+    const response = await PUT(makePutRequest({ id: APP_ID }));
     expect(response.status).toBe(429);
   });
 
   it("returns 401 when not authenticated", async () => {
     mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
 
-    const response = await PUT(makePutRequest({ id: "app-42" }));
+    const response = await PUT(makePutRequest({ id: APP_ID }));
     expect(response.status).toBe(401);
+  });
+
+  it("returns 500 when an unexpected error occurs after auth", async () => {
+    mockCreateClient.mockRejectedValue(new Error("supabase down"));
+
+    const response = await PUT(makePutRequest({ id: APP_ID, company: "X" }));
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Failed to update application");
   });
 });
 
@@ -314,11 +431,11 @@ describe("GET /api/applications/by-id/[id]", () => {
     mockCreateClient.mockResolvedValue(makeSupabaseClient([ok(EXISTING_APP)]));
 
     const response = await getById(makeGetRequest(), {
-      params: Promise.resolve({ id: "app-42" }),
+      params: Promise.resolve({ id: APP_ID }),
     });
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.data).toMatchObject({ id: "app-42", slug: "volvo-engineer" });
+    expect(json.data).toMatchObject({ id: APP_ID, slug: "volvo-engineer" });
     expect(json.data.cv_exists).toBe(true);
   });
 
@@ -327,7 +444,7 @@ describe("GET /api/applications/by-id/[id]", () => {
     mockCreateClient.mockResolvedValue(makeSupabaseClient([ok(EXISTING_APP)]));
 
     const response = await getById(makeGetRequest(), {
-      params: Promise.resolve({ id: "app-42" }),
+      params: Promise.resolve({ id: APP_ID }),
     });
     const json = await response.json();
     expect(json.data.cv_exists).toBe(false);
@@ -337,7 +454,7 @@ describe("GET /api/applications/by-id/[id]", () => {
     mockCreateClient.mockResolvedValue(makeSupabaseClient([ok(null)]));
 
     const response = await getById(makeGetRequest(), {
-      params: Promise.resolve({ id: "app-42" }),
+      params: Promise.resolve({ id: APP_ID }),
     });
     expect(response.status).toBe(404);
   });
@@ -348,7 +465,7 @@ describe("GET /api/applications/by-id/[id]", () => {
     );
 
     const response = await getById(makeGetRequest(), {
-      params: Promise.resolve({ id: "app-42" }),
+      params: Promise.resolve({ id: APP_ID }),
     });
     expect(response.status).toBe(404);
   });
@@ -357,7 +474,7 @@ describe("GET /api/applications/by-id/[id]", () => {
     mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
 
     const response = await getById(makeGetRequest(), {
-      params: Promise.resolve({ id: "app-42" }),
+      params: Promise.resolve({ id: APP_ID }),
     });
     expect(response.status).toBe(401);
   });
