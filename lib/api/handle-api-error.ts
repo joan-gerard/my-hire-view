@@ -5,6 +5,11 @@ export type HandleApiErrorOptions = {
   message?: string;
   /** HTTP status. Defaults to 500. */
   status?: number;
+  /**
+   * Server-only fields for ops logs (e.g. publicId, slug, PostgREST code).
+   * Never included in the JSON response.
+   */
+  meta?: Record<string, unknown>;
 };
 
 /**
@@ -20,7 +25,11 @@ export function handleApiError(
   error: unknown,
   options: HandleApiErrorOptions = {},
 ): NextResponse {
-  console.error(context, error);
+  if (options.meta !== undefined) {
+    console.error(context, error, options.meta);
+  } else {
+    console.error(context, error);
+  }
   return NextResponse.json(
     { error: options.message ?? 'Internal server error' },
     { status: options.status ?? 500 },

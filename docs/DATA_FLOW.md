@@ -471,16 +471,27 @@ sequenceDiagram
   Page->>Page: Render header (company, role, name, location, portfolio/LinkedIn), PDF, video
   Page->>VT: Mount
   VT->>VT: sessionStorage already tracked?
-  VT->>ViewAPI: POST (if not)
-  ViewAPI->>ViewAPI: viewer is applicant? (auth.uid === application.user_id)
-  ViewAPI->>Applications: RPC increment_application_view_count(slug) via service_role (only if not applicant)
-  ViewAPI-->>VT: 200
-  VT->>VT: sessionStorage set
+  alt not tracked client-side
+    VT->>ViewAPI: POST /view
+    ViewAPI->>ViewAPI: per-IP + per-path rate limits
+    alt httpOnly dedupe cookie present
+      ViewAPI-->>VT: 200 (no increment)
+    else no cookie
+      ViewAPI->>ViewAPI: viewer is owner?
+      alt owner
+        ViewAPI-->>VT: 200 + Set-Cookie (no increment)
+      else external viewer
+        ViewAPI->>Applications: RPC increment_application_view_count via service_role
+        ViewAPI-->>VT: 200 + Set-Cookie
+      end
+    end
+    VT->>VT: sessionStorage set
+  end
 ```
 
-All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per session via ViewTracker, and `last_viewed_at` is set to the current time, **except when the applicant (owner) is viewing their own application**—in that case the API returns success without updating so the count and last-viewed time reflect only external viewers. The increment is done via a SECURITY DEFINER database function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
+All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per browser via the server httpOnly dedupe cookie (24h; client `sessionStorage` avoids redundant POSTs), and `last_viewed_at` is set to the current time, **except when the applicant (owner) is viewing their own application**—in that case the API returns success without updating so the count and last-viewed time reflect only external viewers. The increment is done via a SECURITY DEFINER database function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
 
-**CV download count:** When the recruiter (or any visitor) clicks "Download CV" in the PDF viewer, the client calls `POST /api/applications/[slug]/download` (once per session, via sessionStorage). The API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), only when the requester is not the application owner, so the count reflects only external CV downloads. The dashboard "View Insights" panel shows view count, CV download count, creation date, and last viewed date/time. The file name used for the download is chosen when creating or editing the application: either the original uploaded filename (e.g. `My Resume.pdf`) or the generated name `CV-{Slug}.pdf`, stored in `applications.cv_filename` and `applications.use_original_cv_filename`.
+**CV download count:** When the recruiter (or any visitor) clicks "Download CV" in the PDF viewer, the client calls `POST /api/applications/[slug]/download` (once per session via `sessionStorage`, with the same server httpOnly dedupe cookie). The API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), only when the requester is not the application owner, so the count reflects only external CV downloads. The dashboard "View Insights" panel shows view count, CV download count, creation date, and last viewed date/time. The file name used for the download is chosen when creating or editing the application: either the original uploaded filename (e.g. `My Resume.pdf`) or the generated name `CV-{Slug}.pdf`, stored in `applications.cv_filename` and `applications.use_original_cv_filename`.
 
 ---
 

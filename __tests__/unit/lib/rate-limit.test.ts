@@ -135,6 +135,56 @@ describe("tryAcquireUserUploadSlot / releaseUserUploadSlot", () => {
 });
 
 // ---------------------------------------------------------------------------
+// checkPerSlugRateLimit
+// ---------------------------------------------------------------------------
+describe("checkPerSlugRateLimit", () => {
+  it("keys by IP and application path so different slugs stay independent", async () => {
+    const { checkPerSlugRateLimit } = await import("@/lib/rate-limit");
+    const req = makeRequest({ "x-forwarded-for": `slug-ip-${uniqueId()}` });
+    const tight = { limit: 2, windowMs: 60_000 };
+
+    expect(
+      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
+    ).toBe(true);
+    expect(
+      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
+    ).toBe(true);
+    expect(
+      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
+    ).toBe(false);
+    // Different slug under the same IP still allowed
+    expect(
+      checkPerSlugRateLimit(req, "abc12345", "app-two", tight).success,
+    ).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// checkPerSlugRateLimit
+// ---------------------------------------------------------------------------
+describe("checkPerSlugRateLimit", () => {
+  it("keys by IP and application path so different slugs stay independent", async () => {
+    const { checkPerSlugRateLimit } = await import("@/lib/rate-limit");
+    const req = makeRequest({ "x-forwarded-for": `slug-ip-${uniqueId()}` });
+    const tight = { limit: 2, windowMs: 60_000 };
+
+    expect(
+      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
+    ).toBe(true);
+    expect(
+      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
+    ).toBe(true);
+    expect(
+      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
+    ).toBe(false);
+    // Different slug under the same IP still allowed
+    expect(
+      checkPerSlugRateLimit(req, "abc12345", "app-two", tight).success,
+    ).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // checkRateLimit
 // ---------------------------------------------------------------------------
 describe("checkRateLimit", () => {

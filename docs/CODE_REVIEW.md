@@ -145,7 +145,7 @@ Then each route only contains the business logic. Same idea can be applied to ot
 
 **Issue:** Some routes use a broad `catch` and return a generic 500 or 401 without logging. That can make production debugging harder.
 
-**Status:** `handleApiError` in `lib/api/handle-api-error.ts` logs server-side and returns a generic JSON error. Public application routes and `GET /api/applications/by-id/[id]` use it; by-id also separates auth (**401**) from unexpected failures (**500**). Remaining routes can adopt the helper (and eventually a shared `withAuth`) as they are touched.
+**Status:** `handleApiError` in `lib/api/handle-api-error.ts` logs server-side (optional log-only `meta`) and returns a generic JSON error. Public application routes and `GET /api/applications/by-id/[id]` use it; view/download RPC failures pass `publicId` / `slug` / error `code` in `meta`. By-id also separates auth (**401**) from unexpected failures (**500**). Remaining routes can adopt the helper (and eventually a shared `withAuth`) as they are touched.
 
 ---
 

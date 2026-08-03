@@ -69,9 +69,9 @@ Work to tackle once the product is live.
 
 ### Must
 
-| Subcategory | Item                                        | Notes                                                                   | Source                               |
-| ----------- | ------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------ |
-| API         | Server-side view/download dedupe            | Client `sessionStorage` is easy to bypass; cookie or short-lived token. | [API_REFERENCE.md](API_REFERENCE.md) |
+| Subcategory | Item                                        | Notes                                                                                                                                 | Source                               |
+| ----------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| API         | Server-side view/download dedupe            | ~~Client `sessionStorage` is easy to bypass~~ **Done** — httpOnly cookie (24h) + stricter per-IP-per-path rate limit (10/min).     | [API_REFERENCE.md](API_REFERENCE.md) |
 
 ### Should
 
@@ -87,7 +87,7 @@ Work to tackle once the product is live.
 | Legal / Docs   | Retention copy in Terms / Privacy               | Document 90-day archived deletion once the policy is product-real (even if the purge feature flag is still off).                                                                              | [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md)     |
 | API            | Re-check slug uniqueness on create              | Close race between client validate and insert; **409** on conflict.                                                                                                                           | [API_REFERENCE.md](API_REFERENCE.md)                   |
 | API            | Ownership checks on `excludeId` (slug routes)   | Don’t let users exclude another user’s application id.                                                                                                                                        | [API_REFERENCE.md](API_REFERENCE.md)                   |
-| API            | Rate-limit remaining public/auth’d reads        | e.g. by-id GET, viewer-status; optional tighter per-slug limits.                                                                                                                              | [API_REFERENCE.md](API_REFERENCE.md)                   |
+| API            | Rate-limit remaining public/auth’d reads        | e.g. by-id GET, viewer-status. View/download already use per-IP + per-path caps.                                                                                                                              | [API_REFERENCE.md](API_REFERENCE.md)                   |
 | Code quality   | Single source of truth for DB types             | Derive/generate from schema; stop dual `application` / `database` shapes.                                                                                                                     | [CODE_REVIEW.md](CODE_REVIEW.md)                       |
 
 ### Could

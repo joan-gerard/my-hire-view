@@ -94,7 +94,7 @@ docs/                — internal documentation
 
 - `GET /api/applications/[slug]` fetches the application.
 - Page renders a PDF viewer (`react-pdf` + `pdfjs-dist`) and a YouTube embed.
-- **View and download counts** are tracked via Supabase RPCs (owner views excluded; session-scoped dedup via `sessionStorage`).
+- **View and download counts** are tracked via Supabase RPCs (owner views excluded; server httpOnly dedupe cookie + client `sessionStorage` optimization; per-IP and per-path rate limits).
 
 ### Admin dashboard
 
@@ -120,7 +120,7 @@ docs/                — internal documentation
 
 - Server state lives in Supabase + HTTP cookies.
 - Client state is managed with React `useState` in forms and `useApplications`.
-- View/download dedup uses `sessionStorage`.
+- View/download dedup: server httpOnly cookie (24h) + client `sessionStorage`.
 - CV files are stored on Cloudflare R2; profile pictures on Supabase Storage.
 
 RLS policies protect all tables. The service-role Supabase client is used server-side only for privileged operations (analytics RPCs, waitlist inserts).

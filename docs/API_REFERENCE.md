@@ -7,6 +7,7 @@ Each endpoint lists **What works** (practices already in place) and **Improvemen
 In the table of contents, endpoint status is marked with a colored dot:
 
 - 🟢 — no open improvement opportunities
+- 🟠 — remaining items are deferred / not planned for now (known limitations accepted)
 - 🔴 — one or more improvements still to implement
 
 ---
@@ -20,9 +21,9 @@ In the table of contents, endpoint status is marked with a colored dot:
   - 🟢 [PUT applications](#put-applications) — `PUT /api/applications`
   - 🟢 [DELETE applications](#delete-applications) — `DELETE /api/applications`
   - 🟢 [GET application by public path](#get-application-by-public-path) — `GET /api/applications/[publicId]/[slug]`
-  - 🔴 [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]`
-  - 🔴 [POST application view](#post-application-view) — `POST /api/applications/[publicId]/[slug]/view`
-  - 🔴 [POST application download](#post-application-download) — `POST /api/applications/[publicId]/[slug]/download`
+  - 🟢 [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]`
+  - 🟠 [POST application view](#post-application-view) — `POST /api/applications/[publicId]/[slug]/view`
+  - 🟠 [POST application download](#post-application-download) — `POST /api/applications/[publicId]/[slug]/download`
   - 🔴 [GET application viewer status](#get-application-viewer-status) — `GET /api/applications/[publicId]/[slug]/viewer-status`
 - [Profile](#profile)
   - 🟢 [GET profile](#get-profile) — `GET /api/profile`
@@ -58,7 +59,7 @@ In the table of contents, endpoint status is marked with a colored dot:
 
 Related deep-dives: [PDF_AND_R2.md](PDF_AND_R2.md) (CV upload), [PROFILE_PICTURE.md](PROFILE_PICTURE.md), [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
 
-Cross-cutting: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` logs unexpected failures server-side and returns a generic JSON error (used on public application routes and by-id GET); a shared `withAuth` wrapper is still open so auth failures are not confused with other errors. See also [CODE_REVIEW.md](CODE_REVIEW.md).
+Cross-cutting: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` logs unexpected failures server-side (optional log-only `meta` for ops fields like slug / error code) and returns a generic JSON error (used on public application routes and by-id GET); a shared `withAuth` wrapper is still open so auth failures are not confused with other errors. See also [CODE_REVIEW.md](CODE_REVIEW.md).
 
 ---
 
@@ -236,6 +237,7 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 - **Unavailable stub:** archived and draft apps return `{ status: "unavailable" }` only (no PII or media). Skips R2 `HeadObject`. The public view page shows one empty state for unavailable **and** for **404** (deleted / unknown URL).
 - `cv_exists` helps the UI avoid broken “View CV” links when the object is missing (active apps only).
 - Clear **404** when the public id + slug pair does not resolve.
+- Invalid `publicId` or slug format is rejected in `resolvePublicApplication` before any DB query (same helper as view / download / viewer-status).
 
 ---
 
@@ -246,22 +248,18 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 Owner-only fetch for the edit page. Same `cv_exists` behaviour as the public slug GET.
 
 - **Auth:** Required
-- **Rate limit:** None
+- **Rate limit:** Default (60/min)
 - **Success:** `200` `{ data: Application & { cv_exists?: boolean } }`
-- **Errors:** `401`; `404` if missing or not owned; `500` `{ error: "Failed to fetch application" }`
+- **Errors:** `400` invalid UUID; `401`; `404` if missing or not owned; `429`; `500` `{ error: "Failed to fetch application" }`
 
 **What works**
 
 - Auth required; filters by both `id` and `user_id` so owners cannot load another user’s row.
 - Dedicated by-id endpoint avoids fetching the full list just to edit one application.
 - Same `cv_exists` enrichment as the public slug GET for consistent edit UX.
+- Rate limited (default 60/min) before auth/query work — same as other authenticated application/profile reads.
+- Validates `id` as a UUID (**400** when malformed) before querying.
 - Auth failures stay **401**; unexpected errors are logged via `handleApiError` and return **500**.
-
-**Improvement opportunities**
-
-- Add a rate limit consistent with other authenticated reads.
-- Validate `id` as a UUID.
-- Optionally make `cv_exists` lazy/opt-in if HeadObject slows the edit page.
 
 ---
 
@@ -272,24 +270,25 @@ Owner-only fetch for the edit page. Same `cv_exists` behaviour as the public slu
 Record a page view. Owner views are acknowledged but **not** counted. Non-owner increments use the `increment_application_view_count(p_public_id, p_slug)` SECURITY DEFINER RPC via the service-role admin client (updates `view_count` and `last_viewed_at`). See [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
 
 - **Auth:** Not required (session used only to detect owner)
-- **Rate limit:** Default (60/min)
+- **Rate limit:** Default (60/min) per IP, plus **10/min per IP per application path**
 - **Success:** `200` `{ success: true }`
-- **Errors:** `404`; `429`; `500`
+- **Errors:** `403` (missing/foreign origin signal); `404`; `429`; `500`
 
 **What works**
 
 - Owner self-views are detected via session and excluded from the count.
 - Increments go through a SECURITY DEFINER RPC with the service-role client (avoids RLS update issues for anonymous viewers).
-- Rate limited; returns a simple `{ success: true }` contract.
+- Rate limited (per IP and stricter per IP+`publicId`/`slug`); returns a simple `{ success: true }` contract.
 - Also updates `last_viewed_at` for non-owner views.
 - Archived / draft apps return **404** (same as missing) and are **not** counted.
+- Invalid `publicId` or slug format returns **404** without querying the database (`resolvePublicApplication` + `validateSlugFormat`).
+- **Server-side dedupe:** after a successful ack (owner skip or RPC), sets an httpOnly cookie (`mhv_view_{publicId}_{slug}`, 24h). Repeat POSTs with that cookie return **200** without resolving or incrementing. Client `sessionStorage` remains a UX optimization only.
+- RPC failures log `publicId` / `slug` / PostgREST `code` via `handleApiError` `meta` (server-only); the client still sees a generic message.
+- **Same-origin gate:** requires matching `Origin`, allowed `Referer` origin, or `Sec-Fetch-Site: same-origin` (**403** otherwise). Defense in depth only — forgeable with crafted clients.
 
-**Improvement opportunities**
+**Deferred / known limitations**
 
-- Client `sessionStorage` dedupe is easy to bypass; add a short-lived server-side or cookie-based “already counted” token per slug to reduce count inflation.
-- Log RPC failures with slug / error code for ops; keep client message generic.
-- Consider a stricter per-slug rate limit in addition to per-IP.
-- Validate slug format early to avoid unnecessary DB hits.
+- Cookie dedupe is best-effort (cleared cookies / other browsers still count); Redis-backed tokens would harden multi-instance enforcement alongside the in-memory rate limiter. **Not planned for now.**
 
 ---
 
@@ -300,21 +299,24 @@ Record a page view. Owner views are acknowledged but **not** counted. Non-owner 
 Record a CV download. Same owner-exclusion and RPC pattern as view (`increment_application_download_count(p_public_id, p_slug)`).
 
 - **Auth:** Not required (session used only to detect owner)
-- **Rate limit:** Default (60/min)
+- **Rate limit:** Default (60/min) per IP, plus **10/min per IP per application path**
 - **Success:** `200` `{ success: true }`
-- **Errors:** `404`; `429`; `500`
+- **Errors:** `403` (missing/foreign origin signal); `404`; `429`; `500`
 
 **What works**
 
 - Mirrors the view-count pattern: owner excluded, SECURITY DEFINER RPC, service-role client.
-- Rate limited; consistent `{ success: true }` response.
+- Rate limited (per IP and per IP+path); consistent `{ success: true }` response.
 - Keeps download analytics aligned with view analytics for the dashboard.
 - Archived / draft apps return **404** and are **not** counted.
+- Invalid `publicId` or slug format returns **404** without querying the database (same early check as view).
+- Same **httpOnly dedupe cookie** pattern as view (`mhv_download_{publicId}_{slug}`, 24h).
+- RPC failures log path + `code` via `handleApiError` `meta` (same as view); client message stays generic.
+- Same **same-origin gate** as view (`Origin` / `Referer` / `Sec-Fetch-Site`) → **403** when absent or foreign.
 
-**Improvement opportunities**
+**Deferred / known limitations**
 
-- Same as view: server-side dedupe / signed cookie, RPC logging, stricter per-slug limits, early slug validation.
-- Optionally require a matching Referer / same-origin check to blunt trivial cross-site spam (defense in depth only; not a substitute for auth).
+- Same cookie / in-memory rate-limit caveats as view. **Not planned for now.**
 
 ---
 
@@ -334,11 +336,12 @@ Whether the current viewer owns the application (used to show the public-view fo
 - Minimal payload (`{ isOwner }`) — does not leak application content.
 - Works for anonymous and signed-in viewers; owners are detected from session.
 - Supports UI that should differ for recruiters vs the applicant without a full page refetch.
+- Invalid `publicId` or slug format returns **404** without querying the database (same early check as view).
 
 **Improvement opportunities**
 
 - Add a light rate limit (this is a cheap ownership probe and currently unlimited).
-- Validate slug format; log unexpected errors.
+- Log unexpected errors.
 - Could fold into the public GET payload (e.g. `isOwner`) to save a round trip, if the view page always needs both.
 
 ---

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import { checkCvObjectExists } from '@/lib/utils/cv-storage';
+import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from '@/lib/rate-limit';
 import { handleApiError } from '@/lib/api/handle-api-error';
 
 /**
@@ -9,9 +11,12 @@ import { handleApiError } from '@/lib/api/handle-api-error';
  * When cv_url is our R2 public URL, adds cv_exists (HeadObject check) so the client can hide the View link if the file is missing.
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  if (!rate.success) return rateLimit429(rate);
+
   let user;
   try {
     user = await requireAuth();
@@ -20,8 +25,20 @@ export async function GET(
   }
 
   try {
+    const { id: rawId } = await params;
+
+    const idParsed = z
+      .uuid({ error: 'Application ID must be a valid UUID' })
+      .safeParse(rawId.trim());
+    if (!idParsed.success) {
+      return NextResponse.json(
+        { error: 'Application ID must be a valid UUID' },
+        { status: 400 },
+      );
+    }
+    const id = idParsed.data;
+
     const supabase = await createClient();
-    const { id } = await params;
 
     const { data, error } = await supabase
       .from('applications')

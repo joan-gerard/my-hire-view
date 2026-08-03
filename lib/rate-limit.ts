@@ -85,6 +85,16 @@ export const DEFAULT_API_RATE_LIMIT: RateLimitOptions = {
 };
 
 /**
+ * View/download count increments: stricter cap per IP per application path.
+ * Complements the default per-IP limit so one client cannot inflate a single
+ * application's analytics as aggressively.
+ */
+export const ANALYTICS_PER_SLUG_RATE_LIMIT: RateLimitOptions = {
+  limit: 10,
+  windowMs: 60_000,
+};
+
+/**
  * POST /api/slug/validate — tighter than general writes.
  * Debounced UI (~450ms) still fits; caps abuse from rapid manual slug edits.
  */
@@ -127,6 +137,20 @@ export function checkRateLimit(
 ): RateLimitResult {
   const id = getClientIdentifier(request);
   return rateLimit(options, id);
+}
+
+/**
+ * Rate limit by IP + public application path (`publicId`/`slug`).
+ * Use after the default per-IP check for view/download analytics routes.
+ */
+export function checkPerSlugRateLimit(
+  request: NextRequest,
+  publicId: string,
+  slug: string,
+  options: RateLimitOptions = ANALYTICS_PER_SLUG_RATE_LIMIT,
+): RateLimitResult {
+  const ip = getClientIdentifier(request);
+  return rateLimit(options, `${ip}:${publicId}:${slug}`);
 }
 
 /**

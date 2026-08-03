@@ -16,6 +16,7 @@
  * - Returns 200 + application data (incl. cv_exists) for the owner.
  * - Returns 404 when not found or not owned.
  * - Returns 401 for unauthenticated requests.
+ * - Returns 400 for invalid UUID; 429 when rate limited.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
@@ -481,6 +482,30 @@ describe("GET /api/applications/by-id/[id]", () => {
       params: Promise.resolve({ id: APP_ID }),
     });
     expect(response.status).toBe(401);
+  });
+
+  it("returns 400 when id is not a valid UUID", async () => {
+    const response = await getById(makeGetRequest(), {
+      params: Promise.resolve({ id: "not-a-uuid" }),
+    });
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toBe("Application ID must be a valid UUID");
+    expect(mockCreateClient).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 when rate limited", async () => {
+    mockCheckRateLimit.mockReturnValue({
+      success: false,
+      remaining: 0,
+      resetAt: Date.now() + 30_000,
+    });
+
+    const response = await getById(makeGetRequest(), {
+      params: Promise.resolve({ id: APP_ID }),
+    });
+    expect(response.status).toBe(429);
+    expect(mockRequireAuth).not.toHaveBeenCalled();
   });
 
   it("returns 500 when an unexpected error occurs after auth", async () => {

@@ -307,15 +307,20 @@ sequenceDiagram
   Page->>VT: Mount ViewTracker(slug)
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not tracked)
-  ViewAPI->>ViewAPI: get viewer via auth.getUser(); skip increment if viewer is applicant (user_id match)
-  ViewAPI->>Supa: RPC increment_application_view_count(slug) via service_role (SECURITY DEFINER)
-  ViewAPI-->>VT: 200
+  ViewAPI->>ViewAPI: per-IP + per-path rate limits; httpOnly dedupe cookie?
+  alt cookie present
+    ViewAPI-->>VT: 200 (no increment)
+  else
+    ViewAPI->>ViewAPI: get viewer via auth.getUser(); skip increment if owner
+    ViewAPI->>Supa: RPC increment_application_view_count (non-owner only, service_role)
+    ViewAPI-->>VT: 200 + Set-Cookie dedupe
+  end
   VT->>VT: sessionStorage set tracked
 ```
 
-View count and `last_viewed_at` are only updated when the viewer is not the application owner; the applicant can open their own link without affecting the count or last-viewed time. The increment is performed by a SECURITY DEFINER function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
+View count and `last_viewed_at` are only updated when the viewer is not the application owner; the applicant can open their own link without affecting the count or last-viewed time. Repeats within 24h are suppressed by an httpOnly dedupe cookie (client `sessionStorage` only avoids extra POSTs). The increment is performed by a SECURITY DEFINER function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
 
-**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (once per session via sessionStorage). The download API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), mirroring the view-count behaviour; see **docs/VIEW_COUNT_FIX.md**. The downloaded file name is either the original upload name (when `use_original_cv_filename` is true and `cv_filename` is set) or the generated name `CV-{Slug}.pdf`.
+**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (client `sessionStorage` + same server httpOnly dedupe cookie). The download API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), mirroring the view-count behaviour; see **docs/VIEW_COUNT_FIX.md**. The downloaded file name is either the original upload name (when `use_original_cv_filename` is true and `cv_filename` is set) or the generated name `CV-{Slug}.pdf`.
 
 ### 6.4 Profile and snapshot into applications
 
@@ -384,7 +389,7 @@ my-hire-view/
 | Supabase                        | Managed Postgres + Auth + RLS in one product; reduces custom backend code.                                                                                                                                                                                   |
 | Slug-based public URLs          | Stable, shareable links that don’t expose internal IDs; uniqueness enforced in DB and slug API. Users can optionally include their name at the start (name-company-role) or end (company-role-name) of the slug.                                             |
 | Cloudflare R2 for PDFs        | S3-compatible object storage with no egress fees from R2; pairs well with Next.js on Vercel.                                                                                                                                                               |
-| View count in DB                | Simple and accurate; one increment per view (deduplicated per session in ViewTracker).                                                                                                                                                                       |
+| View count in DB                | Simple and accurate; one increment per browser path (httpOnly cookie + client `sessionStorage`), with per-IP and per-path rate limits.                                                                                                                                                                       |
 | Last viewed at in DB            | Set to current time whenever view_count is incremented (non-owner only); null if never viewed.                                                                                                                                                               |
 | Download count in DB            | Same pattern as view count; one increment per download (per session), owner downloads not counted.                                                                                                                                                           |
 | `status` + `archived_at` for archive | Soft hide via `status = archived`; `archived_at` resets when re-archiving (90-day retention clock). Hard purge deferred. See [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md). |

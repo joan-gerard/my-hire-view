@@ -6,17 +6,20 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { analyticsDedupeCookieName } from "@/lib/api/analytics-dedupe";
 
 const {
   mockCreateClient,
   mockCreateAdminClient,
   mockCheckRateLimit,
+  mockCheckPerSlugRateLimit,
   mockCheckCvObjectExists,
   mockResolvePublicApplication,
 } = vi.hoisted(() => ({
   mockCreateClient: vi.fn(),
   mockCreateAdminClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
+  mockCheckPerSlugRateLimit: vi.fn(),
   mockCheckCvObjectExists: vi.fn(),
   mockResolvePublicApplication: vi.fn(),
 }));
@@ -27,7 +30,9 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
+  checkPerSlugRateLimit: mockCheckPerSlugRateLimit,
   DEFAULT_API_RATE_LIMIT: { limit: 60, windowMs: 60_000 },
+  ANALYTICS_PER_SLUG_RATE_LIMIT: { limit: 10, windowMs: 60_000 },
   rateLimit429: vi.fn().mockReturnValue(
     new Response(JSON.stringify({ error: "Too many requests" }), {
       status: 429,
@@ -45,9 +50,10 @@ import { GET } from "@/app/api/applications/[publicId]/[slug]/route";
 import { POST as postView } from "@/app/api/applications/[publicId]/[slug]/view/route";
 
 const PUBLIC_ID = "k7x2m9ab";
+const SLUG = "volvo-engineer";
 const PUBLIC_APP = {
   id: "app-pub",
-  slug: "volvo-engineer",
+  slug: SLUG,
   user_id: "owner-id",
   company: "Volvo",
   role: "Engineer",
@@ -93,19 +99,26 @@ const OWNER_ONLY_KEYS = [
 
 const ROUTE_PARAMS = Promise.resolve({
   publicId: PUBLIC_ID,
-  slug: "volvo-engineer",
+  slug: SLUG,
 });
 
 function makeGetRequest(): NextRequest {
   return new NextRequest(
-    `http://localhost/api/applications/${PUBLIC_ID}/volvo-engineer`,
+    `http://localhost/api/applications/${PUBLIC_ID}/${SLUG}`,
   );
 }
 
-function makePostRequest(): NextRequest {
+function makePostRequest(cookieHeader?: string): NextRequest {
+  const headers: Record<string, string> = {
+    origin: "http://localhost",
+  };
+  if (cookieHeader) headers.cookie = cookieHeader;
   return new NextRequest(
-    `http://localhost/api/applications/${PUBLIC_ID}/volvo-engineer/view`,
-    { method: "POST" },
+    `http://localhost/api/applications/${PUBLIC_ID}/${SLUG}/view`,
+    {
+      method: "POST",
+      headers,
+    },
   );
 }
 
@@ -114,6 +127,11 @@ beforeEach(() => {
   mockCheckRateLimit.mockReturnValue({
     success: true,
     remaining: 59,
+    resetAt: Date.now() + 60_000,
+  });
+  mockCheckPerSlugRateLimit.mockReturnValue({
+    success: true,
+    remaining: 9,
     resetAt: Date.now() + 60_000,
   });
   mockCreateClient.mockResolvedValue({
@@ -238,7 +256,7 @@ describe("GET /api/applications/[publicId]/[slug]", () => {
 });
 
 describe("POST /api/applications/[publicId]/[slug]/view", () => {
-  it("increments the view count and returns 200 for an external viewer", async () => {
+  it("increments the view count, sets a dedupe cookie, and returns 200", async () => {
     mockResolvePublicApplication.mockResolvedValue({
       application: PUBLIC_APP,
       ownerUserId: "owner-id",
@@ -250,8 +268,12 @@ describe("POST /api/applications/[publicId]/[slug]/view", () => {
     expect(response.status).toBe(200);
     expect(admin.rpc).toHaveBeenCalledWith(
       "increment_application_view_count",
-      { p_public_id: PUBLIC_ID, p_slug: "volvo-engineer" },
+      { p_public_id: PUBLIC_ID, p_slug: SLUG },
     );
+    expect(
+      response.cookies.get(analyticsDedupeCookieName("view", PUBLIC_ID, SLUG))
+        ?.value,
+    ).toBe("1");
   });
 
   it("does NOT increment when the owner views their own application", async () => {
@@ -269,6 +291,23 @@ describe("POST /api/applications/[publicId]/[slug]/view", () => {
 
     const response = await postView(makePostRequest(), { params: ROUTE_PARAMS });
     expect(response.status).toBe(200);
+    expect(admin.rpc).not.toHaveBeenCalled();
+    expect(
+      response.cookies.get(analyticsDedupeCookieName("view", PUBLIC_ID, SLUG))
+        ?.value,
+    ).toBe("1");
+  });
+
+  it("skips resolve and RPC when a dedupe cookie is already present", async () => {
+    const cookie = `${analyticsDedupeCookieName("view", PUBLIC_ID, SLUG)}=1`;
+    const admin = { rpc: vi.fn() };
+    mockCreateAdminClient.mockReturnValue(admin);
+
+    const response = await postView(makePostRequest(cookie), {
+      params: ROUTE_PARAMS,
+    });
+    expect(response.status).toBe(200);
+    expect(mockResolvePublicApplication).not.toHaveBeenCalled();
     expect(admin.rpc).not.toHaveBeenCalled();
   });
 
@@ -308,7 +347,21 @@ describe("POST /api/applications/[publicId]/[slug]/view", () => {
     expect(json.error).toContain("view count");
   });
 
-  it("returns 429 when rate limited", async () => {
+  it("returns 403 when the request is not same-origin", async () => {
+    const request = new NextRequest(
+      `http://localhost/api/applications/${PUBLIC_ID}/${SLUG}/view`,
+      {
+        method: "POST",
+        headers: { origin: "https://evil.example" },
+      },
+    );
+
+    const response = await postView(request, { params: ROUTE_PARAMS });
+    expect(response.status).toBe(403);
+    expect(mockResolvePublicApplication).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 when the per-IP rate limit is exceeded", async () => {
     mockCheckRateLimit.mockReturnValue({
       success: false,
       remaining: 0,
@@ -317,5 +370,18 @@ describe("POST /api/applications/[publicId]/[slug]/view", () => {
 
     const response = await postView(makePostRequest(), { params: ROUTE_PARAMS });
     expect(response.status).toBe(429);
+    expect(mockCheckPerSlugRateLimit).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 when the per-slug rate limit is exceeded", async () => {
+    mockCheckPerSlugRateLimit.mockReturnValue({
+      success: false,
+      remaining: 0,
+      resetAt: Date.now() + 30_000,
+    });
+
+    const response = await postView(makePostRequest(), { params: ROUTE_PARAMS });
+    expect(response.status).toBe(429);
+    expect(mockResolvePublicApplication).not.toHaveBeenCalled();
   });
 });

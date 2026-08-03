@@ -34,4 +34,29 @@ describe("handleApiError", () => {
       error: "Failed to track view",
     });
   });
+
+  it("logs optional meta for ops and never returns it to the client", async () => {
+    const rpcError = { message: "function not found", code: "PGRST202" };
+    const meta = {
+      publicId: "k7x2m9ab",
+      slug: "volvo-engineer",
+      code: "PGRST202",
+    };
+
+    const response = handleApiError(
+      "POST /api/applications/.../view RPC",
+      rpcError,
+      { message: "Failed to update view count", meta },
+    );
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      "POST /api/applications/.../view RPC",
+      rpcError,
+      meta,
+    );
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      error: "Failed to update view count",
+    });
+  });
 });

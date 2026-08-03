@@ -3,6 +3,7 @@ import type { Application } from "@/lib/types/application";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { isValidPublicId } from "@/lib/utils/public-id";
+import { validateSlugFormat } from "@/lib/utils/slug-generate";
 
 export type ResolvedPublicApplication = {
   application: Application;
@@ -14,13 +15,15 @@ export type ResolvedPublicApplication = {
  * When show_profile_picture is true, attaches profiles.profile_picture_url
  * onto the application as a display-only profile_picture_url (not a DB column),
  * cache-busted with profiles.updated_at so avatar replaces are visible.
+ *
+ * Invalid public_id or slug format returns null without querying the database.
  */
 export async function resolvePublicApplication(
   supabase: SupabaseClient,
   publicId: string,
   slug: string,
 ): Promise<ResolvedPublicApplication | null> {
-  if (!isValidPublicId(publicId) || !slug.trim()) {
+  if (!isValidPublicId(publicId) || !validateSlugFormat(slug).ok) {
     return null;
   }
 
