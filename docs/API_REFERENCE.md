@@ -2,7 +2,7 @@
 
 Standalone catalog of Next.js App Router API routes under `app/api/`. For architecture, data model, and request flows, see [ARCHITECTURE.md](ARCHITECTURE.md) and [DATA_FLOW.md](DATA_FLOW.md).
 
-Each endpoint lists **What works** (practices already in place) and **Improvement opportunities** (follow-ups). When an improvement is shipped, move it into **What works** so this doc stays a living checklist.
+Each endpoint lists **What works** (practices already in place) and either **Improvement opportunities** (follow-ups still to implement) or **Deferred priorities** (accepted polish, often as a priority table). When an item ships, move it into **What works** so this doc stays a living checklist.
 
 In the table of contents, endpoint status is marked with a colored dot:
 
@@ -34,8 +34,8 @@ In the table of contents, endpoint status is marked with a colored dot:
   - 🟢 [POST slug](#post-slug) — `POST /api/slug`
   - 🟢 [POST slug validate](#post-slug-validate) — `POST /api/slug/validate`
 - [Uploads](#uploads)
-  - 🔴 [POST upload CV](#post-upload-cv) — `POST /api/upload`
-  - 🔴 [POST upload profile picture](#post-upload-profile-picture) — `POST /api/upload/profile-picture`
+  - 🟠 [POST upload CV](#post-upload-cv) — `POST /api/upload`
+  - 🟠 [POST upload profile picture](#post-upload-profile-picture) — `POST /api/upload/profile-picture`
 - [Auth](#auth)
   - 🔴 [POST auth login](#post-auth-login) — `POST /api/auth/login`
   - 🔴 [POST auth signup](#post-auth-signup) — `POST /api/auth/signup`
@@ -499,9 +499,16 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 - Fails clearly when R2 is not configured; logs upload/config errors server-side.
 - Application attach/delete paths authorize object keys per user (`isOwnedTailoredCvUrl` on attach / `deleteCvIfOurs(url, userId)` on delete). Tailored `cv_url` values must be unique across the caller’s applications (**409** if reused); re-uploading the same PDF for another app creates a new object key. Primary CVs are shared via `cv_type: "primary"` and are not subject to the one-URL-per-app rule.
 
-**Improvement opportunities**
+**Deferred priorities** (route contract is solid; polish when upload UX / ops become a pain — see [Backlog](Backlog.md) / [CODE_REVIEW.md](CODE_REVIEW.md))
 
-- None specific to this route beyond general upload UX / observability.
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| High | UX | Friendly status → form copy | Map **400** / **409** / **429** / **500** to clear field messages on Save (today `ApplicationForm` often surfaces raw `error` strings). |
+| High | UX | Save-time busy feedback | While `POST /api/upload` runs inside submit, show explicit “Uploading CV…” (spinner / disabled Save). Fake “0%” progress was removed with upload-on-save; real % is optional. |
+| Medium | Observability | `handleApiError` + `meta` | Align R2/config failures with shared logging (`userId`, bytes, contentType, S3 status) — log-only; keep client messages generic. |
+| Medium | UX | Retry after failure | On network/500, reuse the same idempotency key; generate a new key only when the file changes (partially true today via refs — make the UX explicit). |
+| Lower | UX | Real upload progress % | `XMLHttpRequest` / streaming progress for large PDFs on slow networks. Prefer simple busy state first. |
+| Lower | Observability | Metrics / correlation | Duration, size, `idempotent` rate, 409/429/5xx counts; optional request id in logs. Post-launch if support volume warrants. |
 
 ---
 
@@ -523,9 +530,16 @@ Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png
 - Auth required (dedicated check → **401**); unexpected/Storage failures → **500** with generic client message; Storage errors logged with `status` / `statusCode`.
 - Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8\*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
 
-**Improvement opportunities**
+**Deferred priorities** (same theme as CV upload — contract is fine; remaining work is UX / ops polish)
 
-- None specific to this route beyond general upload UX / observability.
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| High | UX | Friendly status → form copy | Map **400** / **429** / **500** on profile Save to clear messages (size/type vs rate limit vs storage down). |
+| High | UX | Surface upload `{ warning }` | API may return `{ warning }` when folder purge fails; `ProfileForm` today mainly surfaces **PUT** `/api/profile` `warnings`, not the upload warning. |
+| Medium | UX | Save-time busy feedback | Explicit “Uploading picture…” while `POST /api/upload/profile-picture` runs (form already has a loading flag — make copy/stage clear). |
+| Medium | Observability | `handleApiError` + `meta` | Fold Storage failures into shared helper with `userId`, mime, bytes, `status`/`statusCode` in log-only `meta`. |
+| Lower | Rate limit | Tighter picture upload cap | Optional: profile-picture-specific limit (closer to CV’s **10/min**) if abuse appears; default **60/min** is fine for now. |
+| Lower | Observability | Metrics / correlation | Same as CV: duration, size, purge-warning rate, 5xx — post-launch if needed. |
 
 ---
 

@@ -54,12 +54,15 @@ Work needed before a public launch with paid access (free tier / trial only — 
 
 ### Could
 
-| Subcategory    | Item                            | Notes                                                                    | Source                           |
-| -------------- | ------------------------------- | ------------------------------------------------------------------------ | -------------------------------- |
-| Code quality   | FileUpload progress UX          | Shows “0%” without real progress — simplify or implement.                | [CODE_REVIEW.md](CODE_REVIEW.md) |
-| Code quality   | Login / signup DRY              | Shared layout, fields, and/or submit hook.                               | [CODE_REVIEW.md](CODE_REVIEW.md) |
-| UX             | Show password on login / signup | Toggle to reveal/hide password on `/login` and `/signup`.                | —                                |
-| Infrastructure | Middleware entry clarity        | Ensure Next picks up session middleware (`proxy.ts` vs `middleware.ts`). | [CODE_REVIEW.md](CODE_REVIEW.md) |
+| Subcategory    | Item                            | Notes                                                                                                                                                                                                 | Source                           |
+| -------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| UX             | Upload form error + busy copy   | Map CV / profile-picture upload **400** / **409** / **429** / **500** to friendly Save messages; show “Uploading…” during `POST /api/upload` and `POST /api/upload/profile-picture`. Deferred tables in [API_REFERENCE.md](API_REFERENCE.md#post-upload-cv). | [API_REFERENCE.md](API_REFERENCE.md) |
+| UX             | Surface avatar upload `warning` | `POST /api/upload/profile-picture` can return `{ warning }` on purge failure; ensure `ProfileForm` shows it (PUT `/api/profile` `warnings` already partially handled).                                                                 | [API_REFERENCE.md](API_REFERENCE.md), [PROFILE_PICTURE.md](PROFILE_PICTURE.md) |
+| Code quality   | FileUpload / save-time progress | ~~Fake “Uploading… 0%”~~ removed with upload-on-save. Remaining: honest busy state on Save; optional real % later.                                                                                    | [CODE_REVIEW.md](CODE_REVIEW.md), [API_REFERENCE.md](API_REFERENCE.md) |
+| API            | Upload routes → `handleApiError` | Adopt shared helper + log-only `meta` (userId, size, storage status) on CV and profile-picture uploads.                                                                                               | [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
+| Code quality   | Login / signup DRY              | Shared layout, fields, and/or submit hook.                                                                                                                                                            | [CODE_REVIEW.md](CODE_REVIEW.md) |
+| UX             | Show password on login / signup | Toggle to reveal/hide password on `/login` and `/signup`.                                                                                                                                             | —                                |
+| Infrastructure | Middleware entry clarity        | Ensure Next picks up session middleware (`proxy.ts` vs `middleware.ts`).                                                                                                                              | [CODE_REVIEW.md](CODE_REVIEW.md) |
 
 ---
 

@@ -108,12 +108,12 @@ Then each route only contains the business logic. Same idea can be applied to ot
 
 ### 2.3 Protect upload and slug APIs
 
-**Issue:**
+**Issue (historical):**
 
-- `POST /api/upload` – fixed: handler calls `requireAuth()` (dedicated try/catch → 401 JSON) before accepting the PDF.
-- `POST /api/slug` – no auth; any client can request slug generation.
+- `POST /api/upload` – **Done:** `requireAuth()` (dedicated try/catch → 401 JSON) before accepting the PDF.
+- `POST /api/slug` – **Done:** requires auth; uniqueness is per user.
 
-**Recommendation:** Require authentication for slug as well (e.g. call `requireAuth()` at the start of the handler). This avoids abuse (e.g. slug probing) and aligns with the fact that only logged-in admins create applications.
+**Follow-up (deferred):** upload **UX / observability** polish — friendly status mapping, Save-time busy copy, `handleApiError` + `meta` on upload routes. See deferred priority tables under [POST upload CV](API_REFERENCE.md#post-upload-cv) and [POST upload profile picture](API_REFERENCE.md#post-upload-profile-picture).
 
 ---
 
@@ -145,15 +145,19 @@ Then each route only contains the business logic. Same idea can be applied to ot
 
 **Issue:** Some routes use a broad `catch` and return a generic 500 or 401 without logging. That can make production debugging harder.
 
-**Status:** `handleApiError` in `lib/api/handle-api-error.ts` logs server-side (optional log-only `meta`) and returns a generic JSON error. Public application routes and `GET /api/applications/by-id/[id]` use it; view/download RPC failures pass `publicId` / `slug` / error `code` in `meta`. By-id also separates auth (**401**) from unexpected failures (**500**). Remaining routes can adopt the helper (and eventually a shared `withAuth`) as they are touched.
+**Status:** `handleApiError` in `lib/api/handle-api-error.ts` logs server-side (optional log-only `meta`) and returns a generic JSON error. Public application routes and `GET /api/applications/by-id/[id]` use it; view/download RPC failures pass `publicId` / `slug` / error `code` in `meta`. By-id also separates auth (**401**) from unexpected failures (**500**). **Still open:** adopt on upload routes (`POST /api/upload`, `POST /api/upload/profile-picture`) and eventually a shared `withAuth` so auth failures aren’t mislabeled on remaining handlers.
 
 ---
 
-### 2.8 FileUpload: Unused state and error display
+### 2.8 Upload UX (FileUpload + Save-time feedback)
 
-**Issue:** `components/forms/FileUpload.tsx` has `uploadProgress` state that is set but never reflects real progress (the upload request doesn’t report progress). The UI shows “Uploading... 0%”.
+**Issue (updated):** The old fake “Uploading... 0%” path is gone — `FileUpload` keeps a pending file and upload runs on form Save (`ApplicationForm` → `POST /api/upload`). Remaining gaps:
 
-**Recommendation:** Either remove `uploadProgress` and show a simple “Uploading...” label, or implement real progress (e.g. `XMLHttpRequest` with `upload.onprogress` or a library that supports it) so the percentage is meaningful.
+- Save-time busy copy while the upload request is in flight.
+- Mapping API statuses (**400** / **409** / **429** / **500**) to friendly field messages (raw `error` strings are common today).
+- Profile picture: surface `{ warning }` from `POST /api/upload/profile-picture` when purge fails.
+
+**Recommendation:** Prefer honest “Uploading…” / disabled Save first; optional real progress % later. Tracked as deferred priorities in [API_REFERENCE.md](API_REFERENCE.md#post-upload-cv) and [Backlog.md](Backlog.md).
 
 ---
 
@@ -176,12 +180,12 @@ Then each route only contains the business logic. Same idea can be applied to ot
 | Edit page fetch   | Done – GET by-id + edit page uses it                  |
 | Login/Signup DRY  | Recommended – extract layout/fields/hook              |
 | API auth wrapper  | Recommended – e.g. `withAuth`                         |
-| Upload/Slug auth  | Recommended – require auth                           |
+| Upload/Slug auth  | Done – both require auth                             |
 | API validation    | Recommended – validate body (e.g. Zod)                |
 | Middleware file   | Recommended – ensure root `middleware.ts`            |
 | DB/App types      | Recommended – single source of truth                   |
-| Error logging     | Recommended – log in API routes                       |
-| FileUpload UX     | Recommended – fix or remove progress                  |
+| Error logging     | Partial – `handleApiError` on public/by-id; adopt on uploads |
+| Upload UX         | Deferred – friendly errors, Save-time busy copy, avatar `warning` ([API_REFERENCE](API_REFERENCE.md#post-upload-cv)) |
 | API client        | Optional – centralize fetch for future flexibility    |
 
-If you want to tackle more refactors, a good order is: **protect upload/slug APIs**, then **login/signup DRY**, then **API validation and auth wrapper**.
+If you want to tackle more refactors, a good order is: **login/signup DRY**, then **API validation and auth wrapper**, then **upload UX / observability** when it becomes a support pain.
