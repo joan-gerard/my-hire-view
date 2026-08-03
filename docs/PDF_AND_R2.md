@@ -42,7 +42,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 | `POST /api/upload` | Tailored CV upload (auth + idempotency). Keys `cvs/{userId}/tailored/<key>.pdf`. |
 | `GET/POST/DELETE /api/profile/primary-cvs` | Primary CV library (max 5). Keys `cvs/{userId}/primary/{id}.pdf`. GET includes `applications_count` and a `used_by` preview per row. |
 | `lib/storage/r2-client.ts` | S3-compatible R2 client. |
-| `lib/utils/cv-storage.ts` | `isOwnedTailoredCvUrl`, `isOwnedCvUrl`, `deleteCvIfOurs(url, userId)`, `deleteApplicationCvIfTailored`, `checkCvObjectExists`. |
+| `lib/utils/cv-storage.ts` | `isOwnedTailoredCvUrl`, `isOwnedCvUrl`, `deleteCvIfOurs(url, userId)`, `deleteApplicationCvIfTailored`, `checkCvObjectExists` (`true` / `false` for R2 URLs; `undefined` when the URL is outside our R2 public base). |
 
 ## Idempotency
 

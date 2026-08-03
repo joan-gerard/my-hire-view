@@ -455,6 +455,18 @@ describe("GET /api/applications/by-id/[id]", () => {
     expect(json.data.cv_exists).toBe(false);
   });
 
+  it("omits cv_exists when the URL is outside our R2 public base", async () => {
+    mockCheckCvObjectExists.mockResolvedValue(undefined);
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([ok(EXISTING_APP)]));
+
+    const response = await getById(makeGetRequest(), {
+      params: Promise.resolve({ id: APP_ID }),
+    });
+    const json = await response.json();
+    expect(json.data).toMatchObject({ id: APP_ID, cv_url: EXISTING_APP.cv_url });
+    expect(json.data.cv_exists).toBeUndefined();
+  });
+
   it("returns 404 when the application is not found or not owned by user", async () => {
     mockCreateClient.mockResolvedValue(makeSupabaseClient([ok(null)]));
 

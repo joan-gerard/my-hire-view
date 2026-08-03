@@ -18,8 +18,10 @@ import {
   isCvStorageUrl,
   deleteCvIfOurs,
   deleteApplicationCvIfTailored,
+  checkCvObjectExists,
 } from "@/lib/utils/cv-storage";
 import { getR2S3Client } from "@/lib/storage/r2-client";
+import { HeadObjectCommand } from "@aws-sdk/client-s3";
 
 const USER_ID = "user-abc";
 const TAILORED_URL = `https://r2.example.com/cvs/${USER_ID}/tailored/key123.pdf`;
@@ -135,5 +137,42 @@ describe("deleteCvIfOurs / deleteApplicationCvIfTailored", () => {
 
     await deleteApplicationCvIfTailored(PRIMARY_URL, "primary", USER_ID);
     expect(send).not.toHaveBeenCalled();
+  });
+});
+
+describe("checkCvObjectExists", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns true when HeadObject succeeds for an R2 URL", async () => {
+    const send = vi.fn().mockResolvedValue({});
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await expect(checkCvObjectExists(TAILORED_URL)).resolves.toBe(true);
+    expect(send).toHaveBeenCalledWith(expect.any(HeadObjectCommand));
+  });
+
+  it("returns false when HeadObject fails for an R2 URL", async () => {
+    const send = vi.fn().mockRejectedValue(new Error("NotFound"));
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await expect(checkCvObjectExists(TAILORED_URL)).resolves.toBe(false);
+  });
+
+  it("returns undefined for URLs outside our R2 public base", async () => {
+    const send = vi.fn();
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await expect(
+      checkCvObjectExists("https://evil.example/cv.pdf"),
+    ).resolves.toBeUndefined();
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("returns undefined for empty or invalid input", async () => {
+    await expect(checkCvObjectExists(null)).resolves.toBeUndefined();
+    await expect(checkCvObjectExists("")).resolves.toBeUndefined();
+    await expect(checkCvObjectExists(undefined)).resolves.toBeUndefined();
   });
 });

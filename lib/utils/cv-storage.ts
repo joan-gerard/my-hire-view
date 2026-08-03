@@ -155,14 +155,19 @@ export async function deleteApplicationCvIfTailored(
 }
 
 /**
- * Returns true if the URL is ours and HeadObject succeeds.
- * Returns false for non-storage URLs or missing objects.
+ * R2 HeadObject check for a CV public URL.
+ * - `true` — URL is under our R2 public base and the object exists
+ * - `false` — URL is under our R2 public base but the object is missing
+ * - `undefined` — URL is outside our R2 public base; existence is unknown
+ *
+ * Callers should treat `undefined` as “unchecked”: omit `cv_exists` from
+ * detail/public payloads, or default list badges to present (not missing).
  */
 export async function checkCvObjectExists(
   url: string | null | undefined,
-): Promise<boolean> {
+): Promise<boolean | undefined> {
   const key = getCvObjectKeyFromPublicUrl(url);
-  if (!key) return false;
+  if (!key) return undefined;
   try {
     const client = getR2S3Client();
     await client.send(

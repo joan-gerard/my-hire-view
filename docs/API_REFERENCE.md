@@ -116,7 +116,7 @@ List the authenticated user’s applications (newest first), paginated. Returns 
 | `data[].status`         | `"active"` \| `"draft"` \| `"archived"` | Card status                                        |
 | `data[].archived_at`    | `string` (ISO) \| `null`                | Set when archived; retention clock                 |
 | `data[].cv_url`         | `string`                                | Used for `cv_exists` check                         |
-| `data[].cv_exists`      | `boolean`                               | Dashboard “CV missing” badge when false            |
+| `data[].cv_exists`      | `boolean`                               | Dashboard “CV missing” badge when **false**. URLs outside our R2 public base default to **true** (unchecked). |
 | `data[].view_count`     | `number`                                | Status icon + insights                             |
 | `data[].download_count` | `number`                                | Insights                                           |
 | `data[].created_at`     | `string` (ISO)                          | Insights                                           |
@@ -221,7 +221,7 @@ Hard-delete an application and its tailored CV object in R2 (when the URL belong
 
 `GET /api/applications/[publicId]/[slug]`
 
-Public fetch of one application by the owner’s opaque `public_id` and per-user `slug`. Adds `cv_exists` when `cv_url` is set (R2 `HeadObject` check). See [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md).
+Public fetch of one application by the owner’s opaque `public_id` and per-user `slug`. Adds `cv_exists` when `cv_url` is an R2 public URL (`HeadObject`). URLs outside our R2 public base omit `cv_exists` so the UI does not treat them as missing. See [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md).
 
 - **Auth:** Not required
 - **Rate limit:** **120 requests / minute / IP**
@@ -234,7 +234,7 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 - Per-IP rate limit (120/min) tuned for viewing while limiting scraping.
 - Active apps return a **public DTO** (`toPublicApplication`): company/role, candidate identity & links, avatar, CV/video media, `status: "active"`, and optional `cv_exists` — not the full applications row.
 - **Unavailable stub:** archived and draft apps return `{ status: "unavailable" }` only (no PII or media). Skips R2 `HeadObject`. The public view page shows one empty state for unavailable **and** for **404** (deleted / unknown URL).
-- `cv_exists` helps the UI avoid broken “View CV” links when the object is missing (active apps only).
+- `cv_exists` helps the UI avoid broken “View CV” links when an **R2** object is missing (active apps only). Omitted for non-R2 URLs.
 - Clear **404** when the public id + slug pair does not resolve.
 - Invalid `publicId` or slug format is rejected in `resolvePublicApplication` before any DB query (same helper as view / download).
 

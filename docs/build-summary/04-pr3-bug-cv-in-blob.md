@@ -11,9 +11,8 @@ Commit-by-commit detail for PR #3 (bug-cv-in-blob): commits `c19c88e` and `a5da3
 
 **Created:**
 
-- `lib/utils/cv-storage.ts` — URL checks and `deleteCvIfOurs()` for safe CV storage deletion (historically Vercel Blob; app now uses Cloudflare R2 — see `docs/PDF_AND_R2.md`).
-- `docs/PDF_AND_R2.md` — CV PDF storage (replaced earlier `PDF_AND_VERCEL_BLOB.md`).
-- `docs/my-docs/VERCEL_BLOB.md` — Vercel Blob reference notes.
+- `lib/utils/cv-storage.ts` — URL checks and `deleteCvIfOurs()` for safe CV storage deletion (Cloudflare R2 — see `docs/PDF_AND_R2.md`).
+- `docs/PDF_AND_R2.md` — CV PDF storage.
 
 **Updated:**
 

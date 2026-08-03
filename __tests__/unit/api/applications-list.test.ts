@@ -8,10 +8,12 @@ const {
   mockRequireAuth,
   mockCreateClient,
   mockCheckRateLimit,
+  mockCheckCvObjectExists,
 } = vi.hoisted(() => ({
   mockRequireAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
+  mockCheckCvObjectExists: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
@@ -28,7 +30,7 @@ vi.mock("@/lib/rate-limit", () => ({
 vi.mock("@/lib/utils/cv-storage", () => ({
   deleteCvIfOurs: vi.fn(),
   deleteApplicationCvIfTailored: vi.fn(),
-  checkCvObjectExists: vi.fn().mockResolvedValue(true),
+  checkCvObjectExists: mockCheckCvObjectExists,
   isOwnedTailoredCvUrl: vi.fn().mockReturnValue(true),
 }));
 vi.mock("@/lib/auth/ensure-public-id", () => ({
@@ -93,6 +95,27 @@ describe("GET /api/applications", () => {
       total: 21,
     });
     expect(chain.range).toHaveBeenCalledWith(0, APPLICATION_LIST_DEFAULT_LIMIT - 1);
+  });
+
+  it("sets cv_exists:true when existence is unknown (non-R2 URL)", async () => {
+    mockCheckCvObjectExists.mockResolvedValue(undefined);
+    const chain = okWithCount([LIST_ITEM], 1);
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+
+    const response = await GET(makeGetRequest());
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data[0].cv_exists).toBe(true);
+  });
+
+  it("sets cv_exists:false when HeadObject confirms the R2 object is missing", async () => {
+    mockCheckCvObjectExists.mockResolvedValue(false);
+    const chain = okWithCount([LIST_ITEM], 1);
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+
+    const response = await GET(makeGetRequest());
+    const json = await response.json();
+    expect(json.data[0].cv_exists).toBe(false);
   });
 
   it("respects limit and offset query params", async () => {

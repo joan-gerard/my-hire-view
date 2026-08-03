@@ -108,7 +108,8 @@ export async function GET(request: NextRequest) {
     const items = rows.map((row, i) => ({
       ...row,
       public_id: publicId,
-      cv_exists: existence[i] ?? false,
+      // Non-R2 / unchecked URLs → true so they are not flagged missing
+      cv_exists: existence[i] ?? true,
     }));
 
     return NextResponse.json({

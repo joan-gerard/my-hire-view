@@ -8,7 +8,8 @@ import { handleApiError } from '@/lib/api/handle-api-error';
 
 /**
  * GET a single application by id. Requires auth; returns 404 if not found or not owned by user.
- * When cv_url is our R2 public URL, adds cv_exists (HeadObject check) so the client can hide the View link if the file is missing.
+ * When `cv_url` is our R2 public URL, adds `cv_exists` (HeadObject). URLs outside our
+ * R2 public base omit `cv_exists` so the edit UI does not treat them as missing.
  */
 export async function GET(
   request: NextRequest,

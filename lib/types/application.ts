@@ -32,7 +32,11 @@ export interface Application {
   cv_filename?: string | null;
   /** When true, public download uses cv_filename; when false, uses generated name CV-{Slug}.pdf. Default true. Omitted before migration 011. */
   use_original_cv_filename?: boolean;
-  /** Set by GET by-id / public slug when `cv_url` is checked: true if the CV file exists (e.g. in R2), false if missing. Omitted when not checked. */
+  /**
+   * Set by GET by-id / public slug when `cv_url` is an R2 public URL:
+   * true if the object exists, false if missing. Omitted when there is no
+   * `cv_url`, or when the URL is outside our R2 public base.
+   */
   cv_exists?: boolean;
   /**
    * Display-only avatar URL resolved at read time from `profiles.profile_picture_url`
@@ -69,7 +73,10 @@ export type PublicApplication = Pick<
   profile_picture_url: string | null;
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;
-  /** Set when `cv_url` is checked against R2; omitted when there is no `cv_url`. */
+  /**
+   * Set when `cv_url` is checked against R2; omitted when there is no `cv_url`
+   * or the URL is outside our R2 public base (existence unknown).
+   */
   cv_exists?: boolean;
 };
 
@@ -169,7 +176,11 @@ export type ApplicationListItem = Pick<
 > & {
   /** Opaque candidate id for public share URLs. */
   public_id: string;
-  /** True when cv_url points at an existing R2 object (checked on list). */
+  /**
+   * True when `cv_url` is an R2 object that exists, or when existence was not
+   * checked (URL outside our R2 public base). False only when HeadObject
+   * confirms missing.
+   */
   cv_exists: boolean;
 };
 
