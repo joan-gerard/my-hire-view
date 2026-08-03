@@ -19,7 +19,7 @@ In the table of contents, endpoint status is marked with a colored dot:
   - 🟢 [POST applications](#post-applications) — `POST /api/applications`
   - 🟢 [PUT applications](#put-applications) — `PUT /api/applications`
   - 🟢 [DELETE applications](#delete-applications) — `DELETE /api/applications`
-  - 🔴 [GET application by public path](#get-application-by-public-path) — `GET /api/applications/[publicId]/[slug]`
+  - 🟢 [GET application by public path](#get-application-by-public-path) — `GET /api/applications/[publicId]/[slug]`
   - 🔴 [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]`
   - 🔴 [POST application view](#post-application-view) — `POST /api/applications/[publicId]/[slug]/view`
   - 🔴 [POST application download](#post-application-download) — `POST /api/applications/[publicId]/[slug]/download`
@@ -225,20 +225,17 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 
 - **Auth:** Not required
 - **Rate limit:** **120 requests / minute / IP**
-- **Success:** `200` `{ data: PublicApplication }` — recruiter-facing DTO only (see Types). Omits `user_id`, analytics, storage FKs, and other owner-only fields.
-- **Errors:** `404`; `429`; `500`
+- **Success:** `200` `{ data: PublicApplicationResponse }` — either the full recruiter DTO (`PublicApplication`, `status: "active"`) or `{ status: "unavailable" }` when the row exists but must not expose content (`archived` or `draft`). Omits `user_id`, analytics, storage FKs, and other owner-only fields.
+- **Errors:** `404` when the public id + slug pair does not resolve (e.g. deleted or never existed); `429`; `500`
 
 **What works**
 
 - Public by design for shareable recruiter links; no login required.
 - Per-IP rate limit (120/min) tuned for viewing while limiting scraping.
-- Returns a **public DTO** (`toPublicApplication`): company/role, candidate identity & links, avatar, CV/video media, `status`, and optional `cv_exists` — not the full applications row.
-- `cv_exists` helps the UI avoid broken “View CV” links when the object is missing.
+- Active apps return a **public DTO** (`toPublicApplication`): company/role, candidate identity & links, avatar, CV/video media, `status: "active"`, and optional `cv_exists` — not the full applications row.
+- **Unavailable stub:** archived and draft apps return `{ status: "unavailable" }` only (no PII or media). Skips R2 `HeadObject`. The public view page shows one empty state for unavailable **and** for **404** (deleted / unknown URL).
+- `cv_exists` helps the UI avoid broken “View CV” links when the object is missing (active apps only).
 - Clear **404** when the public id + slug pair does not resolve.
-
-**Improvement opportunities**
-
-- For archived applications (`status = archived`), consider a dedicated response shape vs full payload (page already handles archived UI).
 
 ---
 
@@ -285,6 +282,7 @@ Record a page view. Owner views are acknowledged but **not** counted. Non-owner 
 - Increments go through a SECURITY DEFINER RPC with the service-role client (avoids RLS update issues for anonymous viewers).
 - Rate limited; returns a simple `{ success: true }` contract.
 - Also updates `last_viewed_at` for non-owner views.
+- Archived / draft apps return **404** (same as missing) and are **not** counted.
 
 **Improvement opportunities**
 
@@ -311,6 +309,7 @@ Record a CV download. Same owner-exclusion and RPC pattern as view (`increment_a
 - Mirrors the view-count pattern: owner excluded, SECURITY DEFINER RPC, service-role client.
 - Rate limited; consistent `{ success: true }` response.
 - Keeps download analytics aligned with view analytics for the dashboard.
+- Archived / draft apps return **404** and are **not** counted.
 
 **Improvement opportunities**
 
@@ -675,7 +674,7 @@ Pre-launch landing-page signup. Inserts into `waitlist_signups` via the service-
 
 Canonical TypeScript shapes live in:
 
-- `lib/types/application.ts` — `Application`, `PublicApplication` / `toPublicApplication`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
+- `lib/types/application.ts` — `Application`, `PublicApplication` / `UnavailablePublicApplication` / `PublicApplicationResponse`, `toPublicApplication` / `toPublicApplicationResponse`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
 - `lib/validation/application.ts` — `applicationCreateSchema` / `formatApplicationCreateZodError` for `POST /api/applications`; `applicationUpdateSchema` / `formatApplicationUpdateZodError` for `PUT /api/applications`
 - `lib/validation/slug.ts` — `slugReserveSchema` / `formatSlugReserveZodError` for `POST /api/slug`; `slugValidateSchema` / `formatSlugValidateZodError` for `POST /api/slug/validate`
 - `lib/types/profile.ts` — `Profile`, `ProfileUpdateInput`

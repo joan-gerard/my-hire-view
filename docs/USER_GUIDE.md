@@ -75,8 +75,8 @@ At **Dashboard** (`/admin`) you can:
 
 ### Archiving and deleting
 
-- **Archive:** The link still works, but recruiters see a message that the application is no longer active and the CV and video are not shown. You can **Restore** later to make it active again.
-- **Delete:** The application is removed. The link will no longer work.
+- **Archive:** The link still opens, but recruiters see that it **doesn’t have an active application** (no CV, video, or candidate details). You can **Restore** later to make it active again.
+- **Delete:** The application is removed. Opening the old link shows the **same** empty-state message.
 
 ---
 
@@ -93,7 +93,7 @@ You will see:
 - **Resume:** A PDF viewer with the candidate’s CV.
 - **Video pitch:** An embedded YouTube video.
 
-If the application was **archived**, you will see a message that it is no longer active and the CV and video are not available.
+If the application was **archived** or **deleted** (or the link is invalid / mistyped), you will see that the link **doesn’t have an active application** — the CV and video are not shown.
 
 ### View count and last viewed
 

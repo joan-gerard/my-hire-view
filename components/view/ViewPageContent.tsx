@@ -2,10 +2,14 @@
 
 import ApplicationPageHeader from "@/components/public/ApplicationPageHeader";
 import ViewPageFooter from "@/components/public/ViewPageFooter";
-import type { PublicApplication } from "@/lib/types/application";
+import type {
+  PublicApplication,
+  PublicApplicationResponse,
+} from "@/lib/types/application";
+import { isUnavailablePublicApplication } from "@/lib/types/application";
 import { useCallback, useEffect, useState } from "react";
 import ApplicationPageContent from "./ApplicationPageContent";
-import ArchivedApplicationAlert from "./ArchivedApplicationAlert";
+import UnavailableApplicationView from "./UnavailableApplicationView";
 
 interface ViewPageContentProps {
   initialApplication: PublicApplication;
@@ -19,7 +23,7 @@ export default function ViewPageContent({
   slug,
 }: ViewPageContentProps) {
   const [application, setApplication] =
-    useState<PublicApplication>(initialApplication);
+    useState<PublicApplicationResponse>(initialApplication);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [showFooter, setShowFooter] = useState<boolean | null>(null);
 
@@ -35,13 +39,21 @@ export default function ViewPageContent({
 
   const refetchApplication = useCallback(async () => {
     const response = await fetch(`/api/applications/${publicId}/${slug}`);
+    if (response.status === 404) {
+      setApplication({ status: "unavailable" });
+      return;
+    }
     if (!response.ok) return;
-    const { data } = await response.json();
+    const { data } = (await response.json()) as {
+      data: PublicApplicationResponse;
+    };
     setApplication(data);
   }, [publicId, slug]);
 
   // Footer is shown only to non-owners (recruiters/visitors)
   useEffect(() => {
+    if (isUnavailablePublicApplication(application)) return;
+
     let cancelled = false;
     fetch(`/api/applications/${publicId}/${slug}/viewer-status`, {
       credentials: "include",
@@ -56,9 +68,11 @@ export default function ViewPageContent({
     return () => {
       cancelled = true;
     };
-  }, [publicId, slug]);
+  }, [publicId, slug, application]);
 
-  const isArchived = application.status === "archived";
+  if (isUnavailablePublicApplication(application)) {
+    return <UnavailableApplicationView />;
+  }
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
@@ -71,7 +85,7 @@ export default function ViewPageContent({
         portfolioUrl={application.portfolio_url}
         linkedinUrl={application.linkedin_url}
         profileImageUrl={application.profile_picture_url?.trim() || undefined}
-        onWatchVideo={!isArchived ? () => setIsVideoModalOpen(true) : undefined}
+        onWatchVideo={() => setIsVideoModalOpen(true)}
         cvUrl={application.cv_url}
         publicId={publicId}
         slug={slug}
@@ -80,18 +94,14 @@ export default function ViewPageContent({
       />
 
       <div className="mx-auto max-w-6xl mt-6">
-        {isArchived ? (
-          <ArchivedApplicationAlert />
-        ) : (
-          <ApplicationPageContent
-            publicId={publicId}
-            slug={slug}
-            application={application}
-            refetchApplication={refetchApplication}
-            isVideoModalOpen={isVideoModalOpen}
-            onCloseVideoModal={() => setIsVideoModalOpen(false)}
-          />
-        )}
+        <ApplicationPageContent
+          publicId={publicId}
+          slug={slug}
+          application={application}
+          refetchApplication={refetchApplication}
+          isVideoModalOpen={isVideoModalOpen}
+          onCloseVideoModal={() => setIsVideoModalOpen(false)}
+        />
       </div>
 
       {showFooter === true && <ViewPageFooter />}

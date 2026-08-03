@@ -3,12 +3,14 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from '@/lib/rate-limit';
 import { resolvePublicApplication } from '@/lib/utils/resolve-public-application';
+import { isApplicationPubliclyVisible } from '@/lib/types/application';
 import { handleApiError } from '@/lib/api/handle-api-error';
 
 /**
  * POST /api/applications/[publicId]/[slug]/download
  * Increments download_count for the application. Skips increment when the
- * applicant (owner) is downloading their own CV.
+ * applicant (owner) is downloading their own CV. Unavailable apps (archived /
+ * draft) return 404 and are not counted.
  */
 export async function POST(
   request: NextRequest,
@@ -22,7 +24,7 @@ export async function POST(
     const { publicId, slug } = await params;
 
     const resolved = await resolvePublicApplication(supabase, publicId, slug);
-    if (!resolved) {
+    if (!resolved || !isApplicationPubliclyVisible(resolved.application.status)) {
       return NextResponse.json(
         { error: 'Application not found' },
         { status: 404 }

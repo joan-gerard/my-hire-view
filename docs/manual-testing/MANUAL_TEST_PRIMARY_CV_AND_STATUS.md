@@ -19,7 +19,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] Dashboard card shows **active** status icon (not archived)
 - [ ] From the card menu → **Archive**
 - [ ] Card shows archived state; Supabase: `status = archived`, `archived_at` is set (recent timestamp)
-- [ ] Open the public view URL → archived warning; CV/video not shown to recruiters
+- [ ] Open the public view URL → “doesn’t have an active application” empty state; no CV/video/header candidate details; public GET returns `{ status: "unavailable" }`
 - [ ] From the card menu → **Restore**
 - [ ] Card active again; Supabase: `status = active`, `archived_at` is **null**
 - [ ] Archive again → `archived_at` is a **new** timestamp (clock reset)
@@ -148,9 +148,10 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 ## 7. Archive + CV interaction smoke
 
-- [ ] Archive an app that uses a primary CV → public page archived; primary file still in library
+- [ ] Archive an app that uses a primary CV → public page inactive-link empty state; primary file still in library
 - [ ] Restore → view works again with same primary PDF
 - [ ] Archive a tailored-CV app → restore → tailored PDF still loads (unless you deleted it elsewhere)
+- [ ] Delete an application → old public URL shows the same inactive-link empty state
 
 ---
 

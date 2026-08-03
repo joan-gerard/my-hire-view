@@ -187,6 +187,32 @@ describe("GET /api/applications/[publicId]/[slug]", () => {
     expect(json.error).toBe("Application not found");
   });
 
+  it("returns unavailable DTO for archived applications without checking R2", async () => {
+    mockResolvePublicApplication.mockResolvedValue({
+      application: { ...PUBLIC_APP, status: "archived" },
+      ownerUserId: "owner-id",
+    });
+
+    const response = await GET(makeGetRequest(), { params: ROUTE_PARAMS });
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data).toEqual({ status: "unavailable" });
+    expect(mockCheckCvObjectExists).not.toHaveBeenCalled();
+  });
+
+  it("returns unavailable DTO for draft applications without checking R2", async () => {
+    mockResolvePublicApplication.mockResolvedValue({
+      application: { ...PUBLIC_APP, status: "draft" },
+      ownerUserId: "owner-id",
+    });
+
+    const response = await GET(makeGetRequest(), { params: ROUTE_PARAMS });
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data).toEqual({ status: "unavailable" });
+    expect(mockCheckCvObjectExists).not.toHaveBeenCalled();
+  });
+
   it("returns 429 when rate limited", async () => {
     mockCheckRateLimit.mockReturnValue({
       success: false,
@@ -251,6 +277,19 @@ describe("POST /api/applications/[publicId]/[slug]/view", () => {
 
     const response = await postView(makePostRequest(), { params: ROUTE_PARAMS });
     expect(response.status).toBe(404);
+  });
+
+  it("returns 404 and does not increment when the application is archived", async () => {
+    mockResolvePublicApplication.mockResolvedValue({
+      application: { ...PUBLIC_APP, status: "archived" },
+      ownerUserId: "owner-id",
+    });
+    const admin = { rpc: vi.fn() };
+    mockCreateAdminClient.mockReturnValue(admin);
+
+    const response = await postView(makePostRequest(), { params: ROUTE_PARAMS });
+    expect(response.status).toBe(404);
+    expect(admin.rpc).not.toHaveBeenCalled();
   });
 
   it("returns 500 when the RPC call fails", async () => {

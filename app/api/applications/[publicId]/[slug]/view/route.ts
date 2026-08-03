@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from '@/lib/rate-limit';
 import { resolvePublicApplication } from '@/lib/utils/resolve-public-application';
+import { isApplicationPubliclyVisible } from '@/lib/types/application';
 import { handleApiError } from '@/lib/api/handle-api-error';
 
 export async function POST(
@@ -17,7 +18,7 @@ export async function POST(
     const { publicId, slug } = await params;
 
     const resolved = await resolvePublicApplication(supabase, publicId, slug);
-    if (!resolved) {
+    if (!resolved || !isApplicationPubliclyVisible(resolved.application.status)) {
       return NextResponse.json(
         { error: 'Application not found' },
         { status: 404 }

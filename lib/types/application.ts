@@ -17,7 +17,7 @@ export interface Application {
   /** Last time the application page was viewed by someone other than the owner (null if never viewed). */
   last_viewed_at: string | null;
   user_id: string;
-  /** active = live; draft = unpublished; archived = soft-hidden on public view. */
+  /** active = live on public URL; draft/archived = public GET returns unavailable stub. */
   status: ApplicationStatus;
   /** Set when status becomes archived; cleared on restore. Re-archiving resets retention clock. */
   archived_at: string | null;
@@ -48,8 +48,9 @@ export interface Application {
 }
 
 /**
- * Fields returned by `GET /api/applications/[publicId]/[slug]` for the public
- * share page. Omits owner-only / internal fields (`user_id`, analytics, storage FKs, etc.).
+ * Fields returned by `GET /api/applications/[publicId]/[slug]` when the
+ * application is publicly visible (`status = active`). Omits owner-only /
+ * internal fields (`user_id`, analytics, storage FKs, etc.).
  */
 export type PublicApplication = Pick<
   Application,
@@ -62,8 +63,8 @@ export type PublicApplication = Pick<
   | "linkedin_url"
   | "cv_url"
   | "video_url"
-  | "status"
 > & {
+  status: "active";
   /** Display-only avatar URL resolved at read time (may be null when hidden). */
   profile_picture_url: string | null;
   cv_filename?: string | null;
@@ -73,7 +74,38 @@ export type PublicApplication = Pick<
 };
 
 /**
+ * Minimal public DTO when the application must not expose content (archived,
+ * draft, etc.). Same recruiter-facing empty state as a deleted/missing link.
+ */
+export type UnavailablePublicApplication = {
+  status: "unavailable";
+};
+
+/** Success payload for `GET /api/applications/[publicId]/[slug]`. */
+export type PublicApplicationResponse =
+  | PublicApplication
+  | UnavailablePublicApplication;
+
+/** True when recruiters may see CV/video and candidate details. */
+export function isApplicationPubliclyVisible(
+  status: ApplicationStatus,
+): boolean {
+  return status === "active";
+}
+
+export function isUnavailablePublicApplication(
+  data: PublicApplicationResponse,
+): data is UnavailablePublicApplication {
+  return data.status === "unavailable";
+}
+
+export function toUnavailablePublicApplication(): UnavailablePublicApplication {
+  return { status: "unavailable" };
+}
+
+/**
  * Maps a full application row (plus optional `cv_exists`) to the public share DTO.
+ * Non-active statuses return the unavailable stub (no media or PII).
  */
 export function toPublicApplication(
   application: Application,
@@ -90,7 +122,7 @@ export function toPublicApplication(
     profile_picture_url: application.profile_picture_url ?? null,
     cv_url: application.cv_url,
     video_url: application.video_url,
-    status: application.status,
+    status: "active",
   };
   if (application.cv_filename !== undefined) {
     dto.cv_filename = application.cv_filename;
@@ -102,6 +134,19 @@ export function toPublicApplication(
     dto.cv_exists = cv_exists;
   }
   return dto;
+}
+
+/**
+ * Public GET mapper: active → full DTO; archived/draft → unavailable stub.
+ */
+export function toPublicApplicationResponse(
+  application: Application,
+  cv_exists?: boolean,
+): PublicApplicationResponse {
+  if (!isApplicationPubliclyVisible(application.status)) {
+    return toUnavailablePublicApplication();
+  }
+  return toPublicApplication(application, cv_exists);
 }
 
 /**

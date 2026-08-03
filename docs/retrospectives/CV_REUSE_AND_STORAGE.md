@@ -92,7 +92,7 @@ Separately from storage, we replace `is_active` (boolean) with:
 |-------|---------|
 | `active` | Live shareable application |
 | `draft` | Reserved for preview / save-before-publish (preview backlog) |
-| `archived` | Soft-hidden on the public page; CV/video not shown to recruiters |
+| `archived` | Soft-hidden on the public page; public GET returns `{ status: "unavailable" }` (same empty UI as deleted links); CV/video not shown to recruiters |
 
 **`archived_at`** is set when status becomes `archived`. Restoring to `active` clears it; archiving again **resets** the 90-day retention clock.
 
