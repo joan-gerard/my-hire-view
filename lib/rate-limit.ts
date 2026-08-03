@@ -84,6 +84,15 @@ export const DEFAULT_API_RATE_LIMIT: RateLimitOptions = {
   windowMs: 60_000,
 };
 
+/**
+ * POST /api/slug/validate — tighter than general writes.
+ * Debounced UI (~450ms) still fits; caps abuse from rapid manual slug edits.
+ */
+export const SLUG_VALIDATE_RATE_LIMIT: RateLimitOptions = {
+  limit: 30,
+  windowMs: 60_000,
+};
+
 /** CV PDF upload: stricter than general writes (per IP and per user). */
 export const CV_UPLOAD_RATE_LIMIT: RateLimitOptions = {
   limit: 10,

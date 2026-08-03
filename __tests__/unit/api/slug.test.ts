@@ -39,6 +39,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: mockCreateClient }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
   DEFAULT_API_RATE_LIMIT: { limit: 60, windowMs: 60_000 },
+  SLUG_VALIDATE_RATE_LIMIT: { limit: 30, windowMs: 60_000 },
   rateLimit429: vi.fn().mockReturnValue(
     new Response(JSON.stringify({ error: "Too many requests" }), {
       status: 429,
@@ -288,6 +289,7 @@ describe("POST /api/slug/validate", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.ok).toBe(true);
+    expect(mockCreateClient).not.toHaveBeenCalled();
   });
 
   it("returns 200 with ok:false when slug format is invalid", async () => {
@@ -321,34 +323,71 @@ describe("POST /api/slug/validate", () => {
     expect(json.ok).toBe(false);
   });
 
-  it("passes excludeId to the validation helper (edit flow)", async () => {
-    mockValidateSlugForApplication.mockResolvedValue({ ok: true });
+  it("returns 400 for malformed JSON", async () => {
+    const req = makeRawRequest(
+      "http://localhost/api/slug/validate",
+      "{not-json",
+    );
+    const response = await validatePost(req);
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toBe("Invalid JSON body");
+  });
 
+  it("returns 400 for a JSON null body", async () => {
+    const req = makeRequest("http://localhost/api/slug/validate", null);
+    const response = await validatePost(req);
+    expect(response.status).toBe(400);
+    expect(mockValidateSlugForApplication).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when slug is missing", async () => {
+    const req = makeRequest("http://localhost/api/slug/validate", {});
+    const response = await validatePost(req);
+    expect(response.status).toBe(400);
+  });
+
+  it("returns 400 when excludeId is not a UUID", async () => {
     const req = makeRequest("http://localhost/api/slug/validate", {
       slug: "volvo-engineer",
       excludeId: "app-id-42",
     });
-    await validatePost(req);
-    expect(mockValidateSlugForApplication).toHaveBeenCalledWith(
-      "volvo-engineer",
-      "user-123",
-      "app-id-42",
-    );
+    const response = await validatePost(req);
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/UUID/i);
   });
 
-  it("ignores excludeId when it is not a string", async () => {
+  it("passes owned excludeId to the validation helper (edit flow)", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok({ id: OWNED_EXCLUDE_ID })]),
+    );
     mockValidateSlugForApplication.mockResolvedValue({ ok: true });
 
     const req = makeRequest("http://localhost/api/slug/validate", {
       slug: "volvo-engineer",
-      excludeId: 12345,
+      excludeId: OWNED_EXCLUDE_ID,
     });
     await validatePost(req);
     expect(mockValidateSlugForApplication).toHaveBeenCalledWith(
       "volvo-engineer",
       "user-123",
-      undefined,
+      OWNED_EXCLUDE_ID,
     );
+  });
+
+  it("returns 404 when excludeId is not owned by the current user", async () => {
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([ok(null)]));
+
+    const req = makeRequest("http://localhost/api/slug/validate", {
+      slug: "volvo-engineer",
+      excludeId: OWNED_EXCLUDE_ID,
+    });
+    const response = await validatePost(req);
+    expect(response.status).toBe(404);
+    const json = await response.json();
+    expect(json.error).toBe("Application not found");
+    expect(mockValidateSlugForApplication).not.toHaveBeenCalled();
   });
 
   it("returns 401 when not authenticated", async () => {

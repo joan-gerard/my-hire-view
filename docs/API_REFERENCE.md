@@ -489,27 +489,20 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 Check format and uniqueness of a proposed slug **for the current user** (used when the user edits the slug field manually). Invalid or taken slugs return **200** with `{ ok: false, error }` (not 4xx), so the client can show inline feedback.
 
 - **Auth:** Required
-- **Rate limit:** Default (60/min)
-- **Body:** `slug` (string); optional `excludeId` (string, max 64 chars)
+- **Rate limit:** **30 requests / minute / IP** (`SLUG_VALIDATE_RATE_LIMIT`)
+- **Body:** `slug` (string, required; may be empty for format feedback); optional `excludeId` (UUID)
 - **Success:** `200` `{ ok: true }` or `200` `{ ok: false, error: string }`
-- **Errors:** `401`; `429`; `500` `{ ok: false, error }`
+- **Errors:** `400` invalid JSON / schema; `401`; `404` `excludeId` missing or not owned; `429`; `500` `{ ok: false, error }`
 
 **What works**
 
-- Auth required (unlike `/api/slug`).
-- Rate limited.
-- Dedicated auth try/catch returns **401** before business logic.
+- Auth required; dedicated auth try/catch → **401**.
+- Tighter rate limit than general writes (**30/min**), suited to the debounced slug field while capping abuse.
+- **Schema validation** (`slugValidateSchema`): requires a string `slug`; UUID `excludeId`; rejects unexpected keys; malformed JSON / non-object bodies → clear **400**.
+- When `excludeId` is present, verifies ownership via `assertExcludeIdOwnedByUser` (**404** otherwise).
 - Shared `validateSlugForApplication` covers format + uniqueness.
-- **200** + `{ ok: false, error }` is a deliberate UX contract for inline form feedback.
-- Sanitizes `excludeId` (type/length) before use.
-
-**Improvement opportunities**
-
-- Parse/validate the body as an object before reading fields: malformed JSON or a JSON `null` body currently throws and returns **500** `{ ok: false, error: "Failed to validate slug" }` instead of a client **400**. Require a string `slug` (and optional `excludeId`) up front.
-- When `excludeId` is present, verify ownership so users cannot use another user’s id to “exclude” a collision check.
-- Tighten `excludeId` to UUID format (not only length ≤ 64).
-- Optionally rate-limit more tightly (debounced UI still fires often).
-- Keep the intentional **200** + `{ ok: false }` contract documented for API clients.
+- **200** + `{ ok: false, error }` is a deliberate UX contract for inline form feedback (invalid or taken slugs are not **4xx**).
+- Logs unexpected failures before returning **500**.
 
 ---
 
@@ -691,7 +684,7 @@ Canonical TypeScript shapes live in:
 
 - `lib/types/application.ts` — `Application`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
 - `lib/validation/application.ts` — `applicationCreateSchema` / `formatApplicationCreateZodError` for `POST /api/applications`
-- `lib/validation/slug.ts` — `slugReserveSchema` / `formatSlugReserveZodError` for `POST /api/slug`
+- `lib/validation/slug.ts` — `slugReserveSchema` / `formatSlugReserveZodError` for `POST /api/slug`; `slugValidateSchema` / `formatSlugValidateZodError` for `POST /api/slug/validate`
 - `lib/types/profile.ts` — `Profile`, `ProfileUpdateInput`
 - `lib/types/primary-cv.ts` — `PrimaryCv`, `PrimaryCvApplicationPreview`, `PRIMARY_CV_MAX_PER_USER`
 

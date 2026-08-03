@@ -6,8 +6,11 @@ import { APPLICATION_COMPANY_ROLE_MAX_LENGTH } from "@/lib/validation/applicatio
 import { PROFILE_NAME_MAX_LENGTH } from "@/lib/validation/profile";
 import {
   formatSlugReserveZodError,
+  formatSlugValidateZodError,
   slugReserveSchema,
+  slugValidateSchema,
 } from "@/lib/validation/slug";
+import { SLUG_MAX_LENGTH } from "@/lib/utils/slug-generate";
 
 const VALID_BODY = {
   company: "Volvo",
@@ -119,5 +122,44 @@ describe("slugReserveSchema", () => {
         /unrecognized key/i,
       );
     }
+  });
+});
+
+describe("slugValidateSchema", () => {
+  it("accepts a string slug and optional UUID excludeId", () => {
+    const result = slugValidateSchema.safeParse({
+      slug: "volvo-engineer",
+      excludeId: "11111111-1111-4111-8111-111111111111",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("allows empty slug (format feedback stays on the 200 path)", () => {
+    const result = slugValidateSchema.safeParse({ slug: "  " });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.slug).toBe("");
+    }
+  });
+
+  it("rejects missing slug, null body, and non-UUID excludeId", () => {
+    expect(slugValidateSchema.safeParse({}).success).toBe(false);
+    expect(slugValidateSchema.safeParse(null).success).toBe(false);
+    const badId = slugValidateSchema.safeParse({
+      slug: "volvo",
+      excludeId: "app-id-42",
+    });
+    expect(badId.success).toBe(false);
+    if (!badId.success) {
+      expect(formatSlugValidateZodError(badId.error)).toMatch(/UUID/i);
+    }
+  });
+
+  it("rejects overlong slug", () => {
+    expect(
+      slugValidateSchema.safeParse({
+        slug: "a".repeat(SLUG_MAX_LENGTH + 1),
+      }).success,
+    ).toBe(false);
   });
 });

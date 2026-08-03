@@ -4,7 +4,7 @@ import {
   DEFAULT_API_RATE_LIMIT,
   rateLimit429,
 } from "@/lib/rate-limit";
-import { createClient } from "@/lib/supabase/server";
+import { assertExcludeIdOwnedByUser } from "@/lib/utils/exclude-id-ownership";
 import { reserveBaseSlug, SlugCollisionError } from "@/lib/utils/slug";
 import {
   formatSlugReserveZodError,
@@ -47,26 +47,16 @@ export async function POST(request: NextRequest) {
     const body = parsed.data;
 
     if (body.excludeId) {
-      const supabase = await createClient();
-      const { data: owned, error: ownershipError } = await supabase
-        .from("applications")
-        .select("id")
-        .eq("id", body.excludeId)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (ownershipError) {
-        console.error("POST /api/slug excludeId ownership:", ownershipError);
-        return NextResponse.json(
-          { error: "Failed to generate slug" },
-          { status: 500 },
-        );
-      }
-      if (!owned) {
-        return NextResponse.json(
-          { error: "Application not found" },
-          { status: 404 },
-        );
+      const ownership = await assertExcludeIdOwnedByUser(
+        body.excludeId,
+        user.id,
+      );
+      if (!ownership.ok) {
+        const error =
+          ownership.status === 500
+            ? "Failed to generate slug"
+            : ownership.error;
+        return NextResponse.json({ error }, { status: ownership.status });
       }
     }
 
