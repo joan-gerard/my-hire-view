@@ -4,12 +4,12 @@ import PDFViewer from "@/components/pdf/PDFViewer";
 import CvUnavailableWithRetry from "@/components/public/CvUnavailableWithRetry";
 import VideoModal from "@/components/view/VideoModal";
 import ViewTracker from "@/components/view/ViewTracker";
-import type { Application } from "@/lib/types/application";
+import type { PublicApplication } from "@/lib/types/application";
 
 interface ApplicationPageContentProps {
   publicId: string;
   slug: string;
-  application: Application;
+  application: PublicApplication;
   refetchApplication: () => Promise<void>;
   isVideoModalOpen: boolean;
   onCloseVideoModal: () => void;

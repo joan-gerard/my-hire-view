@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { checkCvObjectExists } from '@/lib/utils/cv-storage';
 import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import { resolvePublicApplication } from '@/lib/utils/resolve-public-application';
+import { toPublicApplication } from '@/lib/types/application';
 
 /** Public GET: 120 requests per minute per IP to allow normal viewing while limiting scraping. */
 const PUBLIC_APPLICATION_GET_LIMIT = { limit: 120, windowMs: 60_000 };
@@ -32,7 +33,7 @@ export async function GET(
       : undefined;
 
     return NextResponse.json({
-      data: { ...data, cv_exists },
+      data: toPublicApplication(data, cv_exists),
     });
   } catch {
     return NextResponse.json(

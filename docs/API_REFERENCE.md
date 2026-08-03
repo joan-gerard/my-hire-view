@@ -225,19 +225,19 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 
 - **Auth:** Not required
 - **Rate limit:** **120 requests / minute / IP**
-- **Success:** `200` `{ data: Application & { cv_exists?: boolean } }`
+- **Success:** `200` `{ data: PublicApplication }` — recruiter-facing DTO only (see Types). Omits `user_id`, analytics, storage FKs, and other owner-only fields.
 - **Errors:** `404`; `429`; `500`
 
 **What works**
 
 - Public by design for shareable recruiter links; no login required.
 - Per-IP rate limit (120/min) tuned for viewing while limiting scraping.
+- Returns a **public DTO** (`toPublicApplication`): company/role, candidate identity & links, avatar, CV/video media, `status`, and optional `cv_exists` — not the full applications row.
 - `cv_exists` helps the UI avoid broken “View CV” links when the object is missing.
 - Clear **404** when the public id + slug pair does not resolve.
 
 **Improvement opportunities**
 
-- Return a public DTO: omit `user_id` and any other owner-only fields from the response.
 - Cache `cv_exists` or skip the HeadObject on every request if latency / R2 cost becomes an issue.
 - For archived applications (`status = archived`), consider a dedicated response shape vs full payload (page already handles archived UI).
 - Log unexpected errors server-side before returning **500**.
@@ -676,7 +676,7 @@ Pre-launch landing-page signup. Inserts into `waitlist_signups` via the service-
 
 Canonical TypeScript shapes live in:
 
-- `lib/types/application.ts` — `Application`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
+- `lib/types/application.ts` — `Application`, `PublicApplication` / `toPublicApplication`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
 - `lib/validation/application.ts` — `applicationCreateSchema` / `formatApplicationCreateZodError` for `POST /api/applications`; `applicationUpdateSchema` / `formatApplicationUpdateZodError` for `PUT /api/applications`
 - `lib/validation/slug.ts` — `slugReserveSchema` / `formatSlugReserveZodError` for `POST /api/slug`; `slugValidateSchema` / `formatSlugValidateZodError` for `POST /api/slug/validate`
 - `lib/types/profile.ts` — `Profile`, `ProfileUpdateInput`

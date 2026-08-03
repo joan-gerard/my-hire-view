@@ -48,6 +48,63 @@ export interface Application {
 }
 
 /**
+ * Fields returned by `GET /api/applications/[publicId]/[slug]` for the public
+ * share page. Omits owner-only / internal fields (`user_id`, analytics, storage FKs, etc.).
+ */
+export type PublicApplication = Pick<
+  Application,
+  | "company"
+  | "role"
+  | "first_name"
+  | "last_name"
+  | "location"
+  | "portfolio_url"
+  | "linkedin_url"
+  | "cv_url"
+  | "video_url"
+  | "status"
+> & {
+  /** Display-only avatar URL resolved at read time (may be null when hidden). */
+  profile_picture_url: string | null;
+  cv_filename?: string | null;
+  use_original_cv_filename?: boolean;
+  /** Set when `cv_url` is checked against R2; omitted when there is no `cv_url`. */
+  cv_exists?: boolean;
+};
+
+/**
+ * Maps a full application row (plus optional `cv_exists`) to the public share DTO.
+ */
+export function toPublicApplication(
+  application: Application,
+  cv_exists?: boolean,
+): PublicApplication {
+  const dto: PublicApplication = {
+    company: application.company,
+    role: application.role,
+    first_name: application.first_name,
+    last_name: application.last_name,
+    location: application.location,
+    portfolio_url: application.portfolio_url,
+    linkedin_url: application.linkedin_url,
+    profile_picture_url: application.profile_picture_url ?? null,
+    cv_url: application.cv_url,
+    video_url: application.video_url,
+    status: application.status,
+  };
+  if (application.cv_filename !== undefined) {
+    dto.cv_filename = application.cv_filename;
+  }
+  if (application.use_original_cv_filename !== undefined) {
+    dto.use_original_cv_filename = application.use_original_cv_filename;
+  }
+  if (cv_exists !== undefined) {
+    dto.cv_exists = cv_exists;
+  }
+  return dto;
+}
+
+/**
  * Fields returned by `GET /api/applications` for the admin dashboard list.
  * Omits candidate/CV/video/profile fields that the list UI does not use.
  */

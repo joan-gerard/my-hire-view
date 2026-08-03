@@ -2,13 +2,13 @@
 
 import ApplicationPageHeader from "@/components/public/ApplicationPageHeader";
 import ViewPageFooter from "@/components/public/ViewPageFooter";
-import type { Application } from "@/lib/types/application";
+import type { PublicApplication } from "@/lib/types/application";
 import { useCallback, useEffect, useState } from "react";
 import ApplicationPageContent from "./ApplicationPageContent";
 import ArchivedApplicationAlert from "./ArchivedApplicationAlert";
 
 interface ViewPageContentProps {
-  initialApplication: Application;
+  initialApplication: PublicApplication;
   publicId: string;
   slug: string;
 }
@@ -19,7 +19,7 @@ export default function ViewPageContent({
   slug,
 }: ViewPageContentProps) {
   const [application, setApplication] =
-    useState<Application>(initialApplication);
+    useState<PublicApplication>(initialApplication);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [showFooter, setShowFooter] = useState<boolean | null>(null);
 
