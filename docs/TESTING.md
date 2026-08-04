@@ -90,7 +90,7 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 
 ## Design decisions
 
-**No real network or database calls.** All external dependencies (Supabase client, `requireAuth`, rate limit) are mocked with `vi.mock()`. Mock functions are declared via `vi.hoisted()` so they are available before `vi.mock` factories execute (Vitest hoists `vi.mock` calls to the top of the file at compile time).
+**No real network or database calls.** In API route tests, external dependencies (Supabase client, `requireAuth`, rate limit) are mocked with `vi.mock()`. Mock functions are declared via `vi.hoisted()` so they are available before `vi.mock` factories execute (Vitest hoists `vi.mock` calls to the top of the file at compile time). The rate limiter itself is covered separately by `__tests__/unit/lib/rate-limit.test.ts`, which exercises the real in-memory implementation (not a mock).
 
 **Shared Supabase mock helper (`__tests__/helpers/supabase-mock.ts`).** Provides `makeChain`, `ok`, and `dbError` factories that build a fluent Supabase query-chain mock, and `makeSupabaseClient` which accepts an ordered list of chains so each sequential `from()` call in a route handler returns the next configured response.
 

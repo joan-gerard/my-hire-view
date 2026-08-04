@@ -240,16 +240,20 @@ sequenceDiagram
   participant Applications as applications
 
   U->>Form: Edit slug field
-  Note over Form: 450ms debounce
-  Form->>ValidateAPI: POST { slug } (requireAuth)
-  ValidateAPI->>ValidateAPI: validateSlugFormat(slug)
-  ValidateAPI->>Applications: checkSlugUniqueness(slug)
-  alt valid format and available
-    ValidateAPI-->>Form: { ok: true }
-    Form->>Form: show green status
-  else invalid format or taken
-    ValidateAPI-->>Form: { ok: false, error }
-    Form->>Form: show red status with error message
+  Form->>Form: validateSlugFormat(slug)
+  alt invalid format
+    Form->>Form: show red status (no debounce, no network)
+  else format valid
+    Note over Form: 450ms debounce
+    Form->>ValidateAPI: POST { slug } (requireAuth)
+    ValidateAPI->>Applications: checkSlugUniqueness(slug)
+    alt available
+      ValidateAPI-->>Form: { ok: true }
+      Form->>Form: show green status
+    else taken
+      ValidateAPI-->>Form: { ok: false, error }
+      Form->>Form: show red status with error message
+    end
   end
 ```
 
@@ -325,7 +329,7 @@ sequenceDiagram
 
 ### Notes
 
-**Live slug feedback** — As the user fills in company, role, or changes the **Name in URL** preference, the form debounces a `POST /api/slug` call to check whether the derived slug is already taken. The slug field is updated with the result and a green or red status line appears immediately. When the user edits the slug field manually, the debounce instead calls `POST /api/slug/validate` (requires auth; checks format and uniqueness for that specific string).
+**Live slug feedback** — As the user fills in company, role, or changes the **Name in URL** preference, the form debounces a `POST /api/slug` call to check whether the derived slug is already taken. The slug field is updated with the result and a green or red status line appears immediately. When the user edits the slug field manually, format-invalid values are rejected locally; format-valid changes debounce to `POST /api/slug/validate` (requires auth; uniqueness for that specific string).
 
 **Slug on Save** — The form makes a final server-side check before submitting. For a **manually edited slug**, `POST /api/slug/validate` is called once more to prevent race conditions. The page then decides which slug to persist: if the typed slug passed format + validate it is used directly (no call to `POST /api/slug`); otherwise `POST /api/slug` (`reserveBaseSlug`) is called for the derived company/role slug using the **typed** name fields (same source as the live preview — not visibility-filtered candidate toggles). If that slug is taken the API returns **409** — no numeric suffix is appended, and the user is asked to add their name to the URL or change the slug.
 
@@ -384,7 +388,7 @@ sequenceDiagram
 
 ### 5b. Live slug feedback (while editing)
 
-Every change to the slug field (or Name in URL toggle) triggers a debounced `POST /api/slug/validate`. The `excludeId` ensures the user's own current slug is not flagged as taken.
+Format-invalid slug edits are rejected locally (`validateSlugFormat`) with no network call. Format-valid changes to the slug field (including rebuilds from the Name in URL toggle) trigger a debounced `POST /api/slug/validate`. The `excludeId` ensures the user's own current slug is not flagged as taken.
 
 ```mermaid
 sequenceDiagram
@@ -394,16 +398,20 @@ sequenceDiagram
   participant Applications as applications
 
   U->>Form: Edit slug field or toggle Name in URL
-  Note over Form: 450ms debounce
-  Form->>ValidateAPI: POST { slug, excludeId } (requireAuth)
-  ValidateAPI->>ValidateAPI: validateSlugFormat(slug)
-  ValidateAPI->>Applications: checkSlugUniqueness(slug, excludeId)
-  alt valid and available
-    ValidateAPI-->>Form: { ok: true }
-    Form->>Form: show green status
-  else invalid or taken
-    ValidateAPI-->>Form: { ok: false, error }
-    Form->>Form: show red status with error message
+  Form->>Form: validateSlugFormat(slug)
+  alt invalid format
+    Form->>Form: show red status (no debounce, no network)
+  else format valid
+    Note over Form: 450ms debounce
+    Form->>ValidateAPI: POST { slug, excludeId } (requireAuth)
+    ValidateAPI->>Applications: checkSlugUniqueness(slug, excludeId)
+    alt available
+      ValidateAPI-->>Form: { ok: true }
+      Form->>Form: show green status
+    else taken
+      ValidateAPI-->>Form: { ok: false, error }
+      Form->>Form: show red status with error message
+    end
   end
 ```
 
@@ -460,7 +468,7 @@ sequenceDiagram
 
 ### Notes
 
-**Live slug feedback** — Every change to the slug field triggers a debounced `POST /api/slug/validate` (requires auth). The `excludeId` parameter ensures the application's own current slug is never flagged as taken. A green or red status line appears in real time.
+**Live slug feedback** — Format-invalid slug edits are rejected locally; format-valid changes trigger a debounced `POST /api/slug/validate` (requires auth). The `excludeId` parameter ensures the application's own current slug is never flagged as taken. A green or red status line appears in real time.
 
 **Slug on Save** — The form makes a **final `POST /api/slug/validate`** (with `excludeId`) before uploading the CV. This catches any race where the slug became taken between the last debounced check and clicking Save. When the user **manually edited** the slug, the edit page keeps that typed value (same as create). Otherwise, if the slug or **Name in URL** preference changed relative to what was stored, the edit page calls `POST /api/slug` (`reserveBaseSlug`) with `excludeId`. If that derived slug is taken by another application, the API returns **409** — no numeric suffix is appended.
 
@@ -608,8 +616,9 @@ Candidate fields on the application are either supplied by the form (with toggle
 
 | # | Scenario | Behaviour |
 |---|---|---|
-| 38 | Session expires between page load and Save | `POST /api/applications` returns 401; `alert()` shown, application not created. |
-| 39 | User opens the create form, session expires, then types company/role | Auto slug `POST /api/slug` has no auth, so the availability check still works. The 401 only surfaces at Save when `POST /api/applications` is called. |
+| 38 | Session expires between page load and Save (pending tailored CV file) | `POST /api/upload` returns 401 (`Unauthorized`); form sets `errors.cv_url` and stops. `onSubmit` / `POST /api/applications` are not called; no `alert()`. |
+| 38b | Session expires between page load and Save (primary CV — no upload) | Form skips upload; `onSubmit`'s `POST /api/slug/validate` returns 401 → `alert()` with the API error. Application not created; `POST /api/applications` is not reached. |
+| 39 | User opens the create form, session expires, then types company/role | Auto slug `POST /api/slug` requires auth → 401 → red unavailable status. Save stays blocked by slug status. If the slug was already `available` before expiry and the user does not re-trigger auto slug, Save with a pending tailored file fails first at upload as in #38. |
 | 40 | User opens the create form, session expires, then manually edits the slug | `POST /api/slug/validate` requires auth → 401 → red "Sign in again to check slug availability." |
 
 ### 8.10 Double-submit
