@@ -144,6 +144,7 @@ TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_
 | Priority | Area | Item | Notes |
 | -------- | ---- | ---- | ----- |
 | Medium | Correctness | Escape `q` quotes for PostgREST | `normalizeListSearchQuery` does not strip `"`, but the filter wraps the pattern in double quotes (`company.ilike."%…%"`). A search containing `"` can break the filter and yield **500** instead of matches. Escape or remove quotes (and any other reserved filter chars) before interpolating `q`. |
+| Medium | Correctness | Distinguish missing CV vs HeadObject failure | `checkCvObjectExists` returns `false` for any R2/credentials/`HeadObject` error, so a transient outage surfaces as `cv_exists: false` (dashboard “CV missing” badge). Return `false` only for not-found; treat other failures as unchecked (`undefined` / omit / keep present) so the badge retains its meaning. Same helper on by-id and public GETs. |
 
 ---
 
@@ -178,6 +179,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 | -------- | ---- | ---- | ----- |
 | High | Correctness | Canonical tailored URL / object-key uniqueness | `isTailoredCvUrlInUse` compares raw `cv_url` strings. Equivalent percent-encoded R2 URLs can attach one object to multiple applications; deleting/replacing one then breaks the other. Canonicalize to the object key (or a normalized URL) before compare/store. |
 | High | Correctness | Atomic tailored-URL uniqueness | Check-then-insert is not atomic: concurrent creates can both pass `isTailoredCvUrlInUse` and insert. Enforce per-user uniqueness for the canonical tailored object key at the DB/transaction boundary (like slug’s `UNIQUE (user_id, slug)` race backstop). |
+| High | Security | Same-user ownership for `primary_cv_id` at DB | API resolves via `resolvePrimaryCvForUser` (`id` + `user_id`), but `applications.primary_cv_id` only FKs `primary_cvs(id)`. Owner UPDATE RLS still allows attaching another user’s primary UUID if known. New migration: composite ownership FK (or trigger) on `(primary_cv_id, user_id)` → `primary_cvs(id, user_id)`, keeping `ON DELETE SET NULL`. Same gap on PUT. |
 
 ---
 
@@ -211,6 +213,9 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 | -------- | ---- | ---- | ----- |
 | High | Correctness | Filename-only edit on primary CV | `cvFieldsTouched` includes `cv_filename`. For an existing primary app, the primary branch requires `body.primary_cv_id` and does not fall back to the row’s current id (select also omits `primary_cv_id`). A filename-only PUT → **400**. Preserve existing `primary_cv_id`, or handle filename-only updates without requiring a new primary selection (and without blindly overwriting a custom `cv_filename` with the library filename when that is not intended). |
 | High | Correctness | Canonical / atomic tailored URL uniqueness | Same gaps as create: string `.eq("cv_url")` uniqueness and check-then-update races. Align with POST deferred items (canonical key + DB constraint). |
+| High | Correctness | Allow-list tailored CV deletes only | `deleteApplicationCvIfTailored` skips only when `cvType === "primary"`, then calls `deleteCvIfOurs` (any owned primary or tailored key). Absent/`null` metadata or a tailored-typed row pointing at a primary library URL can delete a shared library PDF and break other apps. Restrict to `cvType === "tailored"` and/or delete only `cvs/{userId}/tailored/…` keys. Same helper on application DELETE. |
+| High | Security | Same-user ownership for `primary_cv_id` at DB | Same as POST: API ownership check is solid; FK + owner UPDATE RLS do not enforce same-user. Ship composite FK / trigger in a forward migration (do not rewrite `022`/`024`). |
+| Medium | Correctness | Enforce `status` ↔ `archived_at` in the database | This route sets/clears `archived_at` with `status`, but there is no CHECK or transition trigger. Direct PostgREST updates can archive without a timestamp (or set `archived_at` while `active`). Add a CHECK (archived iff `archived_at` IS NOT NULL) and/or a trigger that sets/clears on status transitions — **before** the 90-day purge cron relies on both columns ([Backlog](Backlog.md)). |
 
 ---
 
@@ -236,6 +241,13 @@ Hard-delete an application and its tailored CV object in R2 (when the URL belong
 - Only then deletes the applications row.
 - Archive (`PUT` `status: archived`) remains the reversible soft-hide; hard `DELETE` is intentional and irreversible. A possible later alternative (middle-ground delete + orphan tailored-CV cron) is noted in [PDF_AND_R2.md](PDF_AND_R2.md).
 
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| High | Correctness | Allow-list tailored CV deletes only | Same as PUT: `deleteApplicationCvIfTailored` is deny-list on `"primary"` and then deletes any owned R2 key. Missing metadata or a primary-path URL under non-primary `cv_type` can remove a library PDF used by other applications. Require `cvType === "tailored"` and/or tailored-prefix keys only. |
+| High | Correctness | Fail closed when R2 public base is unset | `getCvObjectKeyFromPublicUrl` catches a missing `R2_PUBLIC_BASE_URL` and returns `null`, so `deleteCvIfOurs` no-ops and the applications row is still deleted — leaving the PDF in R2 and breaking the documented fail-closed cleanup. Propagate storage configuration errors on the delete path so the handler can return **500** and skip the DB delete. |
+
 ---
 
 ### GET application by public path
@@ -259,6 +271,15 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 - Clear **404** when the public id + slug pair does not resolve.
 - Invalid `publicId` or slug format is rejected in `resolvePublicApplication` before any DB query (same helper as view / download).
 
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| High | Correctness | SSR public view vs per-IP rate limit | `/view/[publicId]/[slug]` loads this route via server `fetch` (`getBaseUrl()` + `/api/…`) without forwarding the visitor’s IP. `getClientIdentifier` then buckets those requests under the server IP or `"unknown"`, so traffic across visitors shares one **120/min** window and can return **429** → page error. Prefer calling `resolvePublicApplication` (and the same DTO/`cv_exists` path) directly from the RSC, or otherwise exempt/internal-tag this server-side load so the public-IP limiter only applies to real client hits. |
+| High | Observability | Propagate resolve DB errors as 5xx | `resolvePublicApplication` returns `null` when `profileError` or `appError` is set (same as missing row). Callers map `null` → **404** “not found”, so a transient Supabase outage looks like a missing application. Keep missing-row → `null` / **404**; rethrow or surface query errors so `handleApiError` can return **500**. Shared by view and download POSTs. |
+| Medium | Correctness | Distinguish missing CV vs HeadObject failure | Same as list GET: `checkCvObjectExists` maps any HeadObject failure to `cv_exists: false`. Prefer not-found → `false`, other failures → omit / unchecked. |
+| Medium | Security | `toPublicApplication` status footgun | This route correctly uses `toPublicApplicationResponse` (archived/draft → `{ status: "unavailable" }`). The lower-level `toPublicApplication` always emits a full DTO with `status: "active"` and its JSDoc incorrectly claims it returns the unavailable stub for non-active rows. If called directly later, candidate PII/media leak. Enforce the status check in the helper (or change return type to `PublicApplicationResponse`), or narrow the input to active-only and fix the docs. |
+
 ---
 
 ### GET application by id
@@ -280,6 +301,12 @@ Owner-only fetch for the edit page. Same `cv_exists` behaviour as the public slu
 - Rate limited (default 60/min) before auth/query work — same as other authenticated application/profile reads.
 - Validates `id` as a UUID (**400** when malformed) before querying.
 - Auth failures stay **401**; unexpected errors are logged via `handleApiError` and return **500**.
+
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| Medium | Correctness | Distinguish missing CV vs HeadObject failure | Same as list / public GET (`checkCvObjectExists`). |
 
 ---
 
@@ -310,6 +337,7 @@ Record a page view. Owner views are acknowledged but **not** counted. Non-owner 
 
 - Cookie dedupe is best-effort (cleared cookies / other browsers still count); Redis-backed tokens would harden multi-instance enforcement alongside the in-memory rate limiter. **Not planned for now.**
 - **Dedupe before visibility:** if a prior view cookie is present, the handler returns **200** without resolving the app — so a path that was active when the cookie was set can still ack after the app becomes archived / draft (or is deleted), instead of **404**. Resolve and validate public visibility before the short-circuit (or re-check status on the repeat path). **Not planned for now.**
+- **Per-path rate-limit map growth (Medium / Security):** `checkPerSlugRateLimit` runs before format validation and keys the process-wide Map as `${ip}:${publicId}:${slug}`. `prune` only deletes the key being checked, so unique invalid paths are never revisited and entries accumulate until process restart (attacker-controlled high cardinality). The default per-IP limit slows one client (~60 new keys/min) but does not bound growth. Interim: validate/normalize `publicId` + slug (`isValidPublicId` / `validateSlugFormat`) before constructing the key, and/or add global TTL / capacity sweep on the store. Long-term: durable limiter in [Backlog](Backlog.md). Same on download.
 
 ---
 
@@ -339,6 +367,7 @@ Record a CV download. Same owner-exclusion and RPC pattern as view (`increment_a
 
 - Same cookie / in-memory rate-limit caveats as view. **Not planned for now.**
 - **Dedupe before visibility:** if a prior download cookie is present, the handler returns **200** without resolving the app — so a path that was active when the cookie was set can still ack after the app becomes archived / draft (or is deleted), instead of **404**. Resolve and validate public visibility before the short-circuit (or re-check status on the repeat path). Does not increment counts and does not serve the CV; still a contract mismatch with the documented unavailable → **404** behavior. **Not planned for now.**
+- **Per-path rate-limit map growth:** Same as view — `checkPerSlugRateLimit` before path validation + prune-only-on-access allows unbounded Map growth from unique invalid paths.
 
 ---
 
@@ -390,7 +419,9 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 
 | Priority | Area | Item | Notes |
 | -------- | ---- | ---- | ----- |
+| High | Correctness | Picture-only first save without profiles row | `/admin/new` exposes **Add profile picture** when no `profiles` row exists (signup insert failure / immediate-session gap — see signup Deferred). `ProfilePictureModal` PUTs only `{ profile_picture_url }`; with no existing row, merge leaves `first_name`/`last_name` empty → **400**. Bootstrap names (and `public_id`) from Auth `user_metadata` on create-on-first-save, or require the modal/client to send names so the upsert can succeed. |
 | Medium | Correctness | Repairable Auth name sync | Metadata sync runs only when DB `first_name`/`last_name` change (or Auth `public_id` ≠ profile `public_id`). After a failed `updateUser`, the profiles row already has the new names, so retrying the same unchanged PUT skips sync and leaves Auth metadata stale. Also compare normalized Auth `user_metadata` names (same idea as `public_id`) so a no-op profile save can still repair metadata. |
+| High | Security | Validate profile-picture URL origin | `isOwnedProfilePictureUrl` / `getProfilePictureStoragePath` accept any HTTPS host whose pathname matches `/storage/v1/object/public/profile-pictures/{userId}/…`. An authenticated user can save an external URL that still looks “owned,” so public application pages load that host’s image for viewers. Require the parsed URL origin to match `NEXT_PUBLIC_SUPABASE_URL` (in addition to the user-folder path) before accepting. |
 
 ---
 
@@ -431,6 +462,12 @@ Upload a PDF to the primary CV library (max **5** per user). Object key: `cvs/{u
 - PDF-only, **3 MB** max, `%PDF` magic-byte check.
 - Writes R2 object then inserts `primary_cvs` row; rolls back R2 on insert failure.
 - Returns usage fields (`applications_count: 0`, `used_by: []`) for consistent client shape.
+
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| Medium | Correctness | Atomic primary-library cap | Count-then-insert is not atomic: concurrent `POST`s can both pass the `PRIMARY_CV_MAX_PER_USER` check and exceed five rows. Enforce with a DB trigger / advisory lock (or equivalent serialised insert). Prefer not hard-coding `5` in the schema if Premium will raise the limit ([PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md)). |
 
 ---
 
@@ -483,6 +520,12 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 - Uses shared `reserveBaseSlug` / `SlugCollisionError` for consistent slug rules and a clear **409** when taken.
 - Supports name-in-URL positions and `excludeId` for edit flows without inventing numeric suffixes.
 - Logs unexpected failures before returning **500**.
+
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| Medium | Correctness | Preserve name when clamping long slugs | `generateSlug` clamps company+role to 128 before `buildSlug` appends/prepends the name, then clamps again. With `slugNamePosition: "end"`, a long company/role base can consume the full budget so the candidate name is truncated away. Keep the untruncated base until after combining with the name, then clamp the final slug while retaining the requested name segment where possible. Same helpers power the create/edit form live preview. |
 
 ---
 
@@ -649,6 +692,8 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 | Priority | Area | Item | Notes |
 | -------- | ---- | ---- | ----- |
 | High | Correctness | Retry profile create for immediate sessions | On `createInitialProfile` failure, signup still returns success and the code comment assumes `/auth/callback` will retry. That retry only runs on the email-confirmation path. Immediate-session signups (`requiresConfirmation: false`) never hit the callback, so a failed insert can leave the user without a `profiles` row until an incidental path (e.g. `PUT /api/profile`, `ensureProfilePublicId` on app create). Add a post-signup/login bootstrap (or another explicit retry) so the signup profile invariant holds for both flows. |
+| High | Correctness | Distinguish `user_id` vs `public_id` unique violations | `createInitialProfile` treats any Postgres `23505` as success (assumed signup/callback race on `user_id`). `profiles` also has `UNIQUE (public_id)`, so a rare opaque-id collision returns success with **no** row for the new user. Signup still proceeds and the callback only logs errors → later profile/application paths can fail. On `23505`, re-select by `input.userId` and return success only if that row exists; otherwise surface an error (and optionally regenerate `public_id` + retry). |
+| Medium | Correctness | Validate Auth metadata `public_id` format | `publicIdFromUserMetadata` returns any non-empty trimmed string. Auth callback, `PUT /api/profile`, and `ensureProfilePublicId` (application create) will persist it, while public resolution rejects IDs outside `isValidPublicId` (`^[a-z0-9]{6,12}$`) — share URLs never resolve. Normal signup uses `generatePublicId()` (always valid); malformed metadata (manual edits, bugs) still slips through. Validate with `isValidPublicId` and generate a replacement when invalid before insert/upsert/return. |
 
 **Improvement opportunities**
 
