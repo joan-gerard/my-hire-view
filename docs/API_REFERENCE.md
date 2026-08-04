@@ -506,7 +506,7 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 | High | UX | Friendly status → form copy | Map **400** / **409** / **429** / **500** to clear field messages on Save (today `ApplicationForm` often surfaces raw `error` strings). |
 | High | UX | Save-time busy feedback | While `POST /api/upload` runs inside submit, show explicit “Uploading CV…” (spinner / disabled Save). Fake “0%” progress was removed with upload-on-save; real % is optional. |
 | Medium | Observability | `handleApiError` + `meta` | Align R2/config failures with shared logging (`userId`, bytes, contentType, S3 status) — log-only; keep client messages generic. |
-| Medium | UX | Retry after failure | On network/500, reuse the same idempotency key; generate a new key only when the file changes (partially true today via refs — make the UX explicit). |
+| Medium | UX | Retry after failure | On network/500, reuse the same idempotency key; generate a new key only when the file changes (form keeps key + client URL cache across identical reselection via file signature). |
 | Lower | UX | Real upload progress % | `XMLHttpRequest` / streaming progress for large PDFs on slow networks. Prefer simple busy state first. |
 | Lower | Observability | Metrics / correlation | Duration, size, `idempotent` rate, 409/429/5xx counts; optional request id in logs. Post-launch if support volume warrants. |
 

@@ -919,17 +919,9 @@ export default function ApplicationForm({
           }
         }}
         onPendingFileChange={(file) => {
-          setCvPendingFile(file);
-          uploadedPendingFileRef.current = null;
-          if (file) {
-            cvUploadIdempotencyKeyRef.current = crypto.randomUUID();
-            setFormData((prev) => ({
-              ...prev,
-              cv_filename: file.name,
-              cv_type: "tailored",
-              primary_cv_id: null,
-            }));
-          } else {
+          if (!file) {
+            setCvPendingFile(null);
+            uploadedPendingFileRef.current = null;
             cvUploadIdempotencyKeyRef.current = null;
             // Restored saved tailored URL after clearing a new selection
             if (isEdit && initialData?.cv_type === "tailored") {
@@ -941,7 +933,29 @@ export default function ApplicationForm({
                 primary_cv_id: null,
               }));
             }
+            return;
           }
+
+          const signature = getFileSignature(file);
+          const sameAsCached =
+            uploadedPendingFileRef.current?.signature === signature;
+          const sameAsPending =
+            cvPendingFile != null &&
+            getFileSignature(cvPendingFile) === signature;
+          // Reselecting the same PDF keeps the client upload cache and idempotency
+          // key so Save does not create a duplicate R2 object.
+          if (!sameAsCached && !sameAsPending) {
+            uploadedPendingFileRef.current = null;
+            cvUploadIdempotencyKeyRef.current = crypto.randomUUID();
+          }
+
+          setCvPendingFile(file);
+          setFormData((prev) => ({
+            ...prev,
+            cv_filename: file.name,
+            cv_type: "tailored",
+            primary_cv_id: null,
+          }));
         }}
         onPrimaryLibraryChange={handlePrimaryLibraryChange}
         switchToPrimaryConfirmOpen={switchToPrimaryConfirmOpen}
