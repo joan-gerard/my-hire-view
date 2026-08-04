@@ -97,17 +97,19 @@ export default function EditApplicationPage() {
     try {
       setLoading(true);
 
-      // Re-check derived slug via API if slug or name position in URL changed
+      // Manual edits are validated by ApplicationForm (/api/slug/validate); keep them.
+      // Auto mode: if company/role/name-in-URL changed, re-derive via /api/slug.
       const slugOrPreferenceChanged =
         data.slug !== application?.slug ||
         data.slugNamePosition !== slugNamePositionFromDb(application?.include_name_in_slug);
-      let slug = data.slug;
-      if (slugOrPreferenceChanged) {
+      let slug = data.slug.trim();
+      if (slugOrPreferenceChanged && data.slugManuallyEdited !== true) {
         const slugResponse = await fetch('/api/slug', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify({
             company: data.company,
             role: data.role,
@@ -128,7 +130,10 @@ export default function EditApplicationPage() {
         }
 
         const { slug: uniqueSlug } = await slugResponse.json();
-        slug = uniqueSlug;
+        if (typeof uniqueSlug !== 'string' || !uniqueSlug.trim()) {
+          throw new Error('Failed to generate slug');
+        }
+        slug = uniqueSlug.trim();
       }
 
       const { slugFirstName, slugLastName, slugManuallyEdited, ...dataForApi } =

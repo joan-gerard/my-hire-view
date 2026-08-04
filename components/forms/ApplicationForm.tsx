@@ -688,7 +688,8 @@ export default function ApplicationForm({
         // Name-in-URL uses typed values; include toggles only affect public-page fields.
         slugFirstName: formData.first_name?.trim() || null,
         slugLastName: formData.last_name?.trim() || null,
-        ...(resolveSlugOnCreate ? { slugManuallyEdited } : {}),
+        // Create and edit both need this so handlers keep a validated typed slug.
+        slugManuallyEdited,
       };
       await onSubmit(payload);
     } finally {

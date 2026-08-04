@@ -434,8 +434,10 @@ sequenceDiagram
   UploadAPI->>R2: PutObject
   R2-->>UploadAPI: cv_url
   UploadAPI-->>Form: cv_url
-  Form->>EditPage: onSubmit(payload with slug)
-  alt slug or Name-in-URL preference changed vs stored value
+  Form->>EditPage: onSubmit(payload with slug + slugManuallyEdited)
+  alt slugManuallyEdited
+    EditPage->>EditPage: use typed slug directly (already validated)
+  else slug or Name-in-URL preference changed vs stored value
     EditPage->>SlugAPI: POST { company, role, excludeId, slugNamePosition, first/last name? }
     SlugAPI->>Applications: checkSlugUniqueness(derivedSlug, excludeId)
     alt available
@@ -460,7 +462,7 @@ sequenceDiagram
 
 **Live slug feedback** — Every change to the slug field triggers a debounced `POST /api/slug/validate` (requires auth). The `excludeId` parameter ensures the application's own current slug is never flagged as taken. A green or red status line appears in real time.
 
-**Slug on Save** — The form makes a **final `POST /api/slug/validate`** (with `excludeId`) before uploading the CV. This catches any race where the slug became taken between the last debounced check and clicking Save. If the slug or **Name in URL** preference changed relative to what was stored, the edit page then calls `POST /api/slug` (`reserveBaseSlug`) with `excludeId`. If that derived slug is taken by another application, the API returns **409** — no numeric suffix is appended.
+**Slug on Save** — The form makes a **final `POST /api/slug/validate`** (with `excludeId`) before uploading the CV. This catches any race where the slug became taken between the last debounced check and clicking Save. When the user **manually edited** the slug, the edit page keeps that typed value (same as create). Otherwise, if the slug or **Name in URL** preference changed relative to what was stored, the edit page calls `POST /api/slug` (`reserveBaseSlug`) with `excludeId`. If that derived slug is taken by another application, the API returns **409** — no numeric suffix is appended.
 
 **Profile table** — Only the application row is updated; the profile table is never written from the edit flow.
 

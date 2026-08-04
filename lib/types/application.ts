@@ -233,7 +233,8 @@ export interface ApplicationFormData {
   /** When true, public view shows the live profile picture from profiles. */
   show_profile_picture?: boolean;
   /**
-   * Set by ApplicationForm on submit. When true, create flow may keep the typed slug if it passes format + availability checks.
+   * Set by ApplicationForm on submit. When true, create/edit keep the typed slug
+   * after format + availability checks (do not re-derive via POST /api/slug).
    */
   slugManuallyEdited?: boolean;
   /**
