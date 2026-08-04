@@ -566,6 +566,7 @@ Candidate fields on the application are either supplied by the form (with toggle
 | 19 | Manual slug is valid and passes `POST /api/slug/validate` at save time | Used directly; `POST /api/slug` is **not** called. |
 | 20 | Manual slug has invalid format at save time | Form blocks submit with the format error message. |
 | 21 | Manual slug is taken at save time (race: became taken between last debounce check and Save) | Form blocks submit with collision message; `POST /api/slug` is **not** called. |
+| 21b | Final `POST /api/slug/validate` fails at the network/transport level (offline, aborted, etc.) | Form sets `errors.slug` to a retryable connection message; `onSubmit` is not called. Live status stays `available` so Save remains enabled for an immediate retry. |
 | 22 | Manual slug fails validate (taken) and fallback `POST /api/slug` also returns 409 | `alert()` shows the collision message. Application not created. User must act on both their typed slug and the derived slug being taken. |
 | 23 | Manual slug is invalid format and `reserveSlugFromRole()` also 409s | `alert()` shows the derived slug's collision message. |
 

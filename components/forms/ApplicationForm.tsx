@@ -588,17 +588,27 @@ export default function ApplicationForm({
           return;
         }
 
-        const slugValidateRes = await fetch("/api/slug/validate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            slug: slugTrimmed,
-            ...(slugExcludeApplicationId
-              ? { excludeId: slugExcludeApplicationId }
-              : {}),
-          }),
-        });
+        let slugValidateRes: Response;
+        try {
+          slugValidateRes = await fetch("/api/slug/validate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              slug: slugTrimmed,
+              ...(slugExcludeApplicationId
+                ? { excludeId: slugExcludeApplicationId }
+                : {}),
+            }),
+          });
+        } catch {
+          // Keep slugLiveStatus available so Save stays enabled for an immediate retry.
+          const msg =
+            "Could not verify slug. Check your connection and retry.";
+          newErrors.slug = msg;
+          setErrors(newErrors);
+          return;
+        }
         const slugValidateJson: { ok?: boolean; error?: string } =
           await slugValidateRes.json().catch(() => ({}));
         if (slugValidateRes.status === 401) {
