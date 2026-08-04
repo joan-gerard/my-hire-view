@@ -1,9 +1,11 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
-    // Resolve @/* path aliases from tsconfig.json natively (no plugin needed)
-    alias: { "@": new URL(".", import.meta.url).pathname },
+    // Resolve @/* path aliases from tsconfig.json natively (no plugin needed).
+    // fileURLToPath keeps the alias portable on Windows and for paths with spaces.
+    alias: { "@": fileURLToPath(new URL(".", import.meta.url)) },
   },
   test: {
     environment: "node",

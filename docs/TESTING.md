@@ -8,7 +8,7 @@
 
 **Framework:** [Vitest](https://vitest.dev/) — fast, native TypeScript, no Babel overhead.
 
-**Configuration:** `vitest.config.ts` at the project root. The `@/` path alias is resolved natively via `resolve.alias`.
+**Configuration:** `vitest.config.ts` at the project root. The `@/` path alias is resolved natively via `resolve.alias` using `fileURLToPath` (portable on Windows and paths with spaces).
 
 **Scripts:**
 
