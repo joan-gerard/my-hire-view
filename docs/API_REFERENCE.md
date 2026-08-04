@@ -16,9 +16,9 @@ In the table of contents, endpoint status is marked with a colored dot:
 
 - [Conventions](#conventions)
 - [Applications](#applications)
-  - 🟢 [GET applications](#get-applications) — `GET /api/applications`
-  - 🟢 [POST applications](#post-applications) — `POST /api/applications`
-  - 🟢 [PUT applications](#put-applications) — `PUT /api/applications`
+  - 🟠 [GET applications](#get-applications) — `GET /api/applications`
+  - 🟠 [POST applications](#post-applications) — `POST /api/applications`
+  - 🟠 [PUT applications](#put-applications) — `PUT /api/applications`
   - 🟢 [DELETE applications](#delete-applications) — `DELETE /api/applications`
   - 🟢 [GET application by public path](#get-application-by-public-path) — `GET /api/applications/[publicId]/[slug]`
   - 🟢 [GET application by id](#get-application-by-id) — `GET /api/applications/by-id/[id]`
@@ -26,13 +26,13 @@ In the table of contents, endpoint status is marked with a colored dot:
   - 🟠 [POST application download](#post-application-download) — `POST /api/applications/[publicId]/[slug]/download`
 - [Profile](#profile)
   - 🟢 [GET profile](#get-profile) — `GET /api/profile`
-  - 🟢 [PUT profile](#put-profile) — `PUT /api/profile`
+  - 🟠 [PUT profile](#put-profile) — `PUT /api/profile`
   - 🟢 [GET profile primary CVs](#get-profile-primary-cvs) — `GET /api/profile/primary-cvs`
   - 🟢 [POST profile primary CV](#post-profile-primary-cv) — `POST /api/profile/primary-cvs`
-  - 🟢 [DELETE profile primary CV](#delete-profile-primary-cv) — `DELETE /api/profile/primary-cvs`
+  - 🟠 [DELETE profile primary CV](#delete-profile-primary-cv) — `DELETE /api/profile/primary-cvs`
 - [Slugs](#slugs)
   - 🟢 [POST slug](#post-slug) — `POST /api/slug`
-  - 🟢 [POST slug validate](#post-slug-validate) — `POST /api/slug/validate`
+  - 🟠 [POST slug validate](#post-slug-validate) — `POST /api/slug/validate`
 - [Uploads](#uploads)
   - 🟠 [POST upload CV](#post-upload-cv) — `POST /api/upload`
   - 🟠 [POST upload profile picture](#post-upload-profile-picture) — `POST /api/upload/profile-picture`
@@ -137,6 +137,13 @@ TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_
 - Stable ordering (`created_at` descending) for the dashboard.
 - Clear success shape `{ data, meta }`.
 - Projects only dashboard list fields (not `select("*")`).
+- `normalizeListSearchQuery` caps length and strips common PostgREST/`ilike` metacharacters (`%`, `_`, commas, parens, etc.) before building the `or` filter.
+
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| Medium | Correctness | Escape `q` quotes for PostgREST | `normalizeListSearchQuery` does not strip `"`, but the filter wraps the pattern in double quotes (`company.ilike."%…%"`). A search containing `"` can break the filter and yield **500** instead of matches. Escape or remove quotes (and any other reserved filter chars) before interpolating `q`. |
 
 ---
 
@@ -165,6 +172,13 @@ Create an application. Candidate fields fall back to the user’s profile when o
 - **Slug uniqueness:** calls `validateSlugForApplication` (same helper as `POST /api/slug/validate`) before insert so a taken slug returns **409** with `SLUG_COLLISION_USER_MESSAGE` without relying only on the DB. Postgres unique violations (`23505`) remain a race backstop with the same **409** message.
 - Returns **201** with the created row.
 
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| High | Correctness | Canonical tailored URL / object-key uniqueness | `isTailoredCvUrlInUse` compares raw `cv_url` strings. Equivalent percent-encoded R2 URLs can attach one object to multiple applications; deleting/replacing one then breaks the other. Canonicalize to the object key (or a normalized URL) before compare/store. |
+| High | Correctness | Atomic tailored-URL uniqueness | Check-then-insert is not atomic: concurrent creates can both pass `isTailoredCvUrlInUse` and insert. Enforce per-user uniqueness for the canonical tailored object key at the DB/transaction boundary (like slug’s `UNIQUE (user_id, slug)` race backstop). |
+
 ---
 
 ### PUT applications
@@ -190,6 +204,13 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 - Rejects a new tailored `cv_url` that is not a caller-owned tailored upload (**400**), or that is already used by another of the caller’s applications (**409**). Keeping the same `cv_url` on the current row is allowed. Switching to **primary** resolves URL from the caller’s `primary_cvs` library via `primary_cv_id`.
 - Persists `show_profile_picture` when provided (public view uses live profile picture).
 - Maps `slugNamePosition` → `include_name_in_slug` instead of exposing the DB column name as the only contract.
+
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| High | Correctness | Filename-only edit on primary CV | `cvFieldsTouched` includes `cv_filename`. For an existing primary app, the primary branch requires `body.primary_cv_id` and does not fall back to the row’s current id (select also omits `primary_cv_id`). A filename-only PUT → **400**. Preserve existing `primary_cv_id`, or handle filename-only updates without requiring a new primary selection (and without blindly overwriting a custom `cv_filename` with the library filename when that is not intended). |
+| High | Correctness | Canonical / atomic tailored URL uniqueness | Same gaps as create: string `.eq("cv_url")` uniqueness and check-then-update races. Align with POST deferred items (canonical key + DB constraint). |
 
 ---
 
@@ -279,7 +300,7 @@ Record a page view. Owner views are acknowledged but **not** counted. Non-owner 
 - Increments go through a SECURITY DEFINER RPC with the service-role client (avoids RLS update issues for anonymous viewers).
 - Rate limited (per IP and stricter per IP+`publicId`/`slug`); returns a simple `{ success: true }` contract.
 - Also updates `last_viewed_at` for non-owner views.
-- Archived / draft apps return **404** (same as missing) and are **not** counted.
+- Archived / draft apps return **404** (same as missing) and are **not** counted when the request reaches resolve / visibility checks.
 - Invalid `publicId` or slug format returns **404** without querying the database (`resolvePublicApplication` + `validateSlugFormat`).
 - **Server-side dedupe:** after a successful ack (owner skip or RPC), sets an httpOnly cookie (`mhv_view_{publicId}_{slug}`, 24h). Repeat POSTs with that cookie return **200** without resolving or incrementing. Client `sessionStorage` remains a UX optimization only.
 - RPC failures log `publicId` / `slug` / PostgREST `code` via `handleApiError` `meta` (server-only); the client still sees a generic message.
@@ -288,6 +309,7 @@ Record a page view. Owner views are acknowledged but **not** counted. Non-owner 
 **Deferred / known limitations**
 
 - Cookie dedupe is best-effort (cleared cookies / other browsers still count); Redis-backed tokens would harden multi-instance enforcement alongside the in-memory rate limiter. **Not planned for now.**
+- **Dedupe before visibility:** if a prior view cookie is present, the handler returns **200** without resolving the app — so a path that was active when the cookie was set can still ack after the app becomes archived / draft (or is deleted), instead of **404**. Resolve and validate public visibility before the short-circuit (or re-check status on the repeat path). **Not planned for now.**
 
 ---
 
@@ -307,7 +329,7 @@ Record a CV download. Same owner-exclusion and RPC pattern as view (`increment_a
 - Mirrors the view-count pattern: owner excluded, SECURITY DEFINER RPC, service-role client.
 - Rate limited (per IP and per IP+path); consistent `{ success: true }` response.
 - Keeps download analytics aligned with view analytics for the dashboard.
-- Archived / draft apps return **404** and are **not** counted.
+- Archived / draft apps return **404** and are **not** counted when the request reaches resolve / visibility checks.
 - Invalid `publicId` or slug format returns **404** without querying the database (same early check as view).
 - Same **httpOnly dedupe cookie** pattern as view (`mhv_download_{publicId}_{slug}`, 24h).
 - RPC failures log path + `code` via `handleApiError` `meta` (same as view); client message stays generic.
@@ -316,6 +338,7 @@ Record a CV download. Same owner-exclusion and RPC pattern as view (`increment_a
 **Deferred / known limitations**
 
 - Same cookie / in-memory rate-limit caveats as view. **Not planned for now.**
+- **Dedupe before visibility:** if a prior download cookie is present, the handler returns **200** without resolving the app — so a path that was active when the cookie was set can still ack after the app becomes archived / draft (or is deleted), instead of **404**. Resolve and validate public visibility before the short-circuit (or re-check status on the repeat path). Does not increment counts and does not serve the CV; still a contract mismatch with the documented unavailable → **404** behavior. **Not planned for now.**
 
 ---
 
@@ -361,6 +384,13 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 - Deletes previous Storage object after successful write when the URL changes; surfaces partial failures as `warnings`.
 - No applications fan-out for picture URLs (live profile read on view).
 - Dedicated auth try/catch → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
+- Syncs Auth `user_metadata` (`first_name`, `last_name`, `public_id`) when DB names change or Auth `public_id` is out of sync; sync failures become `warnings` while still returning **200** + `data`.
+
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| Medium | Correctness | Repairable Auth name sync | Metadata sync runs only when DB `first_name`/`last_name` change (or Auth `public_id` ≠ profile `public_id`). After a failed `updateUser`, the profiles row already has the new names, so retrying the same unchanged PUT skips sync and leaves Auth metadata stale. Also compare normalized Auth `user_metadata` names (same idea as `public_id`) so a no-op profile save can still repair metadata. |
 
 ---
 
@@ -422,6 +452,12 @@ Remove a primary CV from the library and delete its R2 object. Applications that
 - **Fail closed:** deletes the R2 object first (`deleteCvIfOurs`); on R2 failure → **500** and the library row is left intact. Then deletes the `primary_cvs` row.
 - Returns `applications_affected` count for confirm UX (client may show this before calling DELETE).
 
+**Deferred priorities** (fail-closed R2-first is intentional to avoid orphan PDFs; remaining gap is the inverse failure mode — see [PDF_AND_R2.md](PDF_AND_R2.md))
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| Medium | Correctness | Durable two-step delete | R2 is deleted before the `primary_cvs` row. If the DB delete then fails, the library entry still points at a permanently missing file (client sees **400** while storage is already gone). Prefer a consistent strategy: e.g. soft-delete / tombstone the row, retryable R2 cleanup, then hard-delete — or DB-first + orphan cleanup cron (middle-ground path in [PDF_AND_R2.md](PDF_AND_R2.md)). |
+
 ---
 
 ## Slugs
@@ -472,6 +508,12 @@ Check format and uniqueness of a proposed slug **for the current user** (used wh
 - **200** + `{ ok: false, error }` is a deliberate UX contract for inline form feedback (invalid or taken slugs are not **4xx**).
 - Logs unexpected failures before returning **500**.
 
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| Medium | Rate limit | Route-scoped limiter key | `checkRateLimit` stores by client IP only, so `SLUG_VALIDATE_RATE_LIMIT` (**30/min**) shares the same counter as other routes that call `checkRateLimit` (e.g. default **60/min** APIs). Unrelated traffic can exhaust the bucket and **429** the first slug-validate call. Use a namespaced key (e.g. `slug-validate:${clientIp}` via `rateLimit`, like CV upload’s `cv-upload:${userId}`) so the advertised validate budget is independent. |
+
 ---
 
 ## Uploads
@@ -499,12 +541,14 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 - Fails clearly when R2 is not configured; logs upload/config errors server-side.
 - Application attach/delete paths authorize object keys per user (`isOwnedTailoredCvUrl` on attach / `deleteCvIfOurs(url, userId)` on delete). Tailored `cv_url` values must be unique across the caller’s applications (**409** if reused); re-uploading the same PDF for another app creates a new object key. Primary CVs are shared via `cv_type: "primary"` and are not subject to the one-URL-per-app rule.
 
-**Deferred priorities** (route contract is solid; polish when upload UX / ops become a pain — see [Backlog](Backlog.md) / [CODE_REVIEW.md](CODE_REVIEW.md))
+**Deferred priorities** (route contract is solid; polish when upload UX / ops become a pain — see [Backlog](Backlog.md) / [CODE_REVIEW.md](CODE_REVIEW.md); plus accepted auth-order and idempotency-identity edge cases)
 
 | Priority | Area | Item | Notes |
 | -------- | ---- | ---- | ----- |
 | High | UX | Friendly status → form copy | Map **400** / **409** / **429** / **500** to clear field messages on Save (today `ApplicationForm` often surfaces raw `error` strings). |
 | High | UX | Save-time busy feedback | While `POST /api/upload` runs inside submit, show explicit “Uploading CV…” (spinner / disabled Save). Fake “0%” progress was removed with upload-on-save; real % is optional. |
+| High | Correctness | Auth before R2 config probe | R2 env probe runs before `requireAuth`. Unauthenticated callers get **500** “File upload is not configured” instead of **401** when config is missing, and learn that upload is misconfigured. Check auth first (same pattern as other protected routes). |
+| High | Correctness | Stronger idempotent replay identity | HeadObject replay treats size + PDF MIME as identity via `existingObjectMatchesUpload` and skips magic-byte validation. Same key + same size/`application/pdf` can return the previous object even when bytes differ or the body is not a PDF. Prefer a content digest (e.g. compare request hash to stored metadata) and validate the body before accepting replay. |
 | Medium | Observability | `handleApiError` + `meta` | Align R2/config failures with shared logging (`userId`, bytes, contentType, S3 status) — log-only; keep client messages generic. |
 | Medium | UX | Retry after failure | On network/500, reuse the same idempotency key; generate a new key only when the file changes (form keeps key + client URL cache across identical reselection via file signature). |
 | Lower | UX | Real upload progress % | `XMLHttpRequest` / streaming progress for large PDFs on slow networks. Prefer simple busy state first. |
@@ -530,12 +574,14 @@ Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png
 - Auth required (dedicated check → **401**); unexpected/Storage failures → **500** with generic client message; Storage errors logged with `status` / `statusCode`.
 - Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8\*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
 
-**Deferred priorities** (same theme as CV upload — contract is fine; remaining work is UX / ops polish)
+**Deferred priorities** (contract is fine; remaining work is UX / ops polish plus accepted storage-ordering edge cases)
 
 | Priority | Area | Item | Notes |
 | -------- | ---- | ---- | ----- |
 | High | UX | Friendly status → form copy | Map **400** / **429** / **500** on profile Save to clear messages (size/type vs rate limit vs storage down). |
 | High | UX | Surface upload `{ warning }` | API may return `{ warning }` when folder purge fails; `ProfileForm` today mainly surfaces **PUT** `/api/profile` `warnings`, not the upload warning. |
+| High | Correctness | Defer folder purge until after profile URL commit | Upload runs `removeOtherProfilePicturesInFolder` before `PUT /api/profile`. If the extension/path changes and the PUT fails, the profile can still point at an object the upload already deleted. Prefer cleaning up the previous object only after the profile URL update succeeds (PUT already deletes the old path post-upsert when the URL changes). |
+| Medium | Correctness | Serialize / gate concurrent replacements | Two concurrent uploads with different MIME/ext each write `avatar.<ext>`, list the folder, and purge the other’s path — both returned URLs can end up deleted. Mitigate with per-user serialization or purge only the previously committed profile path. |
 | Medium | UX | Save-time busy feedback | Explicit “Uploading picture…” while `POST /api/upload/profile-picture` runs (form already has a loading flag — make copy/stage clear). |
 | Medium | Observability | `handleApiError` + `meta` | Fold Storage failures into shared helper with `userId`, mime, bytes, `status`/`statusCode` in log-only `meta`. |
 | Lower | Rate limit | Tighter picture upload cap | Optional: profile-picture-specific limit (closer to CV’s **10/min**) if abuse appears; default **60/min** is fine for now. |
@@ -584,11 +630,11 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - **Success:** `200` `{ success: true, requiresConfirmation: false }` with cookies when a session is created immediately; or `200` `{ success: true, requiresConfirmation: true }` when email confirmation is required
 - **Errors:** `400` (missing fields, password mismatch, too-short password, Supabase error); `429`
 
-`emailRedirectTo` is set to `{origin}/auth/callback`. First/last name and `public_id` are stored in Auth `user_metadata` and a `profiles` row is created via the service-role helper (`createInitialProfile`) — works with or without an immediate session. When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code. The callback also retries `createInitialProfile` idempotently.
+`emailRedirectTo` is set to `{origin}/auth/callback`. First/last name and `public_id` are stored in Auth `user_metadata` and a `profiles` row is created via the service-role helper (`createInitialProfile`) — works with or without an immediate session. When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code. The callback also retries `createInitialProfile` idempotently (**confirmation path only**).
 
 **Side effects**
 
-- Creates a `profiles` row (`user_id`, `public_id`, `first_name`, `last_name`; other columns null). Failures are logged; signup still succeeds so the auth callback can retry.
+- Creates a `profiles` row (`user_id`, `public_id`, `first_name`, `last_name`; other columns null). Failures are logged; signup still succeeds. When email confirmation is required, `/auth/callback` retries `createInitialProfile`. Immediate-session signups do not hit that callback (see Deferred).
 
 **What works**
 
@@ -597,6 +643,12 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - Explicit `requiresConfirmation` flag so the UI can guide email-confirm flows.
 - Sets `emailRedirectTo` to `/auth/callback` on the current origin.
 - Seeds Auth `user_metadata` and inserts the initial profiles row (service role; idempotent).
+
+**Deferred priorities**
+
+| Priority | Area | Item | Notes |
+| -------- | ---- | ---- | ----- |
+| High | Correctness | Retry profile create for immediate sessions | On `createInitialProfile` failure, signup still returns success and the code comment assumes `/auth/callback` will retry. That retry only runs on the email-confirmation path. Immediate-session signups (`requiresConfirmation: false`) never hit the callback, so a failed insert can leave the user without a `profiles` row until an incidental path (e.g. `PUT /api/profile`, `ensureProfilePublicId` on app create). Add a post-signup/login bootstrap (or another explicit retry) so the signup profile invariant holds for both flows. |
 
 **Improvement opportunities**
 
