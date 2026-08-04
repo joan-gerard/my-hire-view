@@ -1,5 +1,7 @@
 # Profiles at signup (revisiting “create on first PUT”)
 
+**Actionable work** lives in [Backlog.md](../Backlog.md). This retrospective is design/context only — not a second checklist.
+
 This retrospective explains why MyHireView initially deferred creating a `profiles` row until the first profile save, what that cost us, and why we now create a minimal row at signup (and again idempotently on the auth callback).
 
 ---

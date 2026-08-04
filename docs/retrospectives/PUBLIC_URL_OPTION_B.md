@@ -1,5 +1,7 @@
 # Public URL design — Option B
 
+**Actionable work** lives in [Backlog.md](../Backlog.md). This retrospective is design/context only — not a second checklist.
+
 This document records why MyHireView adopted **Option B** for shareable application URLs, what problem it solves, alternatives we considered, and what we shipped.
 
 ---

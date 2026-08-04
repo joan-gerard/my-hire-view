@@ -1,5 +1,7 @@
 # CV reuse and storage design
 
+**Actionable work** lives in [Backlog.md](../Backlog.md). This retrospective is design/context only — not a second checklist.
+
 This document records why MyHireView moved from **one uploaded PDF per application** to a **primary CV library + optional tailored CV**, what problem that solves, alternatives we considered, and what we ship now versus later (archive retention).
 
 > **Terminology:** Current product language is **primary** / **tailored** (`cv_type`, `primary_cvs`, keys under `cvs/{userId}/primary/…` and `cvs/{userId}/tailored/…`). Historical option labels below may still say “master” / “custom” where they reflect the original decision record; migrations `022_master_cvs.sql` → `024_primary_cvs_rename.sql` performed the rename.

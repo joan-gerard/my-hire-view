@@ -175,32 +175,9 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 ---
 
-## 9. Pre-Launch Gaps & TODOs
+## 9. Planned work
 
-### Must fix (production hardening)
-
-| Issue                         | Location            | Notes                                                                                                    |
-| ----------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------- |
-| `/api/slug` has no auth check | `app/api/slug/`     | Lower risk but worth tightening.                                                                         |
-| In-memory rate limiting       | `lib/rate-limit.ts` | Resets per serverless instance; not safe across concurrent Vercel instances. Replace with Redis/Upstash. |
-| No CI/CD                      | —                   | Tests exist (`pnpm test:ci`) but no automated pipeline runs them on push/PR.                             |
-
-### Nice to have before launch
-
-- ✅ **README is outdated** — still contains create-next-app boilerplate at the top; migration list only covers `001–006` but the repo is now at `019`.
-- ✅ **Remove `/how-it-works` and `/blog` routes** — placeholder/duplicate pages should not ship; drop nav links and unused page-only components. Rebuilding content is post-launch.
-- ✅ `**MarketingHero_Old.tsx**` is still referenced on pricing/blog — clean up or replace.
-- ✅ **Branding on `/admin` and `/view` pages** is outdated — both still use the previous brand; needs updating to match the current visual identity.
-- ✅ **Support for technical issues** — add a support button or section (marketing, dashboard, and/or public view) so users can report bugs or other technical problems (e.g. mailto link, simple feedback form, or a lightweight third-party tool).
-- ✅ **Pricing & membership tiers** — define plan structure (paid plans plus optional free tier / trial only — not unlimited free app access), per-tier limits, price points, and a real `/pricing` page that matches billing.
-- ✅ **Payment / membership system** — integrate a payment provider (e.g. Stripe) before launch: plan management, checkout, webhooks, Supabase subscription state, and gating application create/use behind an active plan or trial.
-- ✅ **In-app video recording** — currently only a YouTube URL can be provided. Users should be able to record a video pitch directly in the browser (via `MediaRecorder` API). Needs a decision on storage: generic object storage is possible for small raw files, but a dedicated video platform (e.g. **Mux**, **Cloudflare Stream**) is usually better for encoding, adaptive streaming, and bandwidth at scale. The recorded video URL would replace the current `video_url` field, or the two could coexist as separate source types.
-- ✅ **Teleprompter UI for recording** — when recording in-app, display a scrolling script overlay so the user can read their pitch while looking at the camera. Needs a script input field on the application form, auto-scroll speed control, and a fullscreen/overlay mode that doesn't obscure the webcam feed.
-
-### After launch (content)
-
-- ✅ **Rebuild `/how-it-works`** with dedicated, more detailed content (not a homepage duplicate).
-- ✅ **Rebuild `/blog`** with real posts (route restored + content).
+Open pre-launch and post-launch work (gaps, TODOs, improvements) lives in **[Backlog.md](Backlog.md)** — the canonical tracker. This overview does not maintain a parallel checklist.
 
 ---
 
@@ -216,4 +193,4 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 ## Summary
 
-The **core product loop** (create application → share link → recruiter views page with PDF + video) is **functionally complete and well-architected**. Main blockers before production launch include **payment / membership gating** (no unlimited free app access), **rate limiting durability**, and **CI**, alongside the remaining pre-launch items above.
+The **core product loop** (create application → share link → recruiter views page with PDF + video) is **functionally complete and well-architected**. Launch blockers and remaining planned work are tracked in **[Backlog.md](Backlog.md)**.

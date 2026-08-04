@@ -1,6 +1,6 @@
 # Code Review – Refactoring & Best Practices
 
-This document summarizes the code review performed on the MyHireView codebase, including refactors already applied and remaining recommendations.
+Historical record of refactors already applied to the MyHireView codebase. Open follow-ups and recommendations are tracked only in **[Backlog.md](Backlog.md)**.
 
 ---
 
@@ -67,125 +67,19 @@ This document summarizes the code review performed on the MyHireView codebase, i
 
 ---
 
-## 2. Further Recommendations
+## 2. Open recommendations
 
-### 2.1 Login / Signup page duplication (DRY)
-
-**Issue:** `app/login/page.tsx` and `app/signup/page.tsx` share a lot of structure: layout, session check in `useEffect`, form fields (email/password), error/loading state, and submit flow.
-
-**Recommendation:** Extract shared pieces:
-
-- A reusable **auth layout** component (centered card, title, link to the other auth page).
-- Optional: shared **email/password fields** and a small hook (e.g. `useAuthSubmit`) for the fetch + redirect + error handling pattern.
-
-This would reduce duplication and keep login/signup behavior consistent.
+Open follow-ups from this review (login/signup DRY, `withAuth`, API validation, middleware entry, DB/app types, upload error/`handleApiError` adoption, upload UX, central API client, etc.) live in **[Backlog.md](Backlog.md)**. Do not re-list them here.
 
 ---
 
-### 2.2 API route auth pattern (DRY)
+## 3. Summary of applied refactors
 
-**Issue:** In `app/api/applications/route.ts`, every handler uses the same pattern:
-
-```ts
-try {
-  const user = await requireAuth();
-  const supabase = await createClient();
-  // ...
-} catch {
-  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-}
-```
-
-**Recommendation:** Introduce a small wrapper, e.g. `withAuth(handler)`, that:
-
-1. Calls `requireAuth()` (or equivalent).
-2. On success, calls the handler with `(request, { user, supabase })`.
-3. On auth failure, returns a consistent 401 JSON response.
-
-Then each route only contains the business logic. Same idea can be applied to other authenticated API routes if you add more.
-
----
-
-### 2.3 Protect upload and slug APIs
-
-**Issue (historical):**
-
-- `POST /api/upload` – **Done:** `requireAuth()` (dedicated try/catch → 401 JSON) before accepting the PDF.
-- `POST /api/slug` – **Done:** requires auth; uniqueness is per user.
-
-**Follow-up (deferred):** upload **UX / observability** polish — friendly status mapping, Save-time busy copy, `handleApiError` + `meta` on upload routes. See deferred priority tables under [POST upload CV](API_REFERENCE.md#post-upload-cv) and [POST upload profile picture](API_REFERENCE.md#post-upload-profile-picture).
-
----
-
-### 2.4 Input validation on API routes
-
-**Issue:** Some routes parse JSON and use properties without validating shape (e.g. login/signup now use `body?.email` and `body?.password`; slug route uses `company`, `role`, `excludeId`). Invalid or missing body can lead to unclear errors.
-
-**Recommendation:** Validate and narrow types at the boundary, e.g. with a small schema (Zod, or a minimal manual check). Return 400 with a clear message when the body is invalid. This improves security and debuggability.
-
----
-
-### 2.5 Middleware entry point
-
-**Issue:** Session update logic lives in `lib/supabase/middleware.ts`, but the file that exports the Next.js middleware and `config` is `proxy.ts` at the root. Next.js normally expects a root `middleware.ts` (or `middleware.js`) that exports the middleware as default.
-
-**Recommendation:** If you intend to use the built-in middleware pipeline, add a root `middleware.ts` that re-exports the middleware (e.g. `export { proxy as default, config } from './proxy'` or move the logic into `middleware.ts` and import `updateSession` there). Ensure the file is named so Next.js picks it up.
-
----
-
-### 2.6 Types: Single source of truth for DB shape
-
-**Current state:** `lib/types/application.ts` and `lib/types/database.ts` both define the application row shape. They stay in sync manually.
-
-**Recommendation:** Prefer a single source of truth. For example, derive the public `Application` type from the database type (e.g. `Database['public']['Tables']['applications']['Row']`) or generate types from the DB schema. This reduces drift and duplication.
-
----
-
-### 2.7 Error handling in API routes
-
-**Issue:** Some routes use a broad `catch` and return a generic 500 or 401 without logging. That can make production debugging harder.
-
-**Status:** `handleApiError` in `lib/api/handle-api-error.ts` logs server-side (optional log-only `meta`) and returns a generic JSON error. Public application routes and `GET /api/applications/by-id/[id]` use it; view/download RPC failures pass `publicId` / `slug` / error `code` in `meta`. By-id also separates auth (**401**) from unexpected failures (**500**). **Still open:** adopt on upload routes (`POST /api/upload`, `POST /api/upload/profile-picture`) and eventually a shared `withAuth` so auth failures aren’t mislabeled on remaining handlers.
-
----
-
-### 2.8 Upload UX (FileUpload + Save-time feedback)
-
-**Issue (updated):** The old fake “Uploading... 0%” path is gone — `FileUpload` keeps a pending file and upload runs on form Save (`ApplicationForm` → `POST /api/upload`). Remaining gaps:
-
-- Save-time busy copy while the upload request is in flight.
-- Mapping API statuses (**400** / **409** / **429** / **500**) to friendly field messages (raw `error` strings are common today).
-- Profile picture: surface `{ warning }` from `POST /api/upload/profile-picture` when purge fails.
-
-**Recommendation:** Prefer honest “Uploading…” / disabled Save first; optional real progress % later. Tracked as deferred priorities in [API_REFERENCE.md](API_REFERENCE.md#post-upload-cv) and [Backlog.md](Backlog.md).
-
----
-
-### 2.9 Centralize API base URL / fetch options
-
-**Issue:** Client-side code calls `fetch('/api/...')` in many places. If you later need a different base URL or default headers (e.g. `credentials: 'include'` everywhere), you’d touch many files.
-
-**Recommendation:** Introduce a small API client (e.g. `lib/api/client.ts`) that wraps `fetch` with a base URL and default options. Use it for all API calls from the client. This also makes it easier to add interceptors (e.g. auth refresh or error handling) later.
-
----
-
-## 3. Summary
-
-| Area              | Status / Action                                      |
-|-------------------|------------------------------------------------------|
-| Auth API DRY      | Done – shared route client in `lib/supabase/route-client.ts` |
-| Shareable URL     | Done – `lib/utils/url.ts`                            |
-| Auth callback     | Done – `await cookies()`                             |
-| ApplicationCard   | Done – Button + clipboard util                        |
-| Edit page fetch   | Done – GET by-id + edit page uses it                  |
-| Login/Signup DRY  | Recommended – extract layout/fields/hook              |
-| API auth wrapper  | Recommended – e.g. `withAuth`                         |
-| Upload/Slug auth  | Done – both require auth                             |
-| API validation    | Recommended – validate body (e.g. Zod)                |
-| Middleware file   | Recommended – ensure root `middleware.ts`            |
-| DB/App types      | Recommended – single source of truth                   |
-| Error logging     | Partial – `handleApiError` on public/by-id; adopt on uploads |
-| Upload UX         | Deferred – friendly errors, Save-time busy copy, avatar `warning` ([API_REFERENCE](API_REFERENCE.md#post-upload-cv)) |
-| API client        | Optional – centralize fetch for future flexibility    |
-
-If you want to tackle more refactors, a good order is: **login/signup DRY**, then **API validation and auth wrapper**, then **upload UX / observability** when it becomes a support pain.
+| Area             | Status                                                                 |
+| ---------------- | ---------------------------------------------------------------------- |
+| Auth API DRY     | Done – shared route client in `lib/supabase/route-client.ts`           |
+| Shareable URL    | Done – `lib/utils/url.ts`                                              |
+| Auth callback    | Done – `await cookies()`                                               |
+| ApplicationCard  | Done – Button + clipboard util                                         |
+| Edit page fetch  | Done – GET by-id + edit page uses it                                   |
+| Upload/Slug auth | Done – both require auth                                               |

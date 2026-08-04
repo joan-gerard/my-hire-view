@@ -1,5 +1,7 @@
 # PDFs and Cloudflare R2
 
+**Actionable work** lives in [Backlog.md](Backlog.md). This doc is storage design/context only — not a second checklist.
+
 This document describes how the application handles CV PDFs and **Cloudflare R2** object storage (S3-compatible API).
 
 ## Overview

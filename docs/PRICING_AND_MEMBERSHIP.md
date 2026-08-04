@@ -1,10 +1,12 @@
 # Pricing & membership — existing mentions
 
+**Actionable work** lives in [Backlog.md](Backlog.md). This doc is pricing decisions and inventory only — not a second checklist.
+
 Living inventory of pricing and membership decisions plus earlier product notes. Plan names and the tier matrix in §2 are **working decisions**; price points and several numeric caps are still open.
 
 Homepage marketing FAQ copy is **placeholder** and is intentionally **not** used here as input for what tiers should offer.
 
-**Related work:** [Backlog.md](Backlog.md) (Before launch → Must: Pricing & membership tiers, Payment / membership system, Pricing page) · [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
+**Related context:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · launch billing items in [Backlog.md](Backlog.md) (Before launch → Must)
 
 ---
 
@@ -99,5 +101,5 @@ Working plan names: **Free**, **Pro**, **Premium**. Nothing below is implemented
 
 1. As remaining caps and prices land, tighten §2 / §4 and treat this doc as the source of truth for pricing.
 2. Keep `/pricing` (and any other marketing surfaces) aligned with that matrix once it exists.
-3. Sync [Backlog.md](Backlog.md) when pricing or billing work ships.
+3. When pricing or billing work ships, update [Backlog.md](Backlog.md) (remove or strike the row). Do not keep a parallel open checklist here.
 |

@@ -1,5 +1,7 @@
 # AI-Powered Interview Preparation — Product Idea
 
+**Actionable work** lives in [Backlog.md](../Backlog.md). This doc is a product idea / design note only — not a second checklist.
+
 A personalized, AI-driven interview preparation application that serves as a central knowledge repository for a user's career history, CV, and past interview Q&As. By leveraging Retrieval-Augmented Generation (RAG), the system cross-references historical data against newly uploaded job descriptions to generate tailored interview questions, context-aware answers, and customized cheat sheets.
 
 ---
