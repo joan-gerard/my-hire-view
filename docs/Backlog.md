@@ -29,7 +29,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | C2-008 | Security | Validate profile-picture URL origin | Path-only “owned” check allows external HTTPS hosts that look like Storage paths; public pages then load that host. Require origin = `NEXT_PUBLIC_SUPABASE_URL`. | [API_REFERENCE.md](API_REFERENCE.md) |
 | C1-009 | API | Retry profile create for immediate-session signup | `createInitialProfile` failure still returns signup success; callback retry is confirmation-only, so immediate sessions can lack a `profiles` row. Add post-signup/login bootstrap or explicit retry. | [API_REFERENCE.md](API_REFERENCE.md) |
 | C1-010 | API | Distinguish `user_id` vs `public_id` unique violations | `createInitialProfile` treats any `23505` as success; rare `public_id` collision can leave no row. Re-select by `userId` before claiming success. | [API_REFERENCE.md](API_REFERENCE.md) |
-| A4-011 | Marketing | Remove `/how-it-works` and `/blog` routes | Delete placeholder pages before launch; drop nav links in `MarketingHeader`; clean up page-only components left unused (e.g. blog-only hero usage). | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | E1-012 | Product | Pricing & membership tiers | Define plans (paid + optional free tier / trial), per-tier limits, price points. Do **not** launch with unlimited free app access. Inventory of existing free/premium mentions: [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md). | [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) |
 | E2-013 | Product | Payment / membership system | Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | E3-014 | Marketing | Pricing page beyond placeholder | Ship real tiers on `/pricing` aligned with billing — not a stub. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
@@ -45,7 +44,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | F21-020 | Product | Delete account from profile | On the profile page, let users delete their account: remove Supabase Auth user, `profiles` row, and associated applications (and related storage: **primary + tailored CVs** in R2, profile picture). | [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) |
 | F22-021 | Docs / DX | Refresh README | Still create-next-app boilerplate above the MyHireView section. Migrations setup step now points at applying **all** files in `supabase/migrations/` in order (through `025`); finish the full README rewrite. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | F23-022 | Support | Technical support entry point | Mailto, simple form, or lightweight tool on marketing / dashboard / view. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
-| A4-023 | Marketing | Clean up `MarketingHero_Old.tsx` | Still referenced on pricing/blog — remove or replace (ties to route cleanup above). | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | F6-024 | API | Schema validation on write routes | Zod (or similar) for bodies/params; clear **400**s. Applications create/update and profile PUT already validate; extend to remaining write routes as needed. | [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
 | F4-025 | API | Shared `withAuth` helper | Shared `withAuth` so auth failures aren’t mislabeled **401** on remaining routes. (`handleApiError` already shipped.) | [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
 | C3-026 | API | Picture-only first save without profiles row | `/admin/new` can open profile-picture modal when no `profiles` row; PUT with only `profile_picture_url` → empty names → **400**. Bootstrap names/`public_id` from Auth metadata on create-on-first-save (ties to signup profile retry). | [API_REFERENCE.md](API_REFERENCE.md) |
@@ -179,7 +177,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 | A1 | `chore/a1-ci-cd` | `A1-002` | ~~CI/CD — run `pnpm test:ci` on push/PR~~ (shipped) |
 | A2 | `fix/a2-auth-callback-rls` | `A2-016` | ~~Auth callback open-redirect fix + tighten `applications` public SELECT RLS~~ (shipped) |
 | A3 | `ops/a3-confirm-email-prod` | `A3-015` | Ops: Confirm email ON in production Supabase (no app code) |
-| A4 | `chore/a4-remove-placeholder-routes` | `A4-011`, `A4-023` | Remove `/how-it-works` + `/blog`; clean `MarketingHero_Old` / nav |
+| A4 | `chore/a4-remove-placeholder-routes` | `A4-011`, `A4-023` | ~~Remove `/how-it-works` + `/blog`; clean `MarketingHero_Old` / nav~~ (shipped) |
 
 #### Sprint B — CV / R2 correctness (Must)
 
@@ -319,8 +317,7 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **A4** — `chore/a4-remove-placeholder-routes` (`A4-011`, `A4-023`)  
-2. **B1** — `fix/b1-tailored-cv-integrity` (`B1-003`–`B1-005`)  
-3. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
-4. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
-5. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
+1. **B1** — `fix/b1-tailored-cv-integrity` (`B1-003`–`B1-005`)  
+2. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
+3. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
+4. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  

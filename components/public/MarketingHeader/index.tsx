@@ -23,7 +23,7 @@ export interface MarketingHeaderProps {
 }
 
 /**
- * Header for public marketing pages: home (/), How it Works, Pricing, Blog.
+ * Header for public marketing pages: home (/) and Pricing.
  * Rendered by app/(marketing)/layout.tsx.
  *
  * Desktop (md+): Left logo, right nav links + avatar dropdown (Dashboard/Sign out or Sign in).
