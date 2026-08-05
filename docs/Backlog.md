@@ -2,6 +2,8 @@
 
 **Canonical tracker** for planned work, to-dos, and improvement opportunities. Open work is owned here only — other docs may give design context or history, but they are not a second checklist.
 
+**Trello:** Cards live on the [MyHireView](https://trello.com/b/PAn5GrDz/myhireview) board (lists: Pre Launch, Post Launch, Current Sprint, In Progress, Done). Card titles use `[id] Item` (e.g. `[A1-002] CI/CD`) and match rows in this file. Keep this doc and Trello in sync whenever a ticket or PR moves, ships, or is added.
+
 **Context (not the work tracker):** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [API_REFERENCE.md](API_REFERENCE.md) · [CODE_REVIEW.md](CODE_REVIEW.md) · [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) · [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md)
 
 **MoSCoW:** **M**ust · **S**hould · **C**ould · **W**on’t (this time)
@@ -153,8 +155,9 @@ Work to tackle once the product is live.
 
 1. Finish **Before launch → Must**, then work down MoSCoW in that section. Prefer the [Sprint plan](#sprint-plan) order below for PR grouping.
 2. After launch, work down MoSCoW starting with **After launch → Should** (no open Must items today), using the after-launch epics in the sprint plan.
-3. When an item ships, remove (or strike) the row here and note the id in the PR (e.g. `E1-012`). Do not maintain a parallel open checklist in other docs.
-4. When adding a ticket, append a new `{PR}-{NNN}` with the next free number (see highest id above); never reuse a retired id. Add it to an existing PR group in the sprint plan or create a new group.
+3. When starting a PR group, move its Trello cards from Pre/Post Launch → **Current Sprint** (then **In Progress** while coding).
+4. When an item or PR ships, update **both** places: remove (or strike) the row here, note the id in the PR (e.g. `E1-012`), and move the matching Trello card(s) to **Done**. Do not maintain a parallel open checklist in other docs.
+5. When adding a ticket, append a new `{PR}-{NNN}` with the next free number (see highest id above); never reuse a retired id. Add it to an existing PR group in the sprint plan (or create a new group), and create the matching Trello card on Pre Launch or Post Launch.
 
 ---
 
