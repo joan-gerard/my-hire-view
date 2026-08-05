@@ -43,7 +43,7 @@ Personalized recruiter landing pages: create shareable pages with your CV (PDF) 
 
 1. Install dependencies: `pnpm install`
 2. Copy `.env.local.example` to `.env.local` and fill in Supabase and Cloudflare R2 values.
-3. Run the SQL migrations in the Supabase SQL Editor (in order): `001_initial_schema.sql`, `002_add_application_is_active.sql`, `003_profiles_table.sql`, `004_application_candidate_fields.sql`, `005_application_include_name_in_slug.sql`, `006_slug_name_position_text.sql`
+3. Apply every SQL file in `supabase/migrations/` via the Supabase SQL Editor **in numeric order** (`001` … `025`). Do not stop at an early migration — later files include security fixes (e.g. `025_drop_applications_public_select.sql` removes the open anon SELECT on `applications`).
 4. **Configure Supabase Auth**: see [docs/SUPABASE_AUTH_SETUP.md](docs/SUPABASE_AUTH_SETUP.md) to enable the Email provider and optional email templates.
 5. Ensure Supabase **Redirect URLs** include `/auth/callback` for email links.
 

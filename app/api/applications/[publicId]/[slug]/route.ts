@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { checkCvObjectExists } from '@/lib/utils/cv-storage';
 import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import { resolvePublicApplication } from '@/lib/utils/resolve-public-application';
@@ -20,10 +19,9 @@ export async function GET(
   if (!rate.success) return rateLimit429(rate);
 
   try {
-    const supabase = await createClient();
     const { publicId, slug } = await params;
 
-    const resolved = await resolvePublicApplication(supabase, publicId, slug);
+    const resolved = await resolvePublicApplication(publicId, slug);
     if (!resolved) {
       return NextResponse.json(
         { error: 'Application not found' },

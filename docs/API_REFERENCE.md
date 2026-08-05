@@ -240,6 +240,7 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 - `cv_exists` helps the UI avoid broken “View CV” links when an **R2** object is missing (active apps only). Omitted for non-R2 URLs.
 - Clear **404** when the public id + slug pair does not resolve.
 - Invalid `publicId` or slug format is rejected in `resolvePublicApplication` before any DB query (same helper as view / download).
+- Resolution uses the service-role admin client (profile + application). Anon clients cannot enumerate `applications` via PostgREST; only owners SELECT their own rows under RLS.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
 

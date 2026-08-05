@@ -1,4 +1,3 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Application } from "@/lib/types/application";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
@@ -12,6 +11,8 @@ export type ResolvedPublicApplication = {
 
 /**
  * Resolves a public application by opaque public_id and per-user slug.
+ * Uses the service-role client so anonymous PostgREST callers cannot rely on
+ * an open applications SELECT policy (see migration 025).
  * When show_profile_picture is true, attaches profiles.profile_picture_url
  * onto the application as a display-only profile_picture_url (not a DB column),
  * cache-busted with profiles.updated_at so avatar replaces are visible.
@@ -19,7 +20,6 @@ export type ResolvedPublicApplication = {
  * Invalid public_id or slug format returns null without querying the database.
  */
 export async function resolvePublicApplication(
-  supabase: SupabaseClient,
   publicId: string,
   slug: string,
 ): Promise<ResolvedPublicApplication | null> {
@@ -38,7 +38,7 @@ export async function resolvePublicApplication(
     return null;
   }
 
-  const { data: application, error: appError } = await supabase
+  const { data: application, error: appError } = await admin
     .from("applications")
     .select("*")
     .eq("user_id", profile.user_id)

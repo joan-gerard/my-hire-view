@@ -34,7 +34,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | E2-013 | Product | Payment / membership system | Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | E3-014 | Marketing | Pricing page beyond placeholder | Ship real tiers on `/pricing` aligned with billing — not a stub. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | A3-015 | Security | Confirm email required in production Supabase | In Auth → Providers → Email, ensure **Confirm email** is ON so Supabase does not issue a session for unconfirmed users once live. | [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md) |
-| A2-016 | Security | Auth security review — follow-ups (2026-07-27) | **Fix first (remaining):** open redirect in `app/auth/callback/route.ts` — `safeNextPath` rejects `//…` and leading `\…`, but `next=/\evil.com` still passes and `new URL(next, origin)` treats `\` as an authority separator → off-site redirect. Reject `/` or `\` as the second character (or otherwise disallow backslash) before building the redirect URL. **Also address:** tighten `applications` public SELECT RLS (`USING (true)` lets anon clients enumerate all rows via PostgREST, not only public URL access). **Already tracked elsewhere:** durable rate limits, confirm email in prod, signup password rules (≥8 + special), generic login/signup errors. **Could add later:** in-app forgot-password flow wired to Supabase reset emails + `/auth/callback`. **Solid today:** server-side login/signup with session cookies via route client; `getUser()` (not client `getSession()`); `/admin` middleware gate; protected APIs use `requireAuth()`; service role key server-only; password only in HTTPS request body (visible in DevTools is expected). | — |
 
 ### Should
 
@@ -44,7 +43,7 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | F17-018 | Branding | Update login and signup branding | Match `/login` and `/signup` to the main homepage visual identity, including any loading states / skeletons on those flows. | — |
 | F20-019 | Legal | Create legal pages | Terms of Service, Privacy Policy, and Cookies (`/terms`, `/privacy`, cookies). Footer and waitlist already link to `/terms` and `/privacy` with no pages. | — |
 | F21-020 | Product | Delete account from profile | On the profile page, let users delete their account: remove Supabase Auth user, `profiles` row, and associated applications (and related storage: **primary + tailored CVs** in R2, profile picture). | [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) |
-| F22-021 | Docs / DX | Refresh README | Still create-next-app boilerplate; migrations list outdated. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
+| F22-021 | Docs / DX | Refresh README | Still create-next-app boilerplate above the MyHireView section. Migrations setup step now points at applying **all** files in `supabase/migrations/` in order (through `025`); finish the full README rewrite. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | F23-022 | Support | Technical support entry point | Mailto, simple form, or lightweight tool on marketing / dashboard / view. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | A4-023 | Marketing | Clean up `MarketingHero_Old.tsx` | Still referenced on pricing/blog — remove or replace (ties to route cleanup above). | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | F6-024 | API | Schema validation on write routes | Zod (or similar) for bodies/params; clear **400**s. Applications create/update and profile PUT already validate; extend to remaining write routes as needed. | [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
@@ -131,6 +130,7 @@ Work to tackle once the product is live.
 | L3-084 | API | Middle-ground R2 delete UX + orphan cleanup | Fail-closed delete already ships on application/primary delete. Remaining: middle-ground delete UX + orphan tailored-CV cleanup cron — see [PDF_AND_R2.md](PDF_AND_R2.md). | [API_REFERENCE.md](API_REFERENCE.md) / [PDF_AND_R2.md](PDF_AND_R2.md) |
 | L4-085 | API | Auth signup CAPTCHA | If signup spam appears. | [API_REFERENCE.md](API_REFERENCE.md) |
 | L4-086 | API | Logout hardening | Log `signOut` failures; optional CSRF / auth requirement. | [API_REFERENCE.md](API_REFERENCE.md) |
+| L4-098 | UX | In-app forgot-password flow | Ported from A2-016 follow-up. Wire UI to Supabase reset emails + `/auth/callback` (templates already documented in [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md)). | [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md) |
 | L5-087 | Privacy | Avoid Auth `user_id` in profile-picture URLs | Store under `public_id/…` (or similar) and migrate RLS; signed/proxy URLs only if avatars become private. Plan a copy → rewrite DB URLs → delete old paths migration for existing objects. | [PROFILE_PICTURE.md](PROFILE_PICTURE.md) |
 | L6-088 | Code quality | Central API client | Wrap client `fetch` with defaults / future interceptors. | [CODE_REVIEW.md](CODE_REVIEW.md) |
 | L9-089 | Infrastructure | Replay-safe `profiles.public_id` backfill | Migration `020` added `public_id TEXT NOT NULL UNIQUE` without nullable→backfill→NOT NULL (safe here because data was reset — [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md)). Only needed if replaying the chain on a DB that already has pre-`020` profile rows. Do **not** rewrite applied `020`; add a one-off forward script if that case appears. | [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md) |
@@ -177,7 +177,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
 | A1 | `chore/a1-ci-cd` | `A1-002` | ~~CI/CD — run `pnpm test:ci` on push/PR~~ (shipped) |
-| A2 | `fix/a2-auth-callback-rls` | `A2-016` | Auth callback open-redirect fix + tighten `applications` public SELECT RLS (two commits OK) |
+| A2 | `fix/a2-auth-callback-rls` | `A2-016` | ~~Auth callback open-redirect fix + tighten `applications` public SELECT RLS~~ (shipped) |
 | A3 | `ops/a3-confirm-email-prod` | `A3-015` | Ops: Confirm email ON in production Supabase (no app code) |
 | A4 | `chore/a4-remove-placeholder-routes` | `A4-011`, `A4-023` | Remove `/how-it-works` + `/blog`; clean `MarketingHero_Old` / nav |
 
@@ -301,7 +301,7 @@ Depends on product-real purge policy; ship in order.
 | L1 | `feat/l1-extended-rate-limits` | `L1-076`, `L1-077` | Rate-limit remaining reads; account/email login throttling (builds on `D3-001`) |
 | L2 | `fix/l2-slug-uniqueness-exclude-id` | `L2-074`, `L2-075` | Slug uniqueness re-check on create; `excludeId` ownership |
 | L3 | `feat/l3-r2-orphan-cleanup` | `L3-084` | Middle-ground R2 delete UX + orphan cleanup cron |
-| L4 | `feat/l4-signup-captcha-logout` | `L4-085`, `L4-086` | Signup CAPTCHA (if needed); logout hardening |
+| L4 | `feat/l4-signup-captcha-logout` | `L4-085`, `L4-086`, `L4-098` | Signup CAPTCHA (if needed); logout hardening; in-app forgot-password flow |
 | L5 | `feat/l5-avatar-public-id-paths` | `L5-087` | Avoid Auth `user_id` in profile-picture URLs |
 | L6 | `refactor/l6-central-api-client` | `L6-088` | Central API client |
 | L7 | `feat/l7-admin-dashboard-stats` | `L7-080` | Admin dashboard stats section |
@@ -319,9 +319,8 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **A2** — `fix/a2-auth-callback-rls` (`A2-016`)  
-2. **A4** — `chore/a4-remove-placeholder-routes` (`A4-011`, `A4-023`)  
-3. **B1** — `fix/b1-tailored-cv-integrity` (`B1-003`–`B1-005`)  
-4. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
-5. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
-6. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
+1. **A4** — `chore/a4-remove-placeholder-routes` (`A4-011`, `A4-023`)  
+2. **B1** — `fix/b1-tailored-cv-integrity` (`B1-003`–`B1-005`)  
+3. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
+4. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
+5. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  

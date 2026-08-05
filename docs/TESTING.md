@@ -40,6 +40,9 @@ __tests__/
         pdf.test.ts
         image.test.ts
         public-id.test.ts
+        resolve-public-application.test.ts
+      auth/
+        safe-next-path.test.ts
       types/
         primary-cv.test.ts
       api/
@@ -75,7 +78,8 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 | `__tests__/unit/lib/utils/image.test.ts` | **Image magic bytes** — JPEG / PNG / WebP detection + light header checks |
 | `__tests__/unit/api/profile-picture-upload.test.ts` | **Profile picture upload** — auth **401** vs unexpected **500**, MIME + magic-byte rejects, Storage error logging without leaking messages, purge warning |
 | `__tests__/unit/lib/utils/public-id.test.ts` | **Public id generation** |
-| `__tests__/unit/lib/utils/resolve-public-application.test.ts` | **Public path resolution** — invalid `publicId` / slug format short-circuits before DB; valid pair resolves application + owner |
+| `__tests__/unit/lib/utils/resolve-public-application.test.ts` | **Public path resolution** — invalid `publicId` / slug format short-circuits before DB; valid pair resolves via service-role client (profiles + applications) |
+| `__tests__/unit/lib/auth/safe-next-path.test.ts` | **Auth callback redirect sanitizer** — allows same-origin relative paths; rejects `//…`, backslash tricks (`/\evil.com`), and ASCII control characters (CR/LF/tab) |
 | `__tests__/unit/lib/types/primary-cv.test.ts` | **Primary CV types** — `PRIMARY_CV_MAX_PER_USER`, preview limit constants |
 | `__tests__/unit/lib/ensure-profile.test.ts` | **Profile bootstrap** — `createInitialProfile` idempotency |
 | `__tests__/unit/lib/rate-limit.test.ts` | **In-memory rate limiter** — `getClientIdentifier` (x-forwarded-for, x-real-ip, fallback to "unknown"), `rateLimit` (counting, window reset via fake timers, per-client isolation), `checkRateLimit`, `checkPerSlugRateLimit` (IP+path isolation), `rateLimit429` (429 status + Retry-After ≥ 1s) |
