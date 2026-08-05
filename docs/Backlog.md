@@ -32,7 +32,7 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | E1-012 | Product | Pricing & membership tiers | Define plans (paid + optional free tier / trial), per-tier limits, price points. Do **not** launch with unlimited free app access. Inventory of existing free/premium mentions: [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md). | [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) |
 | E2-013 | Product | Payment / membership system | Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | E3-014 | Marketing | Pricing page beyond placeholder | Ship real tiers on `/pricing` aligned with billing — not a stub. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
-| A3-015 | Security | Confirm email required in production Supabase | In Auth → Providers → Email, ensure **Confirm email** is ON so Supabase does not issue a session for unconfirmed users once live. | [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md) |
+| A3-015 | Security | Confirm email required in production Supabase | **Defer until production / just before public launch** (not blocking earlier sprints). In Auth → Providers → Email, ensure **Confirm email** is ON so Supabase does not issue a session for unconfirmed users once live. Also set production **Site URL** + Redirect URLs (include `/auth/callback`); localhost Site URL is fine for local-only work. | [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md) |
 
 ### Should
 
@@ -176,7 +176,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 | -- | ------ | ------- | ----- |
 | A1 | `chore/a1-ci-cd` | `A1-002` | ~~CI/CD — run `pnpm test:ci` on push/PR~~ (shipped) |
 | A2 | `fix/a2-auth-callback-rls` | `A2-016` | ~~Auth callback open-redirect fix + tighten `applications` public SELECT RLS~~ (shipped) |
-| A3 | `ops/a3-confirm-email-prod` | `A3-015` | Ops: Confirm email ON in production Supabase (no app code) |
+| A3 | `ops/a3-confirm-email-prod` | `A3-015` | Ops: Confirm email ON in production Supabase (no app code) — **do just before launch** |
 | A4 | `chore/a4-remove-placeholder-routes` | `A4-011`, `A4-023` | ~~Remove `/how-it-works` + `/blog`; clean `MarketingHero_Old` / nav~~ (shipped) |
 
 #### Sprint B — CV / R2 correctness (Must)
