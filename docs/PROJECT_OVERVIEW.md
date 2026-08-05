@@ -144,6 +144,7 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 - **Vitest** is configured as the test runner (`vitest.config.ts`).
 - `pnpm test` — interactive watch mode; `pnpm test:ci` — single run (used in CI).
 - Test files live in `__tests__/unit/` and a shared helper in `__tests__/helpers/`.
+- **CI:** GitHub Actions runs `pnpm test:ci` on every pull request and on pushes to `main` (A1-002). Local Husky **pre-push** runs the same command before `git push`. Pipeline architecture: [CI_CD.md](CI_CD.md).
 
 ### What is covered
 
@@ -156,8 +157,6 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 | Create-application flow (POST `/api/applications`, POST `/api/slug`, POST `/api/slug/validate`)   | `__tests__/unit/api/applications-create.test.ts`, `slug.test.ts` |
 | Edit-application flow (PUT `/api/applications`, GET `/api/applications/by-id/[id]`)               | `__tests__/unit/api/applications-edit.test.ts`                   |
 | Public-view flow (GET `/api/applications/[slug]`, POST `/api/applications/[slug]/view`)           | `__tests__/unit/api/applications-public-view.test.ts`            |
-
-- **No CI/CD pipeline** — no GitHub Actions or equivalent (still a gap).
 
 ---
 
@@ -183,7 +182,7 @@ Open pre-launch and post-launch work (gaps, TODOs, improvements) lives in **[Bac
 
 ## 10. Notable Strengths
 
-- Well-structured internal docs in `docs/` (ARCHITECTURE, API_REFERENCE, DATA_FLOW, BUILD_SUMMARY, CODE_REVIEW, etc.).
+- Well-structured internal docs in `docs/` (ARCHITECTURE, API_REFERENCE, CI_CD, DATA_FLOW, BUILD_SUMMARY, CODE_REVIEW, etc.).
 - Clear separation between marketing and product surfaces.
 - Security-conscious patterns: RLS, owner exclusion from analytics, URL validation, PDF type/size validation.
 - CSS design system with CSS variables (warm neutrals, brand colors) and consistent typography.

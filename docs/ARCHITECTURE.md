@@ -376,7 +376,7 @@ my-hire-view/
 │   └── utils/                  # url, slug, slug-generate, youtube, clipboard
 ├── supabase/migrations/        # 001 schema, 002 is_active, 003 profiles, 004 application candidate fields
 ├── proxy.ts                    # Middleware entry (session + /admin guard)
-└── docs/                       # ARCHITECTURE, API_REFERENCE, CODE_REVIEW, SUPABASE_AUTH_SETUP
+└── docs/                       # ARCHITECTURE, API_REFERENCE, CI_CD, CODE_REVIEW, SUPABASE_AUTH_SETUP
 ```
 
 ---
@@ -398,4 +398,4 @@ my-hire-view/
 
 ---
 
-For setup and auth configuration, see [README.md](../README.md) and [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md). For the full API catalog, see [API_REFERENCE.md](API_REFERENCE.md). For code quality and refactors, see [CODE_REVIEW.md](CODE_REVIEW.md).
+For setup and auth configuration, see [README.md](../README.md) and [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md). For the full API catalog, see [API_REFERENCE.md](API_REFERENCE.md). For CI/CD pipeline architecture, see [CI_CD.md](CI_CD.md). For code quality and refactors, see [CODE_REVIEW.md](CODE_REVIEW.md).

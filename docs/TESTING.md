@@ -1,6 +1,6 @@
 # Testing
 
-> Last updated: August 2, 2026
+> Last updated: August 5, 2026
 
 ---
 
@@ -16,6 +16,10 @@
 |---------|-----|
 | `pnpm test` | Interactive watch mode (development) |
 | `pnpm test:ci` | Single run — no watch, exits with code 1 on failure (used in CI and pre-merge checks) |
+
+## CI
+
+`pnpm test:ci` is the command GitHub Actions runs, and the same command runs locally via the Husky **pre-push** hook (`.husky/pre-push`). Pipeline architecture lives in **[CI_CD.md](CI_CD.md)** — update that doc when the workflow or hooks change.
 
 ---
 
