@@ -1,6 +1,6 @@
 # MyHireView — System Architecture & Design
 
-This document describes the architecture and design of **MyHireView**, an application that lets users create personalized recruiter landing pages: one shareable page per job application, with a custom CV (PDF) and video pitch (YouTube).
+This document describes the architecture and design of **MyHireView**, an application that lets users create personalized recruiter landing pages: one shareable page per job application, with a tailored CV (PDF) and video pitch (YouTube).
 
 ---
 
@@ -10,7 +10,7 @@ This document describes the architecture and design of **MyHireView**, an applic
 
 **High-level behavior:**
 
-- **Public:** Anyone with a link can view an application at `/view/[slug]`. Views are tracked (once per session).
+- **Public:** Anyone with a link can view an application at `/view/[publicId]/[slug]` (e.g. `/view/k7x2m9ab/acme-software-engineer`). Views are tracked (once per session). See [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md).
 - **Authenticated:** Users sign up / sign in, then create, edit, archive, and delete applications. They get shareable URLs and see view counts.
 
 ---
@@ -24,14 +24,14 @@ This document describes the architecture and design of **MyHireView**, an applic
 | **Backend**      | Next.js API Routes (serverless)                            |
 | **Database**     | Supabase (PostgreSQL)                                      |
 | **Auth**         | Supabase Auth (email/password)                             |
-| **File storage** | Vercel Blob (CV PDFs), Supabase Storage (profile pictures) |
+| **File storage** | Cloudflare R2 (CV PDFs), Supabase Storage (profile pictures) |
 | **Video**        | YouTube (embed only; URLs stored)                          |
 
 ---
 
 ## 3. High-Level Architecture
 
-The system is a single Next.js application that uses Supabase for auth and data, and Vercel Blob for CV storage. All user-facing and API logic lives in the same deployment.
+The system is a single Next.js application that uses Supabase for auth and data, and Cloudflare R2 for CV storage. All user-facing and API logic lives in the same deployment.
 
 ```mermaid
 flowchart TB
@@ -53,7 +53,7 @@ flowchart TB
 
   subgraph External["External Services"]
     Supabase[(Supabase<br>PostgreSQL + Auth)]
-    Blob[Vercel Blob<br>PDF storage]
+    R2CV[Cloudflare R2<br>PDF storage]
     YouTube[YouTube<br>Embed]
   end
 
@@ -62,14 +62,14 @@ flowchart TB
   Recruiter --> App
 
   API --> Supabase
-  API --> Blob
+  API --> R2CV
   App --> Supabase
   App --> YouTube
 ```
 
 - **Middleware:** Runs on each request (except static assets). Refreshes Supabase session and redirects unauthenticated users from `/admin` to `/login`.
 - **App Router:** Renders pages (public apply page, admin dashboard, login/signup, home).
-- **API Routes:** Handle CRUD for applications, auth (login/signup/logout), upload, slug generation, and view tracking. They enforce auth where needed and talk to Supabase and Vercel Blob. Rate limiting (see `lib/rate-limit.ts`) is applied per IP on write endpoints (e.g. waitlist, auth, applications, uploads) to mitigate abuse and brute force.
+- **API Routes:** Handle CRUD for applications, auth (login/signup/logout), upload, slug generation, and view tracking. They enforce auth where needed and talk to Supabase and Cloudflare R2 (S3 API). Rate limiting (see `lib/rate-limit.ts`) is applied per IP on write endpoints (e.g. waitlist, auth, applications, uploads) to mitigate abuse and brute force.
 
 ---
 
@@ -78,7 +78,7 @@ flowchart TB
 ```mermaid
 flowchart LR
   subgraph Frontend["Frontend (React)"]
-    Public[Public: /view/slug]
+    Public[Public: /view/publicId/slug]
     Admin[Admin: /admin, /admin/new, /admin/edit/id]
     AuthPages[Auth: /login, /signup]
   end
@@ -105,7 +105,7 @@ flowchart LR
     DB[(applications table)]
     ProfilesTable[(profiles table)]
     AuthUsers[(auth.users)]
-    BlobStore[(Vercel Blob)]
+    R2Store[(Cloudflare R2)]
   end
 
   Public --> SlugAPI
@@ -132,7 +132,7 @@ flowchart LR
   SlugAPI --> DB
   ViewAPI --> DB
   SlugGenAPI --> DB
-  UploadAPI --> BlobStore
+  UploadAPI --> R2Store
   AuthUsers --> SupabaseClients
 
   style Public fill:#dbeafe,stroke:#1d4ed8,stroke-width:2px
@@ -153,7 +153,7 @@ flowchart LR
   style DB fill:#d1fae5,stroke:#047857,stroke-width:2px
   style ProfilesTable fill:#d1fae5,stroke:#047857,stroke-width:2px
   style AuthUsers fill:#d1fae5,stroke:#047857,stroke-width:2px
-  style BlobStore fill:#d1fae5,stroke:#047857,stroke-width:2px
+  style R2Store fill:#d1fae5,stroke:#047857,stroke-width:2px
   style Frontend fill:#eff6ff,stroke:#1d4ed8,stroke-width:2px
   style API fill:#f5f3ff,stroke:#6b21a8,stroke-width:2px
   style Lib fill:#fffbeb,stroke:#b45309,stroke-width:2px
@@ -178,7 +178,7 @@ flowchart LR
 | `/admin/new`        | Create application form (slug, company, role, CV upload, YouTube URL)                                                                                                                                                                                                                                               | Yes  |
 | `/admin/edit/[id]`  | Edit existing application (same form, load by id)                                                                                                                                                                                                                                                                  | Yes  |
 | `/admin/profile`    | Profile: account email, member since; editable profile details (first name, last name, location, portfolio URL, LinkedIn URL); application counts                                                                                                                                                                  | Yes  |
-| `/view/[slug]`      | Public application page: header (company, role, candidate name, location, portfolio/LinkedIn buttons), PDF viewer, YouTube embed; shows “archived” state if `is_active = false`. A footer (MyHireView logo, slogan, Terms/Privacy links, © MyHireView, socials) is shown only to non-owners. Candidate name, location, and links come from the application row (snapshot from profile at create/update). | No   |
+| `/view/[publicId]/[slug]` | Public application page: header (company, role, candidate name, location, portfolio/LinkedIn buttons), PDF viewer, YouTube embed when `status = active`. Archived, draft, deleted, or unknown links share one empty state (“This link doesn’t have an active application”; no application content). A compact footer (MyHireView, Terms/Privacy, ©) is shown to all viewers — owners and recruiters alike — so the candidate preview matches the recruiter experience. Candidate name, location, and links come from the application row (snapshot from profile at create/update). `noindex` and strict referrer policy apply. | No   |
 
 Layouts:
 
@@ -186,65 +186,47 @@ Layouts:
 - **Marketing (`app/(marketing)/layout.tsx`):** Wraps with `HeroEntranceProvider` and `ScrollCoverProvider`, then renders `MarketingHeader` (logo, nav: How it Works, Pricing, Blog; avatar dropdown with Sign In or Dashboard + Sign out) and `children`. Used by `/`, `/how-it-works`, `/pricing`, `/blog`. The header is implemented as a module under `components/public/MarketingHeader/` (index, constants, signOut, UserDropdown, MobileMenuContent, MobileMenuToggle). On mobile, the header background is transparent over the hero and switches to white once the user has scrolled so that `ScrollCoverSection` has reached the top of the viewport (via `ScrollCoverContext` and a 1px sentinel in `ScrollCoverSection`). Mobile viewport detection uses the shared hook `hooks/useMobileViewport` (which also exports `MOBILE_BREAKPOINT_PX`).
 - **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (MyHireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
-### 5.2 API Layer
+API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE.md)** (endpoint index, request/response shapes, auth, and rate limits).
 
-All under `app/api/`:
-
-| Endpoint                            | Methods                | Purpose                                                                                                                                                                                   | Auth                                              |
-| ----------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `/api/applications`                 | GET, POST, PUT, DELETE | List (user’s), create, update, delete application. On POST/PUT, server snapshots current profile (first name, last name, location, portfolio URL, LinkedIn URL) into the application row. | Required (except N/A for unauthenticated)         |
-| `/api/applications/[slug]`          | GET                    | Fetch one application by slug (public); response includes candidate snapshot fields for recruiter view.                                                                                   | No                                                |
-| `/api/profile`                      | GET, PUT               | Get or update current user’s profile (first name, last name, location, portfolio URL, LinkedIn URL). GET creates a profile row if missing.                                                | Required                                          |
-| `/api/waitlist`                     | POST                   | Add waitlist signup (email required; first name, job search status optional). Pre-launch landing page; inserts into `waitlist_signups` via service role.                                  | No                                                |
-| `/api/applications/[slug]/view`         | POST                   | Increment `view_count` and set `last_viewed_at` for slug (owner views not counted). Uses SECURITY DEFINER RPC via service_role; see [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).               | No                                                |
-| `/api/applications/[slug]/viewer-status` | GET                    | Returns `{ isOwner: boolean }` for the current viewer (used to show footer on `/view/[slug]` only to non-owners).                                                                          | No                                                |
-| `/api/applications/[slug]/download` | POST                   | Increment `download_count` for slug (owner downloads not counted). Uses SECURITY DEFINER RPC via service_role; see [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).                                | No                                                |
-| `/api/applications/by-id/[id]`      | GET                    | Fetch one by id (for edit page)                                                                                                                                                           | Required                                          |
-| `/api/auth/login`                   | POST                   | Sign in; sets session cookies via route client                                                                                                                                            | No                                                |
-| `/api/auth/signup`                  | POST                   | Sign up; sets session cookies                                                                                                                                                             | No                                                |
-| `/api/auth/logout`                  | POST                   | Sign out; clears session                                                                                                                                                                  | No                                                |
-| `/api/upload`                       | POST                   | Accept PDF `FormData`, upload to Vercel Blob, return URL                                                                                                                                  | No (consider protecting in production)            |
-| `/api/slug`                         | POST                   | Generate unique slug from company + role; optional `slugNamePosition` ('start' or 'end') and `first_name`, `last_name` to place name in URL; optional `excludeId` for edit                | No (slug generation is idempotent; consider auth) |
-
-Auth is enforced in API handlers via `requireAuth()` from `lib/auth.ts`, which uses the Supabase server client and redirects to `/login` when used in pages; in API routes it returns 401.
-
-### 5.3 Auth & Session
+### 5.2 Auth & Session
 
 - **Provider:** Supabase Auth (email/password). Config and email templates are described in `docs/SUPABASE_AUTH_SETUP.md`.
 - **Session:** Cookie-based. Supabase SSR helpers read/write cookies.
 - **Clients:**
   - **Server (Server Components, server-side logic):** `lib/supabase/server.ts` — `createClient()` using `cookies()` from `next/headers`.
   - **Route handler (login/signup/logout):** `lib/supabase/route-client.ts` — `createSupabaseRouteClient({ request, response })` so the response carries `Set-Cookie` headers.
-  - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used only for operations that must bypass RLS (e.g. view count and download count increment RPCs). Never used from the client.
+  - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used for RLS-bypass ops (view/download count RPCs) and creating the initial `profiles` row at signup when there may be no session yet. Never used from the client.
   - **Middleware:** `lib/supabase/middleware.ts` — `updateSession(request)`: refreshes session and redirects unauthenticated users from `/admin` to `/login`. Intended to be invoked from root middleware (e.g. `middleware.ts` that re-exports or calls this; current entry is `proxy.ts` with matcher config).
-  - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, redirects to `next` (default `/admin`).
+  - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, ensures a profiles row exists (`createInitialProfile`, idempotent), redirects to a safe same-origin `next` (default `/admin`).
 
-### 5.4 Data (Supabase)
+### 5.3 Data (Supabase)
 
 - **Table: `applications`**
-  - `id` (UUID, PK), `slug` (unique), `company`, `role`, `cv_url`, `video_url`, `description`, `created_at`, `updated_at`, `view_count`, `download_count` (CV downloads from public page; owner not counted), `last_viewed_at` (timestamptz, last time a non-owner viewed the page; null if never viewed), `user_id` (FK to `auth.users`), `is_active` (default true; archiving = soft hide).
+  - `id` (UUID, PK), `slug` (unique per user), `company`, `role`, `cv_url`, `cv_type` (`primary` \| `tailored`), `primary_cv_id` (nullable FK), `video_url`, `created_at`, `updated_at`, `view_count`, `download_count`, `last_viewed_at`, `user_id`, `status` (`active` \| `draft` \| `archived`), `archived_at` (set when archived; cleared on restore).
+  - **`primary_cvs`:** profile-owned CV library (max 5 per user in API); see [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md).
   - **CV download filename:** `cv_filename` (TEXT, nullable) stores the original uploaded file name; `use_original_cv_filename` (BOOLEAN, default true) controls whether the public download uses that name or the generated `CV-{Slug}.pdf`. Set on create/update from the application form.
   - **Candidate snapshot fields** (nullable): `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`. These are copied from the user’s **profile** when an application is created or updated, so the recruiter view always reads from the application row (no join to profile). Existing rows may have NULLs until the next edit or a backfill.
   - **`include_name_in_slug`** (TEXT, nullable): Name position in the slug: `null` (not included), `'start'` (name-company-role), or `'end'` (company-role-name). Persisted so the edit form shows the correct choice and users can change it on save.
 - **Table: `profiles`**
-  - One row per user: `user_id` (PK, FK to `auth.users`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `updated_at`. All profile fields are nullable. Users edit this on the profile page; the applications API does not expose profile directly to the public.
-  - **Snapshot rule:** On POST or PUT to `/api/applications`, the server loads the current user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the insert or update. The recruiter-facing page at `/view/[slug]` uses only data from the application row.
+  - One row per user: `user_id` (PK, FK to `auth.users`), `public_id`, `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url`, `updated_at`. Created at signup (`createInitialProfile`) with names + `public_id`; other columns null until the user fills them. DB columns remain nullable; product rules require first/last name at signup and on profile save. Users edit this on the profile page (and can change the picture from new/edit via a shared modal); the applications API does not expose profile directly to the public.
+  - **Snapshot rule:** On POST or PUT to `/api/applications`, the server loads the current user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the insert or update. The recruiter-facing page at `/view/[publicId]/[slug]` uses only data from the application row.
+  - **Public URLs:** Each user has an opaque `profiles.public_id` (assigned at signup). Application slugs are unique per user (`UNIQUE (user_id, slug)`), not globally. Share links are `/view/{public_id}/{slug}`.
 - **Indexes (applications):** `slug`, `user_id`, `created_at DESC`.
 - **RLS:** Enabled on both tables. Applications: users can SELECT/INSERT/UPDATE/DELETE their own rows; public can SELECT any row by slug. Profiles: users can SELECT/INSERT/UPDATE their own row only.
 - **Triggers:** `updated_at` maintained on update for both tables.
 
 Types are mirrored in `lib/types/application.ts`, `lib/types/profile.ts`, and `lib/types/database.ts`.
 
-### 5.5 File Storage (Vercel Blob)
+### 5.4 File Storage (Cloudflare R2)
 
 - **Use case:** CV PDFs only.
-- **Flow (upload on save):** The form keeps the selected PDF in memory until the user saves. On submit, the client uploads to `/api/upload` → API validates type (PDF) and size (10MB max) → `put()` to Vercel Blob with public access → returned URL is stored in `applications.cv_url`. When editing, if the user replaces the CV, the new file is uploaded on save and the previous blob is deleted. When an application is deleted, its CV blob is also deleted. See **docs/PDF_AND_VERCEL_BLOB.md** for full details.
+- **Flow (upload on save):** The form keeps the selected PDF in memory until the user saves. On submit, the client uploads to `/api/upload` → API validates type (PDF) and size (3MB max) → `PutObject` to R2 → returned public URL is stored in `applications.cv_url`. When editing, if the user replaces the CV, the new file is uploaded on save and the previous object is deleted. When an application is deleted, its CV object is also deleted. See **docs/PDF_AND_R2.md** for full details.
 
 Video is not stored; only YouTube URLs are stored and embedded via `YouTubeEmbed` and `lib/utils/youtube.ts`.
 
-### 5.6 Profile pictures (Supabase Storage)
+### 5.5 Profile pictures (Supabase Storage)
 
-- **Use case:** One profile picture per user, uploaded in admin/profile. When creating or editing an application, a single checkbox “Show profile picture for this application” controls whether the profile URL is copied onto the application; the view page reads from the application only. If the user has no profile picture, the checkbox is disabled. See **docs/PROFILE_PICTURE.md** for bucket setup, RLS, and behaviour.
+- **Use case:** One profile picture per user at `{user_id}/avatar.{ext}`, uploaded on profile Save. Applications store only `show_profile_picture`; the public view reads the live URL from `profiles` when that flag is true. See **docs/PROFILE_PICTURE.md**.
 
 ---
 
@@ -283,13 +265,13 @@ sequenceDiagram
   participant AppsAPI as /api/applications
   participant UploadAPI as /api/upload
   participant Supa as Supabase
-  participant Blob as Vercel Blob
+  participant R2 as Cloudflare R2
 
   U->>Form: Fill company, role, select PDF (held in memory), YouTube URL
   U->>Form: Submit
   Form->>UploadAPI: POST FormData (file) on submit
-  UploadAPI->>Blob: put(file)
-  Blob-->>UploadAPI: url
+  UploadAPI->>R2: PutObject (PDF)
+  R2-->>UploadAPI: url
   UploadAPI-->>Form: { url }
   Form->>SlugAPI: POST { company, role }
   SlugAPI->>Supa: check uniqueness, generate slug
@@ -310,13 +292,13 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   participant R as Recruiter
-  participant Page as /view/[slug]
+  participant Page as /view/[publicId]/[slug]
   participant SlugAPI as GET /api/applications/[slug]
   participant ViewAPI as POST /api/.../view
   participant VT as ViewTracker
   participant Supa as Supabase
 
-  R->>Page: Open /view/my-company-role
+  R->>Page: Open /view/k7x2m9ab/my-company-role
   Page->>SlugAPI: fetch(slug)
   SlugAPI->>Supa: select by slug (full row, includes candidate name, location, portfolio_url, linkedin_url)
   Supa-->>SlugAPI: application
@@ -325,15 +307,20 @@ sequenceDiagram
   Page->>VT: Mount ViewTracker(slug)
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not tracked)
-  ViewAPI->>ViewAPI: get viewer via auth.getUser(); skip increment if viewer is applicant (user_id match)
-  ViewAPI->>Supa: RPC increment_application_view_count(slug) via service_role (SECURITY DEFINER)
-  ViewAPI-->>VT: 200
+  ViewAPI->>ViewAPI: per-IP + per-path rate limits; httpOnly dedupe cookie?
+  alt cookie present
+    ViewAPI-->>VT: 200 (no increment)
+  else
+    ViewAPI->>ViewAPI: get viewer via auth.getUser(); skip increment if owner
+    ViewAPI->>Supa: RPC increment_application_view_count (non-owner only, service_role)
+    ViewAPI-->>VT: 200 + Set-Cookie dedupe
+  end
   VT->>VT: sessionStorage set tracked
 ```
 
-View count and `last_viewed_at` are only updated when the viewer is not the application owner; the applicant can open their own link without affecting the count or last-viewed time. The increment is performed by a SECURITY DEFINER function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
+View count and `last_viewed_at` are only updated when the viewer is not the application owner; the applicant can open their own link without affecting the count or last-viewed time. Repeats within 24h are suppressed by an httpOnly dedupe cookie (client `sessionStorage` only avoids extra POSTs). The increment is performed by a SECURITY DEFINER function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
 
-**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (once per session via sessionStorage). The download API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), mirroring the view-count behaviour; see **docs/VIEW_COUNT_FIX.md**. The downloaded file name is either the original upload name (when `use_original_cv_filename` is true and `cv_filename` is set) or the generated name `CV-{Slug}.pdf`.
+**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (client `sessionStorage` + same server httpOnly dedupe cookie). The download API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), mirroring the view-count behaviour; see **docs/VIEW_COUNT_FIX.md**. The downloaded file name is either the original upload name (when `use_original_cv_filename` is true and `cv_filename` is set) or the generated name `CV-{Slug}.pdf`.
 
 ### 6.4 Profile and snapshot into applications
 
@@ -349,8 +336,8 @@ View count and `last_viewed_at` are only updated when the viewer is not the appl
 
 - **Auth:** Supabase handles passwords and sessions; middleware protects `/admin`; API routes use `requireAuth()` where needed.
 - **Data:** RLS ensures users only modify their own applications; public read by slug is allowed by policy.
-- **Upload:** PDF-only, size limit; upload route does not currently require auth (adding auth is recommended for production).
-- **Slug:** Unique per application; generation is deterministic from company/role with collision handling; no sensitive data in slug.
+- **Upload:** PDF-only, size limit; `POST /api/upload` requires auth and an idempotency key. Profile pictures use a separate authenticated upload to Supabase Storage.
+- **Slug:** Unique per application; generation is deterministic from company/role with collision handling; no sensitive data in slug. `POST /api/slug` is currently unauthenticated (consider tightening); `POST /api/slug/validate` requires auth.
 
 ---
 
@@ -370,16 +357,16 @@ my-hire-view/
 │   ├── auth/callback/          # Supabase OAuth/email callback
 │   ├── admin/                  # Dashboard, new, edit (layout uses requireAuth)
 │   ├── view/[slug]/            # Public application route (page, loading, not-found)
-│   └── api/                    # All API routes (see section 5.2)
+│   └── api/                    # All API routes (see docs/API_REFERENCE.md)
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── auth/                   # SignOutButton
-│   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, NameInUrlField, CvDownloadFilenameField, FileUpload, ProfileForm, YouTubeUrlInput
+│   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, NameInUrlField, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
-│   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection (re-export from public/faq), FinalCTASection, Footer (→ ViewPageFooter), HomeHeroContent, HowItWorksHero (How it Works page: content above + fixed image), HowItWorksScrollSection (content that scrolls over fixed hero image), HowItWorksSection (see public/how-it-works/ for StepLabel, StepCard, useHowItWorksObservers, constants; on home page receives isDarkMode from LandingPageSections), LandingPageSections (owns single IntersectionObserver for ProblemSection wrapper; passes isDarkMode to HowItWorksSection, ProblemSection, and FAQSection—one prop name, one source of truth), public/faq/ (FAQSection, FAQItem, FAQContactCard, constants; isDarkMode prop from parent), MarketingHero (reusable: backgroundImage + children + optional imageCredit), MarketingHeader, PageHeroContent (reusable title + subtitle for Pricing / Blog), ProblemSection, SolutionSection, ViewPageFooter
+│   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection (re-export from public/faq), FinalCTASection, Footer (→ ViewPageFooter marketing footer), HomeHeroContent, HowItWorksHero (How it Works page: content above + fixed image), HowItWorksScrollSection (content that scrolls over fixed hero image), HowItWorksSection (see public/how-it-works/ for StepLabel, StepCard, useHowItWorksObservers, constants; on home page receives isDarkMode from LandingPageSections), LandingPageSections (owns single IntersectionObserver for ProblemSection wrapper; passes isDarkMode to HowItWorksSection, ProblemSection, and FAQSection—one prop name, one source of truth), public/faq/ (FAQSection, FAQItem, FAQContactCard, constants; isDarkMode prop from parent), MarketingHero (reusable: backgroundImage + children + optional imageCredit), MarketingHeader, PageHeroContent (reusable title + subtitle for Pricing / Blog), ProblemSection, SolutionSection, ViewPageFooter (full marketing footer; application pages use ApplicationViewFooter)
 │   ├── ui/                     # Button, Input, Textarea
 │   ├── video/                  # YouTubeEmbed
-│   └── view/                   # ViewPageContent, ViewTracker (public application page UI)
+│   └── view/                   # ApplicationViewFooter, ViewPageContent, UnavailableApplicationView, ViewTracker (public application page UI)
 ├── hooks/                      # useApplications (admin dashboard state + API)
 ├── lib/
 │   ├── api/                    # applications (client: fetch, delete, archive, restore)
@@ -389,7 +376,7 @@ my-hire-view/
 │   └── utils/                  # url, slug, slug-generate, youtube, clipboard
 ├── supabase/migrations/        # 001 schema, 002 is_active, 003 profiles, 004 application candidate fields
 ├── proxy.ts                    # Middleware entry (session + /admin guard)
-└── docs/                       # ARCHITECTURE, CODE_REVIEW, SUPABASE_AUTH_SETUP
+└── docs/                       # ARCHITECTURE, API_REFERENCE, CODE_REVIEW, SUPABASE_AUTH_SETUP
 ```
 
 ---
@@ -401,14 +388,14 @@ my-hire-view/
 | Next.js App Router              | Single codebase for SSR, API, and client components; good fit for auth and public/private routes.                                                                                                                                                            |
 | Supabase                        | Managed Postgres + Auth + RLS in one product; reduces custom backend code.                                                                                                                                                                                   |
 | Slug-based public URLs          | Stable, shareable links that don’t expose internal IDs; uniqueness enforced in DB and slug API. Users can optionally include their name at the start (name-company-role) or end (company-role-name) of the slug.                                             |
-| Vercel Blob for PDFs            | Simple serverless storage; no need to run or scale file servers.                                                                                                                                                                                             |
-| View count in DB                | Simple and accurate; one increment per view (deduplicated per session in ViewTracker).                                                                                                                                                                       |
+| Cloudflare R2 for PDFs        | S3-compatible object storage with no egress fees from R2; pairs well with Next.js on Vercel.                                                                                                                                                               |
+| View count in DB                | Simple and accurate; one increment per browser path (httpOnly cookie + client `sessionStorage`), with per-IP and per-path rate limits.                                                                                                                                                                       |
 | Last viewed at in DB            | Set to current time whenever view_count is incremented (non-owner only); null if never viewed.                                                                                                                                                               |
 | Download count in DB            | Same pattern as view count; one increment per download (per session), owner downloads not counted.                                                                                                                                                           |
-| `is_active` for archive         | Soft delete: link still works but shows “archived” message; no hard delete of history.                                                                                                                                                                       |
+| `status` + `archived_at` for archive | Soft hide via `status = archived`; `archived_at` resets when re-archiving (90-day retention clock). Hard purge deferred. See [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md). |
 | Route client for auth APIs      | Login/signup/logout must write cookies on the response; route client is the pattern recommended by Supabase for Next.js.                                                                                                                                     |
 | Profile snapshot on application | Candidate name, location, portfolio URL, and LinkedIn URL are stored in `profiles` and copied into each application row on create/update. Recruiters read only from the application row, giving a stable snapshot and no auth dependency on the public view. |
 
 ---
 
-For setup and auth configuration, see [README.md](../README.md) and [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md). For code quality and refactors, see [CODE_REVIEW.md](CODE_REVIEW.md).
+For setup and auth configuration, see [README.md](../README.md) and [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md). For the full API catalog, see [API_REFERENCE.md](API_REFERENCE.md). For code quality and refactors, see [CODE_REVIEW.md](CODE_REVIEW.md).

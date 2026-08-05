@@ -1,3 +1,7 @@
+export type ApplicationStatus = "active" | "draft" | "archived";
+
+export type ApplicationCvType = "primary" | "tailored";
+
 export interface Application {
   id: string;
   slug: string;
@@ -13,7 +17,10 @@ export interface Application {
   /** Last time the application page was viewed by someone other than the owner (null if never viewed). */
   last_viewed_at: string | null;
   user_id: string;
-  is_active: boolean;
+  /** active = live on public URL; draft/archived = public GET returns unavailable stub. */
+  status: ApplicationStatus;
+  /** Set when status becomes archived; cleared on restore. Re-archiving resets retention clock. */
+  archived_at: string | null;
   first_name: string | null;
   last_name: string | null;
   location: string | null;
@@ -25,12 +32,184 @@ export interface Application {
   cv_filename?: string | null;
   /** When true, public download uses cv_filename; when false, uses generated name CV-{Slug}.pdf. Default true. Omitted before migration 011. */
   use_original_cv_filename?: boolean;
-  /** Set by GET by-id when cv_url is a Blob URL: true if file exists, false if missing. Omitted when not checked. */
+  /**
+   * Set by GET by-id / public slug when `cv_url` is an R2 public URL:
+   * true if the object exists, false if missing. Omitted when there is no
+   * `cv_url`, or when the URL is outside our R2 public base.
+   */
   cv_exists?: boolean;
-  /** Profile picture URL copied from profile at save when user chose to show picture for this application. Null when user has no picture or removed it; view page only shows avatar when this is set. */
+  /**
+   * Display-only avatar URL resolved at read time from `profiles.profile_picture_url`
+   * when `show_profile_picture` is true. Not stored on `applications`.
+   */
   profile_picture_url?: string | null;
-  /** User chose to show profile picture on this application. When true, profile_picture_url is synced from profile; when user has no picture, URL stays null and view shows no avatar. */
+  /** User chose to show the live profile picture on this application. */
   show_profile_picture?: boolean;
+  /** primary = profile library CV (do not delete R2 on app delete); tailored = app-owned upload. */
+  cv_type?: ApplicationCvType;
+  /** When cv_type is primary, the library row id (may be null if primary was deleted). */
+  primary_cv_id?: string | null;
+}
+
+/**
+ * Fields returned by `GET /api/applications/[publicId]/[slug]` when the
+ * application is publicly visible (`status = active`). Omits owner-only /
+ * internal fields (`user_id`, analytics, storage FKs, etc.).
+ */
+export type PublicApplication = Pick<
+  Application,
+  | "company"
+  | "role"
+  | "first_name"
+  | "last_name"
+  | "location"
+  | "portfolio_url"
+  | "linkedin_url"
+  | "cv_url"
+  | "video_url"
+> & {
+  status: "active";
+  /** Display-only avatar URL resolved at read time (may be null when hidden). */
+  profile_picture_url: string | null;
+  cv_filename?: string | null;
+  use_original_cv_filename?: boolean;
+  /**
+   * Set when `cv_url` is checked against R2; omitted when there is no `cv_url`
+   * or the URL is outside our R2 public base (existence unknown).
+   */
+  cv_exists?: boolean;
+};
+
+/**
+ * Minimal public DTO when the application must not expose content (archived,
+ * draft, etc.). Same recruiter-facing empty state as a deleted/missing link.
+ */
+export type UnavailablePublicApplication = {
+  status: "unavailable";
+};
+
+/** Success payload for `GET /api/applications/[publicId]/[slug]`. */
+export type PublicApplicationResponse =
+  | PublicApplication
+  | UnavailablePublicApplication;
+
+/** True when recruiters may see CV/video and candidate details. */
+export function isApplicationPubliclyVisible(
+  status: ApplicationStatus,
+): boolean {
+  return status === "active";
+}
+
+export function isUnavailablePublicApplication(
+  data: PublicApplicationResponse,
+): data is UnavailablePublicApplication {
+  return data.status === "unavailable";
+}
+
+export function toUnavailablePublicApplication(): UnavailablePublicApplication {
+  return { status: "unavailable" };
+}
+
+/**
+ * Maps a full application row (plus optional `cv_exists`) to the public share DTO.
+ * Non-active statuses return the unavailable stub (no media or PII).
+ */
+export function toPublicApplication(
+  application: Application,
+  cv_exists?: boolean,
+): PublicApplication {
+  const dto: PublicApplication = {
+    company: application.company,
+    role: application.role,
+    first_name: application.first_name,
+    last_name: application.last_name,
+    location: application.location,
+    portfolio_url: application.portfolio_url,
+    linkedin_url: application.linkedin_url,
+    profile_picture_url: application.profile_picture_url ?? null,
+    cv_url: application.cv_url,
+    video_url: application.video_url,
+    status: "active",
+  };
+  if (application.cv_filename !== undefined) {
+    dto.cv_filename = application.cv_filename;
+  }
+  if (application.use_original_cv_filename !== undefined) {
+    dto.use_original_cv_filename = application.use_original_cv_filename;
+  }
+  if (cv_exists !== undefined) {
+    dto.cv_exists = cv_exists;
+  }
+  return dto;
+}
+
+/**
+ * Public GET mapper: active → full DTO; archived/draft → unavailable stub.
+ */
+export function toPublicApplicationResponse(
+  application: Application,
+  cv_exists?: boolean,
+): PublicApplicationResponse {
+  if (!isApplicationPubliclyVisible(application.status)) {
+    return toUnavailablePublicApplication();
+  }
+  return toPublicApplication(application, cv_exists);
+}
+
+/**
+ * Fields returned by `GET /api/applications` for the admin dashboard list.
+ * Omits candidate/CV/video/profile fields that the list UI does not use.
+ */
+export type ApplicationListItem = Pick<
+  Application,
+  | "id"
+  | "slug"
+  | "company"
+  | "role"
+  | "status"
+  | "archived_at"
+  | "view_count"
+  | "download_count"
+  | "created_at"
+  | "last_viewed_at"
+  | "cv_url"
+> & {
+  /** Opaque candidate id for public share URLs. */
+  public_id: string;
+  /**
+   * True when `cv_url` is an R2 object that exists, or when existence was not
+   * checked (URL outside our R2 public base). False only when HeadObject
+   * confirms missing.
+   */
+  cv_exists: boolean;
+};
+
+/** Supabase `.select()` projection for `ApplicationListItem` (before attaching public_id / cv_exists). */
+export const APPLICATION_LIST_SELECT =
+  "id, slug, company, role, status, archived_at, view_count, download_count, created_at, last_viewed_at, cv_url" as const;
+
+/** Default page size for `GET /api/applications`. */
+export const APPLICATION_LIST_DEFAULT_LIMIT = 20;
+
+/** Maximum allowed `limit` for `GET /api/applications`. */
+export const APPLICATION_LIST_MAX_LIMIT = 50;
+
+export interface ApplicationListMeta {
+  limit: number;
+  offset: number;
+  total: number;
+}
+
+export interface ApplicationListResponse {
+  data: ApplicationListItem[];
+  meta: ApplicationListMeta;
+}
+
+export interface ApplicationListParams {
+  limit?: number;
+  offset?: number;
+  /** Case-insensitive match on company, role, or slug. */
+  q?: string;
 }
 
 export interface ApplicationFormData {
@@ -51,8 +230,23 @@ export interface ApplicationFormData {
   cv_filename?: string | null;
   /** When true, download uses cv_filename; when false, uses generated name CV-{Slug}.pdf. */
   use_original_cv_filename?: boolean;
-  /** When preference is per_application: whether to show profile picture for this application. Server copies profile URL when true. */
+  /** When true, public view shows the live profile picture from profiles. */
   show_profile_picture?: boolean;
+  /**
+   * Set by ApplicationForm on submit. When true, create/edit keep the typed slug
+   * after format + availability checks (do not re-derive via POST /api/slug).
+   */
+  slugManuallyEdited?: boolean;
+  /**
+   * Typed candidate names for slug generation (Name in URL), even when first/last
+   * are toggled off for the public page. Stripped before POST/PUT applications.
+   */
+  slugFirstName?: string | null;
+  slugLastName?: string | null;
+  /** primary = selected from library; tailored = uploaded for this application. */
+  cv_type?: ApplicationCvType;
+  /** When cv_type is primary, the selected library id. */
+  primary_cv_id?: string | null;
 }
 
 export interface ApplicationCreateInput {
@@ -69,8 +263,12 @@ export interface ApplicationCreateInput {
   slugNamePosition?: "start" | "end" | null;
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;
-  /** When preference is per_application: whether to show profile picture. Server copies profile URL when true. */
+  /** When true, public view shows the live profile picture from profiles. */
   show_profile_picture?: boolean;
+  cv_type?: ApplicationCvType;
+  primary_cv_id?: string | null;
+  /** Optional; defaults to active. */
+  status?: ApplicationStatus;
 }
 
 export interface ApplicationUpdateInput {
@@ -79,7 +277,7 @@ export interface ApplicationUpdateInput {
   slug?: string;
   cv_url?: string;
   video_url?: string;
-  is_active?: boolean;
+  status?: ApplicationStatus;
   first_name?: string | null;
   last_name?: string | null;
   location?: string | null;
@@ -89,4 +287,6 @@ export interface ApplicationUpdateInput {
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;
   show_profile_picture?: boolean;
+  cv_type?: ApplicationCvType;
+  primary_cv_id?: string | null;
 }

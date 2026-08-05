@@ -7,11 +7,11 @@ import Link from "next/link";
 const SLOGAN = "Your video pitch, one link.";
 
 /**
- * Footer for the public application view page (/view/[slug]) and marketing
- * landing page. Displays app branding, legal links, copyright, and social links.
- * Uses explicit black background and white text (no CSS variables) to match
- * the rest of the homepage (Problem, FAQ, CTA sections). Same container,
- * typography, and motion as other landing sections.
+ * Full marketing footer (landing and other marketing routes via `Footer`).
+ * Public application pages use the compact `ApplicationViewFooter` instead.
+ * Explicit black background and white text (no CSS variables) to match the
+ * homepage (Problem, FAQ, CTA sections). Same container, typography, and
+ * motion as other landing sections.
  */
 export default function ViewPageFooter() {
   return (

@@ -8,14 +8,18 @@ interface FileUploadProps {
   /** Called when user selects a file (not uploaded yet; upload happens on form submit). */
   pendingFile?: File | null;
   onPendingFileChange: (file: File | null) => void;
-  /** When false, hide the View link (e.g. blob missing). When true or undefined, show View if value is set. */
+  /** When false, hide the View link (e.g. CV missing in storage). When true or undefined, show View if value is set. */
   cvUrlExists?: boolean;
   /** When provided and cvUrlExists is false, show a "Check again" button to re-run the existence check. */
   onRetryCvCheck?: () => Promise<void>;
   error?: string;
+  /** Hide the top "CV (PDF)" label when nested in CvSourceField. */
+  hideLabel?: boolean;
+  /** Custom label for the file input affordance (accessibility / helper text). */
+  chooseLabel?: string;
 }
 
-const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_SIZE_BYTES = 3 * 1024 * 1024; // 3MB
 
 export default function FileUpload({
   value,
@@ -24,6 +28,8 @@ export default function FileUpload({
   cvUrlExists = true,
   onRetryCvCheck,
   error,
+  hideLabel = false,
+  chooseLabel = "CV (PDF)",
 }: FileUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [checkingCv, setCheckingCv] = useState(false);
@@ -61,7 +67,7 @@ export default function FileUpload({
     }
 
     if (file.size > MAX_SIZE_BYTES) {
-      alert('File size must be less than 10MB');
+      alert('File size must be less than 3MB');
       e.target.value = '';
       return;
     }
@@ -90,16 +96,19 @@ export default function FileUpload({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-[var(--foreground)]">
-        CV (PDF)
-      </label>
-      <div className="mt-1 flex flex-col gap-2">
+      {!hideLabel && (
+        <label className="block text-sm font-medium text-[var(--foreground)]">
+          {chooseLabel}
+        </label>
+      )}
+      <div className={hideLabel ? "flex flex-col gap-2" : "mt-1 flex flex-col gap-2"}>
         <div className="flex items-center gap-4">
           <input
             ref={fileInputRef}
             type="file"
             accept="application/pdf"
             onChange={handleFileChange}
+            aria-label={chooseLabel}
             className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-md file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90"
           />
           {showPending && (
@@ -182,8 +191,8 @@ export default function FileUpload({
           >
             <p className="font-semibold">CV file not found in storage</p>
             <p className="mt-0.5 text-amber-800">
-              The file may have been removed from Vercel. Please upload a new CV
-              below to replace it.
+              The file may have been removed from storage (e.g. Cloudflare R2).
+              Please upload a new CV below to replace it.
             </p>
             {onRetryCvCheck && (
               <>

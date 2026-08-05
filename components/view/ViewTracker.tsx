@@ -3,14 +3,14 @@
 import { useEffect } from 'react';
 
 interface ViewTrackerProps {
+  publicId: string;
   slug: string;
 }
 
-export default function ViewTracker({ slug }: ViewTrackerProps) {
+export default function ViewTracker({ publicId, slug }: ViewTrackerProps) {
   useEffect(() => {
     const trackView = async () => {
-      // Check if we've already tracked this view in this session
-      const storageKey = `view_tracked_${slug}`;
+      const storageKey = `view_tracked_${publicId}_${slug}`;
       const alreadyTracked = sessionStorage.getItem(storageKey);
 
       if (alreadyTracked) {
@@ -18,9 +18,10 @@ export default function ViewTracker({ slug }: ViewTrackerProps) {
       }
 
       try {
-        const response = await fetch(`/api/applications/${slug}/view`, {
-          method: 'POST',
-        });
+        const response = await fetch(
+          `/api/applications/${publicId}/${slug}/view`,
+          { method: 'POST' },
+        );
 
         if (response.ok) {
           sessionStorage.setItem(storageKey, 'true');
@@ -31,7 +32,7 @@ export default function ViewTracker({ slug }: ViewTrackerProps) {
     };
 
     trackView();
-  }, [slug]);
+  }, [publicId, slug]);
 
   return null;
 }

@@ -11,6 +11,17 @@ export interface RouteClientOptions {
 }
 
 /**
+ * Copies Set-Cookie values from one NextResponse onto another.
+ * Needed when returning a new JSON body after the route client has already
+ * written auth/PKCE cookies onto a placeholder response.
+ */
+export function copyResponseCookies(from: NextResponse, to: NextResponse) {
+  for (const cookie of from.cookies.getAll()) {
+    to.cookies.set(cookie);
+  }
+}
+
+/**
  * Creates a Supabase server client that reads cookies from the request
  * and writes session cookies to the given response. Use this in API route
  * handlers (login, signup, logout) so the response carries Set-Cookie headers.

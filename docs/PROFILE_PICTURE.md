@@ -1,6 +1,6 @@
 # Profile pictures
 
-Profile pictures are stored in **Supabase Storage** (not Vercel Blob). One picture per user; it can be included or hidden per application.
+Profile pictures are stored in **Supabase Storage** (CV PDFs use Cloudflare R2). **One picture per user** at a canonical path; it can be shown or hidden per application via a preference flag.
 
 ## Storage bucket
 
@@ -12,21 +12,34 @@ Profile pictures are stored in **Supabase Storage** (not Vercel Blob). One pictu
 
 RLS policies for this bucket are in migration `014_storage_profile_pictures_policies.sql`. They allow:
 
-- **INSERT:** Authenticated users can upload only to a path whose first folder is their `auth.uid()` (e.g. `{user_id}/avatar.jpg`).
+- **INSERT / UPDATE / DELETE:** Authenticated users only under their `auth.uid()` folder.
 - **SELECT:** Public read so the view page can load the image.
-- **UPDATE / DELETE:** Users can update or delete only files in their own folder.
+
+### Canonical object path
+
+Uploads write `{user_id}/avatar.{jpg|png|webp}` with `upsert: true`, then remove any other objects in that folder so only one file remains. `POST /api/upload/profile-picture` checks allowed MIME types and validates JPEG / PNG / WebP magic bytes (plus light headers: PNG IHDR, WebP VP8*); the stored extension and `contentType` follow the detected bytes. Auth failures return **401**; Storage / unexpected failures return **500** (Storage `status` / `statusCode` logged server-side only).
 
 ## Data model
 
-- **profiles:** `profile_picture_url` (Supabase Storage public URL). One picture per user.
-- **applications:** `show_profile_picture` (boolean): User’s choice to show their profile picture on this application. Preserved when they remove their profile picture so the choice stays “Yes” when they add a new picture later. `profile_picture_url` (nullable): Copied from the profile when the user has a picture and `show_profile_picture` is true. When the user changes or removes their profile picture, the API updates this for all applications where `show_profile_picture` is true (new URL or null). View page only uses this URL for display; if null, no avatar is shown and the page does not break.
+- **profiles:** `profile_picture_url` (Supabase Storage public URL). Source of truth for the avatar.
+- **applications:** `show_profile_picture` (boolean) only — whether this application should show the live profile picture. There is **no** `applications.profile_picture_url` column (dropped in migration `023`).
+
+Public and enriched reads set a display-only `profile_picture_url` on the application payload when `show_profile_picture` is true, taken from `profiles.profile_picture_url`.
 
 ## Behaviour
 
-- **admin/profile:** User can upload, change, or remove profile picture. When the profile picture URL changes, the API updates `applications.profile_picture_url` for all applications where `show_profile_picture` is true, so they show the new image (or no image if removed). The preference `show_profile_picture` is not changed when removing the picture. No preference setting; choice is made per application.
-- **admin/new and admin/edit:** One checkbox: "Show profile picture for this application". If the user has no profile picture, the checkbox is **unchecked and disabled** (with a note to upload a picture in Profile). If they have a picture, the checkbox is enabled; default is **checked** for new applications. On edit, the checkbox reflects `application.show_profile_picture` (or, if not set, falls back to whether `profile_picture_url` was set). On save, the server sets `show_profile_picture` from the checkbox and sets `profile_picture_url` from the profile when checked and the user has a picture, otherwise null.
-- **view/[slug]:** Renders an avatar only when `application.profile_picture_url` is set (non-null, non-empty). If the user chose to show the picture but has no profile picture (or removed it), the URL is null and no avatar is shown; the page does not break.
+- **admin/profile (upload-on-save):** Choosing a file shows a local preview only. On **Save profile**, the client uploads to the canonical path, then `PUT /api/profile` with the new URL (or `null` to remove). After a successful profile write, the previous Storage object is deleted when the URL changed. Side-effect failures (Storage delete, Auth metadata sync) are returned as `warnings` while still returning **200** + `data`.
+- **admin/new and admin/edit:** “Show profile picture for this application” Yes/No (enabled when the live profile has a picture). Users can **Add / Change picture** via a shared `ProfilePictureModal` (upload-on-save → `PUT` picture URL only — works because names already exist from signup). Server stores only `show_profile_picture` on the application.
+- **view/[publicId]/[slug]:** Resolves the application and, when `show_profile_picture` is true, attaches the current `profiles.profile_picture_url` for the avatar. Changing the profile picture updates all such applications immediately (no fan-out sync).
+
+### Display cache-busting
+
+Canonical uploads overwrite the same Storage path, so the public URL string often does not change. UI and public views render with `cacheBustProfilePictureUrl(url, profiles.updated_at)` (query `?v=…`) so browsers fetch the new bytes. The value stored in `profiles.profile_picture_url` stays the clean Storage URL (no query string).
+
+## Ownership on profile PUT
+
+Non-null `profile_picture_url` must be a `profile-pictures` public URL under the caller’s `{user_id}/…` folder (canonical `avatar.*` or legacy UUID filenames).
 
 ## Cleanup
 
-When the user removes or replaces their profile picture in admin/profile, the API should delete the previous object from the `profile-pictures` bucket (derive path from the old URL) to avoid orphan files. Application rows: `profile_picture_url` is set to null (or the new URL) for applications with `show_profile_picture` true; `show_profile_picture` is left unchanged. No Storage delete when clearing `profile_picture_url` on an application.
+Replacing or clearing the picture deletes the previous Storage object after a successful profile upsert. Upload also purges non-canonical leftovers in the user’s folder.

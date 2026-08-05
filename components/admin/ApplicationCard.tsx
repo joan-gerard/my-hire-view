@@ -1,6 +1,6 @@
 'use client';
 
-import { Application } from '@/lib/types/application';
+import type { ApplicationListItem } from '@/lib/types/application';
 import { getApplicationUrl } from '@/lib/utils/url';
 import { copyToClipboard } from '@/lib/utils/clipboard';
 import Link from 'next/link';
@@ -19,34 +19,45 @@ import {
 } from '@/components/admin/icons';
 
 interface ApplicationCardProps {
-  application: Application;
+  application: ApplicationListItem;
   onDelete: (id: string) => void;
   onArchive?: (id: string) => void;
   onRestore?: (id: string) => void;
 }
 
 function StatusIcon({
-  isActive,
+  status,
   viewCount,
 }: {
-  isActive: boolean;
+  status: ApplicationListItem['status'];
   viewCount: number;
 }) {
+  const isActive = status === 'active';
   const hasBeenViewed = viewCount > 0;
-  const title = isActive
-    ? hasBeenViewed
-      ? 'Active (viewed)'
-      : 'Active (not viewed yet)'
-    : 'Archived';
-  const ariaLabel = title;
+  const title =
+    status === 'archived'
+      ? 'Archived'
+      : status === 'draft'
+        ? 'Draft'
+        : hasBeenViewed
+          ? 'Active (viewed)'
+          : 'Active (not viewed yet)';
 
   return (
     <div
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
       title={title}
-      aria-label={ariaLabel}
+      aria-label={title}
     >
-      {isActive ? (
+      {status === 'archived' ? (
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)]/10">
+          <ArchiveIcon className="h-5 w-5 text-[var(--foreground)]/60" />
+        </span>
+      ) : status === 'draft' ? (
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100">
+          <ClockIcon className="h-5 w-5 text-amber-700" />
+        </span>
+      ) : (
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
           {hasBeenViewed ? (
             <CheckIcon className="h-5 w-5 text-emerald-600" />
@@ -54,12 +65,32 @@ function StatusIcon({
             <ClockIcon className="h-5 w-5 text-emerald-600" />
           )}
         </span>
-      ) : (
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)]/10">
-          <ArchiveIcon className="h-5 w-5 text-[var(--foreground)]/60" />
-        </span>
       )}
     </div>
+  );
+}
+
+function MissingCvBadge() {
+  return (
+    <span
+      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-500/40 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900"
+      title="The CV file is missing from storage. Edit this application or restore a primary CV."
+      aria-label="CV file missing"
+    >
+      <svg
+        className="h-3.5 w-3.5"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        aria-hidden
+      >
+        <path
+          fillRule="evenodd"
+          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.518 11.594c.75 1.335-.213 2.982-1.742 2.982H3.48c-1.53 0-2.493-1.647-1.743-2.982L8.257 3.1zM11 14a1 1 0 10-2 0 1 1 0 002 0zm-1-2a1 1 0 01-1-1V8a1 1 0 112 0v3a1 1 0 01-1 1z"
+          clipRule="evenodd"
+        />
+      </svg>
+      CV missing
+    </span>
   );
 }
 
@@ -71,7 +102,8 @@ export default function ApplicationCard({
 }: ApplicationCardProps) {
   const [copied, setCopied] = useState(false);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
-  const shareableUrl = getApplicationUrl(application.slug);
+  const shareableUrl = getApplicationUrl(application.public_id, application.slug);
+  const isArchived = application.status === 'archived';
 
   const handleCopyLink = async () => {
     const success = await copyToClipboard(shareableUrl);
@@ -85,21 +117,19 @@ export default function ApplicationCard({
     <div className="relative overflow-visible rounded-lg bg-[var(--secondary-background)] shadow border border-[var(--foreground)]/10">
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
-          {/* 1. Status icon */}
           <StatusIcon
-            isActive={application.is_active}
+            status={application.status}
             viewCount={application.view_count}
           />
 
-          {/* 2 & 3. Company name - Role applied */}
           <span className="min-w-0 text-sm font-medium text-[var(--foreground)] sm:text-base">
             {application.company} - {application.role}
           </span>
 
-          {/* Spacer to push buttons right on larger screens */}
+          {application.cv_exists === false && <MissingCvBadge />}
+
           <div className="hidden flex-1 sm:block" aria-hidden="true" />
 
-          {/* 4. Copy Link button */}
           <button
             type="button"
             onClick={handleCopyLink}
@@ -109,7 +139,6 @@ export default function ApplicationCard({
             {copied ? 'Copied!' : 'Copy Link'}
           </button>
 
-          {/* 5. View Insights button - expands to show views and creation date */}
           <button
             type="button"
             onClick={() => setInsightsExpanded(!insightsExpanded)}
@@ -124,9 +153,8 @@ export default function ApplicationCard({
             )}
           </button>
 
-          {/* 6. View Link button */}
           <Link
-            href={`/view/${application.slug}`}
+            href={`/view/${application.public_id}/${application.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
@@ -135,17 +163,15 @@ export default function ApplicationCard({
             View Application
           </Link>
 
-          {/* 7. 3-dot dropdown menu */}
           <ApplicationCardDropdown
             applicationId={application.id}
-            isArchived={application.is_active === false}
+            isArchived={isArchived}
             onDelete={onDelete}
             onArchive={onArchive}
             onRestore={onRestore}
           />
         </div>
 
-        {/* Expanded insights section */}
         <ApplicationCardInsights
           expanded={insightsExpanded}
           viewCount={application.view_count}

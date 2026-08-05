@@ -21,6 +21,7 @@ interface ApplicationPageHeaderProps {
   /** CV URL for the View CV and Download CV buttons. */
   cvUrl?: string | null;
   /** When provided, a download is recorded (once per session) when the user clicks Download CV. Owner downloads are not counted. */
+  publicId?: string;
   slug?: string;
   /** Original uploaded CV filename. Used for download when useOriginalCvFilename is true. */
   cvFilename?: string | null;
@@ -29,11 +30,11 @@ interface ApplicationPageHeaderProps {
 }
 
 /** Records a CV download (once per session). Owner downloads are not counted. */
-function recordDownloadCount(slug: string): void {
+function recordDownloadCount(publicId: string, slug: string): void {
   if (typeof window === "undefined") return;
-  const storageKey = `download_tracked_${slug}`;
+  const storageKey = `download_tracked_${publicId}_${slug}`;
   if (sessionStorage.getItem(storageKey)) return;
-  fetch(`/api/applications/${slug}/download`, { method: "POST" })
+  fetch(`/api/applications/${publicId}/${slug}/download`, { method: "POST" })
     .then((response) => {
       if (response.ok) sessionStorage.setItem(storageKey, "true");
     })
@@ -45,7 +46,7 @@ function nonEmpty(value: string | null | undefined): value is string {
 }
 
 /**
- * Header for the public application page (/view/[slug]). Shows company, role,
+ * Header for the public application page (/view/[publicId]/[slug]). Shows company, role,
  * and an optional candidate block (name, location, portfolio/LinkedIn) only
  * when the candidate has provided that data. Layout stays balanced whether
  * optional fields are present or not.
@@ -61,6 +62,7 @@ export default function ApplicationPageHeader({
   profileImageUrl,
   onWatchVideo,
   cvUrl,
+  publicId,
   slug,
   cvFilename,
   useOriginalCvFilename = true,
@@ -84,7 +86,7 @@ export default function ApplicationPageHeader({
     if (typeof window === "undefined" || !cvUrl) return;
     setDownloading(true);
     try {
-      if (slug) recordDownloadCount(slug);
+      if (publicId && slug) recordDownloadCount(publicId, slug);
       const response = await fetch(cvUrl, { mode: "cors" });
       if (!response.ok) throw new Error("Failed to fetch PDF");
       const blob = await response.blob();

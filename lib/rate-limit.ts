@@ -84,6 +84,52 @@ export const DEFAULT_API_RATE_LIMIT: RateLimitOptions = {
   windowMs: 60_000,
 };
 
+/**
+ * View/download count increments: stricter cap per IP per application path.
+ * Complements the default per-IP limit so one client cannot inflate a single
+ * application's analytics as aggressively.
+ */
+export const ANALYTICS_PER_SLUG_RATE_LIMIT: RateLimitOptions = {
+  limit: 10,
+  windowMs: 60_000,
+};
+
+/**
+ * POST /api/slug/validate — tighter than general writes.
+ * Debounced UI (~450ms) still fits; caps abuse from rapid manual slug edits.
+ */
+export const SLUG_VALIDATE_RATE_LIMIT: RateLimitOptions = {
+  limit: 30,
+  windowMs: 60_000,
+};
+
+/** CV PDF upload: stricter than general writes (per IP and per user). */
+export const CV_UPLOAD_RATE_LIMIT: RateLimitOptions = {
+  limit: 10,
+  windowMs: 60_000,
+};
+
+/** Best-effort in-flight upload cap per user (per server instance). */
+const MAX_CONCURRENT_CV_UPLOADS_PER_USER = 2;
+const uploadInFlight = new Map<string, number>();
+
+/**
+ * Tries to reserve a concurrent CV-upload slot for `userId`.
+ * Call `releaseUserUploadSlot` in a `finally` when the request finishes.
+ */
+export function tryAcquireUserUploadSlot(userId: string): boolean {
+  const n = uploadInFlight.get(userId) ?? 0;
+  if (n >= MAX_CONCURRENT_CV_UPLOADS_PER_USER) return false;
+  uploadInFlight.set(userId, n + 1);
+  return true;
+}
+
+export function releaseUserUploadSlot(userId: string): void {
+  const n = (uploadInFlight.get(userId) ?? 1) - 1;
+  if (n <= 0) uploadInFlight.delete(userId);
+  else uploadInFlight.set(userId, n);
+}
+
 /** Convenience: rate limit by request IP and return 429 response if limited. */
 export function checkRateLimit(
   request: NextRequest,
@@ -91,6 +137,20 @@ export function checkRateLimit(
 ): RateLimitResult {
   const id = getClientIdentifier(request);
   return rateLimit(options, id);
+}
+
+/**
+ * Rate limit by IP + public application path (`publicId`/`slug`).
+ * Use after the default per-IP check for view/download analytics routes.
+ */
+export function checkPerSlugRateLimit(
+  request: NextRequest,
+  publicId: string,
+  slug: string,
+  options: RateLimitOptions = ANALYTICS_PER_SLUG_RATE_LIMIT,
+): RateLimitResult {
+  const ip = getClientIdentifier(request);
+  return rateLimit(options, `${ip}:${publicId}:${slug}`);
 }
 
 /**

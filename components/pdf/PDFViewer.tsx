@@ -12,7 +12,8 @@ if (typeof window !== "undefined") {
 
 interface PDFViewerProps {
   url: string;
-  /** When provided, a download is recorded (once per session) when the user clicks Download CV. Owner downloads are not counted. */
+  /** Opaque public id for share/download API paths. */
+  publicId?: string;
   slug?: string;
   /** Original uploaded CV filename. Used for download when useOriginalCvFilename is true. */
   cvFilename?: string | null;
@@ -22,6 +23,7 @@ interface PDFViewerProps {
 
 export default function PDFViewer({
   url,
+  publicId,
   slug,
   cvFilename,
   useOriginalCvFilename = true,

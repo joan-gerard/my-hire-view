@@ -28,7 +28,7 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-[var(--foreground)] ring-1 ring-inset ring-[var(--foreground)]/20 placeholder:text-[var(--foreground)]/50 focus:ring-2 focus:ring-inset focus:ring-[var(--brand-primary)] sm:text-sm sm:leading-6"
-        placeholder="Search by company or role..."
+        placeholder="Search by company, role, or slug..."
       />
     </div>
   );

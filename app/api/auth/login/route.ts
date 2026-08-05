@@ -2,12 +2,13 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import { createSupabaseRouteClient } from '@/lib/supabase/route-client';
 
-/** 5 login attempts per minute per IP to mitigate brute force. */
-const LOGIN_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
+/** 15 login attempts per minute per IP — balances brute-force protection with typo retries. */
+const LOGIN_RATE_LIMIT = { limit: 15, windowMs: 60_000 };
 
 /**
  * Server-side login: signs in with Supabase and sets session cookies on the response.
- * This ensures the middleware can read the session on the next request.
+ * Profiles are not created here — first profile PUT creates the row (names seeded
+ * from Auth user_metadata on the profile page / new application form).
  */
 export async function POST(request: NextRequest) {
   const rate = checkRateLimit(request, LOGIN_RATE_LIMIT);

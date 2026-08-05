@@ -10,7 +10,7 @@ This guide describes what you can do with MyHireView as a **candidate** (job see
 
 ### Getting started
 
-- **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your email and a password. Confirm your email if your Supabase project requires it.
+- **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your first name, last name, email, password, and confirm password. Confirm your email if your Supabase project requires it. Your name is stored on your account and a profile record is created with that name (you can add location, links, and a picture later).
 - **Sign in:** Use **Sign in** and enter your email and password. After signing in, you are taken to your **Dashboard** (`/admin`).
 
 ### Profile
@@ -19,14 +19,16 @@ From the header, open **Profile** (`/admin/profile`). You can:
 
 - See your **account email** and **member since** date.
 - Edit **profile details** used as defaults when you create applications:
-  - First name  
-  - Last name  
-  - Location  
-  - Portfolio URL  
-  - LinkedIn URL  
+  - First name (required)
+  - Last name (required)
+  - Location
+  - Portfolio URL
+  - LinkedIn URL
+  - Profile picture  
 
-Saving updates only your profile. These values are not changed when you edit an application. You can leave any field blank.
+Changing your name also updates the name stored on your account. Location and URLs can be left blank. These values are not changed when you edit an application. You can also add or change your profile picture from **New** / **Edit application** without leaving those pages.
 
+- Manage your **Primary CV library** (up to 5 résumé PDFs to reuse on applications). You can manage the same library from **New** / **Edit application** via **Manage library**.
 - See how many **applications** you have in total and how many are **active** vs **archived**. A link takes you back to the dashboard.
 
 ### Dashboard
@@ -44,34 +46,37 @@ At **Dashboard** (`/admin`) you can:
 ### Creating an application
 
 1. Click **New Application** (`/admin/new`).
-2. **Info shown to recruiters** (at the top):
+2. If optional profile fields (location, links) are still empty, a short notice recommends completing your profile for richer prefills (arrow icon opens Profile).
+3. **Info shown to recruiters** (at the top):
    - Your profile details are shown as a preview. You can **toggle each field on or off** (off means recruiters will not see it).
    - You can **edit** any value here; changes apply only to this application, not to your profile.
-   - You can **show or hide** the whole list of fields; that preference is remembered for next time.
-3. Fill in the **application form**:
+   - **Profile picture:** choose whether to show it on this application. Use **Add / Change picture** to update your account avatar without leaving the page.
+   - You can collapse or expand the whole list with the arrow control in the top-right of that section; that preference is remembered for next time.
+4. Fill in the **application form**:
    - **Company name** and **Role/Position** (required).
    - **Name in URL** (optional): choose **None**, **At start** (e.g. `john-doe-acme-software-engineer`), or **At end** (e.g. `acme-software-engineer-john-doe`). The slug preview updates as you type.
    - **Slug** (used in the URL; auto-generated from company and role, and from your name and position if you chose; you can change it manually).
-   - **CV**: upload a PDF (stored securely).
+   - **CV**: choose a **primary CV** from your library (preferred) or upload a **tailored** PDF for this application only. Use **Manage library** to upload or delete primary CVs without leaving the page (same library as on Profile).
    - **YouTube URL** for your video pitch.
-4. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy Link** to share it.
+5. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy Link** to share it.
 
 ### Editing an application
 
 1. On the dashboard, open the **3-dot menu** on the application card and click **Edit**.
-2. The form is pre-filled from **that application only** (including which candidate fields are on or off and their values). You can change **Name in URL** (None / At start / At end) when you save. Your profile is not changed when you save.
-3. Change any fields or toggles, then click **Save Application**.
+2. A notice reminds you that candidate details come from when this application was saved — not from your live profile. Changing your profile does not update existing applications.
+3. The form is pre-filled from **that application only** (including which candidate fields are on or off and their values). You can change **Name in URL** (None / At start / At end) when you save. Your profile is not changed when you save.
+4. Change any fields or toggles, then click **Save Application**.
 
 ### Sharing with recruiters
 
-- Each application has a **unique link**. It can be based on company and role (e.g. `https://yoursite.com/view/acme-software-engineer`) or, if you chose to include your name when creating or editing, on your name plus company and role (e.g. `https://yoursite.com/view/john-doe-acme-software-engineer`).
+- Each application has a **unique link** for that user. The shape is `https://yoursite.com/view/{publicId}/{slug}` — for example `https://yoursite.com/view/k7x2m9ab/acme-software-engineer`. The middle segment is an opaque id assigned to your account (not your name). The last segment is based on company and role, or — if you chose **Name in URL** — includes your name at the start or end (e.g. `john-doe-acme-software-engineer`).
 - Use **Copy Link** on the dashboard card and send it by email, LinkedIn, or job portal.
 - Recruiters can open the link without signing in. You can see how many times the page was viewed and when it was last viewed (view count and last viewed date in View Insights; one count per recruiter session).
 
 ### Archiving and deleting
 
-- **Archive:** The link still works, but recruiters see a message that the application is no longer active and the CV and video are not shown. You can **Restore** later to make it active again.
-- **Delete:** The application is removed. The link will no longer work.
+- **Archive:** The link still opens, but recruiters see that it **doesn’t have an active application** (no CV, video, or candidate details). You can **Restore** later to make it active again.
+- **Delete:** The application is removed. Opening the old link shows the **same** empty-state message.
 
 ---
 
@@ -79,7 +84,7 @@ At **Dashboard** (`/admin`) you can:
 
 ### Viewing an application
 
-- Open the **shareable link** the candidate sent (e.g. `https://yoursite.com/view/acme-software-engineer`).
+- Open the **shareable link** the candidate sent (e.g. `https://yoursite.com/view/k7x2m9ab/acme-software-engineer`).
 - You do **not** need to sign in.
 
 You will see:
@@ -88,7 +93,7 @@ You will see:
 - **Resume:** A PDF viewer with the candidate’s CV.
 - **Video pitch:** An embedded YouTube video.
 
-If the application was **archived**, you will see a message that it is no longer active and the CV and video are not available.
+If the application was **archived** or **deleted** (or the link is invalid / mistyped), you will see that the link **doesn’t have an active application** — the CV and video are not shown.
 
 ### View count and last viewed
 
@@ -103,4 +108,4 @@ If the application was **archived**, you will see a message that it is no longer
 | **Candidate** | Sign up, sign in, edit profile (name, location, portfolio, LinkedIn), create applications (company, role, CV, video, candidate toggles), edit or archive or delete applications, copy shareable links, see view counts. |
 | **Recruiter** | Open shareable link (no login), see candidate name/location/portfolio/LinkedIn when shared, view CV and video pitch. |
 
-For setup and technical details, see [README.md](../README.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
+For setup and technical details, see [README.md](../README.md), [ARCHITECTURE.md](ARCHITECTURE.md), and [API_REFERENCE.md](API_REFERENCE.md).

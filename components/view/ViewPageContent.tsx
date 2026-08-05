@@ -1,25 +1,30 @@
 "use client";
 
 import ApplicationPageHeader from "@/components/public/ApplicationPageHeader";
-import ViewPageFooter from "@/components/public/ViewPageFooter";
-import type { Application } from "@/lib/types/application";
+import type {
+  PublicApplication,
+  PublicApplicationResponse,
+} from "@/lib/types/application";
+import { isUnavailablePublicApplication } from "@/lib/types/application";
 import { useCallback, useEffect, useState } from "react";
 import ApplicationPageContent from "./ApplicationPageContent";
-import ArchivedApplicationAlert from "./ArchivedApplicationAlert";
+import ApplicationViewFooter from "./ApplicationViewFooter";
+import UnavailableApplicationView from "./UnavailableApplicationView";
 
 interface ViewPageContentProps {
-  initialApplication: Application;
+  initialApplication: PublicApplication;
+  publicId: string;
   slug: string;
 }
 
 export default function ViewPageContent({
   initialApplication,
+  publicId,
   slug,
 }: ViewPageContentProps) {
   const [application, setApplication] =
-    useState<Application>(initialApplication);
+    useState<PublicApplicationResponse>(initialApplication);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [showFooter, setShowFooter] = useState<boolean | null>(null);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -32,32 +37,24 @@ export default function ViewPageContent({
   }, [isVideoModalOpen]);
 
   const refetchApplication = useCallback(async () => {
-    const response = await fetch(`/api/applications/${slug}`);
+    const response = await fetch(`/api/applications/${publicId}/${slug}`);
+    if (response.status === 404) {
+      setApplication({ status: "unavailable" });
+      return;
+    }
     if (!response.ok) return;
-    const { data } = await response.json();
-    setApplication(data);
-  }, [slug]);
-
-  // Footer is shown only to non-owners (recruiters/visitors)
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/applications/${slug}/viewer-status`, { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : { isOwner: false }))
-      .then((data) => {
-        if (!cancelled) setShowFooter(data.isOwner === false);
-      })
-      .catch(() => {
-        if (!cancelled) setShowFooter(true);
-      });
-    return () => {
-      cancelled = true;
+    const { data } = (await response.json()) as {
+      data: PublicApplicationResponse;
     };
-  }, [slug]);
+    setApplication(data);
+  }, [publicId, slug]);
 
-  const isArchived = application.is_active === false;
+  if (isUnavailablePublicApplication(application)) {
+    return <UnavailableApplicationView />;
+  }
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <div className="flex min-h-screen flex-col bg-background">
       <ApplicationPageHeader
         company={application.company}
         role={application.role}
@@ -67,28 +64,26 @@ export default function ViewPageContent({
         portfolioUrl={application.portfolio_url}
         linkedinUrl={application.linkedin_url}
         profileImageUrl={application.profile_picture_url?.trim() || undefined}
-        onWatchVideo={!isArchived ? () => setIsVideoModalOpen(true) : undefined}
+        onWatchVideo={() => setIsVideoModalOpen(true)}
         cvUrl={application.cv_url}
+        publicId={publicId}
         slug={slug}
         cvFilename={application.cv_filename}
         useOriginalCvFilename={application.use_original_cv_filename}
       />
 
-      <div className="mx-auto max-w-6xl mt-6">
-        {isArchived ? (
-          <ArchivedApplicationAlert />
-        ) : (
-          <ApplicationPageContent
-            slug={slug}
-            application={application}
-            refetchApplication={refetchApplication}
-            isVideoModalOpen={isVideoModalOpen}
-            onCloseVideoModal={() => setIsVideoModalOpen(false)}
-          />
-        )}
+      <div className="mx-auto w-full max-w-6xl flex-1 mt-6">
+        <ApplicationPageContent
+          publicId={publicId}
+          slug={slug}
+          application={application}
+          refetchApplication={refetchApplication}
+          isVideoModalOpen={isVideoModalOpen}
+          onCloseVideoModal={() => setIsVideoModalOpen(false)}
+        />
       </div>
 
-      {showFooter === true && <ViewPageFooter />}
+      <ApplicationViewFooter />
     </div>
   );
 }

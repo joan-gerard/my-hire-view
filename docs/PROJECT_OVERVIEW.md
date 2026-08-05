@@ -1,6 +1,6 @@
 # MyHireView — Project Overview
 
-> Last updated: May 2, 2026
+> Last updated: May 4, 2026
 
 A high-level catch-up document covering the product, tech stack, architecture, business logic, data model, and pre-launch gaps.
 
@@ -19,17 +19,17 @@ There are two distinct surfaces:
 
 ## 2. Tech Stack
 
-| Area | Choice |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| UI | React 19, Tailwind CSS 4, Framer Motion |
-| Fonts / Icons | Geist, FaunaOne, FunnelSans, `react-icons` |
-| Auth + DB | Supabase (email/password, PostgreSQL, RLS, Storage) |
-| CV storage | Vercel Blob |
-| Video | YouTube embed (URL only, no upload) |
-| Language | TypeScript 5 (strict mode) |
-| Package manager | pnpm |
-| Deployment target | Vercel |
+| Area              | Choice                                              |
+| ----------------- | --------------------------------------------------- |
+| Framework         | Next.js 16 (App Router)                             |
+| UI                | React 19, Tailwind CSS 4, Framer Motion             |
+| Fonts / Icons     | Geist, FaunaOne, FunnelSans, `react-icons`          |
+| Auth + DB         | Supabase (email/password, PostgreSQL, RLS, Storage) |
+| CV storage        | Cloudflare R2                                       |
+| Video             | YouTube embed (URL only, no upload)                 |
+| Language          | TypeScript 5 (strict mode)                          |
+| Package manager   | pnpm                                                |
+| Deployment target | Vercel                                              |
 
 ---
 
@@ -62,7 +62,7 @@ lib/
   supabase/          — clients: server, route-client, middleware, admin (service role)
   api/               — client-side API call helpers
   types/             — TypeScript types including database.ts
-  utils/             — slug, URL, YouTube, blob helpers
+  utils/             — slug, URL, YouTube, CV storage helpers
   auth.ts            — requireAuth() helper
   rate-limit.ts      — in-memory rate limiting
 
@@ -77,7 +77,7 @@ docs/                — internal documentation
 
 ### Session / auth flow
 
-**`proxy.ts`** (Next.js 16 replacement for `middleware.ts`) refreshes the Supabase session cookie on every request and redirects unauthenticated users away from `/admin`.
+`**proxy.ts**` (Next.js 16 replacement for `middleware.ts`) refreshes the Supabase session cookie on every request and redirects unauthenticated users away from `/admin`.
 
 ---
 
@@ -86,7 +86,7 @@ docs/                — internal documentation
 ### Creating an application
 
 1. User fills in company, role, candidate fields (name in URL, profile picture, CV download filename).
-2. CV PDF is uploaded to **Vercel Blob** via `POST /api/upload`.
+2. CV PDF is uploaded to **Cloudflare R2** via `POST /api/upload`.
 3. A slug is generated via `POST /api/slug`.
 4. The full application record is saved via `POST /api/applications`.
 
@@ -94,13 +94,13 @@ docs/                — internal documentation
 
 - `GET /api/applications/[slug]` fetches the application.
 - Page renders a PDF viewer (`react-pdf` + `pdfjs-dist`) and a YouTube embed.
-- **View and download counts** are tracked via Supabase RPCs (owner views excluded; session-scoped dedup via `sessionStorage`).
+- **View and download counts** are tracked via Supabase RPCs (owner views excluded; server httpOnly dedupe cookie + client `sessionStorage` optimization; per-IP and per-path rate limits).
 
 ### Admin dashboard
 
 - `useApplications` hook drives the application list.
 - Applications can be searched, archived/restored, and deleted.
-- Edit flow loads the application by ID, allows PDF replacement (old blob removed), and saves via `PUT /api/applications`.
+- Edit flow loads the application by ID, allows PDF replacement (old R2 object removed), and saves via `PUT /api/applications`.
 
 ### Waitlist
 
@@ -110,18 +110,18 @@ docs/                — internal documentation
 
 ## 5. Data Model (Supabase PostgreSQL)
 
-| Table | Key fields |
-|---|---|
-| `applications` | `slug`, `company`, `role`, `cv_url`, `video_url`, `view_count`, `download_count`, `last_viewed_at`, `is_active`, `user_id`, candidate snapshot fields, profile picture visibility, CV filename preferences |
-| `profiles` | One row per user: `first_name`, `last_name`, `location`, `linkedin_url`, `portfolio_url`, `profile_picture_url` |
-| `waitlist_signups` | `email`, `name`, job search status, segmentation fields |
+| Table              | Key fields                                                                                                                                                                                                 |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `applications`     | `slug`, `company`, `role`, `cv_url`, `video_url`, `view_count`, `download_count`, `last_viewed_at`, `is_active`, `user_id`, candidate snapshot fields, profile picture visibility, CV filename preferences |
+| `profiles`         | One row per user: `first_name`, `last_name`, `location`, `linkedin_url`, `portfolio_url`, `profile_picture_url`                                                                                            |
+| `waitlist_signups` | `email`, `name`, job search status, segmentation fields                                                                                                                                                    |
 
 **State management:**
 
 - Server state lives in Supabase + HTTP cookies.
 - Client state is managed with React `useState` in forms and `useApplications`.
-- View/download dedup uses `sessionStorage`.
-- CV files are stored on Vercel Blob; profile pictures on Supabase Storage.
+- View/download dedup: server httpOnly cookie (24h) + client `sessionStorage`.
+- CV files are stored on Cloudflare R2; profile pictures on Supabase Storage.
 
 RLS policies protect all tables. The service-role Supabase client is used server-side only for privileged operations (analytics RPCs, waitlist inserts).
 
@@ -130,8 +130,8 @@ RLS policies protect all tables. The service-role Supabase client is used server
 ## 6. Authentication & Authorization
 
 - **Supabase Auth** with email/password; sessions stored in HTTP cookies via `@supabase/ssr`.
-- **`proxy.ts`** refreshes the session and guards all `/admin` routes.
-- **`requireAuth()`** in `lib/auth.ts` is used inside API route handlers to get the authenticated user.
+- `**proxy.ts`\*\* refreshes the session and guards all `/admin` routes.
+- `**requireAuth()**` in `lib/auth.ts` is used inside API route handlers to get the authenticated user.
 - **RLS** on `applications` and `profiles` enforces data isolation at the database level.
 - **Public read** of applications by slug is permitted (recruiter view requires no login).
 
@@ -141,58 +141,49 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 ## 7. Testing & CI
 
-- **No test files exist** — no Jest, Vitest, or any test runner is configured.
-- **No `test` or `test:ci` script** in `package.json`.
-- **No CI/CD pipeline** — no GitHub Actions or equivalent.
+- **Vitest** is configured as the test runner (`vitest.config.ts`).
+- `pnpm test` — interactive watch mode; `pnpm test:ci` — single run (used in CI).
+- Test files live in `__tests__/unit/` and a shared helper in `__tests__/helpers/`.
 
-This is the most significant gap before a production launch.
+### What is covered
+
+| Area                                                                                              | File(s)                                                          |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Pure slug utilities (`generateSlug`, `buildSlug`, `validateSlugFormat`)                           | `__tests__/unit/lib/utils/slug-generate.test.ts`                 |
+| Server-side slug helpers (`checkSlugUniqueness`, `validateSlugForApplication`, `reserveBaseSlug`) | `__tests__/unit/lib/utils/slug.test.ts`                          |
+| In-memory rate limiter (`rateLimit`, `checkRateLimit`, `rateLimit429`, `getClientIdentifier`)     | `__tests__/unit/lib/rate-limit.test.ts`                          |
+| Profile flow (GET + PUT `/api/profile`)                                                           | `__tests__/unit/api/profile.test.ts`                             |
+| Create-application flow (POST `/api/applications`, POST `/api/slug`, POST `/api/slug/validate`)   | `__tests__/unit/api/applications-create.test.ts`, `slug.test.ts` |
+| Edit-application flow (PUT `/api/applications`, GET `/api/applications/by-id/[id]`)               | `__tests__/unit/api/applications-edit.test.ts`                   |
+| Public-view flow (GET `/api/applications/[slug]`, POST `/api/applications/[slug]/view`)           | `__tests__/unit/api/applications-public-view.test.ts`            |
+
+- **No CI/CD pipeline** — no GitHub Actions or equivalent (still a gap).
 
 ---
 
 ## 8. Environment Variables
 
-| Variable | Purpose |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (public) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key (public) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only; used for privileged RPCs and waitlist inserts |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob upload token (server-only) |
-| `NEXT_PUBLIC_SITE_URL` | Optional; falls back to localhost in `lib/utils/url.ts` |
+| Variable                                                                                            | Purpose                                                                     |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                                                                          | Supabase project URL (public)                                               |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`                                                                     | Supabase anon key (public)                                                  |
+| `SUPABASE_SERVICE_ROLE_KEY`                                                                         | Server-only; used for privileged RPCs and waitlist inserts                  |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL` | Cloudflare R2 for CV PDFs (server-only); see [PDF_AND_R2.md](PDF_AND_R2.md) |
+| `NEXT_PUBLIC_SITE_URL`                                                                              | Optional; falls back to localhost in `lib/utils/url.ts`                     |
 
-> Note: `.env.local.example` is referenced in the README but appears to be missing from the repo. It should be recreated.
+> Note: `.env.local.example` lists required variables including R2 credentials for CV uploads.
 
 ---
 
-## 9. Pre-Launch Gaps & TODOs
+## 9. Planned work
 
-### Must fix (production hardening)
-
-| Issue | Location | Notes |
-|---|---|---|
-| `/api/upload` has no auth check | `app/api/upload/` | Anyone can upload to the Blob store. Add `requireAuth()`. |
-| `/api/slug` has no auth check | `app/api/slug/` | Lower risk but worth tightening. |
-| In-memory rate limiting | `lib/rate-limit.ts` | Resets per serverless instance; not safe across concurrent Vercel instances. Replace with Redis/Upstash. |
-| No automated tests | — | No test runner configured at all. |
-| No CI/CD | — | No automated pipeline on push/PR. |
-
-### Nice to have before launch
-
-- **README is outdated** — still contains create-next-app boilerplate at the top; migration list only covers `001–006` but the repo is now at `019`.
-- **Pricing and Blog pages** are placeholders — fine for a waitlist launch, not for full public launch.
-- **`.env.local.example`** is missing — add it back for onboarding clarity.
-- **`MarketingHero_Old.tsx`** is still referenced on pricing/blog — clean up or replace.
-- **Blog** has no real content yet.
-- **How It Works page** (`/how-it-works`) is nearly a duplicate of the homepage content — needs its own dedicated, more detailed content.
-- **Branding on `/admin` and `/view` pages** is outdated — both still use the previous brand; needs updating to match the current visual identity.
-- **Payment / membership system** — no payment integration exists yet. Need to integrate a payment provider (e.g. Stripe) to gate features behind a paid membership, covering plan management, checkout flow, webhooks, and Supabase subscription state.
-- **In-app video recording** — currently only a YouTube URL can be provided. Users should be able to record a video pitch directly in the browser (via `MediaRecorder` API). Needs a decision on storage: Vercel Blob works for small files but a dedicated video platform (e.g. Mux, Cloudflare Stream) is more appropriate for encoding, streaming, and bandwidth at scale. The recorded video URL would replace the current `video_url` field, or the two could coexist as separate source types.
-- **Teleprompter UI for recording** — when recording in-app, display a scrolling script overlay so the user can read their pitch while looking at the camera. Needs a script input field on the application form, auto-scroll speed control, and a fullscreen/overlay mode that doesn't obscure the webcam feed.
+Open pre-launch and post-launch work (gaps, TODOs, improvements) lives in **[Backlog.md](Backlog.md)** — the canonical tracker. This overview does not maintain a parallel checklist.
 
 ---
 
 ## 10. Notable Strengths
 
-- Well-structured internal docs in `docs/` (ARCHITECTURE, DATA_FLOW, BUILD_SUMMARY, CODE_REVIEW, etc.).
+- Well-structured internal docs in `docs/` (ARCHITECTURE, API_REFERENCE, DATA_FLOW, BUILD_SUMMARY, CODE_REVIEW, etc.).
 - Clear separation between marketing and product surfaces.
 - Security-conscious patterns: RLS, owner exclusion from analytics, URL validation, PDF type/size validation.
 - CSS design system with CSS variables (warm neutrals, brand colors) and consistent typography.
@@ -202,4 +193,4 @@ This is the most significant gap before a production launch.
 
 ## Summary
 
-The **core product loop** (create application → share link → recruiter views page with PDF + video) is **functionally complete and well-architected**. The main blockers before a real production launch are the **upload endpoint auth gap**, **rate limiting durability**, and the **complete absence of automated testing and CI**. The marketing site is in good shape for a waitlist/early-access launch as-is.
+The **core product loop** (create application → share link → recruiter views page with PDF + video) is **functionally complete and well-architected**. Launch blockers and remaining planned work are tracked in **[Backlog.md](Backlog.md)**.
