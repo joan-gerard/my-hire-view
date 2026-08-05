@@ -70,7 +70,7 @@ hooks/
   useApplications.ts — application list state for the dashboard
 
 supabase/
-  migrations/        — 001–019 ordered SQL migrations
+  migrations/        — ordered SQL migrations (`001` … `025`; apply all in numeric order)
 
 docs/                — internal documentation
 ```

@@ -26,4 +26,17 @@ describe("safeNextPath", () => {
     expect(safeNextPath("\\evil.com")).toBe("/admin");
     expect(safeNextPath("/admin\\..\\evil")).toBe("/admin");
   });
+
+  it("rejects ASCII control characters that URL parsers strip", () => {
+    expect(safeNextPath("/\tevil.com")).toBe("/admin");
+    expect(safeNextPath("/\revil.com")).toBe("/admin");
+    expect(safeNextPath("/\nevil.com")).toBe("/admin");
+    expect(safeNextPath("/admin\n/profile")).toBe("/admin");
+    expect(safeNextPath("/\u0000admin")).toBe("/admin");
+    // Percent-decoded by URLSearchParams before safeNextPath runs
+    expect(safeNextPath(decodeURIComponent("/%09evil.com"))).toBe("/admin");
+    expect(safeNextPath(decodeURIComponent("/%0d%0aLocation:%20https://evil.com"))).toBe(
+      "/admin",
+    );
+  });
 });

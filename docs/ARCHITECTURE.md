@@ -374,7 +374,7 @@ my-hire-view/
 │   ├── supabase/               # server, route-client, middleware, client, env
 │   ├── types/                  # application, profile, database
 │   └── utils/                  # url, slug, slug-generate, youtube, clipboard
-├── supabase/migrations/        # 001 schema, 002 is_active, 003 profiles, 004 application candidate fields
+├── supabase/migrations/        # ordered SQL (001–025); apply all in numeric order
 ├── proxy.ts                    # Middleware entry (session + /admin guard)
 └── docs/                       # ARCHITECTURE, API_REFERENCE, CI_CD, CODE_REVIEW, SUPABASE_AUTH_SETUP
 ```
