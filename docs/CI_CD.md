@@ -58,6 +58,8 @@ flowchart LR
 
 **Setup:** `pnpm install` runs `prepare` → `husky`, which enables hooks for this clone. No pre-commit hook (full suite is reserved for push / CI).
 
+**CI:** the workflow sets `HUSKY=0` so `prepare` does not install hooks on the runner (unnecessary there and avoids install failures if git hooks cannot be configured).
+
 **Skip (emergency only):** `git push --no-verify` — prefer fixing tests instead.
 
 ---
@@ -79,13 +81,14 @@ flowchart LR
 | **Timeout** | 10 minutes |
 | **Job** | `test` |
 | **Permissions** | `contents: read`, `actions: write` (cache only) — no broader `GITHUB_TOKEN` write scopes |
+| **Env** | `HUSKY=0` — skip Husky during `pnpm install` on the runner |
 
 **Steps (in order)**
 
 1. Checkout (`actions/checkout@v4`)
 2. Setup pnpm (`pnpm/action-setup@v4`, version **10**)
 3. Setup Node.js (`actions/setup-node@v4`, Node **22**, `cache: pnpm`)
-4. `pnpm install --frozen-lockfile`
+4. `pnpm install --frozen-lockfile` (with `HUSKY=0`)
 5. `pnpm test:ci` → `vitest run`
 
 ---
@@ -145,3 +148,4 @@ Record intended additions here so this doc stays the single architecture source 
 | 2026-08-05 | Initial CI: GitHub Actions + `pnpm test:ci` on PR / `main` | A1-002 |
 | 2026-08-05 | Husky pre-push runs `pnpm test:ci` before push | A1-002 |
 | 2026-08-05 | CI job: explicit least-privilege `permissions` | A1-002 |
+| 2026-08-05 | CI sets `HUSKY=0` so prepare skips hook install | A1-002 |

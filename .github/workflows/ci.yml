@@ -19,6 +19,9 @@ jobs:
     permissions:
       contents: read
       actions: write
+    env:
+      # Skip prepare→husky on install; hooks are local-dev only.
+      HUSKY: 0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
