@@ -150,8 +150,8 @@ Reuse the ViewPageFooter component but rename it Footer. Styling is aligned with
 ## Implementation
 
 - **Page:** `app/page.tsx` — composes all sections in order; uses `MarketingHeader` and `Footer` (re-export of `ViewPageFooter`).
-- **MarketingHeader (mobile):** Below 768px, the header shows logo left and a hamburger icon right. Tapping the icon expands the header to full viewport height and reveals nav links (How it Works, Pricing, Blog) plus Dashboard/Sign Out or Sign In. Body scroll is locked while the menu is open.
-- **Components:** `components/public/` — `LandingHero`, `EmailCaptureForm`, `ProblemSection`, `SolutionSection`, `HowItWorksSection`, `FAQSection` (implemented in `public/faq/`: `FAQSection`, `FAQItem`, `FAQContactCard`, `constants`), `FinalCTASection`, `Footer`.
+- **MarketingHeader (mobile):** Below 768px, the header shows logo left and a hamburger icon right. Tapping the icon expands the header to full viewport height and reveals nav links (Pricing) plus Dashboard/Sign Out or Sign In. Body scroll is locked while the menu is open.
+- **Components:** `components/public/` — `LandingHero`, `EmailCaptureForm`, `ProblemSection`, `SolutionSection`, `HowItWorksSection`, `FAQSection` (implemented in `public/faq/`: `FAQSection`, `FAQItem`, `FAQContactCard`, `constants`), `CTASection`, `Footer`.
 - **API:** `POST /api/waitlist` — validates and stores signups in `waitlist_signups` (migration `018_waitlist_signups.sql`). Duplicate emails return 409.
 - **Brand colors:** Defined in `app/globals.css`: `--brand-primary` (#2e75b6), `--brand-text` (white), `--brand-accent` (dark blue #1e3a5f), `--brand-surface` (#1e293b), `--background` (#0f172a). Dark theme throughout.
 - **Animations:** Framer Motion is used across the homepage. Shared config in `lib/landing-animations.ts` (fadeUp, staggerContainer, staggerItem, headerEntrance). Header animates on load; hero uses staggered entrance; other sections use scroll-triggered fade-up and staggered children (problem icons, solution cards, how-it-works steps, FAQ items, final CTA). Success state of the email form uses a short scale/fade.

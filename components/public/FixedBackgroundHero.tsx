@@ -210,7 +210,7 @@ function FixedBackgroundHeroContent({
         style={{ y: contentY }}
       >
         <motion.h1
-          className="font-heading text-white text-7xl lg:text-8xl font-semibold tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] text-balance"
+          className="font-heading text-white text-5xl sm:text-7xl lg:text-8xl font-semibold tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] text-balance"
           variants={staggerItem}
         >
           {title}
