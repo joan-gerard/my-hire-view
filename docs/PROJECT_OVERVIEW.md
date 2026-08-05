@@ -132,7 +132,7 @@ RLS policies protect all tables. The service-role Supabase client is used server
 - **Supabase Auth** with email/password; sessions stored in HTTP cookies via `@supabase/ssr`.
 - `**proxy.ts`\*\* refreshes the session and guards all `/admin` routes.
 - `**requireAuth()**` in `lib/auth.ts` is used inside API route handlers to get the authenticated user.
-- **RLS** on `applications` and `profiles` enforces data isolation at the database level.
+- **RLS** on `applications` and `profiles` enforces data isolation at the database level (owners only; public share pages resolve server-side via the service-role client, not an open anon SELECT).
 - **Public read** of applications by slug is permitted (recruiter view requires no login).
 
 See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.

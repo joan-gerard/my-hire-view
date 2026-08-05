@@ -4,18 +4,11 @@ import { cookies } from 'next/headers';
 import { createInitialProfile } from '@/lib/auth/create-initial-profile';
 import { namesFromUserMetadata } from '@/lib/auth/ensure-profile';
 import { publicIdFromUserMetadata } from '@/lib/auth/ensure-public-id';
+import { safeNextPath } from '@/lib/auth/safe-next-path';
 import { getSupabaseEnv } from '@/lib/supabase/env';
 import { generatePublicId } from '@/lib/utils/public-id';
 
 type CookieOptions = Parameters<NextResponse['cookies']['set']>[2];
-
-/** Allow only safe same-origin relative paths (reject `//evil.com` open redirects). */
-function safeNextPath(next: string | null): string {
-  if (!next || !next.startsWith('/') || next.startsWith('//') || next.startsWith('\\')) {
-    return '/admin';
-  }
-  return next;
-}
 
 /**
  * Exchanges the email confirmation (or magic-link) code for a session and

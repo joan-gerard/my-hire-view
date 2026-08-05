@@ -34,7 +34,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | E2-013 | Product | Payment / membership system | Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | E3-014 | Marketing | Pricing page beyond placeholder | Ship real tiers on `/pricing` aligned with billing — not a stub. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | A3-015 | Security | Confirm email required in production Supabase | In Auth → Providers → Email, ensure **Confirm email** is ON so Supabase does not issue a session for unconfirmed users once live. | [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md) |
-| A2-016 | Security | Auth security review — follow-ups (2026-07-27) | **Fix first (remaining):** open redirect in `app/auth/callback/route.ts` — `safeNextPath` rejects `//…` and leading `\…`, but `next=/\evil.com` still passes and `new URL(next, origin)` treats `\` as an authority separator → off-site redirect. Reject `/` or `\` as the second character (or otherwise disallow backslash) before building the redirect URL. **Also address:** tighten `applications` public SELECT RLS (`USING (true)` lets anon clients enumerate all rows via PostgREST, not only public URL access). **Already tracked elsewhere:** durable rate limits, confirm email in prod, signup password rules (≥8 + special), generic login/signup errors. **Could add later:** in-app forgot-password flow wired to Supabase reset emails + `/auth/callback`. **Solid today:** server-side login/signup with session cookies via route client; `getUser()` (not client `getSession()`); `/admin` middleware gate; protected APIs use `requireAuth()`; service role key server-only; password only in HTTPS request body (visible in DevTools is expected). | — |
 
 ### Should
 
@@ -177,7 +176,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
 | A1 | `chore/a1-ci-cd` | `A1-002` | ~~CI/CD — run `pnpm test:ci` on push/PR~~ (shipped) |
-| A2 | `fix/a2-auth-callback-rls` | `A2-016` | Auth callback open-redirect fix + tighten `applications` public SELECT RLS (two commits OK) |
+| A2 | `fix/a2-auth-callback-rls` | `A2-016` | ~~Auth callback open-redirect fix + tighten `applications` public SELECT RLS~~ (shipped) |
 | A3 | `ops/a3-confirm-email-prod` | `A3-015` | Ops: Confirm email ON in production Supabase (no app code) |
 | A4 | `chore/a4-remove-placeholder-routes` | `A4-011`, `A4-023` | Remove `/how-it-works` + `/blog`; clean `MarketingHero_Old` / nav |
 
@@ -319,9 +318,8 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **A2** — `fix/a2-auth-callback-rls` (`A2-016`)  
-2. **A4** — `chore/a4-remove-placeholder-routes` (`A4-011`, `A4-023`)  
-3. **B1** — `fix/b1-tailored-cv-integrity` (`B1-003`–`B1-005`)  
-4. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
-5. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
-6. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
+1. **A4** — `chore/a4-remove-placeholder-routes` (`A4-011`, `A4-023`)  
+2. **B1** — `fix/b1-tailored-cv-integrity` (`B1-003`–`B1-005`)  
+3. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
+4. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
+5. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  

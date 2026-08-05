@@ -45,8 +45,7 @@ export async function POST(
       return NextResponse.json({ success: true });
     }
 
-    const supabase = await createClient();
-    const resolved = await resolvePublicApplication(supabase, publicId, slug);
+    const resolved = await resolvePublicApplication(publicId, slug);
     if (!resolved || !isApplicationPubliclyVisible(resolved.application.status)) {
       return NextResponse.json(
         { error: 'Application not found' },
@@ -54,6 +53,7 @@ export async function POST(
       );
     }
 
+    const supabase = await createClient();
     const {
       data: { user: viewer },
     } = await supabase.auth.getUser();

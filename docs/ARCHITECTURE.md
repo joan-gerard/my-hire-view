@@ -195,9 +195,9 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
 - **Clients:**
   - **Server (Server Components, server-side logic):** `lib/supabase/server.ts` — `createClient()` using `cookies()` from `next/headers`.
   - **Route handler (login/signup/logout):** `lib/supabase/route-client.ts` — `createSupabaseRouteClient({ request, response })` so the response carries `Set-Cookie` headers.
-  - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used for RLS-bypass ops (view/download count RPCs) and creating the initial `profiles` row at signup when there may be no session yet. Never used from the client.
+  - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used for RLS-bypass ops (public application resolution, view/download count RPCs) and creating the initial `profiles` row at signup when there may be no session yet. Never used from the client.
   - **Middleware:** `lib/supabase/middleware.ts` — `updateSession(request)`: refreshes session and redirects unauthenticated users from `/admin` to `/login`. Intended to be invoked from root middleware (e.g. `middleware.ts` that re-exports or calls this; current entry is `proxy.ts` with matcher config).
-  - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, ensures a profiles row exists (`createInitialProfile`, idempotent), redirects to a safe same-origin `next` (default `/admin`).
+  - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, ensures a profiles row exists (`createInitialProfile`, idempotent), redirects via `safeNextPath` to a safe same-origin `next` (default `/admin`; rejects `//…` and backslash open-redirect tricks).
 
 ### 5.3 Data (Supabase)
 
@@ -212,7 +212,7 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
   - **Snapshot rule:** On POST or PUT to `/api/applications`, the server loads the current user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the insert or update. The recruiter-facing page at `/view/[publicId]/[slug]` uses only data from the application row.
   - **Public URLs:** Each user has an opaque `profiles.public_id` (assigned at signup). Application slugs are unique per user (`UNIQUE (user_id, slug)`), not globally. Share links are `/view/{public_id}/{slug}`.
 - **Indexes (applications):** `slug`, `user_id`, `created_at DESC`.
-- **RLS:** Enabled on both tables. Applications: users can SELECT/INSERT/UPDATE/DELETE their own rows; public can SELECT any row by slug. Profiles: users can SELECT/INSERT/UPDATE their own row only.
+- **RLS:** Enabled on both tables. Applications: users can SELECT/INSERT/UPDATE/DELETE their own rows only (no open anon SELECT — public pages resolve via the service-role client in `resolvePublicApplication`). Profiles: users can SELECT/INSERT/UPDATE their own row only.
 - **Triggers:** `updated_at` maintained on update for both tables.
 
 Types are mirrored in `lib/types/application.ts`, `lib/types/profile.ts`, and `lib/types/database.ts`.
@@ -335,7 +335,7 @@ View count and `last_viewed_at` are only updated when the viewer is not the appl
 ## 7. Security Summary
 
 - **Auth:** Supabase handles passwords and sessions; middleware protects `/admin`; API routes use `requireAuth()` where needed.
-- **Data:** RLS ensures users only modify their own applications; public read by slug is allowed by policy.
+- **Data:** RLS ensures users only read/modify their own applications; public share URLs are served by Next.js APIs that resolve via the service-role client (not an open anon SELECT policy).
 - **Upload:** PDF-only, size limit; `POST /api/upload` requires auth and an idempotency key. Profile pictures use a separate authenticated upload to Supabase Storage.
 - **Slug:** Unique per application; generation is deterministic from company/role with collision handling; no sensitive data in slug. `POST /api/slug` is currently unauthenticated (consider tightening); `POST /api/slug/validate` requires auth.
 

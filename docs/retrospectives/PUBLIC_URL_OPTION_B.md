@@ -129,7 +129,7 @@ We implemented **Option B**:
 | Slug uniqueness global | Slug uniqueness per authenticated user |
 | `POST /api/slug` unauthenticated | `POST /api/slug` requires auth |
 
-Public resolution: `public_id` → profile (`user_id`) → application by `(user_id, slug)`. Profile lookup uses the service-role client because RLS does not expose `profiles` to anonymous callers.
+Public resolution: `public_id` → profile (`user_id`) → application by `(user_id, slug)`. Both lookups use the service-role client in `resolvePublicApplication` because RLS does not expose `profiles` or a broad `applications` SELECT to anonymous callers (migration `025` dropped the open public SELECT policy).
 
 ### Client
 
