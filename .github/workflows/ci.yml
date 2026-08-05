@@ -14,6 +14,11 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Least privilege: checkout needs contents:read; actions:write is only for
+    # setup-node's pnpm dependency cache (restore + save). No other write scopes.
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4

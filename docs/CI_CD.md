@@ -78,6 +78,7 @@ flowchart LR
 | **Runner** | `ubuntu-latest` |
 | **Timeout** | 10 minutes |
 | **Job** | `test` |
+| **Permissions** | `contents: read`, `actions: write` (cache only) — no broader `GITHUB_TOKEN` write scopes |
 
 **Steps (in order)**
 
@@ -106,7 +107,7 @@ flowchart LR
 | Need | In CI today? |
 | ---- | ------------ |
 | Supabase / R2 / app env vars | **No** — mocked unit suite |
-| GitHub token | Default `GITHUB_TOKEN` only (checkout) |
+| GitHub token | Job-scoped `GITHUB_TOKEN` with `contents: read` + `actions: write` (pnpm cache) |
 
 When future jobs need secrets (e.g. integration tests, deploy tokens), document them here and store them in the GitHub repo **Settings → Secrets and variables → Actions**.
 
@@ -143,3 +144,4 @@ Record intended additions here so this doc stays the single architecture source 
 | ---- | ------ | ----------- |
 | 2026-08-05 | Initial CI: GitHub Actions + `pnpm test:ci` on PR / `main` | A1-002 |
 | 2026-08-05 | Husky pre-push runs `pnpm test:ci` before push | A1-002 |
+| 2026-08-05 | CI job: explicit least-privilege `permissions` | A1-002 |
