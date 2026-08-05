@@ -13,6 +13,7 @@
 | Concern | Status |
 | -------- | ------ |
 | **CI** | GitHub Actions runs Vitest (`pnpm test:ci`) on PRs and pushes to `main` |
+| **Local pre-push** | Husky runs `pnpm test:ci` before every `git push` (same command as CI) |
 | **CD / deploy** | Not in-repo — hosting (e.g. Vercel) is separate from this pipeline |
 | **Lint / typecheck / build in CI** | Not yet |
 | **Branch protection** | Manual GitHub settings (require CI check before merge) — optional ops step |
@@ -25,8 +26,12 @@ Shipped as **A1-002** on branch `chore/a1-ci-cd`.
 
 ```mermaid
 flowchart LR
-  Dev[Developer] --> Push[Push / open PR]
-  Push --> GHA[GitHub Actions]
+  Dev[Developer] --> Commit[git commit]
+  Commit --> PushCmd[git push]
+  PushCmd --> PrePush[Husky pre-push<br/>pnpm test:ci]
+  PrePush -->|fail| Stop[Push blocked]
+  PrePush -->|pass| Remote[Remote update]
+  Remote --> GHA[GitHub Actions]
   GHA --> CI[CI workflow<br/>.github/workflows/ci.yml]
   CI --> Install[pnpm install<br/>--frozen-lockfile]
   Install --> Test[pnpm test:ci<br/>Vitest]
@@ -39,12 +44,25 @@ flowchart LR
 **Design intent**
 
 - Keep CI **fast and secret-free**: unit/API tests use mocks (no Supabase/R2 credentials required on the runner).
+- **Local pre-push** mirrors CI for faster feedback; it does not replace CI (bypassable with `--no-verify`; CI still gates the shared repo).
 - One workflow file for now; split later if jobs diverge (e.g. lint vs test vs e2e).
 - Deploy remains outside this doc’s “in-repo pipeline” until we codify it (Vercel project settings, preview URLs, etc.).
 
 ---
 
-## 3. Workflow inventory
+## 3. Local git hooks
+
+| Hook | Path | Command | Notes |
+| ---- | ---- | ------- | ----- |
+| **pre-push** | [`.husky/pre-push`](../.husky/pre-push) | `pnpm test:ci` | Blocks push if the suite fails |
+
+**Setup:** `pnpm install` runs `prepare` → `husky`, which enables hooks for this clone. No pre-commit hook (full suite is reserved for push / CI).
+
+**Skip (emergency only):** `git push --no-verify` — prefer fixing tests instead.
+
+---
+
+## 4. Workflow inventory
 
 | Workflow | Path | Purpose |
 | -------- | ---- | ------- |
@@ -71,18 +89,19 @@ flowchart LR
 
 ---
 
-## 4. Tooling & versions
+## 5. Tooling & versions
 
 | Tool | Version / pin | Notes |
 | ---- | ------------- | ----- |
 | Node.js | 22 | Matches current local default; pin in workflow |
 | pnpm | 10 | Via `pnpm/action-setup` |
+| Husky | 9 | Local `pre-push` hook |
 | Test runner | Vitest (`pnpm test:ci`) | See [TESTING.md](TESTING.md) |
 | Package lock | `pnpm-lock.yaml` | Frozen install in CI |
 
 ---
 
-## 5. Secrets & environment
+## 6. Secrets & environment
 
 | Need | In CI today? |
 | ---- | ------------ |
@@ -93,23 +112,24 @@ When future jobs need secrets (e.g. integration tests, deploy tokens), document 
 
 ---
 
-## 6. Quality gates (product / ops)
+## 7. Quality gates (product / ops)
 
 | Gate | Where | Notes |
 | ---- | ----- | ----- |
+| Local pre-push | Husky `.husky/pre-push` | Same `pnpm test:ci` as CI; fails the push on red |
 | Automated tests | GitHub Actions check `CI / test` | Must stay green on PRs |
 | Require check to merge | GitHub branch protection on `main` | Not encoded in YAML; configure in GitHub UI if desired |
-| Local pre-merge | `pnpm test:ci` | Same command as CI |
+| Manual local run | `pnpm test:ci` | Same command as hooks / CI |
 
 ---
 
-## 7. Roadmap / not yet in pipeline
+## 8. Roadmap / not yet in pipeline
 
 Record intended additions here so this doc stays the single architecture source (tickets still live in [Backlog.md](Backlog.md)):
 
 | Idea | Notes |
 | ---- | ----- |
-| `pnpm lint` | ESLint on PR |
+| `pnpm lint` | ESLint on PR (and optionally a lighter pre-commit) |
 | `pnpm build` / typecheck | Catch Next.js / TS build breaks |
 | Coverage upload | Optional (`@vitest/coverage-v8` already a dep) |
 | CD in-repo | Document Vercel (or other) deploy triggers, preview vs production |
@@ -117,8 +137,9 @@ Record intended additions here so this doc stays the single architecture source 
 
 ---
 
-## 8. Changelog
+## 9. Changelog
 
 | Date | Change | Ticket / PR |
 | ---- | ------ | ----------- |
 | 2026-08-05 | Initial CI: GitHub Actions + `pnpm test:ci` on PR / `main` | A1-002 |
+| 2026-08-05 | Husky pre-push runs `pnpm test:ci` before push | A1-002 |

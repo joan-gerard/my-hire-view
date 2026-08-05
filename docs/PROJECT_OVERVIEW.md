@@ -144,7 +144,7 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 - **Vitest** is configured as the test runner (`vitest.config.ts`).
 - `pnpm test` — interactive watch mode; `pnpm test:ci` — single run (used in CI).
 - Test files live in `__tests__/unit/` and a shared helper in `__tests__/helpers/`.
-- **CI:** GitHub Actions runs `pnpm test:ci` on every pull request and on pushes to `main` (A1-002). Pipeline architecture: [CI_CD.md](CI_CD.md).
+- **CI:** GitHub Actions runs `pnpm test:ci` on every pull request and on pushes to `main` (A1-002). Local Husky **pre-push** runs the same command before `git push`. Pipeline architecture: [CI_CD.md](CI_CD.md).
 
 ### What is covered
 

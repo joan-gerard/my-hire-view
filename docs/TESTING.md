@@ -19,7 +19,7 @@
 
 ## CI
 
-`pnpm test:ci` is the command GitHub Actions runs. Pipeline architecture (triggers, jobs, versions, roadmap) lives in **[CI_CD.md](CI_CD.md)** — update that doc when the workflow changes.
+`pnpm test:ci` is the command GitHub Actions runs, and the same command runs locally via the Husky **pre-push** hook (`.husky/pre-push`). Pipeline architecture lives in **[CI_CD.md](CI_CD.md)** — update that doc when the workflow or hooks change.
 
 ---
 
