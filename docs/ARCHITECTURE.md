@@ -359,7 +359,7 @@ my-hire-view/
 │   ├── auth/                   # SignOutButton
 │   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, NameInUrlField, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
-│   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection (re-export from public/faq), FinalCTASection, FixedBackgroundHero, Footer (→ ViewPageFooter), HowItWorksSection (see public/how-it-works/), LandingPageSections, MarketingHeader, ProblemSection, ScrollCoverSection, SolutionSection, ViewPageFooter
+│   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection (re-export from public/faq), CTASection, FixedBackgroundHero, Footer (→ ViewPageFooter), HowItWorksSection (see public/how-it-works/), LandingPageSections, MarketingHeader, ProblemSection, ScrollCoverSection, SolutionSection, ViewPageFooter
 │   ├── ui/                     # Button, Input, Textarea
 │   ├── video/                  # YouTubeEmbed
 │   └── view/                   # ApplicationViewFooter, ViewPageContent, UnavailableApplicationView, ViewTracker (public application page UI)
