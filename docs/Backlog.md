@@ -4,7 +4,7 @@
 
 **Trello:** Cards live on the [MyHireView](https://trello.com/b/PAn5GrDz/myhireview) board (lists: Pre Launch, Post Launch, Current Sprint, In Progress, Done). Card titles use `[id] Item` (e.g. `[A1-002] CI/CD`) and match rows in this file. Keep this doc and Trello in sync whenever a ticket or PR moves, ships, or is added.
 
-**Context (not the work tracker):** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [API_REFERENCE.md](API_REFERENCE.md) · [CODE_REVIEW.md](CODE_REVIEW.md) · [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) · [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md)
+**Context (not the work tracker):** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [API_REFERENCE.md](API_REFERENCE.md) · [CI_CD.md](CI_CD.md) · [CODE_REVIEW.md](CODE_REVIEW.md) · [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) · [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md)
 
 **MoSCoW:** **M**ust · **S**hould · **C**ould · **W**on’t (this time)
 
@@ -21,7 +21,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | ID | Subcategory | Item | Notes | Source |
 | -------- | -------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | D3-001 | Infrastructure | Durable rate limiting | Replace in-memory `lib/rate-limit.ts` with Redis/Upstash (or similar). Also closes per-path Map growth on view/download: `checkPerSlugRateLimit` keys `${ip}:${publicId}:${slug}` before format validation and only prunes the key being hit, so unique invalid paths accumulate. Interim: validate/normalize `publicId` + slug before constructing the key, and/or add global TTL / capacity sweep. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
-| A1-002 | Infrastructure | CI/CD | Run `pnpm test:ci` automatically on push/PR. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | B1-003 | API | Canonical + atomic tailored `cv_url` uniqueness | `isTailoredCvUrlInUse` compares raw `cv_url` strings (percent-encoded equivalents can share one object). Check-then-write races on POST/PUT. Canonicalize to object key + enforce uniqueness at DB/transaction boundary (like slug). | [API_REFERENCE.md](API_REFERENCE.md) |
 | B1-004 | API | Allow-list tailored CV deletes only | `deleteApplicationCvIfTailored` deny-lists `"primary"` then may delete any owned R2 key; can wipe shared primary PDFs. Require `cvType === "tailored"` and/or `cvs/{userId}/tailored/…` only (PUT + DELETE apps). | [API_REFERENCE.md](API_REFERENCE.md) |
 | B1-005 | API | Fail closed when `R2_PUBLIC_BASE_URL` unset on app DELETE | Missing base → key parse returns `null` → R2 cleanup no-ops while DB row still deletes (orphan PDFs). Propagate config errors → **500** and skip DB delete. | [API_REFERENCE.md](API_REFERENCE.md) |
@@ -177,7 +176,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
-| A1 | `chore/a1-ci-cd` | `A1-002` | CI/CD — run `pnpm test:ci` on push/PR |
+| A1 | `chore/a1-ci-cd` | `A1-002` | ~~CI/CD — run `pnpm test:ci` on push/PR~~ (shipped) |
 | A2 | `fix/a2-auth-callback-rls` | `A2-016` | Auth callback open-redirect fix + tighten `applications` public SELECT RLS (two commits OK) |
 | A3 | `ops/a3-confirm-email-prod` | `A3-015` | Ops: Confirm email ON in production Supabase (no app code) |
 | A4 | `chore/a4-remove-placeholder-routes` | `A4-011`, `A4-023` | Remove `/how-it-works` + `/blog`; clean `MarketingHero_Old` / nav |
@@ -320,10 +319,9 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **A1** — `chore/a1-ci-cd` (`A1-002`)  
-2. **A2** — `fix/a2-auth-callback-rls` (`A2-016`)  
-3. **A4** — `chore/a4-remove-placeholder-routes` (`A4-011`, `A4-023`)  
-4. **B1** — `fix/b1-tailored-cv-integrity` (`B1-003`–`B1-005`)  
-5. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
-6. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
-7. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
+1. **A2** — `fix/a2-auth-callback-rls` (`A2-016`)  
+2. **A4** — `chore/a4-remove-placeholder-routes` (`A4-011`, `A4-023`)  
+3. **B1** — `fix/b1-tailored-cv-integrity` (`B1-003`–`B1-005`)  
+4. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
+5. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
+6. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
