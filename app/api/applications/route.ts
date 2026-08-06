@@ -525,7 +525,7 @@ export async function PUT(request: NextRequest) {
     // Filename / download-name only — do not require primary_cv_id or re-resolve CV.
     if (body.cv_filename !== undefined && !cvSourceTouched) {
       updatePayload.cv_filename = body.cv_filename;
-    } else if (cvSourceTouched || body.cv_filename !== undefined) {
+    } else if (cvSourceTouched) {
       let nextCvType: ApplicationCvType =
         (existing.cv_type as ApplicationCvType) ?? "tailored";
 
