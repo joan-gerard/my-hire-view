@@ -21,7 +21,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | ID | Subcategory | Item | Notes | Source |
 | -------- | -------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | D3-001 | Infrastructure | Durable rate limiting | Replace in-memory `lib/rate-limit.ts` with Redis/Upstash (or similar). Also closes per-path Map growth on view/download: `checkPerSlugRateLimit` keys `${ip}:${publicId}:${slug}` before format validation and only prunes the key being hit, so unique invalid paths accumulate. Interim: validate/normalize `publicId` + slug before constructing the key, and/or add global TTL / capacity sweep. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
-| B2-006 | API | Filename-only edit on primary CV | Filename-only PUT requires `body.primary_cv_id` and fails **400**; preserve existing id / handle filename-only without forcing re-select. | [API_REFERENCE.md](API_REFERENCE.md) |
 | D1-007 | API | SSR public view vs per-IP rate limit | `/view/[publicId]/[slug]` server `fetch` shares one **120/min** bucket under server/`unknown` IP → cross-visitor **429**. Call `resolvePublicApplication` from the RSC (or exempt/internal-tag server loads). Distinct from Production base URL for SSR. | [API_REFERENCE.md](API_REFERENCE.md) |
 | C2-008 | Security | Validate profile-picture URL origin | Path-only “owned” check allows external HTTPS hosts that look like Storage paths; public pages then load that host. Require origin = `NEXT_PUBLIC_SUPABASE_URL`. | [API_REFERENCE.md](API_REFERENCE.md) |
 | C1-009 | API | Retry profile create for immediate-session signup | `createInitialProfile` failure still returns signup success; callback retry is confirmation-only, so immediate sessions can lack a `profiles` row. Add post-signup/login bootstrap or explicit retry. | [API_REFERENCE.md](API_REFERENCE.md) |
@@ -66,6 +65,7 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | F19-046 | UX | Explain Public id + show final URL | On `/admin/profile` (and `/admin/new`): short copy for what the Public id is and why it appears in the share URL. On `/admin/new`, also preview the final public URL (e.g. `/view/{publicId}/{slug}`) before submit so users know the link they will share. Relates to vanity Public id Could (after launch). | [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md) |
 | F19-047 | UX | Application card icon / badge legend | On `/admin`, each application card shows a left-side icon/badge with no explanation. Add UI (tooltip, legend, or inline help) so users know what each icon means. | — |
 | F14-048 | UX | Create slug: allow auto-assign fallback | On `/admin/new`, a manually entered taken slug shows “save will use an auto-assigned slug instead,” and the page submit path does fall back to `POST /api/slug` — but `ApplicationForm` keeps Save disabled while `slugLiveStatus` is `unavailable`. Allow that create fallback through (or remove the unreachable recovery copy). | — |
+| F14-099 | UX | Edit form overwrites saved custom slug | On `/admin/edit/[id]`, `slugManuallyEdited` starts `false`, so a mount effect re-runs `buildSlug(company, role, …)` and replaces the loaded `initialData.slug`. Custom slug saves correctly (DB + public URL), but re-opening edit shows company-role only; a careless re-save can revert the share URL. Don’t auto-rebuild until company/role/name-in-URL actually change, or treat a non-derived initial slug as manual. | [DATA_FLOW.md](DATA_FLOW.md) |
 | F15-049 | UX | Preserve CV source choice while library loads | On create, choosing “Upload a different CV” while primary CVs are still loading is overwritten when the fetch finishes (`setCvMode("primary")`), so Save can attach the default primary instead of the tailored file. Preserve an explicit user mode choice, or disable the radios until initial defaulting completes. | — |
 | F16-050 | Product | Preview before submitting an application | Decide UX on `/admin/new`: (1) Preview next to Save (optional); (2) Preview replaces Save — modal or route e.g. `/admin/preview/[id]` before submit; or (3) Save as `status = draft` then publish to `active`. **`status` / `archived_at` shipped** (see [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md)); remaining work is preview UX + draft flows. Relates to local form-draft persistence above. | [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) |
 
@@ -181,7 +181,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
 | B1 | `fix/b1-tailored-cv-integrity` | `B1-003`, `B1-004`, `B1-005` | ~~Canonical/atomic tailored `cv_url` uniqueness; allow-list tailored deletes; fail closed when `R2_PUBLIC_BASE_URL` unset~~ (shipped) |
-| B2 | `fix/b2-primary-cv-filename-put` | `B2-006` | Filename-only primary CV PUT (solo or fold into B1 if small) |
+| B2 | `fix/b2-primary-cv-filename-put` | `B2-006` | ~~Filename-only primary CV PUT~~ (shipped) |
 | B3 | `feat/b3-primary-cv-ownership-fk` | `B3-042` | DB same-user ownership for `primary_cv_id` (migration; pairs with B1 schema work) |
 
 #### Sprint C — Profile / signup invariants
@@ -229,7 +229,7 @@ Ship these when capacity allows; prefer attaching to a Must PR only if the same 
 | F11 | `fix/f11-escape-list-search-q` | `F11-028` | Escape `q` quotes for list search |
 | F12 | `fix/f12-repairable-auth-name-sync` | `F12-031` | Repairable Auth name sync on PUT profile |
 | F13 | `fix/f13-atomic-primary-cv-cap` | `F13-032` | Atomic primary-library cap |
-| F14 | `fix/f14-slug-name-clamp-fallback` | `F14-033`, `F14-048` | Preserve name when clamping slugs + create slug auto-assign fallback |
+| F14 | `fix/f14-slug-name-clamp-fallback` | `F14-033`, `F14-048`, `F14-099` | Preserve name when clamping slugs; create slug auto-assign fallback; edit form must keep saved custom slug on load |
 | F15 | `feat/f15-create-app-draft-cv-mode` | `F15-045`, `F15-049` | Persist create-application draft + preserve CV source while library loads |
 | F16 | `feat/f16-application-preview-draft` | `F16-050` | Preview / draft-before-publish UX (after F15) |
 | F17 | `feat/f17-admin-view-auth-branding` | `F17-017`, `F17-018` | Brand `/admin`, `/view`, login, signup |

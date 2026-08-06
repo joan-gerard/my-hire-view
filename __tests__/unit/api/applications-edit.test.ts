@@ -7,6 +7,7 @@
  * - Schema validation (UUID id, strict keys).
  * - Old tailored CV deleted from R2 only after a successful update.
  * - Primary CVs are not deleted from R2 when switching away.
+ * - Filename-only PUT on primary apps preserves existing primary_cv_id (B2-006).
  * - 404 when application not found or belongs to another user.
  * - Slug collision → 409; other DB update errors → 400.
  * - Auth / rate-limit guards; unexpected errors → 500.
@@ -106,6 +107,7 @@ function ownershipRow(
     user_id: string;
     cv_url: string;
     cv_type: string;
+    primary_cv_id: string | null;
     status: string;
   }> = {},
 ) {
@@ -113,6 +115,7 @@ function ownershipRow(
     user_id: MOCK_USER.id,
     cv_url: EXISTING_APP.cv_url,
     cv_type: "tailored",
+    primary_cv_id: null as string | null,
     status: "active",
     ...overrides,
   };
@@ -269,7 +272,7 @@ describe("PUT /api/applications", () => {
   it("does not delete R2 when leaving a primary CV (deleteApplicationCvIfTailored no-ops)", async () => {
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([
-        ok(ownershipRow({ cv_type: "primary" })),
+        ok(ownershipRow({ cv_type: "primary", primary_cv_id: PRIMARY_CV_ID })),
         ok({
           url: "https://r2.example.com/cvs/user-abc/primary/cv-2.pdf",
           filename: "primary2.pdf",
@@ -295,6 +298,95 @@ describe("PUT /api/applications", () => {
       MOCK_USER.id,
       { onError: "log" },
     );
+  });
+
+  it("allows filename-only PUT on a primary CV app without primary_cv_id (B2-006)", async () => {
+    const primaryUrl =
+      "https://r2.example.com/cvs/user-abc/primary/cv-1.pdf";
+    const updatedApp = {
+      ...EXISTING_APP,
+      cv_type: "primary",
+      primary_cv_id: PRIMARY_CV_ID,
+      cv_url: primaryUrl,
+      cv_filename: "Recruiter-Friendly.pdf",
+    };
+
+    const client = makeSupabaseClient([
+      ok(
+        ownershipRow({
+          cv_type: "primary",
+          primary_cv_id: PRIMARY_CV_ID,
+          cv_url: primaryUrl,
+        }),
+      ),
+      ok(updatedApp),
+    ]);
+    const updateSpy = vi.fn();
+    const originalFrom = client.from as (table: string) => {
+      update: (payload: unknown) => unknown;
+    };
+    client.from = vi.fn((table: string) => {
+      const chain = originalFrom(table);
+      const originalUpdate = chain.update.bind(chain);
+      chain.update = vi.fn((payload: unknown) => {
+        updateSpy(payload);
+        return originalUpdate(payload);
+      });
+      return chain;
+    }) as typeof client.from;
+    mockCreateClient.mockResolvedValue(client);
+
+    const response = await PUT(
+      makePutRequest({
+        id: APP_ID,
+        cv_filename: "Recruiter-Friendly.pdf",
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(updateSpy).toHaveBeenCalledWith({
+      cv_filename: "Recruiter-Friendly.pdf",
+    });
+    expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
+  });
+
+  it("reuses existing primary_cv_id when switching filename with cv_type primary (B2-006)", async () => {
+    const primaryUrl =
+      "https://r2.example.com/cvs/user-abc/primary/cv-1.pdf";
+    const updatedApp = {
+      ...EXISTING_APP,
+      cv_type: "primary",
+      primary_cv_id: PRIMARY_CV_ID,
+      cv_url: primaryUrl,
+      cv_filename: "Custom-Name.pdf",
+    };
+
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(
+          ownershipRow({
+            cv_type: "primary",
+            primary_cv_id: PRIMARY_CV_ID,
+            cv_url: primaryUrl,
+          }),
+        ),
+        ok({ url: primaryUrl, filename: "library-name.pdf" }),
+        ok(updatedApp),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({
+        id: APP_ID,
+        cv_type: "primary",
+        cv_filename: "Custom-Name.pdf",
+      }),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data).toMatchObject({
+      primary_cv_id: PRIMARY_CV_ID,
+      cv_filename: "Custom-Name.pdf",
+    });
   });
 
   it("does NOT delete the CV when cv_url is unchanged", async () => {

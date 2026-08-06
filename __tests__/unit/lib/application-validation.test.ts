@@ -232,10 +232,18 @@ describe("applicationUpdateSchema", () => {
         slug: "Bad Slug",
       }).success,
     ).toBe(false);
+    // Omitting primary_cv_id is OK on update (route falls back to existing — B2-006)
     expect(
       applicationUpdateSchema.safeParse({
         id: APP_ID,
         cv_type: "primary",
+      }).success,
+    ).toBe(true);
+    expect(
+      applicationUpdateSchema.safeParse({
+        id: APP_ID,
+        cv_type: "primary",
+        primary_cv_id: null,
       }).success,
     ).toBe(false);
     expect(
