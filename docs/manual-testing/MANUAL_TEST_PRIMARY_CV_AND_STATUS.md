@@ -1,6 +1,6 @@
 # Manual test checklist — Primary CVs, tailored CVs, and application status
 
-Use this after applying migrations **`021_application_status_and_archived_at.sql`**, **`022_master_cvs.sql`**, and **`024_primary_cvs_rename.sql`**. Prefer a test account with R2 env vars configured (`.env.local`). See [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md).
+Use this after applying migrations **`021_application_status_and_archived_at.sql`**, **`022_master_cvs.sql`**, **`024_primary_cvs_rename.sql`**, and **`027_applications_primary_cv_same_user.sql`**. Prefer a test account with R2 env vars configured (`.env.local`). See [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md).
 
 **Prerequisites**
 
@@ -180,7 +180,8 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 - [ ] `applications` has `status`, `archived_at`, `cv_type`, `primary_cv_id`; no `is_active`
 - [ ] `primary_cvs` rows only for the owning `user_id`
-- [ ] Deleting a primary sets `applications.primary_cv_id` to null where FK `ON DELETE SET NULL` applied (URL may still point at deleted object until edited)
+- [ ] Deleting a primary sets `applications.primary_cv_id` to null where FK `ON DELETE SET NULL` applied (URL may still point at deleted object until edited); `applications.user_id` must remain set
+- [ ] (B3-042) In SQL Editor as a privileged role, an `UPDATE` that sets `primary_cv_id` to another user’s library id is rejected by trigger `applications_primary_cv_same_user`
 
 ---
 
