@@ -94,11 +94,41 @@ describe("getCvObjectKeyFromPublicUrl / toCanonicalCvPublicUrl", () => {
     );
   });
 
-  it("rebuilds a canonical URL from the decoded key", () => {
+  it("strips query strings and fragments when deriving the object key", () => {
+    expect(
+      getCvObjectKeyFromPublicUrl(`${TAILORED_URL}?download=1#section`),
+    ).toBe(`cvs/${USER_ID}/tailored/key123.pdf`);
+    expect(
+      toCanonicalCvPublicUrl(`${TAILORED_URL}?download=1#section`),
+    ).toBe(TAILORED_URL);
+  });
+
+  it("rebuilds a canonical URL with per-segment encoding", () => {
     expect(toCanonicalCvPublicUrl(TAILORED_ENCODED_URL)).toBe(
       `https://r2.example.com/cvs/${USER_ID}/tailored/key/123.pdf`,
     );
     expect(toCanonicalCvPublicUrl(TAILORED_URL)).toBe(TAILORED_URL);
+
+    const reserved = `https://r2.example.com/cvs/${USER_ID}/tailored/file%3Fname%23v1.pdf`;
+    expect(getCvObjectKeyFromPublicUrl(reserved)).toBe(
+      `cvs/${USER_ID}/tailored/file?name#v1.pdf`,
+    );
+    expect(toCanonicalCvPublicUrl(reserved)).toBe(reserved);
+  });
+
+  it("rejects path traversal that would escape the tailored prefix", () => {
+    const traversal = `https://r2.example.com/cvs/${USER_ID}/tailored/../primary/cv-1.pdf`;
+    // URL parser resolves `..`; resulting key is primary — not accepted as tailored.
+    expect(getCvObjectKeyFromPublicUrl(traversal)).toBe(
+      `cvs/${USER_ID}/primary/cv-1.pdf`,
+    );
+    expect(isOwnedTailoredCvUrl(traversal, USER_ID)).toBe(false);
+    expect(isOwnedPrimaryCvObjectKey(getCvObjectKeyFromPublicUrl(traversal), USER_ID)).toBe(
+      true,
+    );
+
+    const encodedTraversal = `https://r2.example.com/cvs/${USER_ID}/tailored/%2e%2e/primary/cv-1.pdf`;
+    expect(isOwnedTailoredCvUrl(encodedTraversal, USER_ID)).toBe(false);
   });
 
   it("returns null when R2 public base is unset", () => {

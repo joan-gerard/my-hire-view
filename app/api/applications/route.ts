@@ -166,9 +166,10 @@ async function resolvePrimaryCvForUser(
 
 /**
  * Tailored CVs are one application ↔ one R2 object. Compares decoded object keys
- * so percent-encoded URL variants of the same object count as in use.
- * Partial unique index `applications_user_id_tailored_cv_url_key` is the race
- * backstop after we canonicalize the URL on write.
+ * so percent-encoded / query / fragment URL variants of the same object count as
+ * in use. Pages past PostgREST `max_rows` so uniqueness does not silently miss
+ * older rows. Partial unique index `applications_user_id_tailored_cv_url_key` is
+ * the race backstop after we canonicalize the URL on write.
  */
 async function isTailoredCvUrlInUse(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -181,25 +182,37 @@ async function isTailoredCvUrlInUse(
     return { inUse: true, error: "Invalid tailored CV URL" };
   }
 
-  let query = supabase
-    .from("applications")
-    .select("id, cv_url")
-    .eq("user_id", userId)
-    .eq("cv_type", "tailored");
+  // Stay under typical PostgREST max_rows (1000) and page until exhausted.
+  const pageSize = 1000;
+  let offset = 0;
 
-  if (excludeApplicationId) {
-    query = query.neq("id", excludeApplicationId);
-  }
+  for (;;) {
+    let query = supabase
+      .from("applications")
+      .select("id, cv_url")
+      .eq("user_id", userId)
+      .eq("cv_type", "tailored")
+      .order("id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
 
-  const { data, error } = await query;
-  if (error) {
-    console.error("isTailoredCvUrlInUse:", error);
-    return { inUse: true, error: error.message };
+    if (excludeApplicationId) {
+      query = query.neq("id", excludeApplicationId);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error("isTailoredCvUrlInUse:", error);
+      return { inUse: true, error: error.message };
+    }
+
+    const rows = data ?? [];
+    const inUse = rows.some(
+      (row) => getCvObjectKeyFromPublicUrl(row.cv_url) === targetKey,
+    );
+    if (inUse) return { inUse: true, error: null };
+    if (rows.length < pageSize) return { inUse: false, error: null };
+    offset += pageSize;
   }
-  const inUse = (data ?? []).some(
-    (row) => getCvObjectKeyFromPublicUrl(row.cv_url) === targetKey,
-  );
-  return { inUse, error: null };
 }
 
 function invalidTailoredCvResponse() {

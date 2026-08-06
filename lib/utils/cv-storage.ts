@@ -9,9 +9,35 @@ import {
 } from "@/lib/storage/r2-client";
 import type { ApplicationCvType } from "@/lib/types/application";
 
+function stripTrailingSlash(path: string): string {
+  if (path.length > 1 && path.endsWith("/")) return path.slice(0, -1);
+  return path;
+}
+
+/**
+ * Decode a single path segment and reject traversal / empty segments.
+ * Returns null when the segment is unsafe or not decodable.
+ */
+function decodePathSegment(raw: string): string | null {
+  if (raw === "") return null;
+  let segment: string;
+  try {
+    segment = decodeURIComponent(raw);
+  } catch {
+    return null;
+  }
+  if (segment === "." || segment === "..") return null;
+  if (segment.includes("\0")) return null;
+  return segment;
+}
+
 /**
  * Returns the object key for our CV bucket if `url` is under our public R2 base URL.
- * Decodes percent-encoded path segments so equivalent URLs map to the same key.
+ *
+ * - Uses the URL pathname only (search and hash are ignored).
+ * - Decodes percent-encoded path segments so equivalent URLs map to the same key.
+ * - Rejects empty segments and `.` / `..` so prefix allow-lists cannot be bypassed
+ *   via path traversal that browsers/CDNs may normalize on fetch.
  */
 export function getCvObjectKeyFromPublicUrl(
   url: string | null | undefined,
@@ -25,28 +51,71 @@ export function getCvObjectKeyFromPublicUrl(
   } catch {
     return null;
   }
-  if (!url.startsWith(`${base}/`)) return null;
-  const encodedKey = url.slice(base.length + 1);
-  if (!encodedKey) return null;
+
+  let parsed: URL;
+  let baseParsed: URL;
   try {
-    const key = decodeURIComponent(encodedKey);
-    return key.length > 0 ? key : null;
+    parsed = new URL(url);
+    baseParsed = new URL(base);
   } catch {
     return null;
   }
+
+  if (
+    parsed.protocol !== baseParsed.protocol ||
+    parsed.host !== baseParsed.host
+  ) {
+    return null;
+  }
+
+  const basePath = stripTrailingSlash(baseParsed.pathname);
+  const urlPath = parsed.pathname;
+
+  let relative: string;
+  if (basePath === "" || basePath === "/") {
+    relative = urlPath.replace(/^\//, "");
+  } else if (urlPath === basePath) {
+    return null;
+  } else if (urlPath.startsWith(`${basePath}/`)) {
+    relative = urlPath.slice(basePath.length + 1);
+  } else {
+    return null;
+  }
+
+  if (!relative) return null;
+
+  const segments: string[] = [];
+  for (const raw of relative.split("/")) {
+    const segment = decodePathSegment(raw);
+    if (segment === null) return null;
+    // `%2F` in a segment becomes `/` after decode — treat as path separators so
+    // the object key matches how public URLs and S3 keys nest.
+    for (const part of segment.split("/")) {
+      if (part === "" || part === "." || part === "..") return null;
+      segments.push(part);
+    }
+  }
+
+  return segments.length > 0 ? segments.join("/") : null;
 }
 
 /**
- * Rebuilds a public CV URL from the decoded object key so equivalent encodings
- * (e.g. `%2F` vs `/`) store as one canonical string. Returns null when the URL
- * is not under our R2 public base.
+ * Rebuilds a public CV URL from the decoded object key so equivalent encodings,
+ * query strings, and fragments store as one canonical string.
+ * Each path segment is percent-encoded so reserved characters (`?`, `#`, `%`, …)
+ * remain part of the object key rather than changing URL structure.
+ * Returns null when the URL is not under our R2 public base.
  */
 export function toCanonicalCvPublicUrl(
   url: string | null | undefined,
 ): string | null {
   const key = getCvObjectKeyFromPublicUrl(url);
   if (!key) return null;
-  return `${getR2PublicBaseUrl()}/${key}`;
+  const encodedPath = key
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `${getR2PublicBaseUrl()}/${encodedPath}`;
 }
 
 function keyHasPrefix(key: string, prefix: string): boolean {
