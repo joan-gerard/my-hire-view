@@ -297,6 +297,28 @@ describe("POST /api/applications", () => {
     );
   });
 
+  it("returns 409 when a URL-equivalent tailored CV is found via keyset scan", async () => {
+    const legacyVariant = `${BASE_APP_INPUT.cv_url}?x=1`;
+    mockGetCvObjectKeyFromPublicUrl.mockImplementation((url) => {
+      if (typeof url !== "string" || url.length === 0) return null;
+      return `key:${url.split("?")[0]}`;
+    });
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(PROFILE_SNAPSHOT),
+        okWithCount(null, 0),
+        ok([{ id: "other-app", cv_url: legacyVariant }]),
+      ]),
+    );
+
+    const response = await POST(makePostRequest(BASE_APP_INPUT));
+    expect(response.status).toBe(409);
+    const json = await response.json();
+    expect(json.error).toBe(
+      "This tailored CV is already used by another application",
+    );
+  });
+
   it("returns 409 when validateSlugForApplication reports the slug is taken", async () => {
     mockValidateSlugForApplication.mockResolvedValue({
       ok: false,

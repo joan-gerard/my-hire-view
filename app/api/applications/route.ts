@@ -208,7 +208,8 @@ async function isTailoredCvUrlInUse(
     }
   }
 
-  // Stay under typical PostgREST max_rows (1000); advance by last seen id.
+  // Request `.limit` may still be capped by a lower PostgREST `max_rows`.
+  // Only an empty page means exhaustion — a short non-empty page must continue.
   const pageSize = 1000;
   let lastId: string | null = null;
 
@@ -236,11 +237,14 @@ async function isTailoredCvUrlInUse(
     }
 
     const rows = data ?? [];
+    if (rows.length === 0) {
+      return { inUse: false, error: null };
+    }
+
     const inUse = rows.some(
       (row) => getCvObjectKeyFromPublicUrl(row.cv_url) === targetKey,
     );
     if (inUse) return { inUse: true, error: null };
-    if (rows.length < pageSize) return { inUse: false, error: null };
 
     const nextLastId = rows[rows.length - 1]?.id;
     if (typeof nextLastId !== "string" || nextLastId.length === 0) {

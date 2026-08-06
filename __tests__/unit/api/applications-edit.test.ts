@@ -354,6 +354,37 @@ describe("PUT /api/applications", () => {
     expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
   });
 
+  it("returns 409 when a URL-equivalent tailored CV is found via keyset scan", async () => {
+    const requestedUrl =
+      "https://r2.example.com/cvs/user-abc/tailored/shared.pdf";
+    const legacyVariant =
+      "https://r2.example.com/cvs/user-abc/tailored/shared.pdf?download=1";
+    mockGetCvObjectKeyFromPublicUrl.mockImplementation((url) => {
+      if (typeof url !== "string" || url.length === 0) return null;
+      return `key:${url.split("?")[0]}`;
+    });
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(ownershipRow()),
+        okWithCount(null, 0),
+        ok([{ id: "other-app", cv_url: legacyVariant }]),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({
+        id: APP_ID,
+        cv_url: requestedUrl,
+      }),
+    );
+    expect(response.status).toBe(409);
+    const json = await response.json();
+    expect(json.error).toBe(
+      "This tailored CV is already used by another application",
+    );
+    expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
+  });
+
   it("returns 409 when validateSlugForApplication reports a collision", async () => {
     mockValidateSlugForApplication.mockResolvedValue({
       ok: false,
