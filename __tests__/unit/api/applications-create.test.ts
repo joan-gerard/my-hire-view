@@ -23,6 +23,8 @@ const {
   mockCheckRateLimit,
   mockDeleteCvIfOurs,
   mockIsOwnedTailoredCvUrl,
+  mockGetCvObjectKeyFromPublicUrl,
+  mockToCanonicalCvPublicUrl,
   mockValidateSlugForApplication,
   SLUG_COLLISION_USER_MESSAGE,
 } = vi.hoisted(() => ({
@@ -31,6 +33,14 @@ const {
   mockCheckRateLimit: vi.fn(),
   mockDeleteCvIfOurs: vi.fn(),
   mockIsOwnedTailoredCvUrl: vi.fn().mockReturnValue(true),
+  mockGetCvObjectKeyFromPublicUrl: vi.fn(
+    (url: string | null | undefined) =>
+      typeof url === "string" && url.length > 0 ? `key:${url}` : null,
+  ),
+  mockToCanonicalCvPublicUrl: vi.fn(
+    (url: string | null | undefined) =>
+      typeof url === "string" && url.length > 0 ? url : null,
+  ),
   mockValidateSlugForApplication: vi.fn(),
   SLUG_COLLISION_USER_MESSAGE:
     "You already have an application with this slug. Change the text slightly or pick another slug.",
@@ -52,6 +62,8 @@ vi.mock("@/lib/utils/cv-storage", () => ({
   deleteApplicationCvIfTailored: mockDeleteCvIfOurs,
   checkCvObjectExists: vi.fn().mockResolvedValue(true),
   isOwnedTailoredCvUrl: mockIsOwnedTailoredCvUrl,
+  getCvObjectKeyFromPublicUrl: mockGetCvObjectKeyFromPublicUrl,
+  toCanonicalCvPublicUrl: mockToCanonicalCvPublicUrl,
 }));
 vi.mock("@/lib/auth/ensure-public-id", () => ({
   ensureProfilePublicId: vi.fn().mockResolvedValue("k7x2m9ab"),
@@ -98,11 +110,16 @@ function makePostRequest(body: object): NextRequest {
   });
 }
 
-/** Chains for tailored create: profile → uniqueness (free) → insert result */
+/** Chains for tailored create: profile → exact URL free → legacy scan free → insert */
 function tailoredCreateChains(
   insertResult: ReturnType<typeof ok> | ReturnType<typeof dbError>,
 ) {
-  return [ok(PROFILE_SNAPSHOT), okWithCount(null, 0), insertResult];
+  return [
+    ok(PROFILE_SNAPSHOT),
+    okWithCount(null, 0),
+    ok([]),
+    insertResult,
+  ];
 }
 
 beforeEach(() => {
@@ -280,6 +297,28 @@ describe("POST /api/applications", () => {
     );
   });
 
+  it("returns 409 when a URL-equivalent tailored CV is found via keyset scan", async () => {
+    const legacyVariant = `${BASE_APP_INPUT.cv_url}?x=1`;
+    mockGetCvObjectKeyFromPublicUrl.mockImplementation((url) => {
+      if (typeof url !== "string" || url.length === 0) return null;
+      return `key:${url.split("?")[0]}`;
+    });
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(PROFILE_SNAPSHOT),
+        okWithCount(null, 0),
+        ok([{ id: "other-app", cv_url: legacyVariant }]),
+      ]),
+    );
+
+    const response = await POST(makePostRequest(BASE_APP_INPUT));
+    expect(response.status).toBe(409);
+    const json = await response.json();
+    expect(json.error).toBe(
+      "This tailored CV is already used by another application",
+    );
+  });
+
   it("returns 409 when validateSlugForApplication reports the slug is taken", async () => {
     mockValidateSlugForApplication.mockResolvedValue({
       ok: false,
@@ -300,7 +339,12 @@ describe("POST /api/applications", () => {
   it("returns 409 with a stable message when slug unique constraint fails", async () => {
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient(
-        tailoredCreateChains(dbError("duplicate key value", "23505")),
+        tailoredCreateChains(
+          dbError(
+            'duplicate key value violates unique constraint "applications_user_id_slug_key"',
+            "23505",
+          ),
+        ),
       ),
     );
 
@@ -308,6 +352,26 @@ describe("POST /api/applications", () => {
     expect(response.status).toBe(409);
     const json = await response.json();
     expect(json.error).toBe(SLUG_COLLISION_USER_MESSAGE);
+  });
+
+  it("returns 409 when tailored cv_url unique constraint fails", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient(
+        tailoredCreateChains(
+          dbError(
+            'duplicate key value violates unique constraint "applications_user_id_tailored_cv_url_key"',
+            "23505",
+          ),
+        ),
+      ),
+    );
+
+    const response = await POST(makePostRequest(BASE_APP_INPUT));
+    expect(response.status).toBe(409);
+    const json = await response.json();
+    expect(json.error).toBe(
+      "This tailored CV is already used by another application",
+    );
   });
 
   it("returns 400 when the DB insert fails for a non-unique reason", async () => {

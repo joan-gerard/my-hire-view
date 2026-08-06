@@ -158,8 +158,8 @@ Create an application. Candidate fields fall back to the user’s profile when o
 - Profile snapshot / fallback for candidate fields keeps recruiter data on the application row.
 - Avatar preference is a boolean only — no denormalized picture URL on the application row.
 - **Primary CV:** when `cv_type` is `"primary"`, `primary_cv_id` must reference a row in the caller’s `primary_cvs` library; `cv_url` is resolved from that library row (client may send the same URL for convenience).
-- **Tailored CV:** when `cv_type` is `"tailored"` (default), `cv_url` must be a caller-owned tailored upload (`cvs/{userId}/tailored/…`); not a primary library key. Reusing another application’s tailored URL returns **409**.
-- **Slug uniqueness:** calls `validateSlugForApplication` (same helper as `POST /api/slug/validate`) before insert so a taken slug returns **409** with `SLUG_COLLISION_USER_MESSAGE` without relying only on the DB. Postgres unique violations (`23505`) remain a race backstop with the same **409** message.
+- **Tailored CV:** when `cv_type` is `"tailored"` (default), `cv_url` must be a caller-owned tailored upload (`cvs/{userId}/tailored/…`); not a primary library key. The server stores a **canonical** public URL (pathname/object key only — search/hash stripped; path segments percent-encoded; `.`/`..` rejected or resolved via URL parsing). Reusing another application’s tailored object (same key / URL, including percent-encoded or query/fragment variants) returns **409**. Uniqueness: exact match on canonical `cv_url`, then keyset-paginated object-key scan for legacy variants (continues until an empty page, so a lower PostgREST `max_rows` cannot truncate the scan); Postgres partial unique index `applications_user_id_tailored_cv_url_key` is the race backstop.
+- **Slug uniqueness:** calls `validateSlugForApplication` (same helper as `POST /api/slug/validate`) before insert so a taken slug returns **409** with `SLUG_COLLISION_USER_MESSAGE` without relying only on the DB. Postgres unique violations (`23505`) remain a race backstop: slug → same **409** message; tailored `cv_url` → tailored-in-use **409**.
 - Returns **201** with the created row.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
@@ -184,9 +184,9 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 - Rate limited.
 - **Schema validation** (`applicationUpdateSchema`): UUID `id`; optional trimmed fields / http(s) URLs / slug format; enums; rejects unexpected keys (blocks mass-assignment of `user_id`, counters, etc.).
 - Ownership check before update; **404** when missing or not owned.
-- When `slug` is provided, re-checks uniqueness via `validateSlugForApplication` (exclude current id); Postgres `23505` → **409** with `SLUG_COLLISION_USER_MESSAGE`.
-- On tailored `cv_url` change: persists the new URL first, then deletes the previous R2 object only after a successful update (`deleteApplicationCvIfTailored`). Primary library objects are never deleted here.
-- Rejects a new tailored `cv_url` that is not a caller-owned tailored upload (**400**), or that is already used by another of the caller’s applications (**409**). Keeping the same `cv_url` on the current row is allowed. Switching to **primary** resolves URL from the caller’s `primary_cvs` library via `primary_cv_id`.
+- When `slug` is provided, re-checks uniqueness via `validateSlugForApplication` (exclude current id); Postgres `23505` on slug → **409** with `SLUG_COLLISION_USER_MESSAGE`; on tailored `cv_url` → tailored-in-use **409**.
+- On tailored `cv_url` change: canonicalizes and persists the new URL first, then deletes the previous R2 object only after a successful update (`deleteApplicationCvIfTailored`). Object-key equality (not raw string) decides whether the previous file should be removed. Primary library objects are never deleted here.
+- Rejects a new tailored `cv_url` that is not a caller-owned tailored upload (**400**), or that is already used by another of the caller’s applications (**409**, object-key compare + partial unique index). Keeping the same object on the current row is allowed. Switching to **primary** resolves URL from the caller’s `primary_cvs` library via `primary_cv_id`.
 - Persists `show_profile_picture` when provided (public view uses live profile picture).
 - Maps `slugNamePosition` → `include_name_in_slug` instead of exposing the DB column name as the only contract.
 
@@ -212,7 +212,7 @@ Hard-delete an application and its tailored CV object in R2 (when the URL belong
 - Rate limited.
 - Validates `id` as a UUID before querying (**400** if missing or malformed).
 - Ownership check before delete; **404** when missing or not owned.
-- **Fail-closed R2 cleanup:** for tailored CVs, deletes the R2 object first (`deleteApplicationCvIfTailored` → `deleteCvIfOurs`). If R2 delete fails → **500** and the DB row is **not** removed (no orphaned “deleted” apps with leftover PDFs). Primary library objects are never deleted here.
+- **Fail-closed R2 cleanup:** for tailored CVs (`cv_type === "tailored"` **and** key under `cvs/{userId}/tailored/…`), deletes the R2 object first (`deleteApplicationCvIfTailored`). If R2 delete fails **or** `R2_PUBLIC_BASE_URL` is unset → **500** and the DB row is **not** removed (no orphaned “deleted” apps with leftover PDFs). Primary library objects are never deleted here (allow-list, not deny-list).
 - Only then deletes the applications row.
 - Archive (`PUT` `status: archived`) remains the reversible soft-hide; hard `DELETE` is intentional and irreversible. A possible later alternative (middle-ground delete + orphan tailored-CV cron) is noted in [PDF_AND_R2.md](PDF_AND_R2.md).
 
@@ -528,7 +528,7 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 - Idempotency keys scoped per user (`cvs/{userId}/tailored/<key>.pdf`); HeadObject replay returns the same URL without re-upload when size and content type match.
 - **Atomic create:** `PutObject` uses `IfNoneMatch: "*"` so concurrent creates with the same key cannot overwrite; **412** (and a single **409** retry) re-checks HeadObject and returns `{ url, idempotent: true }` or **409** on mismatch.
 - Fails clearly when R2 is not configured; logs upload/config errors server-side.
-- Application attach/delete paths authorize object keys per user (`isOwnedTailoredCvUrl` on attach / `deleteCvIfOurs(url, userId)` on delete). Tailored `cv_url` values must be unique across the caller’s applications (**409** if reused); re-uploading the same PDF for another app creates a new object key. Primary CVs are shared via `cv_type: "primary"` and are not subject to the one-URL-per-app rule.
+- Application attach/delete paths authorize object keys per user (`isOwnedTailoredCvUrl` on attach / allow-list `deleteApplicationCvIfTailored` on app delete). Tailored `cv_url` values must be unique across the caller’s applications (**409** if reused; canonical URL + partial unique index); re-uploading the same PDF for another app creates a new object key. Primary CVs are shared via `cv_type: "primary"` and are not subject to the one-URL-per-app rule.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
 
