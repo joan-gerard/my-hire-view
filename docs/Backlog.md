@@ -21,7 +21,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | ID | Subcategory | Item | Notes | Source |
 | -------- | -------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | D3-001 | Infrastructure | Durable rate limiting | Replace in-memory `lib/rate-limit.ts` with Redis/Upstash (or similar). Also closes per-path Map growth on view/download: `checkPerSlugRateLimit` keys `${ip}:${publicId}:${slug}` before format validation and only prunes the key being hit, so unique invalid paths accumulate. Interim: validate/normalize `publicId` + slug before constructing the key, and/or add global TTL / capacity sweep. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
-| B2-006 | API | Filename-only edit on primary CV | Filename-only PUT requires `body.primary_cv_id` and fails **400**; preserve existing id / handle filename-only without forcing re-select. | [API_REFERENCE.md](API_REFERENCE.md) |
 | D1-007 | API | SSR public view vs per-IP rate limit | `/view/[publicId]/[slug]` server `fetch` shares one **120/min** bucket under server/`unknown` IP → cross-visitor **429**. Call `resolvePublicApplication` from the RSC (or exempt/internal-tag server loads). Distinct from Production base URL for SSR. | [API_REFERENCE.md](API_REFERENCE.md) |
 | C2-008 | Security | Validate profile-picture URL origin | Path-only “owned” check allows external HTTPS hosts that look like Storage paths; public pages then load that host. Require origin = `NEXT_PUBLIC_SUPABASE_URL`. | [API_REFERENCE.md](API_REFERENCE.md) |
 | C1-009 | API | Retry profile create for immediate-session signup | `createInitialProfile` failure still returns signup success; callback retry is confirmation-only, so immediate sessions can lack a `profiles` row. Add post-signup/login bootstrap or explicit retry. | [API_REFERENCE.md](API_REFERENCE.md) |
@@ -181,7 +180,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
 | B1 | `fix/b1-tailored-cv-integrity` | `B1-003`, `B1-004`, `B1-005` | ~~Canonical/atomic tailored `cv_url` uniqueness; allow-list tailored deletes; fail closed when `R2_PUBLIC_BASE_URL` unset~~ (shipped) |
-| B2 | `fix/b2-primary-cv-filename-put` | `B2-006` | Filename-only primary CV PUT (solo or fold into B1 if small) |
+| B2 | `fix/b2-primary-cv-filename-put` | `B2-006` | ~~Filename-only primary CV PUT~~ (shipped) |
 | B3 | `feat/b3-primary-cv-ownership-fk` | `B3-042` | DB same-user ownership for `primary_cv_id` (migration; pairs with B1 schema work) |
 
 #### Sprint C — Profile / signup invariants

@@ -242,7 +242,9 @@ export const applicationUpdateSchema = z
   })
   .strict()
   .superRefine((data, ctx) => {
-    if (data.cv_type === "primary" && !data.primary_cv_id) {
+    // Omitting primary_cv_id is allowed on update — the route falls back to the
+    // row's existing id (B2-006). Explicit null with cv_type primary is invalid.
+    if (data.cv_type === "primary" && data.primary_cv_id === null) {
       ctx.addIssue({
         code: "custom",
         path: ["primary_cv_id"],

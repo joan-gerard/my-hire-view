@@ -491,7 +491,7 @@ export async function PUT(request: NextRequest) {
 
     const { data: existing } = await supabase
       .from("applications")
-      .select("user_id, cv_url, cv_type, status")
+      .select("user_id, cv_url, cv_type, primary_cv_id, status")
       .eq("id", id)
       .single();
 
@@ -511,11 +511,10 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const cvFieldsTouched =
+    const cvSourceTouched =
       body.cv_type !== undefined ||
       body.primary_cv_id !== undefined ||
-      body.cv_url !== undefined ||
-      body.cv_filename !== undefined;
+      body.cv_url !== undefined;
 
     /** Old tailored object to delete only after a successful DB update. */
     let previousCvToDelete: {
@@ -523,7 +522,10 @@ export async function PUT(request: NextRequest) {
       cvType: ApplicationCvType;
     } | null = null;
 
-    if (cvFieldsTouched) {
+    // Filename / download-name only — do not require primary_cv_id or re-resolve CV.
+    if (body.cv_filename !== undefined && !cvSourceTouched) {
+      updatePayload.cv_filename = body.cv_filename;
+    } else if (cvSourceTouched || body.cv_filename !== undefined) {
       let nextCvType: ApplicationCvType =
         (existing.cv_type as ApplicationCvType) ?? "tailored";
 
@@ -535,7 +537,11 @@ export async function PUT(request: NextRequest) {
       let nextCvUrl = existing.cv_url as string;
 
       if (nextCvType === "primary") {
-        const primaryId = body.primary_cv_id ?? null;
+        const primaryId =
+          body.primary_cv_id ??
+          (typeof existing.primary_cv_id === "string"
+            ? existing.primary_cv_id
+            : null);
         if (!primaryId) {
           return NextResponse.json(
             { error: "primary_cv_id is required when cv_type is primary" },
@@ -555,7 +561,8 @@ export async function PUT(request: NextRequest) {
         }
         nextCvUrl = primary.url;
         updatePayload.cv_url = primary.url;
-        updatePayload.cv_filename = primary.filename;
+        updatePayload.cv_filename =
+          body.cv_filename !== undefined ? body.cv_filename : primary.filename;
         updatePayload.primary_cv_id = primaryId;
         updatePayload.cv_type = "primary";
       } else {

@@ -182,11 +182,12 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 
 - Auth required; dedicated auth try/catch → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
 - Rate limited.
-- **Schema validation** (`applicationUpdateSchema`): UUID `id`; optional trimmed fields / http(s) URLs / slug format; enums; rejects unexpected keys (blocks mass-assignment of `user_id`, counters, etc.).
+- **Schema validation** (`applicationUpdateSchema`): UUID `id`; optional trimmed fields / http(s) URLs / slug format; enums; rejects unexpected keys (blocks mass-assignment of `user_id`, counters, etc.). When `cv_type` is `"primary"`, `primary_cv_id` may be omitted (route reuses the row’s existing id); explicit `null` is rejected.
 - Ownership check before update; **404** when missing or not owned.
 - When `slug` is provided, re-checks uniqueness via `validateSlugForApplication` (exclude current id); Postgres `23505` on slug → **409** with `SLUG_COLLISION_USER_MESSAGE`; on tailored `cv_url` → tailored-in-use **409**.
 - On tailored `cv_url` change: canonicalizes and persists the new URL first, then deletes the previous R2 object only after a successful update (`deleteApplicationCvIfTailored`). Object-key equality (not raw string) decides whether the previous file should be removed. Primary library objects are never deleted here.
-- Rejects a new tailored `cv_url` that is not a caller-owned tailored upload (**400**), or that is already used by another of the caller’s applications (**409**, object-key compare + partial unique index). Keeping the same object on the current row is allowed. Switching to **primary** resolves URL from the caller’s `primary_cvs` library via `primary_cv_id`.
+- Rejects a new tailored `cv_url` that is not a caller-owned tailored upload (**400**), or that is already used by another of the caller’s applications (**409**, object-key compare + partial unique index). Keeping the same object on the current row is allowed. Switching to **primary** resolves URL from the caller’s `primary_cvs` library via `primary_cv_id` (falls back to the row’s existing `primary_cv_id` when the body omits it).
+- **Download filename:** a PUT that only sets `cv_filename` (no `cv_type` / `primary_cv_id` / `cv_url`) updates the download name without re-resolving or requiring a primary CV id. When the primary path does run, an explicit `cv_filename` in the body is kept; otherwise the library filename is used.
 - Persists `show_profile_picture` when provided (public view uses live profile picture).
 - Maps `slugNamePosition` → `include_name_in_slug` instead of exposing the DB column name as the only contract.
 
