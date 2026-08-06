@@ -16,15 +16,18 @@ import {
   isOwnedCvUrl,
   isOwnedTailoredCvUrl,
   isCvStorageUrl,
+  getCvObjectKeyFromPublicUrl,
+  toCanonicalCvPublicUrl,
   deleteCvIfOurs,
   deleteApplicationCvIfTailored,
   checkCvObjectExists,
 } from "@/lib/utils/cv-storage";
-import { getR2S3Client } from "@/lib/storage/r2-client";
+import { getR2PublicBaseUrl, getR2S3Client } from "@/lib/storage/r2-client";
 import { HeadObjectCommand } from "@aws-sdk/client-s3";
 
 const USER_ID = "user-abc";
 const TAILORED_URL = `https://r2.example.com/cvs/${USER_ID}/tailored/key123.pdf`;
+const TAILORED_ENCODED_URL = `https://r2.example.com/cvs/${USER_ID}/tailored/key%2F123.pdf`;
 const PRIMARY_URL = `https://r2.example.com/cvs/${USER_ID}/primary/cv-1.pdf`;
 const OTHER_TAILORED = "https://r2.example.com/cvs/other-user/tailored/key123.pdf";
 const OTHER_PRIMARY = "https://r2.example.com/cvs/other-user/primary/cv-1.pdf";
@@ -79,9 +82,38 @@ describe("isOwnedCvObjectKey", () => {
   });
 });
 
+describe("getCvObjectKeyFromPublicUrl / toCanonicalCvPublicUrl", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getR2PublicBaseUrl).mockReturnValue("https://r2.example.com");
+  });
+
+  it("decodes percent-encoded path segments to the same key", () => {
+    expect(getCvObjectKeyFromPublicUrl(TAILORED_ENCODED_URL)).toBe(
+      `cvs/${USER_ID}/tailored/key/123.pdf`,
+    );
+  });
+
+  it("rebuilds a canonical URL from the decoded key", () => {
+    expect(toCanonicalCvPublicUrl(TAILORED_ENCODED_URL)).toBe(
+      `https://r2.example.com/cvs/${USER_ID}/tailored/key/123.pdf`,
+    );
+    expect(toCanonicalCvPublicUrl(TAILORED_URL)).toBe(TAILORED_URL);
+  });
+
+  it("returns null when R2 public base is unset", () => {
+    vi.mocked(getR2PublicBaseUrl).mockImplementation(() => {
+      throw new Error("Missing R2_PUBLIC_BASE_URL");
+    });
+    expect(getCvObjectKeyFromPublicUrl(TAILORED_URL)).toBeNull();
+    expect(toCanonicalCvPublicUrl(TAILORED_URL)).toBeNull();
+  });
+});
+
 describe("isOwnedCvUrl / isOwnedTailoredCvUrl / isCvStorageUrl", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getR2PublicBaseUrl).mockReturnValue("https://r2.example.com");
   });
 
   afterEach(() => {
@@ -111,6 +143,7 @@ describe("isOwnedCvUrl / isOwnedTailoredCvUrl / isCvStorageUrl", () => {
 describe("deleteCvIfOurs / deleteApplicationCvIfTailored", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getR2PublicBaseUrl).mockReturnValue("https://r2.example.com");
   });
 
   it("rethrows R2 errors by default (fail closed)", async () => {
@@ -131,18 +164,66 @@ describe("deleteCvIfOurs / deleteApplicationCvIfTailored", () => {
     ).resolves.toBeUndefined();
   });
 
-  it("skips R2 for primary application CVs", async () => {
+  it("skips R2 for primary application CVs (allow-list)", async () => {
     const send = vi.fn();
     vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
 
     await deleteApplicationCvIfTailored(PRIMARY_URL, "primary", USER_ID);
     expect(send).not.toHaveBeenCalled();
   });
+
+  it("skips R2 when cv_type is missing even if the URL looks tailored", async () => {
+    const send = vi.fn();
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await deleteApplicationCvIfTailored(TAILORED_URL, null, USER_ID);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("does not delete a primary library object when cv_type is wrongly tailored", async () => {
+    const send = vi.fn();
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await deleteApplicationCvIfTailored(PRIMARY_URL, "tailored", USER_ID);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("deletes only when cv_type is tailored and the key is under tailored/", async () => {
+    const send = vi.fn().mockResolvedValue({});
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await deleteApplicationCvIfTailored(TAILORED_URL, "tailored", USER_ID);
+    expect(send).toHaveBeenCalled();
+  });
+
+  it("throws when R2_PUBLIC_BASE_URL is unset and a tailored URL needs cleanup", async () => {
+    vi.mocked(getR2PublicBaseUrl).mockImplementation(() => {
+      throw new Error("Missing R2_PUBLIC_BASE_URL");
+    });
+    const send = vi.fn();
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await expect(
+      deleteApplicationCvIfTailored(TAILORED_URL, "tailored", USER_ID),
+    ).rejects.toThrow("Missing R2_PUBLIC_BASE_URL");
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("throws when R2_PUBLIC_BASE_URL is unset for deleteCvIfOurs with a URL", async () => {
+    vi.mocked(getR2PublicBaseUrl).mockImplementation(() => {
+      throw new Error("Missing R2_PUBLIC_BASE_URL");
+    });
+
+    await expect(deleteCvIfOurs(PRIMARY_URL, USER_ID)).rejects.toThrow(
+      "Missing R2_PUBLIC_BASE_URL",
+    );
+  });
 });
 
 describe("checkCvObjectExists", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getR2PublicBaseUrl).mockReturnValue("https://r2.example.com");
   });
 
   it("returns true when HeadObject succeeds for an R2 URL", async () => {

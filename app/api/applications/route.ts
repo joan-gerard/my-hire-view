@@ -19,7 +19,9 @@ import {
 import {
   checkCvObjectExists,
   deleteApplicationCvIfTailored,
+  getCvObjectKeyFromPublicUrl,
   isOwnedTailoredCvUrl,
+  toCanonicalCvPublicUrl,
 } from "@/lib/utils/cv-storage";
 import {
   SLUG_COLLISION_USER_MESSAGE,
@@ -163,8 +165,10 @@ async function resolvePrimaryCvForUser(
 }
 
 /**
- * Tailored CVs are one application ↔ one R2 object. Returns true when another
- * of this user's applications already stores `cvUrl`.
+ * Tailored CVs are one application ↔ one R2 object. Compares decoded object keys
+ * so percent-encoded URL variants of the same object count as in use.
+ * Partial unique index `applications_user_id_tailored_cv_url_key` is the race
+ * backstop after we canonicalize the URL on write.
  */
 async function isTailoredCvUrlInUse(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -172,22 +176,30 @@ async function isTailoredCvUrlInUse(
   cvUrl: string,
   excludeApplicationId?: string,
 ): Promise<{ inUse: boolean; error: string | null }> {
+  const targetKey = getCvObjectKeyFromPublicUrl(cvUrl);
+  if (!targetKey) {
+    return { inUse: true, error: "Invalid tailored CV URL" };
+  }
+
   let query = supabase
     .from("applications")
-    .select("id", { count: "exact", head: true })
+    .select("id, cv_url")
     .eq("user_id", userId)
-    .eq("cv_url", cvUrl);
+    .eq("cv_type", "tailored");
 
   if (excludeApplicationId) {
     query = query.neq("id", excludeApplicationId);
   }
 
-  const { count, error } = await query;
+  const { data, error } = await query;
   if (error) {
     console.error("isTailoredCvUrlInUse:", error);
     return { inUse: true, error: error.message };
   }
-  return { inUse: (count ?? 0) > 0, error: null };
+  const inUse = (data ?? []).some(
+    (row) => getCvObjectKeyFromPublicUrl(row.cv_url) === targetKey,
+  );
+  return { inUse, error: null };
 }
 
 function invalidTailoredCvResponse() {
@@ -200,6 +212,25 @@ function invalidTailoredCvResponse() {
 function tailoredCvInUseResponse() {
   return NextResponse.json(
     { error: "This tailored CV is already used by another application" },
+    { status: 409 },
+  );
+}
+
+/** Map Postgres unique violations to stable 409 responses (slug vs tailored cv_url). */
+function applicationsUniqueViolationResponse(error: {
+  code?: string;
+  message?: string;
+}): NextResponse | null {
+  if (error.code !== "23505") return null;
+  const message = error.message ?? "";
+  if (
+    message.includes("applications_user_id_tailored_cv_url_key") ||
+    message.includes("tailored_cv_url")
+  ) {
+    return tailoredCvInUseResponse();
+  }
+  return NextResponse.json(
+    { error: SLUG_COLLISION_USER_MESSAGE },
     { status: 409 },
   );
 }
@@ -286,12 +317,16 @@ export async function POST(request: NextRequest) {
       cvFilename = primary.filename;
       primaryCvId = body.primary_cv_id;
     } else {
-      if (!isOwnedTailoredCvUrl(cvUrl, user.id)) {
+      const canonical = toCanonicalCvPublicUrl(cvUrl);
+      if (!canonical || !isOwnedTailoredCvUrl(canonical, user.id)) {
         return invalidTailoredCvResponse();
       }
+      cvUrl = canonical;
       const usage = await isTailoredCvUrlInUse(supabase, user.id, cvUrl);
       if (usage.error) {
-        return NextResponse.json({ error: usage.error }, { status: 500 });
+        // Invalid URL after ownership check is a client error; DB failures → 500.
+        const status = usage.error === "Invalid tailored CV URL" ? 400 : 500;
+        return NextResponse.json({ error: usage.error }, { status });
       }
       if (usage.inUse) {
         return tailoredCvInUseResponse();
@@ -323,13 +358,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      // UNIQUE (user_id, slug) — race after client validate / reserve.
-      if (error.code === "23505") {
-        return NextResponse.json(
-          { error: SLUG_COLLISION_USER_MESSAGE },
-          { status: 409 },
-        );
-      }
+      // UNIQUE (user_id, slug) or tailored cv_url — race after pre-checks.
+      const uniqueResponse = applicationsUniqueViolationResponse(error);
+      if (uniqueResponse) return uniqueResponse;
       console.error("POST /api/applications:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
@@ -478,7 +509,6 @@ export async function PUT(request: NextRequest) {
       } else {
         if (body.cv_url !== undefined) {
           nextCvUrl = body.cv_url;
-          updatePayload.cv_url = body.cv_url;
         }
         if (body.cv_filename !== undefined) {
           updatePayload.cv_filename = body.cv_filename;
@@ -486,9 +516,13 @@ export async function PUT(request: NextRequest) {
         updatePayload.primary_cv_id = null;
         updatePayload.cv_type = "tailored";
 
-        if (!isOwnedTailoredCvUrl(nextCvUrl, user.id)) {
+        const canonical = toCanonicalCvPublicUrl(nextCvUrl);
+        if (!canonical || !isOwnedTailoredCvUrl(canonical, user.id)) {
           return invalidTailoredCvResponse();
         }
+        nextCvUrl = canonical;
+        updatePayload.cv_url = canonical;
+
         const usage = await isTailoredCvUrlInUse(
           supabase,
           user.id,
@@ -496,14 +530,17 @@ export async function PUT(request: NextRequest) {
           id,
         );
         if (usage.error) {
-          return NextResponse.json({ error: usage.error }, { status: 500 });
+          const status = usage.error === "Invalid tailored CV URL" ? 400 : 500;
+          return NextResponse.json({ error: usage.error }, { status });
         }
         if (usage.inUse) {
           return tailoredCvInUseResponse();
         }
       }
 
-      if (nextCvUrl !== existing.cv_url) {
+      const previousKey = getCvObjectKeyFromPublicUrl(existing.cv_url);
+      const nextKey = getCvObjectKeyFromPublicUrl(nextCvUrl);
+      if (previousKey !== nextKey) {
         previousCvToDelete = {
           url: existing.cv_url,
           cvType: (existing.cv_type as ApplicationCvType) ?? "tailored",
@@ -519,12 +556,8 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      if (error.code === "23505") {
-        return NextResponse.json(
-          { error: SLUG_COLLISION_USER_MESSAGE },
-          { status: 409 },
-        );
-      }
+      const uniqueResponse = applicationsUniqueViolationResponse(error);
+      if (uniqueResponse) return uniqueResponse;
       console.error("PUT /api/applications:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }

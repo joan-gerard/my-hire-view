@@ -21,9 +21,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | ID | Subcategory | Item | Notes | Source |
 | -------- | -------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | D3-001 | Infrastructure | Durable rate limiting | Replace in-memory `lib/rate-limit.ts` with Redis/Upstash (or similar). Also closes per-path Map growth on view/download: `checkPerSlugRateLimit` keys `${ip}:${publicId}:${slug}` before format validation and only prunes the key being hit, so unique invalid paths accumulate. Interim: validate/normalize `publicId` + slug before constructing the key, and/or add global TTL / capacity sweep. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
-| B1-003 | API | Canonical + atomic tailored `cv_url` uniqueness | `isTailoredCvUrlInUse` compares raw `cv_url` strings (percent-encoded equivalents can share one object). Check-then-write races on POST/PUT. Canonicalize to object key + enforce uniqueness at DB/transaction boundary (like slug). | [API_REFERENCE.md](API_REFERENCE.md) |
-| B1-004 | API | Allow-list tailored CV deletes only | `deleteApplicationCvIfTailored` deny-lists `"primary"` then may delete any owned R2 key; can wipe shared primary PDFs. Require `cvType === "tailored"` and/or `cvs/{userId}/tailored/…` only (PUT + DELETE apps). | [API_REFERENCE.md](API_REFERENCE.md) |
-| B1-005 | API | Fail closed when `R2_PUBLIC_BASE_URL` unset on app DELETE | Missing base → key parse returns `null` → R2 cleanup no-ops while DB row still deletes (orphan PDFs). Propagate config errors → **500** and skip DB delete. | [API_REFERENCE.md](API_REFERENCE.md) |
 | B2-006 | API | Filename-only edit on primary CV | Filename-only PUT requires `body.primary_cv_id` and fails **400**; preserve existing id / handle filename-only without forcing re-select. | [API_REFERENCE.md](API_REFERENCE.md) |
 | D1-007 | API | SSR public view vs per-IP rate limit | `/view/[publicId]/[slug]` server `fetch` shares one **120/min** bucket under server/`unknown` IP → cross-visitor **429**. Call `resolvePublicApplication` from the RSC (or exempt/internal-tag server loads). Distinct from Production base URL for SSR. | [API_REFERENCE.md](API_REFERENCE.md) |
 | C2-008 | Security | Validate profile-picture URL origin | Path-only “owned” check allows external HTTPS hosts that look like Storage paths; public pages then load that host. Require origin = `NEXT_PUBLIC_SUPABASE_URL`. | [API_REFERENCE.md](API_REFERENCE.md) |
@@ -42,7 +39,7 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | F17-018 | Branding | Update login and signup branding | Match `/login` and `/signup` to the main homepage visual identity, including any loading states / skeletons on those flows. | — |
 | F20-019 | Legal | Create legal pages | Terms of Service, Privacy Policy, and Cookies (`/terms`, `/privacy`, cookies). Footer and waitlist already link to `/terms` and `/privacy` with no pages. | — |
 | F21-020 | Product | Delete account from profile | On the profile page, let users delete their account: remove Supabase Auth user, `profiles` row, and associated applications (and related storage: **primary + tailored CVs** in R2, profile picture). | [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) |
-| F22-021 | Docs / DX | Refresh README | Still create-next-app boilerplate above the MyHireView section. Migrations setup step now points at applying **all** files in `supabase/migrations/` in order (through `025`); finish the full README rewrite. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
+| F22-021 | Docs / DX | Refresh README | Still create-next-app boilerplate above the MyHireView section. Migrations setup step now points at applying **all** files in `supabase/migrations/` in order (through `026`); finish the full README rewrite. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | F23-022 | Support | Technical support entry point | Mailto, simple form, or lightweight tool on marketing / dashboard / view. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | F6-024 | API | Schema validation on write routes | Zod (or similar) for bodies/params; clear **400**s. Applications create/update and profile PUT already validate; extend to remaining write routes as needed. | [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
 | F4-025 | API | Shared `withAuth` helper | Shared `withAuth` so auth failures aren’t mislabeled **401** on remaining routes. (`handleApiError` already shipped.) | [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
@@ -183,7 +180,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
-| B1 | `fix/b1-tailored-cv-integrity` | `B1-003`, `B1-004`, `B1-005` | Canonical/atomic tailored `cv_url` uniqueness; allow-list tailored deletes; fail closed when `R2_PUBLIC_BASE_URL` unset |
+| B1 | `fix/b1-tailored-cv-integrity` | `B1-003`, `B1-004`, `B1-005` | ~~Canonical/atomic tailored `cv_url` uniqueness; allow-list tailored deletes; fail closed when `R2_PUBLIC_BASE_URL` unset~~ (shipped) |
 | B2 | `fix/b2-primary-cv-filename-put` | `B2-006` | Filename-only primary CV PUT (solo or fold into B1 if small) |
 | B3 | `feat/b3-primary-cv-ownership-fk` | `B3-042` | DB same-user ownership for `primary_cv_id` (migration; pairs with B1 schema work) |
 
@@ -317,7 +314,6 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **B1** — `fix/b1-tailored-cv-integrity` (`B1-003`–`B1-005`)  
-2. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
-3. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
-4. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
+1. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
+2. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
+3. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  

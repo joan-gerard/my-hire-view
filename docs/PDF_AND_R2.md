@@ -44,7 +44,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 | `POST /api/upload` | Tailored CV upload (auth + idempotency). Keys `cvs/{userId}/tailored/<key>.pdf`. |
 | `GET/POST/DELETE /api/profile/primary-cvs` | Primary CV library (max 5). Keys `cvs/{userId}/primary/{id}.pdf`. GET includes `applications_count` and a `used_by` preview per row. |
 | `lib/storage/r2-client.ts` | S3-compatible R2 client. |
-| `lib/utils/cv-storage.ts` | `isOwnedTailoredCvUrl`, `isOwnedCvUrl`, `deleteCvIfOurs(url, userId)`, `deleteApplicationCvIfTailored`, `checkCvObjectExists` (`true` / `false` for R2 URLs; `undefined` when the URL is outside our R2 public base). |
+| `lib/utils/cv-storage.ts` | `getCvObjectKeyFromPublicUrl`, `toCanonicalCvPublicUrl`, `isOwnedTailoredCvUrl`, `isOwnedCvUrl`, `deleteCvIfOurs(url, userId)`, `deleteApplicationCvIfTailored` (allow-list tailored only; fail closed if `R2_PUBLIC_BASE_URL` unset), `checkCvObjectExists` (`true` / `false` for R2 URLs; `undefined` when the URL is outside our R2 public base). |
 
 ## Idempotency
 
@@ -57,9 +57,9 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 ## Safety
 
 - **PDF content:** Upload routes check MIME type and that the body starts with `%PDF` before writing to R2.
-- **URL check:** Deletes run only when the URL prefix matches `R2_PUBLIC_BASE_URL` **and** the object key belongs to the authenticated user (`cvs/{userId}/primary/…` or `cvs/{userId}/tailored/…`).
-- **Attach check:** Creating/updating a tailored application CV rejects `cv_url` values that are not under `cvs/{userId}/tailored/…`, and rejects URLs already used by another of the user’s applications (**409**). Re-uploading the same PDF for a second app creates a distinct object. Primary CVs remain intentionally shareable via `cv_type: "primary"`.
-- **Delete errors (fail closed):** `deleteCvIfOurs` logs and **rethrows** by default. Application delete and primary-library delete remove the R2 object **before** the DB row; if R2 fails, the API returns **500** and leaves the row. After a successful application **update** that replaces a tailored CV, cleanup of the *previous* object uses `{ onError: "log" }` so a stuck old file does not fail the save.
+- **URL check:** Deletes run only when the URL prefix matches `R2_PUBLIC_BASE_URL` **and** the object key belongs to the authenticated user. Application cleanup (`deleteApplicationCvIfTailored`) allow-lists `cv_type === "tailored"` **and** `cvs/{userId}/tailored/…` only — never primary library keys. `deleteCvIfOurs` may delete primary or tailored keys (library delete path).
+- **Attach check:** Creating/updating a tailored application CV rejects `cv_url` values that are not under `cvs/{userId}/tailored/…`, stores a **canonical** public URL (decoded object key), and rejects URLs already used by another of the user’s applications (**409**, object-key compare). Partial unique index `applications_user_id_tailored_cv_url_key` backs races. Re-uploading the same PDF for a second app creates a distinct object. Primary CVs remain intentionally shareable via `cv_type: "primary"`.
+- **Delete errors (fail closed):** `deleteCvIfOurs` / `deleteApplicationCvIfTailored` log and **rethrow** by default. Missing `R2_PUBLIC_BASE_URL` also throws when a non-empty URL needs cleanup (no silent skip). Application delete and primary-library delete remove the R2 object **before** the DB row; if R2 fails, the API returns **500** and leaves the row. After a successful application **update** that replaces a tailored CV, cleanup of the *previous* object uses `{ onError: "log" }` so a stuck old file does not fail the save.
 
 ## Future option: middle ground + orphan cleanup
 

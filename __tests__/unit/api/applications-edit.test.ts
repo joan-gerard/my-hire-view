@@ -28,6 +28,8 @@ const {
   mockDeleteCvIfOurs,
   mockCheckCvObjectExists,
   mockIsOwnedTailoredCvUrl,
+  mockGetCvObjectKeyFromPublicUrl,
+  mockToCanonicalCvPublicUrl,
   mockValidateSlugForApplication,
   SLUG_COLLISION_USER_MESSAGE,
 } = vi.hoisted(() => ({
@@ -37,6 +39,14 @@ const {
   mockDeleteCvIfOurs: vi.fn(),
   mockCheckCvObjectExists: vi.fn(),
   mockIsOwnedTailoredCvUrl: vi.fn().mockReturnValue(true),
+  mockGetCvObjectKeyFromPublicUrl: vi.fn(
+    (url: string | null | undefined) =>
+      typeof url === "string" && url.length > 0 ? `key:${url}` : null,
+  ),
+  mockToCanonicalCvPublicUrl: vi.fn(
+    (url: string | null | undefined) =>
+      typeof url === "string" && url.length > 0 ? url : null,
+  ),
   mockValidateSlugForApplication: vi.fn(),
   SLUG_COLLISION_USER_MESSAGE:
     "You already have an application with this slug. Change the text slightly or pick another slug.",
@@ -58,6 +68,8 @@ vi.mock("@/lib/utils/cv-storage", () => ({
   deleteApplicationCvIfTailored: mockDeleteCvIfOurs,
   checkCvObjectExists: mockCheckCvObjectExists,
   isOwnedTailoredCvUrl: mockIsOwnedTailoredCvUrl,
+  getCvObjectKeyFromPublicUrl: mockGetCvObjectKeyFromPublicUrl,
+  toCanonicalCvPublicUrl: mockToCanonicalCvPublicUrl,
 }));
 vi.mock("@/lib/utils/slug", () => ({
   SLUG_COLLISION_USER_MESSAGE,
@@ -68,7 +80,6 @@ import { PUT } from "@/app/api/applications/route";
 import { GET as getById } from "@/app/api/applications/by-id/[id]/route";
 import {
   ok,
-  okWithCount,
   dbError,
   makeSupabaseClient,
 } from "../../helpers/supabase-mock";
@@ -204,7 +215,7 @@ describe("PUT /api/applications", () => {
 
     const client = makeSupabaseClient([
       ok(ownershipRow()),
-      okWithCount(null, 0),
+      ok([]),
       ok({ ...EXISTING_APP, cv_url: newCvUrl }),
     ]);
     const originalFrom = client.from as (
@@ -237,7 +248,7 @@ describe("PUT /api/applications", () => {
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([
         ok(ownershipRow()),
-        okWithCount(null, 0),
+        ok([]),
         dbError("Update failed"),
       ]),
     );
@@ -287,7 +298,7 @@ describe("PUT /api/applications", () => {
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([
         ok(ownershipRow()),
-        okWithCount(null, 0),
+        ok([]),
         ok(EXISTING_APP),
       ]),
     );
@@ -319,14 +330,19 @@ describe("PUT /api/applications", () => {
   });
 
   it("returns 409 when tailored cv_url is already used by another application", async () => {
+    const sharedUrl =
+      "https://r2.example.com/cvs/user-abc/tailored/shared.pdf";
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([ok(ownershipRow()), okWithCount(null, 1)]),
+      makeSupabaseClient([
+        ok(ownershipRow()),
+        ok([{ id: "other-app", cv_url: sharedUrl }]),
+      ]),
     );
 
     const response = await PUT(
       makePutRequest({
         id: APP_ID,
-        cv_url: "https://r2.example.com/cvs/user-abc/tailored/shared.pdf",
+        cv_url: sharedUrl,
       }),
     );
     expect(response.status).toBe(409);
