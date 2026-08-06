@@ -76,6 +76,7 @@ vi.mock("@/lib/utils/slug", () => ({
 import { POST } from "@/app/api/applications/route";
 import {
   ok,
+  okWithCount,
   dbError,
   makeSupabaseClient,
 } from "../../helpers/supabase-mock";
@@ -109,11 +110,16 @@ function makePostRequest(body: object): NextRequest {
   });
 }
 
-/** Chains for tailored create: profile → uniqueness (free) → insert result */
+/** Chains for tailored create: profile → exact URL free → legacy scan free → insert */
 function tailoredCreateChains(
   insertResult: ReturnType<typeof ok> | ReturnType<typeof dbError>,
 ) {
-  return [ok(PROFILE_SNAPSHOT), ok([]), insertResult];
+  return [
+    ok(PROFILE_SNAPSHOT),
+    okWithCount(null, 0),
+    ok([]),
+    insertResult,
+  ];
 }
 
 beforeEach(() => {
@@ -280,10 +286,7 @@ describe("POST /api/applications", () => {
 
   it("returns 409 when tailored cv_url is already used by another application", async () => {
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([
-        ok(PROFILE_SNAPSHOT),
-        ok([{ id: "other-app", cv_url: BASE_APP_INPUT.cv_url }]),
-      ]),
+      makeSupabaseClient([ok(PROFILE_SNAPSHOT), okWithCount(null, 1)]),
     );
 
     const response = await POST(makePostRequest(BASE_APP_INPUT));

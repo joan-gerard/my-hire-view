@@ -80,6 +80,7 @@ import { PUT } from "@/app/api/applications/route";
 import { GET as getById } from "@/app/api/applications/by-id/[id]/route";
 import {
   ok,
+  okWithCount,
   dbError,
   makeSupabaseClient,
 } from "../../helpers/supabase-mock";
@@ -215,6 +216,7 @@ describe("PUT /api/applications", () => {
 
     const client = makeSupabaseClient([
       ok(ownershipRow()),
+      okWithCount(null, 0),
       ok([]),
       ok({ ...EXISTING_APP, cv_url: newCvUrl }),
     ]);
@@ -248,6 +250,7 @@ describe("PUT /api/applications", () => {
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([
         ok(ownershipRow()),
+        okWithCount(null, 0),
         ok([]),
         dbError("Update failed"),
       ]),
@@ -298,6 +301,7 @@ describe("PUT /api/applications", () => {
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([
         ok(ownershipRow()),
+        okWithCount(null, 0),
         ok([]),
         ok(EXISTING_APP),
       ]),
@@ -333,10 +337,7 @@ describe("PUT /api/applications", () => {
     const sharedUrl =
       "https://r2.example.com/cvs/user-abc/tailored/shared.pdf";
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([
-        ok(ownershipRow()),
-        ok([{ id: "other-app", cv_url: sharedUrl }]),
-      ]),
+      makeSupabaseClient([ok(ownershipRow()), okWithCount(null, 1)]),
     );
 
     const response = await PUT(

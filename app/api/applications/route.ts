@@ -167,9 +167,12 @@ async function resolvePrimaryCvForUser(
 /**
  * Tailored CVs are one application ↔ one R2 object. Compares decoded object keys
  * so percent-encoded / query / fragment URL variants of the same object count as
- * in use. Pages past PostgREST `max_rows` so uniqueness does not silently miss
- * older rows. Partial unique index `applications_user_id_tailored_cv_url_key` is
- * the race backstop after we canonicalize the URL on write.
+ * in use.
+ *
+ * 1. Fast path: exact match on the canonical `cv_url` (aligned with the partial
+ *    unique index for newly written rows).
+ * 2. Legacy variants: keyset-paginate by `id` past PostgREST `max_rows`. Keyset
+ *    avoids offset page-shift skips when rows are inserted/deleted mid-scan.
  */
 async function isTailoredCvUrlInUse(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -182,9 +185,32 @@ async function isTailoredCvUrlInUse(
     return { inUse: true, error: "Invalid tailored CV URL" };
   }
 
-  // Stay under typical PostgREST max_rows (1000) and page until exhausted.
+  const canonical = toCanonicalCvPublicUrl(cvUrl);
+  if (canonical) {
+    let exactQuery = supabase
+      .from("applications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("cv_type", "tailored")
+      .eq("cv_url", canonical);
+
+    if (excludeApplicationId) {
+      exactQuery = exactQuery.neq("id", excludeApplicationId);
+    }
+
+    const { count, error } = await exactQuery;
+    if (error) {
+      console.error("isTailoredCvUrlInUse exact:", error);
+      return { inUse: true, error: error.message };
+    }
+    if ((count ?? 0) > 0) {
+      return { inUse: true, error: null };
+    }
+  }
+
+  // Stay under typical PostgREST max_rows (1000); advance by last seen id.
   const pageSize = 1000;
-  let offset = 0;
+  let lastId: string | null = null;
 
   for (;;) {
     let query = supabase
@@ -193,7 +219,11 @@ async function isTailoredCvUrlInUse(
       .eq("user_id", userId)
       .eq("cv_type", "tailored")
       .order("id", { ascending: true })
-      .range(offset, offset + pageSize - 1);
+      .limit(pageSize);
+
+    if (lastId) {
+      query = query.gt("id", lastId);
+    }
 
     if (excludeApplicationId) {
       query = query.neq("id", excludeApplicationId);
@@ -211,7 +241,12 @@ async function isTailoredCvUrlInUse(
     );
     if (inUse) return { inUse: true, error: null };
     if (rows.length < pageSize) return { inUse: false, error: null };
-    offset += pageSize;
+
+    const nextLastId = rows[rows.length - 1]?.id;
+    if (typeof nextLastId !== "string" || nextLastId.length === 0) {
+      return { inUse: false, error: null };
+    }
+    lastId = nextLastId;
   }
 }
 
