@@ -5,7 +5,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 **Prerequisites**
 
 - [ ] `pnpm run dev` running
-- [ ] Migrations `021`–`023` applied in Supabase
+- [ ] Migrations `021`–`027` applied in Supabase
 - [ ] R2 configured (`R2_*` in `.env.local`); uploads succeed
 - [ ] Logged in as a user who can open `/admin`, `/admin/profile`, `/admin/new`
 - [ ] Access to Supabase **Table Editor** → `applications`, `primary_cvs` (and R2 dashboard optional)
@@ -182,6 +182,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] `primary_cvs` rows only for the owning `user_id`
 - [ ] Deleting a primary sets `applications.primary_cv_id` to null where FK `ON DELETE SET NULL` applied (URL may still point at deleted object until edited); `applications.user_id` must remain set
 - [ ] (B3-042) In SQL Editor as a privileged role, an `UPDATE` that sets `primary_cv_id` to another user’s library id is rejected by trigger `applications_primary_cv_same_user`
+- [ ] (B3-042) In SQL Editor, changing `primary_cvs.user_id` on a referenced (or any) row is rejected by trigger `primary_cvs_user_id_immutable`
 
 ---
 
@@ -200,4 +201,4 @@ Those are tracked in [Backlog.md](../Backlog.md) (After launch).
 
 ## Done when
 
-All applicable boxes pass with migrations `021`–`023` applied, and `pnpm test:ci` is green.
+All applicable boxes pass with migrations `021`–`027` applied, and `pnpm test:ci` is green.

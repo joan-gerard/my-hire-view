@@ -5,7 +5,10 @@
 -- cannot use ON DELETE SET NULL safely: Postgres would null *both* FK columns,
 -- including applications.user_id.
 --
--- Keep the id-only FK; enforce same-user ownership with a BEFORE trigger.
+-- Keep the id-only FK; enforce same-user ownership with:
+--   1) BEFORE trigger on applications (insert/update of primary_cv_id / user_id)
+--   2) BEFORE trigger on primary_cvs making user_id immutable (parent-side hole:
+--      reassigning ownership would silently break the child invariant)
 -- API still checks ownership; this is the DB backstop.
 
 -- Defensive: clear any cross-user links before enforcing (should be none).
@@ -55,3 +58,34 @@ CREATE TRIGGER applications_primary_cv_same_user
   ON applications
   FOR EACH ROW
   EXECUTE FUNCTION enforce_application_primary_cv_same_user();
+
+-- Parent-side: primary_cvs.user_id must never change (no ownership transfer).
+-- Without this, a privileged UPDATE of primary_cvs.user_id could leave
+-- applications pointing at a CV owned by another user until a later app write.
+
+CREATE OR REPLACE FUNCTION enforce_primary_cv_user_id_immutable()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+    RAISE EXCEPTION
+      'primary_cvs.user_id is immutable (id %)',
+      OLD.id
+      USING ERRCODE = '23514'; -- check_violation
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION enforce_primary_cv_user_id_immutable() IS
+  'B3-042: Reject any change to primary_cvs.user_id. Complements applications_primary_cv_same_user; ownership never transfers.';
+
+DROP TRIGGER IF EXISTS primary_cvs_user_id_immutable ON primary_cvs;
+
+CREATE TRIGGER primary_cvs_user_id_immutable
+  BEFORE UPDATE OF user_id
+  ON primary_cvs
+  FOR EACH ROW
+  EXECUTE FUNCTION enforce_primary_cv_user_id_immutable();

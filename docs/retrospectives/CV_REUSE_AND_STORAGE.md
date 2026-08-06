@@ -114,7 +114,7 @@ This prepares for a future hard-delete of long-archived applications without enc
 | API | `GET/POST/DELETE /api/profile/primary-cvs` |
 | Docs | This retrospective + backlog tickets for retention |
 
-**Migrations:** `021_application_status_and_archived_at.sql`, `022_master_cvs.sql`, `024_primary_cvs_rename.sql`, `027_applications_primary_cv_same_user.sql` (same-user ownership trigger for `primary_cv_id`).
+**Migrations:** `021_application_status_and_archived_at.sql`, `022_master_cvs.sql`, `024_primary_cvs_rename.sql`, `027_applications_primary_cv_same_user.sql` (same-user ownership trigger for `primary_cv_id` + immutable `primary_cvs.user_id`).
 
 ---
 
