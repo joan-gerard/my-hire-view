@@ -62,7 +62,7 @@ Cross-cutting already in place on many routes: schema validation at the boundary
 
 `GET /api/applications`
 
-List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) — not CV/video/candidate/profile columns. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`). `public_id` is resolved read-only (profiles row, then Auth `user_metadata`); this endpoint does **not** create a profiles row.
+List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) — not CV/video/candidate/profile columns. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`). `public_id` is resolved read-only (profiles row, then Auth `user_metadata`); this endpoint does **not** create a profiles row. When neither source has a valid id, `public_id` is `null` and the dashboard disables share/view actions (avoids `/view//…` URLs).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -598,7 +598,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 **Side effects**
 
 - Creates a `profiles` row (`user_id`, `public_id`, `first_name`, `last_name`; other columns null). Failures are logged; signup still succeeds. Retries: confirmation `/auth/callback`, one extra attempt when a session is issued immediately, and `POST /api/auth/login` bootstrap.
-- `createInitialProfile` re-selects by `user_id` on unique conflicts (does not treat a `public_id` collision as success) and regenerates invalid/`taken` public ids, syncing Auth metadata when the stored id changes (C1-010, C1-038).
+- `createInitialProfile` re-selects by `user_id` on unique conflicts (does not treat a `public_id` collision as success), regenerates invalid/`taken` public ids, and always reconciles Auth `user_metadata.public_id` to the profiles value (sync failure is returned as an error) (C1-010, C1-038).
 
 **What works**
 

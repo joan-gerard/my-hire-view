@@ -8,6 +8,7 @@ export type InitialProfileInput = {
   userId: string;
   first_name: string;
   last_name: string;
+  /** May be empty or invalid — regenerated before insert (C1-038). */
   public_id: string;
 };
 
@@ -17,21 +18,28 @@ const MAX_PUBLIC_ID_ATTEMPTS = 3;
 type AdminClient = ReturnType<typeof createAdminClient>;
 
 /**
- * Merges `public_id` into Auth `user_metadata` when the profiles row used a
- * different id than the caller requested (invalid format or uniqueness retry).
+ * Ensures Auth `user_metadata.public_id` matches the profiles row value.
+ * No-ops when already equal. Returns an error if get/update fails so callers
+ * do not treat a divergent metadata state as success.
  */
 async function syncPublicIdToAuthMetadata(
   admin: AdminClient,
   userId: string,
   publicId: string,
-): Promise<void> {
+): Promise<{ error: string | null }> {
   const { data, error: getError } = await admin.auth.admin.getUserById(userId);
   if (getError || !data.user) {
+    const message = getError?.message ?? "user missing";
     console.error(
       "createInitialProfile: failed to load Auth user for public_id sync:",
-      getError?.message ?? "user missing",
+      message,
     );
-    return;
+    return { error: message };
+  }
+
+  const current = data.user.user_metadata?.public_id;
+  if (typeof current === "string" && current === publicId) {
+    return { error: null };
   }
 
   const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
@@ -45,7 +53,10 @@ async function syncPublicIdToAuthMetadata(
       "createInitialProfile: failed to sync public_id to Auth metadata:",
       updateError.message,
     );
+    return { error: updateError.message };
   }
+
+  return { error: null };
 }
 
 /**
@@ -54,7 +65,8 @@ async function syncPublicIdToAuthMetadata(
  * (no session / RLS insert yet) and when a session is issued immediately.
  *
  * Does not overwrite an existing row (safe to call from signup, auth callback,
- * and login bootstrap).
+ * and login bootstrap). Always reconciles Auth `public_id` to the profiles value
+ * when a row exists or is created.
  *
  * Unique violations (`23505`): re-select by `user_id` before claiming success.
  * If this user still has no row, treat it as a `public_id` collision and retry
@@ -67,7 +79,7 @@ export async function createInitialProfile(
 
   const { data: existing, error: selectError } = await admin
     .from("profiles")
-    .select("user_id")
+    .select("user_id, public_id")
     .eq("user_id", input.userId)
     .maybeSingle();
 
@@ -77,6 +89,12 @@ export async function createInitialProfile(
   }
 
   if (existing) {
+    if (
+      typeof existing.public_id === "string" &&
+      isValidPublicId(existing.public_id)
+    ) {
+      return syncPublicIdToAuthMetadata(admin, input.userId, existing.public_id);
+    }
     return { error: null };
   }
 
@@ -97,8 +115,15 @@ export async function createInitialProfile(
     });
 
     if (!insertError) {
-      if (publicId !== input.public_id) {
-        await syncPublicIdToAuthMetadata(admin, input.userId, publicId);
+      const sync = await syncPublicIdToAuthMetadata(
+        admin,
+        input.userId,
+        publicId,
+      );
+      if (sync.error) {
+        return {
+          error: `Auth public_id sync failed: ${sync.error}`,
+        };
       }
       return { error: null };
     }
@@ -111,7 +136,7 @@ export async function createInitialProfile(
     // Unique violation: either concurrent insert for this user_id, or public_id taken.
     const { data: afterConflict, error: reselectError } = await admin
       .from("profiles")
-      .select("user_id")
+      .select("user_id, public_id")
       .eq("user_id", input.userId)
       .maybeSingle();
 
@@ -124,6 +149,16 @@ export async function createInitialProfile(
     }
 
     if (afterConflict) {
+      if (
+        typeof afterConflict.public_id === "string" &&
+        isValidPublicId(afterConflict.public_id)
+      ) {
+        return syncPublicIdToAuthMetadata(
+          admin,
+          input.userId,
+          afterConflict.public_id,
+        );
+      }
       return { error: null };
     }
 

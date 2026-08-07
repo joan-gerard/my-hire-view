@@ -102,10 +102,14 @@ export default function ApplicationCard({
 }: ApplicationCardProps) {
   const [copied, setCopied] = useState(false);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
-  const shareableUrl = getApplicationUrl(application.public_id, application.slug);
+  const canShare = Boolean(application.public_id);
+  const shareableUrl = canShare
+    ? getApplicationUrl(application.public_id!, application.slug)
+    : null;
   const isArchived = application.status === 'archived';
 
   const handleCopyLink = async () => {
+    if (!shareableUrl) return;
     const success = await copyToClipboard(shareableUrl);
     if (success) {
       setCopied(true);
@@ -130,14 +134,24 @@ export default function ApplicationCard({
 
           <div className="hidden flex-1 sm:block" aria-hidden="true" />
 
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--brand-primary)]/30 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
-          >
-            <CopyIcon className="h-4 w-4" />
-            {copied ? 'Copied!' : 'Copy Link'}
-          </button>
+          {canShare ? (
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--brand-primary)]/30 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
+            >
+              <CopyIcon className="h-4 w-4" />
+              {copied ? 'Copied!' : 'Copy Link'}
+            </button>
+          ) : (
+            <span
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--foreground)]/50"
+              title="Complete your profile to get a share link"
+            >
+              <CopyIcon className="h-4 w-4" />
+              Link unavailable
+            </span>
+          )}
 
           <button
             type="button"
@@ -153,15 +167,25 @@ export default function ApplicationCard({
             )}
           </button>
 
-          <Link
-            href={`/view/${application.public_id}/${application.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
-          >
-            <ExternalLinkIcon className="h-4 w-4" />
-            View Application
-          </Link>
+          {canShare ? (
+            <Link
+              href={`/view/${application.public_id}/${application.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
+            >
+              <ExternalLinkIcon className="h-4 w-4" />
+              View Application
+            </Link>
+          ) : (
+            <span
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--foreground)]/10 px-3 py-1.5 text-sm font-medium text-[var(--foreground)]/50"
+              title="Complete your profile to preview the public page"
+            >
+              <ExternalLinkIcon className="h-4 w-4" />
+              View unavailable
+            </span>
+          )}
 
           <ApplicationCardDropdown
             applicationId={application.id}

@@ -44,13 +44,21 @@ export async function POST(request: NextRequest) {
 
   const user = data.user ?? data.session.user;
   if (user?.id) {
-    const profileResult = await bootstrapInitialProfile(user);
-    if (profileResult.error) {
-      console.error(
-        'Login succeeded but profiles bootstrap failed:',
-        profileResult.error,
-      );
-      // Do not fail login — ensureProfilePublicId / PUT profile remain safety nets.
+    try {
+      const profileResult = await bootstrapInitialProfile(user);
+      if (profileResult.skipped) {
+        console.warn(
+          'Login: skipped profile bootstrap (missing first/last name in metadata)',
+        );
+      } else if (profileResult.error) {
+        console.error(
+          'Login succeeded but profiles bootstrap failed:',
+          profileResult.error,
+        );
+      }
+    } catch (err) {
+      // Do not fail login on bootstrap throws (e.g. missing service-role env).
+      console.error('Login profiles bootstrap threw:', err);
     }
   }
 

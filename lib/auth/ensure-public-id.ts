@@ -58,6 +58,18 @@ export async function ensureProfilePublicId(
     .maybeSingle();
 
   if (existing?.public_id) {
+    const fromMeta = publicIdFromUserMetadata(user);
+    if (fromMeta !== existing.public_id) {
+      const { error: metaError } = await supabase.auth.updateUser({
+        data: { public_id: existing.public_id },
+      });
+      if (metaError) {
+        console.error(
+          "Failed to sync profiles.public_id to user_metadata:",
+          metaError.message,
+        );
+      }
+    }
     return existing.public_id;
   }
 

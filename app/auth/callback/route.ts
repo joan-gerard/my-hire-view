@@ -60,12 +60,20 @@ export async function GET(request: Request) {
 
   const user = data.user ?? data.session?.user;
   if (user?.id) {
-    const result = await bootstrapInitialProfile(user);
-    if (result.error) {
-      console.error(
-        'Auth callback createInitialProfile failed:',
-        result.error,
-      );
+    try {
+      const result = await bootstrapInitialProfile(user);
+      if (result.skipped) {
+        console.warn(
+          'Auth callback: skipped profile create (missing first/last name in metadata)',
+        );
+      } else if (result.error) {
+        console.error(
+          'Auth callback createInitialProfile failed:',
+          result.error,
+        );
+      }
+    } catch (err) {
+      console.error('Auth callback profile bootstrap threw:', err);
     }
   }
 

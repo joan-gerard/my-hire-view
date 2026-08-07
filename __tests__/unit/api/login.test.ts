@@ -113,6 +113,21 @@ describe("POST /api/auth/login", () => {
     expect(await response.json()).toEqual({ success: true });
   });
 
+  it("still returns success if profile bootstrap throws", async () => {
+    const user = { id: "user-1", user_metadata: {} };
+    mockSignInWithPassword.mockResolvedValue({
+      data: { user, session: { access_token: "tok", user } },
+      error: null,
+    });
+    mockBootstrapInitialProfile.mockRejectedValue(new Error("env missing"));
+
+    const response = await POST(
+      makeRequest({ email: "jane@example.com", password: "secret1" }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true });
+  });
+
   it("returns 429 when rate limited", async () => {
     mockCheckRateLimit.mockReturnValue({
       success: false,

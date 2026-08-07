@@ -72,7 +72,7 @@ describe("bootstrapInitialProfile", () => {
     });
   });
 
-  it("generates a public_id when metadata is missing or invalid", async () => {
+  it("passes raw invalid public_id through so createInitialProfile can sync Auth", async () => {
     await bootstrapInitialProfile({
       id: "user-1",
       user_metadata: {
@@ -86,17 +86,34 @@ describe("bootstrapInitialProfile", () => {
       userId: "user-1",
       first_name: "Jane",
       last_name: "Doe",
-      public_id: expect.stringMatching(/^[a-z0-9]{8}$/),
+      public_id: "not valid",
     });
   });
 
-  it("returns an error when names are missing", async () => {
+  it("passes an empty public_id when metadata is missing", async () => {
+    await bootstrapInitialProfile({
+      id: "user-1",
+      user_metadata: {
+        first_name: "Jane",
+        last_name: "Doe",
+      },
+    });
+
+    expect(mockCreateInitialProfile).toHaveBeenCalledWith({
+      userId: "user-1",
+      first_name: "Jane",
+      last_name: "Doe",
+      public_id: "",
+    });
+  });
+
+  it("skips create when names are missing (not an error)", async () => {
     const result = await bootstrapInitialProfile({
       id: "user-1",
       user_metadata: { public_id: "k7x2m9ab" },
     });
 
-    expect(result.error).toContain("first/last name");
+    expect(result).toEqual({ error: null, skipped: true });
     expect(mockCreateInitialProfile).not.toHaveBeenCalled();
   });
 });

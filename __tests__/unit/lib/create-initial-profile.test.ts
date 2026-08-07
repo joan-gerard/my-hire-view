@@ -1,6 +1,6 @@
 /**
  * Unit tests for createInitialProfile — idempotency, 23505 user_id vs public_id,
- * and invalid public_id regeneration (C1-010, C1-038).
+ * Auth metadata sync, and invalid public_id regeneration (C1-010, C1-038).
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -47,9 +47,7 @@ beforeEach(() => {
   mockUpdateUserById.mockResolvedValue({ data: { user: {} }, error: null });
 });
 
-function adminWithChains(
-  chains: ReturnType<typeof ok>[],
-) {
+function adminWithChains(chains: ReturnType<typeof ok>[]) {
   const client = makeSupabaseClient(chains);
   mockCreateAdminClient.mockReturnValue({
     ...client,
@@ -65,15 +63,38 @@ function adminWithChains(
 }
 
 describe("createInitialProfile", () => {
-  it("returns success when a profiles row already exists", async () => {
-    adminWithChains([ok({ user_id: "user-1" })]);
+  it("returns success when a profiles row already exists and Auth matches", async () => {
+    adminWithChains([ok({ user_id: "user-1", public_id: "k7x2m9ab" })]);
 
     const result = await createInitialProfile(INPUT);
     expect(result).toEqual({ error: null });
+    expect(mockGetUserById).toHaveBeenCalledWith("user-1");
     expect(mockUpdateUserById).not.toHaveBeenCalled();
   });
 
-  it("inserts a profiles row when none exists", async () => {
+  it("repairs Auth metadata when an existing row has a different public_id", async () => {
+    mockGetUserById.mockResolvedValue({
+      data: {
+        user: {
+          id: "user-1",
+          user_metadata: { public_id: "BAD-ID!" },
+        },
+      },
+      error: null,
+    });
+    adminWithChains([ok({ user_id: "user-1", public_id: "k7x2m9ab" })]);
+
+    const result = await createInitialProfile(INPUT);
+    expect(result).toEqual({ error: null });
+    expect(mockUpdateUserById).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({
+        user_metadata: expect.objectContaining({ public_id: "k7x2m9ab" }),
+      }),
+    );
+  });
+
+  it("inserts a profiles row and no-ops Auth sync when metadata already matches", async () => {
     const client = adminWithChains([
       ok(null),
       ok(null), // insert
@@ -82,6 +103,7 @@ describe("createInitialProfile", () => {
     const result = await createInitialProfile(INPUT);
     expect(result).toEqual({ error: null });
     expect(client.from).toHaveBeenCalledWith("profiles");
+    expect(mockGetUserById).toHaveBeenCalled();
     expect(mockUpdateUserById).not.toHaveBeenCalled();
   });
 
@@ -89,7 +111,7 @@ describe("createInitialProfile", () => {
     adminWithChains([
       ok(null), // initial select
       dbError("duplicate key", "23505"), // insert
-      ok({ user_id: "user-1" }), // re-select
+      ok({ user_id: "user-1", public_id: "k7x2m9ab" }), // re-select
     ]);
 
     const result = await createInitialProfile(INPUT);
@@ -140,6 +162,27 @@ describe("createInitialProfile", () => {
         }),
       }),
     );
+  });
+
+  it("returns an error when Auth metadata sync fails after insert", async () => {
+    mockUpdateUserById.mockResolvedValue({
+      data: { user: null },
+      error: { message: "auth unavailable" },
+    });
+    mockGetUserById.mockResolvedValue({
+      data: {
+        user: {
+          id: "user-1",
+          user_metadata: { public_id: "stale-id" },
+        },
+      },
+      error: null,
+    });
+    adminWithChains([ok(null), ok(null)]);
+
+    const result = await createInitialProfile(INPUT);
+    expect(result.error).toContain("Auth public_id sync failed");
+    expect(result.error).toContain("auth unavailable");
   });
 
   it("returns the select error when the initial lookup fails", async () => {
