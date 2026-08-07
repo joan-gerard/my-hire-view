@@ -219,4 +219,50 @@ describe("ensureProfilePublicId", () => {
       data: { public_id: id },
     });
   });
+
+  it("retries create upsert when public_id collides repeatedly then succeeds", async () => {
+    const client = clientWithAuth([
+      ok(null), // no existing
+      ok(null), // ownership for preferred
+      dbError("duplicate key", "23505"),
+      dbError("duplicate key", "23505"),
+      ok(null), // third upsert succeeds
+    ]);
+
+    const id = await ensureProfilePublicId(client as never, {
+      id: "u1",
+      user_metadata: {
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "taken001",
+      },
+    });
+
+    expect(id).toMatch(/^[a-z0-9]{8}$/);
+    expect(id).not.toBe("taken001");
+    expect(mockUpdateUser).toHaveBeenCalledWith({
+      data: { public_id: id },
+    });
+  });
+
+  it("throws when create upsert exhausts unique-id retries", async () => {
+    const client = clientWithAuth([
+      ok(null),
+      ok(null), // ownership
+      dbError("duplicate key", "23505"),
+      dbError("duplicate key", "23505"),
+      dbError("duplicate key", "23505"),
+    ]);
+
+    await expect(
+      ensureProfilePublicId(client as never, {
+        id: "u1",
+        user_metadata: {
+          first_name: "Jane",
+          last_name: "Doe",
+          public_id: "taken001",
+        },
+      }),
+    ).rejects.toThrow(/could not assign a unique/i);
+  });
 });

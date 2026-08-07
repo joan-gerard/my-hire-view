@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import {
   choosePreferredPublicId,
+  PUBLIC_ID_REPAIR_MAX_ATTEMPTS,
   repairProfilePublicId,
 } from "@/lib/auth/repair-profile-public-id";
 import {
@@ -75,6 +76,8 @@ async function syncPublicIdToUserMetadata(
  * Ensures the user has a valid profiles.public_id (and metadata copy when needed).
  * Creates or repairs a minimal profiles row when missing/invalid so public URLs
  * can resolve. Call on application create (not on dashboard list GET).
+ *
+ * Repair updates only `public_id` (never overwrites existing names).
  */
 export async function ensureProfilePublicId(
   supabase: SupabaseClient,
@@ -106,12 +109,6 @@ export async function ensureProfilePublicId(
       stalePublicId:
         typeof existing.public_id === "string" ? existing.public_id : null,
       preferredPublicId: fromMeta ?? "",
-      ...(names && {
-        extraUpdateFields: {
-          first_name: names.first_name,
-          last_name: names.last_name,
-        },
-      }),
     });
 
     if (repaired.error || !repaired.publicId) {
@@ -126,47 +123,35 @@ export async function ensureProfilePublicId(
     return repaired.publicId;
   }
 
-  const publicId = await choosePreferredPublicId(supabase, user.id, fromMeta);
+  let publicId = await choosePreferredPublicId(supabase, user.id, fromMeta);
 
-  const { error: upsertError } = await supabase.from("profiles").upsert(
-    {
-      user_id: user.id,
-      public_id: publicId,
-      ...(names && {
-        first_name: names.first_name,
-        last_name: names.last_name,
-      }),
-    },
-    { onConflict: "user_id" },
-  );
+  for (let attempt = 0; attempt < PUBLIC_ID_REPAIR_MAX_ATTEMPTS; attempt++) {
+    const { error: upsertError } = await supabase.from("profiles").upsert(
+      {
+        user_id: user.id,
+        public_id: publicId,
+        ...(names && {
+          first_name: names.first_name,
+          last_name: names.last_name,
+        }),
+      },
+      { onConflict: "user_id" },
+    );
 
-  if (upsertError) {
-    // Collision on create: retry with a fresh id once via generate (upsert rare race).
-    if (upsertError.code === "23505") {
-      const retryId = generatePublicId();
-      const { error: retryError } = await supabase.from("profiles").upsert(
-        {
-          user_id: user.id,
-          public_id: retryId,
-          ...(names && {
-            first_name: names.first_name,
-            last_name: names.last_name,
-          }),
-        },
-        { onConflict: "user_id" },
-      );
-      if (retryError) {
-        throw new Error(`Failed to assign public id: ${retryError.message}`);
+    if (!upsertError) {
+      if (publicIdFromUserMetadata(user) !== publicId) {
+        await syncPublicIdToUserMetadata(supabase, publicId);
       }
-      await syncPublicIdToUserMetadata(supabase, retryId);
-      return retryId;
+      return publicId;
     }
+
+    if (upsertError.code === "23505") {
+      publicId = generatePublicId();
+      continue;
+    }
+
     throw new Error(`Failed to assign public id: ${upsertError.message}`);
   }
 
-  if (publicIdFromUserMetadata(user) !== publicId) {
-    await syncPublicIdToUserMetadata(supabase, publicId);
-  }
-
-  return publicId;
+  throw new Error("Failed to assign public id: could not assign a unique id");
 }

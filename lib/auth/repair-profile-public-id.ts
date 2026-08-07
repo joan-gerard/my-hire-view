@@ -13,8 +13,6 @@ export type RepairProfilePublicIdOptions = {
   stalePublicId: string | null;
   /** Preferred new id when valid and not owned by another user; otherwise generated. */
   preferredPublicId: string;
-  /** Extra columns merged into the repair update (e.g. names). */
-  extraUpdateFields?: Record<string, string>;
 };
 
 export type RepairProfilePublicIdResult = {
@@ -50,8 +48,9 @@ export async function choosePreferredPublicId(
 
 /**
  * Conditionally replaces a stale/invalid `public_id` on an existing profiles row.
- * Only updates when the row still has `stalePublicId`; otherwise re-reads the
- * canonical value (concurrent repair). Retries on unique collisions.
+ * Only updates `public_id` (never names or other columns). Only updates when the
+ * row still has `stalePublicId`; otherwise re-reads the canonical value
+ * (concurrent repair). Retries on unique collisions.
  *
  * Shared by signup bootstrap (`createInitialProfile`) and application-create
  * safety net (`ensureProfilePublicId`).
@@ -60,7 +59,7 @@ export async function repairProfilePublicId(
   client: SupabaseClient,
   options: RepairProfilePublicIdOptions,
 ): Promise<RepairProfilePublicIdResult> {
-  const { userId, extraUpdateFields } = options;
+  const { userId } = options;
   let publicId = await choosePreferredPublicId(
     client,
     userId,
@@ -71,10 +70,7 @@ export async function repairProfilePublicId(
   for (let attempt = 0; attempt < PUBLIC_ID_REPAIR_MAX_ATTEMPTS; attempt++) {
     let query = client
       .from("profiles")
-      .update({
-        public_id: publicId,
-        ...extraUpdateFields,
-      })
+      .update({ public_id: publicId })
       .eq("user_id", userId);
 
     if (expectedStale === null) {
