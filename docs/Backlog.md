@@ -58,7 +58,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | F3-039 | Security | Waitlist bot protection | CAPTCHA, honeypot, or Turnstile — IP limits alone are weak. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F1-040 | Security | Harden auth login/signup responses | Validate email/password (format, max length); prefer generic errors (less enumeration); wrap malformed JSON → **400**; log unexpected Auth API failures. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F1-041 | Security | Enforce signup password rules | Require ≥ 8 characters and ≥ 1 special character on signup (client + `POST /api/auth/signup`). | — |
-| B3-042 | Security | DB same-user ownership for `primary_cv_id` | API checks ownership; FK only references `primary_cvs(id)`. **In progress:** forward migration `027` — applications same-user trigger + `primary_cvs.user_id` immutability + quarantine of pre-existing cross-user rows (draft + scrub `cv_url`; public serves URL not FK). Not composite FK: `ON DELETE SET NULL` on `(primary_cv_id, user_id)` would also null `user_id`. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F24-043 | Marketing | Landing product screenshots | Replace SVG placeholders when real shots exist. | [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) |
 | F19-044 | UX | New-user onboarding checklist | Checklist / workflow for new users (e.g. fill profile, upload photo, create first application) — shown until steps are complete. | — |
 | F15-045 | UX | Persist create-application form draft | Keep create-application form data until submit so refresh / navigation doesn’t lose progress (e.g. local draft or autosave). | — |
@@ -182,7 +181,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 | -- | ------ | ------- | ----- |
 | B1 | `fix/b1-tailored-cv-integrity` | `B1-003`, `B1-004`, `B1-005` | ~~Canonical/atomic tailored `cv_url` uniqueness; allow-list tailored deletes; fail closed when `R2_PUBLIC_BASE_URL` unset~~ (shipped) |
 | B2 | `fix/b2-primary-cv-filename-put` | `B2-006` | ~~Filename-only primary CV PUT~~ (shipped) |
-| B3 | `feat/b3-primary-cv-ownership-fk` | `B3-042` | DB same-user ownership for `primary_cv_id` (migration; pairs with B1 schema work) |
+| B3 | `feat/b3-primary-cv-ownership-fk` | `B3-042` | ~~DB same-user ownership for `primary_cv_id` (migration; pairs with B1 schema work)~~ (shipped) |
 
 #### Sprint C — Profile / signup invariants
 
