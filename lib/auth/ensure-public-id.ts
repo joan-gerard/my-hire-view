@@ -1,17 +1,24 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
-import { generatePublicId } from "@/lib/utils/public-id";
+import {
+  generatePublicId,
+  isValidPublicId,
+} from "@/lib/utils/public-id";
 
 type AuthUserLike = {
   id: string;
   user_metadata?: Record<string, unknown> | null;
 };
 
-/** Reads trimmed public_id from Supabase Auth user_metadata. */
+/**
+ * Reads a valid public_id from Supabase Auth user_metadata.
+ * Invalid or empty values return null so callers regenerate (C1-038).
+ */
 export function publicIdFromUserMetadata(user: AuthUserLike): string | null {
   const meta = user.user_metadata ?? {};
   const raw = typeof meta.public_id === "string" ? meta.public_id.trim() : "";
-  return raw || null;
+  if (!raw || !isValidPublicId(raw)) return null;
+  return raw;
 }
 
 /**

@@ -1,12 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createInitialProfile } from '@/lib/auth/create-initial-profile';
-import { namesFromUserMetadata } from '@/lib/auth/ensure-profile';
-import { publicIdFromUserMetadata } from '@/lib/auth/ensure-public-id';
+import { bootstrapInitialProfile } from '@/lib/auth/bootstrap-initial-profile';
 import { safeNextPath } from '@/lib/auth/safe-next-path';
 import { getSupabaseEnv } from '@/lib/supabase/env';
-import { generatePublicId } from '@/lib/utils/public-id';
 
 type CookieOptions = Parameters<NextResponse['cookies']['set']>[2];
 
@@ -63,24 +60,11 @@ export async function GET(request: Request) {
 
   const user = data.user ?? data.session?.user;
   if (user?.id) {
-    const names = namesFromUserMetadata(user);
-    const publicId = publicIdFromUserMetadata(user) ?? generatePublicId();
-    if (names) {
-      const result = await createInitialProfile({
-        userId: user.id,
-        first_name: names.first_name,
-        last_name: names.last_name,
-        public_id: publicId,
-      });
-      if (result.error) {
-        console.error(
-          'Auth callback createInitialProfile failed:',
-          result.error,
-        );
-      }
-    } else {
+    const result = await bootstrapInitialProfile(user);
+    if (result.error) {
       console.error(
-        'Auth callback: user has no first/last name in metadata; skipped profile create',
+        'Auth callback createInitialProfile failed:',
+        result.error,
       );
     }
   }

@@ -195,7 +195,8 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
   - **Route handler (login/signup/logout):** `lib/supabase/route-client.ts` — `createSupabaseRouteClient({ request, response })` so the response carries `Set-Cookie` headers.
   - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used for RLS-bypass ops (public application resolution, view/download count RPCs) and creating the initial `profiles` row at signup when there may be no session yet. Never used from the client.
   - **Middleware:** `lib/supabase/middleware.ts` — `updateSession(request)`: refreshes session and redirects unauthenticated users from `/admin` to `/login`. Intended to be invoked from root middleware (e.g. `middleware.ts` that re-exports or calls this; current entry is `proxy.ts` with matcher config).
-  - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, ensures a profiles row exists (`createInitialProfile`, idempotent), redirects via `safeNextPath` to a safe same-origin `next` (default `/admin`; rejects `//…` and backslash open-redirect tricks).
+  - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, ensures a profiles row exists (`bootstrapInitialProfile` → `createInitialProfile`, idempotent), redirects via `safeNextPath` to a safe same-origin `next` (default `/admin`; rejects `//…` and backslash open-redirect tricks).
+  - **Login bootstrap:** `POST /api/auth/login` also runs `bootstrapInitialProfile` so immediate-session signups that missed the callback still get a profiles row.
 
 ### 5.3 Data (Supabase)
 
