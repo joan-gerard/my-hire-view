@@ -93,7 +93,7 @@ describe("ensureProfilePublicId", () => {
     expect(mockUpdateUser).not.toHaveBeenCalled();
   });
 
-  it("repairs an invalid existing public_id instead of syncing it to Auth", async () => {
+  it("repairs an invalid existing public_id and syncs Auth to the repaired id", async () => {
     const client = clientWithAuth([
       ok({ public_id: "BAD!" }),
       ok(null), // preferred id ownership check — available
@@ -105,12 +105,17 @@ describe("ensureProfilePublicId", () => {
       user_metadata: {
         first_name: "Jane",
         last_name: "Doe",
-        public_id: "fixed001",
+        public_id: "staleid1",
       },
     });
 
     expect(id).toBe("fixed001");
-    expect(mockUpdateUser).not.toHaveBeenCalled(); // meta already matches
+    expect(mockUpdateUser).toHaveBeenCalledWith({
+      data: { public_id: "fixed001" },
+    });
+    expect(mockUpdateUser).not.toHaveBeenCalledWith({
+      data: { public_id: "BAD!" },
+    });
   });
 
   it("retries repair with a new id when the preferred public_id collides (23505)", async () => {
@@ -161,7 +166,7 @@ describe("ensureProfilePublicId", () => {
     const client = clientWithAuth([
       ok(null), // no existing row
       ok(null), // ownership check for preferred
-      ok(null), // upsert
+      ok(null), // insert
     ]);
 
     const id = await ensureProfilePublicId(client as never, {
@@ -180,7 +185,7 @@ describe("ensureProfilePublicId", () => {
   it("generates a public_id when creating and metadata has none", async () => {
     const client = clientWithAuth([
       ok(null), // no existing
-      ok(null), // upsert
+      ok(null), // insert
     ]);
 
     const id = await ensureProfilePublicId(client as never, {
@@ -201,7 +206,7 @@ describe("ensureProfilePublicId", () => {
     const client = clientWithAuth([
       ok(null), // no existing row
       ok({ user_id: "other-user" }), // ownership — taken
-      ok(null), // upsert with generated id
+      ok(null), // insert with generated id
     ]);
 
     const id = await ensureProfilePublicId(client as never, {
@@ -220,13 +225,15 @@ describe("ensureProfilePublicId", () => {
     });
   });
 
-  it("retries create upsert when public_id collides repeatedly then succeeds", async () => {
+  it("retries create insert when public_id collides repeatedly then succeeds", async () => {
     const client = clientWithAuth([
       ok(null), // no existing
       ok(null), // ownership for preferred
       dbError("duplicate key", "23505"),
+      ok(null), // re-read — no row yet (public_id taken by someone else)
       dbError("duplicate key", "23505"),
-      ok(null), // third upsert succeeds
+      ok(null), // re-read — still none
+      ok(null), // third insert succeeds
     ]);
 
     const id = await ensureProfilePublicId(client as never, {
@@ -245,13 +252,39 @@ describe("ensureProfilePublicId", () => {
     });
   });
 
-  it("throws when create upsert exhausts unique-id retries", async () => {
+  it("keeps the concurrent create winner on user_id conflict instead of overwriting", async () => {
+    const client = clientWithAuth([
+      ok(null), // no existing
+      ok(null), // ownership
+      dbError("duplicate key", "23505"), // insert lost the race
+      ok({ public_id: "winner01" }), // re-read canonical
+    ]);
+
+    const id = await ensureProfilePublicId(client as never, {
+      id: "u1",
+      user_metadata: {
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "loser001",
+      },
+    });
+
+    expect(id).toBe("winner01");
+    expect(mockUpdateUser).toHaveBeenCalledWith({
+      data: { public_id: "winner01" },
+    });
+  });
+
+  it("throws when create insert exhausts unique-id retries", async () => {
     const client = clientWithAuth([
       ok(null),
       ok(null), // ownership
       dbError("duplicate key", "23505"),
+      ok(null), // re-read empty
       dbError("duplicate key", "23505"),
+      ok(null),
       dbError("duplicate key", "23505"),
+      ok(null),
     ]);
 
     await expect(

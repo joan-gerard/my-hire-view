@@ -78,6 +78,8 @@ async function syncPublicIdToUserMetadata(
  * can resolve. Call on application create (not on dashboard list GET).
  *
  * Repair updates only `public_id` (never overwrites existing names).
+ * Create uses insert (not upsert) so a concurrent winner’s id/names are kept;
+ * on unique conflict we re-read the canonical row before syncing Auth.
  */
 export async function ensureProfilePublicId(
   supabase: SupabaseClient,
@@ -126,31 +128,46 @@ export async function ensureProfilePublicId(
   let publicId = await choosePreferredPublicId(supabase, user.id, fromMeta);
 
   for (let attempt = 0; attempt < PUBLIC_ID_REPAIR_MAX_ATTEMPTS; attempt++) {
-    const { error: upsertError } = await supabase.from("profiles").upsert(
-      {
-        user_id: user.id,
-        public_id: publicId,
-        ...(names && {
-          first_name: names.first_name,
-          last_name: names.last_name,
-        }),
-      },
-      { onConflict: "user_id" },
-    );
+    const { error: insertError } = await supabase.from("profiles").insert({
+      user_id: user.id,
+      public_id: publicId,
+      ...(names && {
+        first_name: names.first_name,
+        last_name: names.last_name,
+      }),
+    });
 
-    if (!upsertError) {
+    if (!insertError) {
       if (publicIdFromUserMetadata(user) !== publicId) {
         await syncPublicIdToUserMetadata(supabase, publicId);
       }
       return publicId;
     }
 
-    if (upsertError.code === "23505") {
-      publicId = generatePublicId();
-      continue;
+    if (insertError.code !== "23505") {
+      throw new Error(`Failed to assign public id: ${insertError.message}`);
     }
 
-    throw new Error(`Failed to assign public id: ${upsertError.message}`);
+    // Unique conflict: concurrent create for this user, or public_id taken.
+    // Prefer the canonical row if another request already won.
+    const { data: current, error: readError } = await supabase
+      .from("profiles")
+      .select("public_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (readError) {
+      throw new Error(`Failed to assign public id: ${readError.message}`);
+    }
+
+    if (current?.public_id && isValidPublicId(current.public_id)) {
+      if (publicIdFromUserMetadata(user) !== current.public_id) {
+        await syncPublicIdToUserMetadata(supabase, current.public_id);
+      }
+      return current.public_id;
+    }
+
+    publicId = generatePublicId();
   }
 
   throw new Error("Failed to assign public id: could not assign a unique id");
