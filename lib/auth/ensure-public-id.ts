@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import {
+  choosePreferredPublicId,
+  repairProfilePublicId,
+} from "@/lib/auth/repair-profile-public-id";
+import {
   generatePublicId,
   isValidPublicId,
 } from "@/lib/utils/public-id";
@@ -9,9 +13,6 @@ type AuthUserLike = {
   id: string;
   user_metadata?: Record<string, unknown> | null;
 };
-
-/** Max update attempts when repairing an invalid `public_id` collides. */
-const MAX_PUBLIC_ID_ATTEMPTS = 3;
 
 /**
  * Reads a valid public_id from Supabase Auth user_metadata.
@@ -25,9 +26,12 @@ export function publicIdFromUserMetadata(user: AuthUserLike): string | null {
 }
 
 /**
- * Read-only: valid profiles.public_id if present, else Auth user_metadata.
- * Does not create or update a profiles row (use ensureProfilePublicId for that).
- * Invalid stored values are ignored so callers do not build dead share URLs.
+ * Read-only: valid profiles.public_id if present, else Auth user_metadata
+ * only when no profiles row exists yet.
+ *
+ * When a profiles row exists but its `public_id` is invalid, returns null
+ * (does not fall back to Auth metadata — that id may belong to another user
+ * and would build cross-user share links). Use ensureProfilePublicId to repair.
  */
 export async function resolvePublicIdReadOnly(
   supabase: SupabaseClient,
@@ -39,11 +43,14 @@ export async function resolvePublicIdReadOnly(
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (
-    typeof existing?.public_id === "string" &&
-    isValidPublicId(existing.public_id)
-  ) {
-    return existing.public_id;
+  if (existing) {
+    if (
+      typeof existing.public_id === "string" &&
+      isValidPublicId(existing.public_id)
+    ) {
+      return existing.public_id;
+    }
+    return null;
   }
 
   return publicIdFromUserMetadata(user);
@@ -91,94 +98,73 @@ export async function ensureProfilePublicId(
   }
 
   const fromMeta = publicIdFromUserMetadata(user);
-  let publicId = fromMeta ?? generatePublicId();
   const names = namesFromUserMetadata(user);
-  const stalePublicId =
-    typeof existing?.public_id === "string" ? existing.public_id : null;
 
   if (existing) {
-    // Row exists with invalid/empty public_id — conditional repair.
-    let expectedStale = stalePublicId;
-    let repaired = false;
+    const repaired = await repairProfilePublicId(supabase, {
+      userId: user.id,
+      stalePublicId:
+        typeof existing.public_id === "string" ? existing.public_id : null,
+      preferredPublicId: fromMeta ?? "",
+      ...(names && {
+        extraUpdateFields: {
+          first_name: names.first_name,
+          last_name: names.last_name,
+        },
+      }),
+    });
 
-    for (let attempt = 0; attempt < MAX_PUBLIC_ID_ATTEMPTS; attempt++) {
-      let query = supabase
-        .from("profiles")
-        .update({
-          public_id: publicId,
+    if (repaired.error || !repaired.publicId) {
+      throw new Error(
+        `Failed to repair public id: ${repaired.error ?? "could not assign a unique id"}`,
+      );
+    }
+
+    if (publicIdFromUserMetadata(user) !== repaired.publicId) {
+      await syncPublicIdToUserMetadata(supabase, repaired.publicId);
+    }
+    return repaired.publicId;
+  }
+
+  const publicId = await choosePreferredPublicId(supabase, user.id, fromMeta);
+
+  const { error: upsertError } = await supabase.from("profiles").upsert(
+    {
+      user_id: user.id,
+      public_id: publicId,
+      ...(names && {
+        first_name: names.first_name,
+        last_name: names.last_name,
+      }),
+    },
+    { onConflict: "user_id" },
+  );
+
+  if (upsertError) {
+    // Collision on create: retry with a fresh id once via generate (upsert rare race).
+    if (upsertError.code === "23505") {
+      const retryId = generatePublicId();
+      const { error: retryError } = await supabase.from("profiles").upsert(
+        {
+          user_id: user.id,
+          public_id: retryId,
           ...(names && {
             first_name: names.first_name,
             last_name: names.last_name,
           }),
-        })
-        .eq("user_id", user.id);
-
-      if (expectedStale === null) {
-        query = query.is("public_id", null);
-      } else {
-        query = query.eq("public_id", expectedStale);
+        },
+        { onConflict: "user_id" },
+      );
+      if (retryError) {
+        throw new Error(`Failed to assign public id: ${retryError.message}`);
       }
-
-      const { data, error } = await query.select("public_id").maybeSingle();
-
-      if (error) {
-        if (error.code === "23505") {
-          publicId = generatePublicId();
-          continue;
-        }
-        throw new Error(`Failed to repair public id: ${error.message}`);
-      }
-
-      if (data?.public_id && isValidPublicId(data.public_id)) {
-        publicId = data.public_id;
-        repaired = true;
-        break;
-      }
-
-      const { data: current, error: readError } = await supabase
-        .from("profiles")
-        .select("public_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (readError) {
-        throw new Error(`Failed to repair public id: ${readError.message}`);
-      }
-
-      if (current?.public_id && isValidPublicId(current.public_id)) {
-        publicId = current.public_id;
-        repaired = true;
-        break;
-      }
-
-      expectedStale =
-        typeof current?.public_id === "string" ? current.public_id : null;
-      publicId = generatePublicId();
+      await syncPublicIdToUserMetadata(supabase, retryId);
+      return retryId;
     }
-
-    if (!repaired) {
-      throw new Error("Failed to repair public id: could not assign a unique id");
-    }
-  } else {
-    const { error: upsertError } = await supabase.from("profiles").upsert(
-      {
-        user_id: user.id,
-        public_id: publicId,
-        ...(names && {
-          first_name: names.first_name,
-          last_name: names.last_name,
-        }),
-      },
-      { onConflict: "user_id" },
-    );
-
-    if (upsertError) {
-      throw new Error(`Failed to assign public id: ${upsertError.message}`);
-    }
+    throw new Error(`Failed to assign public id: ${upsertError.message}`);
   }
 
-  const metaNow = publicIdFromUserMetadata(user);
-  if (metaNow !== publicId) {
+  if (publicIdFromUserMetadata(user) !== publicId) {
     await syncPublicIdToUserMetadata(supabase, publicId);
   }
 

@@ -4,6 +4,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  dbError,
   makeSupabaseClient,
   ok,
 } from "../../helpers/supabase-mock";
@@ -19,8 +20,17 @@ describe("resolvePublicIdReadOnly", () => {
     expect(id).toBe("k7x2m9ab");
   });
 
-  it("ignores an invalid profiles.public_id and falls back to metadata", async () => {
+  it("returns null when a profiles row exists with an invalid public_id (no Auth fallback)", async () => {
     const client = makeSupabaseClient([ok({ public_id: "BAD!" })]);
+    const id = await resolvePublicIdReadOnly(client as never, {
+      id: "u1",
+      user_metadata: { public_id: "k7x2m9ab" },
+    });
+    expect(id).toBeNull();
+  });
+
+  it("falls back to Auth metadata only when no profiles row exists", async () => {
+    const client = makeSupabaseClient([ok(null)]);
     const id = await resolvePublicIdReadOnly(client as never, {
       id: "u1",
       user_metadata: { public_id: "k7x2m9ab" },
@@ -86,6 +96,7 @@ describe("ensureProfilePublicId", () => {
   it("repairs an invalid existing public_id instead of syncing it to Auth", async () => {
     const client = clientWithAuth([
       ok({ public_id: "BAD!" }),
+      ok(null), // preferred id ownership check — available
       ok({ public_id: "fixed001" }), // conditional update
     ]);
 
@@ -102,9 +113,54 @@ describe("ensureProfilePublicId", () => {
     expect(mockUpdateUser).not.toHaveBeenCalled(); // meta already matches
   });
 
+  it("retries repair with a new id when the preferred public_id collides (23505)", async () => {
+    const client = clientWithAuth([
+      ok({ public_id: "BAD!" }),
+      ok(null), // ownership check for preferred
+      dbError("duplicate key", "23505"), // first repair update
+      ok({ public_id: "retryid1" }), // second update succeeds
+    ]);
+
+    const id = await ensureProfilePublicId(client as never, {
+      id: "u1",
+      user_metadata: {
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "taken001",
+      },
+    });
+
+    expect(id).toBe("retryid1");
+    expect(mockUpdateUser).toHaveBeenCalledWith({
+      data: { public_id: "retryid1" },
+    });
+  });
+
+  it("throws when repair exhausts unique-id retries", async () => {
+    const client = clientWithAuth([
+      ok({ public_id: "BAD!" }),
+      ok(null), // ownership
+      dbError("duplicate key", "23505"),
+      dbError("duplicate key", "23505"),
+      dbError("duplicate key", "23505"),
+    ]);
+
+    await expect(
+      ensureProfilePublicId(client as never, {
+        id: "u1",
+        user_metadata: {
+          first_name: "Jane",
+          last_name: "Doe",
+          public_id: "taken001",
+        },
+      }),
+    ).rejects.toThrow(/could not assign a unique/i);
+  });
+
   it("creates a profiles row when none exists", async () => {
     const client = clientWithAuth([
-      ok(null),
+      ok(null), // no existing row
+      ok(null), // ownership check for preferred
       ok(null), // upsert
     ]);
 
@@ -119,5 +175,48 @@ describe("ensureProfilePublicId", () => {
 
     expect(id).toBe("k7x2m9ab");
     expect(mockUpdateUser).not.toHaveBeenCalled();
+  });
+
+  it("generates a public_id when creating and metadata has none", async () => {
+    const client = clientWithAuth([
+      ok(null), // no existing
+      ok(null), // upsert
+    ]);
+
+    const id = await ensureProfilePublicId(client as never, {
+      id: "u1",
+      user_metadata: {
+        first_name: "Jane",
+        last_name: "Doe",
+      },
+    });
+
+    expect(id).toMatch(/^[a-z0-9]{8}$/);
+    expect(mockUpdateUser).toHaveBeenCalledWith({
+      data: { public_id: id },
+    });
+  });
+
+  it("rejects a preferred metadata id owned by another user when creating", async () => {
+    const client = clientWithAuth([
+      ok(null), // no existing row
+      ok({ user_id: "other-user" }), // ownership — taken
+      ok(null), // upsert with generated id
+    ]);
+
+    const id = await ensureProfilePublicId(client as never, {
+      id: "u1",
+      user_metadata: {
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "taken001",
+      },
+    });
+
+    expect(id).toMatch(/^[a-z0-9]{8}$/);
+    expect(id).not.toBe("taken001");
+    expect(mockUpdateUser).toHaveBeenCalledWith({
+      data: { public_id: id },
+    });
   });
 });

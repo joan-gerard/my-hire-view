@@ -101,6 +101,7 @@ describe("createInitialProfile", () => {
   it("repairs an existing row with an invalid public_id and syncs Auth", async () => {
     adminWithChains([
       ok({ user_id: "user-1", public_id: "BAD!" }),
+      ok(null), // preferred ownership check
       ok({ public_id: "newid123" }), // conditional update + select
     ]);
     mockGetUserById.mockResolvedValue({
@@ -126,7 +127,7 @@ describe("createInitialProfile", () => {
   it("uses concurrent repair winner when conditional update matches no row", async () => {
     adminWithChains([
       ok({ user_id: "user-1", public_id: "BAD!" }),
-      ok(null), // conditional update matched nothing
+      ok(null), // conditional update matched nothing (empty preferred → generate, no ownership query)
       ok({ public_id: "winner01" }), // re-read canonical
     ]);
     mockGetUserById.mockResolvedValue({

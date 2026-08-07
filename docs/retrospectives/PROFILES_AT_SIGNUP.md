@@ -79,7 +79,7 @@ After a successful password sign-in, the same bootstrap runs. This closes the **
 | Double insert (signup + callback + login) | Idempotent select-then-insert; `23505` only success after re-select by `user_id` |
 | Signup succeeds but profile insert fails | Do not fail signup; log; callback and/or login bootstrap retry; immediate session retries once |
 | Rare `public_id` unique collision | Re-select by `user_id`; if still missing, regenerate `public_id` and sync Auth metadata (sync failure is an error) |
-| Invalid Auth `public_id` metadata | Pass raw metadata into `createInitialProfile`; validate with `isValidPublicId` or regenerate and reconcile Auth by reading Auth (not trusting caller input alone). Existing rows with an invalid/empty `public_id` are repaired with a conditional update + re-read before Auth sync. `ensureProfilePublicId` / read-only resolve also reject invalid stored ids instead of syncing them into metadata. |
+| Invalid Auth `public_id` metadata | Pass raw metadata into `createInitialProfile`; validate with `isValidPublicId` or regenerate and reconcile Auth by reading Auth. Existing rows with an invalid/empty `public_id` are repaired via shared `repairProfilePublicId` (conditional update + re-read). Read-only resolve returns **null** when a profiles row exists but is invalid (no Auth fallback — avoids cross-user share links). Preferred metadata ids owned by another user are rejected before use. |
 | Picture-only PUT needs names | Names exist on the row from signup → merge succeeds |
 | Open redirect on `next` | Callback only allows safe same-origin relative paths |
 

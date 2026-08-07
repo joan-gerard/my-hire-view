@@ -62,7 +62,7 @@ Cross-cutting already in place on many routes: schema validation at the boundary
 
 `GET /api/applications`
 
-List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) — not CV/video/candidate/profile columns. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`). `public_id` is resolved read-only (profiles row, then Auth `user_metadata`); this endpoint does **not** create a profiles row. When neither source has a valid id, `public_id` is `null` and the dashboard disables share/view actions (avoids `/view//…` URLs).
+List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) — not CV/video/candidate/profile columns. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`). `public_id` is resolved read-only: valid `profiles.public_id` if present; Auth `user_metadata` only when **no** profiles row exists (never falls back to Auth when the row’s id is invalid — that can be another user’s id). This endpoint does **not** create a profiles row. When unresolved, `public_id` is `null` and the dashboard disables share/view actions (avoids `/view//…` and cross-user links).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
