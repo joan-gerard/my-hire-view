@@ -23,8 +23,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | D3-001 | Infrastructure | Durable rate limiting | Replace in-memory `lib/rate-limit.ts` with Redis/Upstash (or similar). Also closes per-path Map growth on view/download: `checkPerSlugRateLimit` keys `${ip}:${publicId}:${slug}` before format validation and only prunes the key being hit, so unique invalid paths accumulate. Interim: validate/normalize `publicId` + slug before constructing the key, and/or add global TTL / capacity sweep. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | D1-007 | API | SSR public view vs per-IP rate limit | `/view/[publicId]/[slug]` server `fetch` shares one **120/min** bucket under server/`unknown` IP → cross-visitor **429**. Call `resolvePublicApplication` from the RSC (or exempt/internal-tag server loads). Distinct from Production base URL for SSR. | [API_REFERENCE.md](API_REFERENCE.md) |
 | C2-008 | Security | Validate profile-picture URL origin | Path-only “owned” check allows external HTTPS hosts that look like Storage paths; public pages then load that host. Require origin = `NEXT_PUBLIC_SUPABASE_URL`. | [API_REFERENCE.md](API_REFERENCE.md) |
-| C1-009 | API | Retry profile create for immediate-session signup | `createInitialProfile` failure still returns signup success; callback retry is confirmation-only, so immediate sessions can lack a `profiles` row. Add post-signup/login bootstrap or explicit retry. | [API_REFERENCE.md](API_REFERENCE.md) |
-| C1-010 | API | Distinguish `user_id` vs `public_id` unique violations | `createInitialProfile` treats any `23505` as success; rare `public_id` collision can leave no row. Re-select by `userId` before claiming success. | [API_REFERENCE.md](API_REFERENCE.md) |
 | E1-012 | Product | Pricing & membership tiers | Define plans (paid + optional free tier / trial), per-tier limits, price points. Do **not** launch with unlimited free app access. Inventory of existing free/premium mentions: [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md). | [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) |
 | E2-013 | Product | Payment / membership system | Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | E3-014 | Marketing | Pricing page beyond placeholder | Ship real tiers on `/pricing` aligned with billing — not a stub. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
@@ -54,7 +52,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | F7-035 | API | Auth before R2 config probe on CV upload | Unauthenticated callers get **500** “not configured” instead of **401** when env missing. Check auth first. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F7-036 | API | Stronger idempotent CV upload replay identity | Replay trusts size + PDF MIME only; same key/size can return non-matching/non-PDF bytes. Prefer content digest + validate body before accepting replay. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F9-037 | API | Defer profile-picture folder purge until after URL commit | Upload purges before `PUT /api/profile`; failed PUT can leave profile pointing at a deleted object. Clean up previous object only after URL commit succeeds. | [API_REFERENCE.md](API_REFERENCE.md) |
-| C1-038 | API | Validate Auth metadata `public_id` format | Invalid metadata can be persisted; public resolution rejects → dead share URLs. Validate with `isValidPublicId` or regenerate. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F3-039 | Security | Waitlist bot protection | CAPTCHA, honeypot, or Turnstile — IP limits alone are weak. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F1-040 | Security | Harden auth login/signup responses | Validate email/password (format, max length); prefer generic errors (less enumeration); wrap malformed JSON → **400**; log unexpected Auth API failures. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F1-041 | Security | Enforce signup password rules | Require ≥ 8 characters and ≥ 1 special character on signup (client + `POST /api/auth/signup`). | — |
@@ -187,7 +184,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
-| C1 | `fix/c1-signup-profile-invariants` | `C1-009`, `C1-010`, `C1-038` | Immediate-session profile retry; `23505` user_id vs public_id; validate Auth `public_id` format |
+| C1 | `fix/c1-signup-profile-invariants` | `C1-009`, `C1-010`, `C1-038` | ~~Immediate-session profile retry; `23505` user_id vs public_id; validate Auth `public_id` format~~ (shipped) |
 | C2 | `fix/c2-profile-picture-url-origin` | `C2-008` | Validate profile-picture URL origin |
 | C3 | `fix/c3-picture-only-first-save` | `C3-026` | Picture-only first save without profiles row (after C1) |
 
@@ -313,6 +310,6 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **C1** — `fix/c1-signup-profile-invariants` (`C1-009`, `C1-010`, `C1-038`)  
+1. **C2** — `fix/c2-profile-picture-url-origin` (`C2-008`)  
 2. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
 3. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
