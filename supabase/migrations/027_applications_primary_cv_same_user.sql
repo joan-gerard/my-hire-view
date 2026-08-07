@@ -15,6 +15,8 @@
 -- Public pages serve applications.cv_url (not primary_cv_id), so clearing only the
 -- FK would leave an active app still exposing another user's PDF. Quarantine:
 -- null the FK, hide from public (draft), and replace cv_url (column is NOT NULL).
+-- Use a per-row sentinel so multiple tailored apps for the same user do not hit
+-- applications_user_id_tailored_cv_url_key (026) and abort this migration.
 -- Also catches rows whose cv_url matches another user's primary_cvs.url (e.g. after
 -- an earlier FK-only cleanup left the stolen URL in place).
 UPDATE applications AS a
@@ -22,7 +24,7 @@ SET
   primary_cv_id = NULL,
   status = 'draft',
   archived_at = NULL,
-  cv_url = 'https://invalid.local/quarantined-cross-user-cv',
+  cv_url = 'https://invalid.local/quarantined-cross-user-cv/' || a.id::text,
   updated_at = now()
 WHERE
   (
