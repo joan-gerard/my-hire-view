@@ -1,18 +1,111 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  PUBLIC_ID_REPAIR_MAX_ATTEMPTS,
+  repairProfilePublicId,
+} from "@/lib/auth/repair-profile-public-id";
+import {
+  generatePublicId,
+  isValidPublicId,
+} from "@/lib/utils/public-id";
 
 export type InitialProfileInput = {
   userId: string;
   first_name: string;
   last_name: string;
+  /** May be empty or invalid — regenerated before insert (C1-038). */
   public_id: string;
 };
+
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+type ProfileRow = {
+  user_id: string;
+  public_id: string | null;
+};
+
+/**
+ * Ensures Auth `user_metadata.public_id` matches the profiles row value.
+ * No-ops when already equal (after reading Auth). Errors are always prefixed.
+ */
+async function syncPublicIdToAuthMetadata(
+  admin: AdminClient,
+  userId: string,
+  publicId: string,
+): Promise<{ error: string | null }> {
+  const { data, error: getError } = await admin.auth.admin.getUserById(userId);
+  if (getError || !data.user) {
+    const message = getError?.message ?? "user missing";
+    console.error(
+      "createInitialProfile: failed to load Auth user for public_id sync:",
+      message,
+    );
+    return { error: `Auth public_id sync failed: ${message}` };
+  }
+
+  const current = data.user.user_metadata?.public_id;
+  if (typeof current === "string" && current === publicId) {
+    return { error: null };
+  }
+
+  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
+    user_metadata: {
+      ...(data.user.user_metadata ?? {}),
+      public_id: publicId,
+    },
+  });
+  if (updateError) {
+    console.error(
+      "createInitialProfile: failed to sync public_id to Auth metadata:",
+      updateError.message,
+    );
+    return { error: `Auth public_id sync failed: ${updateError.message}` };
+  }
+
+  return { error: null };
+}
+
+/**
+ * Existing-row path: repair invalid `public_id` if needed, then always
+ * reconcile Auth via sync (exact-value no-op when already matching).
+ */
+async function reconcileExistingProfile(
+  admin: AdminClient,
+  input: InitialProfileInput,
+  existing: ProfileRow,
+): Promise<{ error: string | null }> {
+  let publicId =
+    typeof existing.public_id === "string" ? existing.public_id : "";
+
+  if (!isValidPublicId(publicId)) {
+    const repaired = await repairProfilePublicId(admin, {
+      userId: input.userId,
+      stalePublicId:
+        typeof existing.public_id === "string" ? existing.public_id : null,
+      preferredPublicId: input.public_id,
+    });
+    if (repaired.error || !repaired.publicId) {
+      return {
+        error: repaired.error ?? "Could not repair invalid public_id",
+      };
+    }
+    publicId = repaired.publicId;
+  }
+
+  return syncPublicIdToAuthMetadata(admin, input.userId, publicId);
+}
 
 /**
  * Idempotently creates a profiles row for a newly signed-up user.
  * Uses the service-role client so it works when email confirmation is ON
  * (no session / RLS insert yet) and when a session is issued immediately.
  *
- * Does not overwrite an existing row (safe to call from signup and auth callback).
+ * Does not overwrite an existing row’s names (safe to call from signup, auth
+ * callback, and login bootstrap). Ensures a valid `public_id` on the row and
+ * reconciles Auth metadata when needed.
+ *
+ * Unique violations (`23505`): re-select by `user_id` before claiming success.
+ * If this user still has no row, treat it as a `public_id` collision and retry
+ * with a new id (C1-010). Invalid `public_id` values are replaced (C1-038).
  */
 export async function createInitialProfile(
   input: InitialProfileInput,
@@ -21,7 +114,7 @@ export async function createInitialProfile(
 
   const { data: existing, error: selectError } = await admin
     .from("profiles")
-    .select("user_id")
+    .select("user_id, public_id")
     .eq("user_id", input.userId)
     .maybeSingle();
 
@@ -31,28 +124,59 @@ export async function createInitialProfile(
   }
 
   if (existing) {
-    return { error: null };
+    return reconcileExistingProfile(admin, input, existing);
   }
 
-  const { error: insertError } = await admin.from("profiles").insert({
-    user_id: input.userId,
-    public_id: input.public_id,
-    first_name: input.first_name,
-    last_name: input.last_name,
-    location: null,
-    portfolio_url: null,
-    linkedin_url: null,
-    profile_picture_url: null,
-  });
+  let publicId = isValidPublicId(input.public_id)
+    ? input.public_id
+    : generatePublicId();
 
-  if (insertError) {
-    // Concurrent signup/callback race: unique violation is fine.
-    if (insertError.code === "23505") {
-      return { error: null };
+  for (let attempt = 0; attempt < PUBLIC_ID_REPAIR_MAX_ATTEMPTS; attempt++) {
+    const { error: insertError } = await admin.from("profiles").insert({
+      user_id: input.userId,
+      public_id: publicId,
+      first_name: input.first_name,
+      last_name: input.last_name,
+      location: null,
+      portfolio_url: null,
+      linkedin_url: null,
+      profile_picture_url: null,
+    });
+
+    if (!insertError) {
+      return syncPublicIdToAuthMetadata(admin, input.userId, publicId);
     }
-    console.error("createInitialProfile insert failed:", insertError.message);
-    return { error: insertError.message };
+
+    if (insertError.code !== "23505") {
+      console.error("createInitialProfile insert failed:", insertError.message);
+      return { error: insertError.message };
+    }
+
+    // Unique violation: either concurrent insert for this user_id, or public_id taken.
+    const { data: afterConflict, error: reselectError } = await admin
+      .from("profiles")
+      .select("user_id, public_id")
+      .eq("user_id", input.userId)
+      .maybeSingle();
+
+    if (reselectError) {
+      console.error(
+        "createInitialProfile re-select after 23505 failed:",
+        reselectError.message,
+      );
+      return { error: reselectError.message };
+    }
+
+    if (afterConflict) {
+      return reconcileExistingProfile(admin, input, afterConflict);
+    }
+
+    // public_id collision for another user — retry with a fresh id.
+    publicId = generatePublicId();
   }
 
-  return { error: null };
+  console.error(
+    "createInitialProfile: exhausted public_id retries after unique violations",
+  );
+  return { error: "Could not assign a unique public_id" };
 }

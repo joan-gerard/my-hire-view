@@ -19,6 +19,7 @@ const MIN_PASSWORD_LENGTH = 6;
  *
  * When confirmation is required, PKCE cookies written during signUp must still
  * be returned so /auth/callback can exchange the email link code later.
+ * Immediate-session profile insert failures retry once; login also bootstraps.
  */
 export async function POST(request: NextRequest) {
   const rate = checkRateLimit(request, SIGNUP_RATE_LIMIT);
@@ -87,18 +88,28 @@ export async function POST(request: NextRequest) {
 
   const userId = data.user?.id;
   if (userId) {
-    const profileResult = await createInitialProfile({
+    let profileResult = await createInitialProfile({
       userId,
       first_name,
       last_name,
       public_id,
     });
+    // Immediate-session path never hits /auth/callback — one extra try here,
+    // then login bootstrap covers remaining gaps (C1-009).
+    if (profileResult.error && data.session) {
+      profileResult = await createInitialProfile({
+        userId,
+        first_name,
+        last_name,
+        public_id,
+      });
+    }
     if (profileResult.error) {
       console.error(
         'Signup succeeded but profiles row failed:',
         profileResult.error,
       );
-      // Do not fail signup — auth callback can retry createInitialProfile.
+      // Do not fail signup — confirmation callback and/or login bootstrap retry.
     }
   }
 

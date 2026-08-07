@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const publicId = (await resolvePublicIdReadOnly(supabase, user)) ?? "";
+    const publicId = await resolvePublicIdReadOnly(supabase, user);
     const rows = data ?? [];
     const existence = await Promise.all(
       rows.map((row) => checkCvObjectExists(row.cv_url)),

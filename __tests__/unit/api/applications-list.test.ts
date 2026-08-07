@@ -39,6 +39,7 @@ vi.mock("@/lib/auth/ensure-public-id", () => ({
 }));
 
 import { GET } from "@/app/api/applications/route";
+import { resolvePublicIdReadOnly } from "@/lib/auth/ensure-public-id";
 import {
   APPLICATION_LIST_DEFAULT_LIMIT,
   APPLICATION_LIST_MAX_LIMIT,
@@ -116,6 +117,17 @@ describe("GET /api/applications", () => {
     const response = await GET(makeGetRequest());
     const json = await response.json();
     expect(json.data[0].cv_exists).toBe(false);
+  });
+
+  it("returns null public_id when none can be resolved (does not coerce to empty string)", async () => {
+    vi.mocked(resolvePublicIdReadOnly).mockResolvedValueOnce(null);
+    const chain = okWithCount([LIST_ITEM], 1);
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+
+    const response = await GET(makeGetRequest());
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data[0].public_id).toBeNull();
   });
 
   it("respects limit and offset query params", async () => {

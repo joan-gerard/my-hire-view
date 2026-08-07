@@ -193,7 +193,7 @@ describe("POST /api/auth/signup", () => {
     });
   });
 
-  it("still returns success if profile create fails (callback can retry)", async () => {
+  it("still returns success if profile create fails (callback/login can retry)", async () => {
     mockSignUp.mockResolvedValue({
       data: {
         user: { id: "user-1" },
@@ -207,6 +207,8 @@ describe("POST /api/auth/signup", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json).toEqual({ success: true, requiresConfirmation: false });
+    // Immediate session: one retry after the first failure (C1-009).
+    expect(mockCreateInitialProfile).toHaveBeenCalledTimes(2);
   });
 
   it("returns 400 when Supabase signUp fails", async () => {

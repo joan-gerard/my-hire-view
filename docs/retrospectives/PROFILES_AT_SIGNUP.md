@@ -51,18 +51,22 @@ After a successful `signUp`:
    - `user_id`, `public_id`, `first_name`, `last_name`
    - `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` → `null`
 
-3. If the insert fails, **signup still succeeds** (user can confirm email / log in); we log and rely on the callback retry.
+3. If the insert fails, **signup still succeeds** (user can confirm email / log in); we log and rely on callback / login bootstrap retries.
 
 Service role is intentional: it works **with or without** a session (email confirmation ON or OFF).
 
 ### On email confirmation (`GET /auth/callback`)
 
-After `exchangeCodeForSession`, call the same `createInitialProfile` with names/`public_id` from metadata. Insert is **idempotent** (skip if row exists; treat unique violation as success). That covers the case where signup’s insert failed or raced.
+After `exchangeCodeForSession`, call `bootstrapInitialProfile` (names/`public_id` from metadata → `createInitialProfile`). Insert is **idempotent** (skip if row exists; unique violations re-checked by `user_id`). That covers the case where signup’s insert failed or raced.
+
+### On login (`POST /api/auth/login`)
+
+After a successful password sign-in, the same bootstrap runs. This closes the **immediate-session** gap: when confirmation is OFF, users never hit `/auth/callback`, so a failed signup insert would otherwise leave them without a profiles row (C1-009).
 
 ### Safety nets that remain
 
 - `PUT /api/profile` still upserts (can create a row if somehow missing).
-- `ensureProfilePublicId` still can create/fix `public_id` before application create.
+- `ensureProfilePublicId` still can create/fix `public_id` before application create (rejects invalid metadata ids via `isValidPublicId`).
 - Profile / new-application UIs still seed from metadata if GET returns 404.
 
 ---
@@ -72,8 +76,10 @@ After `exchangeCodeForSession`, call the same `createInitialProfile` with names/
 | Caveat | Approach |
 |--------|----------|
 | No session when confirmation required | Service-role insert at signup; callback retry after session exists |
-| Double insert (signup + callback) | Idempotent select-then-insert; ignore unique conflicts |
-| Signup succeeds but profile insert fails | Do not fail signup; log; callback retries |
+| Double insert (signup + callback + login) | Idempotent select-then-insert; `23505` only success after re-select by `user_id` |
+| Signup succeeds but profile insert fails | Do not fail signup; log; callback and/or login bootstrap retry; immediate session retries once |
+| Rare `public_id` unique collision | Re-select by `user_id`; if still missing, regenerate `public_id` and sync Auth metadata (sync failure is an error) |
+| Invalid Auth `public_id` metadata | Pass raw metadata into `createInitialProfile`; validate with `isValidPublicId` or regenerate and reconcile Auth by reading Auth. Existing rows with an invalid/empty `public_id` are repaired via shared `repairProfilePublicId` (conditional update of **`public_id` only** + re-read — never overwrites names). Read-only resolve returns **null** when a profiles row exists but is invalid (no Auth fallback). Preferred metadata ids owned by another user are rejected before use. Create path uses **insert** (not upsert): on unique conflict, re-read the canonical row before Auth sync so a concurrent winner’s id/names are preserved. |
 | Picture-only PUT needs names | Names exist on the row from signup → merge succeeds |
 | Open redirect on `next` | Callback only allows safe same-origin relative paths |
 
@@ -92,7 +98,9 @@ After `exchangeCodeForSession`, call the same `createInitialProfile` with names/
 ## Docs / code pointers
 
 - `lib/auth/create-initial-profile.ts`
+- `lib/auth/bootstrap-initial-profile.ts`
 - `app/api/auth/signup/route.ts`
+- `app/api/auth/login/route.ts`
 - `app/auth/callback/route.ts`
 - `components/forms/ProfilePictureModal.tsx` (uses picture-only PUT)
 - [PROFILE_PICTURE.md](../PROFILE_PICTURE.md), [API_REFERENCE.md](../API_REFERENCE.md) (signup side effects)

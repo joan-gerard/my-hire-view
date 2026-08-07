@@ -174,8 +174,11 @@ export type ApplicationListItem = Pick<
   | "last_viewed_at"
   | "cv_url"
 > & {
-  /** Opaque candidate id for public share URLs. */
-  public_id: string;
+  /**
+   * Opaque candidate id for public share URLs. Null when neither a profiles row
+   * nor valid Auth metadata provides one (list is read-only — does not create).
+   */
+  public_id: string | null;
   /**
    * True when `cv_url` is an R2 object that exists, or when existence was not
    * checked (URL outside our R2 public base). False only when HeadObject

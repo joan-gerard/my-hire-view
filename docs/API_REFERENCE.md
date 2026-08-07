@@ -62,7 +62,7 @@ Cross-cutting already in place on many routes: schema validation at the boundary
 
 `GET /api/applications`
 
-List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) — not CV/video/candidate/profile columns. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`). `public_id` is resolved read-only (profiles row, then Auth `user_metadata`); this endpoint does **not** create a profiles row.
+List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) — not CV/video/candidate/profile columns. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`). `public_id` is resolved read-only: valid `profiles.public_id` if present; Auth `user_metadata` only when **no** profiles row exists (never falls back to Auth when the row’s id is invalid — that can be another user’s id). This endpoint does **not** create a profiles row. When unresolved, `public_id` is `null` and the dashboard disables share/view actions (avoids `/view//…` and cross-user links).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -577,7 +577,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - Requires both email and password before calling Supabase.
 - Uses the route client so session cookies land on the response (middleware can read them next request).
 - Distinguishes missing fields (**400**), auth failure (**401**), and missing session (**500**).
-- Does **not** create a `profiles` row (signup / auth callback does).
+- Bootstraps a missing `profiles` row from Auth `user_metadata` after a successful sign-in (`bootstrapInitialProfile` → `createInitialProfile`). Failures are logged; login still succeeds.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
 
@@ -593,11 +593,12 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - **Success:** `200` `{ success: true, requiresConfirmation: false }` with cookies when a session is created immediately; or `200` `{ success: true, requiresConfirmation: true }` when email confirmation is required
 - **Errors:** `400` (missing fields, password mismatch, too-short password, Supabase error); `429`
 
-`emailRedirectTo` is set to `{origin}/auth/callback`. First/last name and `public_id` are stored in Auth `user_metadata` and a `profiles` row is created via the service-role helper (`createInitialProfile`) — works with or without an immediate session. When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code. The callback also retries `createInitialProfile` idempotently (**confirmation path only**).
+`emailRedirectTo` is set to `{origin}/auth/callback`. First/last name and `public_id` are stored in Auth `user_metadata` and a `profiles` row is created via the service-role helper (`createInitialProfile`) — works with or without an immediate session. When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code. The callback retries `createInitialProfile` idempotently. Immediate-session signups retry once on failure; **login** also bootstraps a missing profiles row (C1-009).
 
 **Side effects**
 
-- Creates a `profiles` row (`user_id`, `public_id`, `first_name`, `last_name`; other columns null). Failures are logged; signup still succeeds. When email confirmation is required, `/auth/callback` retries `createInitialProfile`. Immediate-session signups do not hit that callback (open work in [Backlog.md](Backlog.md)).
+- Creates a `profiles` row (`user_id`, `public_id`, `first_name`, `last_name`; other columns null). Failures are logged; signup still succeeds. Retries: confirmation `/auth/callback`, one extra attempt when a session is issued immediately, and `POST /api/auth/login` bootstrap.
+- `createInitialProfile` re-selects by `user_id` on unique conflicts (does not treat a `public_id` collision as success), regenerates invalid/`taken` public ids, and always reconciles Auth `user_metadata.public_id` to the profiles value (sync failure is returned as an error) (C1-010, C1-038).
 
 **What works**
 

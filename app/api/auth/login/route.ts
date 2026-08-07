@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { bootstrapInitialProfile } from '@/lib/auth/bootstrap-initial-profile';
 import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import { createSupabaseRouteClient } from '@/lib/supabase/route-client';
 
@@ -7,8 +8,8 @@ const LOGIN_RATE_LIMIT = { limit: 15, windowMs: 60_000 };
 
 /**
  * Server-side login: signs in with Supabase and sets session cookies on the response.
- * Profiles are not created here — first profile PUT creates the row (names seeded
- * from Auth user_metadata on the profile page / new application form).
+ * Also bootstraps a missing profiles row from Auth user_metadata (safety net when
+ * signup insert failed and the email-confirmation callback never ran — C1-009).
  */
 export async function POST(request: NextRequest) {
   const rate = checkRateLimit(request, LOGIN_RATE_LIMIT);
@@ -39,6 +40,26 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to create session' },
       { status: 500 }
     );
+  }
+
+  const user = data.user ?? data.session.user;
+  if (user?.id) {
+    try {
+      const profileResult = await bootstrapInitialProfile(user);
+      if (profileResult.skipped) {
+        console.warn(
+          'Login: skipped profile bootstrap (missing first/last name in metadata)',
+        );
+      } else if (profileResult.error) {
+        console.error(
+          'Login succeeded but profiles bootstrap failed:',
+          profileResult.error,
+        );
+      }
+    } catch (err) {
+      // Do not fail login on bootstrap throws (e.g. missing service-role env).
+      console.error('Login profiles bootstrap threw:', err);
+    }
   }
 
   return response;
