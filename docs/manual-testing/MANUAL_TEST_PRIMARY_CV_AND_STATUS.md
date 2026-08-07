@@ -1,11 +1,11 @@
 # Manual test checklist — Primary CVs, tailored CVs, and application status
 
-Use this after applying migrations **`021_application_status_and_archived_at.sql`**, **`022_master_cvs.sql`**, and **`024_primary_cvs_rename.sql`**. Prefer a test account with R2 env vars configured (`.env.local`). See [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md).
+Use this after applying migrations **`021_application_status_and_archived_at.sql`**, **`022_master_cvs.sql`**, **`024_primary_cvs_rename.sql`**, and **`027_applications_primary_cv_same_user.sql`**. Prefer a test account with R2 env vars configured (`.env.local`). See [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md).
 
 **Prerequisites**
 
 - [ ] `pnpm run dev` running
-- [ ] Migrations `021`–`023` applied in Supabase
+- [ ] Migrations `021`–`027` applied in Supabase
 - [ ] R2 configured (`R2_*` in `.env.local`); uploads succeed
 - [ ] Logged in as a user who can open `/admin`, `/admin/profile`, `/admin/new`
 - [ ] Access to Supabase **Table Editor** → `applications`, `primary_cvs` (and R2 dashboard optional)
@@ -180,7 +180,10 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 - [ ] `applications` has `status`, `archived_at`, `cv_type`, `primary_cv_id`; no `is_active`
 - [ ] `primary_cvs` rows only for the owning `user_id`
-- [ ] Deleting a primary sets `applications.primary_cv_id` to null where FK `ON DELETE SET NULL` applied (URL may still point at deleted object until edited)
+- [ ] Deleting a primary sets `applications.primary_cv_id` to null where FK `ON DELETE SET NULL` applied (URL may still point at deleted object until edited); `applications.user_id` must remain set
+- [ ] (B3-042) In SQL Editor as a privileged role, an `UPDATE` that sets `primary_cv_id` to another user’s library id is rejected by trigger `applications_primary_cv_same_user`
+- [ ] (B3-042) In SQL Editor, changing `primary_cvs.user_id` on a referenced (or any) row is rejected by trigger `primary_cvs_user_id_immutable`
+- [ ] (B3-042) No live apps should still point at another user’s primary URL: `SELECT id, slug, status, cv_url FROM applications WHERE cv_url LIKE 'https://invalid.local/quarantined-cross-user-cv/%'` (quarantined rows are draft; URL includes the application id); foreign library URLs must not appear on `status = active` rows
 
 ---
 
@@ -199,4 +202,4 @@ Those are tracked in [Backlog.md](../Backlog.md) (After launch).
 
 ## Done when
 
-All applicable boxes pass with migrations `021`–`023` applied, and `pnpm test:ci` is green.
+All applicable boxes pass with migrations `021`–`027` applied, and `pnpm test:ci` is green.
