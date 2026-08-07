@@ -8,19 +8,27 @@ export type InitialProfileInput = {
   userId: string;
   first_name: string;
   last_name: string;
-  /** May be empty or invalid — regenerated before insert (C1-038). */
+  /**
+   * May be empty or invalid — regenerated before insert (C1-038).
+   * When a profiles row already exists, a valid value matching `profiles.public_id`
+   * short-circuits Auth reconciliation (caller already holds matching metadata).
+   */
   public_id: string;
 };
 
-/** Max insert attempts when `public_id` collides with another user’s row. */
+/** Max insert/update attempts when `public_id` collides with another user’s row. */
 const MAX_PUBLIC_ID_ATTEMPTS = 3;
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
+type ProfileRow = {
+  user_id: string;
+  public_id: string | null;
+};
+
 /**
  * Ensures Auth `user_metadata.public_id` matches the profiles row value.
- * No-ops when already equal. Returns an error if get/update fails so callers
- * do not treat a divergent metadata state as success.
+ * No-ops when already equal. Errors are always prefixed for consistent logs.
  */
 async function syncPublicIdToAuthMetadata(
   admin: AdminClient,
@@ -34,7 +42,7 @@ async function syncPublicIdToAuthMetadata(
       "createInitialProfile: failed to load Auth user for public_id sync:",
       message,
     );
-    return { error: message };
+    return { error: `Auth public_id sync failed: ${message}` };
   }
 
   const current = data.user.user_metadata?.public_id;
@@ -53,10 +61,85 @@ async function syncPublicIdToAuthMetadata(
       "createInitialProfile: failed to sync public_id to Auth metadata:",
       updateError.message,
     );
-    return { error: updateError.message };
+    return { error: `Auth public_id sync failed: ${updateError.message}` };
   }
 
   return { error: null };
+}
+
+/**
+ * Writes a valid unique `public_id` onto an existing profiles row (invalid/empty
+ * repair). Retries on unique collisions.
+ */
+async function repairProfilePublicId(
+  admin: AdminClient,
+  userId: string,
+  preferredPublicId: string,
+): Promise<{ publicId: string | null; error: string | null }> {
+  let publicId = isValidPublicId(preferredPublicId)
+    ? preferredPublicId
+    : generatePublicId();
+
+  for (let attempt = 0; attempt < MAX_PUBLIC_ID_ATTEMPTS; attempt++) {
+    const { error } = await admin
+      .from("profiles")
+      .update({ public_id: publicId })
+      .eq("user_id", userId);
+
+    if (!error) {
+      return { publicId, error: null };
+    }
+
+    if (error.code !== "23505") {
+      console.error(
+        "createInitialProfile: failed to repair public_id:",
+        error.message,
+      );
+      return { publicId: null, error: error.message };
+    }
+
+    publicId = generatePublicId();
+  }
+
+  return {
+    publicId: null,
+    error: "Could not assign a unique public_id",
+  };
+}
+
+/**
+ * Existing-row path: repair invalid `public_id` if needed, then reconcile Auth.
+ * Skips Auth admin when the caller already passed a matching valid metadata id.
+ */
+async function reconcileExistingProfile(
+  admin: AdminClient,
+  input: InitialProfileInput,
+  existing: ProfileRow,
+): Promise<{ error: string | null }> {
+  let publicId =
+    typeof existing.public_id === "string" ? existing.public_id : "";
+
+  if (!isValidPublicId(publicId)) {
+    const repaired = await repairProfilePublicId(
+      admin,
+      input.userId,
+      input.public_id,
+    );
+    if (repaired.error || !repaired.publicId) {
+      return {
+        error: repaired.error ?? "Could not repair invalid public_id",
+      };
+    }
+    publicId = repaired.publicId;
+    return syncPublicIdToAuthMetadata(admin, input.userId, publicId);
+  }
+
+  // Steady state: caller already has the same valid id in Auth metadata.
+  if (input.public_id === publicId) {
+    return { error: null };
+  }
+
+  return syncPublicIdToAuthMetadata(admin, input.userId, publicId);
 }
 
 /**
@@ -64,9 +147,9 @@ async function syncPublicIdToAuthMetadata(
  * Uses the service-role client so it works when email confirmation is ON
  * (no session / RLS insert yet) and when a session is issued immediately.
  *
- * Does not overwrite an existing row (safe to call from signup, auth callback,
- * and login bootstrap). Always reconciles Auth `public_id` to the profiles value
- * when a row exists or is created.
+ * Does not overwrite an existing row’s names (safe to call from signup, auth
+ * callback, and login bootstrap). Ensures a valid `public_id` on the row and
+ * reconciles Auth metadata when needed.
  *
  * Unique violations (`23505`): re-select by `user_id` before claiming success.
  * If this user still has no row, treat it as a `public_id` collision and retry
@@ -89,13 +172,7 @@ export async function createInitialProfile(
   }
 
   if (existing) {
-    if (
-      typeof existing.public_id === "string" &&
-      isValidPublicId(existing.public_id)
-    ) {
-      return syncPublicIdToAuthMetadata(admin, input.userId, existing.public_id);
-    }
-    return { error: null };
+    return reconcileExistingProfile(admin, input, existing);
   }
 
   let publicId = isValidPublicId(input.public_id)
@@ -115,17 +192,7 @@ export async function createInitialProfile(
     });
 
     if (!insertError) {
-      const sync = await syncPublicIdToAuthMetadata(
-        admin,
-        input.userId,
-        publicId,
-      );
-      if (sync.error) {
-        return {
-          error: `Auth public_id sync failed: ${sync.error}`,
-        };
-      }
-      return { error: null };
+      return syncPublicIdToAuthMetadata(admin, input.userId, publicId);
     }
 
     if (insertError.code !== "23505") {
@@ -149,17 +216,7 @@ export async function createInitialProfile(
     }
 
     if (afterConflict) {
-      if (
-        typeof afterConflict.public_id === "string" &&
-        isValidPublicId(afterConflict.public_id)
-      ) {
-        return syncPublicIdToAuthMetadata(
-          admin,
-          input.userId,
-          afterConflict.public_id,
-        );
-      }
-      return { error: null };
+      return reconcileExistingProfile(admin, input, afterConflict);
     }
 
     // public_id collision for another user — retry with a fresh id.

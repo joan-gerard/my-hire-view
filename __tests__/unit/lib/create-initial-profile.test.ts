@@ -63,16 +63,16 @@ function adminWithChains(chains: ReturnType<typeof ok>[]) {
 }
 
 describe("createInitialProfile", () => {
-  it("returns success when a profiles row already exists and Auth matches", async () => {
+  it("short-circuits Auth when existing row matches caller public_id", async () => {
     adminWithChains([ok({ user_id: "user-1", public_id: "k7x2m9ab" })]);
 
     const result = await createInitialProfile(INPUT);
     expect(result).toEqual({ error: null });
-    expect(mockGetUserById).toHaveBeenCalledWith("user-1");
+    expect(mockGetUserById).not.toHaveBeenCalled();
     expect(mockUpdateUserById).not.toHaveBeenCalled();
   });
 
-  it("repairs Auth metadata when an existing row has a different public_id", async () => {
+  it("repairs Auth metadata when an existing row differs from caller public_id", async () => {
     mockGetUserById.mockResolvedValue({
       data: {
         user: {
@@ -84,12 +84,37 @@ describe("createInitialProfile", () => {
     });
     adminWithChains([ok({ user_id: "user-1", public_id: "k7x2m9ab" })]);
 
-    const result = await createInitialProfile(INPUT);
+    const result = await createInitialProfile({
+      ...INPUT,
+      public_id: "otherid1",
+    });
     expect(result).toEqual({ error: null });
+    expect(mockGetUserById).toHaveBeenCalledWith("user-1");
     expect(mockUpdateUserById).toHaveBeenCalledWith(
       "user-1",
       expect.objectContaining({
         user_metadata: expect.objectContaining({ public_id: "k7x2m9ab" }),
+      }),
+    );
+  });
+
+  it("repairs an existing row with an invalid public_id and syncs Auth", async () => {
+    adminWithChains([
+      ok({ user_id: "user-1", public_id: "BAD!" }),
+      ok(null), // update repair
+    ]);
+
+    const result = await createInitialProfile({
+      ...INPUT,
+      public_id: "",
+    });
+    expect(result).toEqual({ error: null });
+    expect(mockUpdateUserById).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({
+        user_metadata: expect.objectContaining({
+          public_id: expect.stringMatching(/^[a-z0-9]{6,12}$/),
+        }),
       }),
     );
   });
@@ -116,6 +141,8 @@ describe("createInitialProfile", () => {
 
     const result = await createInitialProfile(INPUT);
     expect(result).toEqual({ error: null });
+    // Matching caller public_id → short-circuit, no Auth admin
+    expect(mockGetUserById).not.toHaveBeenCalled();
     expect(mockUpdateUserById).not.toHaveBeenCalled();
   });
 
@@ -164,7 +191,7 @@ describe("createInitialProfile", () => {
     );
   });
 
-  it("returns an error when Auth metadata sync fails after insert", async () => {
+  it("returns a prefixed error when Auth metadata sync fails after insert", async () => {
     mockUpdateUserById.mockResolvedValue({
       data: { user: null },
       error: { message: "auth unavailable" },
@@ -181,8 +208,21 @@ describe("createInitialProfile", () => {
     adminWithChains([ok(null), ok(null)]);
 
     const result = await createInitialProfile(INPUT);
-    expect(result.error).toContain("Auth public_id sync failed");
-    expect(result.error).toContain("auth unavailable");
+    expect(result.error).toBe("Auth public_id sync failed: auth unavailable");
+  });
+
+  it("returns a prefixed error when Auth sync fails on the existing-row path", async () => {
+    mockGetUserById.mockResolvedValue({
+      data: { user: null },
+      error: { message: "auth unavailable" },
+    });
+    adminWithChains([ok({ user_id: "user-1", public_id: "k7x2m9ab" })]);
+
+    const result = await createInitialProfile({
+      ...INPUT,
+      public_id: "otherid1",
+    });
+    expect(result.error).toBe("Auth public_id sync failed: auth unavailable");
   });
 
   it("returns the select error when the initial lookup fails", async () => {
