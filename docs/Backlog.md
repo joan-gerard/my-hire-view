@@ -22,7 +22,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | -------- | -------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | D3-001 | Infrastructure | Durable rate limiting | Replace in-memory `lib/rate-limit.ts` with Redis/Upstash (or similar). Also closes per-path Map growth on view/download: `checkPerSlugRateLimit` keys `${ip}:${publicId}:${slug}` before format validation and only prunes the key being hit, so unique invalid paths accumulate. Interim: validate/normalize `publicId` + slug before constructing the key, and/or add global TTL / capacity sweep. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | D1-007 | API | SSR public view vs per-IP rate limit | `/view/[publicId]/[slug]` server `fetch` shares one **120/min** bucket under server/`unknown` IP → cross-visitor **429**. Call `resolvePublicApplication` from the RSC (or exempt/internal-tag server loads). Distinct from Production base URL for SSR. | [API_REFERENCE.md](API_REFERENCE.md) |
-| C2-008 | Security | Validate profile-picture URL origin | Path-only “owned” check allows external HTTPS hosts that look like Storage paths; public pages then load that host. Require origin = `NEXT_PUBLIC_SUPABASE_URL`. | [API_REFERENCE.md](API_REFERENCE.md) |
 | E1-012 | Product | Pricing & membership tiers | Define plans (paid + optional free tier / trial), per-tier limits, price points. Do **not** launch with unlimited free app access. Inventory of existing free/premium mentions: [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md). | [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) |
 | E2-013 | Product | Payment / membership system | Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | E3-014 | Marketing | Pricing page beyond placeholder | Ship real tiers on `/pricing` aligned with billing — not a stub. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
@@ -185,7 +184,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
 | C1 | `fix/c1-signup-profile-invariants` | `C1-009`, `C1-010`, `C1-038` | ~~Immediate-session profile retry; `23505` user_id vs public_id; validate Auth `public_id` format~~ (shipped) |
-| C2 | `fix/c2-profile-picture-url-origin` | `C2-008` | Validate profile-picture URL origin |
+| C2 | `fix/c2-profile-picture-url-origin` | `C2-008` | ~~Validate profile-picture URL origin~~ (shipped) |
 | C3 | `fix/c3-picture-only-first-save` | `C3-026` | Picture-only first save without profiles row (after C1) |
 
 #### Sprint D — Public view & rate limiting
@@ -310,6 +309,6 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **C2** — `fix/c2-profile-picture-url-origin` (`C2-008`)  
-2. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
-3. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
+1. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
+2. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
+3. **C3** — `fix/c3-picture-only-first-save` (`C3-026`)  
