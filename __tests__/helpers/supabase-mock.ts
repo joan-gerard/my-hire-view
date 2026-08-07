@@ -29,6 +29,7 @@ export function makeChain<T = unknown>(result: DbResult<T>) {
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     neq: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
     gt: vi.fn().mockReturnThis(),
     gte: vi.fn().mockReturnThis(),
     lt: vi.fn().mockReturnThis(),
@@ -57,6 +58,7 @@ export function makeChain<T = unknown>(result: DbResult<T>) {
   (self.delete as ReturnType<typeof vi.fn>).mockReturnValue(self);
   (self.eq as ReturnType<typeof vi.fn>).mockReturnValue(self);
   (self.neq as ReturnType<typeof vi.fn>).mockReturnValue(self);
+  (self.is as ReturnType<typeof vi.fn>).mockReturnValue(self);
   (self.gt as ReturnType<typeof vi.fn>).mockReturnValue(self);
   (self.gte as ReturnType<typeof vi.fn>).mockReturnValue(self);
   (self.lt as ReturnType<typeof vi.fn>).mockReturnValue(self);

@@ -82,7 +82,8 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 | `__tests__/unit/lib/auth/safe-next-path.test.ts` | **Auth callback redirect sanitizer** — allows same-origin relative paths; rejects `//…`, backslash tricks (`/\evil.com`), and ASCII control characters (CR/LF/tab) |
 | `__tests__/unit/lib/types/primary-cv.test.ts` | **Primary CV types** — `PRIMARY_CV_MAX_PER_USER`, preview limit constants |
 | `__tests__/unit/lib/ensure-profile.test.ts` | **Auth metadata names** — `namesFromUserMetadata` trim / missing |
-| `__tests__/unit/lib/create-initial-profile.test.ts` | **Profile create at signup** — idempotent skip; `23505` re-select by `user_id` vs `public_id` retry; invalid `public_id` regenerate + Auth sync |
+| `__tests__/unit/lib/ensure-public-id.test.ts` | **Public id ensure/resolve** — ignore invalid stored ids; repair before Auth sync; create when missing |
+| `__tests__/unit/lib/create-initial-profile.test.ts` | **Profile create at signup** — idempotent skip; `23505` re-select by `user_id` vs `public_id` retry; invalid `public_id` regenerate + Auth sync; conditional concurrent repair |
 | `__tests__/unit/lib/bootstrap-initial-profile.test.ts` | **Profile bootstrap + public_id validation** — metadata → create; reject invalid `public_id`; missing names |
 | `__tests__/unit/api/login.test.ts` | **Login** — credentials, rate limit, profiles bootstrap after session (C1-009) |
 | `__tests__/unit/lib/rate-limit.test.ts` | **In-memory rate limiter** — `getClientIdentifier` (x-forwarded-for, x-real-ip, fallback to "unknown"), `rateLimit` (counting, window reset via fake timers, per-client isolation), `checkRateLimit`, `checkPerSlugRateLimit` (IP+path isolation), `rateLimit429` (429 status + Retry-After ≥ 1s) |

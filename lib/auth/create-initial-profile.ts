@@ -8,11 +8,7 @@ export type InitialProfileInput = {
   userId: string;
   first_name: string;
   last_name: string;
-  /**
-   * May be empty or invalid — regenerated before insert (C1-038).
-   * When a profiles row already exists, a valid value matching `profiles.public_id`
-   * short-circuits Auth reconciliation (caller already holds matching metadata).
-   */
+  /** May be empty or invalid — regenerated before insert (C1-038). */
   public_id: string;
 };
 
@@ -28,7 +24,7 @@ type ProfileRow = {
 
 /**
  * Ensures Auth `user_metadata.public_id` matches the profiles row value.
- * No-ops when already equal. Errors are always prefixed for consistent logs.
+ * No-ops when already equal (after reading Auth). Errors are always prefixed.
  */
 async function syncPublicIdToAuthMetadata(
   admin: AdminClient,
@@ -68,29 +64,40 @@ async function syncPublicIdToAuthMetadata(
 }
 
 /**
- * Writes a valid unique `public_id` onto an existing profiles row (invalid/empty
- * repair). Retries on unique collisions.
+ * Conditionally replaces a stale/invalid `public_id` on an existing profiles row.
+ * Only updates when the row still has `stalePublicId`; otherwise re-reads the
+ * canonical value (concurrent repair). Retries on unique collisions.
  */
 async function repairProfilePublicId(
   admin: AdminClient,
   userId: string,
+  stalePublicId: string | null,
   preferredPublicId: string,
 ): Promise<{ publicId: string | null; error: string | null }> {
   let publicId = isValidPublicId(preferredPublicId)
     ? preferredPublicId
     : generatePublicId();
+  let expectedStale = stalePublicId;
 
   for (let attempt = 0; attempt < MAX_PUBLIC_ID_ATTEMPTS; attempt++) {
-    const { error } = await admin
+    let query = admin
       .from("profiles")
       .update({ public_id: publicId })
       .eq("user_id", userId);
 
-    if (!error) {
-      return { publicId, error: null };
+    if (expectedStale === null) {
+      query = query.is("public_id", null);
+    } else {
+      query = query.eq("public_id", expectedStale);
     }
 
-    if (error.code !== "23505") {
+    const { data, error } = await query.select("public_id").maybeSingle();
+
+    if (error) {
+      if (error.code === "23505") {
+        publicId = generatePublicId();
+        continue;
+      }
       console.error(
         "createInitialProfile: failed to repair public_id:",
         error.message,
@@ -98,6 +105,27 @@ async function repairProfilePublicId(
       return { publicId: null, error: error.message };
     }
 
+    if (data?.public_id && isValidPublicId(data.public_id)) {
+      return { publicId: data.public_id, error: null };
+    }
+
+    // No row matched — another request likely repaired; re-read canonical.
+    const { data: current, error: readError } = await admin
+      .from("profiles")
+      .select("public_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (readError) {
+      return { publicId: null, error: readError.message };
+    }
+
+    if (current?.public_id && isValidPublicId(current.public_id)) {
+      return { publicId: current.public_id, error: null };
+    }
+
+    expectedStale =
+      typeof current?.public_id === "string" ? current.public_id : null;
     publicId = generatePublicId();
   }
 
@@ -108,8 +136,8 @@ async function repairProfilePublicId(
 }
 
 /**
- * Existing-row path: repair invalid `public_id` if needed, then reconcile Auth.
- * Skips Auth admin when the caller already passed a matching valid metadata id.
+ * Existing-row path: repair invalid `public_id` if needed, then always
+ * reconcile Auth via sync (exact-value no-op when already matching).
  */
 async function reconcileExistingProfile(
   admin: AdminClient,
@@ -123,6 +151,7 @@ async function reconcileExistingProfile(
     const repaired = await repairProfilePublicId(
       admin,
       input.userId,
+      typeof existing.public_id === "string" ? existing.public_id : null,
       input.public_id,
     );
     if (repaired.error || !repaired.publicId) {
@@ -131,12 +160,6 @@ async function reconcileExistingProfile(
       };
     }
     publicId = repaired.publicId;
-    return syncPublicIdToAuthMetadata(admin, input.userId, publicId);
-  }
-
-  // Steady state: caller already has the same valid id in Auth metadata.
-  if (input.public_id === publicId) {
-    return { error: null };
   }
 
   return syncPublicIdToAuthMetadata(admin, input.userId, publicId);
