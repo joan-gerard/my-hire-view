@@ -11,15 +11,34 @@
 --      reassigning ownership would silently break the child invariant)
 -- API still checks ownership; this is the DB backstop.
 
--- Defensive: clear any cross-user links before enforcing (should be none).
+-- Defensive: quarantine cross-user primary links before enforcing (should be none).
+-- Public pages serve applications.cv_url (not primary_cv_id), so clearing only the
+-- FK would leave an active app still exposing another user's PDF. Quarantine:
+-- null the FK, hide from public (draft), and replace cv_url (column is NOT NULL).
+-- Also catches rows whose cv_url matches another user's primary_cvs.url (e.g. after
+-- an earlier FK-only cleanup left the stolen URL in place).
 UPDATE applications AS a
-SET primary_cv_id = NULL
-WHERE a.primary_cv_id IS NOT NULL
-  AND NOT EXISTS (
+SET
+  primary_cv_id = NULL,
+  status = 'draft',
+  archived_at = NULL,
+  cv_url = 'https://invalid.local/quarantined-cross-user-cv',
+  updated_at = now()
+WHERE
+  (
+    a.primary_cv_id IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1
+      FROM primary_cvs AS pc
+      WHERE pc.id = a.primary_cv_id
+        AND pc.user_id = a.user_id
+    )
+  )
+  OR EXISTS (
     SELECT 1
     FROM primary_cvs AS pc
-    WHERE pc.id = a.primary_cv_id
-      AND pc.user_id = a.user_id
+    WHERE pc.url = a.cv_url
+      AND pc.user_id <> a.user_id
   );
 
 CREATE OR REPLACE FUNCTION enforce_application_primary_cv_same_user()
