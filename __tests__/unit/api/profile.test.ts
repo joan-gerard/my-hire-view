@@ -6,7 +6,7 @@
  * PUT  — upserts profile (creates on first save), syncs Auth user_metadata names,
  *        validates URL fields, enforces rate limiting, rejects unauthenticated callers.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 
 const {
@@ -70,12 +70,17 @@ function makePutRequest(body: object): NextRequest {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc.supabase.co");
   mockRequireAuth.mockResolvedValue(MOCK_USER);
   mockCheckRateLimit.mockReturnValue({
     success: true,
     remaining: 59,
     resetAt: Date.now() + 60_000,
   });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("GET /api/profile", () => {
@@ -389,6 +394,18 @@ describe("PUT /api/profile", () => {
     const response = await PUT(
       makePutRequest({
         profile_picture_url: "https://cdn.example.com/hotlink.jpg",
+      }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/profile picture/i);
+  });
+
+  it("returns 400 when profile_picture_url has our path shape on a foreign origin (C2-008)", async () => {
+    const response = await PUT(
+      makePutRequest({
+        profile_picture_url:
+          "https://evil.example/storage/v1/object/public/profile-pictures/user-123/avatar.jpg",
       }),
     );
     expect(response.status).toBe(400);

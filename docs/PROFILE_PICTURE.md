@@ -38,7 +38,7 @@ Canonical uploads overwrite the same Storage path, so the public URL string ofte
 
 ## Ownership on profile PUT
 
-Non-null `profile_picture_url` must be a `profile-pictures` public URL under the caller’s `{user_id}/…` folder (canonical `avatar.*` or legacy UUID filenames).
+Non-null `profile_picture_url` must be a `profile-pictures` public URL whose **origin** matches `NEXT_PUBLIC_SUPABASE_URL`, under the caller’s `{user_id}/…` folder (canonical `avatar.*` or legacy UUID filenames). Lookalike paths on other HTTPS hosts are rejected (C2-008).
 
 ## Cleanup
 

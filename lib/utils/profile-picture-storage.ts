@@ -6,8 +6,23 @@ export const PROFILE_PICTURE_BASENAME = "avatar";
 const AVATAR_EXT_RE = /^(jpe?g|png|webp)$/i;
 
 /**
+ * True when `url`’s origin matches `NEXT_PUBLIC_SUPABASE_URL`.
+ * Fail closed when the env var is missing or not a valid absolute URL.
+ */
+function isConfiguredSupabaseOrigin(url: URL): boolean {
+  const configured = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!configured) return false;
+  try {
+    return url.origin === new URL(configured).origin;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Extracts the storage object path from a Supabase Storage public URL.
- * Returns null if the URL is not a profile-pictures bucket URL.
+ * Returns null if the URL is not a profile-pictures bucket URL on our
+ * configured Supabase origin (path-only matches on other hosts are rejected).
  * Example: …/profile-pictures/user-id/avatar.jpg -> user-id/avatar.jpg
  */
 export function getProfilePictureStoragePath(
@@ -17,6 +32,7 @@ export function getProfilePictureStoragePath(
     return null;
   try {
     const u = new URL(url);
+    if (!isConfiguredSupabaseOrigin(u)) return null;
     const match = u.pathname.match(
       /\/storage\/v1\/object\/public\/profile-pictures\/(.+)$/,
     );
@@ -36,8 +52,9 @@ export function canonicalProfilePicturePath(
 }
 
 /**
- * True when `url` is a public profile-pictures object under this user's folder
- * (`{userId}/…`). Accepts canonical `avatar.*` and legacy UUID filenames.
+ * True when `url` is a public profile-pictures object on our Supabase origin
+ * under this user's folder (`{userId}/…`). Accepts canonical `avatar.*` and
+ * legacy UUID filenames. External hosts with a lookalike path are rejected.
  */
 export function isOwnedProfilePictureUrl(
   url: string,

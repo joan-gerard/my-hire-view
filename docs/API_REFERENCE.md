@@ -367,14 +367,14 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` — omit picture field to leave unchanged; `null` to clear. Unexpected keys → **400**. Max lengths: names **100**, location **200**, URLs **2048**. Non-null picture URL must be under the caller’s Storage folder.
+- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` — omit picture field to leave unchanged; `null` to clear. Unexpected keys → **400**. Max lengths: names **100**, location **200**, URLs **2048**. Non-null picture URL must be on the configured Supabase origin (`NEXT_PUBLIC_SUPABASE_URL`) under the caller’s Storage folder.
 - **Success:** `200` `{ data: Profile }` optionally with `warnings: string[]` (e.g. Storage delete or metadata sync failed)
 - **Errors:** `400` schema / unowned picture URL / missing names / upsert error; `401`; `429`; `500`
 
 **What works**
 
 - Auth required; upsert keyed by `user_id` (create-on-first-save).
-- Rate limited; Zod validation; ownership check on picture URLs.
+- Rate limited; Zod validation; ownership check on picture URLs (origin must match `NEXT_PUBLIC_SUPABASE_URL`; path-only lookalikes on other hosts → **400**).
 - Deletes previous Storage object after successful write when the URL changes; surfaces partial failures as `warnings`.
 - No applications fan-out for picture URLs (live profile read on view).
 - Dedicated auth try/catch → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).

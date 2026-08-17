@@ -1,7 +1,7 @@
 /**
  * Unit tests for profile picture Storage URL helpers.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   cacheBustProfilePictureUrl,
   canonicalProfilePicturePath,
@@ -11,12 +11,24 @@ import {
 } from "@/lib/utils/profile-picture-storage";
 
 const USER_ID = "user-123";
+const SUPABASE_ORIGIN = "https://abc.supabase.co";
 const CANONICAL_URL =
   "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
 const LEGACY_URL =
   "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/abc.jpg";
 const OTHER_USER_URL =
   "https://abc.supabase.co/storage/v1/object/public/profile-pictures/other-user/avatar.jpg";
+/** Same path shape as ours, but on an attacker-controlled host (C2-008). */
+const LOOKALIKE_EXTERNAL_URL =
+  "https://evil.example/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+
+beforeEach(() => {
+  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", SUPABASE_ORIGIN);
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe("getProfilePictureStoragePath", () => {
   it("extracts the object path from a profile-pictures public URL", () => {
@@ -33,6 +45,22 @@ describe("getProfilePictureStoragePath", () => {
       ),
     ).toBeNull();
     expect(getProfilePictureStoragePath(null)).toBeNull();
+  });
+
+  it("returns null for lookalike paths on a foreign HTTPS origin (C2-008)", () => {
+    expect(getProfilePictureStoragePath(LOOKALIKE_EXTERNAL_URL)).toBeNull();
+  });
+
+  it("returns null when NEXT_PUBLIC_SUPABASE_URL is unset", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    expect(getProfilePictureStoragePath(CANONICAL_URL)).toBeNull();
+  });
+
+  it("accepts URLs when the env var has a trailing slash", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", `${SUPABASE_ORIGIN}/`);
+    expect(getProfilePictureStoragePath(CANONICAL_URL)).toBe(
+      "user-123/avatar.jpg",
+    );
   });
 });
 
@@ -75,6 +103,12 @@ describe("isOwnedProfilePictureUrl", () => {
     expect(
       isOwnedProfilePictureUrl("https://cdn.example.com/pic.jpg", USER_ID),
     ).toBe(false);
+  });
+
+  it("returns false for lookalike storage paths on a foreign origin (C2-008)", () => {
+    expect(isOwnedProfilePictureUrl(LOOKALIKE_EXTERNAL_URL, USER_ID)).toBe(
+      false,
+    );
   });
 
   it("returns false when the path is only the user id with no object", () => {
