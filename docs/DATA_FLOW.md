@@ -488,11 +488,14 @@ sequenceDiagram
   participant Loader as loadPublicApplicationResponse
   participant ViewAPI as POST .../view
   participant VT as ViewTracker
+  participant Profiles as profiles
   participant Applications as applications
 
   R->>Page: Open shareable link
   Page->>Loader: resolve public application (in-process)
-  Loader->>Applications: profile + application (service role)
+  Loader->>Profiles: select by public_id (service role)
+  Profiles-->>Loader: user_id, profile_picture_url
+  Loader->>Applications: select by user_id + slug
   Applications-->>Loader: application row
   Loader-->>Page: PublicApplicationResponse
   Page->>Page: Render header (company, role, name, location, portfolio/LinkedIn), PDF, video

@@ -10,7 +10,26 @@ function getBaseUrl(): string {
 
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (configured) {
-    return configured.replace(/\/$/, "");
+    const base = configured.replace(/\/$/, "");
+    if (process.env.NODE_ENV === "production") {
+      let origin: string;
+      try {
+        origin = new URL(base).origin;
+      } catch {
+        throw new Error(
+          "NEXT_PUBLIC_SITE_URL must be a valid absolute URL in production.",
+        );
+      }
+      if (
+        origin === "http://localhost:3000" ||
+        origin === "http://127.0.0.1:3000"
+      ) {
+        throw new Error(
+          "NEXT_PUBLIC_SITE_URL must be a public production URL, not localhost.",
+        );
+      }
+    }
+    return base;
   }
 
   if (process.env.NODE_ENV === "production") {

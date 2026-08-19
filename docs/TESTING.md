@@ -41,6 +41,8 @@ __tests__/
         image.test.ts
         public-id.test.ts
         resolve-public-application.test.ts
+        load-public-application-response.test.ts
+        url.test.ts
       auth/
         safe-next-path.test.ts
       types/
@@ -72,13 +74,13 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 | `__tests__/unit/lib/utils/slug-generate.test.ts` | **Pure slug utilities** — `validateSlugFormat` (empty input, too long, invalid chars, valid slugs), `generateSlug` (normalisation, special-char stripping, space collapsing), `buildSlug` (position `start`/`end`, partial and missing names) |
 | `__tests__/unit/lib/utils/slug.test.ts` | **Server-side slug helpers** — `checkSlugUniqueness` (unique, taken, DB error), `validateSlugForApplication` (format short-circuits DB call, available, taken), `reserveBaseSlug` (name positions, collision throws `SlugCollisionError`), `SlugCollisionError` (shape and default message) |
 | `__tests__/unit/lib/utils/profile-picture-storage.test.ts` | **Profile picture Storage URLs** — path parse, canonical `avatar.*`, ownership (canonical + legacy under user folder), reject lookalike paths on foreign origins (C2-008) |
-| `__tests__/unit/lib/utils/cv-storage.test.ts` | **CV R2 ownership & delete** — `getCvObjectKeyFromPublicUrl` / `toCanonicalCvPublicUrl`, `isOwnedTailoredCvUrl`, `isOwnedPrimaryCvObjectKey`, allow-list `deleteApplicationCvIfTailored`, fail closed when `R2_PUBLIC_BASE_URL` unset, `deleteCvIfOurs`, `checkCvObjectExists` (`true`/`false`/`undefined`) |
+| `__tests__/unit/lib/utils/cv-storage.test.ts` | **CV R2 ownership & delete** — `getCvObjectKeyFromPublicUrl` / `toCanonicalCvPublicUrl`, `isOwnedTailoredCvUrl`, `isOwnedPrimaryCvObjectKey`, allow-list `deleteApplicationCvIfTailored`, fail closed when `R2_PUBLIC_BASE_URL` unset, `deleteCvIfOurs`, `checkCvObjectExists` (`true` / NotFound→`false` / infra→`undefined`)
 | `__tests__/unit/lib/utils/upload-idempotency.test.ts` | **Tailored upload idempotency** — HeadObject replay, size/type mismatch |
 | `__tests__/unit/lib/utils/pdf.test.ts` | **PDF magic bytes** — `%PDF` detection |
 | `__tests__/unit/lib/utils/image.test.ts` | **Image magic bytes** — JPEG / PNG / WebP detection + light header checks |
 | `__tests__/unit/api/profile-picture-upload.test.ts` | **Profile picture upload** — auth **401** vs unexpected **500**, MIME + magic-byte rejects, Storage error logging without leaking messages, purge warning |
 | `__tests__/unit/lib/utils/public-id.test.ts` | **Public id generation** |
-| `__tests__/unit/lib/utils/resolve-public-application.test.ts` | **Public path resolution** — invalid `publicId` / slug format short-circuits before DB; valid pair resolves via service-role client (profiles + applications) |
+| `__tests__/unit/lib/utils/resolve-public-application.test.ts` | **Public path resolution** — invalid `publicId` / slug format short-circuits before DB; valid pair resolves via service-role client; missing rows → null; query errors throw |
 | `__tests__/unit/lib/utils/load-public-application-response.test.ts` | **Public share DTO loader** — null when unresolved, active DTO + `cv_exists`, unavailable stub for draft/archived, propagates errors (D1-007) |
 | `__tests__/unit/lib/utils/url.test.ts` | **Site URL helpers** — localhost fallback in dev, trim trailing slash, production fail-fast without `NEXT_PUBLIC_SITE_URL`, share link builder (D1-061) |
 | `__tests__/unit/lib/auth/safe-next-path.test.ts` | **Auth callback redirect sanitizer** — allows same-origin relative paths; rejects `//…`, backslash tricks (`/\evil.com`), and ASCII control characters (CR/LF/tab) |

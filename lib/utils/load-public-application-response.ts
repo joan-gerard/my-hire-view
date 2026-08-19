@@ -9,7 +9,8 @@ import { resolvePublicApplication } from "@/lib/utils/resolve-public-application
 /**
  * Loads the public application DTO for share pages and the public GET API.
  * Returns null when the public id + slug pair does not resolve (404).
- * Throws on unexpected infrastructure errors (DB, R2, etc.).
+ * Throws on database query errors. R2 HeadObject failures omit `cv_exists`
+ * rather than reporting a missing CV (see `checkCvObjectExists`).
  */
 export async function loadPublicApplicationResponse(
   publicId: string,

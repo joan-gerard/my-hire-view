@@ -80,22 +80,7 @@ const PUBLIC_APP = {
   updated_at: "2026-01-01T00:00:00Z",
 };
 
-/** Owner-only / internal keys that must never appear on the public GET DTO. */
-const OWNER_ONLY_KEYS = [
-  "id",
-  "slug",
-  "user_id",
-  "view_count",
-  "download_count",
-  "last_viewed_at",
-  "archived_at",
-  "include_name_in_slug",
-  "show_profile_picture",
-  "cv_type",
-  "primary_cv_id",
-  "created_at",
-  "updated_at",
-] as const;
+/** Owner-only / internal keys stripped by toPublicApplication — verified in loader tests. */
 
 const ROUTE_PARAMS = Promise.resolve({
   publicId: PUBLIC_ID,
@@ -177,9 +162,6 @@ describe("GET /api/applications/[publicId]/[slug]", () => {
       status: "active",
       cv_exists: true,
     });
-    for (const key of OWNER_ONLY_KEYS) {
-      expect(json.data).not.toHaveProperty(key);
-    }
   });
 
   it("returns 404 when the loader finds no application", async () => {

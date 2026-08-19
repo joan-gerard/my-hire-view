@@ -39,9 +39,7 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | F6-024 | API | Schema validation on write routes | Zod (or similar) for bodies/params; clear **400**s. Applications create/update and profile PUT already validate; extend to remaining write routes as needed. | [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
 | F4-025 | API | Shared `withAuth` helper | Shared `withAuth` so auth failures aren’t mislabeled **401** on remaining routes. (`handleApiError` already shipped.) | [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
 | C3-026 | API | Picture-only first save without profiles row | `/admin/new` can open profile-picture modal when no `profiles` row; PUT with only `profile_picture_url` → empty names → **400**. Bootstrap names/`public_id` from Auth metadata on create-on-first-save (ties to signup profile retry). | [API_REFERENCE.md](API_REFERENCE.md) |
-| F10-027 | API | Propagate `resolvePublicApplication` DB errors as 5xx | Query errors currently map to `null` → **404**; outages look like missing apps (public GET + view/download). Keep missing-row → **404**; surface DB errors as **500**. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F11-028 | API | Escape `q` quotes for PostgREST list search | `"` in `q` can break `ilike."%…%"` → **500**. Escape/strip quotes and remaining reserved filter chars. | [API_REFERENCE.md](API_REFERENCE.md) |
-| F10-029 | API | Distinguish missing CV vs HeadObject failure | `checkCvObjectExists` maps any R2 error to `cv_exists: false` (“CV missing”). Not-found → `false`; other failures → omit/unchecked. Shared by list, public, by-id GETs. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F10-030 | API | Harden `toPublicApplication` status handling | Helper always emits full DTO with `status: "active"`; JSDoc wrong. Enforce status check in helper / narrow types so direct use can’t leak archived/draft PII. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F12-031 | API | Repairable Auth name sync on PUT profile | Failed `updateUser` leaves Auth stale; same-name PUT skips re-sync. Also compare Auth `user_metadata` names (like `public_id`) so a no-op save can repair. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F13-032 | API | Atomic primary-library cap | Concurrent `POST /api/profile/primary-cvs` can exceed `PRIMARY_CV_MAX_PER_USER`. Enforce with DB trigger/lock; avoid hard-coding `5` if Premium raises the limit. | [API_REFERENCE.md](API_REFERENCE.md) |
@@ -218,7 +216,7 @@ Ship these when capacity allows; prefer attaching to a Must PR only if the same 
 | F7 | `fix/f7-upload-auth-and-replay` | `F7-035`, `F7-036` | Auth before R2 config probe; stronger CV upload replay identity |
 | F8 | `feat/f8-upload-form-ux` | `F8-051`, `F8-055`, `F8-063` | Upload form errors / busy copy / progress / retry idempotency |
 | F9 | `fix/f9-avatar-purge-and-warnings` | `F9-037`, `F9-052`, `F9-062` | Defer avatar purge; surface warnings; serialize concurrent replacements |
-| F10 | `fix/f10-public-resolve-cv-exists` | `F10-027`, `F10-029`, `F10-030` | Resolve DB → 5xx; HeadObject vs missing CV; harden `toPublicApplication` |
+| F10 | `fix/f10-public-resolve-cv-exists` | `F10-027`, `F10-029`, `F10-030` | ~~Resolve DB → 5xx; HeadObject vs missing CV~~ (shipped in D1 follow-up); harden `toPublicApplication` |
 | F11 | `fix/f11-escape-list-search-q` | `F11-028` | Escape `q` quotes for list search |
 | F12 | `fix/f12-repairable-auth-name-sync` | `F12-031` | Repairable Auth name sync on PUT profile |
 | F13 | `fix/f13-atomic-primary-cv-cap` | `F13-032` | Atomic primary-library cap |

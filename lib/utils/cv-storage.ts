@@ -263,12 +263,22 @@ export async function deleteApplicationCvIfTailored(
 /**
  * R2 HeadObject check for a CV public URL.
  * - `true` — URL is under our R2 public base and the object exists
- * - `false` — URL is under our R2 public base but the object is missing
- * - `undefined` — URL is outside our R2 public base; existence is unknown
+ * - `false` — URL is under our R2 public base but the object is missing (NotFound)
+ * - `undefined` — URL is outside our R2 public base, or HeadObject failed for
+ *   infrastructure reasons; existence is unknown
  *
  * Callers should treat `undefined` as “unchecked”: omit `cv_exists` from
  * detail/public payloads, or default list badges to present (not missing).
  */
+function isHeadObjectNotFound(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const e = error as {
+    name?: string;
+    $metadata?: { httpStatusCode?: number };
+  };
+  return e.name === "NotFound" || e.$metadata?.httpStatusCode === 404;
+}
+
 export async function checkCvObjectExists(
   url: string | null | undefined,
 ): Promise<boolean | undefined> {
@@ -280,7 +290,10 @@ export async function checkCvObjectExists(
       new HeadObjectCommand({ Bucket: getR2Bucket(), Key: key }),
     );
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    if (isHeadObjectNotFound(error)) {
+      return false;
+    }
+    return undefined;
   }
 }

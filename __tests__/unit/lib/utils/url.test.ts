@@ -34,6 +34,14 @@ describe("getBaseUrl", () => {
     expect(() => getBaseUrl()).toThrow(/NEXT_PUBLIC_SITE_URL must be set in production/);
   });
 
+  it("throws in production when NEXT_PUBLIC_SITE_URL is localhost", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+
+    const { getBaseUrl } = await loadUrlModule();
+    expect(() => getBaseUrl()).toThrow(/must be a public production URL, not localhost/);
+  });
+
   it("builds share links from the configured site URL on the server", async () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://myhireview.com");

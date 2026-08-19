@@ -82,8 +82,10 @@ Keep self-`fetch` but build the URL from the incoming request.
 | `lib/utils/load-public-application-response.ts` | Shared loader for public DTO (resolve + status + `cv_exists`) |
 | `app/view/[publicId]/[slug]/page.tsx` | RSC calls loader directly; no SSR `fetch` |
 | `app/api/applications/[publicId]/[slug]/route.ts` | GET uses same loader; rate limit unchanged for real clients |
-| `lib/utils/url.ts` | Production server: **require** `NEXT_PUBLIC_SITE_URL` (fail fast); dev keeps localhost fallback; client uses `window.location.origin` |
-| Tests | Loader unit tests; URL helper production guard; route tests mock loader |
+| `lib/utils/url.ts` | Production server: **require** `NEXT_PUBLIC_SITE_URL` (fail fast if unset or localhost); dev keeps localhost fallback; client uses `window.location.origin`. Example env ships a blank value so copy-paste does not deploy localhost to production. |
+| `lib/utils/resolve-public-application.ts` | DB query errors throw (→ **500**); missing rows still return null (→ **404**) |
+| `lib/utils/cv-storage.ts` | `checkCvObjectExists`: NotFound → `false`; other HeadObject failures → omit `cv_exists` (not false) |
+| Tests | Loader + resolver + URL helper tests; route tests mock loader |
 
 **Unchanged:** Browser `fetch('/api/applications/...')` from `ViewPageContent` for refetch; view/download analytics POSTs; per-IP limits on those routes.
 
@@ -93,7 +95,8 @@ Keep self-`fetch` but build the URL from the incoming request.
 
 1. **Do not rate-limit your own SSR as if it were a single user.** Internal server work should not share a public scraping cap keyed by IP.
 2. **Prefer in-process calls for RSC data that already lives in the same app.** Reuse a shared function, not an HTTP loopback, unless you need edge caching or a separate service boundary.
-3. **Canonical site URL belongs in env for share links.** Fail fast in production rather than silently emitting `localhost` URLs.
+3. **Canonical site URL belongs in env for share links.** Fail fast in production when the var is unset **or still set to localhost** — copying `.env.local.example` must not silently ship localhost URLs.
+4. **Distinguish not-found from outage in shared loaders.** DB errors should surface as **500**, not **404**; R2 HeadObject outages should omit `cv_exists`, not claim the CV is missing.
 
 ---
 

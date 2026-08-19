@@ -132,6 +132,18 @@ describe("loadPublicApplicationResponse", () => {
     expect(mockCheckCvObjectExists).not.toHaveBeenCalled();
   });
 
+  it("omits cv_exists when HeadObject fails for infrastructure reasons", async () => {
+    mockResolvePublicApplication.mockResolvedValue({
+      application: PUBLIC_APP,
+      ownerUserId: "owner-id",
+    });
+    mockCheckCvObjectExists.mockResolvedValue(undefined);
+
+    const result = await loadPublicApplicationResponse(PUBLIC_ID, SLUG);
+    expect(result).toMatchObject({ status: "active", cv_url: PUBLIC_APP.cv_url });
+    expect(result).not.toHaveProperty("cv_exists");
+  });
+
   it("propagates unexpected errors from resolvePublicApplication", async () => {
     mockResolvePublicApplication.mockRejectedValue(new Error("supabase down"));
 
