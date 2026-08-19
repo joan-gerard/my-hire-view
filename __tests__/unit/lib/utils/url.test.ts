@@ -45,10 +45,15 @@ describe("getBaseUrl", () => {
   it.each([
     "https://localhost:3000",
     "http://localhost",
+    "http://localhost.",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
+    "http://127.0.0.2:3000",
+    "http://127.1.2.3:3000",
     "http://[::1]:3000",
+    "http://[::ffff:127.0.0.1]:3000",
     "http://0.0.0.0:3000",
+    "http://ip6-localhost:3000",
   ])("throws in production for loopback host %s", async (siteUrl) => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", siteUrl);

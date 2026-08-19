@@ -4,14 +4,62 @@
  * and other canonical URL builders never fall back to localhost.
  */
 
+const LOCALHOST_ALIASES = new Set([
+  "localhost",
+  "ip6-localhost",
+  "ip6-loopback",
+]);
+
+function normalizeHostname(hostname: string): string {
+  return hostname.replace(/^\[|\]$/g, "").replace(/\.$/, "").toLowerCase();
+}
+
+function isIpv4Loopback(host: string): boolean {
+  const parts = host.split(".");
+  if (parts.length !== 4) return false;
+  const octets = parts.map((part) => Number.parseInt(part, 10));
+  if (octets.some((octet) => Number.isNaN(octet) || octet < 0 || octet > 255)) {
+    return false;
+  }
+  return octets[0] === 127;
+}
+
+function isIpv4MappedLoopback(host: string): boolean {
+  const match = host.match(/^::ffff:(.+)$/i);
+  if (!match) return false;
+
+  const tail = match[1];
+  if (tail.includes(".")) {
+    return isIpv4Loopback(tail);
+  }
+
+  const groups = tail.split(":").map((part) => Number.parseInt(part, 16));
+  if (groups.some((group) => Number.isNaN(group))) return false;
+
+  let value: number;
+  if (groups.length === 1) {
+    value = groups[0];
+  } else if (groups.length === 2) {
+    value = (groups[0] << 16) | groups[1];
+  } else {
+    return false;
+  }
+
+  return (value >>> 24) === 127;
+}
+
 function isLoopbackHostname(hostname: string): boolean {
-  const host = hostname.replace(/^\[|\]$/g, "").toLowerCase();
-  return (
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    host === "::1" ||
-    host === "0.0.0.0"
-  );
+  const host = normalizeHostname(hostname);
+  if (LOCALHOST_ALIASES.has(host)) return true;
+  if (host === "0.0.0.0" || host === "::1") return true;
+  if (isIpv4Loopback(host)) return true;
+  if (isIpv6Loopback(host)) return true;
+  return false;
+}
+
+function isIpv6Loopback(host: string): boolean {
+  if (host === "::1") return true;
+  return isIpv4MappedLoopback(host);
 }
 
 function assertProductionSiteUrl(url: URL): void {
