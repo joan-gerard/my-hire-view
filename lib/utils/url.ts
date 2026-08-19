@@ -17,11 +17,12 @@ function normalizeHostname(hostname: string): string {
 function isIpv4Loopback(host: string): boolean {
   const parts = host.split(".");
   if (parts.length !== 4) return false;
-  const octets = parts.map((part) => Number.parseInt(part, 10));
-  if (octets.some((octet) => Number.isNaN(octet) || octet < 0 || octet > 255)) {
-    return false;
+  for (const part of parts) {
+    if (!/^\d{1,3}$/.test(part)) return false;
+    const octet = Number.parseInt(part, 10);
+    if (octet < 0 || octet > 255) return false;
   }
-  return octets[0] === 127;
+  return Number.parseInt(parts[0], 10) === 127;
 }
 
 function isIpv4MappedLoopback(host: string): boolean {
@@ -58,7 +59,6 @@ function isLoopbackHostname(hostname: string): boolean {
 }
 
 function isIpv6Loopback(host: string): boolean {
-  if (host === "::1") return true;
   return isIpv4MappedLoopback(host);
 }
 

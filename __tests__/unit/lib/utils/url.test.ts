@@ -79,4 +79,12 @@ describe("getBaseUrl", () => {
       "https://myhireview.com/view/k7x2m9ab/acme-engineer",
     );
   });
+
+  it("allows production hostnames that resemble loopback IPs but are valid DNS names", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://127.0.0.1example");
+
+    const { getBaseUrl } = await loadUrlModule();
+    expect(getBaseUrl()).toBe("https://127.0.0.1example");
+  });
 });
