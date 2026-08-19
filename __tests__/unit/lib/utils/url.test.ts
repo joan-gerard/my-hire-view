@@ -18,12 +18,23 @@ describe("getBaseUrl", () => {
     expect(getBaseUrl()).toBe("http://localhost:3000");
   });
 
-  it("returns configured NEXT_PUBLIC_SITE_URL on the server", async () => {
+  it("returns configured NEXT_PUBLIC_SITE_URL origin on the server", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://myhireview.com/");
 
     const { getBaseUrl } = await loadUrlModule();
     expect(getBaseUrl()).toBe("https://myhireview.com");
+  });
+
+  it("strips trailing path slashes from configured site URLs", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://myhireview.com///");
+
+    const { getBaseUrl, getApplicationUrl } = await loadUrlModule();
+    expect(getBaseUrl()).toBe("https://myhireview.com");
+    expect(getApplicationUrl("k7x2m9ab", "acme-engineer")).toBe(
+      "https://myhireview.com/view/k7x2m9ab/acme-engineer",
+    );
   });
 
   it("throws in production on the server when NEXT_PUBLIC_SITE_URL is unset", async () => {
@@ -53,6 +64,7 @@ describe("getBaseUrl", () => {
     "http://[::1]:3000",
     "http://[::ffff:127.0.0.1]:3000",
     "http://0.0.0.0:3000",
+    "http://[::]:443",
     "http://ip6-localhost:3000",
   ])("throws in production for loopback host %s", async (siteUrl) => {
     vi.stubEnv("NODE_ENV", "production");
@@ -68,6 +80,17 @@ describe("getBaseUrl", () => {
 
     const { getBaseUrl } = await loadUrlModule();
     expect(() => getBaseUrl()).toThrow(/must use http or https in production/);
+  });
+
+  it.each([
+    "https://myhireview.com?x=1",
+    "https://myhireview.com#section",
+  ])("throws in production when NEXT_PUBLIC_SITE_URL includes query or fragment: %s", async (siteUrl) => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", siteUrl);
+
+    const { getBaseUrl } = await loadUrlModule();
+    expect(() => getBaseUrl()).toThrow(/must not include a query string or fragment/);
   });
 
   it("builds share links from the configured site URL on the server", async () => {

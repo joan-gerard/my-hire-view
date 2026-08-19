@@ -25,16 +25,12 @@ function isIpv4Loopback(host: string): boolean {
   return Number.parseInt(parts[0], 10) === 127;
 }
 
+/** IPv4-mapped loopback after WHATWG URL normalization (hex tail only). */
 function isIpv4MappedLoopback(host: string): boolean {
   const match = host.match(/^::ffff:(.+)$/i);
   if (!match) return false;
 
-  const tail = match[1];
-  if (tail.includes(".")) {
-    return isIpv4Loopback(tail);
-  }
-
-  const groups = tail.split(":").map((part) => Number.parseInt(part, 16));
+  const groups = match[1].split(":").map((part) => Number.parseInt(part, 16));
   if (groups.some((group) => Number.isNaN(group))) return false;
 
   let value: number;
@@ -52,13 +48,8 @@ function isIpv4MappedLoopback(host: string): boolean {
 function isLoopbackHostname(hostname: string): boolean {
   const host = normalizeHostname(hostname);
   if (LOCALHOST_ALIASES.has(host)) return true;
-  if (host === "0.0.0.0" || host === "::1") return true;
+  if (host === "0.0.0.0" || host === "::" || host === "::1") return true;
   if (isIpv4Loopback(host)) return true;
-  if (isIpv6Loopback(host)) return true;
-  return false;
-}
-
-function isIpv6Loopback(host: string): boolean {
   return isIpv4MappedLoopback(host);
 }
 
@@ -66,6 +57,11 @@ function assertProductionSiteUrl(url: URL): void {
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new Error(
       "NEXT_PUBLIC_SITE_URL must use http or https in production.",
+    );
+  }
+  if (url.search || url.hash) {
+    throw new Error(
+      "NEXT_PUBLIC_SITE_URL must not include a query string or fragment.",
     );
   }
   if (isLoopbackHostname(url.hostname)) {
@@ -82,19 +78,26 @@ function getBaseUrl(): string {
 
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (configured) {
-    const base = configured.replace(/\/$/, "");
-    if (process.env.NODE_ENV === "production") {
-      let parsed: URL;
-      try {
-        parsed = new URL(base);
-      } catch {
+    try {
+      const parsed = new URL(configured);
+      if (process.env.NODE_ENV === "production") {
+        assertProductionSiteUrl(parsed);
+      }
+      return parsed.origin;
+    } catch (error) {
+      if (
+        process.env.NODE_ENV === "production" &&
+        !(error instanceof Error && error.message.startsWith("NEXT_PUBLIC_SITE_URL"))
+      ) {
         throw new Error(
           "NEXT_PUBLIC_SITE_URL must be a valid absolute URL in production.",
         );
       }
-      assertProductionSiteUrl(parsed);
+      if (process.env.NODE_ENV === "production") {
+        throw error;
+      }
+      return configured.replace(/\/+$/, "");
     }
-    return base;
   }
 
   if (process.env.NODE_ENV === "production") {
