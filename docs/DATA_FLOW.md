@@ -535,7 +535,7 @@ All data shown to the recruiter (including candidate name, location, and links) 
 | **applications** | New/Edit form → `/api/applications` | Dashboard, edit page, public `/view/[publicId]/[slug]` |
 | **auth**    | Login/signup → Supabase Auth  | Middleware, requireAuth(), profile/dashboard |
 
-Candidate fields on the application are either supplied by the form (with toggles) or, on create only, taken from the profile when not in the request body. The recruiter view never reads from the profile table.
+Candidate fields on the application are either supplied by the form (with toggles) or, on create only, taken from the profile when not in the request body. The recruiter view reads the profile table only for the display-only profile picture when `show_profile_picture` is true; all candidate text fields (name, location, links) still come from the application row.
 
 ---
 

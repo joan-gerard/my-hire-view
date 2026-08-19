@@ -272,11 +272,11 @@ export async function deleteApplicationCvIfTailored(
  */
 function isHeadObjectNotFound(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
-  const e = error as {
-    name?: string;
-    $metadata?: { httpStatusCode?: number };
-  };
-  return e.name === "NotFound" || e.$metadata?.httpStatusCode === 404;
+  const e = error as { name?: string; Code?: string };
+  const code = e.name ?? e.Code;
+  // NoSuchBucket also returns HTTP 404 but is an infrastructure/config failure.
+  if (code === "NoSuchBucket") return false;
+  return code === "NotFound" || code === "NoSuchKey";
 }
 
 export async function checkCvObjectExists(

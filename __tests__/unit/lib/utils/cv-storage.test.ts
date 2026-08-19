@@ -273,6 +273,16 @@ describe("checkCvObjectExists", () => {
     await expect(checkCvObjectExists(TAILORED_URL)).resolves.toBe(false);
   });
 
+  it("returns undefined when HeadObject reports NoSuchBucket", async () => {
+    const send = vi.fn().mockRejectedValue({
+      name: "NoSuchBucket",
+      $metadata: { httpStatusCode: 404 },
+    });
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await expect(checkCvObjectExists(TAILORED_URL)).resolves.toBeUndefined();
+  });
+
   it("returns undefined when HeadObject fails for reasons other than NotFound", async () => {
     const send = vi.fn().mockRejectedValue(new Error("network timeout"));
     vi.mocked(getR2S3Client).mockReturnValue({ send } as never);

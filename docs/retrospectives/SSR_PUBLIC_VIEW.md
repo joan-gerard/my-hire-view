@@ -82,9 +82,9 @@ Keep self-`fetch` but build the URL from the incoming request.
 | `lib/utils/load-public-application-response.ts` | Shared loader for public DTO (resolve + status + `cv_exists`) |
 | `app/view/[publicId]/[slug]/page.tsx` | RSC calls loader directly; no SSR `fetch` |
 | `app/api/applications/[publicId]/[slug]/route.ts` | GET uses same loader; rate limit unchanged for real clients |
-| `lib/utils/url.ts` | Production server: **require** `NEXT_PUBLIC_SITE_URL` (fail fast if unset or localhost); dev keeps localhost fallback; client uses `window.location.origin`. Example env ships a blank value so copy-paste does not deploy localhost to production. |
+| `lib/utils/url.ts` | Production server: **require** `NEXT_PUBLIC_SITE_URL` (fail fast if unset, non-http(s), or loopback hostname); dev keeps localhost fallback; client uses `window.location.origin`. Example env ships a blank value so copy-paste does not deploy localhost to production. |
 | `lib/utils/resolve-public-application.ts` | DB query errors throw (→ **500**); missing rows still return null (→ **404**) |
-| `lib/utils/cv-storage.ts` | `checkCvObjectExists`: NotFound → `false`; other HeadObject failures → omit `cv_exists` (not false) |
+| `lib/utils/cv-storage.ts` | `checkCvObjectExists`: object NotFound → `false`; NoSuchBucket and other HeadObject failures → omit `cv_exists` (not false) |
 | Tests | Loader + resolver + URL helper tests; route tests mock loader |
 
 **Unchanged:** Browser `fetch('/api/applications/...')` from `ViewPageContent` for refetch; view/download analytics POSTs; per-IP limits on those routes.
