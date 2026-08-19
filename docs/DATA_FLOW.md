@@ -57,6 +57,7 @@ flowchart LR
     ProfileAPI["/api/profile"]
     AppsAPI["/api/applications"]
     SlugAPIs["/api/slug &amp; /api/slug/validate"]
+    ViewLoader["loadPublicApplicationResponse"]
     ViewSlugAPI["GET /api/applications/[publicId]/[slug]"]
     ViewAPI["POST .../view"]
   end
@@ -73,13 +74,15 @@ flowchart LR
   ProfilePage --> ProfileAPI
   NewEdit --> AppsAPI
   NewEdit --> SlugAPIs
-  ViewPage --> ViewSlugAPI
+  ViewPage --> ViewLoader
   ViewPage --> ViewAPI
 
   ProfileAPI --> Profiles
   AppsAPI --> Profiles
   AppsAPI --> Applications
   SlugAPIs --> Applications
+  ViewLoader --> Profiles
+  ViewLoader --> Applications
   ViewSlugAPI --> Applications
   ViewAPI --> Applications
 ```
@@ -482,16 +485,16 @@ sequenceDiagram
 sequenceDiagram
   participant R as Recruiter
   participant Page as /view/[publicId]/[slug]
-  participant SlugAPI as GET /api/applications/[slug]
+  participant Loader as loadPublicApplicationResponse
   participant ViewAPI as POST .../view
   participant VT as ViewTracker
   participant Applications as applications
 
   R->>Page: Open shareable link
-  Page->>SlugAPI: fetch(slug)
-  SlugAPI->>Applications: select by slug
-  Applications-->>SlugAPI: full row (incl. candidate fields)
-  SlugAPI-->>Page: application
+  Page->>Loader: resolve public application (in-process)
+  Loader->>Applications: profile + application (service role)
+  Applications-->>Loader: application row
+  Loader-->>Page: PublicApplicationResponse
   Page->>Page: Render header (company, role, name, location, portfolio/LinkedIn), PDF, video
   Page->>VT: Mount
   VT->>VT: sessionStorage already tracked?
@@ -512,6 +515,8 @@ sequenceDiagram
     VT->>VT: sessionStorage set
   end
 ```
+
+Initial page load resolves the application in-process on the server (no SSR self-`fetch` to the public GET route). Client refetches after interactive updates still call `GET /api/applications/[publicId]/[slug]` and remain per-IP rate limited. See [retrospectives/SSR_PUBLIC_VIEW.md](retrospectives/SSR_PUBLIC_VIEW.md).
 
 All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per browser via the server httpOnly dedupe cookie (24h; client `sessionStorage` avoids redundant POSTs), and `last_viewed_at` is set to the current time, **except when the applicant (owner) is viewing their own application**—in that case the API returns success without updating so the count and last-viewed time reflect only external viewers. The increment is done via a SECURITY DEFINER database function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
 

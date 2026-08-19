@@ -4,7 +4,7 @@
 
 **Trello:** Cards live on the [MyHireView](https://trello.com/b/PAn5GrDz/myhireview) board (lists: Pre Launch, Post Launch, Current Sprint, In Progress, Done). Card titles use `[id] Item` (e.g. `[A1-002] CI/CD`) and match rows in this file. Keep this doc and Trello in sync whenever a ticket or PR moves, ships, or is added.
 
-**Context (not the work tracker):** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [API_REFERENCE.md](API_REFERENCE.md) · [CI_CD.md](CI_CD.md) · [CODE_REVIEW.md](CODE_REVIEW.md) · [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) · [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md)
+**Context (not the work tracker):** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [API_REFERENCE.md](API_REFERENCE.md) · [CI_CD.md](CI_CD.md) · [CODE_REVIEW.md](CODE_REVIEW.md) · [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) · [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md) · [retrospectives/SSR_PUBLIC_VIEW.md](retrospectives/SSR_PUBLIC_VIEW.md)
 
 **MoSCoW:** **M**ust · **S**hould · **C**ould · **W**on’t (this time)
 
@@ -21,7 +21,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | ID | Subcategory | Item | Notes | Source |
 | -------- | -------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | D3-001 | Infrastructure | Durable rate limiting | Replace in-memory `lib/rate-limit.ts` with Redis/Upstash (or similar). Also closes per-path Map growth on view/download: `checkPerSlugRateLimit` keys `${ip}:${publicId}:${slug}` before format validation and only prunes the key being hit, so unique invalid paths accumulate. Interim: validate/normalize `publicId` + slug before constructing the key, and/or add global TTL / capacity sweep. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
-| D1-007 | API | SSR public view vs per-IP rate limit | `/view/[publicId]/[slug]` server `fetch` shares one **120/min** bucket under server/`unknown` IP → cross-visitor **429**. Call `resolvePublicApplication` from the RSC (or exempt/internal-tag server loads). Distinct from Production base URL for SSR. | [API_REFERENCE.md](API_REFERENCE.md) |
 | E1-012 | Product | Pricing & membership tiers | Define plans (paid + optional free tier / trial), per-tier limits, price points. Do **not** launch with unlimited free app access. Inventory of existing free/premium mentions: [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md). | [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) |
 | E2-013 | Product | Payment / membership system | Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | E3-014 | Marketing | Pricing page beyond placeholder | Ship real tiers on `/pricing` aligned with billing — not a stub. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
@@ -78,7 +77,6 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | F25-058 | Code quality | ConfirmDialog single cancel path | Cancel / backdrop dismissal call `onCancel` directly, then controlled `open=false` closes the native `<dialog>` and the `close` listener calls `onCancel` again. Route dismissal through one path (or guard the listener) so each cancel emits once. | — |
 | F2-059 | UX | Show password on login / signup | Toggle to reveal/hide password on `/login` and `/signup`. | — |
 | F26-060 | Infrastructure | Middleware entry clarity | Ensure Next picks up session middleware (`proxy.ts` vs `middleware.ts`). | [CODE_REVIEW.md](CODE_REVIEW.md) |
-| D1-061 | Infrastructure | Production base URL for SSR | `getBaseUrl()` falls back to `http://localhost:3000` when `NEXT_PUBLIC_SITE_URL` is unset. `/view/[publicId]/[slug]` SSR `fetch` then targets localhost and fails in production. Require the env in prod (fail fast) and/or derive the request origin (`Host` / `x-forwarded-host`) for server-side fetches; keep share-link builders on an explicit canonical site URL. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F9-062 | API | Serialize concurrent profile-picture replacements | Two concurrent uploads with different MIME/ext can purge each other’s returned URLs. Mitigate with per-user serialization or purge only the previously committed path. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F8-063 | UX | CV upload retry after failure (idempotency key) | On network/500, reuse the same idempotency key; generate a new key only when the file changes. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F3-064 | API | Cap waitlist `first_name` + tighten email validation | Length cap on `first_name`; stricter email validation (or small library). | [API_REFERENCE.md](API_REFERENCE.md) |
@@ -191,7 +189,7 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
-| D1 | `fix/d1-ssr-view-rate-limit` | `D1-007`, `D1-061` | SSR public view vs per-IP rate limit + production base URL for SSR |
+| D1 | `fix/d1-ssr-view-rate-limit` | `D1-007`, `D1-061` | ~~SSR public view vs per-IP rate limit + production base URL for SSR~~ (shipped) |
 | D2 | `fix/d2-slug-validate-rate-limit-key` | `D2-034` | Route-scoped slug-validate rate-limit key (can ship before Redis) |
 | D3 | `feat/d3-durable-rate-limiting` | `D3-001` | Durable rate limiting (Redis/Upstash) + per-path Map growth / interim validate-before-key |
 
@@ -309,6 +307,6 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **D1** — `fix/d1-ssr-view-rate-limit` (`D1-007`, `D1-061`)  
-2. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
-3. **C3** — `fix/c3-picture-only-first-save` (`C3-026`)  
+1. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
+2. **C3** — `fix/c3-picture-only-first-save` (`C3-026`)  
+3. **D2** — `fix/d2-slug-validate-rate-limit-key` (`D2-034`)

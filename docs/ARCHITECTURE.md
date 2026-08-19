@@ -293,17 +293,17 @@ sequenceDiagram
 sequenceDiagram
   participant R as Recruiter
   participant Page as /view/[publicId]/[slug]
-  participant SlugAPI as GET /api/applications/[slug]
+  participant Loader as loadPublicApplicationResponse
   participant ViewAPI as POST /api/.../view
   participant VT as ViewTracker
   participant Supa as Supabase
 
   R->>Page: Open /view/k7x2m9ab/my-company-role
-  Page->>SlugAPI: fetch(slug)
-  SlugAPI->>Supa: select by slug (full row, includes candidate name, location, portfolio_url, linkedin_url)
-  Supa-->>SlugAPI: application
-  SlugAPI-->>Page: { data }
-  Page->>Page: Render header (company, role, candidate name, location, portfolio/LinkedIn buttons) + PDF + YouTube
+  Page->>Loader: resolve public application (in-process)
+  Loader->>Supa: profile + application (service role)
+  Supa-->>Loader: application row
+  Loader-->>Page: PublicApplicationResponse
+  Page->>Page: Render header + PDF + YouTube
   Page->>VT: Mount ViewTracker(slug)
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not tracked)
