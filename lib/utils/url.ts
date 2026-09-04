@@ -4,6 +4,8 @@
  * and other canonical URL builders never fall back to localhost.
  */
 
+const LOCAL_DEV_BASE_URL = "http://localhost:3000";
+
 const LOCALHOST_ALIASES = new Set([
   "localhost",
   "ip6-localhost",
@@ -53,8 +55,12 @@ function isLoopbackHostname(hostname: string): boolean {
   return isIpv4MappedLoopback(host);
 }
 
+function isHttpOrHttps(url: URL): boolean {
+  return url.protocol === "http:" || url.protocol === "https:";
+}
+
 function assertProductionSiteUrl(url: URL): void {
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
+  if (!isHttpOrHttps(url)) {
     throw new Error(
       "NEXT_PUBLIC_SITE_URL must use http or https in production.",
     );
@@ -82,21 +88,24 @@ function getBaseUrl(): string {
       const parsed = new URL(configured);
       if (process.env.NODE_ENV === "production") {
         assertProductionSiteUrl(parsed);
+      } else if (!isHttpOrHttps(parsed)) {
+        // file:/mailto:/etc. yield origin "null"; ftp and others are not web share bases.
+        return LOCAL_DEV_BASE_URL;
       }
       return parsed.origin;
     } catch (error) {
-      if (
-        process.env.NODE_ENV === "production" &&
-        !(error instanceof Error && error.message.startsWith("NEXT_PUBLIC_SITE_URL"))
-      ) {
+      if (process.env.NODE_ENV === "production") {
+        if (
+          error instanceof Error &&
+          error.message.startsWith("NEXT_PUBLIC_SITE_URL")
+        ) {
+          throw error;
+        }
         throw new Error(
           "NEXT_PUBLIC_SITE_URL must be a valid absolute URL in production.",
         );
       }
-      if (process.env.NODE_ENV === "production") {
-        throw error;
-      }
-      return configured.replace(/\/+$/, "");
+      return LOCAL_DEV_BASE_URL;
     }
   }
 
@@ -106,7 +115,7 @@ function getBaseUrl(): string {
     );
   }
 
-  return "http://localhost:3000";
+  return LOCAL_DEV_BASE_URL;
 }
 
 /**

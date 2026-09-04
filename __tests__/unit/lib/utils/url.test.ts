@@ -37,6 +37,28 @@ describe("getBaseUrl", () => {
     );
   });
 
+  it.each(["file:///tmp/site", "ftp://example.com", "mailto:x@y.com"])(
+    "falls back to localhost in development for non-http(s) site URL %s",
+    async (siteUrl) => {
+      vi.stubEnv("NODE_ENV", "development");
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", siteUrl);
+
+      const { getBaseUrl, getApplicationUrl } = await loadUrlModule();
+      expect(getBaseUrl()).toBe("http://localhost:3000");
+      expect(getApplicationUrl("k7x2m9ab", "acme-engineer")).toBe(
+        "http://localhost:3000/view/k7x2m9ab/acme-engineer",
+      );
+    },
+  );
+
+  it("falls back to localhost in development when NEXT_PUBLIC_SITE_URL is not a valid URL", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "not-a-url");
+
+    const { getBaseUrl } = await loadUrlModule();
+    expect(getBaseUrl()).toBe("http://localhost:3000");
+  });
+
   it("throws in production on the server when NEXT_PUBLIC_SITE_URL is unset", async () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
