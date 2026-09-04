@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 
 const HEADER_HEIGHT_PX = 72;
 
@@ -25,18 +26,37 @@ const ScrollCoverContext = createContext<ScrollCoverContextValue | null>(null);
  * when the user has scrolled and the ScrollCoverSection has reached the top of the viewport.
  * Uses Intersection Observer on a 1px sentinel; when the sentinel leaves the viewport top,
  * scrollCoverReachedTop becomes true.
+ *
+ * On non-home marketing routes (e.g. `/pricing`) there is no fixed hero, so the header
+ * stays solid white from the start — same idea as HeroEntranceProvider setting heroReady.
  */
 export function ScrollCoverProvider({ children }: { children: React.ReactNode }) {
-  const [scrollCoverReachedTop, setScrollCoverReachedTop] = useState(false);
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+  const [scrollCoverReachedTop, setScrollCoverReachedTop] = useState(!isHome);
   const [sentinelRef, setSentinelRef] = useState<HTMLElement | null>(null);
 
-  const setScrollCoverSentinelRef = useCallback((element: HTMLElement | null) => {
-    setSentinelRef(element);
-    if (!element) setScrollCoverReachedTop(false);
-  }, []);
+  const setScrollCoverSentinelRef = useCallback(
+    (element: HTMLElement | null) => {
+      setSentinelRef(element);
+      if (!element) {
+        // No sentinel: home resets to transparent-over-hero; other routes stay solid.
+        setScrollCoverReachedTop(pathname !== "/");
+      }
+    },
+    [pathname],
+  );
 
   useEffect(() => {
-    if (!sentinelRef) return;
+    if (pathname !== "/") {
+      setScrollCoverReachedTop(true);
+      return;
+    }
+    setScrollCoverReachedTop(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (pathname !== "/" || !sentinelRef) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -46,16 +66,16 @@ export function ScrollCoverProvider({ children }: { children: React.ReactNode })
         root: null,
         rootMargin: `-${HEADER_HEIGHT_PX}px 0px 0px 0px`,
         threshold: 0,
-      }
+      },
     );
 
     observer.observe(sentinelRef);
     return () => observer.disconnect();
-  }, [sentinelRef]);
+  }, [pathname, sentinelRef]);
 
   const value = useMemo(
     () => ({ scrollCoverReachedTop, setScrollCoverSentinelRef }),
-    [scrollCoverReachedTop, setScrollCoverSentinelRef]
+    [scrollCoverReachedTop, setScrollCoverSentinelRef],
   );
 
   return (

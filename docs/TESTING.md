@@ -30,6 +30,9 @@ __tests__/
   helpers/
     supabase-mock.ts     — reusable Supabase fluent-chain mock factory
   unit/
+    components/
+      public/
+        pricing-tiers.test.ts
     lib/
       utils/
         slug-generate.test.ts
@@ -71,7 +74,7 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 
 | File | What it covers |
 |------|---------------|
-| `__tests__/unit/lib/utils/slug-generate.test.ts` | **Pure slug utilities** — `validateSlugFormat` (empty input, too long, invalid chars, valid slugs), `generateSlug` (normalisation, special-char stripping, space collapsing), `buildSlug` (position `start`/`end`, partial and missing names) |
+| `__tests__/unit/components/public/pricing-tiers.test.ts` | **Pricing draft tiers (E3-014)** — Free/Pro/Premium ids & names, Pro highlighted, no invented `$` prices while TBA, waitlist CTAs, core matrix features, draft disclaimer |
 | `__tests__/unit/lib/utils/slug.test.ts` | **Server-side slug helpers** — `checkSlugUniqueness` (unique, taken, DB error), `validateSlugForApplication` (format short-circuits DB call, available, taken), `reserveBaseSlug` (name positions, collision throws `SlugCollisionError`), `SlugCollisionError` (shape and default message) |
 | `__tests__/unit/lib/utils/profile-picture-storage.test.ts` | **Profile picture Storage URLs** — path parse, canonical `avatar.*`, ownership (canonical + legacy under user folder), reject lookalike paths on foreign origins (C2-008) |
 | `__tests__/unit/lib/utils/cv-storage.test.ts` | **CV R2 ownership & delete** — `getCvObjectKeyFromPublicUrl` / `toCanonicalCvPublicUrl`, `isOwnedTailoredCvUrl`, `isOwnedPrimaryCvObjectKey`, allow-list `deleteApplicationCvIfTailored`, fail closed when `R2_PUBLIC_BASE_URL` unset, `deleteCvIfOurs`, `checkCvObjectExists` (`true` / object NotFound→`false` / NoSuchBucket+infra→`undefined`)

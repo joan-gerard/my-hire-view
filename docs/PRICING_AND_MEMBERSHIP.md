@@ -18,7 +18,7 @@ Homepage marketing FAQ copy is **placeholder** and is intentionally **not** used
 | Free access, if any, is a **free tier and/or trial only** — not unlimited free use of the app. | Same |
 | Creating / using applications should be **gated** behind an active plan or trial. | Same |
 | Billing provider direction: **Stripe (or similar)** — checkout, webhooks, Supabase subscription state. | Same |
-| `/pricing` must ship **real tiers aligned with billing**, not a stub. | Same; page today says “Content coming soon.” (`app/(marketing)/pricing/page.tsx`) |
+| `/pricing` must ship **real tiers aligned with billing**, not a stub. | Same; `/pricing` now shows draft Free/Pro/Premium from §2 (E3-014). Prices/caps still TBA until E1/E2 finalize. |
 
 ---
 
@@ -100,6 +100,6 @@ Working plan names: **Free**, **Pro**, **Premium**. Nothing below is implemented
 ## 5. How to keep this current
 
 1. As remaining caps and prices land, tighten §2 / §4 and treat this doc as the source of truth for pricing.
-2. Keep `/pricing` (and any other marketing surfaces) aligned with that matrix once it exists.
+2. Keep `/pricing` (and any other marketing surfaces) aligned with this matrix — tier copy lives in `components/public/pricing/constants.ts`.
 3. When pricing or billing work ships, update [Backlog.md](Backlog.md) (remove or strike the row). Do not keep a parallel open checklist here.
 |
