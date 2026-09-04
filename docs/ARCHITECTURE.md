@@ -293,17 +293,20 @@ sequenceDiagram
 sequenceDiagram
   participant R as Recruiter
   participant Page as /view/[publicId]/[slug]
-  participant SlugAPI as GET /api/applications/[slug]
+  participant Loader as loadPublicApplicationResponse
   participant ViewAPI as POST /api/.../view
   participant VT as ViewTracker
-  participant Supa as Supabase
+  participant Profiles as profiles
+  participant Applications as applications
 
   R->>Page: Open /view/k7x2m9ab/my-company-role
-  Page->>SlugAPI: fetch(slug)
-  SlugAPI->>Supa: select by slug (full row, includes candidate name, location, portfolio_url, linkedin_url)
-  Supa-->>SlugAPI: application
-  SlugAPI-->>Page: { data }
-  Page->>Page: Render header (company, role, candidate name, location, portfolio/LinkedIn buttons) + PDF + YouTube
+  Page->>Loader: resolve public application (in-process)
+  Loader->>Profiles: select by public_id (service role)
+  Profiles-->>Loader: user_id, profile_picture_url
+  Loader->>Applications: select by user_id + slug
+  Applications-->>Loader: application row
+  Loader-->>Page: PublicApplicationResponse
+  Page->>Page: Render header + PDF + YouTube
   Page->>VT: Mount ViewTracker(slug)
   VT->>VT: sessionStorage already tracked?
   VT->>ViewAPI: POST (if not tracked)
@@ -312,7 +315,7 @@ sequenceDiagram
     ViewAPI-->>VT: 200 (no increment)
   else
     ViewAPI->>ViewAPI: get viewer via auth.getUser(); skip increment if owner
-    ViewAPI->>Supa: RPC increment_application_view_count (non-owner only, service_role)
+    ViewAPI->>Applications: RPC increment_application_view_count via service_role
     ViewAPI-->>VT: 200 + Set-Cookie dedupe
   end
   VT->>VT: sessionStorage set tracked

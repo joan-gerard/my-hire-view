@@ -264,11 +264,30 @@ describe("checkCvObjectExists", () => {
     expect(send).toHaveBeenCalledWith(expect.any(HeadObjectCommand));
   });
 
-  it("returns false when HeadObject fails for an R2 URL", async () => {
-    const send = vi.fn().mockRejectedValue(new Error("NotFound"));
+  it("returns false when HeadObject reports NotFound for an R2 URL", async () => {
+    const send = vi
+      .fn()
+      .mockRejectedValue({ name: "NotFound", $metadata: { httpStatusCode: 404 } });
     vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
 
     await expect(checkCvObjectExists(TAILORED_URL)).resolves.toBe(false);
+  });
+
+  it("returns undefined when HeadObject reports NoSuchBucket", async () => {
+    const send = vi.fn().mockRejectedValue({
+      name: "NoSuchBucket",
+      $metadata: { httpStatusCode: 404 },
+    });
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await expect(checkCvObjectExists(TAILORED_URL)).resolves.toBeUndefined();
+  });
+
+  it("returns undefined when HeadObject fails for reasons other than NotFound", async () => {
+    const send = vi.fn().mockRejectedValue(new Error("network timeout"));
+    vi.mocked(getR2S3Client).mockReturnValue({ send } as never);
+
+    await expect(checkCvObjectExists(TAILORED_URL)).resolves.toBeUndefined();
   });
 
   it("returns undefined for URLs outside our R2 public base", async () => {

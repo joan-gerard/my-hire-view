@@ -57,6 +57,7 @@ flowchart LR
     ProfileAPI["/api/profile"]
     AppsAPI["/api/applications"]
     SlugAPIs["/api/slug &amp; /api/slug/validate"]
+    ViewLoader["loadPublicApplicationResponse"]
     ViewSlugAPI["GET /api/applications/[publicId]/[slug]"]
     ViewAPI["POST .../view"]
   end
@@ -73,13 +74,15 @@ flowchart LR
   ProfilePage --> ProfileAPI
   NewEdit --> AppsAPI
   NewEdit --> SlugAPIs
-  ViewPage --> ViewSlugAPI
+  ViewPage --> ViewLoader
   ViewPage --> ViewAPI
 
   ProfileAPI --> Profiles
   AppsAPI --> Profiles
   AppsAPI --> Applications
   SlugAPIs --> Applications
+  ViewLoader --> Profiles
+  ViewLoader --> Applications
   ViewSlugAPI --> Applications
   ViewAPI --> Applications
 ```
@@ -482,16 +485,19 @@ sequenceDiagram
 sequenceDiagram
   participant R as Recruiter
   participant Page as /view/[publicId]/[slug]
-  participant SlugAPI as GET /api/applications/[slug]
+  participant Loader as loadPublicApplicationResponse
   participant ViewAPI as POST .../view
   participant VT as ViewTracker
+  participant Profiles as profiles
   participant Applications as applications
 
   R->>Page: Open shareable link
-  Page->>SlugAPI: fetch(slug)
-  SlugAPI->>Applications: select by slug
-  Applications-->>SlugAPI: full row (incl. candidate fields)
-  SlugAPI-->>Page: application
+  Page->>Loader: resolve public application (in-process)
+  Loader->>Profiles: select by public_id (service role)
+  Profiles-->>Loader: user_id, profile_picture_url
+  Loader->>Applications: select by user_id + slug
+  Applications-->>Loader: application row
+  Loader-->>Page: PublicApplicationResponse
   Page->>Page: Render header (company, role, name, location, portfolio/LinkedIn), PDF, video
   Page->>VT: Mount
   VT->>VT: sessionStorage already tracked?
@@ -513,6 +519,8 @@ sequenceDiagram
   end
 ```
 
+Initial page load resolves the application in-process on the server (no SSR self-`fetch` to the public GET route). Client refetches after interactive updates still call `GET /api/applications/[publicId]/[slug]` and remain per-IP rate limited. See [retrospectives/SSR_PUBLIC_VIEW.md](retrospectives/SSR_PUBLIC_VIEW.md).
+
 All data shown to the recruiter (including candidate name, location, and links) comes from the application row. View count is incremented once per browser via the server httpOnly dedupe cookie (24h; client `sessionStorage` avoids redundant POSTs), and `last_viewed_at` is set to the current time, **except when the applicant (owner) is viewing their own application**—in that case the API returns success without updating so the count and last-viewed time reflect only external viewers. The increment is done via a SECURITY DEFINER database function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
 
 **CV download count:** When the recruiter (or any visitor) clicks "Download CV" in the PDF viewer, the client calls `POST /api/applications/[slug]/download` (once per session via `sessionStorage`, with the same server httpOnly dedupe cookie). The API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), only when the requester is not the application owner, so the count reflects only external CV downloads. The dashboard "View Insights" panel shows view count, CV download count, creation date, and last viewed date/time. The file name used for the download is chosen when creating or editing the application: either the original uploaded filename (e.g. `My Resume.pdf`) or the generated name `CV-{Slug}.pdf`, stored in `applications.cv_filename` and `applications.use_original_cv_filename`.
@@ -527,7 +535,7 @@ All data shown to the recruiter (including candidate name, location, and links) 
 | **applications** | New/Edit form → `/api/applications` | Dashboard, edit page, public `/view/[publicId]/[slug]` |
 | **auth**    | Login/signup → Supabase Auth  | Middleware, requireAuth(), profile/dashboard |
 
-Candidate fields on the application are either supplied by the form (with toggles) or, on create only, taken from the profile when not in the request body. The recruiter view never reads from the profile table.
+Candidate fields on the application are either supplied by the form (with toggles) or, on create only, taken from the profile when not in the request body. The recruiter view reads the profile table only for the display-only profile picture when `show_profile_picture` is true; all candidate text fields (name, location, links) still come from the application row.
 
 ---
 

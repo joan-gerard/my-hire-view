@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { makeSupabaseClient, ok } from "../../../helpers/supabase-mock";
+import { makeSupabaseClient, ok, dbError } from "../../../helpers/supabase-mock";
 
 const { mockCreateAdminClient } = vi.hoisted(() => ({
   mockCreateAdminClient: vi.fn(),
@@ -80,5 +80,57 @@ describe("resolvePublicApplication", () => {
     });
     expect(admin.from).toHaveBeenCalledWith("profiles");
     expect(admin.from).toHaveBeenCalledWith("applications");
+  });
+
+  it("returns null when the profile row is missing", async () => {
+    const admin = makeSupabaseClient([ok(null)]);
+    mockCreateAdminClient.mockReturnValue(admin);
+
+    const result = await resolvePublicApplication(PUBLIC_ID, SLUG);
+
+    expect(result).toBeNull();
+    expect(admin.from).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns null when the application row is missing", async () => {
+    const admin = makeSupabaseClient([
+      ok({
+        user_id: OWNER_USER_ID,
+        profile_picture_url: null,
+        updated_at: "2026-01-01T00:00:00Z",
+      }),
+      ok(null),
+    ]);
+    mockCreateAdminClient.mockReturnValue(admin);
+
+    const result = await resolvePublicApplication(PUBLIC_ID, SLUG);
+
+    expect(result).toBeNull();
+    expect(admin.from).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws when the profile query fails", async () => {
+    const admin = makeSupabaseClient([dbError("connection refused")]);
+    mockCreateAdminClient.mockReturnValue(admin);
+
+    await expect(resolvePublicApplication(PUBLIC_ID, SLUG)).rejects.toEqual({
+      message: "connection refused",
+    });
+  });
+
+  it("throws when the application query fails", async () => {
+    const admin = makeSupabaseClient([
+      ok({
+        user_id: OWNER_USER_ID,
+        profile_picture_url: null,
+        updated_at: "2026-01-01T00:00:00Z",
+      }),
+      dbError("timeout"),
+    ]);
+    mockCreateAdminClient.mockReturnValue(admin);
+
+    await expect(resolvePublicApplication(PUBLIC_ID, SLUG)).rejects.toEqual({
+      message: "timeout",
+    });
   });
 });

@@ -1,33 +1,7 @@
 import ViewPageContent from '@/components/view/ViewPageContent';
 import UnavailableApplicationView from '@/components/view/UnavailableApplicationView';
-import {
-  isUnavailablePublicApplication,
-  type PublicApplicationResponse,
-} from '@/lib/types/application';
-import { getBaseUrl } from '@/lib/utils/url';
-
-async function getApplication(
-  publicId: string,
-  slug: string,
-): Promise<PublicApplicationResponse> {
-  const response = await fetch(
-    `${getBaseUrl()}/api/applications/${publicId}/${slug}`,
-    { cache: 'no-store' },
-  );
-
-  if (response.status === 404) {
-    return { status: 'unavailable' };
-  }
-
-  if (!response.ok) {
-    throw new Error(`Failed to load application (${response.status})`);
-  }
-
-  const { data } = (await response.json()) as {
-    data: PublicApplicationResponse;
-  };
-  return data;
-}
+import { isUnavailablePublicApplication } from '@/lib/types/application';
+import { loadPublicApplicationResponse } from '@/lib/utils/load-public-application-response';
 
 export const metadata = {
   robots: {
@@ -42,9 +16,9 @@ export default async function ApplicationPage({
   params: Promise<{ publicId: string; slug: string }>;
 }) {
   const { publicId, slug } = await params;
-  const application = await getApplication(publicId, slug);
+  const application = await loadPublicApplicationResponse(publicId, slug);
 
-  if (isUnavailablePublicApplication(application)) {
+  if (!application || isUnavailablePublicApplication(application)) {
     return <UnavailableApplicationView />;
   }
 

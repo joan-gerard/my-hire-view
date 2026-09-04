@@ -18,6 +18,7 @@ export type ResolvedPublicApplication = {
  * cache-busted with profiles.updated_at so avatar replaces are visible.
  *
  * Invalid public_id or slug format returns null without querying the database.
+ * Missing profile or application rows return null (404). Database query errors throw.
  */
 export async function resolvePublicApplication(
   publicId: string,
@@ -34,7 +35,10 @@ export async function resolvePublicApplication(
     .eq("public_id", publicId)
     .maybeSingle();
 
-  if (profileError || !profile) {
+  if (profileError) {
+    throw profileError;
+  }
+  if (!profile) {
     return null;
   }
 
@@ -45,7 +49,10 @@ export async function resolvePublicApplication(
     .eq("slug", slug)
     .maybeSingle();
 
-  if (appError || !application) {
+  if (appError) {
+    throw appError;
+  }
+  if (!application) {
     return null;
   }
 
