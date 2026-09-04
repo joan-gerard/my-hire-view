@@ -1,6 +1,6 @@
 /**
  * Draft pricing tiers for /pricing (E3-014).
- * Source of truth: docs/PRICING_AND_MEMBERSHIP.md §2.
+ * Source of truth: docs/PRICING_AND_MEMBERSHIP.md §3.
  * Price points and several numeric caps remain TBD — do not invent amounts here.
  */
 
