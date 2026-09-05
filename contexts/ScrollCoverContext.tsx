@@ -13,7 +13,11 @@ import { usePathname } from "next/navigation";
 const HEADER_HEIGHT_PX = 72;
 
 export interface ScrollCoverContextValue {
-  /** True when the top of ScrollCoverSection has scrolled past the top of the viewport (below the header). */
+  /**
+   * True when the marketing header should use the solid (scrolled) treatment.
+   * On home: true once ScrollCoverSection has reached the top of the viewport.
+   * On other marketing routes: always true (no fixed hero).
+   */
   scrollCoverReachedTop: boolean;
   /** Register the sentinel element at the top of ScrollCoverSection. Called with null on unmount. */
   setScrollCoverSentinelRef: (element: HTMLElement | null) => void;
@@ -25,42 +29,37 @@ const ScrollCoverContext = createContext<ScrollCoverContextValue | null>(null);
  * Provides scroll-cover state so MarketingHeader can switch from transparent to white
  * when the user has scrolled and the ScrollCoverSection has reached the top of the viewport.
  * Uses Intersection Observer on a 1px sentinel; when the sentinel leaves the viewport top,
- * scrollCoverReachedTop becomes true.
+ * home scroll state becomes true.
  *
- * On non-home marketing routes (e.g. `/pricing`) there is no fixed hero, so the header
- * stays solid white from the start — same idea as HeroEntranceProvider setting heroReady.
+ * On non-home marketing routes (e.g. `/pricing`) there is no fixed hero, so the exposed
+ * value is always true — derived synchronously from the pathname so navigating from `/`
+ * does not flash a transparent header for one paint before a useEffect runs.
  */
 export function ScrollCoverProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const [scrollCoverReachedTop, setScrollCoverReachedTop] = useState(!isHome);
+  /** Home-only: whether ScrollCoverSection has reached the top. Ignored off-home. */
+  const [homeScrollCoverReachedTop, setHomeScrollCoverReachedTop] =
+    useState(false);
   const [sentinelRef, setSentinelRef] = useState<HTMLElement | null>(null);
 
   const setScrollCoverSentinelRef = useCallback(
     (element: HTMLElement | null) => {
       setSentinelRef(element);
       if (!element) {
-        // No sentinel: home resets to transparent-over-hero; other routes stay solid.
-        setScrollCoverReachedTop(pathname !== "/");
+        // Leaving home (or unmounting sentinel): reset for the next home visit.
+        setHomeScrollCoverReachedTop(false);
       }
     },
-    [pathname],
+    [],
   );
 
   useEffect(() => {
-    if (pathname !== "/") {
-      setScrollCoverReachedTop(true);
-      return;
-    }
-    setScrollCoverReachedTop(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (pathname !== "/" || !sentinelRef) return;
+    if (!isHome || !sentinelRef) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setScrollCoverReachedTop(!entry.isIntersecting);
+        setHomeScrollCoverReachedTop(!entry.isIntersecting);
       },
       {
         root: null,
@@ -71,7 +70,10 @@ export function ScrollCoverProvider({ children }: { children: React.ReactNode })
 
     observer.observe(sentinelRef);
     return () => observer.disconnect();
-  }, [pathname, sentinelRef]);
+  }, [isHome, sentinelRef]);
+
+  // Non-home routes are always "solid" — must not wait for an effect after navigation.
+  const scrollCoverReachedTop = isHome ? homeScrollCoverReachedTop : true;
 
   const value = useMemo(
     () => ({ scrollCoverReachedTop, setScrollCoverSentinelRef }),

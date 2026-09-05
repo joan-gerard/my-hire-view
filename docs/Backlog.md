@@ -304,6 +304,6 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **E1 → E2 → E3** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` → `feat/e3-pricing-page`  
+1. **E1 → E2** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` (E3 pricing page shipped)  
 2. **C3** — `fix/c3-picture-only-first-save` (`C3-026`)  
 3. **D2** — `fix/d2-slug-validate-rate-limit-key` (`D2-034`)
