@@ -9,9 +9,14 @@ import {
 } from "@/lib/landing-animations";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useState } from "react";
 import {
+  ANNUAL_SAVINGS_LABEL,
+  getAnnualNudge,
+  getTierPrice,
   PRICING_DRAFT_NOTE,
   PRICING_TIERS,
+  type BillingInterval,
   type PricingFeature,
   type PricingTier,
 } from "./constants";
@@ -22,12 +27,20 @@ import {
  * teal accent CTAs. Sits directly under PricingIntro so tiers are early in view.
  */
 export default function PricingTiersSection() {
+  const [billingInterval, setBillingInterval] =
+    useState<BillingInterval>("annual");
+
   return (
     <section
       id="pricing"
       className="px-4 md:px-6 lg:px-10 2xl:px-12 pt-6 pb-6 lg:pt-8 lg:pb-8 max-w-[1700px] mx-auto"
       aria-label="Pricing plans"
     >
+      <BillingIntervalToggle
+        value={billingInterval}
+        onChange={setBillingInterval}
+      />
+
       <motion.div
         className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-3 lg:items-stretch"
         initial="hidden"
@@ -35,7 +48,12 @@ export default function PricingTiersSection() {
         variants={staggerContainer.variants}
       >
         {PRICING_TIERS.map((tier) => (
-          <PricingTierCard key={tier.id} tier={tier} />
+          <PricingTierCard
+            key={tier.id}
+            tier={tier}
+            billingInterval={billingInterval}
+            onSelectAnnual={() => setBillingInterval("annual")}
+          />
         ))}
       </motion.div>
 
@@ -52,8 +70,79 @@ export default function PricingTiersSection() {
   );
 }
 
-function PricingTierCard({ tier }: { tier: PricingTier }) {
+function BillingIntervalToggle({
+  value,
+  onChange,
+}: {
+  value: BillingInterval;
+  onChange: (interval: BillingInterval) => void;
+}) {
+  return (
+    <div className="mb-8 lg:mb-10 flex flex-col items-center gap-2">
+      <div
+        role="radiogroup"
+        aria-label="Billing interval"
+        className="inline-flex rounded-2xl border border-(--foreground)/10 bg-[#fbfaf9] p-1"
+      >
+        {(
+          [
+            { id: "monthly", label: "Monthly" },
+            { id: "annual", label: "Annual" },
+          ] as const
+        ).map((option) => {
+          const selected = value === option.id;
+          const isAnnual = option.id === "annual";
+          return (
+            <button
+              key={option.id}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(option.id)}
+              className={
+                selected
+                  ? "relative inline-flex items-center justify-center rounded-xl bg-(--brand-accent-1) px-5 py-2 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-accent-1) focus-visible:ring-offset-2"
+                  : "relative inline-flex items-center justify-center rounded-xl px-5 py-2 text-sm font-medium text-foreground/70 transition hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-accent-1) focus-visible:ring-offset-2"
+              }
+            >
+              {option.label}
+              {isAnnual && (
+                <span
+                  className={
+                    selected
+                      ? "absolute top-0 right-0 z-10 translate-x-1/2 -translate-y-1/2 rounded-md bg-white px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase text-(--brand-accent-1) shadow-sm"
+                      : "absolute top-0 right-0 z-10 translate-x-1/2 -translate-y-1/2 rounded-md bg-(--brand-accent-1) px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase text-white shadow-sm"
+                  }
+                >
+                  {ANNUAL_SAVINGS_LABEL}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {value === "monthly" && (
+        <p className="text-sm font-extralight text-(--brand-accent-2)">
+          {`Switch to annual and ${ANNUAL_SAVINGS_LABEL.toLowerCase()}`}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function PricingTierCard({
+  tier,
+  billingInterval,
+  onSelectAnnual,
+}: {
+  tier: PricingTier;
+  billingInterval: BillingInterval;
+  onSelectAnnual: () => void;
+}) {
   const isHighlighted = tier.highlighted;
+  const price = getTierPrice(tier, billingInterval);
+  const annualNudge =
+    billingInterval === "monthly" ? getAnnualNudge(tier) : null;
 
   return (
     <motion.article
@@ -81,11 +170,20 @@ function PricingTierCard({ tier }: { tier: PricingTier }) {
 
       <div className="flex flex-col gap-1">
         <p className="text-4xl xl:text-5xl font-light tracking-tight text-foreground">
-          {tier.priceLabel}
+          {price.priceLabel}
         </p>
         <p className="text-sm font-extralight text-foreground/60">
-          {tier.priceNote}
+          {price.priceNote}
         </p>
+        {annualNudge && (
+          <button
+            type="button"
+            onClick={onSelectAnnual}
+            className="mt-1 self-start text-left text-sm font-medium text-(--brand-accent-1) underline-offset-2 transition hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-accent-1) focus-visible:ring-offset-2"
+          >
+            {annualNudge}
+          </button>
+        )}
       </div>
 
       <ul className="flex flex-col gap-3 flex-1" role="list">

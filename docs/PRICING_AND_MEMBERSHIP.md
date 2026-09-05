@@ -2,7 +2,7 @@
 
 **Purpose of this doc:** Working decisions on Free / Pro / Premium for MyHireView. It is **not** a second backlog — actionable engineering work lives in [Backlog.md](Backlog.md).
 
-**Status:** Plan names, monthly USD prices, numeric caps, Free primary-only, analytics split, and application-cap counting rules below are **working decisions**. Billing gates (Stripe checkout, API/UI enforcement) are **not** implemented yet — that is E2. Display currency on `/pricing` is **USD**; Stripe adaptive/local presentment can come later with checkout.
+**Status:** Plan names, monthly and annual USD prices, numeric caps, Free primary-only, analytics split, and application-cap counting rules below are **working decisions**. Billing gates (Stripe checkout, API/UI enforcement) are **not** implemented yet — that is E2. Display currency on `/pricing` is **USD**; Stripe adaptive/local presentment can come later with checkout.
 
 Homepage marketing FAQ copy is **placeholder** and is intentionally **not** used here as input for what tiers should offer.
 
@@ -76,7 +76,7 @@ Unless a row in §3 says otherwise, candidates on **any** plan are expected to u
 | Free access, if any, is a **free tier and/or trial only** — not unlimited free use of the app. | Same |
 | Creating / using applications should be **gated** behind an active plan or trial. | Same |
 | Billing provider direction: **Stripe (or similar)** — checkout, webhooks, Supabase subscription state. | Same |
-| `/pricing` must ship **real tiers aligned with billing**, not a stub. | Same; `/pricing` shows Free/Pro/Premium from §3 (E3-014) with locked monthly USD prices; checkout still E2. |
+| `/pricing` must ship **real tiers aligned with billing**, not a stub. | Same; `/pricing` shows Free/Pro/Premium from §3 (E3-014) with locked monthly/annual USD prices; checkout still E2. |
 
 ---
 
@@ -86,14 +86,14 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 
 **Design intent:** Tailored CVs are the main paid unlock on **Pro** (core product promise: a CV that matches the role). **Premium** adds branding, unlimited scale (with a fair-use soft ceiling), and richer analytics — not “you may finally tailor a CV.”
 
-**Billing interval:** **Monthly only** (USD on `/pricing`). No annual plans — candidates cancel when they land a job. Stripe adaptive/local currency at checkout can come later with E2.
+**Billing interval:** **Monthly and annual** (USD on `/pricing`). Annual is the default toggle on `/pricing` (highlights savings). Effective monthly on annual (~$3.25 Pro / ~$4.92 Premium) is marketing copy only — billed amounts are `$39/yr` and `$59/yr`. Stripe adaptive/local currency at checkout can come later with E2.
 
 ### 3.1 Comparison matrix (at a glance)
 
 | Dimension | Free | Pro | Premium |
 | --------- | ---- | --- | ------- |
 | **Positioning** | Try the product with a hard cap | Core paid unlock: tailored CVs | Branding, scale, richer insight |
-| **Price (USD)** | Free | **$9/mo** | **$19/mo** |
+| **Price (USD)** | Free | **$9/mo** or **$39/yr** | **$14/mo** or **$59/yr** |
 | **Applications** | Up to **3** | Up to **15** | **Unlimited** (marketed); internal soft ceiling **100** |
 | **CV workflow** | **Primary CVs only** | **Primary + tailored** (tailored optional per app) | Same as Pro |
 | **Video pitch** | Included (YouTube URL) | Included | Included |
@@ -121,7 +121,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | **Up to 15 applications** | Hard cap. Count rules in §3.6. | Working decision (this doc) |
 | Analytics | Basic metrics **plus per-view timestamp history**. | Working decision (this doc) |
 | Primary library | Up to **5** (same as Free — Pro’s story is tailoring, not storage). | Working decision (this doc) |
-| **Price** | **$9/mo** USD. | Working decision (this doc) |
+| **Price** | **$9/mo** or **$39/yr** (~$3.25/mo effective). | Working decision (this doc) |
 
 ### 3.4 Premium — detail
 
@@ -132,7 +132,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | **Unlimited applications** | Marketed as unlimited; internal fair-use soft ceiling **100** (protects R2 storage). Soft-ceiling UX copy TBD (§5). | Working decision (this doc) |
 | **Richer analytics** | Beyond Pro: view duration, geographic origin, referrer/traffic source, video-pitch engagement (played vs page-only), CSV export, side-by-side comparison across the candidate’s own applications. | Working decision (this doc) |
 | **Primary library up to 15** | Raise above Free/Pro’s 5. | Working decision (this doc); today Free/Pro still use `PRIMARY_CV_MAX_PER_USER` = 5 until Premium gating ships |
-| **Price** | **$19/mo** USD. | Working decision (this doc) |
+| **Price** | **$14/mo** or **$59/yr** (~$4.92/mo effective). | Working decision (this doc) |
 
 ### 3.5 Adjacent features
 

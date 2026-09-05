@@ -1,11 +1,13 @@
 /**
  * Pricing tiers for /pricing (E3-014).
  * Source of truth: docs/PRICING_AND_MEMBERSHIP.md §3.
- * Monthly billing only — no annual plans. Display amounts are USD until Stripe
- * adaptive presentment (E2); avoid “USD” in customer-facing sentences.
+ * Monthly and annual billing. Display amounts are USD until Stripe adaptive
+ * presentment (E2); avoid “USD” in customer-facing sentences.
  */
 
 export type PricingTierId = "free" | "pro" | "premium";
+
+export type BillingInterval = "monthly" | "annual";
 
 export interface PricingFeature {
   /** Short feature line shown on the card. */
@@ -14,16 +16,22 @@ export interface PricingFeature {
   tooltip?: string;
 }
 
+export interface PricingTierPrice {
+  amountUsd: number;
+  /** Displayed price label (customer-facing). */
+  priceLabel: string;
+  priceNote: string;
+}
+
 export interface PricingTier {
   id: PricingTierId;
   name: string;
   /** Short positioning line under the plan name. */
   tagline: string;
-  /** Displayed price label (customer-facing). */
-  priceLabel: string;
-  priceNote: string;
-  /** Numeric USD amount for future Stripe / adaptive presentment. */
-  amountUsd: number;
+  prices: {
+    monthly: PricingTierPrice;
+    annual: PricingTierPrice;
+  };
   /** ISO currency code for structured price (display is USD on /pricing today). */
   currency: "USD";
   /** When true, visually emphasize as the recommended paid plan. */
@@ -36,20 +44,43 @@ export interface PricingTier {
 /** Waitlist CTA shared by all tiers until billing (E2) ships. */
 export const PRICING_WAITLIST_HREF = "/#early-access" as const;
 
+const FREE_PRICE = {
+  amountUsd: 0,
+  priceLabel: "Free",
+  priceNote: "No card required",
+} as const satisfies PricingTierPrice;
+
 const MONTHLY_PRICE_NOTE = "Billed monthly · Cancel anytime";
 
+/** Shown on the Annual toggle (and monthly-view nudges) — vs paying monthly for a year. */
+export const ANNUAL_SAVINGS_LABEL = "Save ~64%";
+
 /**
- * Locked plan matrix: Free · Pro · Premium (monthly).
+ * Persuasive annual compare line for paid tiers when Monthly is selected.
+ * Free returns null (no savings story).
+ */
+export function getAnnualNudge(tier: PricingTier): string | null {
+  if (tier.id === "free") return null;
+  const annual = tier.prices.annual;
+  // Reuse the annual note’s effective monthly (e.g. "~$3.25/mo · Billed annually").
+  const effectiveMo = annual.priceNote.split("·")[0]?.trim();
+  if (!effectiveMo) return `${ANNUAL_SAVINGS_LABEL} at ${annual.priceLabel}`;
+  return `${ANNUAL_SAVINGS_LABEL} — ${effectiveMo} at ${annual.priceLabel}`;
+}
+
+/**
+ * Locked plan matrix: Free · Pro · Premium (monthly + annual).
  * See docs/PRICING_AND_MEMBERSHIP.md §3.
  */
 export const PRICING_TIERS: readonly PricingTier[] = [
   {
     id: "free",
     name: "Free",
-    tagline: "Try the product with a hard cap — primary CVs only.",
-    priceLabel: "Free",
-    priceNote: "No card required",
-    amountUsd: 0,
+    tagline: "Build and share your first application pages, free.",
+    prices: {
+      monthly: FREE_PRICE,
+      annual: FREE_PRICE,
+    },
     currency: "USD",
     highlighted: false,
     cta: { label: "Join waitlist", href: PRICING_WAITLIST_HREF },
@@ -79,10 +110,19 @@ export const PRICING_TIERS: readonly PricingTier[] = [
   {
     id: "pro",
     name: "Pro",
-    tagline: "The core unlock: CVs tailored to each role.",
-    priceLabel: "$9/mo",
-    priceNote: MONTHLY_PRICE_NOTE,
-    amountUsd: 9,
+    tagline: "Tailor your CV to every role, with room to grow.",
+    prices: {
+      monthly: {
+        amountUsd: 9,
+        priceLabel: "$9/mo",
+        priceNote: MONTHLY_PRICE_NOTE,
+      },
+      annual: {
+        amountUsd: 39,
+        priceLabel: "$39/yr",
+        priceNote: "~$3.25/mo · Billed annually",
+      },
+    },
     currency: "USD",
     highlighted: true,
     cta: { label: "Join waitlist", href: PRICING_WAITLIST_HREF },
@@ -103,10 +143,20 @@ export const PRICING_TIERS: readonly PricingTier[] = [
   {
     id: "premium",
     name: "Premium",
-    tagline: "Branding, scale, and richer insight for serious applicants.",
-    priceLabel: "$19/mo",
-    priceNote: MONTHLY_PRICE_NOTE,
-    amountUsd: 19,
+    tagline:
+      "Stand out with a branded link, deeper insight, and unlimited applications.",
+    prices: {
+      monthly: {
+        amountUsd: 14,
+        priceLabel: "$14/mo",
+        priceNote: MONTHLY_PRICE_NOTE,
+      },
+      annual: {
+        amountUsd: 59,
+        priceLabel: "$59/yr",
+        priceNote: "~$4.92/mo · Billed annually",
+      },
+    },
     currency: "USD",
     highlighted: false,
     cta: { label: "Join waitlist", href: PRICING_WAITLIST_HREF },
@@ -114,7 +164,8 @@ export const PRICING_TIERS: readonly PricingTier[] = [
       { label: "Everything in Pro" },
       {
         label: "Custom vanity public id",
-        tooltip: "Branded URL such as /view/your-name/… instead of a random id.",
+        tooltip:
+          "Branded URL such as /view/your-name/… instead of a random id.",
       },
       { label: "Unlimited applications" },
       {
@@ -126,6 +177,13 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     ],
   },
 ] as const;
+
+export function getTierPrice(
+  tier: PricingTier,
+  interval: BillingInterval,
+): PricingTierPrice {
+  return tier.prices[interval];
+}
 
 /** Note under the tier grid — checkout not live yet; plans/prices are set. */
 export const PRICING_DRAFT_NOTE =

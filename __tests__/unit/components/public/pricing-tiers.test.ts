@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  ANNUAL_SAVINGS_LABEL,
+  getAnnualNudge,
+  getTierPrice,
   PRICING_DRAFT_NOTE,
   PRICING_FAQ,
   PRICING_TIERS,
@@ -26,19 +29,54 @@ describe("pricing tier data (E3-014)", () => {
     expect(highlighted[0]?.id).toBe("pro");
   });
 
-  it("locks monthly prices for paid tiers", () => {
+  it("locks monthly and annual prices for paid tiers", () => {
     const free = PRICING_TIERS.find((t) => t.id === "free");
     const pro = PRICING_TIERS.find((t) => t.id === "pro");
     const premium = PRICING_TIERS.find((t) => t.id === "premium");
 
-    expect(free?.priceLabel).toBe("Free");
-    expect(free?.amountUsd).toBe(0);
-    expect(pro?.priceLabel).toBe("$9/mo");
-    expect(pro?.amountUsd).toBe(9);
-    expect(premium?.priceLabel).toBe("$19/mo");
-    expect(premium?.amountUsd).toBe(19);
+    expect(getTierPrice(free!, "monthly")).toMatchObject({
+      amountUsd: 0,
+      priceLabel: "Free",
+    });
+    expect(getTierPrice(free!, "annual")).toMatchObject({
+      amountUsd: 0,
+      priceLabel: "Free",
+    });
+
+    expect(getTierPrice(pro!, "monthly")).toMatchObject({
+      amountUsd: 9,
+      priceLabel: "$9/mo",
+    });
+    expect(getTierPrice(pro!, "annual")).toMatchObject({
+      amountUsd: 39,
+      priceLabel: "$39/yr",
+    });
+
+    expect(getTierPrice(premium!, "monthly")).toMatchObject({
+      amountUsd: 14,
+      priceLabel: "$14/mo",
+    });
+    expect(getTierPrice(premium!, "annual")).toMatchObject({
+      amountUsd: 59,
+      priceLabel: "$59/yr",
+    });
+
     expect(pro?.currency).toBe("USD");
     expect(premium?.currency).toBe("USD");
+  });
+
+  it("nudges annual savings on paid tiers (for monthly view)", () => {
+    const free = PRICING_TIERS.find((t) => t.id === "free")!;
+    const pro = PRICING_TIERS.find((t) => t.id === "pro")!;
+    const premium = PRICING_TIERS.find((t) => t.id === "premium")!;
+
+    expect(getAnnualNudge(free)).toBeNull();
+    expect(getAnnualNudge(pro)).toMatch(new RegExp(ANNUAL_SAVINGS_LABEL));
+    expect(getAnnualNudge(pro)).toMatch(/\$39\/yr/);
+    expect(getAnnualNudge(pro)).toMatch(/\$3\.25/);
+    expect(getAnnualNudge(premium)).toMatch(new RegExp(ANNUAL_SAVINGS_LABEL));
+    expect(getAnnualNudge(premium)).toMatch(/\$59\/yr/);
+    expect(getAnnualNudge(premium)).toMatch(/\$4\.92/);
   });
 
   it("routes all tier CTAs to the waitlist until billing ships", () => {
