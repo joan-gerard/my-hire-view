@@ -128,7 +128,7 @@ function PricingFeatureText({ feature }: { feature: PricingFeature }) {
   const tipId = `pricing-tip-${feature.label.replace(/\W+/g, "-").toLowerCase()}`;
 
   return (
-    <span className="group relative inline-flex max-w-full items-baseline gap-1.5 text-base font-extralight leading-snug text-foreground/85">
+    <span className="group relative flex w-full min-w-0 items-baseline gap-1.5 text-base font-extralight leading-snug text-foreground/85">
       <span>{feature.label}</span>
       <button
         type="button"
@@ -141,7 +141,7 @@ function PricingFeatureText({ feature }: { feature: PricingFeature }) {
       <span
         id={tipId}
         role="tooltip"
-        className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 hidden w-max max-w-[18rem] rounded-md bg-(--foreground) px-2.5 py-1.5 text-xs font-normal leading-snug text-(--background) shadow-lg group-hover:block group-focus-within:block"
+        className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 hidden w-max max-w-[min(100%,18rem)] rounded-md bg-(--foreground) px-2.5 py-1.5 text-xs font-normal leading-snug text-(--background) shadow-lg group-hover:block group-focus-within:block"
       >
         {feature.tooltip}
       </span>
