@@ -9,7 +9,14 @@ import {
 } from "@/lib/landing-animations";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useState } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type RefObject,
+} from "react";
 import {
   ANNUAL_SAVINGS_LABEL,
   getAnnualNudge,
@@ -21,6 +28,11 @@ import {
   type PricingTier,
 } from "./constants";
 
+const BILLING_OPTIONS = [
+  { id: "monthly", label: "Monthly" },
+  { id: "annual", label: "Annual" },
+] as const;
+
 /**
  * Free · Pro · Premium comparison for /pricing.
  * Visual language matches SolutionSection: warm surface cards, light headlines,
@@ -29,6 +41,22 @@ import {
 export default function PricingTiersSection() {
   const [billingInterval, setBillingInterval] =
     useState<BillingInterval>("annual");
+  const annualRadioRef = useRef<HTMLButtonElement>(null);
+  const focusAnnualAfterNudgeRef = useRef(false);
+
+  const selectAnnualAndFocusToggle = useCallback(() => {
+    // Nudge buttons unmount when interval flips; restore focus on the Annual radio.
+    focusAnnualAfterNudgeRef.current = true;
+    setBillingInterval("annual");
+  }, []);
+
+  useLayoutEffect(() => {
+    if (billingInterval !== "annual" || !focusAnnualAfterNudgeRef.current) {
+      return;
+    }
+    focusAnnualAfterNudgeRef.current = false;
+    annualRadioRef.current?.focus();
+  }, [billingInterval]);
 
   return (
     <section
@@ -39,6 +67,7 @@ export default function PricingTiersSection() {
       <BillingIntervalToggle
         value={billingInterval}
         onChange={setBillingInterval}
+        annualRadioRef={annualRadioRef}
       />
 
       <motion.div
@@ -52,7 +81,7 @@ export default function PricingTiersSection() {
             key={tier.id}
             tier={tier}
             billingInterval={billingInterval}
-            onSelectAnnual={() => setBillingInterval("annual")}
+            onSelectAnnual={selectAnnualAndFocusToggle}
           />
         ))}
       </motion.div>
@@ -73,10 +102,57 @@ export default function PricingTiersSection() {
 function BillingIntervalToggle({
   value,
   onChange,
+  annualRadioRef,
 }: {
   value: BillingInterval;
   onChange: (interval: BillingInterval) => void;
+  annualRadioRef: RefObject<HTMLButtonElement | null>;
 }) {
+  const monthlyRadioRef = useRef<HTMLButtonElement>(null);
+
+  const focusOption = (interval: BillingInterval) => {
+    const el =
+      interval === "annual" ? annualRadioRef.current : monthlyRadioRef.current;
+    el?.focus();
+  };
+
+  const selectOption = (interval: BillingInterval) => {
+    onChange(interval);
+    focusOption(interval);
+  };
+
+  const handleRadioKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentId: BillingInterval,
+  ) => {
+    const index = BILLING_OPTIONS.findIndex((o) => o.id === currentId);
+    if (index < 0) return;
+
+    let nextIndex: number | null = null;
+    switch (event.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        nextIndex = (index + 1) % BILLING_OPTIONS.length;
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        nextIndex = (index - 1 + BILLING_OPTIONS.length) % BILLING_OPTIONS.length;
+        break;
+      case "Home":
+        nextIndex = 0;
+        break;
+      case "End":
+        nextIndex = BILLING_OPTIONS.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    const next = BILLING_OPTIONS[nextIndex];
+    if (next) selectOption(next.id);
+  };
+
   return (
     <div className="mb-8 lg:mb-10 flex flex-col items-center gap-2">
       <div
@@ -84,12 +160,7 @@ function BillingIntervalToggle({
         aria-label="Billing interval"
         className="inline-flex rounded-2xl border border-(--foreground)/10 bg-[#fbfaf9] p-1"
       >
-        {(
-          [
-            { id: "monthly", label: "Monthly" },
-            { id: "annual", label: "Annual" },
-          ] as const
-        ).map((option) => {
+        {BILLING_OPTIONS.map((option) => {
           const selected = value === option.id;
           const isAnnual = option.id === "annual";
           return (
@@ -98,7 +169,10 @@ function BillingIntervalToggle({
               type="button"
               role="radio"
               aria-checked={selected}
-              onClick={() => onChange(option.id)}
+              tabIndex={selected ? 0 : -1}
+              ref={isAnnual ? annualRadioRef : monthlyRadioRef}
+              onClick={() => selectOption(option.id)}
+              onKeyDown={(event) => handleRadioKeyDown(event, option.id)}
               className={
                 selected
                   ? "relative inline-flex items-center justify-center rounded-xl bg-(--brand-accent-1) px-5 py-2 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-accent-1) focus-visible:ring-offset-2"
@@ -108,6 +182,7 @@ function BillingIntervalToggle({
               {option.label}
               {isAnnual && (
                 <span
+                  aria-hidden
                   className={
                     selected
                       ? "absolute top-0 right-0 z-10 translate-x-1/2 -translate-y-1/2 rounded-md bg-white px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase text-(--brand-accent-1) shadow-sm"
