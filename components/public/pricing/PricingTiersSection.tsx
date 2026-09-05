@@ -141,7 +141,7 @@ function PricingFeatureText({ feature }: { feature: PricingFeature }) {
       <span
         id={tipId}
         role="tooltip"
-        className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 hidden w-[min(100%,18rem)] rounded-md bg-(--foreground) px-2.5 py-1.5 text-xs font-normal leading-snug text-(--background) shadow-lg group-hover:block group-focus-within:block"
+        className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 hidden w-max max-w-[18rem] rounded-md bg-(--foreground) px-2.5 py-1.5 text-xs font-normal leading-snug text-(--background) shadow-lg group-hover:block group-focus-within:block"
       >
         {feature.tooltip}
       </span>

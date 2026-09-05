@@ -56,9 +56,9 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     features: [
       { label: "Up to 3 applications" },
       {
-        label: "Primary CVs only",
+        label: "Up to 5 primary CVs",
         tooltip:
-          "Résumés in your library that you can reuse across applications. No per-role tailored uploads on Free.",
+          "Résumés in your reusable library. Free is primary-only — no per-role tailored uploads.",
       },
       {
         label: "Video pitch",

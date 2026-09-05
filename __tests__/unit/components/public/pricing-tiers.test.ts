@@ -57,7 +57,7 @@ describe("pricing tier data (E3-014)", () => {
       tier?.features.map((f) => f.label) ?? [];
 
     expect(labels(free).some((f) => /3 applications/i.test(f))).toBe(true);
-    expect(labels(free).some((f) => /primary cvs only/i.test(f))).toBe(true);
+    expect(labels(free).some((f) => /up to 5 primary/i.test(f))).toBe(true);
     expect(labels(free).some((f) => /video pitch/i.test(f))).toBe(true);
     expect(labels(free).some((f) => /private shareable link/i.test(f))).toBe(
       true,
