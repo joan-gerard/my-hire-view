@@ -169,6 +169,9 @@ function BillingIntervalToggle({
               type="button"
               role="radio"
               aria-checked={selected}
+              aria-label={
+                isAnnual ? `Annual, ${ANNUAL_SAVINGS_LABEL}` : undefined
+              }
               tabIndex={selected ? 0 : -1}
               ref={isAnnual ? annualRadioRef : monthlyRadioRef}
               onClick={() => selectOption(option.id)}
