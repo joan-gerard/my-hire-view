@@ -1,20 +1,20 @@
 # Pricing & membership
 
-**Purpose of this doc:** Working decisions on Free / Pro / Premium for MyHireView, plus open questions for feedback. It is **not** a second backlog — actionable engineering work lives in [Backlog.md](Backlog.md).
+**Purpose of this doc:** Working decisions on Free / Pro / Premium for MyHireView. It is **not** a second backlog — actionable engineering work lives in [Backlog.md](Backlog.md).
 
-**Status:** Plan names and the tier matrix below are **working decisions**. Price points and several numeric caps are still open (see §5). Nothing here is implemented as a billing gate yet.
+**Status:** Plan names, monthly USD prices, numeric caps, Free primary-only, analytics split, and application-cap counting rules below are **working decisions**. Billing gates (Stripe checkout, API/UI enforcement) are **not** implemented yet — that is E2. Display currency on `/pricing` is **USD**; Stripe adaptive/local presentment can come later with checkout.
 
 Homepage marketing FAQ copy is **placeholder** and is intentionally **not** used here as input for what tiers should offer.
 
-**Related context:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [USER_GUIDE.md](USER_GUIDE.md) · launch billing items in [Backlog.md](Backlog.md) (Before launch → Must)
+**Related context:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [USER_GUIDE.md](USER_GUIDE.md) · launch billing items in [Backlog.md](Backlog.md) (Before launch → Must) · customer-facing tier copy in `components/public/pricing/constants.ts`
 
 | Section | What it covers |
 | ------- | -------------- |
 | [§1 Product breakdown](#1-product-breakdown) | What MyHireView is and the building blocks tiers gate |
 | [§2 Product principles](#2-product-principles-already-decided-in-docs) | Launch / billing rules already decided elsewhere |
-| [§3 Tiers](#3-tiers--free--pro--premium) | Free · Pro · Premium matrix, per-tier detail, adjacent features |
+| [§3 Tiers](#3-tiers--free--pro--premium) | Free · Pro · Premium matrix, enforcement, adjacent features |
 | [§4 Source excerpts](#4-source-excerpts-verbatim-intent) | Verbatim intent from earlier docs |
-| [§5 Still undefined](#5-still-undefined-to-decide-when-designing-tiers) | Open caps, prices, and gating questions (feedback targets) |
+| [§5 Still open](#5-still-open) | Remaining TBD items (checkout UX, when to build adjacent features, API gates) |
 | [§6 How to keep this current](#6-how-to-keep-this-current) | Maintenance rules for this doc and `/pricing` |
 
 ---
@@ -36,7 +36,7 @@ There are two product surfaces:
 
 | Role | What they do |
 | ---- | ------------ |
-| **Candidate** (job seeker) | Signs up, maintains a profile and primary CV library, creates/edits applications, copies share links, checks basic engagement metrics |
+| **Candidate** (job seeker) | Signs up, maintains a profile and primary CV library, creates/edits applications, copies share links, checks engagement metrics |
 | **Recruiter** | Opens a shared link — no account required — to view CV, video pitch, and candidate details |
 
 ### Building blocks (what “an application” includes)
@@ -47,24 +47,24 @@ These are the core concepts the tier matrix refers to. Full product behaviour: [
 | -------------- | ------- |
 | **Application** | One company + role page: CV, optional video, candidate snapshot, shareable URL. Status: active / archived / deleted. |
 | **Profile** | Account defaults (name, location, LinkedIn, portfolio, profile picture) used when creating applications. |
-| **Primary CV library** | Up to **5** résumé PDFs owned by the profile and reusable across applications. Product max today: `PRIMARY_CV_MAX_PER_USER` = 5. |
-| **Tailored CV** | A one-off PDF uploaded for a **single** application (role-specific version), in addition to the primary library. |
-| **Public link** | Shape: `/view/{publicId}/{slug}`. Default **public id** is an opaque account id (not the user’s name). Slug is derived from company/role (optional name-in-URL). |
-| **Vanity public id** | Optional custom public id (e.g. `/view/joan-gerard/…`) — planned as a Premium-style branding unlock. |
-| **Video pitch** | YouTube URL embedded on the public page (upload-not-in-product today). |
-| **Basic analytics** | As shipped today: view count, CV download count, created / last viewed (View Insights). Owner self-views are excluded from counts. |
+| **Primary CV library** | Résumé PDFs owned by the profile and reusable across applications. Free/Pro max **5**; Premium max **15**. |
+| **Tailored CV** | A one-off PDF uploaded for a **single** application (role-specific version), in addition to the primary library. Pro/Premium only; optional per application (primary still allowed). |
+| **Public link** | Shape: `/view/{publicId}/{slug}`. Default **public id** is an opaque account id (not the user’s name) — marketed as a **private shareable link**. Slug is derived from company/role (optional name-in-URL). |
+| **Vanity public id** | Custom public id (e.g. `/view/joan-gerard/…`) — Premium branding unlock. |
+| **Video pitch** | YouTube URL embedded on the public page (included on every plan). In-app recording/hosting is a separate future feature. |
+| **Basic analytics** | Aggregate view count, CV download count, created / last viewed (View Insights). Owner self-views are excluded from counts. |
 
 ### What every plan is built on (not the paid differentiators)
 
 Unless a row in §3 says otherwise, candidates on **any** plan are expected to use the same core loop:
 
 - Profile + dashboard (create, edit, archive, restore, delete applications)
-- Application page with CV + optional video + candidate details
+- Application page with CV + optional **video pitch** + candidate details
 - Shareable recruiter link (no login for the viewer)
-- Primary CV library (within the product’s library size rules)
-- Basic analytics (as shipped today)
+- Primary CV library (within the plan’s library size)
+- At least basic analytics
 
-**Tiers mainly differ on:** how many applications you can have, whether you can upload **tailored** CVs, public-link branding (opaque vs vanity), analytics depth, and (optionally) primary-library size.
+**Tiers mainly differ on:** application caps, whether you can upload **tailored** CVs, public-link branding (private/opaque vs vanity), analytics depth, and primary-library size.
 
 ---
 
@@ -76,64 +76,82 @@ Unless a row in §3 says otherwise, candidates on **any** plan are expected to u
 | Free access, if any, is a **free tier and/or trial only** — not unlimited free use of the app. | Same |
 | Creating / using applications should be **gated** behind an active plan or trial. | Same |
 | Billing provider direction: **Stripe (or similar)** — checkout, webhooks, Supabase subscription state. | Same |
-| `/pricing` must ship **real tiers aligned with billing**, not a stub. | Same; `/pricing` now shows draft Free/Pro/Premium from §3 (E3-014). Prices/caps still TBA until E1/E2 finalize. |
+| `/pricing` must ship **real tiers aligned with billing**, not a stub. | Same; `/pricing` shows Free/Pro/Premium from §3 (E3-014) with locked monthly USD prices; checkout still E2. |
 
 ---
 
 ## 3. Tiers — Free · Pro · Premium
 
-Working plan names: **Free**, **Pro**, **Premium**. Nothing below is implemented as a billing gate yet.
+Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implemented yet (E2).
 
-**Design intent:** Tailored CVs are the main paid unlock on **Pro** (core product promise: a CV that matches the role). **Premium** adds branding, higher/unlimited scale, and richer analytics — not “you may finally tailor a CV.”
+**Design intent:** Tailored CVs are the main paid unlock on **Pro** (core product promise: a CV that matches the role). **Premium** adds branding, unlimited scale (with a fair-use soft ceiling), and richer analytics — not “you may finally tailor a CV.”
+
+**Billing interval:** **Monthly only** (USD on `/pricing`). No annual plans — candidates cancel when they land a job. Stripe adaptive/local currency at checkout can come later with E2.
 
 ### 3.1 Comparison matrix (at a glance)
 
 | Dimension | Free | Pro | Premium |
 | --------- | ---- | --- | ------- |
 | **Positioning** | Try the product with a hard cap | Core paid unlock: tailored CVs | Branding, scale, richer insight |
-| **Applications** | Up to **3** (hard cap) | **Higher** than Free — exact number TBD (above 3; at or below Premium) | **Higher or unlimited** — exact cap TBD (above Pro, or unlimited) |
-| **CV workflow** | **Primary CVs only** (default). Optional later: very tight tailored allowance (e.g. 1) — undecided; assume primary-only until then | **Primary + tailored** per application | Same as Pro (everything in Pro) |
-| **Primary library size** | Today’s global max (**5**) | Today’s global max (**5**) | May **raise** above 5 — exact number TBD (optional differentiator) |
-| **Public id** | Opaque (`/view/{opaquePublicId}/{slug}`) | Opaque (same as Free unless Premium vanity is claimed) | **Custom vanity** public id (e.g. `/view/joan-gerard/…`) |
-| **Analytics** | Basic (views, CV downloads, created / last viewed) | At least basic; richer metrics reserved for Premium unless we later move some to Pro | **Richer** than today’s view + download counts (events / dashboards / exports TBD) |
-| **Price** | Free (no card required — marketing framing) | TBA | TBA |
+| **Price (USD)** | Free | **$9/mo** | **$19/mo** |
+| **Applications** | Up to **3** | Up to **15** | **Unlimited** (marketed); internal soft ceiling **100** |
+| **CV workflow** | **Primary CVs only** | **Primary + tailored** (tailored optional per app) | Same as Pro |
+| **Video pitch** | Included (YouTube URL) | Included | Included |
+| **Primary library size** | **5** | **5** | **15** |
+| **Public id** | Private/opaque link | Private/opaque link | **Custom vanity** public id |
+| **Analytics** | Aggregate views/downloads (+ created / last viewed) | Basic + **per-view timestamp history** | + duration, geography, referrer, video engagement, CSV export, cross-app comparison |
 
 ### 3.2 Free — detail
 
 | Capability | Notes | Sources |
 | ---------- | ----- | ------- |
-| **Up to 3 applications** | Hard cap. | Working decision (this doc) |
-| **Primary CVs only** (default) | Upload/use the primary library; no full tailored-CV workflow. Optionally allow a **very tight** tailored allowance later (e.g. 1) — default assumption is **primary-only** until that is decided. | Working decision (this doc); primary/tailored model in [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md) |
-| Opaque public id | Default `/view/{opaquePublicId}/{slug}`. | [PUBLIC_URL_OPTION_B.md](retrospectives/PUBLIC_URL_OPTION_B.md) |
-| Basic analytics (as shipped today) | View count, CV download count, created / last viewed (View Insights). | [USER_GUIDE.md](USER_GUIDE.md), [DATA_FLOW.md](DATA_FLOW.md) |
+| **Up to 3 applications** | Hard cap. Count rules in §3.6. | Working decision (this doc) |
+| **Primary CVs only** | Upload/use the primary library; no tailored-CV workflow. | Working decision (this doc); [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md) |
+| **Video pitch** | YouTube URL on the application page. | Working decision (this doc) |
+| Private/opaque public id | Default `/view/{opaquePublicId}/{slug}` — no personal name in the public id segment. | [PUBLIC_URL_OPTION_B.md](retrospectives/PUBLIC_URL_OPTION_B.md) |
+| Basic analytics | View count, CV download count, created / last viewed (View Insights). | [USER_GUIDE.md](USER_GUIDE.md), [DATA_FLOW.md](DATA_FLOW.md) |
+| Primary library | Up to **5**. | Working decision (this doc); today’s product max |
 
 ### 3.3 Pro — detail
 
 | Capability | Notes | Sources |
 | ---------- | ----- | ------- |
-| **Primary + tailored CVs** | Real paid unlock: per-application tailored uploads in addition to the primary library. | Working decision (this doc) |
-| **Higher application cap** than Free | Exact number TBD (above 3; at or below Premium). | Working decision (this doc) |
-| Opaque public id | Same as Free unless Premium vanity is claimed. | — |
-| Analytics | At least today’s basic metrics; richer analytics reserved for Premium unless we later move some to Pro. | Working decision (this doc) |
+| **Everything in Free** | Including video pitch and private/opaque links. | Working decision (this doc) |
+| **Primary + tailored CVs** | Per-application tailored uploads in addition to the primary library. Tailored is **optional** — Pro users may still attach a primary CV only. | Working decision (this doc) |
+| **Up to 15 applications** | Hard cap. Count rules in §3.6. | Working decision (this doc) |
+| Analytics | Basic metrics **plus per-view timestamp history**. | Working decision (this doc) |
+| Primary library | Up to **5** (same as Free — Pro’s story is tailoring, not storage). | Working decision (this doc) |
+| **Price** | **$9/mo** USD. | Working decision (this doc) |
 
 ### 3.4 Premium — detail
 
 | Capability | Notes | Sources |
 | ---------- | ----- | ------- |
-| Everything in Pro | Including primary + tailored CVs. | Working decision (this doc) |
+| Everything in Pro | Including primary + tailored CVs and per-view history. | Working decision (this doc) |
 | **Custom vanity public id** | LinkedIn-style branded public id (e.g. `/view/joan-gerard/...`). | [Backlog.md](Backlog.md) (After launch → Could), [PUBLIC_URL_OPTION_B.md](retrospectives/PUBLIC_URL_OPTION_B.md#future-custom-public-id-vanity-handle) |
-| **Higher or unlimited applications** | Exact cap TBD (above Pro, or unlimited). | Working decision (this doc) |
-| **Richer analytics** | Beyond today’s view + download counts (events / dashboards / exports TBD). | Working decision (this doc) |
-| **Larger primary library** (optional) | Today’s product max is **5** primaries; Premium may raise that. Exact number TBD. | [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md), API `PRIMARY_CV_MAX_PER_USER` |
+| **Unlimited applications** | Marketed as unlimited; internal fair-use soft ceiling **100** (protects R2 storage). Soft-ceiling UX copy TBD (§5). | Working decision (this doc) |
+| **Richer analytics** | Beyond Pro: view duration, geographic origin, referrer/traffic source, video-pitch engagement (played vs page-only), CSV export, side-by-side comparison across the candidate’s own applications. | Working decision (this doc) |
+| **Primary library up to 15** | Raise above Free/Pro’s 5. | Working decision (this doc); today Free/Pro still use `PRIMARY_CV_MAX_PER_USER` = 5 until Premium gating ships |
+| **Price** | **$19/mo** USD. | Working decision (this doc) |
 
-### 3.5 Adjacent (not tiered yet)
+### 3.5 Adjacent features
 
-These ideas exist in product docs / backlog but are **not** assigned to Free, Pro, or Premium.
+| Item | Placement | Notes | Sources |
+| ---- | --------- | ----- | ------- |
+| AI interview prep (Phases 1–2) | **Later paid add-on** — not baked into Free/Pro/Premium at launch | Different job-to-be-done; AI cost profile unknown until usage is known. | [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md), [Backlog.md](Backlog.md) |
+| In-app video recording + teleprompter | **Not Free** — lean **Pro and/or Premium** when built | Today’s video pitch is a YouTube URL (no hosting cost). In-app recording means we host video. Exact tier when built is TBD (§5). | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 
-| Item | Notes | Sources |
-| ---- | ----- | ------- |
-| AI interview prep (Phases 1–2) | Product idea / backlog Could — **not** assigned to Free, Pro, or Premium. | [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md), [Backlog.md](Backlog.md) |
-| In-app video recording + teleprompter | Pre-launch nice-to-have — **not** assigned to a tier. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
+### 3.6 Enforcement / lifecycle (working decisions)
+
+These rules are product truth for when E2 gates ship; not implemented in API/UI yet.
+
+| Rule | Decision |
+| ---- | -------- |
+| **What the application cap counts** | **All applications ever created** that still exist as rows: **active + archived** count toward the cap. **Permanently deleted** applications do **not** count (hard-delete frees a slot). Soft-archive does **not** free a slot — archive-cycling cannot bypass Free/Pro limits. |
+| **At cap** | Block **creating** a new application. Do not auto-delete or auto-archive. User may upgrade, or permanently delete an existing application to free a slot (within the counting rules above). |
+| **Tailored on Pro/Premium** | Optional per application; reject `cv_type: "tailored"` on Free when gated. |
+| **Downgrade** | Existing applications stay accessible (view/edit/archive per product rules). New creates are blocked while count ≥ new tier’s cap. Leaving Premium: vanity public id reverts to the opaque private id. |
+| **Premium soft ceiling** | Market “unlimited”; enforce a generous internal soft ceiling of **100** applications for storage fair use. Exact customer-facing messaging when approaching/hitting the ceiling is TBD (§5). |
 
 ---
 
@@ -157,33 +175,20 @@ These ideas exist in product docs / backlog but are **not** assigned to Free, Pr
 
 ---
 
-## 5. Still undefined (to decide when designing tiers)
+## 5. Still open
 
-Use this list as the main **feedback checklist** — each item is still open.
+Remaining TBD items (everything else in §3 is locked):
 
-### Pricing
-
-- Price points and billing interval (monthly / annual).
-
-### Caps & allowances
-
-- Exact Pro application cap; Premium higher vs unlimited.
-- Free: stay **primary-only**, or allow a very tight tailored allowance (e.g. 1).
-- Exact Premium primary-library size (today’s global max is 5).
-
-### Feature depth
-
-- What “richer analytics” includes (events, dashboards, exports, etc.).
-- Whether future features (AI prep, in-app recording) are Free, Pro, Premium, or separate add-ons.
-
-### Enforcement
-
-- How gating is enforced in API/UI (application create cap, reject `cv_type: "tailored"` on Free, vanity claim on Premium, etc.).
+- Stripe adaptive / local-currency presentment at checkout (E2) — `/pricing` stays USD for now.
+- Exact customer-facing copy when a Premium user approaches or hits the soft ceiling of 100.
+- When to build in-app video recording and which of Pro / Premium gets it.
+- When to ship AI interview prep as a paid add-on.
+- How gating is implemented in API/UI under E2 (create cap, reject tailored on Free, vanity claim on Premium, soft ceiling).
 
 ---
 
 ## 6. How to keep this current
 
-1. As remaining caps and prices land, tighten §3 / §5 and treat this doc as the source of truth for pricing.
-2. Keep `/pricing` (and any other marketing surfaces) aligned with this matrix — tier copy lives in `components/public/pricing/constants.ts`.
+1. Treat this doc as the source of truth for pricing and membership decisions; tighten §5 as remaining items land.
+2. Keep `/pricing` aligned with this matrix — tier copy lives in `components/public/pricing/constants.ts`.
 3. When pricing or billing work ships, update [Backlog.md](Backlog.md) (remove or strike the row). Do not keep a parallel open checklist here.

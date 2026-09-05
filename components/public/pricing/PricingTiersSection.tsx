@@ -5,7 +5,6 @@ import {
   fadeUp,
   staggerContainer,
   staggerItem,
-  transition,
   viewport,
 } from "@/lib/landing-animations";
 import { motion } from "framer-motion";
@@ -13,6 +12,7 @@ import Link from "next/link";
 import {
   PRICING_DRAFT_NOTE,
   PRICING_TIERS,
+  type PricingFeature,
   type PricingTier,
 } from "./constants";
 
@@ -25,27 +25,9 @@ export default function PricingTiersSection() {
   return (
     <section
       id="pricing"
-      className="px-4 md:px-6 lg:px-10 2xl:px-12 pt-6 pb-10 lg:pt-8 lg:pb-16 max-w-[1700px] mx-auto"
-      aria-labelledby="pricing-tiers-heading"
+      className="px-4 md:px-6 lg:px-10 2xl:px-12 pt-6 pb-6 lg:pt-8 lg:pb-8 max-w-[1700px] mx-auto"
+      aria-label="Pricing plans"
     >
-      <motion.div
-        className="mx-auto flex flex-col gap-3 max-w-3xl text-center mb-8 lg:mb-10"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...transition, delay: 0.1 }}
-      >
-        <h2
-          id="pricing-tiers-heading"
-          className="text-2xl sm:text-3xl 2xl:text-4xl font-light tracking-tight text-foreground text-balance"
-        >
-          Free, Pro, and Premium
-        </h2>
-        <p className="text-base sm:text-lg font-extralight leading-snug text-foreground/80 text-balance">
-          Tailored CVs are the main paid unlock on Pro. Premium adds branding,
-          scale, and richer analytics — not permission to finally tailor a CV.
-        </p>
-      </motion.div>
-
       <motion.div
         className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-3 lg:items-stretch"
         initial="hidden"
@@ -92,7 +74,7 @@ function PricingTierCard({ tier }: { tier: PricingTier }) {
         <h3 className="text-2xl xl:text-3xl font-light text-foreground">
           {tier.name}
         </h3>
-        <p className="text-base xl:text-lg font-extralight leading-snug text-foreground/70">
+        <p className="text-base xl:text-lg font-extralight leading-snug text-foreground/70 lg:min-h-[2.75em]">
           {tier.tagline}
         </p>
       </header>
@@ -108,16 +90,14 @@ function PricingTierCard({ tier }: { tier: PricingTier }) {
 
       <ul className="flex flex-col gap-3 flex-1" role="list">
         {tier.features.map((feature) => (
-          <li key={feature} className="flex gap-3 items-start">
+          <li key={feature.label} className="flex gap-3 items-start">
             <span
               className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-(--brand-accent-1)/15 text-(--brand-accent-1)"
               aria-hidden
             >
               <CheckIcon className="h-3.5 w-3.5" />
             </span>
-            <span className="text-base font-extralight leading-snug text-foreground/85">
-              {feature}
-            </span>
+            <PricingFeatureText feature={feature} />
           </li>
         ))}
       </ul>
@@ -133,5 +113,38 @@ function PricingTierCard({ tier }: { tier: PricingTier }) {
         {tier.cta.label}
       </Link>
     </motion.article>
+  );
+}
+
+function PricingFeatureText({ feature }: { feature: PricingFeature }) {
+  if (!feature.tooltip) {
+    return (
+      <span className="text-base font-extralight leading-snug text-foreground/85">
+        {feature.label}
+      </span>
+    );
+  }
+
+  const tipId = `pricing-tip-${feature.label.replace(/\W+/g, "-").toLowerCase()}`;
+
+  return (
+    <span className="group relative inline-flex max-w-full items-baseline gap-1.5 text-base font-extralight leading-snug text-foreground/85">
+      <span>{feature.label}</span>
+      <button
+        type="button"
+        className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-(--foreground)/25 text-[10px] font-semibold leading-none text-(--foreground)/55 transition hover:border-(--brand-accent-1) hover:text-(--brand-accent-1) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-accent-1) focus-visible:ring-offset-1"
+        aria-describedby={tipId}
+        aria-label={`More about ${feature.label}`}
+      >
+        ?
+      </button>
+      <span
+        id={tipId}
+        role="tooltip"
+        className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 hidden w-[min(100%,18rem)] rounded-md bg-(--foreground) px-2.5 py-1.5 text-xs font-normal leading-snug text-(--background) shadow-lg group-hover:block group-focus-within:block"
+      >
+        {feature.tooltip}
+      </span>
+    </span>
   );
 }
