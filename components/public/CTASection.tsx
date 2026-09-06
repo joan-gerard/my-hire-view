@@ -9,16 +9,37 @@ import {
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 /** Unsplash: career success / ready to start theme (professional, aspirational). */
 const CTA_IMAGE = "/solution-1-1.png";
 
+export interface CTASectionProps {
+  /** CTA destination. Defaults to on-page waitlist anchor (home). */
+  ctaHref?: string;
+  /** Button label. */
+  ctaLabel?: string;
+  /** Optional override for the headline (supports line breaks via ReactNode). */
+  headline?: ReactNode;
+  /** Optional override for supporting copy. */
+  description?: string;
+}
+
 /**
- * Final CTA section for the pre-launch landing page (LANDING_PAGE_BRIEF).
- * Hero-style block with image, headline, copy, and scroll-to-form CTA.
+ * Final CTA section for marketing pages (LANDING_PAGE_BRIEF).
+ * Hero-style block with image, headline, copy, and waitlist CTA.
  * Aligns with SolutionSection and ProblemSection: same container, rounded hero, overlay, typography.
  */
-export default function CTASection() {
+export default function CTASection({
+  ctaHref = "#early-access",
+  ctaLabel = "Get Early Access",
+  headline = (
+    <>
+      Ready to Transform <br /> Your Job Search?
+    </>
+  ),
+  description = "Join the waitlist now and be among the first to create applications that actually get noticed.",
+}: CTASectionProps = {}) {
   return (
     <motion.section
       className="px-0 md:px-6 lg:px-10 2xl:px-12 pt-16 pb-10 lg:pb-16 max-w-5xl mx-auto"
@@ -57,24 +78,23 @@ export default function CTASection() {
             className="relative z-10 text-2xl 2xl:text-5xl text-balance font-light tracking-tight text-white sm:text-3xl lg:text-3xl xl:text-4xl max-w-2xl"
             variants={staggerItem}
           >
-            Ready to Transform <br /> Your Job Search?
+            {headline}
           </motion.h2>
           <motion.p
             className="relative z-10 text-lg leading-normal text-balance text-white/90 max-w-2xl"
             variants={staggerItem}
           >
-            Join the waitlist now and be among the first to create applications
-            that actually get noticed.
+            {description}
           </motion.p>
           <motion.div
             className="relative z-10 w-full max-w-md mt-2"
             variants={staggerItem}
           >
             <Link
-              href="#early-access"
+              href={ctaHref}
               className="flex items-center justify-center w-fit rounded-2xl bg-(--brand-accent-1)/90 hover:bg-(--brand-accent-1) text-white px-6 py-3 text-base xl:text-xl font-semibold backdrop-blur-md shadow-md transition focus:outline-none focus:ring-2 focus:ring-(--brand-accent-1) focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70"
             >
-              Get Early Access
+              {ctaLabel}
             </Link>
           </motion.div>
         </motion.div>

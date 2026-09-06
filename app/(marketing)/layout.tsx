@@ -7,7 +7,7 @@ import { getUser } from "@/lib/auth";
  * Shared layout for public marketing pages: home (/) and Pricing.
  * Renders MarketingHeader and a full-height flex column so these routes share the same nav.
  * HeroEntranceProvider coordinates delayed entrance of header and hero content until the hero video has finished its entrance (home only).
- * ScrollCoverProvider lets the header switch to white when ScrollCoverSection has reached the top of the viewport.
+ * ScrollCoverProvider lets the header switch to white when ScrollCoverSection has reached the top of the viewport on home; on `/pricing` and other non-home routes the header stays solid from the start.
  */
 export default async function MarketingLayout({
   children,

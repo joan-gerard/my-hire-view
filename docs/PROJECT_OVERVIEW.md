@@ -12,7 +12,7 @@ A high-level catch-up document covering the product, tech stack, architecture, b
 
 There are two distinct surfaces:
 
-- **Marketing site** (`/`) — home, pricing stub, waitlist signup. Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.)
+- **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices; checkout still E2), waitlist signup. Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.)
 - **Product** (`/admin`) — authenticated dashboard to create, manage, and track applications.
 
 ---

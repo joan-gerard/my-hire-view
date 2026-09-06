@@ -1,0 +1,90 @@
+You are reviewing MyHireView pricing and membership packaging.
+
+**Attached materials (only sources for MyHireView-specific context):**
+1. PRICING_AND_MEMBERSHIP.md — working decisions, product breakdown, tier matrix, open questions
+2. constants.ts — draft tier copy used on the /pricing page (names, taglines, price labels, feature bullets, CTAs)
+
+Do not assume access to any other docs, codebase, or prior conversation. If something is missing from the attachments, say so explicitly instead of inventing MyHireView-specific product details.
+
+**How to use the two files:**
+- Treat the markdown doc as the decision source of truth (principles, tier intent, caps, open questions).
+- Treat constants.ts as the customer-facing draft of those decisions.
+- Call out any mismatch between the doc and constants.ts (missing features, softer/stronger claims, wording that overpromises TBD items, etc.).
+- You may and should use external knowledge and web research for competitor pricing and packaging benchmarks. Cite competitors and (where possible) the prices/plans you used.
+
+**Your job has three parts:**
+
+### Part A — Clarity review
+
+Assess whether the document is clear, complete, and easy to understand on its own — and whether constants.ts presents the same story clearly to a visitor on /pricing.
+
+Cover:
+1. Ambiguous terms or jargon (in either file) that need plain-language definitions
+2. Structural issues in the doc (ordering, redundancy, missing context)
+3. Whether Free vs Pro vs Premium are clearly differentiated in the doc and in the pricing-page copy
+4. Gaps, contradictions, or doc ↔ constants.ts mismatches
+5. Anything a first-time reader would still be unsure about after finishing the doc / reading the tier cards
+
+**Output A:** Bullets for what works, what is unclear, doc ↔ copy mismatches, and concrete clarity improvements (wording/structure only — do not rewrite whole files unless a short example passage helps).
+
+### Part B — Tier fairness & feature placement
+
+Review whether the Free / Pro / Premium breakdown is fair and coherent, and whether each feature sits on the right tier — using both the doc matrix and the feature lists in constants.ts.
+
+Cover:
+1. Value ladder — Does each step (Free → Pro → Premium) feel justified? Is anything over- or under-powered?
+2. Feature placement — For each major differentiator (application caps, primary vs tailored CVs, opaque vs vanity public id, basic vs richer analytics, primary library size, and any adjacent features in the doc), say:
+   - Keep on current tier, or
+   - Move (to which tier), or
+   - Split / soften (e.g. partial access on a lower tier)
+   - With a short reason
+3. Fairness risks — Free too generous (hurts conversion), Free too weak (hurts adoption), Pro too thin, Premium not worth paying more, easy-to-game limits, hard-to-explain packaging
+4. Copy fairness — Does constants.ts make any tier sound more or less valuable than the doc intends?
+5. Recommended adjusted matrix — If you would reassign features, show a revised Free / Pro / Premium feature table (still opinion-labeled), and note what would need to change in constants.ts
+
+Treat the document’s stated design intent as important context (especially: tailored CVs as the main Pro unlock; Premium as branding / scale / richer analytics — not “finally allowed to tailor a CV”), but challenge it if competitor norms or fairness argue otherwise.
+
+**Output B:** Clear keep/move/split recommendations per feature, plus an optional revised matrix, fairness rationale, and any constants.ts copy adjustments implied by that.
+
+### Part C — Pricing suggestions (competitor-informed)
+
+Propose concrete launch pricing, informed by research on competitors and analogous products (job-search / career tools, résumé or application helpers, creator/prosumer SaaS with free + paid tiers, vanity/branding upsells, analytics upsells).
+
+Also decide currency and market framing:
+- The product owner is based in Sweden.
+- Do not assume USD by default.
+- Recommend a primary currency (e.g. SEK, EUR, USD) for launch pricing, and say whether to show secondary currencies. Justify using audience (where job seekers pay), Stripe/common SaaS practice, and competitor norms in EU/Nordics vs US-centric tools.
+- Give prices in your recommended primary currency; optionally add approximate equivalents in other currencies.
+- Note how constants.ts should express prices (it currently uses TBA for paid plans).
+
+Include:
+1. Competitor scan — Brief table or bullets: competitor → relevant plan(s) → price → what you learn for MyHireView (packaging and price). Use current public pricing where you can; note dates/uncertainty if soft.
+2. Price points for paid tiers — monthly and annual (state any annual discount) in the recommended currency
+3. Numeric recommendations for open items in the doc:
+   - Pro application cap
+   - Premium application cap (finite vs unlimited — choose one and justify)
+   - Free: stay primary-only vs a small tailored allowance
+   - Premium primary-library size (doc notes today’s global max is 5)
+4. What “richer analytics” should include on Premium at launch
+5. Where adjacent features in the doc (AI interview prep, in-app video recording) should sit: Free, Pro, Premium, add-on, or later
+6. Brief willingness-to-pay rationale tied to the competitor scan and to active job seekers as buyers
+
+**Output C:**
+1. Currency recommendation + why
+2. Competitor scan
+3. Pricing table:
+
+| Plan | Monthly | Annual | App cap | Tailored CVs | Public id | Analytics | Library size |
+|------|---------|--------|---------|--------------|-----------|-----------|--------------|
+
+4. Short rationale / tradeoffs
+5. Suggested updates to constants.ts price labels / notes once prices are chosen
+6. The top 3 decisions to lock first
+
+**Rules:**
+- Treat the markdown doc’s principles and working tier decisions as the baseline unless you give a clear reason to change them.
+- Prefer the doc over constants.ts when they conflict, but always flag the conflict.
+- Be specific; avoid vague advice.
+- Label opinions as opinions.
+- Separate MyHireView facts (from the attachments) from competitor research and from your recommendations.
+- Do not edit the attached files; review and recommend only.
