@@ -3,8 +3,10 @@
  *
  * GET  — returns existing profile or 404 when missing (read-only; no insert),
  *        enforces rate limiting, rejects unauthenticated callers.
- * PUT  — upserts profile (creates on first save), syncs Auth user_metadata names,
- *        validates URL fields, enforces rate limiting, rejects unauthenticated callers.
+ * PUT  — upserts profile (creates on first save; seeds names/public_id from
+ *        Auth metadata when the row is missing so picture-only first save works),
+ *        syncs Auth user_metadata names, validates URL fields, enforces rate
+ *        limiting, rejects unauthenticated callers.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
@@ -196,6 +198,238 @@ describe("PUT /api/profile", () => {
         last_name: "Doe",
         public_id: expect.stringMatching(/^[a-z0-9]{8}$/),
       }),
+    });
+  });
+
+  it("creates profile from Auth metadata on picture-only first save (C3-026)", async () => {
+    const ownedUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    mockRequireAuth.mockResolvedValue({
+      id: "user-123",
+      user_metadata: {
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+      },
+    });
+    const created = {
+      user_id: "user-123",
+      public_id: "k7x2m9ab",
+      first_name: "Jane",
+      last_name: "Doe",
+      location: null,
+      portfolio_url: null,
+      linkedin_url: null,
+      profile_picture_url: ownedUrl,
+    };
+    const upsertChain = ok(created);
+    const client = makeSupabaseClient([
+      dbError("No rows found", "PGRST116"),
+      upsertChain,
+    ]);
+    mockCreateClient.mockResolvedValue(client);
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: ownedUrl }),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data).toMatchObject({
+      first_name: "Jane",
+      last_name: "Doe",
+      public_id: "k7x2m9ab",
+      profile_picture_url: ownedUrl,
+    });
+    expect(upsertChain.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+        profile_picture_url: ownedUrl,
+      }),
+      { onConflict: "user_id" },
+    );
+  });
+
+  it("returns 400 on picture-only first save when Auth metadata has no names", async () => {
+    const ownedUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    mockRequireAuth.mockResolvedValue({
+      id: "user-123",
+      user_metadata: { public_id: "k7x2m9ab" },
+    });
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([dbError("No rows found", "PGRST116")]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: ownedUrl }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("First name and last name");
+  });
+
+  it("backfills null names from Auth metadata on picture-only PUT (C3-026)", async () => {
+    const ownedUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    mockRequireAuth.mockResolvedValue({
+      id: "user-123",
+      user_metadata: {
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+      },
+    });
+    const existingWithoutNames = {
+      user_id: "user-123",
+      public_id: "k7x2m9ab",
+      first_name: null,
+      last_name: null,
+      location: null,
+      portfolio_url: null,
+      linkedin_url: null,
+      profile_picture_url: null,
+    };
+    const updated = {
+      ...existingWithoutNames,
+      first_name: "Jane",
+      last_name: "Doe",
+      profile_picture_url: ownedUrl,
+    };
+    const upsertChain = ok(updated);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(existingWithoutNames), upsertChain]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: ownedUrl }),
+    );
+    expect(response.status).toBe(200);
+    expect(upsertChain.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+        profile_picture_url: ownedUrl,
+      }),
+      { onConflict: "user_id" },
+    );
+  });
+
+  it("backfills blank-string names from Auth metadata on picture-only PUT", async () => {
+    const ownedUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    mockRequireAuth.mockResolvedValue({
+      id: "user-123",
+      user_metadata: {
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+      },
+    });
+    const existingWithBlankNames = {
+      user_id: "user-123",
+      public_id: "k7x2m9ab",
+      first_name: "",
+      last_name: "   ",
+      location: null,
+      portfolio_url: null,
+      linkedin_url: null,
+      profile_picture_url: null,
+    };
+    const updated = {
+      ...existingWithBlankNames,
+      first_name: "Jane",
+      last_name: "Doe",
+      profile_picture_url: ownedUrl,
+    };
+    const upsertChain = ok(updated);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(existingWithBlankNames), upsertChain]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: ownedUrl }),
+    );
+    expect(response.status).toBe(200);
+    expect(upsertChain.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        first_name: "Jane",
+        last_name: "Doe",
+        profile_picture_url: ownedUrl,
+      }),
+      { onConflict: "user_id" },
+    );
+  });
+
+  it("returns 400 when Auth metadata name exceeds max length on picture-only first save", async () => {
+    const ownedUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    mockRequireAuth.mockResolvedValue({
+      id: "user-123",
+      user_metadata: {
+        first_name: "A".repeat(101),
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+      },
+    });
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([dbError("No rows found", "PGRST116")]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: ownedUrl }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/First name.*100/);
+  });
+
+  it("preserves an existing over-long stored name on picture-only PUT", async () => {
+    const ownedUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    const longFirst = "A".repeat(101);
+    const existingWithLongName = {
+      user_id: "user-123",
+      public_id: "k7x2m9ab",
+      first_name: longFirst,
+      last_name: "Doe",
+      location: null,
+      portfolio_url: null,
+      linkedin_url: null,
+      profile_picture_url: null,
+    };
+    const updated = {
+      ...existingWithLongName,
+      profile_picture_url: ownedUrl,
+    };
+    const upsertChain = ok(updated);
+    const client = makeSupabaseClient([
+      ok(existingWithLongName),
+      upsertChain,
+    ]);
+    mockCreateClient.mockResolvedValue(client);
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: ownedUrl }),
+    );
+    expect(response.status).toBe(200);
+    expect(upsertChain.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        first_name: longFirst,
+        last_name: "Doe",
+        profile_picture_url: ownedUrl,
+      }),
+      { onConflict: "user_id" },
+    );
+    // Auth metadata must not be poisoned with the over-long stored name.
+    expect(client.auth.updateUser).toHaveBeenCalledWith({
+      data: {
+        first_name: "A".repeat(100),
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+      },
     });
   });
 

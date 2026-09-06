@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/auth";
+import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { generatePublicId } from "@/lib/utils/public-id";
 import { createClient } from "@/lib/supabase/server";
@@ -9,9 +10,17 @@ import {
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from "@/lib/rate-limit";
 import {
   formatProfileUpdateZodError,
+  PROFILE_NAME_MAX_LENGTH,
   profileUpdateSchema,
 } from "@/lib/validation/profile";
 import { NextRequest, NextResponse } from "next/server";
+
+/** Treat null/undefined/blank stored names as missing so metadata can seed. */
+function storedNameOrNull(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 /**
  * Read-only: returns the current user's profiles row, or 404 if none exists.
@@ -108,6 +117,13 @@ export async function PUT(request: NextRequest) {
 
     const oldPictureUrl = existing?.profile_picture_url ?? null;
 
+    // Seed omitted names from Auth metadata so a picture-only PUT works when
+    // the profiles row is missing or has blank names (e.g. minimal ensureProfilePublicId
+    // insert). Stored non-blank names still win (C3-026).
+    const metaNames = namesFromUserMetadata(user);
+    const storedFirst = storedNameOrNull(existing?.first_name);
+    const storedLast = storedNameOrNull(existing?.last_name);
+
     const publicId =
       existing?.public_id ??
       publicIdFromUserMetadata(user) ??
@@ -119,11 +135,11 @@ export async function PUT(request: NextRequest) {
       first_name:
         body.first_name !== undefined
           ? (body.first_name ?? null)
-          : (existing?.first_name ?? null),
+          : (storedFirst ?? metaNames?.first_name ?? null),
       last_name:
         body.last_name !== undefined
           ? (body.last_name ?? null)
-          : (existing?.last_name ?? null),
+          : (storedLast ?? metaNames?.last_name ?? null),
       location:
         body.location !== undefined
           ? (body.location ?? null)
@@ -149,6 +165,28 @@ export async function PUT(request: NextRequest) {
         { status: 400 },
       );
     }
+    // Cap names this request introduces (body or metadata seed). Preserve legacy
+    // over-long stored values so picture-only PUTs still succeed.
+    const firstFromStored =
+      body.first_name === undefined && storedFirst !== null;
+    const lastFromStored =
+      body.last_name === undefined && storedLast !== null;
+    if (!firstFromStored && firstName.length > PROFILE_NAME_MAX_LENGTH) {
+      return NextResponse.json(
+        {
+          error: `First name must be at most ${PROFILE_NAME_MAX_LENGTH} characters`,
+        },
+        { status: 400 },
+      );
+    }
+    if (!lastFromStored && lastName.length > PROFILE_NAME_MAX_LENGTH) {
+      return NextResponse.json(
+        {
+          error: `Last name must be at most ${PROFILE_NAME_MAX_LENGTH} characters`,
+        },
+        { status: 400 },
+      );
+    }
     merged.first_name = firstName;
     merged.last_name = lastName;
 
@@ -165,6 +203,7 @@ export async function PUT(request: NextRequest) {
     const warnings: string[] = [];
 
     // Keep Auth user_metadata in sync when names or public_id change (or on first save).
+    // Cap names for Auth only — profiles may still hold a legacy over-long stored value.
     const prevFirst = existing?.first_name ?? null;
     const prevLast = existing?.last_name ?? null;
     const metaPublicId = publicIdFromUserMetadata(user);
@@ -175,8 +214,8 @@ export async function PUT(request: NextRequest) {
     ) {
       const { error: metaError } = await supabase.auth.updateUser({
         data: {
-          first_name: firstName,
-          last_name: lastName,
+          first_name: firstName.slice(0, PROFILE_NAME_MAX_LENGTH),
+          last_name: lastName.slice(0, PROFILE_NAME_MAX_LENGTH),
           public_id: publicId,
         },
       });

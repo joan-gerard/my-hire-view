@@ -51,7 +51,7 @@ Requires `SUPABASE_SERVICE_ROLE_KEY` in the server env (signup profile insert).
 
 - [ ] Invalid file type or >5MB in modal → error, no save
 - [ ] Cancel modal → no profile change
-- [ ] (Optional) Temporarily break service role and sign up: Auth user exists; after fixing env and confirming email / hitting callback, profiles row appears or next Profile Save upserts
+- [ ] (Optional) Temporarily break service role and sign up: Auth user exists; after fixing env and confirming email / hitting callback, profiles row appears. Or delete the profiles row while keeping Auth metadata, then Save picture from `/admin/new` — PUT should create the row from metadata (C3-026).
 
 ---
 

@@ -147,7 +147,7 @@ sequenceDiagram
   Page->>U: Refresh / success
 ```
 
-Profile data is used as the default source for candidate fields when creating a new application; it is not updated from the application form. The row is normally created at signup; PUT merges with the existing row (picture-only updates are valid).
+Profile data is used as the default source for candidate fields when creating a new application; it is not updated from the application form. The row is normally created at signup; PUT merges with the existing row (picture-only updates are valid). If the row is missing or has blank names, omitted names/`public_id` are seeded from Auth `user_metadata` so a picture-only PUT still works (body and metadata-seeded names must be ≤ 100 characters; legacy over-long stored names are preserved).
 
 ---
 
@@ -600,7 +600,7 @@ Candidate fields on the application are either supplied by the form (with toggle
 
 | # | Scenario | Behaviour |
 |---|---|---|
-| 29 | User has no profile row yet (signup insert failed) | GET `/api/profile` → **404**; profile page and `/admin/new` seed names from Auth `user_metadata`; `getProfileSnapshot` returns all-null fields — create trusts client body from the form. Auth callback / next PUT can create the row. |
+| 29 | User has no profile row yet (signup insert failed) | GET `/api/profile` → **404**; profile page and `/admin/new` seed names from Auth `user_metadata`; `getProfileSnapshot` returns all-null fields — create trusts client body from the form. Auth callback / login bootstrap / next PUT can create the row (picture-only PUT seeds names/`public_id` from metadata). |
 | 30 | User disables all candidate toggles | All candidate fields sent as `null`; the recruiter view shows no name, location, or links. |
 | 31 | User enables name toggle but leaves first/last name blank | `trim() || null` evaluates to `null`; stored as null in DB. |
 | 32 | User enables Name in URL with position `start` or `end` but has no first or last name | `buildSlug` / `reserveBaseSlug` falls back to company-role only (name segment is omitted). The slug does not include a name even though the preference is set. |
