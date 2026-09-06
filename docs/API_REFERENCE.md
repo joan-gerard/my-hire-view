@@ -363,7 +363,7 @@ Return the current user’s profile. **Read-only** — does not create a row. If
 
 `PUT /api/profile`
 
-Upsert profile fields (row usually already exists from signup). Requires non-empty `first_name` and `last_name` (after merge with existing — so picture-only updates work). Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change, syncs Auth `user_metadata`. When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upsert profile fields (row usually already exists from signup). Requires non-empty `first_name` and `last_name` (after merge with existing — so picture-only updates work). On **create-on-first-save** (no profiles row yet), omitted names and `public_id` are seeded from Auth `user_metadata` when present (C3-026), so a picture-only PUT from `/admin/new` can create the row. Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change, syncs Auth `user_metadata`. When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -375,6 +375,7 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 
 - Auth required; upsert keyed by `user_id` (create-on-first-save).
 - Rate limited; Zod validation; ownership check on picture URLs (origin must match `NEXT_PUBLIC_SUPABASE_URL`; path-only lookalikes on other hosts → **400**).
+- Create-on-first-save seeds omitted `first_name` / `last_name` / `public_id` from Auth `user_metadata` when no profiles row exists (picture-only first save).
 - Deletes previous Storage object after successful write when the URL changes; surfaces partial failures as `warnings`.
 - No applications fan-out for picture URLs (live profile read on view).
 - Dedicated auth try/catch → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).

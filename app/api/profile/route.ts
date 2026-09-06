@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/auth";
+import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { generatePublicId } from "@/lib/utils/public-id";
 import { createClient } from "@/lib/supabase/server";
@@ -108,6 +109,10 @@ export async function PUT(request: NextRequest) {
 
     const oldPictureUrl = existing?.profile_picture_url ?? null;
 
+    // Create-on-first-save: seed names/public_id from Auth metadata so a
+    // picture-only PUT works when signup bootstrap did not create a row (C3-026).
+    const metaNames = !existing ? namesFromUserMetadata(user) : null;
+
     const publicId =
       existing?.public_id ??
       publicIdFromUserMetadata(user) ??
@@ -119,11 +124,11 @@ export async function PUT(request: NextRequest) {
       first_name:
         body.first_name !== undefined
           ? (body.first_name ?? null)
-          : (existing?.first_name ?? null),
+          : (existing?.first_name ?? metaNames?.first_name ?? null),
       last_name:
         body.last_name !== undefined
           ? (body.last_name ?? null)
-          : (existing?.last_name ?? null),
+          : (existing?.last_name ?? metaNames?.last_name ?? null),
       location:
         body.location !== undefined
           ? (body.location ?? null)

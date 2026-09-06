@@ -65,7 +65,7 @@ After a successful password sign-in, the same bootstrap runs. This closes the **
 
 ### Safety nets that remain
 
-- `PUT /api/profile` still upserts (can create a row if somehow missing).
+- `PUT /api/profile` still upserts (can create a row if somehow missing). On create-on-first-save, omitted names/`public_id` are seeded from Auth metadata so picture-only PUTs succeed (C3-026).
 - `ensureProfilePublicId` still can create/fix `public_id` before application create (rejects invalid metadata ids via `isValidPublicId`).
 - Profile / new-application UIs still seed from metadata if GET returns 404.
 
@@ -80,7 +80,7 @@ After a successful password sign-in, the same bootstrap runs. This closes the **
 | Signup succeeds but profile insert fails | Do not fail signup; log; callback and/or login bootstrap retry; immediate session retries once |
 | Rare `public_id` unique collision | Re-select by `user_id`; if still missing, regenerate `public_id` and sync Auth metadata (sync failure is an error) |
 | Invalid Auth `public_id` metadata | Pass raw metadata into `createInitialProfile`; validate with `isValidPublicId` or regenerate and reconcile Auth by reading Auth. Existing rows with an invalid/empty `public_id` are repaired via shared `repairProfilePublicId` (conditional update of **`public_id` only** + re-read — never overwrites names). Read-only resolve returns **null** when a profiles row exists but is invalid (no Auth fallback). Preferred metadata ids owned by another user are rejected before use. Create path uses **insert** (not upsert): on unique conflict, re-read the canonical row before Auth sync so a concurrent winner’s id/names are preserved. |
-| Picture-only PUT needs names | Names exist on the row from signup → merge succeeds |
+| Picture-only PUT needs names | Names exist on the row from signup → merge succeeds. If the row is still missing, create-on-first-save seeds names/`public_id` from Auth metadata (C3-026). |
 | Open redirect on `next` | Callback only allows safe same-origin relative paths |
 
 ---
