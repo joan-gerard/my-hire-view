@@ -185,9 +185,9 @@ export function getTierPrice(
   return tier.prices[interval];
 }
 
-/** Note under the tier grid — checkout not live yet; plans/prices are set. */
+/** Note under the tier grid — checkout not live; prices are a working draft until E1. */
 export const PRICING_DRAFT_NOTE =
-  "Launch prices above are set. Paid checkout ships with membership — join the waitlist for early access until then.";
+  "Prices above are a working draft and may change before launch. Paid checkout ships with membership — join the waitlist for early access until then.";
 
 /** FAQ for caps, lifecycle, and downgrades on /pricing. */
 export const PRICING_FAQ = [

@@ -147,6 +147,7 @@ describe("pricing tier data (E3-014)", () => {
   it("notes that checkout ships with membership", () => {
     expect(PRICING_DRAFT_NOTE.toLowerCase()).toMatch(/checkout|membership/);
     expect(PRICING_DRAFT_NOTE.toLowerCase()).toMatch(/waitlist/);
+    expect(PRICING_DRAFT_NOTE.toLowerCase()).toMatch(/draft|may change/);
     expect(PRICING_DRAFT_NOTE).not.toMatch(/USD/i);
   });
 

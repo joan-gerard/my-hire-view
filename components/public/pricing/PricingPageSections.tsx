@@ -24,7 +24,7 @@ export default function PricingPageSections() {
             Ready to stand out <br /> when we launch?
           </>
         }
-        description="Plans and prices are set. Join the waitlist for early access — paid checkout ships with membership."
+        description="Plans and prices are a working draft and may change before launch. Join the waitlist for early access — paid checkout ships with membership."
         ctaLabel="Get Early Access"
       />
       <Footer />

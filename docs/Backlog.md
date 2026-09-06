@@ -21,8 +21,8 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | ID | Subcategory | Item | Notes | Source |
 | -------- | -------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | D3-001 | Infrastructure | Durable rate limiting | Replace in-memory `lib/rate-limit.ts` with Redis/Upstash (or similar). Also closes per-path Map growth on view/download: `checkPerSlugRateLimit` keys `${ip}:${publicId}:${slug}` before format validation and only prunes the key being hit, so unique invalid paths accumulate. Interim: validate/normalize `publicId` + slug before constructing the key, and/or add global TTL / capacity sweep. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
-| E1-012 | Product | Pricing & membership tiers | Define plans (paid + optional free tier / trial), per-tier limits, price points. Do **not** launch with unlimited free app access. Inventory of existing free/premium mentions: [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md). | [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) |
-| E2-013 | Product | Payment / membership system | Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
+| E1-012 | Product | Pricing & membership tiers | **Defer until near public launch** — plans/prices/caps may still change. Working draft lives in [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) and on `/pricing` (E3). When ready: lock Free/Pro/Premium, per-tier limits, and price points; do **not** launch with unlimited free app access. Must finish before E2. | [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) |
+| E2-013 | Product | Payment / membership system | **Defer until near public launch** (after E1 is locked). Stripe (or similar): checkout, webhooks, Supabase subscription state; gate creating/using applications behind an active plan or trial. Do not start until tier matrix is final. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | A3-015 | Security | Confirm email required in production Supabase | **Defer until production / just before public launch** (not blocking earlier sprints). In Auth → Providers → Email, ensure **Confirm email** is ON so Supabase does not issue a session for unconfirmed users once live. Also set production **Site URL** + Redirect URLs (include `/auth/callback`); localhost Site URL is fine for local-only work. | [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md) |
 
 ### Should
@@ -192,11 +192,13 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 
 #### Sprint E — Monetization (Must epic)
 
+**Timing:** E3 marketing page is shipped. **E1 then E2 stay deferred until near public launch** — treat current prices/caps as a working draft that may change. Same “just before launch” bucket as `A3-015`.
+
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
-| E1 | `docs/e1-pricing-tiers` | `E1-012` | Define pricing & membership tiers (doc/product decisions) |
-| E2 | `feat/e2-payment-membership` | `E2-013` | Payment / membership system — split into schema → checkout → webhooks → API/UI gates as needed |
-| E3 | `feat/e3-pricing-page` | `E3-014` | ~~Real `/pricing` page with draft Free/Pro/Premium~~ (shipped; final prices/caps with E1/E2) |
+| E1 | `docs/e1-pricing-tiers` | `E1-012` | **Near launch** — lock pricing & membership tiers (doc/product decisions); revisit draft in [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) |
+| E2 | `feat/e2-payment-membership` | `E2-013` | **Near launch (after E1)** — payment / membership system — split into schema → checkout → webhooks → API/UI gates as needed |
+| E3 | `feat/e3-pricing-page` | `E3-014` | ~~Real `/pricing` page with draft Free/Pro/Premium~~ (shipped; **re-align copy when E1 locks**, then wire checkout in E2) |
 
 ---
 
@@ -304,6 +306,8 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **E1 → E2** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` (E3 pricing page shipped)  
-2. **C3** — `fix/c3-picture-only-first-save` (`C3-026`)  
-3. **D2** — `fix/d2-slug-validate-rate-limit-key` (`D2-034`)
+1. **C3** — `fix/c3-picture-only-first-save` (`C3-026`)  
+2. **D2** — `fix/d2-slug-validate-rate-limit-key` (`D2-034`)  
+3. **D3** — `feat/d3-durable-rate-limiting` (`D3-001`) — or pick an F-batch Should when capacity allows  
+
+**Near launch (not now):** **E1 → E2** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` (plus `A3-015`). Keep the working draft in [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) / `/pricing` updated if product thinking changes, but do not lock or build billing until launch is imminent.
