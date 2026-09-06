@@ -10,9 +10,17 @@ import {
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from "@/lib/rate-limit";
 import {
   formatProfileUpdateZodError,
+  PROFILE_NAME_MAX_LENGTH,
   profileUpdateSchema,
 } from "@/lib/validation/profile";
 import { NextRequest, NextResponse } from "next/server";
+
+/** Treat null/undefined/blank stored names as missing so metadata can seed. */
+function storedNameOrNull(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 /**
  * Read-only: returns the current user's profiles row, or 404 if none exists.
@@ -110,8 +118,8 @@ export async function PUT(request: NextRequest) {
     const oldPictureUrl = existing?.profile_picture_url ?? null;
 
     // Seed omitted names from Auth metadata so a picture-only PUT works when
-    // the profiles row is missing or has null names (e.g. minimal ensureProfilePublicId
-    // insert). Stored non-null names still win via ?? (C3-026).
+    // the profiles row is missing or has blank names (e.g. minimal ensureProfilePublicId
+    // insert). Stored non-blank names still win (C3-026).
     const metaNames = namesFromUserMetadata(user);
 
     const publicId =
@@ -125,11 +133,15 @@ export async function PUT(request: NextRequest) {
       first_name:
         body.first_name !== undefined
           ? (body.first_name ?? null)
-          : (existing?.first_name ?? metaNames?.first_name ?? null),
+          : (storedNameOrNull(existing?.first_name) ??
+            metaNames?.first_name ??
+            null),
       last_name:
         body.last_name !== undefined
           ? (body.last_name ?? null)
-          : (existing?.last_name ?? metaNames?.last_name ?? null),
+          : (storedNameOrNull(existing?.last_name) ??
+            metaNames?.last_name ??
+            null),
       location:
         body.location !== undefined
           ? (body.location ?? null)
@@ -152,6 +164,23 @@ export async function PUT(request: NextRequest) {
     if (!firstName || !lastName) {
       return NextResponse.json(
         { error: "First name and last name are required" },
+        { status: 400 },
+      );
+    }
+    // Body names are Zod-capped; metadata / legacy DB values may not be.
+    if (firstName.length > PROFILE_NAME_MAX_LENGTH) {
+      return NextResponse.json(
+        {
+          error: `First name must be at most ${PROFILE_NAME_MAX_LENGTH} characters`,
+        },
+        { status: 400 },
+      );
+    }
+    if (lastName.length > PROFILE_NAME_MAX_LENGTH) {
+      return NextResponse.json(
+        {
+          error: `Last name must be at most ${PROFILE_NAME_MAX_LENGTH} characters`,
+        },
         { status: 400 },
       );
     }
