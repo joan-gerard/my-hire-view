@@ -109,9 +109,10 @@ export async function PUT(request: NextRequest) {
 
     const oldPictureUrl = existing?.profile_picture_url ?? null;
 
-    // Create-on-first-save: seed names/public_id from Auth metadata so a
-    // picture-only PUT works when signup bootstrap did not create a row (C3-026).
-    const metaNames = !existing ? namesFromUserMetadata(user) : null;
+    // Seed omitted names from Auth metadata so a picture-only PUT works when
+    // the profiles row is missing or has null names (e.g. minimal ensureProfilePublicId
+    // insert). Stored non-null names still win via ?? (C3-026).
+    const metaNames = namesFromUserMetadata(user);
 
     const publicId =
       existing?.public_id ??

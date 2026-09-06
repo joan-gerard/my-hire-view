@@ -147,7 +147,7 @@ sequenceDiagram
   Page->>U: Refresh / success
 ```
 
-Profile data is used as the default source for candidate fields when creating a new application; it is not updated from the application form. The row is normally created at signup; PUT merges with the existing row (picture-only updates are valid). If the row is missing, create-on-first-save seeds omitted names/`public_id` from Auth `user_metadata` so a picture-only PUT still works.
+Profile data is used as the default source for candidate fields when creating a new application; it is not updated from the application form. The row is normally created at signup; PUT merges with the existing row (picture-only updates are valid). If the row is missing or has null names, omitted names/`public_id` are seeded from Auth `user_metadata` so a picture-only PUT still works.
 
 ---
 

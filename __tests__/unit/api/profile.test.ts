@@ -270,6 +270,53 @@ describe("PUT /api/profile", () => {
     expect(json.error).toContain("First name and last name");
   });
 
+  it("backfills null names from Auth metadata on picture-only PUT (C3-026)", async () => {
+    const ownedUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    mockRequireAuth.mockResolvedValue({
+      id: "user-123",
+      user_metadata: {
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+      },
+    });
+    const existingWithoutNames = {
+      user_id: "user-123",
+      public_id: "k7x2m9ab",
+      first_name: null,
+      last_name: null,
+      location: null,
+      portfolio_url: null,
+      linkedin_url: null,
+      profile_picture_url: null,
+    };
+    const updated = {
+      ...existingWithoutNames,
+      first_name: "Jane",
+      last_name: "Doe",
+      profile_picture_url: ownedUrl,
+    };
+    const upsertChain = ok(updated);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(existingWithoutNames), upsertChain]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: ownedUrl }),
+    );
+    expect(response.status).toBe(200);
+    expect(upsertChain.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+        profile_picture_url: ownedUrl,
+      }),
+      { onConflict: "user_id" },
+    );
+  });
+
   it("returns 400 for an invalid portfolio URL", async () => {
     const response = await PUT(
       makePutRequest({ portfolio_url: "not-a-url" }),
