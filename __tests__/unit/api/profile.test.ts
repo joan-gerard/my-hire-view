@@ -405,9 +405,11 @@ describe("PUT /api/profile", () => {
       profile_picture_url: ownedUrl,
     };
     const upsertChain = ok(updated);
-    mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([ok(existingWithLongName), upsertChain]),
-    );
+    const client = makeSupabaseClient([
+      ok(existingWithLongName),
+      upsertChain,
+    ]);
+    mockCreateClient.mockResolvedValue(client);
 
     const response = await PUT(
       makePutRequest({ profile_picture_url: ownedUrl }),
@@ -421,6 +423,14 @@ describe("PUT /api/profile", () => {
       }),
       { onConflict: "user_id" },
     );
+    // Auth metadata must not be poisoned with the over-long stored name.
+    expect(client.auth.updateUser).toHaveBeenCalledWith({
+      data: {
+        first_name: "A".repeat(100),
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+      },
+    });
   });
 
   it("returns 400 for an invalid portfolio URL", async () => {

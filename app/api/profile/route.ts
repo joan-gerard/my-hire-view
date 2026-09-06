@@ -203,6 +203,7 @@ export async function PUT(request: NextRequest) {
     const warnings: string[] = [];
 
     // Keep Auth user_metadata in sync when names or public_id change (or on first save).
+    // Cap names for Auth only — profiles may still hold a legacy over-long stored value.
     const prevFirst = existing?.first_name ?? null;
     const prevLast = existing?.last_name ?? null;
     const metaPublicId = publicIdFromUserMetadata(user);
@@ -213,8 +214,8 @@ export async function PUT(request: NextRequest) {
     ) {
       const { error: metaError } = await supabase.auth.updateUser({
         data: {
-          first_name: firstName,
-          last_name: lastName,
+          first_name: firstName.slice(0, PROFILE_NAME_MAX_LENGTH),
+          last_name: lastName.slice(0, PROFILE_NAME_MAX_LENGTH),
           public_id: publicId,
         },
       });

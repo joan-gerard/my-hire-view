@@ -379,7 +379,7 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 - Deletes previous Storage object after successful write when the URL changes; surfaces partial failures as `warnings`.
 - No applications fan-out for picture URLs (live profile read on view).
 - Dedicated auth try/catch → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
-- Syncs Auth `user_metadata` (`first_name`, `last_name`, `public_id`) when DB names change or Auth `public_id` is out of sync; sync failures become `warnings` while still returning **200** + `data`.
+- Syncs Auth `user_metadata` (`first_name`, `last_name`, `public_id`) when DB names change or Auth `public_id` is out of sync; sync failures become `warnings` while still returning **200** + `data`. Names written to Auth are truncated to **100** characters so metadata never holds an over-long seed (legacy over-long profiles values may still differ until the user edits them).
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
 
