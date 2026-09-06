@@ -2,7 +2,7 @@
 
 **Purpose of this doc:** Working decisions on Free / Pro / Premium for MyHireView. It is **not** a second backlog — actionable engineering work lives in [Backlog.md](Backlog.md).
 
-**Status:** Plan names, monthly and annual USD prices, numeric caps, Free primary-only, analytics split, and application-cap counting rules below are **working decisions**. Billing gates (Stripe checkout, API/UI enforcement) are **not** implemented yet — that is E2. Display currency on `/pricing` is **USD**; Stripe adaptive/local presentment can come later with checkout.
+**Status:** Plan names, monthly and annual USD prices, numeric caps, Free primary-only, analytics split, and application-cap counting rules below are **working decisions** — expected to change before launch. **E1** (lock tiers) and **E2** (Stripe checkout / gates) are **deferred until near public launch**; do not treat this matrix as final. Display currency on `/pricing` is **USD**; Stripe adaptive/local presentment can come later with checkout.
 
 Homepage marketing FAQ copy is **placeholder** and is intentionally **not** used here as input for what tiers should offer.
 
@@ -76,7 +76,7 @@ Unless a row in §3 says otherwise, candidates on **any** plan are expected to u
 | Free access, if any, is a **free tier and/or trial only** — not unlimited free use of the app. | Same |
 | Creating / using applications should be **gated** behind an active plan or trial. | Same |
 | Billing provider direction: **Stripe (or similar)** — checkout, webhooks, Supabase subscription state. | Same |
-| `/pricing` must ship **real tiers aligned with billing**, not a stub. | Same; `/pricing` shows Free/Pro/Premium from §3 (E3-014) with locked monthly/annual USD prices; checkout still E2. |
+| `/pricing` must ship **real tiers aligned with billing**, not a stub. | Same; `/pricing` shows Free/Pro/Premium from §3 (E3-014) with current working USD prices; **E1 locks** near launch, then checkout in **E2**. |
 
 ---
 
@@ -177,18 +177,19 @@ These rules are product truth for when E2 gates ship; not implemented in API/UI 
 
 ## 5. Still open
 
-Remaining TBD items (everything else in §3 is locked):
+Remaining TBD items (treat §3 as a **working** matrix until E1 locks it near launch):
 
 - Stripe adaptive / local-currency presentment at checkout (E2) — `/pricing` stays USD for now.
 - Exact customer-facing copy when a Premium user approaches or hits the soft ceiling of 100.
 - When to build in-app video recording and which of Pro / Premium gets it.
 - When to ship AI interview prep as a paid add-on.
 - How gating is implemented in API/UI under E2 (create cap, reject tailored on Free, vanity claim on Premium, soft ceiling).
+- Final price points / caps if product thinking changes before launch (fold into E1).
 
 ---
 
 ## 6. How to keep this current
 
-1. Treat this doc as the source of truth for pricing and membership decisions; tighten §5 as remaining items land.
-2. Keep `/pricing` aligned with this matrix — tier copy lives in `components/public/pricing/constants.ts`.
-3. When pricing or billing work ships, update [Backlog.md](Backlog.md) (remove or strike the row). Do not keep a parallel open checklist here.
+1. Treat this doc as the **working** source of truth for pricing and membership until E1 locks it near launch; tighten §5 as remaining items land.
+2. Keep `/pricing` aligned with this matrix — tier copy lives in `components/public/pricing/constants.ts`. If product thinking changes before launch, update this doc and the pricing page together; leave E1/E2 tickets deferred.
+3. When E1 (lock) and E2 (billing) ship near launch, update [Backlog.md](Backlog.md) (remove or strike the rows). Do not keep a parallel open checklist here.
