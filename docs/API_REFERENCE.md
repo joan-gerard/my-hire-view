@@ -363,19 +363,19 @@ Return the current user’s profile. **Read-only** — does not create a row. If
 
 `PUT /api/profile`
 
-Upsert profile fields (row usually already exists from signup). Requires non-empty `first_name` and `last_name` (after merge with existing — so picture-only updates work). Omitted names and `public_id` are seeded from Auth `user_metadata` when present and the profiles value is missing/blank (C3-026), so a picture-only PUT from `/admin/new` can create or repair the row. Resolved names must still satisfy the **100**-character max (including metadata seeds). Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change, syncs Auth `user_metadata`. When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upsert profile fields (row usually already exists from signup). Requires non-empty `first_name` and `last_name` (after merge with existing — so picture-only updates work). Omitted names and `public_id` are seeded from Auth `user_metadata` when present and the profiles value is missing/blank (C3-026), so a picture-only PUT from `/admin/new` can create or repair the row. Names introduced by this request (body or metadata seed) must satisfy the **100**-character max; an existing over-long stored name is preserved so picture-only updates still succeed. Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change, syncs Auth `user_metadata`. When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
 - **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` — omit picture field to leave unchanged; `null` to clear. Unexpected keys → **400**. Max lengths: names **100**, location **200**, URLs **2048**. Non-null picture URL must be on the configured Supabase origin (`NEXT_PUBLIC_SUPABASE_URL`) under the caller’s Storage folder.
 - **Success:** `200` `{ data: Profile }` optionally with `warnings: string[]` (e.g. Storage delete or metadata sync failed)
-- **Errors:** `400` schema / unowned picture URL / missing names / over-long names / upsert error; `401`; `429`; `500`
+- **Errors:** `400` schema / unowned picture URL / missing names / over-long introduced names / upsert error; `401`; `429`; `500`
 
 **What works**
 
 - Auth required; upsert keyed by `user_id` (create-on-first-save).
 - Rate limited; Zod validation; ownership check on picture URLs (origin must match `NEXT_PUBLIC_SUPABASE_URL`; path-only lookalikes on other hosts → **400**).
-- Omitted `first_name` / `last_name` / `public_id` are seeded from Auth `user_metadata` when the profiles value is missing or blank (picture-only create/repair); resolved names are capped at **100** characters.
+- Omitted `first_name` / `last_name` / `public_id` are seeded from Auth `user_metadata` when the profiles value is missing or blank (picture-only create/repair); body and metadata-seeded names are capped at **100** characters (legacy over-long stored names are left as-is).
 - Deletes previous Storage object after successful write when the URL changes; surfaces partial failures as `warnings`.
 - No applications fan-out for picture URLs (live profile read on view).
 - Dedicated auth try/catch → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).

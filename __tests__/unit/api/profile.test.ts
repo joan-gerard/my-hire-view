@@ -386,6 +386,43 @@ describe("PUT /api/profile", () => {
     expect(json.error).toMatch(/First name.*100/);
   });
 
+  it("preserves an existing over-long stored name on picture-only PUT", async () => {
+    const ownedUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    const longFirst = "A".repeat(101);
+    const existingWithLongName = {
+      user_id: "user-123",
+      public_id: "k7x2m9ab",
+      first_name: longFirst,
+      last_name: "Doe",
+      location: null,
+      portfolio_url: null,
+      linkedin_url: null,
+      profile_picture_url: null,
+    };
+    const updated = {
+      ...existingWithLongName,
+      profile_picture_url: ownedUrl,
+    };
+    const upsertChain = ok(updated);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(existingWithLongName), upsertChain]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: ownedUrl }),
+    );
+    expect(response.status).toBe(200);
+    expect(upsertChain.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        first_name: longFirst,
+        last_name: "Doe",
+        profile_picture_url: ownedUrl,
+      }),
+      { onConflict: "user_id" },
+    );
+  });
+
   it("returns 400 for an invalid portfolio URL", async () => {
     const response = await PUT(
       makePutRequest({ portfolio_url: "not-a-url" }),

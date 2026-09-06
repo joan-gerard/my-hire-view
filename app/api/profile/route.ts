@@ -121,6 +121,8 @@ export async function PUT(request: NextRequest) {
     // the profiles row is missing or has blank names (e.g. minimal ensureProfilePublicId
     // insert). Stored non-blank names still win (C3-026).
     const metaNames = namesFromUserMetadata(user);
+    const storedFirst = storedNameOrNull(existing?.first_name);
+    const storedLast = storedNameOrNull(existing?.last_name);
 
     const publicId =
       existing?.public_id ??
@@ -133,15 +135,11 @@ export async function PUT(request: NextRequest) {
       first_name:
         body.first_name !== undefined
           ? (body.first_name ?? null)
-          : (storedNameOrNull(existing?.first_name) ??
-            metaNames?.first_name ??
-            null),
+          : (storedFirst ?? metaNames?.first_name ?? null),
       last_name:
         body.last_name !== undefined
           ? (body.last_name ?? null)
-          : (storedNameOrNull(existing?.last_name) ??
-            metaNames?.last_name ??
-            null),
+          : (storedLast ?? metaNames?.last_name ?? null),
       location:
         body.location !== undefined
           ? (body.location ?? null)
@@ -167,8 +165,13 @@ export async function PUT(request: NextRequest) {
         { status: 400 },
       );
     }
-    // Body names are Zod-capped; metadata / legacy DB values may not be.
-    if (firstName.length > PROFILE_NAME_MAX_LENGTH) {
+    // Cap names this request introduces (body or metadata seed). Preserve legacy
+    // over-long stored values so picture-only PUTs still succeed.
+    const firstFromStored =
+      body.first_name === undefined && storedFirst !== null;
+    const lastFromStored =
+      body.last_name === undefined && storedLast !== null;
+    if (!firstFromStored && firstName.length > PROFILE_NAME_MAX_LENGTH) {
       return NextResponse.json(
         {
           error: `First name must be at most ${PROFILE_NAME_MAX_LENGTH} characters`,
@@ -176,7 +179,7 @@ export async function PUT(request: NextRequest) {
         { status: 400 },
       );
     }
-    if (lastName.length > PROFILE_NAME_MAX_LENGTH) {
+    if (!lastFromStored && lastName.length > PROFILE_NAME_MAX_LENGTH) {
       return NextResponse.json(
         {
           error: `Last name must be at most ${PROFILE_NAME_MAX_LENGTH} characters`,
