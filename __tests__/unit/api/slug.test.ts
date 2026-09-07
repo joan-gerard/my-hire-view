@@ -39,7 +39,11 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: mockCreateClient }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
   DEFAULT_API_RATE_LIMIT: { limit: 60, windowMs: 60_000 },
-  SLUG_VALIDATE_RATE_LIMIT: { limit: 30, windowMs: 60_000 },
+  SLUG_VALIDATE_RATE_LIMIT: {
+    limit: 30,
+    windowMs: 60_000,
+    keyPrefix: "slug-validate",
+  },
   rateLimit429: vi.fn().mockReturnValue(
     new Response(JSON.stringify({ error: "Too many requests" }), {
       status: 429,

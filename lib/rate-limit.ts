@@ -34,6 +34,11 @@ export interface RateLimitOptions {
   limit: number;
   /** Window duration in milliseconds. */
   windowMs: number;
+  /**
+   * Optional prefix so this limit does not share a counter with other
+   * `checkRateLimit` callers for the same IP (e.g. `slug-validate`).
+   */
+  keyPrefix?: string;
 }
 
 export interface RateLimitResult {
@@ -97,10 +102,12 @@ export const ANALYTICS_PER_SLUG_RATE_LIMIT: RateLimitOptions = {
 /**
  * POST /api/slug/validate — tighter than general writes.
  * Debounced UI (~450ms) still fits; caps abuse from rapid manual slug edits.
+ * Namespaced so other `checkRateLimit` callers do not share this counter (D2-034).
  */
 export const SLUG_VALIDATE_RATE_LIMIT: RateLimitOptions = {
   limit: 30,
   windowMs: 60_000,
+  keyPrefix: "slug-validate",
 };
 
 /** CV PDF upload: stricter than general writes (per IP and per user). */
@@ -130,12 +137,16 @@ export function releaseUserUploadSlot(userId: string): void {
   else uploadInFlight.set(userId, n);
 }
 
-/** Convenience: rate limit by request IP and return 429 response if limited. */
+/**
+ * Convenience: rate limit by request IP (optionally namespaced via
+ * `options.keyPrefix`) and return a result the caller can turn into 429.
+ */
 export function checkRateLimit(
   request: NextRequest,
   options: RateLimitOptions
 ): RateLimitResult {
-  const id = getClientIdentifier(request);
+  const ip = getClientIdentifier(request);
+  const id = options.keyPrefix ? `${options.keyPrefix}:${ip}` : ip;
   return rateLimit(options, id);
 }
 
