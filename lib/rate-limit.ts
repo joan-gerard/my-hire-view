@@ -291,8 +291,12 @@ export async function checkRateLimit(
  * Rate limit by IP + public application path (`publicId`/`slug`).
  * Use after the default per-IP check for view/download analytics routes.
  *
- * Invalid `publicId` / slug formats do not create a per-path key (D3-001): the
- * caller still has the IP-level limit, and junk URLs cannot grow the store.
+ * Invalid or non-canonical `publicId` / slug (format fail, or surrounding
+ * whitespace) do not create a per-path key (D3-001): the caller still has the
+ * IP-level limit, and junk URLs cannot grow the store. `validateSlugFormat`
+ * trims for the format check, so we also require `slug === slug.trim()` before
+ * keying — otherwise padded paths would get distinct counters while resolve
+ * still 404s on the untrimmed value.
  */
 export async function checkPerSlugRateLimit(
   request: NextRequest,
@@ -300,7 +304,12 @@ export async function checkPerSlugRateLimit(
   slug: string,
   options: RateLimitOptions = ANALYTICS_PER_SLUG_RATE_LIMIT,
 ): Promise<RateLimitResult> {
-  if (!isValidPublicId(publicId) || !validateSlugFormat(slug).ok) {
+  const slugCanonical = slug === slug.trim();
+  if (
+    !isValidPublicId(publicId) ||
+    !slugCanonical ||
+    !validateSlugFormat(slug).ok
+  ) {
     return {
       success: true,
       remaining: options.limit,

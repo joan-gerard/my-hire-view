@@ -30,8 +30,9 @@ const SMALL_LIMIT: RateLimitOptions = { limit: 3, windowMs: 60_000 };
 
 beforeEach(() => {
   resetRateLimitClientsForTests();
-  delete process.env.UPSTASH_REDIS_REST_URL;
-  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  // Tracked by Vitest so afterEach `unstubAllEnvs` restores prior values.
+  vi.stubEnv("UPSTASH_REDIS_REST_URL", undefined);
+  vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", undefined);
 });
 
 afterEach(() => {
@@ -213,6 +214,34 @@ describe("checkPerSlugRateLimit", () => {
       windowMs: 60_000,
     });
     expect(valid.success).toBe(true);
+  });
+
+  it("does not create store keys for whitespace-padded slugs (D3-001)", async () => {
+    const req = makeRequest({ "x-forwarded-for": `pad-ip-${uniqueId()}` });
+    const before = getMemoryRateLimitStoreSizeForTests();
+    const tight = { limit: 2, windowMs: 60_000 };
+
+    // Format-valid after trim, but non-canonical — would 404 on resolve
+    for (let i = 0; i < 20; i++) {
+      const result = await checkPerSlugRateLimit(
+        req,
+        "abc12345",
+        `  app-one-${i}  `,
+        tight,
+      );
+      expect(result.success).toBe(true);
+    }
+
+    expect(getMemoryRateLimitStoreSizeForTests()).toBe(before);
+
+    const canonical = await checkPerSlugRateLimit(
+      req,
+      "abc12345",
+      "app-one",
+      tight,
+    );
+    expect(canonical.success).toBe(true);
+    expect(getMemoryRateLimitStoreSizeForTests()).toBe(before + 1);
   });
 });
 
