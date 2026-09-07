@@ -63,7 +63,7 @@ function normalizeListSearchQuery(raw: string | null): string | null {
 }
 
 export async function GET(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   let user;
@@ -288,7 +288,7 @@ function applicationsUniqueViolationResponse(error: {
 }
 
 export async function POST(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   let user;
@@ -428,7 +428,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   let user;
@@ -643,7 +643,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   let user;

@@ -45,7 +45,7 @@ function isValidCareerStage(value: unknown): value is (typeof CAREER_STAGES)[num
  * Email, first_name, and job_search_status are required.
  */
 export async function POST(request: NextRequest) {
-  const rate = checkRateLimit(request, WAITLIST_RATE_LIMIT);
+  const rate = await checkRateLimit(request, WAITLIST_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   try {

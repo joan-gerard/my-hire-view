@@ -41,7 +41,7 @@ function logStorageError(context: string, error: unknown): void {
  * file remains. Prefer calling from profile Save (upload-on-save), not on file pick.
  */
 export async function POST(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   let user;

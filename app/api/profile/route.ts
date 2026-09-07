@@ -27,7 +27,7 @@ function storedNameOrNull(value: unknown): string | null {
  * Profiles are normally created at signup; GET never creates a row.
  */
 export async function GET(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   let user;
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   let user;

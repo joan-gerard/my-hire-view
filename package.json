@@ -15,6 +15,8 @@
     "@aws-sdk/client-s3": "^3.1041.0",
     "@supabase/ssr": "^0.1.0",
     "@supabase/supabase-js": "^2.39.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.4",
     "clsx": "^2.1.1",
     "framer-motion": "^11.0.0",
     "next": "16.1.6",

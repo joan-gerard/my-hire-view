@@ -12,7 +12,7 @@ const LOGIN_RATE_LIMIT = { limit: 15, windowMs: 60_000 };
  * signup insert failed and the email-confirmation callback never ran — C1-009).
  */
 export async function POST(request: NextRequest) {
-  const rate = checkRateLimit(request, LOGIN_RATE_LIMIT);
+  const rate = await checkRateLimit(request, LOGIN_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   const body = await request.json();

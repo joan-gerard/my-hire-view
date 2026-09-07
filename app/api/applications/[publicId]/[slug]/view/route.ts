@@ -20,13 +20,13 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ publicId: string; slug: string }> }
 ) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   try {
     const { publicId, slug } = await params;
 
-    const perSlug = checkPerSlugRateLimit(request, publicId, slug);
+    const perSlug = await checkPerSlugRateLimit(request, publicId, slug);
     if (!perSlug.success) return rateLimit429(perSlug);
 
     if (!isSameOriginAnalyticsRequest(request)) {

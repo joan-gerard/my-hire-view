@@ -94,7 +94,7 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 | `__tests__/unit/lib/create-initial-profile.test.ts` | **Profile create at signup** — idempotent skip; `23505` re-select by `user_id` vs `public_id` retry; invalid `public_id` regenerate + Auth sync; shared conditional concurrent repair |
 | `__tests__/unit/lib/bootstrap-initial-profile.test.ts` | **Profile bootstrap + public_id validation** — metadata → create; reject invalid `public_id`; missing names |
 | `__tests__/unit/api/login.test.ts` | **Login** — credentials, rate limit, profiles bootstrap after session (C1-009) |
-| `__tests__/unit/lib/rate-limit.test.ts` | **In-memory rate limiter** — `getClientIdentifier` (x-forwarded-for, x-real-ip, fallback to "unknown"), `rateLimit` (counting, window reset via fake timers, per-client isolation), `checkRateLimit`, `checkPerSlugRateLimit` (IP+path isolation), `rateLimit429` (429 status + Retry-After ≥ 1s) |
+| `__tests__/unit/lib/rate-limit.test.ts` | **Rate limiter** — `getClientIdentifier`, in-memory `rateLimit` (windows, isolation, sweep), async `checkRateLimit` / `checkPerSlugRateLimit` (incl. D2 keyPrefix + D3 invalid-path key skip), Upstash path (mocked) + Redis error fallback, `rateLimit429` |
 | `__tests__/unit/lib/api/handle-api-error.test.ts` | **API error helper** — `handleApiError` logs with context, default 500 message, custom message/status, optional log-only `meta` never returned to client |
 | `__tests__/unit/lib/api/same-origin.test.ts` | **Analytics same-origin gate** — matching `Origin` / `Referer` / `Sec-Fetch-Site`, site URL allowlist, rejects foreign or missing signals |
 | `__tests__/unit/lib/api/analytics-dedupe.test.ts` | **View/download dedupe cookies** — cookie names, present/absent checks, httpOnly + maxAge + secure-in-production |
@@ -110,7 +110,7 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 
 ## Design decisions
 
-**No real network or database calls.** In API route tests, external dependencies (Supabase client, `requireAuth`, rate limit) are mocked with `vi.mock()`. Mock functions are declared via `vi.hoisted()` so they are available before `vi.mock` factories execute (Vitest hoists `vi.mock` calls to the top of the file at compile time). The rate limiter itself is covered separately by `__tests__/unit/lib/rate-limit.test.ts`, which exercises the real in-memory implementation (not a mock).
+**No real network or database calls.** In API route tests, external dependencies (Supabase client, `requireAuth`, rate limit) are mocked with `vi.mock()`. Mock functions are declared via `vi.hoisted()` so they are available before `vi.mock` factories execute (Vitest hoists `vi.mock` calls to the top of the file at compile time). The rate limiter itself is covered separately by `__tests__/unit/lib/rate-limit.test.ts`, which exercises the real in-memory implementation and a mocked Upstash path (not live Redis).
 
 **Shared Supabase mock helper (`__tests__/helpers/supabase-mock.ts`).** Provides `makeChain`, `ok`, and `dbError` factories that build a fluent Supabase query-chain mock, and `makeSupabaseClient` which accepts an ordered list of chains so each sequential `from()` call in a route handler returns the next configured response.
 

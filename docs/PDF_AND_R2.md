@@ -52,7 +52,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 - Object keys are scoped per user: `cvs/{userId}/tailored/<key>.pdf`.
 - Retries or duplicate submits with the **same** key reuse the **same** R2 object URL; the server short-circuits with `HeadObject` when the object already exists and its size/content-type match the request (mismatch → **409**).
 - Creates use a conditional `PutObject` (`IfNoneMatch: "*"`). If another request already created the object, R2 returns **412** and the API re-checks HeadObject, then responds with `{ url, idempotent: true }` or **409** instead of overwriting.
-- Upload rate limit is **10/min** per IP and per user; at most **2** concurrent uploads per user (in-memory, per instance).
+- Upload rate limit is **10/min** per IP and per user (durable via Upstash when configured); at most **2** concurrent uploads per user (in-memory, per instance).
 
 ## Safety
 
