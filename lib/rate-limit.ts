@@ -188,7 +188,13 @@ export function rateLimit(
 
 /**
  * Durable when Upstash env is set; otherwise in-memory (per instance).
- * On Redis errors, falls back to in-memory so an outage does not take routes down.
+ *
+ * **Outage policy (intentional fail-open):** when Upstash is configured but
+ * `limit()` throws, log and fall back to in-memory for that request so a Redis
+ * outage does not take API routes down. During the outage, counters are
+ * per-instance only (distributed protection is weakened until Redis recovers).
+ * Prefer setting `UPSTASH_REDIS_REST_*` in production; unset env is the normal
+ * local/dev path, not an error.
  */
 export async function rateLimitAsync(
   options: RateLimitOptions,
@@ -205,7 +211,7 @@ export async function rateLimitAsync(
       };
     } catch (err) {
       console.error(
-        "[rate-limit] Upstash limit failed; falling back to in-memory",
+        "[rate-limit] Upstash limit failed; falling back to in-memory (fail-open outage policy)",
         err,
       );
     }

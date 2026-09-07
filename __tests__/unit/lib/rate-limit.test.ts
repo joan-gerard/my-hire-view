@@ -37,6 +37,9 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllEnvs();
+  vi.doUnmock("@upstash/redis");
+  vi.doUnmock("@upstash/ratelimit");
+  vi.resetModules();
   resetRateLimitClientsForTests();
 });
 
@@ -112,6 +115,22 @@ describe("rateLimit", () => {
     expect(rateLimit(SMALL_LIMIT, id1).success).toBe(false);
     // id2 has not been used — should still succeed
     expect(rateLimit(SMALL_LIMIT, id2).success).toBe(true);
+  });
+
+  it("sweeps expired entries after the sweep interval", () => {
+    vi.useFakeTimers();
+    const shortWindow: RateLimitOptions = { limit: 2, windowMs: 1_000 };
+    const expiredId = `expired-${uniqueId()}`;
+    rateLimit(shortWindow, expiredId);
+    expect(getMemoryRateLimitStoreSizeForTests()).toBeGreaterThanOrEqual(1);
+
+    // Past both the entry window and MEMORY_SWEEP_INTERVAL_MS (60s)
+    vi.advanceTimersByTime(61_000);
+    rateLimit(shortWindow, `fresh-${uniqueId()}`);
+
+    // Expired key removed by sweep; only the fresh key should remain from this pair
+    // (other tests may have left nothing after reset in beforeEach)
+    expect(getMemoryRateLimitStoreSizeForTests()).toBe(1);
   });
 });
 
@@ -275,10 +294,6 @@ describe("Upstash-backed rateLimitAsync", () => {
     expect(result.success).toBe(true);
     expect(result.remaining).toBe(5);
     expect(limitFn).toHaveBeenCalledTimes(1);
-
-    vi.doUnmock("@upstash/redis");
-    vi.doUnmock("@upstash/ratelimit");
-    vi.resetModules();
   });
 
   it("falls back to in-memory when Upstash.limit throws", async () => {
@@ -310,10 +325,6 @@ describe("Upstash-backed rateLimitAsync", () => {
     expect(first.success).toBe(true);
     expect(second.success).toBe(false);
     expect(limitFn).toHaveBeenCalled();
-
-    vi.doUnmock("@upstash/redis");
-    vi.doUnmock("@upstash/ratelimit");
-    vi.resetModules();
   });
 });
 

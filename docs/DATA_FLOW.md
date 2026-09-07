@@ -619,7 +619,7 @@ Candidate fields on the application are either supplied by the form (with toggle
 |---|---|---|
 | 36 | Client exceeds 60 requests/minute (IP-based) on any API route | Any of `POST /api/slug`, `POST /api/slug/validate`, `POST /api/applications` returns 429 with `Retry-After` header. Live status shows a generic error or the error propagates via `alert()`. |
 | 37 | Upstash Redis env is configured (`UPSTASH_REDIS_REST_*`) | Counters are shared across serverless instances (durable fixed-window limits). |
-| 37b | Upstash env is unset (local/dev) | In-memory fallback; limits are per-instance only. Production should set Upstash env vars. |
+| 37b | Upstash env is unset (local/dev) or Redis is unreachable | In-memory fallback per instance. Unset env is normal locally; if Upstash is configured but `limit()` fails, fail-open to in-memory for availability (logged). Production should set Upstash env vars. |
 
 ### 8.9 Session / auth
 
