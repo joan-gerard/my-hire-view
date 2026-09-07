@@ -124,6 +124,7 @@ Work to tackle once the product is live.
 | L8-094 | API | Uniform **200** for waitlist duplicate emails | Trade-off vs current explicit **409** (enumeration). | [API_REFERENCE.md](API_REFERENCE.md) |
 | L8-095 | API | Tighter profile-picture upload rate limit | Optional ~10/min like CV if abuse appears; default **60/min** is fine for now. | [API_REFERENCE.md](API_REFERENCE.md) |
 | L8-096 | API | Upload metrics / correlation | Duration, size, idempotent/purge-warning rates, 5xx; optional request id in logs. Post-launch if support volume warrants (CV + profile-picture uploads). | [API_REFERENCE.md](API_REFERENCE.md) |
+| L1-100 | Infrastructure | Upstash rate-limit outage circuit breaker | D3 fail-open is intentional (documented). Hardening: after N consecutive `limit()` failures, skip Redis for ~30s then retry — cuts latency/log noise during outages. Optional: align memory per-slug keys with `keyPrefix` for symmetry with Upstash prefixes. | D3-001 review follow-up |
 
 ### Won’t (this time)
 
@@ -283,7 +284,7 @@ Depends on product-real purge policy; ship in order.
 
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
-| L1 | `feat/l1-extended-rate-limits` | `L1-076`, `L1-077` | Rate-limit remaining reads; account/email login throttling (builds on `D3-001`) |
+| L1 | `feat/l1-extended-rate-limits` | `L1-076`, `L1-077`, `L1-100` | Rate-limit remaining reads; account/email login throttling; Upstash outage circuit breaker (builds on `D3-001`) |
 | L2 | `fix/l2-slug-uniqueness-exclude-id` | `L2-074`, `L2-075` | Slug uniqueness re-check on create; `excludeId` ownership |
 | L3 | `feat/l3-r2-orphan-cleanup` | `L3-084` | Middle-ground R2 delete UX + orphan cleanup cron |
 | L4 | `feat/l4-signup-captcha-logout` | `L4-085`, `L4-086`, `L4-098` | Signup CAPTCHA (if needed); logout hardening; in-app forgot-password flow |
