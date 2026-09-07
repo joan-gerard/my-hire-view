@@ -47,7 +47,7 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 - **Content type** — JSON bodies unless noted (`multipart/form-data` for uploads).
 - **Success shape** — Often `{ data }` or `{ success: true }`. Endpoint sections below list specifics.
 - **Error shape** — `{ error: string }` (some endpoints also return `{ ok: false, error }`).
-- **Rate limiting** — Per IP via `lib/rate-limit.ts` (optional `keyPrefix` keeps route-specific counters separate). Exceeded limit → **429** with `Retry-After` and `{ error: "Too many requests. Please try again later." }`.
+- **Rate limiting** — Per IP via `lib/rate-limit.ts` (optional `keyPrefix` keeps route-specific counters separate). With `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`, counters are shared across serverless instances (Upstash fixed window); otherwise an in-memory fallback applies per instance (local/dev). Exceeded limit → **429** with `Retry-After` and `{ error: "Too many requests. Please try again later." }`.
 - **Default write limit** — `DEFAULT_API_RATE_LIMIT`: **60 requests / minute / IP** (used by most write routes unless noted).
 
 Related deep-dives: [PDF_AND_R2.md](PDF_AND_R2.md) (CV upload), [PROFILE_PICTURE.md](PROFILE_PICTURE.md), [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
@@ -296,12 +296,11 @@ Record a page view. Owner views are acknowledged but **not** counted. Non-owner 
 
 **Accepted limitations**
 
-- Cookie dedupe is best-effort (cleared cookies / other browsers still count); Redis-backed tokens would harden multi-instance enforcement alongside the in-memory rate limiter. **Not planned for now.**
+- Cookie dedupe is best-effort (cleared cookies / other browsers still count). **Not planned for now** to move dedupe tokens to Redis.
 - **Dedupe before visibility:** if a prior view cookie is present, the handler returns **200** without resolving the app — so a path that was active when the cookie was set can still ack after the app becomes archived / draft (or is deleted), instead of **404**. **Not planned for now.**
 - Same-origin gate is forgeable defense-in-depth (documented intentional).
 
-**Open work:** Per-path rate-limit Map growth (and durable limiter) — [Backlog.md](Backlog.md).
-
+**Durable limits (D3-001):** Per-IP and per-path counters use Upstash when configured. Invalid `publicId` / slug formats do **not** create per-path rate-limit keys (IP limit still applies).
 ---
 
 ### POST application download
@@ -328,11 +327,11 @@ Record a CV download. Same owner-exclusion and RPC pattern as view (`increment_a
 
 **Accepted limitations**
 
-- Same cookie / in-memory rate-limit caveats as view. **Not planned for now.**
+- Same cookie dedupe caveats as view. **Not planned for now** to move dedupe tokens to Redis.
 - **Dedupe before visibility:** cookie short-circuit can **200** after archive/draft/delete without **404** (no count bump / no CV serve). **Not planned for now.**
 - Same-origin gate is forgeable defense-in-depth (same as view).
 
-**Open work:** Per-path rate-limit Map growth — [Backlog.md](Backlog.md) (same as view).
+**Durable limits (D3-001):** Same Upstash / validate-before-key behavior as view.
 
 ---
 
@@ -525,7 +524,7 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 **What works**
 
 - Auth required (dedicated check before processing).
-- Stricter rate limit than general writes (**10/min** IP + user) and a concurrent upload cap (**2** per user, in-memory / per instance).
+- Stricter rate limit than general writes (**10/min** IP + user) and a concurrent upload cap (**2** per user, in-memory / per instance). IP + user counters are durable via Upstash when configured.
 - Restricts to PDF MIME type and **3 MB** max size; rejects bodies that do not start with `%PDF` (magic bytes), not MIME alone.
 - Idempotency keys scoped per user (`cvs/{userId}/tailored/<key>.pdf`); HeadObject replay returns the same URL without re-upload when size and content type match.
 - **Atomic create:** `PutObject` uses `IfNoneMatch: "*"` so concurrent creates with the same key cannot overwrite; **412** (and a single **409** retry) re-checks HeadObject and returns `{ url, idempotent: true }` or **409** on mismatch.

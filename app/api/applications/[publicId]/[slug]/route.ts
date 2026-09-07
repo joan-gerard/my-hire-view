@@ -10,7 +10,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ publicId: string; slug: string }> }
 ) {
-  const rate = checkRateLimit(request, PUBLIC_APPLICATION_GET_LIMIT);
+  const rate = await checkRateLimit(request, PUBLIC_APPLICATION_GET_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   try {

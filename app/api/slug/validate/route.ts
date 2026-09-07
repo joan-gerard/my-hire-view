@@ -17,7 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
  * Requires auth. Optional excludeId ignores the current row when editing.
  */
 export async function POST(request: NextRequest) {
-  const rate = checkRateLimit(request, SLUG_VALIDATE_RATE_LIMIT);
+  const rate = await checkRateLimit(request, SLUG_VALIDATE_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   let user;

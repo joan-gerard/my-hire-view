@@ -1,11 +1,14 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 import {
   getClientIdentifier,
   rateLimit,
   checkRateLimit,
+  checkPerSlugRateLimit,
   rateLimit429,
   SLUG_VALIDATE_RATE_LIMIT,
+  getMemoryRateLimitStoreSizeForTests,
+  resetRateLimitClientsForTests,
   type RateLimitOptions,
 } from "@/lib/rate-limit";
 
@@ -24,6 +27,18 @@ function uniqueId(): string {
 }
 
 const SMALL_LIMIT: RateLimitOptions = { limit: 3, windowMs: 60_000 };
+
+beforeEach(() => {
+  resetRateLimitClientsForTests();
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllEnvs();
+  resetRateLimitClientsForTests();
+});
 
 // ---------------------------------------------------------------------------
 // getClientIdentifier
@@ -86,7 +101,6 @@ describe("rateLimit", () => {
     // Advance past the window
     vi.advanceTimersByTime(SMALL_LIMIT.windowMs + 1);
     expect(rateLimit(SMALL_LIMIT, id).success).toBe(true);
-    vi.useRealTimers();
   });
 
   it("tracks different identifiers independently", () => {
@@ -140,23 +154,46 @@ describe("tryAcquireUserUploadSlot / releaseUserUploadSlot", () => {
 // ---------------------------------------------------------------------------
 describe("checkPerSlugRateLimit", () => {
   it("keys by IP and application path so different slugs stay independent", async () => {
-    const { checkPerSlugRateLimit } = await import("@/lib/rate-limit");
     const req = makeRequest({ "x-forwarded-for": `slug-ip-${uniqueId()}` });
     const tight = { limit: 2, windowMs: 60_000 };
 
     expect(
-      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
+      (await checkPerSlugRateLimit(req, "abc12345", "app-one", tight)).success,
     ).toBe(true);
     expect(
-      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
+      (await checkPerSlugRateLimit(req, "abc12345", "app-one", tight)).success,
     ).toBe(true);
     expect(
-      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
+      (await checkPerSlugRateLimit(req, "abc12345", "app-one", tight)).success,
     ).toBe(false);
     // Different slug under the same IP still allowed
     expect(
-      checkPerSlugRateLimit(req, "abc12345", "app-two", tight).success,
+      (await checkPerSlugRateLimit(req, "abc12345", "app-two", tight)).success,
     ).toBe(true);
+  });
+
+  it("does not create store keys for invalid publicId/slug (D3-001)", async () => {
+    const req = makeRequest({ "x-forwarded-for": `junk-ip-${uniqueId()}` });
+    const before = getMemoryRateLimitStoreSizeForTests();
+
+    for (let i = 0; i < 50; i++) {
+      const result = await checkPerSlugRateLimit(
+        req,
+        `!!!invalid-${i}!!!`,
+        `also bad ${i}`,
+        { limit: 2, windowMs: 60_000 },
+      );
+      expect(result.success).toBe(true);
+    }
+
+    expect(getMemoryRateLimitStoreSizeForTests()).toBe(before);
+
+    // Valid path still has a fresh allowance
+    const valid = await checkPerSlugRateLimit(req, "abc12345", "app-one", {
+      limit: 2,
+      windowMs: 60_000,
+    });
+    expect(valid.success).toBe(true);
   });
 });
 
@@ -164,14 +201,14 @@ describe("checkPerSlugRateLimit", () => {
 // checkRateLimit
 // ---------------------------------------------------------------------------
 describe("checkRateLimit", () => {
-  it("uses the x-forwarded-for header as the client identifier", () => {
+  it("uses the x-forwarded-for header as the client identifier", async () => {
     const req = makeRequest({ "x-forwarded-for": "42.42.42.42" });
     // A fresh IP should succeed on the first call
-    const result = checkRateLimit(req, SMALL_LIMIT);
+    const result = await checkRateLimit(req, SMALL_LIMIT);
     expect(result.success).toBe(true);
   });
 
-  it("namespaces counters when keyPrefix is set (D2-034)", () => {
+  it("namespaces counters when keyPrefix is set (D2-034)", async () => {
     const ip = `prefix-ip-${uniqueId()}`;
     const req = makeRequest({ "x-forwarded-for": ip });
     const tight: RateLimitOptions = {
@@ -181,23 +218,102 @@ describe("checkRateLimit", () => {
     };
     const bare: RateLimitOptions = { limit: 2, windowMs: 60_000 };
 
-    expect(checkRateLimit(req, tight).success).toBe(true);
-    expect(checkRateLimit(req, tight).success).toBe(true);
-    expect(checkRateLimit(req, tight).success).toBe(false);
+    expect((await checkRateLimit(req, tight)).success).toBe(true);
+    expect((await checkRateLimit(req, tight)).success).toBe(true);
+    expect((await checkRateLimit(req, tight)).success).toBe(false);
     // Same IP without prefix still has its own allowance
-    expect(checkRateLimit(req, bare).success).toBe(true);
+    expect((await checkRateLimit(req, bare)).success).toBe(true);
   });
 
-  it("keeps SLUG_VALIDATE_RATE_LIMIT independent of DEFAULT-style IP buckets", () => {
+  it("keeps SLUG_VALIDATE_RATE_LIMIT independent of DEFAULT-style IP buckets", async () => {
     const ip = `slug-validate-ip-${uniqueId()}`;
     const req = makeRequest({ "x-forwarded-for": ip });
     const general: RateLimitOptions = { limit: 2, windowMs: 60_000 };
 
-    expect(checkRateLimit(req, general).success).toBe(true);
-    expect(checkRateLimit(req, general).success).toBe(true);
-    expect(checkRateLimit(req, general).success).toBe(false);
+    expect((await checkRateLimit(req, general)).success).toBe(true);
+    expect((await checkRateLimit(req, general)).success).toBe(true);
+    expect((await checkRateLimit(req, general)).success).toBe(false);
     // Slug validate still allowed — does not share the bare-IP counter
-    expect(checkRateLimit(req, SLUG_VALIDATE_RATE_LIMIT).success).toBe(true);
+    expect((await checkRateLimit(req, SLUG_VALIDATE_RATE_LIMIT)).success).toBe(
+      true,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Upstash path (mocked)
+// ---------------------------------------------------------------------------
+describe("Upstash-backed rateLimitAsync", () => {
+  it("uses Upstash when REST env vars are set", async () => {
+    const limitFn = vi.fn().mockResolvedValue({
+      success: true,
+      remaining: 5,
+      reset: Date.now() + 60_000,
+    });
+
+    vi.resetModules();
+    vi.doMock("@upstash/redis", () => ({
+      Redis: {
+        fromEnv: () => ({}),
+      },
+    }));
+    vi.doMock("@upstash/ratelimit", () => ({
+      Ratelimit: class {
+        static fixedWindow = vi.fn(() => ({}));
+        limit = limitFn;
+      },
+    }));
+
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.upstash.io");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "test-token");
+
+    const { rateLimitAsync, resetRateLimitClientsForTests: reset } =
+      await import("@/lib/rate-limit");
+    reset();
+
+    const result = await rateLimitAsync(SMALL_LIMIT, `upstash-${uniqueId()}`);
+    expect(result.success).toBe(true);
+    expect(result.remaining).toBe(5);
+    expect(limitFn).toHaveBeenCalledTimes(1);
+
+    vi.doUnmock("@upstash/redis");
+    vi.doUnmock("@upstash/ratelimit");
+    vi.resetModules();
+  });
+
+  it("falls back to in-memory when Upstash.limit throws", async () => {
+    const limitFn = vi.fn().mockRejectedValue(new Error("redis down"));
+
+    vi.resetModules();
+    vi.doMock("@upstash/redis", () => ({
+      Redis: {
+        fromEnv: () => ({}),
+      },
+    }));
+    vi.doMock("@upstash/ratelimit", () => ({
+      Ratelimit: class {
+        static fixedWindow = vi.fn(() => ({}));
+        limit = limitFn;
+      },
+    }));
+
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.upstash.io");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "test-token");
+
+    const { rateLimitAsync, resetRateLimitClientsForTests: reset } =
+      await import("@/lib/rate-limit");
+    reset();
+
+    const id = `fallback-${uniqueId()}`;
+    const first = await rateLimitAsync({ limit: 1, windowMs: 60_000 }, id);
+    const second = await rateLimitAsync({ limit: 1, windowMs: 60_000 }, id);
+    expect(first.success).toBe(true);
+    expect(second.success).toBe(false);
+    expect(limitFn).toHaveBeenCalled();
+
+    vi.doUnmock("@upstash/redis");
+    vi.doUnmock("@upstash/ratelimit");
+    vi.resetModules();
   });
 });
 

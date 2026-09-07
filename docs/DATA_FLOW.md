@@ -618,7 +618,8 @@ Candidate fields on the application are either supplied by the form (with toggle
 | # | Scenario | Behaviour |
 |---|---|---|
 | 36 | Client exceeds 60 requests/minute (IP-based) on any API route | Any of `POST /api/slug`, `POST /api/slug/validate`, `POST /api/applications` returns 429 with `Retry-After` header. Live status shows a generic error or the error propagates via `alert()`. |
-| 37 | Rate limit store is in-memory (not shared across serverless instances) | On multi-instance deployments (e.g. Vercel), the limit is per-instance not global; a single client could bypass it by hitting different instances. Accepted limitation. |
+| 37 | Upstash Redis env is configured (`UPSTASH_REDIS_REST_*`) | Counters are shared across serverless instances (durable fixed-window limits). |
+| 37b | Upstash env is unset (local/dev) | In-memory fallback; limits are per-instance only. Production should set Upstash env vars. |
 
 ### 8.9 Session / auth
 

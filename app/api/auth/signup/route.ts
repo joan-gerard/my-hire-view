@@ -22,7 +22,7 @@ const MIN_PASSWORD_LENGTH = 6;
  * Immediate-session profile insert failures retry once; login also bootstraps.
  */
 export async function POST(request: NextRequest) {
-  const rate = checkRateLimit(request, SIGNUP_RATE_LIMIT);
+  const rate = await checkRateLimit(request, SIGNUP_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   const body = await request.json();

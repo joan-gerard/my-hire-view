@@ -42,7 +42,7 @@ function toApplicationStatus(value: unknown): ApplicationStatus {
  * (includes `applications_count` and a `used_by` preview per row for delete UX).
  */
 export async function GET(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   try {
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
  * Object key: `cvs/{userId}/primary/{id}.pdf`.
  */
 export async function POST(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   try {
@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
  * Applications that still reference it keep the URL but will show missing CV until updated.
  */
 export async function DELETE(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   try {

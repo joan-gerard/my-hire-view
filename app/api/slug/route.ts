@@ -16,7 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
  * Returns the slug derived from company/role (and name-in-URL rules) if available for this user; 409 if already taken.
  */
 export async function POST(request: NextRequest) {
-  const rate = checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
+  const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
   let user;

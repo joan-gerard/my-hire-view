@@ -11,7 +11,7 @@ import {
 import {
   checkRateLimit,
   CV_UPLOAD_RATE_LIMIT,
-  rateLimit,
+  rateLimitAsync,
   rateLimit429,
   releaseUserUploadSlot,
   tryAcquireUserUploadSlot,
@@ -64,7 +64,7 @@ function idempotencyKeyConflictResponse(): NextResponse {
 }
 
 export async function POST(request: NextRequest) {
-  const ipRate = checkRateLimit(request, CV_UPLOAD_RATE_LIMIT);
+  const ipRate = await checkRateLimit(request, CV_UPLOAD_RATE_LIMIT);
   if (!ipRate.success) return rateLimit429(ipRate);
 
   try {
@@ -86,7 +86,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userRate = rateLimit(CV_UPLOAD_RATE_LIMIT, `cv-upload:${user.id}`);
+  const userRate = await rateLimitAsync(
+    CV_UPLOAD_RATE_LIMIT,
+    `cv-upload:${user.id}`,
+  );
   if (!userRate.success) return rateLimit429(userRate);
 
   if (!tryAcquireUserUploadSlot(user.id)) {
