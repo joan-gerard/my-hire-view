@@ -37,13 +37,11 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | F23-022 | Support | Technical support entry point | Mailto, simple form, or lightweight tool on marketing / dashboard / view. | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
 | F6-024 | API | Schema validation on write routes | Zod (or similar) for bodies/params; clear **400**s. Applications create/update and profile PUT already validate; extend to remaining write routes as needed. | [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
 | F4-025 | API | Shared `withAuth` helper | Shared `withAuth` so auth failures aren’t mislabeled **401** on remaining routes. (`handleApiError` already shipped.) | [API_REFERENCE.md](API_REFERENCE.md), [CODE_REVIEW.md](CODE_REVIEW.md) |
-| C3-026 | API | Picture-only first save without profiles row | `/admin/new` can open profile-picture modal when no `profiles` row; PUT with only `profile_picture_url` → empty names → **400**. Bootstrap names/`public_id` from Auth metadata on create-on-first-save (ties to signup profile retry). | [API_REFERENCE.md](API_REFERENCE.md) |
 | F11-028 | API | Escape `q` quotes for PostgREST list search | `"` in `q` can break `ilike."%…%"` → **500**. Escape/strip quotes and remaining reserved filter chars. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F10-030 | API | Harden `toPublicApplication` status handling | Helper always emits full DTO with `status: "active"`; JSDoc wrong. Enforce status check in helper / narrow types so direct use can’t leak archived/draft PII. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F12-031 | API | Repairable Auth name sync on PUT profile | Failed `updateUser` leaves Auth stale; same-name PUT skips re-sync. Also compare Auth `user_metadata` names (like `public_id`) so a no-op save can repair. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F13-032 | API | Atomic primary-library cap | Concurrent `POST /api/profile/primary-cvs` can exceed `PRIMARY_CV_MAX_PER_USER`. Enforce with DB trigger/lock; avoid hard-coding `5` if Premium raises the limit. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F14-033 | API | Preserve name when clamping long slugs | `generateSlug` can truncate the name segment away when company/role fills 128. Clamp after combining; keep requested name where possible. Affects `POST /api/slug` + form preview. | [API_REFERENCE.md](API_REFERENCE.md) |
-| D2-034 | API | Route-scoped slug-validate rate-limit key | `SLUG_VALIDATE_RATE_LIMIT` shares the IP counter with other `checkRateLimit` callers. Namespace key (e.g. `slug-validate:${ip}`). | [API_REFERENCE.md](API_REFERENCE.md) |
 | F7-035 | API | Auth before R2 config probe on CV upload | Unauthenticated callers get **500** “not configured” instead of **401** when env missing. Check auth first. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F7-036 | API | Stronger idempotent CV upload replay identity | Replay trusts size + PDF MIME only; same key/size can return non-matching/non-PDF bytes. Prefer content digest + validate body before accepting replay. | [API_REFERENCE.md](API_REFERENCE.md) |
 | F9-037 | API | Defer profile-picture folder purge until after URL commit | Upload purges before `PUT /api/profile`; failed PUT can leave profile pointing at a deleted object. Clean up previous object only after URL commit succeeds. | [API_REFERENCE.md](API_REFERENCE.md) |
@@ -180,14 +178,14 @@ Organizes open tickets into **PR-sized groups** by shared code, dependencies, an
 | -- | ------ | ------- | ----- |
 | C1 | `fix/c1-signup-profile-invariants` | `C1-009`, `C1-010`, `C1-038` | ~~Immediate-session profile retry; `23505` user_id vs public_id; validate Auth `public_id` format~~ (shipped) |
 | C2 | `fix/c2-profile-picture-url-origin` | `C2-008` | ~~Validate profile-picture URL origin~~ (shipped) |
-| C3 | `fix/c3-picture-only-first-save` | `C3-026` | Picture-only first save without profiles row (after C1) |
+| C3 | `fix/c3-picture-only-first-save` | `C3-026` | ~~Picture-only first save without profiles row (after C1)~~ (shipped) |
 
 #### Sprint D — Public view & rate limiting
 
 | PR | Branch | Tickets | Scope |
 | -- | ------ | ------- | ----- |
 | D1 | `fix/d1-ssr-view-rate-limit` | `D1-007`, `D1-061` | ~~SSR public view vs per-IP rate limit + production base URL for SSR~~ (shipped) |
-| D2 | `fix/d2-slug-validate-rate-limit-key` | `D2-034` | Route-scoped slug-validate rate-limit key (can ship before Redis) |
+| D2 | `fix/d2-slug-validate-rate-limit-key` | `D2-034` | ~~Route-scoped slug-validate rate-limit key (can ship before Redis)~~ (shipped) |
 | D3 | `feat/d3-durable-rate-limiting` | `D3-001` | Durable rate limiting (Redis/Upstash) + per-path Map growth / interim validate-before-key |
 
 #### Sprint E — Monetization (Must epic)
@@ -306,8 +304,8 @@ Depends on product-real purge policy; ship in order.
 
 ### Suggested next PRs (start here)
 
-1. **C3** — `fix/c3-picture-only-first-save` (`C3-026`)  
-2. **D2** — `fix/d2-slug-validate-rate-limit-key` (`D2-034`)  
-3. **D3** — `feat/d3-durable-rate-limiting` (`D3-001`) — or pick an F-batch Should when capacity allows  
+1. **D3** — `feat/d3-durable-rate-limiting` (`D3-001`) — or pick an F-batch Should when capacity allows  
+2. **F1** — `fix/f1-harden-auth-signup` (`F1-040`, `F1-041`)  
+3. **F14** — `fix/f14-slug-name-clamp-fallback` (`F14-033`, `F14-048`, `F14-099`) — slug UX polish cluster  
 
 **Near launch (not now):** **E1 → E2** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` (plus `A3-015`). Keep the working draft in [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) / `/pricing` updated if product thinking changes, but do not lock or build billing until launch is imminent.

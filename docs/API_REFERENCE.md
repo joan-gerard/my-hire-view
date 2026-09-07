@@ -47,7 +47,7 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 - **Content type** — JSON bodies unless noted (`multipart/form-data` for uploads).
 - **Success shape** — Often `{ data }` or `{ success: true }`. Endpoint sections below list specifics.
 - **Error shape** — `{ error: string }` (some endpoints also return `{ ok: false, error }`).
-- **Rate limiting** — Per IP via `lib/rate-limit.ts`. Exceeded limit → **429** with `Retry-After` and `{ error: "Too many requests. Please try again later." }`.
+- **Rate limiting** — Per IP via `lib/rate-limit.ts` (optional `keyPrefix` keeps route-specific counters separate). Exceeded limit → **429** with `Retry-After` and `{ error: "Too many requests. Please try again later." }`.
 - **Default write limit** — `DEFAULT_API_RATE_LIMIT`: **60 requests / minute / IP** (used by most write routes unless noted).
 
 Related deep-dives: [PDF_AND_R2.md](PDF_AND_R2.md) (CV upload), [PROFILE_PICTURE.md](PROFILE_PICTURE.md), [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
@@ -488,7 +488,7 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 Check format and uniqueness of a proposed slug **for the current user** (used when the user edits the slug field manually). Invalid or taken slugs return **200** with `{ ok: false, error }` (not 4xx), so the client can show inline feedback.
 
 - **Auth:** Required
-- **Rate limit:** **30 requests / minute / IP** (`SLUG_VALIDATE_RATE_LIMIT`)
+- **Rate limit:** **30 requests / minute / IP** (`SLUG_VALIDATE_RATE_LIMIT`, key `slug-validate:${ip}` so other routes do not share this counter)
 - **Body:** `slug` (string, required; may be empty for format feedback); optional `excludeId` (UUID)
 - **Success:** `200` `{ ok: true }` or `200` `{ ok: false, error: string }`
 - **Errors:** `400` invalid JSON / schema; `401`; `404` `excludeId` missing or not owned; `429`; `500` `{ ok: false, error }`
@@ -496,7 +496,7 @@ Check format and uniqueness of a proposed slug **for the current user** (used wh
 **What works**
 
 - Auth required; dedicated auth try/catch → **401**.
-- Tighter rate limit than general writes (**30/min**), suited to the debounced slug field while capping abuse.
+- Tighter rate limit than general writes (**30/min**), suited to the debounced slug field while capping abuse. Counter is namespaced (`slug-validate:${ip}`) so profile/list/upload traffic cannot burn this allowance (and vice versa).
 - **Schema validation** (`slugValidateSchema`): requires a string `slug`; UUID `excludeId`; rejects unexpected keys; malformed JSON / non-object bodies → clear **400**.
 - When `excludeId` is present, verifies ownership via `assertExcludeIdOwnedByUser` (**404** otherwise).
 - Shared `validateSlugForApplication` covers format + uniqueness.

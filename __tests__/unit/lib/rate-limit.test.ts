@@ -5,6 +5,7 @@ import {
   rateLimit,
   checkRateLimit,
   rateLimit429,
+  SLUG_VALIDATE_RATE_LIMIT,
   type RateLimitOptions,
 } from "@/lib/rate-limit";
 
@@ -160,31 +161,6 @@ describe("checkPerSlugRateLimit", () => {
 });
 
 // ---------------------------------------------------------------------------
-// checkPerSlugRateLimit
-// ---------------------------------------------------------------------------
-describe("checkPerSlugRateLimit", () => {
-  it("keys by IP and application path so different slugs stay independent", async () => {
-    const { checkPerSlugRateLimit } = await import("@/lib/rate-limit");
-    const req = makeRequest({ "x-forwarded-for": `slug-ip-${uniqueId()}` });
-    const tight = { limit: 2, windowMs: 60_000 };
-
-    expect(
-      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
-    ).toBe(true);
-    expect(
-      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
-    ).toBe(true);
-    expect(
-      checkPerSlugRateLimit(req, "abc12345", "app-one", tight).success,
-    ).toBe(false);
-    // Different slug under the same IP still allowed
-    expect(
-      checkPerSlugRateLimit(req, "abc12345", "app-two", tight).success,
-    ).toBe(true);
-  });
-});
-
-// ---------------------------------------------------------------------------
 // checkRateLimit
 // ---------------------------------------------------------------------------
 describe("checkRateLimit", () => {
@@ -193,6 +169,35 @@ describe("checkRateLimit", () => {
     // A fresh IP should succeed on the first call
     const result = checkRateLimit(req, SMALL_LIMIT);
     expect(result.success).toBe(true);
+  });
+
+  it("namespaces counters when keyPrefix is set (D2-034)", () => {
+    const ip = `prefix-ip-${uniqueId()}`;
+    const req = makeRequest({ "x-forwarded-for": ip });
+    const tight: RateLimitOptions = {
+      limit: 2,
+      windowMs: 60_000,
+      keyPrefix: "slug-validate",
+    };
+    const bare: RateLimitOptions = { limit: 2, windowMs: 60_000 };
+
+    expect(checkRateLimit(req, tight).success).toBe(true);
+    expect(checkRateLimit(req, tight).success).toBe(true);
+    expect(checkRateLimit(req, tight).success).toBe(false);
+    // Same IP without prefix still has its own allowance
+    expect(checkRateLimit(req, bare).success).toBe(true);
+  });
+
+  it("keeps SLUG_VALIDATE_RATE_LIMIT independent of DEFAULT-style IP buckets", () => {
+    const ip = `slug-validate-ip-${uniqueId()}`;
+    const req = makeRequest({ "x-forwarded-for": ip });
+    const general: RateLimitOptions = { limit: 2, windowMs: 60_000 };
+
+    expect(checkRateLimit(req, general).success).toBe(true);
+    expect(checkRateLimit(req, general).success).toBe(true);
+    expect(checkRateLimit(req, general).success).toBe(false);
+    // Slug validate still allowed — does not share the bare-IP counter
+    expect(checkRateLimit(req, SLUG_VALIDATE_RATE_LIMIT).success).toBe(true);
   });
 });
 
