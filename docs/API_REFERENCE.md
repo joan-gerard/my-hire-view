@@ -574,7 +574,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 **What works**
 
 - Per-IP rate limit (**15/min**) to blunt brute force while allowing typo retries.
-- Zod body validation (`loginBodySchema`); malformed JSON → **400** “Invalid JSON body”; bodies over **8 KiB** → **413** (F1-040).
+- Zod body validation (`loginBodySchema`); malformed JSON → **400** “Invalid JSON body”; bodies over **8 KiB** (raw bytes, streamed with early cancel) → **413** (F1-040).
 - Uses the route client so session cookies land on the response (middleware can read them next request).
 - Auth failures return a **generic** “Invalid email or password” (no provider message / less email enumeration); unexpected Auth throws are logged and return a generic **500** (F1-040).
 - Distinguishes validation (**400**), auth failure (**401**), and missing session / unexpected (**500**).

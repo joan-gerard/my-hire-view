@@ -170,4 +170,17 @@ describe("signupBodySchema", () => {
     ).toBe(false);
     encodeSpy.mockRestore();
   });
+
+  it("uses a confirm-specific message when only confirmPassword is oversized", () => {
+    const parsed = signupBodySchema.safeParse({
+      ...base,
+      confirmPassword: "a".repeat(AUTH_PASSWORD_MAX_BYTES + 1),
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues[0]?.message).toBe(
+        `Confirm password must be at most ${AUTH_PASSWORD_MAX_BYTES} UTF-8 bytes`,
+      );
+    }
+  });
 });

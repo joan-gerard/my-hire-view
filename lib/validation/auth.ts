@@ -126,6 +126,10 @@ function passwordExceedsMaxBytesMessage(): string {
   return `Password must be at most ${AUTH_PASSWORD_MAX_BYTES} UTF-8 bytes`;
 }
 
+function confirmPasswordExceedsMaxBytesMessage(): string {
+  return `Confirm password must be at most ${AUTH_PASSWORD_MAX_BYTES} UTF-8 bytes`;
+}
+
 /**
  * Returns a user-facing password rule error, or null when the password is OK.
  * Shared by the signup form and Zod refine (F1-041).
@@ -179,7 +183,7 @@ export const signupBodySchema = z
     confirmPassword: z
       .string({ error: "Confirm password is required" })
       .max(AUTH_PASSWORD_MAX_BYTES, {
-        error: passwordExceedsMaxBytesMessage(),
+        error: confirmPasswordExceedsMaxBytesMessage(),
       }),
     first_name: requiredTrimmedName("First name"),
     last_name: requiredTrimmedName("Last name"),
