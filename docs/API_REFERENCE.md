@@ -567,16 +567,17 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 
 - **Auth:** Not required
 - **Rate limit:** **15 / minute / IP**
-- **Body:** `{ email, password }`
+- **Body:** `{ email, password }` — email trimmed, valid format, max **254**; password required, max **72**
 - **Success:** `200` `{ success: true }` (+ session cookies)
-- **Errors:** `400` missing fields; `401` bad credentials; `429`; `500` no session
+- **Errors:** `400` invalid/missing fields or malformed JSON; `401` bad credentials (generic message); `429`; `500` no session or unexpected Auth failure
 
 **What works**
 
 - Per-IP rate limit (**15/min**) to blunt brute force while allowing typo retries.
-- Requires both email and password before calling Supabase.
+- Zod body validation (`loginBodySchema`); malformed JSON → **400** “Invalid JSON body” (F1-040).
 - Uses the route client so session cookies land on the response (middleware can read them next request).
-- Distinguishes missing fields (**400**), auth failure (**401**), and missing session (**500**).
+- Auth failures return a **generic** “Invalid email or password” (no provider message / less email enumeration); unexpected Auth throws are logged and return a generic **500** (F1-040).
+- Distinguishes validation (**400**), auth failure (**401**), and missing session / unexpected (**500**).
 - Bootstraps a missing `profiles` row from Auth `user_metadata` after a successful sign-in (`bootstrapInitialProfile` → `createInitialProfile`). Failures are logged; login still succeeds.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
@@ -589,9 +590,9 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 
 - **Auth:** Not required
 - **Rate limit:** **5 / minute / IP**
-- **Body:** `{ email, password, confirmPassword, first_name, last_name }` — all required; `password` and `confirmPassword` must match; password min length **6**; names trimmed and non-empty
+- **Body:** `{ email, password, confirmPassword, first_name, last_name }` — all required; email trimmed/valid (max **254**); names trimmed, non-empty, max **100**; `password` and `confirmPassword` must match; password ≥ **8** chars, ≤ **72**, and ≥ **1** special (non-alphanumeric) character (F1-041)
 - **Success:** `200` `{ success: true, requiresConfirmation: false }` with cookies when a session is created immediately; or `200` `{ success: true, requiresConfirmation: true }` when email confirmation is required
-- **Errors:** `400` (missing fields, password mismatch, too-short password, Supabase error); `429`
+- **Errors:** `400` (validation, password rules, mismatch, malformed JSON, or Auth rejection with **generic** message); `429`; `500` unexpected Auth failure
 
 `emailRedirectTo` is set to `{origin}/auth/callback`. First/last name and `public_id` are stored in Auth `user_metadata` and a `profiles` row is created via the service-role helper (`createInitialProfile`) — works with or without an immediate session. When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code. The callback retries `createInitialProfile` idempotently. Immediate-session signups retry once on failure; **login** also bootstraps a missing profiles row (C1-009).
 
@@ -603,7 +604,8 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 **What works**
 
 - Tight **5/min** rate limit (stricter than login’s **15/min**).
-- Requires email, password confirmation, and first/last name; uses the route client for cookies when a session exists.
+- Zod body validation (`signupBodySchema`) + shared password helper used by the signup form (F1-040, F1-041).
+- Auth rejections (including “already registered”) return a **generic** create-account message so responses do not confirm whether an email exists (F1-040).
 - Explicit `requiresConfirmation` flag so the UI can guide email-confirm flows.
 - Sets `emailRedirectTo` to `/auth/callback` on the current origin.
 - Seeds Auth `user_metadata` and inserts the initial profiles row (service role; idempotent).

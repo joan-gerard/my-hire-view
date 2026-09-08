@@ -2,6 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import {
+  getSignupPasswordError,
+  SIGNUP_PASSWORD_MIN_LENGTH,
+  SIGNUP_PASSWORD_RULES_HINT,
+} from '@/lib/validation/auth';
 
 export default function SignUpForm() {
   const [firstName, setFirstName] = useState('');
@@ -17,6 +22,12 @@ export default function SignUpForm() {
     e.preventDefault();
     setError(null);
     setNotice(null);
+
+    const passwordError = getSignupPasswordError(password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -156,9 +167,9 @@ export default function SignUpForm() {
                 type="password"
                 autoComplete="new-password"
                 required
-                minLength={6}
+                minLength={SIGNUP_PASSWORD_MIN_LENGTH}
                 className={inputClassName}
-                placeholder="Password (min. 6 characters)"
+                placeholder={`Password (${SIGNUP_PASSWORD_RULES_HINT.toLowerCase()})`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -173,7 +184,7 @@ export default function SignUpForm() {
                 type="password"
                 autoComplete="new-password"
                 required
-                minLength={6}
+                minLength={SIGNUP_PASSWORD_MIN_LENGTH}
                 className={`${inputClassName} rounded-b-md`}
                 placeholder="Confirm password"
                 value={confirmPassword}
@@ -181,6 +192,9 @@ export default function SignUpForm() {
               />
             </div>
           </div>
+          <p className="text-xs text-[var(--foreground)]/70">
+            Password: {SIGNUP_PASSWORD_RULES_HINT}.
+          </p>
 
           <div>
             <button

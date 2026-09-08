@@ -1,9 +1,13 @@
 /**
- * Tests for /api/auth/signup — required names, password confirmation, and
- * profiles row creation (service role) after successful signUp.
+ * Tests for /api/auth/signup — validation (F1-040/F1-041), profiles creation,
+ * and generic Auth error responses.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import {
+  GENERIC_SIGNUP_ERROR,
+  SIGNUP_PASSWORD_MIN_LENGTH,
+} from "@/lib/validation/auth";
 
 const {
   mockCheckRateLimit,
@@ -46,16 +50,16 @@ import { POST } from "@/app/api/auth/signup/route";
 
 const VALID_BODY = {
   email: "jane@example.com",
-  password: "secret1",
-  confirmPassword: "secret1",
+  password: "secret1!",
+  confirmPassword: "secret1!",
   first_name: "Jane",
   last_name: "Doe",
 };
 
-function makeRequest(body: object): NextRequest {
+function makeRequest(body: object | string): NextRequest {
   return new NextRequest("http://localhost/api/auth/signup", {
     method: "POST",
-    body: JSON.stringify(body),
+    body: typeof body === "string" ? body : JSON.stringify(body),
     headers: { "Content-Type": "application/json" },
   });
 }
@@ -82,19 +86,37 @@ describe("POST /api/auth/signup", () => {
     expect(mockSignUp).not.toHaveBeenCalled();
   });
 
+  it("returns 400 for malformed JSON (F1-040)", async () => {
+    const response = await POST(makeRequest("{not-json"));
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toBe("Invalid JSON body");
+    expect(mockSignUp).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for invalid email format (F1-040)", async () => {
+    const response = await POST(
+      makeRequest({ ...VALID_BODY, email: "not-an-email" }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/email/i);
+    expect(mockSignUp).not.toHaveBeenCalled();
+  });
+
   it("returns 400 when first or last name is missing", async () => {
     const response = await POST(
       makeRequest({ ...VALID_BODY, first_name: "  ", last_name: "" }),
     );
     expect(response.status).toBe(400);
     const json = await response.json();
-    expect(json.error).toContain("First name and last name");
+    expect(json.error).toMatch(/name/i);
     expect(mockSignUp).not.toHaveBeenCalled();
   });
 
   it("returns 400 when passwords do not match", async () => {
     const response = await POST(
-      makeRequest({ ...VALID_BODY, confirmPassword: "other" }),
+      makeRequest({ ...VALID_BODY, confirmPassword: "other1!" }),
     );
     expect(response.status).toBe(400);
     const json = await response.json();
@@ -102,17 +124,31 @@ describe("POST /api/auth/signup", () => {
     expect(mockSignUp).not.toHaveBeenCalled();
   });
 
-  it("returns 400 when password is too short", async () => {
+  it("returns 400 when password is too short (F1-041)", async () => {
     const response = await POST(
       makeRequest({
         ...VALID_BODY,
-        password: "abc",
-        confirmPassword: "abc",
+        password: "abc!",
+        confirmPassword: "abc!",
       }),
     );
     expect(response.status).toBe(400);
     const json = await response.json();
-    expect(json.error).toContain("at least 6");
+    expect(json.error).toContain(`at least ${SIGNUP_PASSWORD_MIN_LENGTH}`);
+    expect(mockSignUp).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when password has no special character (F1-041)", async () => {
+    const response = await POST(
+      makeRequest({
+        ...VALID_BODY,
+        password: "password1",
+        confirmPassword: "password1",
+      }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("special character");
     expect(mockSignUp).not.toHaveBeenCalled();
   });
 
@@ -135,7 +171,7 @@ describe("POST /api/auth/signup", () => {
     expect(mockSignUp).toHaveBeenCalledWith(
       expect.objectContaining({
         email: "jane@example.com",
-        password: "secret1",
+        password: "secret1!",
         options: expect.objectContaining({
           data: expect.objectContaining({
             first_name: "Jane",
@@ -211,7 +247,8 @@ describe("POST /api/auth/signup", () => {
     expect(mockCreateInitialProfile).toHaveBeenCalledTimes(2);
   });
 
-  it("returns 400 when Supabase signUp fails", async () => {
+  it("returns a generic 400 when Supabase signUp fails (F1-040)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     mockSignUp.mockResolvedValue({
       data: { user: null, session: null },
       error: { message: "User already registered" },
@@ -220,8 +257,26 @@ describe("POST /api/auth/signup", () => {
     const response = await POST(makeRequest(VALID_BODY));
     expect(response.status).toBe(400);
     const json = await response.json();
-    expect(json.error).toBe("User already registered");
+    expect(json.error).toBe(GENERIC_SIGNUP_ERROR);
+    expect(json.error).not.toContain("already registered");
     expect(mockCreateInitialProfile).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it("returns 500 and logs when Auth signUp throws (F1-040)", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockSignUp.mockRejectedValue(new Error("network down"));
+
+    const response = await POST(makeRequest(VALID_BODY));
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Something went wrong. Please try again.");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[auth/signup] unexpected Auth API failure:",
+      expect.any(Error),
+    );
+    errorSpy.mockRestore();
   });
 
   it("returns 429 when rate limited", async () => {
