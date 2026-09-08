@@ -590,7 +590,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 
 - **Auth:** Not required
 - **Rate limit:** **5 / minute / IP**
-- **Body:** `{ email, password, confirmPassword, first_name, last_name }` — all required; email trimmed/valid (max **254**); names trimmed, non-empty, max **100**; `password` and `confirmPassword` must match; password ≥ **8** chars, ≤ **72** UTF-8 bytes, and ≥ **1** special character that is not a letter, digit, or whitespace (F1-041)
+- **Body:** `{ email, password, confirmPassword, first_name, last_name }` — all required; email trimmed/valid (max **254**); names trimmed, non-empty, max **100**; `password` and `confirmPassword` must match; password ≥ **8** chars, ≤ **72** UTF-8 bytes, and ≥ **1** special character that is not a Unicode letter, number, or whitespace (F1-041)
 - **Success:** `200` `{ success: true, requiresConfirmation: false }` with cookies when a session is created immediately; or `200` `{ success: true, requiresConfirmation: true }` when email confirmation is required
 - **Errors:** `400` (validation, password rules, mismatch, malformed JSON, or Auth rejection with **generic** message); `429`; `500` unexpected Auth failure
 

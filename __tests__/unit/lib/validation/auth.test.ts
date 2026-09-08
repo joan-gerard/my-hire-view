@@ -19,6 +19,10 @@ describe("getSignupPasswordError", () => {
     expect(getSignupPasswordError("password1")).toContain("special character");
   });
 
+  it("rejects Unicode letter+digit passwords that lack a real special character", () => {
+    expect(getSignupPasswordError("пароль123")).toContain("special character");
+  });
+
   it("rejects whitespace-only passwords that lack a real special character", () => {
     expect(getSignupPasswordError("        ")).toContain("special character");
   });
@@ -29,8 +33,8 @@ describe("getSignupPasswordError", () => {
 
   it("rejects passwords longer than the max UTF-8 byte length", () => {
     const long = `${"a".repeat(AUTH_PASSWORD_MAX_BYTES)}!`;
-    expect(getSignupPasswordError(long)).toContain(
-      `at most ${AUTH_PASSWORD_MAX_BYTES}`,
+    expect(getSignupPasswordError(long)).toBe(
+      `Password must be at most ${AUTH_PASSWORD_MAX_BYTES} UTF-8 bytes`,
     );
   });
 
@@ -41,13 +45,17 @@ describe("getSignupPasswordError", () => {
     expect(passwordUtf8ByteLength(multibyte)).toBeGreaterThan(
       AUTH_PASSWORD_MAX_BYTES,
     );
-    expect(getSignupPasswordError(multibyte)).toContain(
-      `at most ${AUTH_PASSWORD_MAX_BYTES}`,
+    expect(getSignupPasswordError(multibyte)).toBe(
+      `Password must be at most ${AUTH_PASSWORD_MAX_BYTES} UTF-8 bytes`,
     );
   });
 
   it("accepts a strong enough password", () => {
     expect(getSignupPasswordError("secret1!")).toBeNull();
+  });
+
+  it("accepts Unicode letters when a real special character is present", () => {
+    expect(getSignupPasswordError("пароль12!")).toBeNull();
   });
 });
 

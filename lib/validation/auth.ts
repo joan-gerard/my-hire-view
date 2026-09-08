@@ -15,10 +15,10 @@ export const AUTH_PASSWORD_MAX_BYTES = 72;
 export const AUTH_EMAIL_MAX_LENGTH = 254;
 
 /**
- * At least one non-alphanumeric, non-whitespace character (F1-041).
- * Whitespace alone must not satisfy the “special character” rule.
+ * At least one character that is not a Unicode letter, number, or whitespace (F1-041).
+ * ASCII-only `A-Za-z0-9` would treat Cyrillic/CJK letters as “special”.
  */
-export const SIGNUP_PASSWORD_SPECIAL_CHAR_REGEX = /[^A-Za-z0-9\s]/;
+export const SIGNUP_PASSWORD_SPECIAL_CHAR_REGEX = /[^\p{L}\p{N}\s]/u;
 
 /** Client-safe login failure — does not reveal whether the email exists. */
 export const GENERIC_LOGIN_ERROR = "Invalid email or password";
@@ -31,7 +31,7 @@ export const GENERIC_SIGNUP_ERROR =
   "Unable to create account. If you already have an account, try signing in.";
 
 export const SIGNUP_PASSWORD_RULES_HINT =
-  `At least ${SIGNUP_PASSWORD_MIN_LENGTH} characters (max ${AUTH_PASSWORD_MAX_BYTES}), including one special character (not a space)`;
+  `At least ${SIGNUP_PASSWORD_MIN_LENGTH} characters (max ${AUTH_PASSWORD_MAX_BYTES} UTF-8 bytes), including one special character (not a letter, digit, or space)`;
 
 const FIELD_LABELS: Record<string, string> = {
   email: "Email",
@@ -105,7 +105,7 @@ function requiredTrimmedName(label: string) {
 }
 
 function passwordExceedsMaxBytesMessage(): string {
-  return `Password must be at most ${AUTH_PASSWORD_MAX_BYTES} characters`;
+  return `Password must be at most ${AUTH_PASSWORD_MAX_BYTES} UTF-8 bytes`;
 }
 
 /**
