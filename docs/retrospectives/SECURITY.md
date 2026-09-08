@@ -96,7 +96,7 @@ Keep these visible so product and engineering share one security story. Status i
 **What we shipped**
 
 - Shared Zod schemas and helpers in `lib/validation/auth.ts`
-- Signup: ≥ 8 characters, ≤ 72 UTF-8 bytes, ≥ 1 special char via `/[^\p{L}\p{N}\s]/u` (form + API; hint + `maxLength` aligned; oversize errors say UTF-8 bytes)
+- Signup: ≥ 8 characters, ≤ 72 UTF-8 bytes (length short-circuit before encode; no HTML `maxLength` byte illusion), ≥ 1 special char via `/[^\p{L}\p{N}\s]/u`; auth JSON capped at 8 KiB
 - Login/signup: email format and max lengths; password max length; malformed JSON → **400**
 - Generic Auth failure messages; unexpected Auth throws logged with a safe client **500**
 - API contract updated in [API_REFERENCE.md](../API_REFERENCE.md)

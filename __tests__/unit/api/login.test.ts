@@ -72,6 +72,18 @@ describe("POST /api/auth/login", () => {
     expect(mockSignInWithPassword).not.toHaveBeenCalled();
   });
 
+  it("returns 413 when the request body is too large", async () => {
+    const response = await POST(
+      new NextRequest("http://localhost/api/auth/login", {
+        method: "POST",
+        body: "x".repeat(10_000),
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    expect(response.status).toBe(413);
+    expect(mockSignInWithPassword).not.toHaveBeenCalled();
+  });
+
   it("returns 400 for invalid email format (F1-040)", async () => {
     const response = await POST(
       makeRequest({ email: "not-an-email", password: "secret1!" }),

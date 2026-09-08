@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   getSignupPasswordError,
-  AUTH_PASSWORD_MAX_BYTES,
   SIGNUP_PASSWORD_MIN_LENGTH,
   SIGNUP_PASSWORD_RULES_HINT,
 } from '@/lib/validation/auth';
@@ -169,7 +168,6 @@ export default function SignUpForm() {
                 autoComplete="new-password"
                 required
                 minLength={SIGNUP_PASSWORD_MIN_LENGTH}
-                maxLength={AUTH_PASSWORD_MAX_BYTES}
                 className={inputClassName}
                 placeholder={`Password (${SIGNUP_PASSWORD_RULES_HINT.toLowerCase()})`}
                 value={password}
@@ -187,7 +185,6 @@ export default function SignUpForm() {
                 autoComplete="new-password"
                 required
                 minLength={SIGNUP_PASSWORD_MIN_LENGTH}
-                maxLength={AUTH_PASSWORD_MAX_BYTES}
                 className={`${inputClassName} rounded-b-md`}
                 placeholder="Confirm password"
                 value={confirmPassword}

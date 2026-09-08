@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { readLimitedJsonBody } from '@/lib/api/read-limited-json-body';
 import { bootstrapInitialProfile } from '@/lib/auth/bootstrap-initial-profile';
 import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import { createSupabaseRouteClient } from '@/lib/supabase/route-client';
 import {
+  AUTH_REQUEST_BODY_MAX_BYTES,
   formatLoginZodError,
   GENERIC_LOGIN_ERROR,
   loginBodySchema,
@@ -23,12 +25,20 @@ export async function POST(request: NextRequest) {
   const rate = await checkRateLimit(request, LOGIN_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
-  let raw: unknown;
-  try {
-    raw = await request.json();
-  } catch {
+  const bodyResult = await readLimitedJsonBody(
+    request,
+    AUTH_REQUEST_BODY_MAX_BYTES,
+  );
+  if (!bodyResult.ok) {
+    if (bodyResult.error === 'too_large') {
+      return NextResponse.json(
+        { error: 'Request body too large' },
+        { status: 413 },
+      );
+    }
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
+  const raw = bodyResult.value;
 
   const parsed = loginBodySchema.safeParse(raw);
   if (!parsed.success) {

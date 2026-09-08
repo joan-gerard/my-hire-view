@@ -1,12 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   AUTH_PASSWORD_MAX_BYTES,
   getSignupPasswordError,
   loginBodySchema,
+  passwordExceedsMaxBytes,
   passwordUtf8ByteLength,
   SIGNUP_PASSWORD_MIN_LENGTH,
   signupBodySchema,
 } from "@/lib/validation/auth";
+
+describe("passwordExceedsMaxBytes", () => {
+  it("short-circuits on JS length without needing a full UTF-8 encode path for huge input", () => {
+    const huge = "a".repeat(AUTH_PASSWORD_MAX_BYTES + 1);
+    expect(passwordExceedsMaxBytes(huge)).toBe(true);
+  });
+
+  it("detects multibyte passwords over the byte cap under the length cap", () => {
+    const multibyte = "é".repeat(40);
+    expect(multibyte.length).toBeLessThanOrEqual(AUTH_PASSWORD_MAX_BYTES);
+    expect(passwordUtf8ByteLength(multibyte)).toBeGreaterThan(
+      AUTH_PASSWORD_MAX_BYTES,
+    );
+    expect(passwordExceedsMaxBytes(multibyte)).toBe(true);
+  });
+});
 
 describe("getSignupPasswordError", () => {
   it("rejects passwords shorter than the minimum", () => {
@@ -86,6 +103,14 @@ describe("loginBodySchema", () => {
     });
     expect(parsed.success).toBe(false);
   });
+
+  it("rejects oversized JS-length passwords without treating them as valid", () => {
+    const parsed = loginBodySchema.safeParse({
+      email: "jane@example.com",
+      password: "a".repeat(AUTH_PASSWORD_MAX_BYTES + 10),
+    });
+    expect(parsed.success).toBe(false);
+  });
 });
 
 describe("signupBodySchema", () => {
@@ -126,5 +151,23 @@ describe("signupBodySchema", () => {
       confirmPassword: spaces,
     });
     expect(parsed.success).toBe(false);
+  });
+
+  it("rejects huge password strings via the length cap", () => {
+    const encodeSpy = vi.spyOn(TextEncoder.prototype, "encode");
+    const huge = "a".repeat(10_000);
+    const parsed = signupBodySchema.safeParse({
+      ...base,
+      password: huge,
+      confirmPassword: huge,
+    });
+    expect(parsed.success).toBe(false);
+    // Zod .max should reject before getSignupPasswordError encodes the huge string.
+    expect(
+      encodeSpy.mock.calls.some(
+        (call) => typeof call[0] === "string" && call[0].length === 10_000,
+      ),
+    ).toBe(false);
+    encodeSpy.mockRestore();
   });
 });

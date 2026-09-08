@@ -41,11 +41,29 @@ const FIELD_LABELS: Record<string, string> = {
   last_name: "Last name",
 };
 
+/**
+ * Soft cap for login/signup JSON bodies (email, names, password fields).
+ * Rejects oversized payloads before full parse / password UTF-8 encoding.
+ */
+export const AUTH_REQUEST_BODY_MAX_BYTES = 8_192;
+
 const utf8Encoder = new TextEncoder();
 
 /** UTF-8 byte length — the unit bcrypt/GoTrue actually truncates on. */
 export function passwordUtf8ByteLength(password: string): number {
   return utf8Encoder.encode(password).length;
+}
+
+/**
+ * True when the password cannot fit in AUTH_PASSWORD_MAX_BYTES of UTF-8.
+ * Short-circuits on JS string length first: UTF-8 byte length is always
+ * ≥ UTF-16 length for TextEncoder output, so a longer string can never fit.
+ */
+export function passwordExceedsMaxBytes(password: string): boolean {
+  if (password.length > AUTH_PASSWORD_MAX_BYTES) {
+    return true;
+  }
+  return passwordUtf8ByteLength(password) > AUTH_PASSWORD_MAX_BYTES;
 }
 
 function formatAuthZodError(error: z.ZodError): string {
@@ -116,7 +134,7 @@ export function getSignupPasswordError(password: string): string | null {
   if (password.length < SIGNUP_PASSWORD_MIN_LENGTH) {
     return `Password must be at least ${SIGNUP_PASSWORD_MIN_LENGTH} characters`;
   }
-  if (passwordUtf8ByteLength(password) > AUTH_PASSWORD_MAX_BYTES) {
+  if (passwordExceedsMaxBytes(password)) {
     return passwordExceedsMaxBytesMessage();
   }
   if (!SIGNUP_PASSWORD_SPECIAL_CHAR_REGEX.test(password)) {
@@ -132,10 +150,13 @@ export const loginBodySchema = z
     password: z
       .string({ error: "Password is required" })
       .min(1, { error: "Password is required" })
-      .refine(
-        (password) => passwordUtf8ByteLength(password) <= AUTH_PASSWORD_MAX_BYTES,
-        { error: passwordExceedsMaxBytesMessage() },
-      ),
+      // Cheap UTF-16 length cap before UTF-8 encode in the refine below.
+      .max(AUTH_PASSWORD_MAX_BYTES, {
+        error: passwordExceedsMaxBytesMessage(),
+      })
+      .refine((password) => !passwordExceedsMaxBytes(password), {
+        error: passwordExceedsMaxBytesMessage(),
+      }),
   })
   .strict();
 
@@ -149,8 +170,17 @@ export function formatLoginZodError(error: z.ZodError): string {
 export const signupBodySchema = z
   .object({
     email: trimmedEmailSchema(),
-    password: z.string({ error: "Password is required" }),
-    confirmPassword: z.string({ error: "Confirm password is required" }),
+    // Max rejects huge attacker-controlled strings before UTF-8 encode in refine.
+    password: z
+      .string({ error: "Password is required" })
+      .max(AUTH_PASSWORD_MAX_BYTES, {
+        error: passwordExceedsMaxBytesMessage(),
+      }),
+    confirmPassword: z
+      .string({ error: "Confirm password is required" })
+      .max(AUTH_PASSWORD_MAX_BYTES, {
+        error: passwordExceedsMaxBytesMessage(),
+      }),
     first_name: requiredTrimmedName("First name"),
     last_name: requiredTrimmedName("Last name"),
   })
