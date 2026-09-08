@@ -567,7 +567,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 
 - **Auth:** Not required
 - **Rate limit:** **15 / minute / IP**
-- **Body:** `{ email, password }` — email trimmed, valid format, max **254**; password required, max **72**
+- **Body:** `{ email, password }` — email trimmed, valid format, max **254**; password required, max **72** UTF-8 bytes (bcrypt/GoTrue bound)
 - **Success:** `200` `{ success: true }` (+ session cookies)
 - **Errors:** `400` invalid/missing fields or malformed JSON; `401` bad credentials (generic message); `429`; `500` no session or unexpected Auth failure
 
@@ -590,7 +590,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 
 - **Auth:** Not required
 - **Rate limit:** **5 / minute / IP**
-- **Body:** `{ email, password, confirmPassword, first_name, last_name }` — all required; email trimmed/valid (max **254**); names trimmed, non-empty, max **100**; `password` and `confirmPassword` must match; password ≥ **8** chars, ≤ **72**, and ≥ **1** special (non-alphanumeric) character (F1-041)
+- **Body:** `{ email, password, confirmPassword, first_name, last_name }` — all required; email trimmed/valid (max **254**); names trimmed, non-empty, max **100**; `password` and `confirmPassword` must match; password ≥ **8** chars, ≤ **72** UTF-8 bytes, and ≥ **1** special character that is not a letter, digit, or whitespace (F1-041)
 - **Success:** `200` `{ success: true, requiresConfirmation: false }` with cookies when a session is created immediately; or `200` `{ success: true, requiresConfirmation: true }` when email confirmation is required
 - **Errors:** `400` (validation, password rules, mismatch, malformed JSON, or Auth rejection with **generic** message); `429`; `500` unexpected Auth failure
 

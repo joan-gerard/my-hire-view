@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  AUTH_PASSWORD_MAX_LENGTH,
+  AUTH_PASSWORD_MAX_BYTES,
   getSignupPasswordError,
   loginBodySchema,
+  passwordUtf8ByteLength,
   SIGNUP_PASSWORD_MIN_LENGTH,
   signupBodySchema,
 } from "@/lib/validation/auth";
@@ -18,10 +19,30 @@ describe("getSignupPasswordError", () => {
     expect(getSignupPasswordError("password1")).toContain("special character");
   });
 
-  it("rejects passwords longer than the max", () => {
-    const long = `${"a".repeat(AUTH_PASSWORD_MAX_LENGTH)}!`;
+  it("rejects whitespace-only passwords that lack a real special character", () => {
+    expect(getSignupPasswordError("        ")).toContain("special character");
+  });
+
+  it("rejects passwords that use only spaces as the non-alphanumeric char", () => {
+    expect(getSignupPasswordError("pass word")).toContain("special character");
+  });
+
+  it("rejects passwords longer than the max UTF-8 byte length", () => {
+    const long = `${"a".repeat(AUTH_PASSWORD_MAX_BYTES)}!`;
     expect(getSignupPasswordError(long)).toContain(
-      `at most ${AUTH_PASSWORD_MAX_LENGTH}`,
+      `at most ${AUTH_PASSWORD_MAX_BYTES}`,
+    );
+  });
+
+  it("rejects multibyte passwords that exceed 72 UTF-8 bytes under 72 characters", () => {
+    // "é" is 2 UTF-8 bytes; 40 × é = 80 bytes, 40 JS string units.
+    const multibyte = `${"é".repeat(40)}!`;
+    expect(multibyte.length).toBeLessThanOrEqual(AUTH_PASSWORD_MAX_BYTES);
+    expect(passwordUtf8ByteLength(multibyte)).toBeGreaterThan(
+      AUTH_PASSWORD_MAX_BYTES,
+    );
+    expect(getSignupPasswordError(multibyte)).toContain(
+      `at most ${AUTH_PASSWORD_MAX_BYTES}`,
     );
   });
 
@@ -46,6 +67,14 @@ describe("loginBodySchema", () => {
     const parsed = loginBodySchema.safeParse({
       email: "nope",
       password: "any",
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("rejects passwords over the UTF-8 byte max", () => {
+    const parsed = loginBodySchema.safeParse({
+      email: "jane@example.com",
+      password: "é".repeat(40),
     });
     expect(parsed.success).toBe(false);
   });
@@ -77,6 +106,16 @@ describe("signupBodySchema", () => {
       ...base,
       password: "short",
       confirmPassword: "short",
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it("rejects all-space passwords", () => {
+    const spaces = "        ";
+    const parsed = signupBodySchema.safeParse({
+      ...base,
+      password: spaces,
+      confirmPassword: spaces,
     });
     expect(parsed.success).toBe(false);
   });

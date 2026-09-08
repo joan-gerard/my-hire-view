@@ -5,16 +5,20 @@ import { z } from "zod";
 export const SIGNUP_PASSWORD_MIN_LENGTH = 8;
 
 /**
- * Upper bound for passwords on login/signup.
- * Aligns with common bcrypt truncation (72 bytes) used by GoTrue/Supabase.
+ * Upper bound for passwords on login/signup, measured as UTF-8 bytes.
+ * Matches bcrypt’s 72-byte truncation used by GoTrue/Supabase — counting
+ * JavaScript string length would let multibyte passwords slip past.
  */
-export const AUTH_PASSWORD_MAX_LENGTH = 72;
+export const AUTH_PASSWORD_MAX_BYTES = 72;
 
 /** RFC 5321 practical max for the email address. */
 export const AUTH_EMAIL_MAX_LENGTH = 254;
 
-/** At least one non-alphanumeric character (F1-041). */
-export const SIGNUP_PASSWORD_SPECIAL_CHAR_REGEX = /[^A-Za-z0-9]/;
+/**
+ * At least one non-alphanumeric, non-whitespace character (F1-041).
+ * Whitespace alone must not satisfy the “special character” rule.
+ */
+export const SIGNUP_PASSWORD_SPECIAL_CHAR_REGEX = /[^A-Za-z0-9\s]/;
 
 /** Client-safe login failure — does not reveal whether the email exists. */
 export const GENERIC_LOGIN_ERROR = "Invalid email or password";
@@ -27,7 +31,7 @@ export const GENERIC_SIGNUP_ERROR =
   "Unable to create account. If you already have an account, try signing in.";
 
 export const SIGNUP_PASSWORD_RULES_HINT =
-  `At least ${SIGNUP_PASSWORD_MIN_LENGTH} characters, including one special character`;
+  `At least ${SIGNUP_PASSWORD_MIN_LENGTH} characters (max ${AUTH_PASSWORD_MAX_BYTES}), including one special character (not a space)`;
 
 const FIELD_LABELS: Record<string, string> = {
   email: "Email",
@@ -36,6 +40,13 @@ const FIELD_LABELS: Record<string, string> = {
   first_name: "First name",
   last_name: "Last name",
 };
+
+const utf8Encoder = new TextEncoder();
+
+/** UTF-8 byte length — the unit bcrypt/GoTrue actually truncates on. */
+export function passwordUtf8ByteLength(password: string): number {
+  return utf8Encoder.encode(password).length;
+}
 
 function formatAuthZodError(error: z.ZodError): string {
   const issue = error.issues[0];
@@ -93,6 +104,10 @@ function requiredTrimmedName(label: string) {
   );
 }
 
+function passwordExceedsMaxBytesMessage(): string {
+  return `Password must be at most ${AUTH_PASSWORD_MAX_BYTES} characters`;
+}
+
 /**
  * Returns a user-facing password rule error, or null when the password is OK.
  * Shared by the signup form and Zod refine (F1-041).
@@ -101,8 +116,8 @@ export function getSignupPasswordError(password: string): string | null {
   if (password.length < SIGNUP_PASSWORD_MIN_LENGTH) {
     return `Password must be at least ${SIGNUP_PASSWORD_MIN_LENGTH} characters`;
   }
-  if (password.length > AUTH_PASSWORD_MAX_LENGTH) {
-    return `Password must be at most ${AUTH_PASSWORD_MAX_LENGTH} characters`;
+  if (passwordUtf8ByteLength(password) > AUTH_PASSWORD_MAX_BYTES) {
+    return passwordExceedsMaxBytesMessage();
   }
   if (!SIGNUP_PASSWORD_SPECIAL_CHAR_REGEX.test(password)) {
     return "Password must include at least one special character";
@@ -110,16 +125,17 @@ export function getSignupPasswordError(password: string): string | null {
   return null;
 }
 
-/** Login body: email format + length; password present with max length. */
+/** Login body: email format + length; password present with UTF-8 byte max. */
 export const loginBodySchema = z
   .object({
     email: trimmedEmailSchema(),
     password: z
       .string({ error: "Password is required" })
       .min(1, { error: "Password is required" })
-      .max(AUTH_PASSWORD_MAX_LENGTH, {
-        error: `Password must be at most ${AUTH_PASSWORD_MAX_LENGTH} characters`,
-      }),
+      .refine(
+        (password) => passwordUtf8ByteLength(password) <= AUTH_PASSWORD_MAX_BYTES,
+        { error: passwordExceedsMaxBytesMessage() },
+      ),
   })
   .strict();
 
