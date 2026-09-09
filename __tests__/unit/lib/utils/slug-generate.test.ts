@@ -3,6 +3,7 @@ import {
   validateSlugFormat,
   generateSlug,
   buildSlug,
+  isCustomSlug,
   SLUG_MAX_LENGTH,
 } from "@/lib/utils/slug-generate";
 
@@ -216,5 +217,79 @@ describe("buildSlug", () => {
     const slug = buildSlug(company, role, first, last, "start");
     expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
     expect(validateSlugFormat(slug).ok).toBe(true);
+  });
+
+  it("preserves the name segment when clamping a long start slug (F14-033)", () => {
+    const company = "a".repeat(100);
+    const role = "b".repeat(100);
+    const first = "jane";
+    const last = "doe";
+    const slug = buildSlug(company, role, first, last, "start");
+    expect(slug.startsWith("jane-doe-")).toBe(true);
+    expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
+    expect(validateSlugFormat(slug).ok).toBe(true);
+    // Pre-clamp of company+role alone would have been 128 chars; name must still appear.
+    expect(generateSlug(company, role).length).toBe(SLUG_MAX_LENGTH);
+  });
+
+  it("preserves the name segment when clamping a long end slug (F14-033)", () => {
+    const company = "a".repeat(100);
+    const role = "b".repeat(100);
+    const first = "jane";
+    const last = "doe";
+    const slug = buildSlug(company, role, first, last, "end");
+    expect(slug.endsWith("-jane-doe")).toBe(true);
+    expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
+    expect(validateSlugFormat(slug).ok).toBe(true);
+  });
+
+  it("returns a clamped name-only slug when the name alone fills the max length", () => {
+    const longFirst = "n".repeat(SLUG_MAX_LENGTH + 10);
+    const slug = buildSlug("Acme", "Engineer", longFirst, null, "start");
+    expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
+    expect(slug.startsWith("n")).toBe(true);
+    expect(slug.includes("acme")).toBe(false);
+    expect(validateSlugFormat(slug).ok).toBe(true);
+  });
+
+  it("does not leave a trailing hyphen when company/role normalize to empty (start)", () => {
+    const slug = buildSlug("!!!", "@@@", "john", "doe", "start");
+    expect(slug).toBe("john-doe");
+    expect(validateSlugFormat(slug).ok).toBe(true);
+  });
+
+  it("does not leave a leading hyphen when company/role normalize to empty (end)", () => {
+    const slug = buildSlug("!!!", "@@@", "john", "doe", "end");
+    expect(slug).toBe("john-doe");
+    expect(validateSlugFormat(slug).ok).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isCustomSlug
+// ---------------------------------------------------------------------------
+describe("isCustomSlug", () => {
+  it("returns false for an empty slug", () => {
+    expect(isCustomSlug("", "Volvo", "Engineer")).toBe(false);
+  });
+
+  it("returns false when the slug matches the derived company-role slug", () => {
+    expect(isCustomSlug("volvo-engineer", "Volvo", "Engineer")).toBe(false);
+  });
+
+  it("returns false when the slug matches a name-in-URL derived slug", () => {
+    expect(
+      isCustomSlug("john-doe-volvo-engineer", "Volvo", "Engineer", "John", "Doe", "start"),
+    ).toBe(false);
+  });
+
+  it("returns true when the saved slug differs from the derived value (F14-099)", () => {
+    expect(
+      isCustomSlug("my-custom-link", "Volvo", "Engineer", "John", "Doe", null),
+    ).toBe(true);
+  });
+
+  it("trims before comparing", () => {
+    expect(isCustomSlug("  volvo-engineer  ", "Volvo", "Engineer")).toBe(false);
   });
 });
