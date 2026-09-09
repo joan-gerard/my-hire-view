@@ -251,6 +251,18 @@ describe("buildSlug", () => {
     expect(slug.includes("acme")).toBe(false);
     expect(validateSlugFormat(slug).ok).toBe(true);
   });
+
+  it("does not leave a trailing hyphen when company/role normalize to empty (start)", () => {
+    const slug = buildSlug("!!!", "@@@", "john", "doe", "start");
+    expect(slug).toBe("john-doe");
+    expect(validateSlugFormat(slug).ok).toBe(true);
+  });
+
+  it("does not leave a leading hyphen when company/role normalize to empty (end)", () => {
+    const slug = buildSlug("!!!", "@@@", "john", "doe", "end");
+    expect(slug).toBe("john-doe");
+    expect(validateSlugFormat(slug).ok).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------

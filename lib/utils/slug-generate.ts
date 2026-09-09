@@ -43,6 +43,10 @@ function joinPreferringName(
   baseSlug: string,
   nameAt: "start" | "end",
 ): string {
+  if (!baseSlug) {
+    return clampSlugLength(nameSlug);
+  }
+
   const combined =
     nameAt === "start" ? `${nameSlug}-${baseSlug}` : `${baseSlug}-${nameSlug}`;
   if (combined.length <= SLUG_MAX_LENGTH) return combined;
