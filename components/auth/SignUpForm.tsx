@@ -1,7 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import AuthPageShell from '@/components/auth/AuthPageShell';
+import { AuthErrorAlert, AuthNoticeAlert } from '@/components/auth/AuthAlert';
+import AuthSubmitButton from '@/components/auth/AuthSubmitButton';
+import PasswordField from '@/components/auth/PasswordField';
+import { AUTH_INPUT_CLASS } from '@/components/auth/auth-form-styles';
 import {
   getSignupPasswordError,
   SIGNUP_PASSWORD_MIN_LENGTH,
@@ -75,138 +79,106 @@ export default function SignUpForm() {
     }
   };
 
-  const inputClassName =
-    'relative block w-full border-0 px-3 py-2 text-[var(--foreground)] ring-1 ring-inset ring-[var(--foreground)]/20 placeholder:text-[var(--foreground)]/50 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-[var(--brand-primary)] sm:text-sm sm:leading-6';
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-[var(--foreground)]">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-[var(--foreground)]/80">
-            Or{' '}
-            <Link
-              href="/login"
-              className="font-medium text-[var(--brand-primary)] hover:opacity-80"
-            >
-              sign in to your existing account
-            </Link>
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-800">{error}</div>
-            </div>
-          )}
-          {notice && (
-            <div className="rounded-md bg-[var(--brand-secondary)] p-4">
-              <div className="text-sm text-[var(--foreground)]">{notice}</div>
-            </div>
-          )}
-          <div className="space-y-0 rounded-md shadow-sm">
-            <div className="grid grid-cols-1 sm:grid-cols-2">
-              <div>
-                <label htmlFor="first-name" className="sr-only">
-                  First name
-                </label>
-                <input
-                  id="first-name"
-                  name="first_name"
-                  type="text"
-                  autoComplete="given-name"
-                  required
-                  className={`${inputClassName} rounded-t-md sm:rounded-tr-none sm:rounded-tl-md`}
-                  placeholder="First name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="last-name" className="sr-only">
-                  Last name
-                </label>
-                <input
-                  id="last-name"
-                  name="last_name"
-                  type="text"
-                  autoComplete="family-name"
-                  required
-                  className={`${inputClassName} sm:rounded-tr-md`}
-                  placeholder="Last name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
+    <AuthPageShell
+      title="Create your account"
+      alternateHref="/login"
+      alternateLabel="sign in to your existing account"
+    >
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {error && <AuthErrorAlert message={error} />}
+        {notice && <AuthNoticeAlert message={notice} />}
+        <div className="space-y-0 rounded-md shadow-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2">
             <div>
-              <label htmlFor="email-address" className="sr-only">
-                Email address
+              <label htmlFor="first-name" className="sr-only">
+                First name
               </label>
               <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="first-name"
+                name="first_name"
+                type="text"
+                autoComplete="given-name"
                 required
-                className={inputClassName}
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                className={`${AUTH_INPUT_CLASS} rounded-t-md sm:rounded-tr-none sm:rounded-tl-md`}
+                placeholder="First name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
-                Password
+              <label htmlFor="last-name" className="sr-only">
+                Last name
               </label>
               <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
+                id="last-name"
+                name="last_name"
+                type="text"
+                autoComplete="family-name"
                 required
-                minLength={SIGNUP_PASSWORD_MIN_LENGTH}
-                className={inputClassName}
-                placeholder={`Password (${SIGNUP_PASSWORD_RULES_HINT.toLowerCase()})`}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="confirm-password" className="sr-only">
-                Confirm password
-              </label>
-              <input
-                id="confirm-password"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={SIGNUP_PASSWORD_MIN_LENGTH}
-                className={`${inputClassName} rounded-b-md`}
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={`${AUTH_INPUT_CLASS} sm:rounded-tr-md`}
+                placeholder="Last name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
               />
             </div>
           </div>
-          <p className="text-xs text-[var(--foreground)]/70">
-            Password: {SIGNUP_PASSWORD_RULES_HINT}.
-          </p>
-
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-[var(--brand-primary)] px-3 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Creating account...' : 'Sign up'}
-            </button>
+            <label htmlFor="email-address" className="sr-only">
+              Email address
+            </label>
+            <input
+              id="email-address"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className={AUTH_INPUT_CLASS}
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
-        </form>
-      </div>
-    </div>
+          <PasswordField
+            id="password"
+            name="password"
+            label="Password"
+            autoComplete="new-password"
+            required
+            minLength={SIGNUP_PASSWORD_MIN_LENGTH}
+            placeholder="Password *"
+            aria-describedby="signup-password-hint"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <PasswordField
+            id="confirm-password"
+            name="confirmPassword"
+            label="Confirm password"
+            autoComplete="new-password"
+            required
+            minLength={SIGNUP_PASSWORD_MIN_LENGTH}
+            className="rounded-b-md"
+            placeholder="Confirm password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </div>
+        <p
+          id="signup-password-hint"
+          className="text-xs text-[var(--foreground)]/70"
+        >
+          * {SIGNUP_PASSWORD_RULES_HINT}.
+        </p>
+
+        <div>
+          <AuthSubmitButton
+            loading={loading}
+            idleLabel="Sign up"
+            loadingLabel="Creating account..."
+          />
+        </div>
+      </form>
+    </AuthPageShell>
   );
 }

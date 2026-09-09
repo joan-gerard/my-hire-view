@@ -67,9 +67,26 @@ Historical record of refactors already applied to the MyHireView codebase. Open 
 
 ---
 
+### 1.6 DRY: Login / signup pages + show-password (F2)
+
+**Before:** `LoginForm` and `SignUpForm` each owned a full-page layout, error/notice banners, stacked field chrome, and submit button markup. Password fields were plain `type="password"` inputs with no reveal control. Signup helper copy restated the full UTF-8 / special-character rules in the placeholder and under the form.
+
+**After:**
+
+- Shared shell, alerts, submit, and field styles under `components/auth/` (`AuthPageShell`, `AuthAlert`, `AuthSubmitButton`, `auth-form-styles`).
+- Shared `PasswordField` with a show/hide toggle on login and signup (including confirm password).
+- Shorter signup password hint linked to the password field via `*` + `aria-describedby`; full rules stay in validation / API errors.
+
+**Files added:**  
+`components/auth/AuthPageShell.tsx`, `AuthAlert.tsx`, `AuthSubmitButton.tsx`, `PasswordField.tsx`, `auth-form-styles.ts`  
+**Files changed:**  
+`components/auth/LoginForm.tsx`, `components/auth/SignUpForm.tsx`, `lib/validation/auth.ts` (`SIGNUP_PASSWORD_RULES_HINT`).
+
+---
+
 ## 2. Open recommendations
 
-Open follow-ups from this review (login/signup DRY, `withAuth`, API validation, middleware entry, DB/app types, upload error/`handleApiError` adoption, upload UX, central API client, etc.) live in **[Backlog.md](Backlog.md)**. Do not re-list them here.
+Open follow-ups from this review (`withAuth`, API validation, middleware entry, DB/app types, upload error/`handleApiError` adoption, upload UX, central API client, etc.) live in **[Backlog.md](Backlog.md)**. Do not re-list them here.
 
 ---
 
@@ -78,6 +95,7 @@ Open follow-ups from this review (login/signup DRY, `withAuth`, API validation, 
 | Area             | Status                                                                 |
 | ---------------- | ---------------------------------------------------------------------- |
 | Auth API DRY     | Done – shared route client in `lib/supabase/route-client.ts`           |
+| Auth pages DRY   | Done – shared shell, alerts, submit, `PasswordField` show/hide (F2)    |
 | Shareable URL    | Done – `lib/utils/url.ts`                                              |
 | Auth callback    | Done – `await cookies()`                                               |
 | ApplicationCard  | Done – Button + clipboard util                                         |
