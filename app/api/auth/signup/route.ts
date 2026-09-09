@@ -17,12 +17,15 @@ import {
 /** 5 signup attempts per minute per IP to mitigate abuse. */
 const SIGNUP_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 
-/** Same body as a confirmation-required signup — used for duplicates (F1-040). */
-function duplicateSignupResponse(): NextResponse {
-  return NextResponse.json({
+/** Same body + cookies as a confirmation-required signup — used for duplicates (F1-040). */
+function duplicateSignupResponse(cookieJar: NextResponse): NextResponse {
+  const response = NextResponse.json({
     success: true,
     requiresConfirmation: true,
   });
+  // Match confirmation success headers (PKCE verifier) so Set-Cookie cannot enumerate.
+  copyResponseCookies(cookieJar, response);
+  return response;
 }
 
 function isDuplicateSignupError(message: string): boolean {
@@ -46,7 +49,7 @@ function isDuplicateSignupError(message: string): boolean {
  *
  * F1-040 / F1-041: Zod body validation (email format, password ≥ 8 code points +
  * special char); generic Auth errors; duplicate emails return the same 200
- * confirmation response as a new signup (no status-code enumeration).
+ * confirmation response as a new signup (status, body, and Set-Cookie headers).
  */
 export async function POST(request: NextRequest) {
   const rate = await checkRateLimit(request, SIGNUP_RATE_LIMIT);
@@ -109,9 +112,9 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     if (isDuplicateSignupError(error.message)) {
-      // Match confirmation-required success so status/body do not enumerate emails.
+      // Match confirmation-required success so status/body/cookies do not enumerate emails.
       console.warn('[auth/signup] duplicate sign-up masked:', error.message);
-      return duplicateSignupResponse();
+      return duplicateSignupResponse(cookieJar);
     }
     console.warn('[auth/signup] sign-up rejected:', error.message);
     return NextResponse.json({ error: GENERIC_SIGNUP_ERROR }, { status: 400 });
@@ -127,7 +130,7 @@ export async function POST(request: NextRequest) {
     identities.length === 0
   ) {
     console.warn('[auth/signup] obfuscated duplicate sign-up masked');
-    return duplicateSignupResponse();
+    return duplicateSignupResponse(cookieJar);
   }
 
   const userId = data.user?.id;

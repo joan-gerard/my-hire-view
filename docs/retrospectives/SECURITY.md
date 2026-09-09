@@ -27,7 +27,7 @@ MyHireView holds career-sensitive data: CVs, profile pictures, application detai
 | Admin UI without a session | Middleware refreshes session; `/admin` redirects to `/login`; APIs use `requireAuth()` | Middleware / `lib/auth` |
 | Login / signup / logout flooding | Per-IP rate limits (login **15**/min, signup **5**/min, logout **20**/min) | Auth routes + **D3** durable limits |
 | Weak signup passwords | Require ≥ **8** Unicode code points, ≤ **72** UTF-8 bytes, and ≥ **1** special character that is not a Unicode letter, number, or whitespace (client + `POST /api/auth/signup`) | **F1-041** |
-| Auth error messages revealing account existence | Generic client messages for non-duplicate Auth failures; duplicate signup returns the same **200** + `requiresConfirmation` as a new confirmation signup (no status-code enumeration); malformed JSON → **400** | **F1-040** |
+| Auth error messages revealing account existence | Generic client messages for non-duplicate Auth failures; duplicate signup returns the same **200** + `requiresConfirmation` **and** PKCE/`Set-Cookie` headers as a new confirmation signup; malformed JSON → **400** | **F1-040** |
 | Profiles row missing after signup/confirm glitches | Service-role `createInitialProfile`; callback + login bootstrap retries | **C1-009**, **C1-010**, **C1-038** |
 
 ### Database / RLS

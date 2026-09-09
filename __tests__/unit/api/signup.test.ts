@@ -261,6 +261,18 @@ describe("POST /api/auth/signup", () => {
 
   it("returns a confirmation-style 200 when Supabase reports duplicate email (F1-040)", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockCreateSupabaseRouteClient.mockImplementation(
+      ({
+        response,
+      }: {
+        response: { cookies: { set: (n: string, v: string) => void } };
+      }) => {
+        response.cookies.set("sb-test-code-verifier", "pkce-secret");
+        return {
+          auth: { signUp: mockSignUp },
+        };
+      },
+    );
     mockSignUp.mockResolvedValue({
       data: { user: null, session: null },
       error: { message: "User already registered" },
@@ -270,6 +282,9 @@ describe("POST /api/auth/signup", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json).toEqual({ success: true, requiresConfirmation: true });
+    expect(response.cookies.get("sb-test-code-verifier")?.value).toBe(
+      "pkce-secret",
+    );
     expect(mockCreateInitialProfile).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
@@ -277,6 +292,18 @@ describe("POST /api/auth/signup", () => {
 
   it("masks obfuscated duplicate signups (empty identities, no session)", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockCreateSupabaseRouteClient.mockImplementation(
+      ({
+        response,
+      }: {
+        response: { cookies: { set: (n: string, v: string) => void } };
+      }) => {
+        response.cookies.set("sb-test-code-verifier", "pkce-secret");
+        return {
+          auth: { signUp: mockSignUp },
+        };
+      },
+    );
     mockSignUp.mockResolvedValue({
       data: {
         user: { id: "user-1", identities: [] },
@@ -291,6 +318,9 @@ describe("POST /api/auth/signup", () => {
       success: true,
       requiresConfirmation: true,
     });
+    expect(response.cookies.get("sb-test-code-verifier")?.value).toBe(
+      "pkce-secret",
+    );
     expect(mockCreateInitialProfile).not.toHaveBeenCalled();
     warnSpy.mockRestore();
   });
