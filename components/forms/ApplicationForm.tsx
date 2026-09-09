@@ -6,7 +6,11 @@ import type {
   ApplicationFormData,
 } from "@/lib/types/application";
 import type { PrimaryCv } from "@/lib/types/primary-cv";
-import { buildSlug, validateSlugFormat } from "@/lib/utils/slug-generate";
+import {
+  buildSlug,
+  isCustomSlug,
+  validateSlugFormat,
+} from "@/lib/utils/slug-generate";
 import { getApplicationUrl } from "@/lib/utils/url";
 import { useEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
@@ -132,7 +136,17 @@ export default function ApplicationForm({
   const [slugLiveStatus, setSlugLiveStatus] = useState<SlugLiveStatus>({
     kind: "idle",
   });
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  /** Edit: treat a non-derived saved slug as manual so mount auto-rebuild does not wipe it (F14-099). */
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(() =>
+    isCustomSlug(
+      initialData?.slug ?? "",
+      initialData?.company ?? "",
+      initialData?.role ?? "",
+      initialData?.first_name,
+      initialData?.last_name,
+      initialData?.slugNamePosition ?? null,
+    ),
+  );
   const slugManuallyEditedRef = useRef(false);
   slugManuallyEditedRef.current = slugManuallyEdited;
   /** File selected but not yet uploaded (upload happens on submit). */
@@ -818,18 +832,7 @@ export default function ApplicationForm({
             role="alert"
           >
             <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-            <span>
-              {slugLiveStatus.message}
-              {resolveSlugOnCreate &&
-                slugManuallyEdited &&
-                slugLiveStatus.kind === "unavailable" && (
-                  <>
-                    {" "}
-                    If you continue without changing it, save will use an
-                    auto-assigned slug instead.
-                  </>
-                )}
-            </span>
+            <span>{slugLiveStatus.message}</span>
           </p>
         )}
       <p className="text-xs text-(--foreground)/60">

@@ -150,7 +150,7 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 | Area                                                                                              | File(s)                                                          |
 | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Pure slug utilities (`generateSlug`, `buildSlug`, `validateSlugFormat`)                           | `__tests__/unit/lib/utils/slug-generate.test.ts`                 |
+| Pure slug utilities (`generateSlug`, `buildSlug`, `validateSlugFormat`, `isCustomSlug`) | `__tests__/unit/lib/utils/slug-generate.test.ts`                 |
 | Server-side slug helpers (`checkSlugUniqueness`, `validateSlugForApplication`, `reserveBaseSlug`) | `__tests__/unit/lib/utils/slug.test.ts`                          |
 | In-memory / Upstash rate limiter (`rateLimit`, `rateLimitAsync`, `checkRateLimit`, `rateLimit429`, `getClientIdentifier`) | `__tests__/unit/lib/rate-limit.test.ts`                          |
 | Profile flow (GET + PUT `/api/profile`)                                                           | `__tests__/unit/api/profile.test.ts`                             |

@@ -124,26 +124,28 @@ export default function NewApplicationPage() {
       let finalSlug: string;
 
       if (data.slugManuallyEdited === true) {
+        // Manual create: never silently swap to a derived slug (F14-048).
         const trimmed = data.slug.trim();
         const format = validateSlugFormat(trimmed);
-        if (format.ok) {
-          const validateRes = await fetch("/api/slug/validate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ slug: trimmed }),
-          });
-          const validateJson: { ok?: boolean } = await validateRes
-            .json()
-            .catch(() => ({}));
-          if (validateRes.ok && validateJson.ok === true) {
-            finalSlug = trimmed;
-          } else {
-            finalSlug = await reserveSlugFromRole();
-          }
-        } else {
-          finalSlug = await reserveSlugFromRole();
+        if (!format.ok) {
+          throw new Error(format.error);
         }
+        const validateRes = await fetch("/api/slug/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ slug: trimmed }),
+        });
+        const validateJson: { ok?: boolean; error?: string } = await validateRes
+          .json()
+          .catch(() => ({}));
+        if (!(validateRes.ok && validateJson.ok === true)) {
+          throw new Error(
+            validateJson.error ||
+              "This slug is not available. Change it before saving.",
+          );
+        }
+        finalSlug = trimmed;
       } else {
         // Auto: keep the previewed slug (same derivation as the live form), after a
         // final uniqueness check — do not re-derive from visibility-filtered names.
