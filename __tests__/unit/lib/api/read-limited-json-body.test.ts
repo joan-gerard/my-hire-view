@@ -103,4 +103,17 @@ describe("readLimitedJsonBody", () => {
     const result = await readLimitedJsonBody(request, 1024);
     expect(result).toEqual({ ok: false, error: "invalid_json" });
   });
+
+  it("returns invalid_json when the body stream is already locked", async () => {
+    const request = new Request("http://localhost/api", {
+      method: "POST",
+      body: JSON.stringify({ ok: true }),
+      headers: { "Content-Type": "application/json" },
+    });
+    // Lock the body after Request construction (e.g. prior consumer).
+    request.body!.getReader();
+
+    const result = await readLimitedJsonBody(request, 1024);
+    expect(result).toEqual({ ok: false, error: "invalid_json" });
+  });
 });

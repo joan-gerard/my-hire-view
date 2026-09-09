@@ -24,7 +24,14 @@ export async function readLimitedJsonBody(
     return parseJsonBytes(new Uint8Array());
   }
 
-  const reader = stream.getReader();
+  let reader: ReadableStreamDefaultReader<Uint8Array>;
+  try {
+    reader = stream.getReader();
+  } catch {
+    // Body already locked / disturbed — treat as unreadable JSON payload.
+    return { ok: false, error: "invalid_json" };
+  }
+
   const chunks: Uint8Array[] = [];
   let totalBytes = 0;
 
