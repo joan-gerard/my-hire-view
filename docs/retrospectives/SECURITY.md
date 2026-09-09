@@ -26,8 +26,8 @@ MyHireView holds career-sensitive data: CVs, profile pictures, application detai
 | Post-login redirect could be abused as an open redirect | `safeNextPath` allows only safe same-origin relative paths | **A2-016** |
 | Admin UI without a session | Middleware refreshes session; `/admin` redirects to `/login`; APIs use `requireAuth()` | Middleware / `lib/auth` |
 | Login / signup / logout flooding | Per-IP rate limits (login **15**/min, signup **5**/min, logout **20**/min) | Auth routes + **D3** durable limits |
-| Weak signup passwords | Require ≥ **8** characters, ≤ **72** UTF-8 bytes, and ≥ **1** special character that is not a Unicode letter, number, or whitespace (client + `POST /api/auth/signup`) | **F1-041** |
-| Auth error messages revealing account existence | Generic client messages for login/signup Auth failures; provider text logged server-side only; malformed JSON → **400** | **F1-040** |
+| Weak signup passwords | Require ≥ **8** Unicode code points, ≤ **72** UTF-8 bytes, and ≥ **1** special character that is not a Unicode letter, number, or whitespace (client + `POST /api/auth/signup`) | **F1-041** |
+| Auth error messages revealing account existence | Generic client messages for non-duplicate Auth failures; duplicate signup returns the same **200** + `requiresConfirmation` as a new confirmation signup (no status-code enumeration); malformed JSON → **400** | **F1-040** |
 | Profiles row missing after signup/confirm glitches | Service-role `createInitialProfile`; callback + login bootstrap retries | **C1-009**, **C1-010**, **C1-038** |
 
 ### Database / RLS
@@ -96,9 +96,9 @@ Keep these visible so product and engineering share one security story. Status i
 **What we shipped**
 
 - Shared Zod schemas and helpers in `lib/validation/auth.ts`
-- Signup: ≥ 8 characters, ≤ 72 UTF-8 bytes (length short-circuit before encode; no HTML `maxLength` byte illusion), ≥ 1 special char via `/[^\p{L}\p{N}\s]/u`; auth JSON capped at 8 KiB
+- Signup: ≥ 8 Unicode code points, ≤ 72 UTF-8 bytes (length short-circuit before encode; no HTML `maxLength` byte illusion), ≥ 1 special char via `/[^\p{L}\p{N}\s]/u`; auth JSON capped at 8 KiB (streamed bytes, fatal UTF-8); duplicates → confirmation-style **200**
 - Login/signup: email format and max lengths; password max length; malformed JSON → **400**
-- Generic Auth failure messages; unexpected Auth throws logged with a safe client **500**
+- Generic Auth failure messages (non-duplicate); unexpected Auth throws logged with a safe client **500**
 - API contract updated in [API_REFERENCE.md](../API_REFERENCE.md)
 
 ---

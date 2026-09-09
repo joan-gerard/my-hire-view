@@ -130,12 +130,17 @@ function confirmPasswordExceedsMaxBytesMessage(): string {
   return `Confirm password must be at most ${AUTH_PASSWORD_MAX_BYTES} UTF-8 bytes`;
 }
 
+/** Unicode code-point length (astral chars count as one, not two UTF-16 units). */
+export function passwordCodePointLength(password: string): number {
+  return Array.from(password).length;
+}
+
 /**
  * Returns a user-facing password rule error, or null when the password is OK.
  * Shared by the signup form and Zod refine (F1-041).
  */
 export function getSignupPasswordError(password: string): string | null {
-  if (password.length < SIGNUP_PASSWORD_MIN_LENGTH) {
+  if (passwordCodePointLength(password) < SIGNUP_PASSWORD_MIN_LENGTH) {
     return `Password must be at least ${SIGNUP_PASSWORD_MIN_LENGTH} characters`;
   }
   if (passwordExceedsMaxBytes(password)) {

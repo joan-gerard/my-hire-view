@@ -104,6 +104,18 @@ describe("readLimitedJsonBody", () => {
     expect(result).toEqual({ ok: false, error: "invalid_json" });
   });
 
+  it("rejects malformed UTF-8 instead of substituting replacement chars", async () => {
+    const malformed = new Uint8Array([0x7b, 0x22, 0x61, 0x22, 0x3a, 0xff, 0x7d]); // {"a":<bad>}
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(malformed);
+        controller.close();
+      },
+    });
+    const result = await readLimitedJsonBody(requestFromStream(stream), 1024);
+    expect(result).toEqual({ ok: false, error: "invalid_json" });
+  });
+
   it("returns invalid_json when the body stream is already locked", async () => {
     const request = new Request("http://localhost/api", {
       method: "POST",

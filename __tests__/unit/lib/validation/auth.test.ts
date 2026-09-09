@@ -32,6 +32,17 @@ describe("getSignupPasswordError", () => {
     );
   });
 
+  it("rejects astral-only passwords that are under 8 code points", () => {
+    // Four emoji = 8 UTF-16 units but only 4 Unicode characters.
+    expect(getSignupPasswordError("😀😀😀😀")).toContain(
+      `at least ${SIGNUP_PASSWORD_MIN_LENGTH}`,
+    );
+  });
+
+  it("accepts eight code points including astral characters when other rules pass", () => {
+    expect(getSignupPasswordError("😀😀😀😀😀😀😀!")).toBeNull();
+  });
+
   it("rejects passwords without a special character", () => {
     expect(getSignupPasswordError("password1")).toContain("special character");
   });

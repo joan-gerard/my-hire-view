@@ -259,7 +259,7 @@ describe("POST /api/auth/signup", () => {
     expect(mockCreateInitialProfile).toHaveBeenCalledTimes(2);
   });
 
-  it("returns a generic 400 when Supabase signUp fails (F1-040)", async () => {
+  it("returns a confirmation-style 200 when Supabase reports duplicate email (F1-040)", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     mockSignUp.mockResolvedValue({
       data: { user: null, session: null },
@@ -267,10 +267,45 @@ describe("POST /api/auth/signup", () => {
     });
 
     const response = await POST(makeRequest(VALID_BODY));
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json).toEqual({ success: true, requiresConfirmation: true });
+    expect(mockCreateInitialProfile).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it("masks obfuscated duplicate signups (empty identities, no session)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockSignUp.mockResolvedValue({
+      data: {
+        user: { id: "user-1", identities: [] },
+        session: null,
+      },
+      error: null,
+    });
+
+    const response = await POST(makeRequest(VALID_BODY));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      success: true,
+      requiresConfirmation: true,
+    });
+    expect(mockCreateInitialProfile).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it("returns a generic 400 for non-duplicate Auth failures (F1-040)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockSignUp.mockResolvedValue({
+      data: { user: null, session: null },
+      error: { message: "Signup is disabled" },
+    });
+
+    const response = await POST(makeRequest(VALID_BODY));
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toBe(GENERIC_SIGNUP_ERROR);
-    expect(json.error).not.toContain("already registered");
     expect(mockCreateInitialProfile).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();

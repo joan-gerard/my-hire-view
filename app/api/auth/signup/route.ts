@@ -17,6 +17,24 @@ import {
 /** 5 signup attempts per minute per IP to mitigate abuse. */
 const SIGNUP_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 
+/** Same body as a confirmation-required signup — used for duplicates (F1-040). */
+function duplicateSignupResponse(): NextResponse {
+  return NextResponse.json({
+    success: true,
+    requiresConfirmation: true,
+  });
+}
+
+function isDuplicateSignupError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('already registered') ||
+    normalized.includes('already been registered') ||
+    normalized.includes('user already exists') ||
+    normalized.includes('email address is already')
+  );
+}
+
 /**
  * Server-side signup: creates a user, stores first/last name + public_id in Auth
  * user_metadata, creates a profiles row (service role; works with or without a
@@ -26,8 +44,9 @@ const SIGNUP_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
  * be returned so /auth/callback can exchange the email link code later.
  * Immediate-session profile insert failures retry once; login also bootstraps.
  *
- * F1-040 / F1-041: Zod body validation (email format, password ≥ 8 + special
- * char); generic Auth errors; malformed JSON → 400; unexpected Auth failures logged.
+ * F1-040 / F1-041: Zod body validation (email format, password ≥ 8 code points +
+ * special char); generic Auth errors; duplicate emails return the same 200
+ * confirmation response as a new signup (no status-code enumeration).
  */
 export async function POST(request: NextRequest) {
   const rate = await checkRateLimit(request, SIGNUP_RATE_LIMIT);
@@ -89,9 +108,26 @@ export async function POST(request: NextRequest) {
   }
 
   if (error) {
-    // Do not forward provider messages like "User already registered" (F1-040).
+    if (isDuplicateSignupError(error.message)) {
+      // Match confirmation-required success so status/body do not enumerate emails.
+      console.warn('[auth/signup] duplicate sign-up masked:', error.message);
+      return duplicateSignupResponse();
+    }
     console.warn('[auth/signup] sign-up rejected:', error.message);
     return NextResponse.json({ error: GENERIC_SIGNUP_ERROR }, { status: 400 });
+  }
+
+  // When Confirm email is on, Supabase may return an obfuscated user with no
+  // identities for an existing email — treat like a confirmation-required signup.
+  const identities = data.user?.identities;
+  if (
+    data.user &&
+    !data.session &&
+    Array.isArray(identities) &&
+    identities.length === 0
+  ) {
+    console.warn('[auth/signup] obfuscated duplicate sign-up masked');
+    return duplicateSignupResponse();
   }
 
   const userId = data.user?.id;

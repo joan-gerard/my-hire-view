@@ -86,7 +86,8 @@ function parseJsonBytes(
   | { ok: false; error: "invalid_json" } {
   let text: string;
   try {
-    text = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    // Reject malformed UTF-8 rather than substituting U+FFFD into passwords/fields.
+    text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
     return { ok: false, error: "invalid_json" };
   }

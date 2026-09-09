@@ -590,9 +590,9 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 
 - **Auth:** Not required
 - **Rate limit:** **5 / minute / IP**
-- **Body:** `{ email, password, confirmPassword, first_name, last_name }` — all required; email trimmed/valid (max **254**); names trimmed, non-empty, max **100**; `password` and `confirmPassword` must match; password ≥ **8** chars, ≤ **72** UTF-8 bytes, and ≥ **1** special character that is not a Unicode letter, number, or whitespace (F1-041)
-- **Success:** `200` `{ success: true, requiresConfirmation: false }` with cookies when a session is created immediately; or `200` `{ success: true, requiresConfirmation: true }` when email confirmation is required
-- **Errors:** `400` (validation, password rules, mismatch, malformed JSON, or Auth rejection with **generic** message); `413` body too large; `429`; `500` unexpected Auth failure
+- **Body:** `{ email, password, confirmPassword, first_name, last_name }` — all required; email trimmed/valid (max **254**); names trimmed, non-empty, max **100**; `password` and `confirmPassword` must match; password ≥ **8** Unicode code points, ≤ **72** UTF-8 bytes, and ≥ **1** special character that is not a Unicode letter, number, or whitespace (F1-041)
+- **Success:** `200` `{ success: true, requiresConfirmation: false }` with cookies when a session is created immediately; or `200` `{ success: true, requiresConfirmation: true }` when email confirmation is required. **Duplicate / already-registered emails** return the same `200` + `requiresConfirmation: true` body (no session cookies) so status codes do not enumerate accounts (F1-040).
+- **Errors:** `400` (validation, password rules, mismatch, malformed JSON, or non-duplicate Auth rejection with **generic** message); `413` body too large; `429`; `500` unexpected Auth failure
 
 `emailRedirectTo` is set to `{origin}/auth/callback`. First/last name and `public_id` are stored in Auth `user_metadata` and a `profiles` row is created via the service-role helper (`createInitialProfile`) — works with or without an immediate session. When confirmation is required, the response **preserves PKCE cookies** from `signUp` so `/auth/callback` can exchange the email link code. The callback retries `createInitialProfile` idempotently. Immediate-session signups retry once on failure; **login** also bootstraps a missing profiles row (C1-009).
 
@@ -605,7 +605,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 
 - Tight **5/min** rate limit (stricter than login’s **15/min**).
 - Zod body validation (`signupBodySchema`) + shared password helper used by the signup form (F1-040, F1-041). Bodies over **8 KiB** → **413**.
-- Auth rejections (including “already registered”) return a **generic** create-account message so responses do not confirm whether an email exists (F1-040).
+- Auth rejections for **duplicate emails** return the same confirmation-style **200** as a new signup needing email verify (F1-040). Other Auth failures stay a **generic** **400**.
 - Explicit `requiresConfirmation` flag so the UI can guide email-confirm flows.
 - Sets `emailRedirectTo` to `/auth/callback` on the current origin.
 - Seeds Auth `user_metadata` and inserts the initial profiles row (service role; idempotent).
