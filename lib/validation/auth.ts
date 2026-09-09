@@ -30,8 +30,9 @@ export const GENERIC_LOGIN_ERROR = "Invalid email or password";
 export const GENERIC_SIGNUP_ERROR =
   "Unable to create account. If you already have an account, try signing in.";
 
+/** Short UX copy for signup — full rules enforced in validation / API errors. */
 export const SIGNUP_PASSWORD_RULES_HINT =
-  `At least ${SIGNUP_PASSWORD_MIN_LENGTH} characters (max ${AUTH_PASSWORD_MAX_BYTES} UTF-8 bytes), including one special character (not a letter, digit, or space)`;
+  `At least ${SIGNUP_PASSWORD_MIN_LENGTH} characters, including one special character`;
 
 const FIELD_LABELS: Record<string, string> = {
   email: "Email",

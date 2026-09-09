@@ -78,6 +78,7 @@ Open follow-ups from this review (login/signup DRY, `withAuth`, API validation, 
 | Area             | Status                                                                 |
 | ---------------- | ---------------------------------------------------------------------- |
 | Auth API DRY     | Done – shared route client in `lib/supabase/route-client.ts`           |
+| Auth pages DRY   | Done – shared shell, alerts, submit, `PasswordField` show/hide (F2)    |
 | Shareable URL    | Done – `lib/utils/url.ts`                                              |
 | Auth callback    | Done – `await cookies()`                                               |
 | ApplicationCard  | Done – Button + clipboard util                                         |
