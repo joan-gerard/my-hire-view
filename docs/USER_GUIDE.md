@@ -55,7 +55,7 @@ At **Dashboard** (`/admin`) you can:
 4. Fill in the **application form**:
    - **Company name** and **Role/Position** (required).
    - **Name in URL** (optional): choose **None**, **At start** (e.g. `john-doe-acme-software-engineer`), or **At end** (e.g. `acme-software-engineer-john-doe`). The slug preview updates as you type.
-   - **Slug** (used in the URL; auto-generated from company and role, and from your name and position if you chose; you can change it manually).
+   - **Slug** (used in the URL; auto-generated from company and role, and from your name and position if you chose; you can change it manually). Use **Reset to suggested** to go back to the automatic link from the current company, role, and Name in URL choice.
    - **CV**: choose a **primary CV** from your library (preferred) or upload a **tailored** PDF for this application only. Use **Manage library** to upload or delete primary CVs without leaving the page (same library as on Profile).
    - **YouTube URL** for your video pitch.
 5. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy Link** to share it.
@@ -64,7 +64,7 @@ At **Dashboard** (`/admin`) you can:
 
 1. On the dashboard, open the **3-dot menu** on the application card and click **Edit**.
 2. A notice reminds you that candidate details come from when this application was saved — not from your live profile. Changing your profile does not update existing applications.
-3. The form is pre-filled from **that application only** (including which candidate fields are on or off and their values). You can change **Name in URL** (None / At start / At end) when you save. Your profile is not changed when you save.
+3. The form is pre-filled from **that application only** (including which candidate fields are on or off and their values). You can change **Name in URL** (None / At start / At end) when you save. If you previously customized the slug, use **Reset to suggested** to restore the automatic link from company, role, and Name in URL. Your profile is not changed when you save.
 4. Change any fields or toggles, then click **Save Application**.
 
 ### Sharing with recruiters

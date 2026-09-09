@@ -230,7 +230,7 @@ sequenceDiagram
     SlugAPI-->>Form: 409 { error }
     Form->>Form: write derived slug to field, show red collision message
   end
-  Note over Form: Toggling Name in URL resets manual-edit flag and re-triggers this flow
+  Note over Form: Toggling Name in URL or Reset to suggested clears manual-edit flag and re-triggers this flow
 ```
 
 **Manual slug** (user edits the slug field directly):
@@ -325,7 +325,7 @@ sequenceDiagram
 
 ### Notes
 
-**Live slug feedback** — As the user fills in company, role, or changes the **Name in URL** preference, the form debounces a `POST /api/slug` call to check whether the derived slug is already taken. The slug field is updated with the result and a green or red status line appears immediately. When the user edits the slug field manually, format-invalid values are rejected locally; format-valid changes debounce to `POST /api/slug/validate` (requires auth; uniqueness for that specific string).
+**Live slug feedback** — As the user fills in company, role, or changes the **Name in URL** preference, the form debounces a `POST /api/slug` call to check whether the derived slug is already taken. The slug field is updated with the result and a green or red status line appears immediately. **Reset to suggested** (next to the slug field) clears manual mode and re-runs that derivation (F27-101). When the user edits the slug field manually, format-invalid values are rejected locally; format-valid changes debounce to `POST /api/slug/validate` (requires auth; uniqueness for that specific string).
 
 **Slug on Save** — The form makes a final server-side check before submitting. For a **manually edited slug**, `POST /api/slug/validate` is called once more to prevent race conditions. Save stays **blocked** while the live status is taken/invalid — there is no silent auto-assign of a different slug (F14-048). The page then persists the typed slug only when format + validate succeed; otherwise it surfaces an error.
 
@@ -385,29 +385,48 @@ sequenceDiagram
 
 ### 5b. Live slug feedback (while editing)
 
-Format-invalid slug edits are rejected locally (`validateSlugFormat`) with no network call. Format-valid changes to the slug field (including rebuilds from the Name in URL toggle) trigger a debounced `POST /api/slug/validate`. The `excludeId` ensures the user's own current slug is not flagged as taken.
+On load, if the saved slug is not equal to `buildSlug(company, role, …)` (custom slug), the form starts in **manual** mode so auto-rebuild does not overwrite it (F14-099).
+
+**Auto slug** (default, Name in URL toggle, or **Reset to suggested** — F27-101): same path as create — debounced `POST /api/slug` with `excludeId` so the current application’s own slug is not treated as taken. Do **not** use `/api/slug/validate` to derive a slug.
+
+**Manual slug** (user edits the slug field): format-invalid values are rejected locally; format-valid changes debounce to `POST /api/slug/validate` with `excludeId`.
 
 ```mermaid
 sequenceDiagram
   participant U as User
   participant Form as ApplicationForm
+  participant SlugAPI as POST /api/slug
   participant ValidateAPI as POST /api/slug/validate
   participant Applications as applications
 
-  U->>Form: Edit slug field or toggle Name in URL
-  Form->>Form: validateSlugFormat(slug)
-  alt invalid format
-    Form->>Form: show red status (no debounce, no network)
-  else format valid
-    Note over Form: 450ms debounce
-    Form->>ValidateAPI: POST { slug, excludeId } (requireAuth)
-    ValidateAPI->>Applications: checkSlugUniqueness(slug, excludeId)
+  alt auto mode (incl. Reset to suggested / Name in URL)
+    U->>Form: Change company/role, Name in URL, or Reset to suggested
+    Note over Form: clears manual flag; 450ms debounce
+    Form->>SlugAPI: POST { company, role, excludeId, slugNamePosition, first/last? }
+    SlugAPI->>Applications: checkSlugUniqueness(derivedSlug, excludeId)
     alt available
-      ValidateAPI-->>Form: { ok: true }
-      Form->>Form: show green status
+      SlugAPI-->>Form: 200 { slug }
+      Form->>Form: write slug, show green status
     else taken
-      ValidateAPI-->>Form: { ok: false, error }
-      Form->>Form: show red status with error message
+      SlugAPI-->>Form: 409 { error }
+      Form->>Form: write derived slug, show red collision message
+    end
+  else manual mode
+    U->>Form: Edit slug field
+    Form->>Form: validateSlugFormat(slug)
+    alt invalid format
+      Form->>Form: show red status (no network)
+    else format valid
+      Note over Form: 450ms debounce
+      Form->>ValidateAPI: POST { slug, excludeId }
+      ValidateAPI->>Applications: checkSlugUniqueness(slug, excludeId)
+      alt available
+        ValidateAPI-->>Form: { ok: true }
+        Form->>Form: show green status
+      else taken
+        ValidateAPI-->>Form: { ok: false, error }
+        Form->>Form: show red status
+      end
     end
   end
 ```
@@ -465,7 +484,7 @@ sequenceDiagram
 
 ### Notes
 
-**Live slug feedback** — Format-invalid slug edits are rejected locally; format-valid changes trigger a debounced `POST /api/slug/validate` (requires auth). The `excludeId` parameter ensures the application's own current slug is never flagged as taken. A green or red status line appears in real time. On load, if the saved slug is not equal to `buildSlug(company, role, …)` (custom slug), the form starts in **manual** mode so auto-rebuild does not overwrite it (F14-099). Toggling **Name in URL** still resets to auto mode.
+**Live slug feedback** — In **auto** mode (including after **Reset to suggested** or toggling **Name in URL**), the form debounces `POST /api/slug` with `excludeId` (F27-101) — same derivation path as create. In **manual** mode, format-invalid edits are rejected locally; format-valid changes debounce to `POST /api/slug/validate` with `excludeId`. On load, if the saved slug is not equal to `buildSlug(company, role, …)` (custom slug), the form starts in **manual** mode so auto-rebuild does not overwrite it (F14-099).
 
 **Slug on Save** — The form makes a **final `POST /api/slug/validate`** (with `excludeId`) before uploading the CV. This catches any race where the slug became taken between the last debounced check and clicking Save. When the user **manually edited** the slug, the edit page keeps that typed value (same as create). Otherwise, if the slug or **Name in URL** preference changed relative to what was stored, the edit page calls `POST /api/slug` (`reserveBaseSlug`) with `excludeId`. If that derived slug is taken by another application, the API returns **409** — no numeric suffix is appended.
 
@@ -558,6 +577,7 @@ Candidate fields on the application are either supplied by the form (with toggle
 | 11 | User types a slug that is available | Green "This slug is available." shown. |
 | 12 | Session expires while user is filling the form | `POST /api/slug/validate` returns 401; red "Sign in again to check slug availability." shown. |
 | 13 | User toggles Name in URL (None → At start/end → None) | `slugManuallyEdited` is reset to `false`; auto slug mode re-activates and `POST /api/slug` fires again from the current company/role values. |
+| 13b | User clicks **Reset to suggested** (create or edit) | Same as 13: clears manual mode and re-derives via `buildSlug` + `POST /api/slug` (`excludeId` on edit). Preview URL updates. Needed after F14-099 so custom slugs have an explicit way back to the automatic suggestion (F27-101). |
 
 ### 8.3 Slug: on Save (auto mode)
 

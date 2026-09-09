@@ -149,6 +149,11 @@ export default function ApplicationForm({
   );
   const slugManuallyEditedRef = useRef(false);
   slugManuallyEditedRef.current = slugManuallyEdited;
+  /**
+   * Bumped by "Reset to suggested" so auto-reserve re-runs even when already
+   * in auto mode (F27-101).
+   */
+  const [slugAutoReserveNonce, setSlugAutoReserveNonce] = useState(0);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
   const isSubmittingRef = useRef(false);
@@ -352,8 +357,22 @@ export default function ApplicationForm({
     setSlugManuallyEdited(false);
   };
 
+  /**
+   * Exit manual slug mode and re-derive from company + role + Name in URL
+   * via POST /api/slug (create and edit; excludeId on edit) — F27-101.
+   */
+  const handleResetSlugToSuggested = () => {
+    setSlugManuallyEdited(false);
+    setSlugAutoReserveNonce((n) => n + 1);
+  };
+
+  /** Create or edit: auto mode uses POST /api/slug (not local-only buildSlug). */
+  const shouldAutoReserveSlug =
+    !slugManuallyEdited &&
+    (resolveSlugOnCreate || Boolean(slugExcludeApplicationId));
+
   useEffect(() => {
-    if (resolveSlugOnCreate && !slugManuallyEdited) {
+    if (shouldAutoReserveSlug) {
       return;
     }
     if (!slugManuallyEdited && formData.company && formData.role) {
@@ -373,13 +392,16 @@ export default function ApplicationForm({
     formData.last_name,
     slugNamePosition,
     slugManuallyEdited,
-    resolveSlugOnCreate,
+    shouldAutoReserveSlug,
   ]);
 
-  /** New application, auto slug: POST /api/slug returns the derived slug if it is still available. */
+  /**
+   * Auto slug (create + edit): POST /api/slug returns the derived slug if available.
+   * Edit passes excludeId so the current application’s own slug is not treated as taken.
+   */
   useEffect(() => {
     let cancelled = false;
-    if (!resolveSlugOnCreate || slugManuallyEdited) {
+    if (!shouldAutoReserveSlug) {
       return () => {
         cancelled = true;
       };
@@ -412,6 +434,9 @@ export default function ApplicationForm({
             company: formData.company,
             role: formData.role,
             slugNamePosition: slugNamePosition ?? null,
+            ...(slugExcludeApplicationId
+              ? { excludeId: slugExcludeApplicationId }
+              : {}),
             ...((slugNamePosition === "start" || slugNamePosition === "end") && {
               first_name: formData.first_name ?? undefined,
               last_name: formData.last_name ?? undefined,
@@ -457,8 +482,9 @@ export default function ApplicationForm({
       window.clearTimeout(timer);
     };
   }, [
-    resolveSlugOnCreate,
-    slugManuallyEdited,
+    shouldAutoReserveSlug,
+    slugAutoReserveNonce,
+    slugExcludeApplicationId,
     formData.company,
     formData.role,
     formData.first_name,
@@ -467,7 +493,7 @@ export default function ApplicationForm({
   ]);
 
   const runManualSlugValidate =
-    serverSlugValidation || (resolveSlugOnCreate && slugManuallyEdited);
+    slugManuallyEdited && (serverSlugValidation || resolveSlugOnCreate);
 
   useEffect(() => {
     let cancelled = false;
@@ -513,7 +539,8 @@ export default function ApplicationForm({
           .json()
           .catch(() => ({}));
         if (cancelled) return;
-        if (resolveSlugOnCreate && !slugManuallyEditedRef.current) return;
+        // Discard if the user left manual mode (e.g. Reset to suggested / Name in URL).
+        if (!slugManuallyEditedRef.current) return;
         if (res.status === 401) {
           setSlugLiveStatus({
             kind: "unavailable",
@@ -556,7 +583,6 @@ export default function ApplicationForm({
     formData.slug,
     slugExcludeApplicationId,
     runManualSlugValidate,
-    resolveSlugOnCreate,
   ]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -791,17 +817,35 @@ export default function ApplicationForm({
         onChange={handleSlugNamePositionChange}
       />
 
-      <Input
-        label="Slug *"
-        value={formData.slug}
-        onChange={(e) => {
-          setFormData((prev) => ({ ...prev, slug: e.target.value }));
-          setSlugManuallyEdited(true);
-        }}
-        error={errors.slug}
-        placeholder="auto-generated-slug"
-        required
-      />
+      <div>
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <label
+            htmlFor="application-slug"
+            className="block text-sm font-medium text-foreground"
+          >
+            Slug *
+          </label>
+          <button
+            type="button"
+            onClick={handleResetSlugToSuggested}
+            disabled={!hasCompany || !hasRole || loading}
+            className="text-sm font-medium text-(--brand-primary) hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+          >
+            Reset to suggested
+          </button>
+        </div>
+        <Input
+          id="application-slug"
+          value={formData.slug}
+          onChange={(e) => {
+            setFormData((prev) => ({ ...prev, slug: e.target.value }));
+            setSlugManuallyEdited(true);
+          }}
+          error={errors.slug}
+          placeholder="auto-generated-slug"
+          required
+        />
+      </div>
       {slugLiveStatus.kind === "checking" && (
         <p
           className="flex items-center gap-1.5 text-xs text-(--foreground)/60"
