@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { readLimitedJsonBody } from '@/lib/api/read-limited-json-body';
 import { createInitialProfile } from '@/lib/auth/create-initial-profile';
 import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import {
@@ -6,11 +7,36 @@ import {
   createSupabaseRouteClient,
 } from '@/lib/supabase/route-client';
 import { generatePublicId } from '@/lib/utils/public-id';
+import {
+  AUTH_REQUEST_BODY_MAX_BYTES,
+  formatSignupZodError,
+  GENERIC_SIGNUP_ERROR,
+  signupBodySchema,
+} from '@/lib/validation/auth';
 
 /** 5 signup attempts per minute per IP to mitigate abuse. */
 const SIGNUP_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 
-const MIN_PASSWORD_LENGTH = 6;
+/** Same body + cookies as a confirmation-required signup — used for duplicates (F1-040). */
+function duplicateSignupResponse(cookieJar: NextResponse): NextResponse {
+  const response = NextResponse.json({
+    success: true,
+    requiresConfirmation: true,
+  });
+  // Match confirmation success headers (PKCE verifier) so Set-Cookie cannot enumerate.
+  copyResponseCookies(cookieJar, response);
+  return response;
+}
+
+function isDuplicateSignupError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('already registered') ||
+    normalized.includes('already been registered') ||
+    normalized.includes('user already exists') ||
+    normalized.includes('email address is already')
+  );
+}
 
 /**
  * Server-side signup: creates a user, stores first/last name + public_id in Auth
@@ -20,48 +46,38 @@ const MIN_PASSWORD_LENGTH = 6;
  * When confirmation is required, PKCE cookies written during signUp must still
  * be returned so /auth/callback can exchange the email link code later.
  * Immediate-session profile insert failures retry once; login also bootstraps.
+ *
+ * F1-040 / F1-041: Zod body validation (email format, password ≥ 8 code points +
+ * special char); generic Auth errors; duplicate emails return the same 200
+ * confirmation response as a new signup (status, body, and Set-Cookie headers).
  */
 export async function POST(request: NextRequest) {
   const rate = await checkRateLimit(request, SIGNUP_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
-  const body = await request.json();
-  const email = typeof body?.email === 'string' ? body.email.trim() : '';
-  const password = typeof body?.password === 'string' ? body.password : '';
-  const confirmPassword =
-    typeof body?.confirmPassword === 'string' ? body.confirmPassword : '';
-  const first_name =
-    typeof body?.first_name === 'string' ? body.first_name.trim() : '';
-  const last_name =
-    typeof body?.last_name === 'string' ? body.last_name.trim() : '';
+  const bodyResult = await readLimitedJsonBody(
+    request,
+    AUTH_REQUEST_BODY_MAX_BYTES,
+  );
+  if (!bodyResult.ok) {
+    if (bodyResult.error === 'too_large') {
+      return NextResponse.json(
+        { error: 'Request body too large' },
+        { status: 413 },
+      );
+    }
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+  const raw = bodyResult.value;
 
-  if (!email || !password) {
+  const parsed = signupBodySchema.safeParse(raw);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: 'Email and password are required' },
-      { status: 400 }
+      { error: formatSignupZodError(parsed.error) },
+      { status: 400 },
     );
   }
-
-  if (!first_name || !last_name) {
-    return NextResponse.json(
-      { error: 'First name and last name are required' },
-      { status: 400 }
-    );
-  }
-
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return NextResponse.json(
-      { error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` },
-      { status: 400 }
-    );
-  }
-
-  if (password !== confirmPassword) {
-    return NextResponse.json(
-      { error: 'Passwords do not match' },
-      { status: 400 }
-    );
-  }
+  const { email, password, first_name, last_name } = parsed.data;
 
   // Placeholder response so the route client can attach auth/PKCE cookies.
   const cookieJar = NextResponse.json({ ok: true });
@@ -73,17 +89,48 @@ export async function POST(request: NextRequest) {
 
   const public_id = generatePublicId();
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-      data: { first_name, last_name, public_id },
-    },
-  });
+  let data;
+  let error;
+  try {
+    const result = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${origin}/auth/callback`,
+        data: { first_name, last_name, public_id },
+      },
+    });
+    data = result.data;
+    error = result.error;
+  } catch (err) {
+    console.error('[auth/signup] unexpected Auth API failure:', err);
+    return NextResponse.json(
+      { error: 'Something went wrong. Please try again.' },
+      { status: 500 },
+    );
+  }
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    if (isDuplicateSignupError(error.message)) {
+      // Match confirmation-required success so status/body/cookies do not enumerate emails.
+      console.warn('[auth/signup] duplicate sign-up masked:', error.message);
+      return duplicateSignupResponse(cookieJar);
+    }
+    console.warn('[auth/signup] sign-up rejected:', error.message);
+    return NextResponse.json({ error: GENERIC_SIGNUP_ERROR }, { status: 400 });
+  }
+
+  // When Confirm email is on, Supabase may return an obfuscated user with no
+  // identities for an existing email — treat like a confirmation-required signup.
+  const identities = data.user?.identities;
+  if (
+    data.user &&
+    !data.session &&
+    Array.isArray(identities) &&
+    identities.length === 0
+  ) {
+    console.warn('[auth/signup] obfuscated duplicate sign-up masked');
+    return duplicateSignupResponse(cookieJar);
   }
 
   const userId = data.user?.id;

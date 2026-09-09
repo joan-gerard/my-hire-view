@@ -1,8 +1,9 @@
 /**
- * Tests for /api/auth/login — credentials, session, and profile bootstrap (C1-009).
+ * Tests for /api/auth/login — validation (F1-040), session, and profile bootstrap.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { GENERIC_LOGIN_ERROR } from "@/lib/validation/auth";
 
 const {
   mockCheckRateLimit,
@@ -35,10 +36,10 @@ vi.mock("@/lib/auth/bootstrap-initial-profile", () => ({
 
 import { POST } from "@/app/api/auth/login/route";
 
-function makeRequest(body: object): NextRequest {
+function makeRequest(body: object | string): NextRequest {
   return new NextRequest("http://localhost/api/auth/login", {
     method: "POST",
-    body: JSON.stringify(body),
+    body: typeof body === "string" ? body : JSON.stringify(body),
     headers: { "Content-Type": "application/json" },
   });
 }
@@ -63,7 +64,36 @@ describe("POST /api/auth/login", () => {
     expect(mockSignInWithPassword).not.toHaveBeenCalled();
   });
 
-  it("returns 401 when credentials are invalid", async () => {
+  it("returns 400 for malformed JSON (F1-040)", async () => {
+    const response = await POST(makeRequest("{not-json"));
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toBe("Invalid JSON body");
+    expect(mockSignInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("returns 413 when the request body is too large", async () => {
+    const response = await POST(
+      new NextRequest("http://localhost/api/auth/login", {
+        method: "POST",
+        body: "x".repeat(10_000),
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    expect(response.status).toBe(413);
+    expect(mockSignInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for invalid email format (F1-040)", async () => {
+    const response = await POST(
+      makeRequest({ email: "not-an-email", password: "secret1!" }),
+    );
+    expect(response.status).toBe(400);
+    expect(mockSignInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("returns a generic 401 when credentials are invalid (F1-040)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     mockSignInWithPassword.mockResolvedValue({
       data: { user: null, session: null },
       error: { message: "Invalid login credentials" },
@@ -73,22 +103,45 @@ describe("POST /api/auth/login", () => {
       makeRequest({ email: "a@b.com", password: "wrong" }),
     );
     expect(response.status).toBe(401);
+    const json = await response.json();
+    expect(json.error).toBe(GENERIC_LOGIN_ERROR);
     expect(mockBootstrapInitialProfile).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it("returns 500 and logs when Auth sign-in throws (F1-040)", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockSignInWithPassword.mockRejectedValue(new Error("network down"));
+
+    const response = await POST(
+      makeRequest({ email: "a@b.com", password: "secret1!" }),
+    );
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Something went wrong. Please try again.");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[auth/login] unexpected Auth API failure:",
+      expect.any(Error),
+    );
+    errorSpy.mockRestore();
   });
 
   it("returns 500 when sign-in succeeds without a session", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockSignInWithPassword.mockResolvedValue({
       data: { user: { id: "user-1" }, session: null },
       error: null,
     });
 
     const response = await POST(
-      makeRequest({ email: "a@b.com", password: "secret1" }),
+      makeRequest({ email: "a@b.com", password: "secret1!" }),
     );
     expect(response.status).toBe(500);
     const json = await response.json();
     expect(json.error).toBe("Failed to create session");
     expect(mockBootstrapInitialProfile).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 
   it("bootstraps the profiles row after a successful login", async () => {
@@ -106,7 +159,7 @@ describe("POST /api/auth/login", () => {
     });
 
     const response = await POST(
-      makeRequest({ email: "jane@example.com", password: "secret1" }),
+      makeRequest({ email: "jane@example.com", password: "secret1!" }),
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true });
@@ -131,7 +184,7 @@ describe("POST /api/auth/login", () => {
     });
 
     const response = await POST(
-      makeRequest({ email: "jane@example.com", password: "secret1" }),
+      makeRequest({ email: "jane@example.com", password: "secret1!" }),
     );
     expect(response.status).toBe(200);
     expect(mockBootstrapInitialProfile).toHaveBeenCalledWith(sessionUser);
@@ -147,7 +200,7 @@ describe("POST /api/auth/login", () => {
     });
 
     const response = await POST(
-      makeRequest({ email: "jane@example.com", password: "secret1" }),
+      makeRequest({ email: "jane@example.com", password: "secret1!" }),
     );
     expect(response.status).toBe(200);
     expect(mockBootstrapInitialProfile).not.toHaveBeenCalled();
@@ -166,7 +219,7 @@ describe("POST /api/auth/login", () => {
     });
 
     const response = await POST(
-      makeRequest({ email: "jane@example.com", password: "secret1" }),
+      makeRequest({ email: "jane@example.com", password: "secret1!" }),
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true });
@@ -185,7 +238,7 @@ describe("POST /api/auth/login", () => {
     mockBootstrapInitialProfile.mockResolvedValue({ error: "db down" });
 
     const response = await POST(
-      makeRequest({ email: "jane@example.com", password: "secret1" }),
+      makeRequest({ email: "jane@example.com", password: "secret1!" }),
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true });
@@ -200,7 +253,7 @@ describe("POST /api/auth/login", () => {
     mockBootstrapInitialProfile.mockRejectedValue(new Error("env missing"));
 
     const response = await POST(
-      makeRequest({ email: "jane@example.com", password: "secret1" }),
+      makeRequest({ email: "jane@example.com", password: "secret1!" }),
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true });
