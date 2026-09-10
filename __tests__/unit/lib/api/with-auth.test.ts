@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextResponse } from "next/server";
 
-const { mockGetUser } = vi.hoisted(() => ({
-  mockGetUser: vi.fn(),
+const { mockGetSessionUser } = vi.hoisted(() => ({
+  mockGetSessionUser: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
-  getUser: mockGetUser,
+  getSessionUser: mockGetSessionUser,
 }));
 
 import { withAuth } from "@/lib/api/with-auth";
@@ -15,7 +15,7 @@ describe("withAuth", () => {
   let errorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    mockGetUser.mockReset();
+    mockGetSessionUser.mockReset();
     errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
@@ -25,7 +25,7 @@ describe("withAuth", () => {
 
   it("returns { ok: true, user } when a session exists", async () => {
     const user = { id: "user-abc", email: "a@b.com" };
-    mockGetUser.mockResolvedValue(user);
+    mockGetSessionUser.mockResolvedValue(user);
 
     const result = await withAuth();
 
@@ -33,7 +33,7 @@ describe("withAuth", () => {
   });
 
   it("returns 401 Unauthorized when there is no session", async () => {
-    mockGetUser.mockResolvedValue(null);
+    mockGetSessionUser.mockResolvedValue(null);
 
     const result = await withAuth();
 
@@ -47,9 +47,9 @@ describe("withAuth", () => {
     });
   });
 
-  it("returns JSON 500 when getUser fails (Auth outage)", async () => {
+  it("returns JSON 500 when getSessionUser fails (Auth outage)", async () => {
     const cause = new Error("supabase unavailable");
-    mockGetUser.mockRejectedValue(cause);
+    mockGetSessionUser.mockRejectedValue(cause);
 
     const result = await withAuth();
 

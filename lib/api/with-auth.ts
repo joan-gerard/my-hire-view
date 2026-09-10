@@ -1,6 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { getUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api/handle-api-error";
 
 export type AuthOk = { ok: true; user: User };
@@ -20,7 +20,7 @@ export type AuthResult = AuthOk | AuthFail;
  */
 export async function withAuth(): Promise<AuthResult> {
   try {
-    const user = await getUser();
+    const user = await getSessionUser();
     if (!user) {
       return {
         ok: false,

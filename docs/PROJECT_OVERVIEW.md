@@ -63,8 +63,8 @@ lib/
   api/               — client-side API call helpers
   types/             — TypeScript types including database.ts
   utils/             — slug, URL, YouTube, CV storage helpers
-  auth.ts            — getUser(), requireAuth() (pages/layouts)
-  api/with-auth.ts   — withAuth() for API routes (401 JSON, no redirect)
+  auth.ts            — getUser() (soft/optional UI), getSessionUser() / requireAuth() (pages)
+  api/with-auth.ts   — withAuth() for API routes (401 / 500 JSON, no redirect)
   rate-limit.ts      — Upstash Redis rate limiting (in-memory fallback)
 
 hooks/
@@ -132,7 +132,7 @@ RLS policies protect all tables. The service-role Supabase client is used server
 
 - **Supabase Auth** with email/password; sessions stored in HTTP cookies via `@supabase/ssr`.
 - `**proxy.ts`\*\* refreshes the session and guards all `/admin` routes.
-- `**withAuth()**` in `lib/api/with-auth.ts` is used inside API route handlers to get the authenticated user (or return **401**). `**requireAuth()**` in `lib/auth.ts` remains for pages/layouts (redirect to `/login`).
+- `**withAuth()**` in `lib/api/with-auth.ts` is used inside API route handlers to get the authenticated user (or return **401** / Auth-outage **500**). `**requireAuth()**` / `**getSessionUser()**` in `lib/auth.ts` are for pages that need a real session check; soft `**getUser()**` is for optional UI (marketing) and never throws.
 - **RLS** on `applications` and `profiles` enforces data isolation at the database level (owners only; public share pages resolve server-side via the service-role client, not an open anon SELECT).
 - **Public read** of applications by slug is permitted (recruiter view requires no login).
 

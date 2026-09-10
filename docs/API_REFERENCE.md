@@ -43,7 +43,7 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 ## Conventions
 
 - **Base path** — All routes are under `/api/…` on the same origin as the app.
-- **Auth** — Session cookies (Supabase SSR). Handlers that need a user call `withAuth()` from `lib/api/with-auth.ts`: no session → **401** `{ error: "Unauthorized" }`; Auth lookup failure (outage) → **500** via `handleApiError` (not mislabeled as unauthorized). Pages/layouts still use `requireAuth()` from `lib/auth.ts` (redirect to `/login`). `getUser()` treats `AuthSessionMissingError` as signed out; other Auth errors are thrown.
+- **Auth** — Session cookies (Supabase SSR). Handlers that need a user call `withAuth()` from `lib/api/with-auth.ts` (via `getSessionUser()`): no session → **401** `{ error: "Unauthorized" }`; Auth lookup failure (outage) → **500** via `handleApiError` (not mislabeled as unauthorized). Pages/layouts that require a session use `requireAuth()` (redirect to `/login` on missing session; Auth outages propagate). Optional UI (e.g. marketing header) uses soft `getUser()` which returns `null` on missing session **or** Auth outage so public pages stay up.
 - **Content type** — JSON bodies unless noted (`multipart/form-data` for uploads).
 - **Success shape** — Often `{ data }` or `{ success: true }`. Endpoint sections below list specifics.
 - **Error shape** — `{ error: string }` (some endpoints also return `{ ok: false, error }`).
