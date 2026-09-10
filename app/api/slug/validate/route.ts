@@ -1,4 +1,4 @@
-import { requireAuth } from "@/lib/auth";
+import { withAuth } from "@/lib/api/with-auth";
 import {
   checkRateLimit,
   rateLimit429,
@@ -20,12 +20,9 @@ export async function POST(request: NextRequest) {
   const rate = await checkRateLimit(request, SLUG_VALIDATE_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
-  let user;
-  try {
-    user = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   try {
     let raw: unknown;

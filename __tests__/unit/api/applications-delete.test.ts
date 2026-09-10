@@ -10,20 +10,21 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { authOk, authUnauthorized } from "../../helpers/auth-mock";
 
 const {
-  mockRequireAuth,
+  mockWithAuth,
   mockCreateClient,
   mockCheckRateLimit,
   mockDeleteCvIfOurs,
 } = vi.hoisted(() => ({
-  mockRequireAuth: vi.fn(),
+  mockWithAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockDeleteCvIfOurs: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
+vi.mock("@/lib/api/with-auth", () => ({ withAuth: mockWithAuth }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mockCreateClient }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
@@ -65,7 +66,7 @@ function makeDeleteRequest(id: string | null): NextRequest {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockRequireAuth.mockResolvedValue(MOCK_USER);
+  mockWithAuth.mockResolvedValue(authOk(MOCK_USER));
   mockCheckRateLimit.mockReturnValue({
     success: true,
     remaining: 59,
@@ -171,7 +172,7 @@ describe("DELETE /api/applications", () => {
   });
 
   it("returns 401 when not authenticated", async () => {
-    mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
+    mockWithAuth.mockResolvedValue(authUnauthorized());
 
     const response = await DELETE(makeDeleteRequest(APP_ID));
     expect(response.status).toBe(401);

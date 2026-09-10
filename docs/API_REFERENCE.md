@@ -43,7 +43,7 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 ## Conventions
 
 - **Base path** — All routes are under `/api/…` on the same origin as the app.
-- **Auth** — Session cookies (Supabase SSR). Handlers that need a user call `requireAuth()` from `lib/auth.ts` and return **401** `{ error: "Unauthorized" }` when there is no session.
+- **Auth** — Session cookies (Supabase SSR). Handlers that need a user call `withAuth()` from `lib/api/with-auth.ts` and return its **401** `{ error: "Unauthorized" }` when there is no session. Pages/layouts still use `requireAuth()` from `lib/auth.ts` (redirect to `/login`).
 - **Content type** — JSON bodies unless noted (`multipart/form-data` for uploads).
 - **Success shape** — Often `{ data }` or `{ success: true }`. Endpoint sections below list specifics.
 - **Error shape** — `{ error: string }` (some endpoints also return `{ ok: false, error }`).
@@ -52,7 +52,7 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 
 Related deep-dives: [PDF_AND_R2.md](PDF_AND_R2.md) (CV upload), [PROFILE_PICTURE.md](PROFILE_PICTURE.md), [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
 
-Cross-cutting already in place on many routes: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` (optional log-only `meta`) on public application routes and by-id GET. Open cross-cutting work (`withAuth`, remaining validation, upload observability, etc.) is tracked in [Backlog.md](Backlog.md). Historical refactors: [CODE_REVIEW.md](CODE_REVIEW.md).
+Cross-cutting already in place on many routes: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` (optional log-only `meta`) on public application routes and by-id GET; `withAuth` in `lib/api/with-auth.ts` so missing sessions stay **401** and are not mislabeled as unauthorized when later work fails. Open cross-cutting work (remaining validation, upload observability, etc.) is tracked in [Backlog.md](Backlog.md). Historical refactors: [CODE_REVIEW.md](CODE_REVIEW.md).
 
 ---
 
@@ -125,7 +125,7 @@ TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_
 
 - Requires auth; scoped to `user_id` so users only see their own rows.
 - Rate limited (default 60/min) before auth/query work.
-- Dedicated auth try/catch → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
+- Dedicated `withAuth` → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
 - Offset pagination with default page size **20** (max **50**) and `meta.total` for UI pagers.
 - Optional server-side `q` search so pagination and filtering stay consistent.
 - Stable ordering (`created_at` descending) for the dashboard.
@@ -153,7 +153,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 - Auth required; inserts always set `user_id` from the session (not the client body).
 - Rate limited.
-- Dedicated auth try/catch → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
+- Dedicated `withAuth` → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
 - **Schema validation** (`applicationCreateSchema` in `lib/validation/application.ts`): required trimmed strings; http(s) URLs for `cv_url` / `video_url` / optional portfolio / LinkedIn; slug format via `validateSlugFormat`; enums/booleans; rejects unexpected keys; `primary_cv_id` UUID required when `cv_type` is `"primary"`. Invalid bodies return clear **400** `{ error }` before any insert.
 - Profile snapshot / fallback for candidate fields keeps recruiter data on the application row.
 - Avatar preference is a boolean only — no denormalized picture URL on the application row.
@@ -180,7 +180,7 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 
 **What works**
 
-- Auth required; dedicated auth try/catch → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
+- Auth required; dedicated `withAuth` → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
 - Rate limited.
 - **Schema validation** (`applicationUpdateSchema`): UUID `id`; optional trimmed fields / http(s) URLs / slug format; enums; rejects unexpected keys (blocks mass-assignment of `user_id`, counters, etc.). When `cv_type` is `"primary"`, `primary_cv_id` may be omitted (route reuses the row’s existing id); explicit `null` is rejected.
 - Ownership check before update; **404** when missing or not owned.
@@ -209,7 +209,7 @@ Hard-delete an application and its tailored CV object in R2 (when the URL belong
 
 **What works**
 
-- Auth required; dedicated auth try/catch → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
+- Auth required; dedicated `withAuth` → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
 - Rate limited.
 - Validates `id` as a UUID before querying (**400** if missing or malformed).
 - Ownership check before delete; **404** when missing or not owned.
@@ -354,7 +354,7 @@ Return the current user’s profile. **Read-only** — does not create a row. If
 - Distinguishes “no row” (`404`) from other DB errors (`500`).
 - Profiles are normally created at signup; GET never creates a row.
 - Rate limited (default 60/min) before auth/query work.
-- Dedicated auth try/catch → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
+- Dedicated `withAuth` → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
 
 ---
 
@@ -377,7 +377,7 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 - Omitted `first_name` / `last_name` / `public_id` are seeded from Auth `user_metadata` when the profiles value is missing or blank (picture-only create/repair); body and metadata-seeded names are capped at **100** characters (legacy over-long stored names are left as-is).
 - Deletes previous Storage object after successful write when the URL changes; surfaces partial failures as `warnings`.
 - No applications fan-out for picture URLs (live profile read on view).
-- Dedicated auth try/catch → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
+- Dedicated `withAuth` → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
 - Syncs Auth `user_metadata` (`first_name`, `last_name`, `public_id`) when DB names change or Auth `public_id` is out of sync; sync failures become `warnings` while still returning **200** + `data`. Names written to Auth are truncated to **100** characters so metadata never holds an over-long seed (legacy over-long profiles values may still differ until the user edits them).
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.

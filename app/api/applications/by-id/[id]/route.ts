@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { requireAuth } from '@/lib/auth';
 import { checkCvObjectExists } from '@/lib/utils/cv-storage';
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from '@/lib/rate-limit';
 import { handleApiError } from '@/lib/api/handle-api-error';
+import { withAuth } from '@/lib/api/with-auth';
 
 /**
  * GET a single application by id. Requires auth; returns 404 if not found or not owned by user.
@@ -18,12 +18,9 @@ export async function GET(
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
-  let user;
-  try {
-    user = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   try {
     const { id: rawId } = await params;

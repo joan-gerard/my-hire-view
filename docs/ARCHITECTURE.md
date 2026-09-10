@@ -95,7 +95,7 @@ flowchart LR
   end
 
   subgraph Lib["Shared lib"]
-    Auth[requireAuth, getUser]
+    Auth[withAuth, requireAuth, getUser]
     SupabaseClients[Supabase: server, route-client, middleware]
     Utils[url, slug, youtube, clipboard]
     Types[application, database types]
@@ -277,7 +277,7 @@ sequenceDiagram
   SlugAPI->>Supa: check uniqueness, generate slug
   SlugAPI-->>Form: { slug }
   Form->>AppsAPI: POST { company, role, slug, cv_url, video_url, ... }
-  AppsAPI->>AppsAPI: requireAuth()
+  AppsAPI->>AppsAPI: withAuth()
   AppsAPI->>Supa: select profile by user_id
   Supa-->>AppsAPI: profile (first_name, last_name, location, portfolio_url, linkedin_url)
   AppsAPI->>AppsAPI: merge profile snapshot into insert
@@ -337,7 +337,7 @@ View count and `last_viewed_at` are only updated when the viewer is not the appl
 
 ## 7. Security Summary
 
-- **Auth:** Supabase handles passwords and sessions; middleware protects `/admin`; API routes use `requireAuth()` where needed.
+- **Auth:** Supabase handles passwords and sessions; middleware protects `/admin`; API routes use `withAuth()` where needed; pages/layouts use `requireAuth()`.
 - **Data:** RLS ensures users only read/modify their own applications; public share URLs are served by Next.js APIs that resolve via the service-role client (not an open anon SELECT policy).
 - **Upload:** PDF-only, size limit; `POST /api/upload` requires auth and an idempotency key. Profile pictures use a separate authenticated upload to Supabase Storage.
 - **Slug:** Unique per application; generation is deterministic from company/role with collision handling; no sensitive data in slug. `POST /api/slug` is currently unauthenticated (consider tightening); `POST /api/slug/validate` requires auth.
@@ -371,7 +371,8 @@ my-hire-view/
 ├── hooks/                      # useApplications (admin dashboard state + API)
 ├── lib/
 │   ├── api/                    # applications (client: fetch, delete, archive, restore)
-│   ├── auth.ts                 # getUser, requireAuth
+│   ├── auth.ts                 # getUser, requireAuth (pages)
+│   ├── api/with-auth.ts        # withAuth (API routes → 401 JSON)
 │   ├── supabase/               # server, route-client, middleware, client, env
 │   ├── types/                  # application, profile, database
 │   └── utils/                  # url, slug, slug-generate, youtube, clipboard

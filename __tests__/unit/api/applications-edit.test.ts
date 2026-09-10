@@ -21,9 +21,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { authOk, authUnauthorized } from "../../helpers/auth-mock";
 
 const {
-  mockRequireAuth,
+  mockWithAuth,
   mockCreateClient,
   mockCheckRateLimit,
   mockDeleteCvIfOurs,
@@ -34,7 +35,7 @@ const {
   mockValidateSlugForApplication,
   SLUG_COLLISION_USER_MESSAGE,
 } = vi.hoisted(() => ({
-  mockRequireAuth: vi.fn(),
+  mockWithAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockDeleteCvIfOurs: vi.fn(),
@@ -53,7 +54,7 @@ const {
     "You already have an application with this slug. Change the text slightly or pick another slug.",
 }));
 
-vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
+vi.mock("@/lib/api/with-auth", () => ({ withAuth: mockWithAuth }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mockCreateClient }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
@@ -137,7 +138,7 @@ function makeGetRequest(): NextRequest {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockRequireAuth.mockResolvedValue(MOCK_USER);
+  mockWithAuth.mockResolvedValue(authOk(MOCK_USER));
   mockIsOwnedTailoredCvUrl.mockReturnValue(true);
   mockValidateSlugForApplication.mockResolvedValue({ ok: true });
   mockCheckRateLimit.mockReturnValue({
@@ -554,7 +555,7 @@ describe("PUT /api/applications", () => {
   });
 
   it("returns 401 when not authenticated", async () => {
-    mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
+    mockWithAuth.mockResolvedValue(authUnauthorized());
 
     const response = await PUT(makePutRequest({ id: APP_ID }));
     expect(response.status).toBe(401);
@@ -628,7 +629,7 @@ describe("GET /api/applications/by-id/[id]", () => {
   });
 
   it("returns 401 when not authenticated", async () => {
-    mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
+    mockWithAuth.mockResolvedValue(authUnauthorized());
 
     const response = await getById(makeGetRequest(), {
       params: Promise.resolve({ id: APP_ID }),
@@ -657,7 +658,7 @@ describe("GET /api/applications/by-id/[id]", () => {
       params: Promise.resolve({ id: APP_ID }),
     });
     expect(response.status).toBe(429);
-    expect(mockRequireAuth).not.toHaveBeenCalled();
+    expect(mockWithAuth).not.toHaveBeenCalled();
   });
 
   it("returns 500 when an unexpected error occurs after auth", async () => {
