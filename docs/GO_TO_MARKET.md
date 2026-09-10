@@ -8,7 +8,7 @@
 
 | Section | What it covers |
 | ------- | -------------- |
-| [§1 Who pays](#1-who-pays-and-why) | Buyer, viral viewer, why they upgrade |
+| [§1 Who pays](#1-who-pays-and-why) | Buyer vs recruiter, Ideal Customer Profile (ICP), why they upgrade |
 | [§2 Discovery loop](#2-the-discovery-loop) | The path from stranger to paid user |
 | [§3 Positioning](#3-positioning-working) | Working message until interviews sharpen it |
 | [§4 What to do](#4-what-to-do-by-phase) | Actions by phase (now → launch → 90 days → scale) |
@@ -28,6 +28,10 @@ MyHireView has **two audiences**. Only one pays.
 | ---- | ------------ | ------------ |
 | **Candidate** (job seeker) | Signs up, builds application pages, shares links, checks views | **Yes** — Free / Pro / Premium |
 | **Recruiter** | Opens `/view/{publicId}/{slug}` with no account | **No** — they are a **distribution surface** |
+
+**Ideal Customer Profile (ICP)** — who is most likely to **buy**, not everyone who might try the product. An ICP is the person for whom MyHireView is an obvious yes: they have the problem, they feel it strongly enough to pay, and you can actually reach them. That is narrower than “users.” Recruiters who open `/view` pages are users in a sense, but they are **not** the ICP because they do not pay.
+
+A useful ICP usually includes who they are (role, career stage, situation), the job they are trying to get done, why they would pay, and where you can find them.
 
 **Working ICP (until interviews prove otherwise):** people **actively searching** for a job who already customize applications (tailored CV, LinkedIn outreach, maybe a video) and feel PDFs disappear into ATS inboxes. Waitlist fields already segment this: job search status, primary goal, career stage. After launch, keep collecting the same signals from signed-in users (Epic **O** in [Backlog.md](Backlog.md)).
 
@@ -277,7 +281,7 @@ Below: **search terms**, **what you need from them**, and **what you must provid
 | **Done looks like** | Prioritized experiments with a kill criterion each |
 | **Engagement** | Advisory (monthly) or a short paid sprint |
 
-Avoid “growth hackers” who only sell paid ads or TikTok without looking at your ICP.
+Avoid “growth hackers” who only sell paid ads or TikTok without looking at your ICP (who actually pays — §1).
 
 ### 7.3 SEO and content strategy
 
