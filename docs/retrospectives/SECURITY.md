@@ -78,6 +78,7 @@ Keep these visible so product and engineering share one security story. Status i
 
 | Concern | Planned approach | Tickets |
 | -------- | ---------------- | ------- |
+| No single end-to-end security/safety pass before public launch | Global review of auth, RLS, share URLs, uploads/R2, rate limits, error leakage; file gaps as new backlog tickets | **F29-103** (near launch) |
 | Unconfirmed emails getting sessions in production | Ops: Confirm email ON; production Site URL + redirect URLs | **A3-015** (near launch) |
 | Unauth callers learning R2 is misconfigured (**500** vs **401**) | Check auth before config probe; stronger upload replay identity | **F7-035**, **F7-036** |
 | Misuse of `toPublicApplication` leaking non-active PII | Enforce status in helper / narrow types | **F10-030** |
