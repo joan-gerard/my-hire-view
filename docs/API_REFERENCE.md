@@ -653,7 +653,7 @@ Pre-launch landing-page signup. Inserts into `waitlist_signups` via the service-
 
 - Strict **5/min** rate limit for a public write endpoint.
 - Zod body schema (`lib/validation/waitlist.ts`): required fields, enum allowlists, `email` via Zod email + max **254**, `first_name` trimmed non-empty max **100** (F3-064).
-- Honeypot field `website`: filled → **200** `{ success: true }` with no DB insert (F3-039 light; no CAPTCHA).
+- Honeypot field `website`: filled → **200** `{ success: true }` with no DB insert (F3-039 light; no CAPTCHA). Checked on the raw body **before** Zod so bots cannot probe validation with invalid fields.
 - Soft JSON body cap (**4 KiB**); malformed JSON → **400**; oversized → **413**.
 - Normalizes email to lowercase on insert.
 - Maps unique violations to **409**; generic message for other DB errors (logs server-side).

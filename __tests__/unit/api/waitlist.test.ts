@@ -132,6 +132,19 @@ describe("POST /api/waitlist", () => {
     expect(mockCreateAdminClient).not.toHaveBeenCalled();
   });
 
+  it("returns silent 200 for filled honeypot even when other fields are invalid", async () => {
+    const response = await POST(
+      makeRequest({
+        email: "not-an-email",
+        first_name: "",
+        [WAITLIST_HONEYPOT_FIELD]: "http://bot.example",
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true });
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
   it("returns 409 on duplicate email", async () => {
     mockInsert.mockResolvedValue({ error: { code: "23505" } });
     const response = await POST(makeRequest(VALID_BODY));

@@ -1,5 +1,7 @@
-import { AUTH_EMAIL_MAX_LENGTH } from "@/lib/validation/auth";
-import { PROFILE_NAME_MAX_LENGTH } from "@/lib/validation/profile";
+import {
+  requiredTrimmedName,
+  trimmedEmailSchema,
+} from "@/lib/validation/auth";
 import { z } from "zod";
 
 /** Soft cap for waitlist JSON bodies (email, name, enums, honeypot). */
@@ -43,35 +45,6 @@ const FIELD_LABELS: Record<string, string> = {
   [WAITLIST_HONEYPOT_FIELD]: "Website",
 };
 
-function trimmedEmailSchema() {
-  return z.preprocess(
-    (value) => {
-      if (typeof value !== "string") return value;
-      return value.trim();
-    },
-    z
-      .email({ error: "Please enter a valid email address" })
-      .max(AUTH_EMAIL_MAX_LENGTH, {
-        error: `Email must be at most ${AUTH_EMAIL_MAX_LENGTH} characters`,
-      }),
-  );
-}
-
-function requiredTrimmedFirstName() {
-  return z.preprocess(
-    (value) => {
-      if (typeof value !== "string") return value;
-      return value.trim();
-    },
-    z
-      .string({ error: "First name is required" })
-      .min(1, { error: "First name is required" })
-      .max(PROFILE_NAME_MAX_LENGTH, {
-        error: `First name must be at most ${PROFILE_NAME_MAX_LENGTH} characters`,
-      }),
-  );
-}
-
 /** Optional enum: omit / empty → undefined; invalid value → Zod error. */
 function optionalEnumField<T extends string>(
   values: readonly T[],
@@ -84,21 +57,23 @@ function optionalEnumField<T extends string>(
       const trimmed = value.trim();
       return trimmed === "" ? undefined : trimmed;
     },
-    z.enum(values as [T, ...T[]], {
-      error: `Please select a valid ${label.toLowerCase()}`,
-    }).optional(),
+    z
+      .enum(values as [T, ...T[]], {
+        error: `Please select a valid ${label.toLowerCase()}`,
+      })
+      .optional(),
   );
 }
 
 /**
  * Waitlist signup body (F3-064 + F3-039 honeypot).
  * Unexpected keys are rejected. Honeypot may be present but must be empty
- * after trim for a real insert (checked by the route).
+ * after trim for a real insert (checked by the route before/after parse).
  */
 export const waitlistBodySchema = z
   .object({
     email: trimmedEmailSchema(),
-    first_name: requiredTrimmedFirstName(),
+    first_name: requiredTrimmedName("First name"),
     job_search_status: z.enum(WAITLIST_JOB_SEARCH_STATUSES, {
       error: "Please select your job search status",
     }),
@@ -146,7 +121,22 @@ export function formatWaitlistZodError(error: z.ZodError): string {
   return `${label}: ${issue.message}`;
 }
 
-/** True when the honeypot was filled — treat as a bot (do not insert). */
+/**
+ * Raw-body honeypot check (before Zod) so bots that also send invalid fields
+ * still get a silent 200 and cannot probe validation.
+ */
+export function isRawWaitlistHoneypotTriggered(raw: unknown): boolean {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    return false;
+  }
+  const value = (raw as Record<string, unknown>)[WAITLIST_HONEYPOT_FIELD];
+  if (value === undefined || value === null) return false;
+  if (typeof value === "string") return value.trim() !== "";
+  // Non-string honeypot values are not human form input — treat as tripped.
+  return true;
+}
+
+/** True when the parsed honeypot was filled — treat as a bot (do not insert). */
 export function isWaitlistHoneypotTriggered(body: WaitlistBody): boolean {
   return body[WAITLIST_HONEYPOT_FIELD].trim() !== "";
 }

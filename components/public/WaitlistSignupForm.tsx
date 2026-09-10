@@ -1,5 +1,6 @@
 "use client";
 
+import { AUTH_EMAIL_MAX_LENGTH } from "@/lib/validation/auth";
 import { PROFILE_NAME_MAX_LENGTH } from "@/lib/validation/profile";
 import { WAITLIST_HONEYPOT_FIELD } from "@/lib/validation/waitlist";
 
@@ -43,6 +44,9 @@ export interface WaitlistSignupFormProps {
   setPrimaryGoal: (value: string) => void;
   careerStage: string;
   setCareerStage: (value: string) => void;
+  /** Honeypot — must stay empty; controlled so it can be cleared after submit. */
+  website: string;
+  setWebsite: (value: string) => void;
   errorMessage: string;
   status: WaitlistFormStatus;
 }
@@ -59,6 +63,8 @@ export function WaitlistSignupForm({
   setPrimaryGoal,
   careerStage,
   setCareerStage,
+  website,
+  setWebsite,
   errorMessage,
   status,
 }: WaitlistSignupFormProps) {
@@ -80,6 +86,7 @@ export function WaitlistSignupForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={isDisabled}
+            maxLength={AUTH_EMAIL_MAX_LENGTH}
             className={CONTROL_CLASS}
           />
         </FormField>
@@ -100,6 +107,7 @@ export function WaitlistSignupForm({
         {/*
           Honeypot (F3-039): visually hidden; leave empty. Bots that auto-fill
           every field trip it; the API returns success without inserting.
+          Controlled so autofill cannot stick across retries.
         */}
         <div
           className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
@@ -112,7 +120,9 @@ export function WaitlistSignupForm({
             name={WAITLIST_HONEYPOT_FIELD}
             tabIndex={-1}
             autoComplete="off"
-            defaultValue=""
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            disabled={isDisabled}
           />
         </div>
       </div>

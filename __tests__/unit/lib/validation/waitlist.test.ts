@@ -5,6 +5,7 @@ import { AUTH_EMAIL_MAX_LENGTH } from "@/lib/validation/auth";
 import { PROFILE_NAME_MAX_LENGTH } from "@/lib/validation/profile";
 import {
   formatWaitlistZodError,
+  isRawWaitlistHoneypotTriggered,
   isWaitlistHoneypotTriggered,
   WAITLIST_HONEYPOT_FIELD,
   waitlistBodySchema,
@@ -130,5 +131,32 @@ describe("waitlistBodySchema", () => {
     expect(parsed.success).toBe(true);
     if (!parsed.success) return;
     expect(isWaitlistHoneypotTriggered(parsed.data)).toBe(false);
+  });
+});
+
+describe("isRawWaitlistHoneypotTriggered", () => {
+  it("returns true for a non-empty string honeypot before Zod", () => {
+    expect(
+      isRawWaitlistHoneypotTriggered({
+        email: "bad",
+        [WAITLIST_HONEYPOT_FIELD]: "http://bot.example",
+      }),
+    ).toBe(true);
+  });
+
+  it("returns true for non-string honeypot values", () => {
+    expect(
+      isRawWaitlistHoneypotTriggered({ [WAITLIST_HONEYPOT_FIELD]: 1 }),
+    ).toBe(true);
+  });
+
+  it("returns false when honeypot is missing, empty, or whitespace", () => {
+    expect(isRawWaitlistHoneypotTriggered({})).toBe(false);
+    expect(
+      isRawWaitlistHoneypotTriggered({ [WAITLIST_HONEYPOT_FIELD]: "" }),
+    ).toBe(false);
+    expect(
+      isRawWaitlistHoneypotTriggered({ [WAITLIST_HONEYPOT_FIELD]: "  " }),
+    ).toBe(false);
   });
 });

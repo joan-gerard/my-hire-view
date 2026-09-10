@@ -3,6 +3,7 @@ import { checkRateLimit, rateLimit429 } from '@/lib/rate-limit';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   formatWaitlistZodError,
+  isRawWaitlistHoneypotTriggered,
   isWaitlistHoneypotTriggered,
   WAITLIST_REQUEST_BODY_MAX_BYTES,
   waitlistBodySchema,
@@ -15,7 +16,8 @@ const WAITLIST_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 /**
  * POST /api/waitlist – add a signup to the waitlist (pre-launch landing page).
  * Email, first_name, and job_search_status are required.
- * F3-039: filled honeypot → silent 200 (no insert). F3-064: Zod name/email rules.
+ * F3-039: filled honeypot → silent 200 (no insert), checked before Zod so bots
+ * cannot probe validation. F3-064: Zod name/email rules.
  */
 export async function POST(request: NextRequest) {
   const rate = await checkRateLimit(request, WAITLIST_RATE_LIMIT);
@@ -36,6 +38,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
+    // Before Zod: filled honeypot → silent 200 (no validation leak to bots).
+    if (isRawWaitlistHoneypotTriggered(bodyResult.value)) {
+      return NextResponse.json({ success: true });
+    }
+
     const parsed = waitlistBodySchema.safeParse(bodyResult.value);
     if (!parsed.success) {
       return NextResponse.json(
@@ -44,7 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Honeypot tripped — pretend success so bots do not learn they were blocked.
+    // Defense in depth if schema ever accepts a filled honeypot again.
     if (isWaitlistHoneypotTriggered(parsed.data)) {
       return NextResponse.json({ success: true });
     }

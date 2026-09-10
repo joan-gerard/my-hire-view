@@ -110,8 +110,8 @@ Keep these visible so product and engineering share one security story. Status i
 **What we shipped**
 
 - Zod schema in `lib/validation/waitlist.ts`: email (Zod email + max **254**), `first_name` trimmed max **100**, enum allowlists, strict keys
-- Honeypot field `website` on the landing form; filled → silent **200** with no insert
-- Soft **4 KiB** JSON body cap; career-stage form values aligned with API enums
+- Honeypot field `website` on the landing form (controlled + cleared after submit); filled → silent **200** with no insert, checked on the raw body before Zod so bots cannot probe validation
+- Soft **4 KiB** JSON body cap; career-stage form values aligned with API enums; shared `trimmedEmailSchema` / `requiredTrimmedName` from auth validation
 - API contract updated in [API_REFERENCE.md](../API_REFERENCE.md)
 
 ---

@@ -94,7 +94,8 @@ function formatAuthZodError(error: z.ZodError): string {
   return `${label}: ${issue.message}`;
 }
 
-function trimmedEmailSchema() {
+/** Trimmed email: Zod email + AUTH_EMAIL_MAX_LENGTH. Shared by auth + waitlist. */
+export function trimmedEmailSchema() {
   return z.preprocess(
     (value) => {
       if (typeof value !== "string") return value;
@@ -108,7 +109,8 @@ function trimmedEmailSchema() {
   );
 }
 
-function requiredTrimmedName(label: string) {
+/** Trimmed non-empty name capped at PROFILE_NAME_MAX_LENGTH. Shared by auth + waitlist. */
+export function requiredTrimmedName(label: string) {
   return z.preprocess(
     (value) => {
       if (typeof value !== "string") return value;
