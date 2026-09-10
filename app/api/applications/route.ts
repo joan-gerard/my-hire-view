@@ -1,4 +1,4 @@
-import { requireAuth } from "@/lib/auth";
+import { withAuth } from "@/lib/api/with-auth";
 import {
   ensureProfilePublicId,
   resolvePublicIdReadOnly,
@@ -66,12 +66,9 @@ export async function GET(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
-  let user;
-  try {
-    user = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -291,12 +288,9 @@ export async function POST(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
-  let user;
-  try {
-    user = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   try {
     const raw: unknown = await request.json();
@@ -431,12 +425,9 @@ export async function PUT(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
-  let user;
-  try {
-    user = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   try {
     const raw: unknown = await request.json();
@@ -646,12 +637,9 @@ export async function DELETE(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
-  let user;
-  try {
-    user = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   try {
     const { searchParams } = new URL(request.url);

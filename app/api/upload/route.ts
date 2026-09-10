@@ -2,7 +2,7 @@ import {
   HeadObjectCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
-import { requireAuth } from "@/lib/auth";
+import { withAuth } from "@/lib/api/with-auth";
 import {
   getR2Bucket,
   getR2PublicBaseUrl,
@@ -79,12 +79,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let user;
-  try {
-    user = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   const userRate = await rateLimitAsync(
     CV_UPLOAD_RATE_LIMIT,

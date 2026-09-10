@@ -10,20 +10,21 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
+import { authOk, authUnauthorized } from "../../helpers/auth-mock";
 
 const {
-  mockRequireAuth,
+  mockWithAuth,
   mockCreateClient,
   mockCheckRateLimit,
   mockDeleteProfilePicture,
 } = vi.hoisted(() => ({
-  mockRequireAuth: vi.fn(),
+  mockWithAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockDeleteProfilePicture: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
+vi.mock("@/lib/api/with-auth", () => ({ withAuth: mockWithAuth }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mockCreateClient }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
@@ -73,7 +74,7 @@ function makePutRequest(body: object): NextRequest {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc.supabase.co");
-  mockRequireAuth.mockResolvedValue(MOCK_USER);
+  mockWithAuth.mockResolvedValue(authOk(MOCK_USER));
   mockCheckRateLimit.mockReturnValue({
     success: true,
     remaining: 59,
@@ -140,7 +141,7 @@ describe("GET /api/profile", () => {
   });
 
   it("returns 401 when not authenticated", async () => {
-    mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
+    mockWithAuth.mockResolvedValue(authUnauthorized());
 
     const response = await GET(makeGetRequest());
     expect(response.status).toBe(401);
@@ -204,14 +205,14 @@ describe("PUT /api/profile", () => {
   it("creates profile from Auth metadata on picture-only first save (C3-026)", async () => {
     const ownedUrl =
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
-    mockRequireAuth.mockResolvedValue({
+    mockWithAuth.mockResolvedValue(authOk({
       id: "user-123",
       user_metadata: {
         first_name: "Jane",
         last_name: "Doe",
         public_id: "k7x2m9ab",
       },
-    });
+    }));
     const created = {
       user_id: "user-123",
       public_id: "k7x2m9ab",
@@ -254,10 +255,10 @@ describe("PUT /api/profile", () => {
   it("returns 400 on picture-only first save when Auth metadata has no names", async () => {
     const ownedUrl =
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
-    mockRequireAuth.mockResolvedValue({
+    mockWithAuth.mockResolvedValue(authOk({
       id: "user-123",
       user_metadata: { public_id: "k7x2m9ab" },
-    });
+    }));
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([dbError("No rows found", "PGRST116")]),
     );
@@ -273,14 +274,14 @@ describe("PUT /api/profile", () => {
   it("backfills null names from Auth metadata on picture-only PUT (C3-026)", async () => {
     const ownedUrl =
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
-    mockRequireAuth.mockResolvedValue({
+    mockWithAuth.mockResolvedValue(authOk({
       id: "user-123",
       user_metadata: {
         first_name: "Jane",
         last_name: "Doe",
         public_id: "k7x2m9ab",
       },
-    });
+    }));
     const existingWithoutNames = {
       user_id: "user-123",
       public_id: "k7x2m9ab",
@@ -320,14 +321,14 @@ describe("PUT /api/profile", () => {
   it("backfills blank-string names from Auth metadata on picture-only PUT", async () => {
     const ownedUrl =
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
-    mockRequireAuth.mockResolvedValue({
+    mockWithAuth.mockResolvedValue(authOk({
       id: "user-123",
       user_metadata: {
         first_name: "Jane",
         last_name: "Doe",
         public_id: "k7x2m9ab",
       },
-    });
+    }));
     const existingWithBlankNames = {
       user_id: "user-123",
       public_id: "k7x2m9ab",
@@ -366,14 +367,14 @@ describe("PUT /api/profile", () => {
   it("returns 400 when Auth metadata name exceeds max length on picture-only first save", async () => {
     const ownedUrl =
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
-    mockRequireAuth.mockResolvedValue({
+    mockWithAuth.mockResolvedValue(authOk({
       id: "user-123",
       user_metadata: {
         first_name: "A".repeat(101),
         last_name: "Doe",
         public_id: "k7x2m9ab",
       },
-    });
+    }));
     mockCreateClient.mockResolvedValue(
       makeSupabaseClient([dbError("No rows found", "PGRST116")]),
     );
@@ -550,7 +551,7 @@ describe("PUT /api/profile", () => {
   });
 
   it("returns 401 when not authenticated", async () => {
-    mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
+    mockWithAuth.mockResolvedValue(authUnauthorized());
 
     const response = await PUT(makePutRequest({ first_name: "X" }));
     expect(response.status).toBe(401);

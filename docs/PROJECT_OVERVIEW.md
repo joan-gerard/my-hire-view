@@ -12,7 +12,7 @@ A high-level catch-up document covering the product, tech stack, architecture, b
 
 There are two distinct surfaces:
 
-- **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices as a **working draft**; E1 lock + E2 checkout deferred until near launch), waitlist signup. Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.)
+- **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices as a **working draft**; E1 lock + E2 checkout deferred until near launch), waitlist signup. Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.) Discovery, launch channels, and when to bring in specialists: [GO_TO_MARKET.md](GO_TO_MARKET.md).
 - **Product** (`/admin`) — authenticated dashboard to create, manage, and track applications.
 
 ---
@@ -63,7 +63,8 @@ lib/
   api/               — client-side API call helpers
   types/             — TypeScript types including database.ts
   utils/             — slug, URL, YouTube, CV storage helpers
-  auth.ts            — requireAuth() helper
+  auth.ts            — getUser() (soft/optional UI), getSessionUser() / requireAuth() (pages)
+  api/with-auth.ts   — withAuth() for API routes (401 / 500 JSON, no redirect)
   rate-limit.ts      — Upstash Redis rate limiting (in-memory fallback)
 
 hooks/
@@ -131,7 +132,7 @@ RLS policies protect all tables. The service-role Supabase client is used server
 
 - **Supabase Auth** with email/password; sessions stored in HTTP cookies via `@supabase/ssr`.
 - `**proxy.ts`\*\* refreshes the session and guards all `/admin` routes.
-- `**requireAuth()**` in `lib/auth.ts` is used inside API route handlers to get the authenticated user.
+- `**withAuth()**` in `lib/api/with-auth.ts` is used inside API route handlers to get the authenticated user (or return **401** / Auth-outage **500**). `**requireAuth()**` / `**getSessionUser()**` in `lib/auth.ts` are for pages that need a real session check; soft `**getUser()**` is for optional UI (marketing) and never throws.
 - **RLS** on `applications` and `profiles` enforces data isolation at the database level (owners only; public share pages resolve server-side via the service-role client, not an open anon SELECT).
 - **Public read** of applications by slug is permitted (recruiter view requires no login).
 
@@ -177,6 +178,8 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 ## 9. Planned work
 
 Open pre-launch and post-launch work (gaps, TODOs, improvements) lives in **[Backlog.md](Backlog.md)** — the canonical tracker. This overview does not maintain a parallel checklist.
+
+How people discover the app and become paid users (channels, phases, specialist briefs) lives in **[GO_TO_MARKET.md](GO_TO_MARKET.md)** — strategy only, not a second ticket list.
 
 ---
 

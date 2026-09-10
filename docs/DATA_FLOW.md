@@ -139,7 +139,7 @@ sequenceDiagram
 
   U->>Page: Edit name, location, URLs, Save
   Page->>API: PUT profile
-  API->>API: requireAuth, validate URLs + required names
+  API->>API: withAuth, validate URLs + required names
   API->>DB: upsert by user_id
   API->>Auth: updateUser metadata when names change
   DB-->>API: updated row
@@ -248,7 +248,7 @@ sequenceDiagram
     Form->>Form: show red status (no debounce, no network)
   else format valid
     Note over Form: 450ms debounce
-    Form->>ValidateAPI: POST { slug } (requireAuth)
+    Form->>ValidateAPI: POST { slug } (withAuth)
     ValidateAPI->>Applications: checkSlugUniqueness(slug)
     alt available
       ValidateAPI-->>Form: { ok: true }
@@ -311,7 +311,7 @@ sequenceDiagram
     NewPage->>U: show error (do not auto-assign a different slug)
   end
   NewPage->>AppsAPI: POST (slug, cv_url, company, role, candidate fields)
-  AppsAPI->>AppsAPI: requireAuth()
+  AppsAPI->>AppsAPI: withAuth()
   AppsAPI->>Profiles: select profile (candidate field fallback)
   Profiles-->>AppsAPI: profile row
   AppsAPI->>AppsAPI: merge body fields with profile fallback
@@ -472,7 +472,7 @@ sequenceDiagram
     end
   end
   EditPage->>AppsAPI: PUT (id, resolved slug, cv_url, all fields)
-  AppsAPI->>AppsAPI: requireAuth(), verify ownership
+  AppsAPI->>AppsAPI: withAuth(), verify ownership
   AppsAPI->>AppsAPI: if cv_url changed, delete old R2 object
   AppsAPI->>Applications: update row (no profile merge)
   Applications-->>AppsAPI: updated row
@@ -546,7 +546,7 @@ All data shown to the recruiter (including candidate name, location, and links) 
 | ----------- | ----------------------------- | --------------------------------- |
 | **profiles** | First `PUT /api/profile` (create); later profile page updates | Profile page; `/admin/new` prefill; applications API (create fallback when row exists) |
 | **applications** | New/Edit form → `/api/applications` | Dashboard, edit page, public `/view/[publicId]/[slug]` |
-| **auth**    | Login/signup → Supabase Auth  | Middleware, requireAuth(), profile/dashboard |
+| **auth**    | Login/signup → Supabase Auth  | Middleware, withAuth() (APIs), requireAuth() (pages), profile/dashboard |
 
 Candidate fields on the application are either supplied by the form (with toggles) or, on create only, taken from the profile when not in the request body. The recruiter view reads the profile table only for the display-only profile picture when `show_profile_picture` is true; all candidate text fields (name, location, links) still come from the application row.
 

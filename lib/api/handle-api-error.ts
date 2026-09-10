@@ -17,8 +17,9 @@ export type HandleApiErrorOptions = {
  * response. Use in route `catch` blocks so failures are observable without
  * leaking internals to clients.
  *
- * Prefer separating auth (`requireAuth`) into its own try/catch so auth
- * failures stay **401** and are not logged as unexpected errors.
+ * Prefer `withAuth()` before the handler body so missing sessions stay
+ * **401** and Auth lookup failures stay **500** (both via `{ ok: false,
+ * response }`) and are not mixed with business-logic error handling.
  */
 export function handleApiError(
   context: string,

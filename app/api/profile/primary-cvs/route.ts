@@ -1,5 +1,5 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { requireAuth } from "@/lib/auth";
+import { withAuth } from "@/lib/api/with-auth";
 import {
   checkRateLimit,
   DEFAULT_API_RATE_LIMIT,
@@ -45,8 +45,11 @@ export async function GET(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
+
   try {
-    const user = await requireAuth();
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("primary_cvs")
@@ -99,8 +102,12 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ data: withUsage });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    console.error("GET /api/profile/primary-cvs:", error);
+    return NextResponse.json(
+      { error: "Failed to list primary CVs" },
+      { status: 500 },
+    );
   }
 }
 
@@ -125,12 +132,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let user;
-  try {
-    user = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   try {
     const supabase = await createClient();
@@ -233,8 +237,11 @@ export async function DELETE(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
+
   try {
-    const user = await requireAuth();
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -290,7 +297,11 @@ export async function DELETE(request: NextRequest) {
       success: true,
       applications_affected: count ?? 0,
     });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    console.error("DELETE /api/profile/primary-cvs:", error);
+    return NextResponse.json(
+      { error: "Failed to delete primary CV" },
+      { status: 500 },
+    );
   }
 }

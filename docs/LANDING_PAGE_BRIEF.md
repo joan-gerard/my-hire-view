@@ -2,6 +2,8 @@
 
 This brief outlines the structure and copy for a pre-launch “Coming Soon” landing page designed to capture early interest and build an email list before the official MyHireView launch.
 
+Channels, launch phases, and specialist briefs (beyond this page’s structure): [GO_TO_MARKET.md](GO_TO_MARKET.md).
+
 ## Page Structure
 
 ### 1. Hero Section

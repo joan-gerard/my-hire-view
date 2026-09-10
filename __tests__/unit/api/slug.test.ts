@@ -7,6 +7,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { authOk, authUnauthorized } from "../../helpers/auth-mock";
 
 // ---------------------------------------------------------------------------
 // Mocks — declared with vi.hoisted so they are available when vi.mock
@@ -15,13 +16,13 @@ import { NextRequest } from "next/server";
 const {
   mockReserveBaseSlug,
   mockValidateSlugForApplication,
-  mockRequireAuth,
+  mockWithAuth,
   mockCheckRateLimit,
   mockCreateClient,
 } = vi.hoisted(() => ({
   mockReserveBaseSlug: vi.fn(),
   mockValidateSlugForApplication: vi.fn(),
-  mockRequireAuth: vi.fn(),
+  mockWithAuth: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockCreateClient: vi.fn(),
 }));
@@ -34,7 +35,7 @@ vi.mock("@/lib/utils/slug", async (importOriginal) => {
     validateSlugForApplication: mockValidateSlugForApplication,
   };
 });
-vi.mock("@/lib/auth", () => ({ requireAuth: mockRequireAuth }));
+vi.mock("@/lib/api/with-auth", () => ({ withAuth: mockWithAuth }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mockCreateClient }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
@@ -86,7 +87,7 @@ beforeEach(() => {
     remaining: 59,
     resetAt: Date.now() + 60_000,
   });
-  mockRequireAuth.mockResolvedValue({ id: "user-123" });
+  mockWithAuth.mockResolvedValue(authOk({ id: "user-123" }));
 });
 
 // ---------------------------------------------------------------------------
@@ -253,7 +254,7 @@ describe("POST /api/slug", () => {
   });
 
   it("returns 401 when not authenticated", async () => {
-    mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
+    mockWithAuth.mockResolvedValue(authUnauthorized());
 
     const req = makeRequest("http://localhost/api/slug", {
       company: "Volvo",
@@ -395,7 +396,7 @@ describe("POST /api/slug/validate", () => {
   });
 
   it("returns 401 when not authenticated", async () => {
-    mockRequireAuth.mockRejectedValue(new Error("Not authenticated"));
+    mockWithAuth.mockResolvedValue(authUnauthorized());
 
     const req = makeRequest("http://localhost/api/slug/validate", {
       slug: "volvo-engineer",

@@ -1,4 +1,4 @@
-import { requireAuth } from "@/lib/auth";
+import { withAuth } from "@/lib/api/with-auth";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { generatePublicId } from "@/lib/utils/public-id";
@@ -30,12 +30,9 @@ export async function GET(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
-  let user;
-  try {
-    user = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   try {
     const supabase = await createClient();
@@ -71,12 +68,9 @@ export async function PUT(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
   if (!rate.success) return rateLimit429(rate);
 
-  let user;
-  try {
-    user = await requireAuth();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   try {
     const supabase = await createClient();

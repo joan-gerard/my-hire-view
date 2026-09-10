@@ -6,7 +6,7 @@
 
 Homepage marketing FAQ copy is **placeholder** and is intentionally **not** used here as input for what tiers should offer.
 
-**Related context:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [USER_GUIDE.md](USER_GUIDE.md) · launch billing items in [Backlog.md](Backlog.md) (Before launch → Must) · customer-facing tier copy in `components/public/pricing/constants.ts`
+**Related context:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [USER_GUIDE.md](USER_GUIDE.md) · launch billing items in [Backlog.md](Backlog.md) (Before launch → Must) · customer-facing tier copy in `components/public/pricing/constants.ts` · how tiers get discovered and sold: [GO_TO_MARKET.md](GO_TO_MARKET.md)
 
 | Section | What it covers |
 | ------- | -------------- |
@@ -99,6 +99,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | **Video pitch** | Included (YouTube URL) | Included | Included |
 | **Primary library size** | **5** | **5** | **15** |
 | **Public id** | Private/opaque link | Private/opaque link | **Custom vanity** public id |
+| **Public page style** | Default layout | Default layout | **+ personalization** (planned after launch — colors, headline, quotes, photos; see Epic N) |
 | **Analytics** | Aggregate views/downloads (+ created / last viewed) | Basic + **per-view timestamp history** | + duration, geography, referrer, video engagement, CSV export, cross-app comparison |
 
 ### 3.2 Free — detail
@@ -132,6 +133,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | **Unlimited applications** | Marketed as unlimited; internal fair-use soft ceiling **100** (protects R2 storage). Soft-ceiling UX copy TBD (§5). | Working decision (this doc) |
 | **Richer analytics** | Beyond Pro: view duration, geographic origin, referrer/traffic source, video-pitch engagement (played vs page-only), CSV export, side-by-side comparison across the candidate’s own applications. | Working decision (this doc) |
 | **Primary library up to 15** | Raise above Free/Pro’s 5. | Working decision (this doc); today Free/Pro still use `PRIMARY_CV_MAX_PER_USER` = 5 until Premium gating ships |
+| **Public view personalization** (planned) | Optional personality / branding on `/view` beyond name, picture, video, CV — e.g. theme/accent colors, headline, quotes, extra photos. **After launch**; design brainstorm `N0-109`, scope `N1-106`, then `N2-107` / `N3-108`. Natural **Premium** unlock alongside vanity public id. | [Backlog.md](Backlog.md) (After launch → Could, Epic N) |
 | **Price** | **$14/mo** or **$59/yr** (~$4.92/mo effective). | Working decision (this doc) |
 
 ### 3.5 Adjacent features
@@ -185,6 +187,7 @@ Remaining TBD items (treat §3 as a **working** matrix until E1 locks it near la
 - When to ship AI interview prep as a paid add-on.
 - How gating is implemented in API/UI under E2 (create cap, reject tailored on Free, vanity claim on Premium, soft ceiling).
 - Final price points / caps if product thinking changes before launch (fold into E1).
+- Public view personalization knobs (headline, quotes, colors, extra photos) and whether they are **Premium-only** — after launch (Epic N: `N0-109` design → `N1-106` scope → `N2`/`N3` build).
 
 ---
 

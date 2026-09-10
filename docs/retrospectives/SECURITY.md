@@ -24,7 +24,7 @@ MyHireView holds career-sensitive data: CVs, profile pictures, application detai
 | -------- | ------------------- | -------------- |
 | Session cookies must land on API responses so middleware sees the user | Route handlers use `createSupabaseRouteClient` (+ cookie copy for signup PKCE) | Auth routes; [SUPABASE_AUTH_SETUP.md](../SUPABASE_AUTH_SETUP.md) |
 | Post-login redirect could be abused as an open redirect | `safeNextPath` allows only safe same-origin relative paths | **A2-016** |
-| Admin UI without a session | Middleware refreshes session; `/admin` redirects to `/login`; APIs use `requireAuth()` | Middleware / `lib/auth` |
+| Admin UI without a session | Middleware refreshes session; `/admin` redirects to `/login`; APIs use `withAuth()` | Middleware / `lib/auth` + `lib/api/with-auth` |
 | Login / signup / logout flooding | Per-IP rate limits (login **15**/min, signup **5**/min, logout **20**/min) | Auth routes + **D3** durable limits |
 | Weak signup passwords | Require ≥ **8** Unicode code points, ≤ **72** UTF-8 bytes, and ≥ **1** special character that is not a Unicode letter, number, or whitespace (client + `POST /api/auth/signup`) | **F1-041** |
 | Auth error messages revealing account existence | Generic client messages for non-duplicate Auth failures; duplicate signup returns the same **200** + `requiresConfirmation` **and** PKCE/`Set-Cookie` headers as a new confirmation signup; malformed JSON → **400** | **F1-040** |

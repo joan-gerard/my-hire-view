@@ -86,7 +86,7 @@ Historical record of refactors already applied to the MyHireView codebase. Open 
 
 ## 2. Open recommendations
 
-Open follow-ups from this review (`withAuth`, API validation, middleware entry, DB/app types, upload error/`handleApiError` adoption, upload UX, central API client, etc.) live in **[Backlog.md](Backlog.md)**. Do not re-list them here.
+Open follow-ups from this review (API validation, middleware entry, DB/app types, upload error/`handleApiError` adoption, upload UX, central API client, etc.) live in **[Backlog.md](Backlog.md)**. Do not re-list them here.
 
 ---
 
