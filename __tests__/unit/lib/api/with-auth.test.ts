@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextResponse } from "next/server";
 
 const { mockGetUser } = vi.hoisted(() => ({
@@ -12,8 +12,15 @@ vi.mock("@/lib/auth", () => ({
 import { withAuth } from "@/lib/api/with-auth";
 
 describe("withAuth", () => {
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     mockGetUser.mockReset();
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
   });
 
   it("returns { ok: true, user } when a session exists", async () => {
@@ -40,9 +47,19 @@ describe("withAuth", () => {
     });
   });
 
-  it("propagates getUser failures so callers can map them to 500", async () => {
-    mockGetUser.mockRejectedValue(new Error("supabase unavailable"));
+  it("returns JSON 500 when getUser fails (Auth outage)", async () => {
+    const cause = new Error("supabase unavailable");
+    mockGetUser.mockRejectedValue(cause);
 
-    await expect(withAuth()).rejects.toThrow("supabase unavailable");
+    const result = await withAuth();
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected auth failure");
+
+    expect(errorSpy).toHaveBeenCalledWith("withAuth", cause);
+    expect(result.response.status).toBe(500);
+    await expect(result.response.json()).resolves.toEqual({
+      error: "Internal server error",
+    });
   });
 });

@@ -18,7 +18,8 @@ export type HandleApiErrorOptions = {
  * leaking internals to clients.
  *
  * Prefer `withAuth()` before the handler body so missing sessions stay
- * **401** and are not logged as unexpected errors via this helper.
+ * **401** and Auth lookup failures stay **500** (both via `{ ok: false,
+ * response }`) and are not mixed with business-logic error handling.
  */
 export function handleApiError(
   context: string,
