@@ -68,6 +68,7 @@ MyHireView holds career-sensitive data: CVs, profile pictures, application detai
 | -------- | ------------------- | -------------- |
 | Default API write abuse | Shared `lib/rate-limit.ts` (default **60**/min/IP, tighter on sensitive routes) | Pre-launch + **D2** / **D3** |
 | Slug-validate sharing the general write budget | Dedicated `keyPrefix: "slug-validate"` (**30**/min) | **D2-034** |
+| Waitlist bot / junk signups | Honeypot (`website`) silent **200**; Zod email + `first_name` max **100**; IP rate limit. CAPTCHA/Turnstile deferred | **F3-039** (honeypot), **F3-064** |
 
 ---
 
@@ -77,8 +78,8 @@ Keep these visible so product and engineering share one security story. Status i
 
 | Concern | Planned approach | Tickets |
 | -------- | ---------------- | ------- |
+| No single end-to-end security/safety pass before public launch | Global review of auth, RLS, share URLs, uploads/R2, rate limits, error leakage; file gaps as new backlog tickets | **F29-103** (near launch) |
 | Unconfirmed emails getting sessions in production | Ops: Confirm email ON; production Site URL + redirect URLs | **A3-015** (near launch) |
-| Waitlist bot / spam signups | CAPTCHA / Turnstile / honeypot; tighter name/email validation | **F3-039**, **F3-064** |
 | Unauth callers learning R2 is misconfigured (**500** vs **401**) | Check auth before config probe; stronger upload replay identity | **F7-035**, **F7-036** |
 | Misuse of `toPublicApplication` leaking non-active PII | Enforce status in helper / narrow types | **F10-030** |
 | Broader read limits; account-/email-level login throttling; Redis outage noise | Extend limits; circuit breaker after repeated Upstash failures | **L1-076**, **L1-077**, **L1-100** |
@@ -89,7 +90,7 @@ Keep these visible so product and engineering share one security story. Status i
 
 ---
 
-## F1 deep dive (this PR)
+## F1 deep dive
 
 **Problem:** Login and signup forwarded Auth provider messages (e.g. “User already registered”) and only required a short password. Attackers could probe which emails had accounts; users could create weak passwords.
 
@@ -99,6 +100,19 @@ Keep these visible so product and engineering share one security story. Status i
 - Signup: ≥ 8 Unicode code points, ≤ 72 UTF-8 bytes (length short-circuit before encode; no HTML `maxLength` byte illusion), ≥ 1 special char via `/[^\p{L}\p{N}\s]/u`; auth JSON capped at 8 KiB (streamed bytes, fatal UTF-8); duplicates → confirmation-style **200**
 - Login/signup: email format and max lengths; password max length; malformed JSON → **400**
 - Generic Auth failure messages (non-duplicate); unexpected Auth throws logged with a safe client **500**
+- API contract updated in [API_REFERENCE.md](../API_REFERENCE.md)
+
+---
+
+## F3 deep dive (this PR)
+
+**Problem:** Public waitlist signup only had a weak email regex and IP rate limits — bots could still junk the list with long nonsense names or auto-filled forms. CAPTCHA was intentionally skipped (waitlist may not be needed until product is ready).
+
+**What we shipped**
+
+- Zod schema in `lib/validation/waitlist.ts`: email (Zod email + max **254**), `first_name` trimmed max **100**, enum allowlists, strict keys
+- Honeypot field `website` on the landing form (controlled + cleared after submit; submit reads live DOM so event-less fills still trip it); filled → silent **200** with no insert, checked on the raw body before Zod so bots cannot probe validation
+- Soft **4 KiB** JSON body cap; career-stage form values aligned with API enums; shared `trimmedEmailSchema` / `requiredTrimmedName` from auth validation
 - API contract updated in [API_REFERENCE.md](../API_REFERENCE.md)
 
 ---

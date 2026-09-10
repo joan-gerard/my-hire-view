@@ -1,5 +1,9 @@
 "use client";
 
+import { AUTH_EMAIL_MAX_LENGTH } from "@/lib/validation/auth";
+import { PROFILE_NAME_MAX_LENGTH } from "@/lib/validation/profile";
+import { WAITLIST_HONEYPOT_FIELD } from "@/lib/validation/waitlist";
+
 export const JOB_SEARCH_OPTIONS = [
   { value: "Actively searching", label: "Actively searching" },
   { value: "Casually looking", label: "Casually looking" },
@@ -16,9 +20,9 @@ export const PRIMARY_GOAL_OPTIONS = [
 
 export const CAREER_STAGE_OPTIONS = [
   { value: "Entry-level", label: "Entry-level" },
-  { value: "Junior", label: "Junior" },
-  { value: "Mid-level", label: "Mid-level" },
-  { value: "Senior", label: "Senior" },
+  { value: "Junior (1–3 years)", label: "Junior" },
+  { value: "Mid-level (3–7 years)", label: "Mid-level" },
+  { value: "Senior (7+ years)", label: "Senior" },
   { value: "Other", label: "Other" },
 ] as const;
 
@@ -40,6 +44,9 @@ export interface WaitlistSignupFormProps {
   setPrimaryGoal: (value: string) => void;
   careerStage: string;
   setCareerStage: (value: string) => void;
+  /** Honeypot — controlled so we can clear after submit; submit still reads live DOM. */
+  website: string;
+  setWebsite: (value: string) => void;
   errorMessage: string;
   status: WaitlistFormStatus;
 }
@@ -56,6 +63,8 @@ export function WaitlistSignupForm({
   setPrimaryGoal,
   careerStage,
   setCareerStage,
+  website,
+  setWebsite,
   errorMessage,
   status,
 }: WaitlistSignupFormProps) {
@@ -77,6 +86,7 @@ export function WaitlistSignupForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={isDisabled}
+            maxLength={AUTH_EMAIL_MAX_LENGTH}
             className={CONTROL_CLASS}
           />
         </FormField>
@@ -90,9 +100,32 @@ export function WaitlistSignupForm({
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             disabled={isDisabled}
+            maxLength={PROFILE_NAME_MAX_LENGTH}
             className={CONTROL_CLASS}
           />
         </FormField>
+        {/*
+          Honeypot (F3-039): visually hidden; leave empty. Bots that auto-fill
+          every field trip it; the API returns success without inserting.
+          Controlled so we can clear after submit; EmailCaptureForm also reads
+          the live DOM value at submit so event-less fills are still captured.
+        */}
+        <div
+          className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
+          aria-hidden="true"
+        >
+          <label htmlFor="waitlist-website">Website</label>
+          <input
+            id="waitlist-website"
+            type="text"
+            name={WAITLIST_HONEYPOT_FIELD}
+            tabIndex={-1}
+            autoComplete="off"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            disabled={isDisabled}
+          />
+        </div>
       </div>
       <WaitlistRadioFieldsets
         jobSearchStatus={jobSearchStatus}

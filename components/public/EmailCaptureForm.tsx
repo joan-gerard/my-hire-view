@@ -6,6 +6,7 @@ import {
   transition,
   viewport,
 } from "@/lib/landing-animations";
+import { WAITLIST_HONEYPOT_FIELD } from "@/lib/validation/waitlist";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { SectionBadge } from "../ui/SectionBadge";
@@ -32,6 +33,7 @@ export default function EmailCaptureForm() {
   const [jobSearchStatus, setJobSearchStatus] = useState("Actively searching");
   const [primaryGoal, setPrimaryGoal] = useState("");
   const [careerStage, setCareerStage] = useState("");
+  const [website, setWebsite] = useState("");
   const [status, setStatus] = useState<WaitlistFormStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -39,6 +41,14 @@ export default function EmailCaptureForm() {
     e.preventDefault();
     setErrorMessage("");
     setStatus("loading");
+
+    // Read live DOM value (not only React state) so event-less bot/autofill
+    // fills still trip the honeypot; clear controlled state afterward.
+    const form = e.currentTarget;
+    const honeypotInput = form.elements.namedItem(
+      WAITLIST_HONEYPOT_FIELD,
+    ) as HTMLInputElement | null;
+    const honeypotValue = honeypotInput?.value ?? website;
 
     try {
       const res = await fetch("/api/waitlist", {
@@ -50,10 +60,14 @@ export default function EmailCaptureForm() {
           job_search_status: jobSearchStatus,
           primary_goal: primaryGoal.trim() || undefined,
           career_stage: careerStage.trim() || undefined,
+          [WAITLIST_HONEYPOT_FIELD]: honeypotValue,
         }),
       });
 
       const data = await res.json().catch(() => ({}));
+
+      // Always clear honeypot so autofill cannot stick across retries.
+      setWebsite("");
 
       if (!res.ok) {
         setStatus("error");
@@ -74,6 +88,7 @@ export default function EmailCaptureForm() {
         .getElementById("early-access")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch {
+      setWebsite("");
       setStatus("error");
       setErrorMessage("Something went wrong. Please try again.");
     }
@@ -135,6 +150,8 @@ export default function EmailCaptureForm() {
                 setPrimaryGoal={setPrimaryGoal}
                 careerStage={careerStage}
                 setCareerStage={setCareerStage}
+                website={website}
+                setWebsite={setWebsite}
                 errorMessage={errorMessage}
                 status={status}
               />
