@@ -42,6 +42,14 @@ export default function EmailCaptureForm() {
     setErrorMessage("");
     setStatus("loading");
 
+    // Read live DOM value (not only React state) so event-less bot/autofill
+    // fills still trip the honeypot; clear controlled state afterward.
+    const form = e.currentTarget;
+    const honeypotInput = form.elements.namedItem(
+      WAITLIST_HONEYPOT_FIELD,
+    ) as HTMLInputElement | null;
+    const honeypotValue = honeypotInput?.value ?? website;
+
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
@@ -52,7 +60,7 @@ export default function EmailCaptureForm() {
           job_search_status: jobSearchStatus,
           primary_goal: primaryGoal.trim() || undefined,
           career_stage: careerStage.trim() || undefined,
-          [WAITLIST_HONEYPOT_FIELD]: website,
+          [WAITLIST_HONEYPOT_FIELD]: honeypotValue,
         }),
       });
 

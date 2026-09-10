@@ -44,7 +44,7 @@ export interface WaitlistSignupFormProps {
   setPrimaryGoal: (value: string) => void;
   careerStage: string;
   setCareerStage: (value: string) => void;
-  /** Honeypot — must stay empty; controlled so it can be cleared after submit. */
+  /** Honeypot — controlled so we can clear after submit; submit still reads live DOM. */
   website: string;
   setWebsite: (value: string) => void;
   errorMessage: string;
@@ -107,7 +107,8 @@ export function WaitlistSignupForm({
         {/*
           Honeypot (F3-039): visually hidden; leave empty. Bots that auto-fill
           every field trip it; the API returns success without inserting.
-          Controlled so autofill cannot stick across retries.
+          Controlled so we can clear after submit; EmailCaptureForm also reads
+          the live DOM value at submit so event-less fills are still captured.
         */}
         <div
           className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
