@@ -64,6 +64,8 @@ __tests__/
       applications-list.test.ts
       applications-public-view.test.ts
       signup.test.ts
+      login.test.ts
+      waitlist.test.ts
 ```
 
 Manual QA for primary/tailored CVs and application status: [manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md](manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md).
@@ -94,6 +96,9 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 | `__tests__/unit/lib/create-initial-profile.test.ts` | **Profile create at signup** — idempotent skip; `23505` re-select by `user_id` vs `public_id` retry; invalid `public_id` regenerate + Auth sync; shared conditional concurrent repair |
 | `__tests__/unit/lib/bootstrap-initial-profile.test.ts` | **Profile bootstrap + public_id validation** — metadata → create; reject invalid `public_id`; missing names |
 | `__tests__/unit/api/login.test.ts` | **Login** — credentials, rate limit, profiles bootstrap after session (C1-009) |
+| `__tests__/unit/api/signup.test.ts` | **Signup** — F1-040/F1-041 validation, generic Auth errors, duplicate **200** |
+| `__tests__/unit/api/waitlist.test.ts` | **Waitlist** — valid insert, email/name **400**, honeypot silent **200**, duplicate **409**, body size **413**, rate limit **429** (F3-039 / F3-064) |
+| `__tests__/unit/lib/validation/waitlist.test.ts` | **Waitlist Zod schema** — email/name caps, enums, honeypot trigger helper |
 | `__tests__/unit/lib/rate-limit.test.ts` | **Rate limiter** — `getClientIdentifier`, in-memory `rateLimit` (windows, isolation, sweep), async `checkRateLimit` / `checkPerSlugRateLimit` (incl. D2 keyPrefix + D3 invalid-path key skip), Upstash path (mocked) + Redis error fallback, `rateLimit429` |
 | `__tests__/unit/lib/api/handle-api-error.test.ts` | **API error helper** — `handleApiError` logs with context, default 500 message, custom message/status, optional log-only `meta` never returned to client |
 | `__tests__/unit/lib/api/same-origin.test.ts` | **Analytics same-origin gate** — matching `Origin` / `Referer` / `Sec-Fetch-Site`, site URL allowlist, rejects foreign or missing signals |

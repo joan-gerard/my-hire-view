@@ -6,6 +6,7 @@ import {
   transition,
   viewport,
 } from "@/lib/landing-animations";
+import { WAITLIST_HONEYPOT_FIELD } from "@/lib/validation/waitlist";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { SectionBadge } from "../ui/SectionBadge";
@@ -40,6 +41,12 @@ export default function EmailCaptureForm() {
     setErrorMessage("");
     setStatus("loading");
 
+    const form = e.currentTarget;
+    const honeypotInput = form.elements.namedItem(
+      WAITLIST_HONEYPOT_FIELD,
+    ) as HTMLInputElement | null;
+    const honeypotValue = honeypotInput?.value ?? "";
+
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
@@ -50,6 +57,7 @@ export default function EmailCaptureForm() {
           job_search_status: jobSearchStatus,
           primary_goal: primaryGoal.trim() || undefined,
           career_stage: careerStage.trim() || undefined,
+          [WAITLIST_HONEYPOT_FIELD]: honeypotValue,
         }),
       });
 

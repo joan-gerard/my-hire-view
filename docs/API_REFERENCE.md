@@ -645,15 +645,17 @@ Pre-launch landing-page signup. Inserts into `waitlist_signups` via the service-
 - **Auth:** Not required
 - **Rate limit:** **5 / minute / IP**
 - **Body — required:** `email`, `first_name`, `job_search_status` (`Actively searching` | `Casually looking` | `Career planning` | `Other`)
-- **Body — optional:** `primary_goal` (`Get more interviews` | `Track my applications` | `Stand out to recruiters` | `Network with recruiters` | `Other`), `career_stage` (`Entry-level` | `Junior (1–3 years)` | `Mid-level (3–7 years)` | `Senior (7+ years)` | `Other`)
+- **Body — optional:** `primary_goal` (`Get more interviews` | `Track my applications` | `Stand out to recruiters` | `Network with recruiters` | `Other`), `career_stage` (`Entry-level` | `Junior (1–3 years)` | `Mid-level (3–7 years)` | `Senior (7+ years)` | `Other`), `website` (honeypot — must be empty / omitted; non-empty → silent **200** without insert)
 - **Success:** `200` `{ success: true }`
-- **Errors:** `400` validation; `409` duplicate email; `429`; `500`
+- **Errors:** `400` validation (incl. Zod email / `first_name` max **100**); `409` duplicate email; `413` body too large; `429`; `500`
 
 **What works**
 
 - Strict **5/min** rate limit for a public write endpoint.
-- Validates required fields and allowlists enum values for status / goal / stage.
-- Basic email format check; normalizes email to lowercase on insert.
+- Zod body schema (`lib/validation/waitlist.ts`): required fields, enum allowlists, `email` via Zod email + max **254**, `first_name` trimmed non-empty max **100** (F3-064).
+- Honeypot field `website`: filled → **200** `{ success: true }` with no DB insert (F3-039 light; no CAPTCHA).
+- Soft JSON body cap (**4 KiB**); malformed JSON → **400**; oversized → **413**.
+- Normalizes email to lowercase on insert.
 - Maps unique violations to **409**; generic message for other DB errors (logs server-side).
 - Insert-only via service role; response does not return row data.
 
@@ -668,6 +670,7 @@ Canonical TypeScript shapes live in:
 - `lib/types/application.ts` — `Application`, `PublicApplication` / `UnavailablePublicApplication` / `PublicApplicationResponse`, `toPublicApplication` / `toPublicApplicationResponse`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
 - `lib/validation/application.ts` — `applicationCreateSchema` / `formatApplicationCreateZodError` for `POST /api/applications`; `applicationUpdateSchema` / `formatApplicationUpdateZodError` for `PUT /api/applications`
 - `lib/validation/slug.ts` — `slugReserveSchema` / `formatSlugReserveZodError` for `POST /api/slug`; `slugValidateSchema` / `formatSlugValidateZodError` for `POST /api/slug/validate`
+- `lib/validation/waitlist.ts` — `waitlistBodySchema` / `formatWaitlistZodError` for `POST /api/waitlist`
 - `lib/types/profile.ts` — `Profile`, `ProfileUpdateInput`
 - `lib/types/primary-cv.ts` — `PrimaryCv`, `PrimaryCvApplicationPreview`, `PRIMARY_CV_MAX_PER_USER`
 

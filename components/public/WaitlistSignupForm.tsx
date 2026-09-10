@@ -1,5 +1,8 @@
 "use client";
 
+import { PROFILE_NAME_MAX_LENGTH } from "@/lib/validation/profile";
+import { WAITLIST_HONEYPOT_FIELD } from "@/lib/validation/waitlist";
+
 export const JOB_SEARCH_OPTIONS = [
   { value: "Actively searching", label: "Actively searching" },
   { value: "Casually looking", label: "Casually looking" },
@@ -16,9 +19,9 @@ export const PRIMARY_GOAL_OPTIONS = [
 
 export const CAREER_STAGE_OPTIONS = [
   { value: "Entry-level", label: "Entry-level" },
-  { value: "Junior", label: "Junior" },
-  { value: "Mid-level", label: "Mid-level" },
-  { value: "Senior", label: "Senior" },
+  { value: "Junior (1–3 years)", label: "Junior" },
+  { value: "Mid-level (3–7 years)", label: "Mid-level" },
+  { value: "Senior (7+ years)", label: "Senior" },
   { value: "Other", label: "Other" },
 ] as const;
 
@@ -90,9 +93,28 @@ export function WaitlistSignupForm({
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             disabled={isDisabled}
+            maxLength={PROFILE_NAME_MAX_LENGTH}
             className={CONTROL_CLASS}
           />
         </FormField>
+        {/*
+          Honeypot (F3-039): visually hidden; leave empty. Bots that auto-fill
+          every field trip it; the API returns success without inserting.
+        */}
+        <div
+          className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
+          aria-hidden="true"
+        >
+          <label htmlFor="waitlist-website">Website</label>
+          <input
+            id="waitlist-website"
+            type="text"
+            name={WAITLIST_HONEYPOT_FIELD}
+            tabIndex={-1}
+            autoComplete="off"
+            defaultValue=""
+          />
+        </div>
       </div>
       <WaitlistRadioFieldsets
         jobSearchStatus={jobSearchStatus}

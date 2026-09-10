@@ -104,7 +104,7 @@ docs/                — internal documentation
 
 ### Waitlist
 
-- `POST /api/waitlist` — validated body, rate-limited, inserts into `waitlist_signups` via service role.
+- `POST /api/waitlist` — Zod-validated body (email / name caps, honeypot), rate-limited, inserts into `waitlist_signups` via service role.
 
 ---
 
