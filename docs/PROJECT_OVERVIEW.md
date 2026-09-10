@@ -12,7 +12,7 @@ A high-level catch-up document covering the product, tech stack, architecture, b
 
 There are two distinct surfaces:
 
-- **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices as a **working draft**; E1 lock + E2 checkout deferred until near launch), waitlist signup. Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.)
+- **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices as a **working draft**; E1 lock + E2 checkout deferred until near launch), waitlist signup. Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.) Discovery, launch channels, and when to bring in specialists: [GO_TO_MARKET.md](GO_TO_MARKET.md).
 - **Product** (`/admin`) — authenticated dashboard to create, manage, and track applications.
 
 ---
@@ -178,6 +178,8 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 ## 9. Planned work
 
 Open pre-launch and post-launch work (gaps, TODOs, improvements) lives in **[Backlog.md](Backlog.md)** — the canonical tracker. This overview does not maintain a parallel checklist.
+
+How people discover the app and become paid users (channels, phases, specialist briefs) lives in **[GO_TO_MARKET.md](GO_TO_MARKET.md)** — strategy only, not a second ticket list.
 
 ---
 
