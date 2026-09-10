@@ -2,6 +2,7 @@ import {
   HeadObjectCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
+import { handleApiError } from "@/lib/api/handle-api-error";
 import { withAuth } from "@/lib/api/with-auth";
 import {
   getR2Bucket,
@@ -27,6 +28,20 @@ const MAX_CV_BYTES = 3 * 1024 * 1024;
 function s3HttpStatus(err: unknown): number | undefined {
   return (err as { $metadata?: { httpStatusCode?: number } }).$metadata
     ?.httpStatusCode;
+}
+
+/** Server-only log fields for unexpected CV upload failures. */
+function cvUploadErrorMeta(
+  userId: string,
+  size?: number,
+  err?: unknown,
+): Record<string, unknown> {
+  const storageStatus = err !== undefined ? s3HttpStatus(err) : undefined;
+  return {
+    userId,
+    ...(size !== undefined ? { size } : {}),
+    ...(storageStatus !== undefined ? { storageStatus } : {}),
+  };
 }
 
 function isHeadNotFound(err: unknown): boolean {
@@ -72,11 +87,9 @@ export async function POST(request: NextRequest) {
     getR2Bucket();
     getR2S3Client();
   } catch (e) {
-    console.error("R2 configuration error:", e);
-    return NextResponse.json(
-      { error: "File upload is not configured" },
-      { status: 500 },
-    );
+    return handleApiError("POST /api/upload R2 config", e, {
+      message: "File upload is not configured",
+    });
   }
 
   const auth = await withAuth();
@@ -96,6 +109,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  let uploadSize: number | undefined;
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -111,6 +126,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    uploadSize = file.size;
     if (file.size > MAX_CV_BYTES) {
       return NextResponse.json(
         { error: "File size must be less than 3MB" },
@@ -144,11 +160,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ url, idempotent: true });
     } catch (headErr) {
       if (!isHeadNotFound(headErr)) {
-        console.error("HeadObject before CV upload:", headErr);
-        return NextResponse.json(
-          { error: "Failed to verify upload state" },
-          { status: 500 },
-        );
+        return handleApiError("POST /api/upload HeadObject", headErr, {
+          message: "Failed to verify upload state",
+          meta: cvUploadErrorMeta(user.id, file.size, headErr),
+        });
       }
     }
 
@@ -177,10 +192,13 @@ export async function POST(request: NextRequest) {
           return idempotencyKeyConflictResponse();
         }
       } catch (verifyErr) {
-        console.error("HeadObject after conditional put race:", verifyErr);
-        return NextResponse.json(
-          { error: "Failed to verify upload state" },
-          { status: 500 },
+        return handleApiError(
+          "POST /api/upload HeadObject after put race",
+          verifyErr,
+          {
+            message: "Failed to verify upload state",
+            meta: cvUploadErrorMeta(user.id, file.size, verifyErr),
+          },
         );
       }
       return NextResponse.json({ url, idempotent: true });
@@ -208,11 +226,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url, idempotent: false });
   } catch (error) {
-    console.error("Upload error:", error);
-    return NextResponse.json(
-      { error: "Failed to upload file" },
-      { status: 500 },
-    );
+    return handleApiError("POST /api/upload", error, {
+      message: "Failed to upload file",
+      meta: cvUploadErrorMeta(user.id, uploadSize, error),
+    });
   } finally {
     releaseUserUploadSlot(user.id);
   }
