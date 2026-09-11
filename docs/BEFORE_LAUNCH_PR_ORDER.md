@@ -16,7 +16,7 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 | **4** | 5 | F16, F17, F21, F29, I2 |
 | **5** | 1 | E2 |
 
-**24 open** (F25 shipped). **Weighted average ≈ 2.7** — many 1–3 polish items; complexity concentrates in **E2**, then **F16 / F17 / F21 / F29 / I2**.
+**24 open** (F25 shipped). **Weighted average ≈ 2.6** — many 1–3 polish items; complexity concentrates in **E2**, then **F16 / F17 / F21 / F29 / I2**.
 
 ---
 
