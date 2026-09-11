@@ -19,6 +19,10 @@ interface ConfirmDialogProps {
 
 /**
  * Accessible confirm modal using a native `<dialog>`.
+ *
+ * Dismissal (Cancel, backdrop, Escape) always goes through `dialog.close()`;
+ * `onCancel` is emitted only from the `close` listener so each cancel runs once
+ * (F25-058). Confirm sets a flag so the same listener does not call `onCancel`.
  */
 export default function ConfirmDialog({
   open,
@@ -33,14 +37,21 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const confirmedRef = useRef(false);
+  const cancelEmittedRef = useRef(false);
   const titleId = useId();
   const messageId = useId();
+
+  const requestDismiss = () => {
+    confirmedRef.current = false;
+    dialogRef.current?.close();
+  };
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (open && !dialog.open) {
       confirmedRef.current = false;
+      cancelEmittedRef.current = false;
       dialog.showModal();
     } else if (!open && dialog.open) {
       dialog.close();
@@ -51,7 +62,9 @@ export default function ConfirmDialog({
     const dialog = dialogRef.current;
     if (!dialog) return;
     const onClose = () => {
-      if (!confirmedRef.current) onCancel();
+      if (confirmedRef.current || cancelEmittedRef.current) return;
+      cancelEmittedRef.current = true;
+      onCancel();
     };
     dialog.addEventListener("close", onClose);
     return () => dialog.removeEventListener("close", onClose);
@@ -65,8 +78,7 @@ export default function ConfirmDialog({
       aria-describedby={messageId}
       onClick={(e) => {
         if (e.target === dialogRef.current) {
-          confirmedRef.current = false;
-          onCancel();
+          requestDismiss();
         }
       }}
     >
@@ -82,10 +94,7 @@ export default function ConfirmDialog({
           {!confirmOnly && (
             <button
               type="button"
-              onClick={() => {
-                confirmedRef.current = false;
-                onCancel();
-              }}
+              onClick={requestDismiss}
               className="rounded-md border border-[var(--foreground)]/20 px-3 py-1.5 text-sm font-medium hover:bg-[var(--foreground)]/5"
             >
               {cancelLabel}
