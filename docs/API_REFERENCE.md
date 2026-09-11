@@ -445,6 +445,7 @@ Remove a primary CV from the library and delete its R2 object. Applications that
 - **Schema validation** (`primaryCvDeleteQuerySchema`): trimmed non-empty UUID `id`; missing/blank → **400** “Primary CV id is required”; malformed → **400** “Primary CV id must be a valid UUID” (before DB lookup).
 - **Fail closed:** deletes the R2 object first (`deleteCvIfOurs`); on R2 failure → **500** and the library row is left intact. Then deletes the `primary_cvs` row.
 - Returns `applications_affected` count for confirm UX (client may show this before calling DELETE).
+- After a successful delete, the library UI refreshes the list **then** shows a still-referenced warning when `applications_affected` > 0 (so the refresh cannot wipe the message). Upload and delete are serialized in the library UI so an in-flight upload refresh cannot clear that warning.
 
 **Accepted limitations**
 

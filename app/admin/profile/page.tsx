@@ -4,12 +4,13 @@ import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import { createClient } from "@/lib/supabase/server";
 import PrimaryCvLibrarySection from "@/components/forms/PrimaryCvLibrarySection";
 import ProfileForm from "@/components/forms/ProfileForm";
+import { formatApplicationStatusBreakdown } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
 
 /**
  * Profile page for the account owner. Shows identity from Supabase Auth,
  * editable profile details (name, location, portfolio, LinkedIn), and a
- * summary of their applications.
+ * summary of their applications (total plus active / draft / archived).
  *
  * A profiles row is normally created at signup. If missing (failed insert),
  * the form is seeded from Auth user_metadata and Save upserts the row.
@@ -49,6 +50,12 @@ export default async function AdminProfilePage() {
     .eq("user_id", user.id)
     .eq("status", "active");
 
+  const draftCountResult = await supabase
+    .from("applications")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("status", "draft");
+
   const archivedCountResult = await supabase
     .from("applications")
     .select("*", { count: "exact", head: true })
@@ -57,7 +64,13 @@ export default async function AdminProfilePage() {
 
   const applicationCount = count ?? 0;
   const activeCount = activeCountResult.count ?? 0;
+  const draftCount = draftCountResult.count ?? 0;
   const archivedCount = archivedCountResult.count ?? 0;
+  const statusBreakdown = formatApplicationStatusBreakdown({
+    active: activeCount,
+    draft: draftCount,
+    archived: archivedCount,
+  });
 
   return (
     <div className="space-y-8">
@@ -122,11 +135,8 @@ export default async function AdminProfilePage() {
         <p className="mt-2 text-sm text-[var(--foreground)]/80">
           You have <strong>{applicationCount}</strong> application
           {applicationCount !== 1 ? "s" : ""} in total
-          {applicationCount > 0 && (
-            <>
-              {" "}
-              ({activeCount} active, {archivedCount} archived)
-            </>
+          {applicationCount > 0 && statusBreakdown && (
+            <> ({statusBreakdown})</>
           )}
           .
         </p>
