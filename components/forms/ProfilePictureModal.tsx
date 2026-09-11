@@ -2,6 +2,10 @@
 
 import Button from "@/components/ui/Button";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
+import {
+  messageForUploadFailure,
+  messageForUploadNetworkError,
+} from "@/lib/utils/upload-form-messages";
 import { useEffect, useId, useRef, useState } from "react";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -39,7 +43,9 @@ export default function ProfilePictureModal({
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
   const [removed, setRemoved] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<"idle" | "uploading" | "saving">(
+    "idle",
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,6 +78,9 @@ export default function ProfilePictureModal({
   const displayUrl = removed
     ? null
     : (previewObjectUrl ?? savedDisplayUrl);
+  const loading = submitPhase !== "idle";
+  const saveLoadingLabel =
+    submitPhase === "uploading" ? "Uploading…" : "Saving…";
   const dirty = Boolean(pendingFile) || removed;
   const canSave = dirty && !loading;
 
@@ -95,7 +104,7 @@ export default function ProfilePictureModal({
   const handleSave = async () => {
     if (!canSave) return;
     setError(null);
-    setLoading(true);
+    setSubmitPhase(pendingFile ? "uploading" : "saving");
     try {
       let profilePictureUrl: string | null = null;
 
@@ -104,21 +113,37 @@ export default function ProfilePictureModal({
       } else if (pendingFile) {
         const fd = new FormData();
         fd.append("file", pendingFile);
-        const uploadRes = await fetch("/api/upload/profile-picture", {
-          method: "POST",
-          body: fd,
-        });
-        const uploadJson = await uploadRes.json().catch(() => ({}));
+        let uploadRes: Response;
+        try {
+          uploadRes = await fetch("/api/upload/profile-picture", {
+            method: "POST",
+            body: fd,
+          });
+        } catch {
+          setError(messageForUploadNetworkError("profile-picture"));
+          return;
+        }
+        const uploadJson = (await uploadRes.json().catch(() => ({}))) as {
+          error?: string;
+          url?: string;
+        };
         if (!uploadRes.ok) {
-          setError(uploadJson.error ?? "Upload failed");
+          setError(
+            messageForUploadFailure(
+              "profile-picture",
+              uploadRes.status,
+              uploadJson.error,
+            ),
+          );
           return;
         }
         profilePictureUrl =
           typeof uploadJson.url === "string" ? uploadJson.url : null;
         if (!profilePictureUrl) {
-          setError("Upload failed");
+          setError(messageForUploadFailure("profile-picture", 500, null));
           return;
         }
+        setSubmitPhase("saving");
       }
 
       const response = await fetch("/api/profile", {
@@ -150,7 +175,7 @@ export default function ProfilePictureModal({
     } catch {
       setError("Failed to save profile picture");
     } finally {
-      setLoading(false);
+      setSubmitPhase("idle");
     }
   };
 
@@ -172,6 +197,11 @@ export default function ProfilePictureModal({
           One picture per account. Changes are saved when you click Save
           picture — then you can show it on this application.
         </p>
+        {submitPhase === "uploading" && (
+          <p className="text-sm text-[var(--foreground)]/80" role="status">
+            Uploading…
+          </p>
+        )}
 
         {error && (
           <p
@@ -244,6 +274,7 @@ export default function ProfilePictureModal({
             type="button"
             variant="primary"
             loading={loading}
+            loadingLabel={saveLoadingLabel}
             disabled={!canSave}
             onClick={() => void handleSave()}
           >

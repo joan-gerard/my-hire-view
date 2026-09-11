@@ -11,6 +11,14 @@ import {
   isCustomSlug,
   validateSlugFormat,
 } from "@/lib/utils/slug-generate";
+import {
+  getFileSignature,
+  resolveCvUploadIdempotencyKey,
+} from "@/lib/utils/cv-upload-client-key";
+import {
+  messageForUploadFailure,
+  messageForUploadNetworkError,
+} from "@/lib/utils/upload-form-messages";
 import { getApplicationUrl } from "@/lib/utils/url";
 import { useEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
@@ -156,12 +164,19 @@ export default function ApplicationForm({
   const [slugAutoReserveNonce, setSlugAutoReserveNonce] = useState(0);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
+  /**
+   * Local submit phase so Save stays busy during CV upload (before parent
+   * `loading`) and shows honest "Uploading…" / "Saving…" copy (F8-051 / F8-055).
+   */
+  const [submitPhase, setSubmitPhase] = useState<"idle" | "uploading" | "saving">(
+    "idle",
+  );
   const isSubmittingRef = useRef(false);
   const uploadedPendingFileRef = useRef<{
     signature: string;
     url: string;
   } | null>(null);
-  /** One key per selected CV file; server dedupes uploads / retries to the same R2 object. */
+  /** One key per selected CV file; reused on retry until the file changes (F8-063). */
   const cvUploadIdempotencyKeyRef = useRef<string | null>(null);
 
   const [primaryCvs, setPrimaryCvs] = useState<PrimaryCv[]>([]);
@@ -287,9 +302,6 @@ export default function ApplicationForm({
     }
   };
 
-  const getFileSignature = (file: File): string =>
-    `${file.name}:${file.size}:${file.lastModified}`;
-
   const hasCompany = Boolean(formData.company.trim());
   const hasRole = Boolean(formData.role.trim());
   const hasSlug = Boolean(formData.slug.trim());
@@ -309,10 +321,13 @@ export default function ApplicationForm({
   const requiredReady =
     hasCompany && hasRole && hasCv && hasVideo && slugReady;
 
-  const canSubmit = requiredReady && !loading;
+  const formBusy = loading || submitPhase !== "idle";
+  const canSubmit = requiredReady && !formBusy;
+  const saveLoadingLabel =
+    submitPhase === "uploading" ? "Uploading…" : "Saving…";
 
   const disabledReason = (() => {
-    if (canSubmit || loading) return null;
+    if (canSubmit || formBusy) return null;
     if (!hasCompany) return "Company name is required.";
     if (!hasRole) return "Role is required.";
     if (!hasCv)
@@ -587,9 +602,10 @@ export default function ApplicationForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (loading || isSubmittingRef.current || !canSubmit) return;
+    if (formBusy || isSubmittingRef.current || !canSubmit) return;
     isSubmittingRef.current = true;
     setErrors({});
+    setSubmitPhase("saving");
 
     try {
       const newErrors: Partial<Record<keyof ApplicationFormData, string>> = {};
@@ -688,26 +704,56 @@ export default function ApplicationForm({
         if (cachedUpload?.signature === signature) {
           cvUrl = cachedUpload.url;
         } else {
-          if (!cvUploadIdempotencyKeyRef.current) {
-            cvUploadIdempotencyKeyRef.current = crypto.randomUUID();
-          }
+          // Reuse key on retry; only mint when missing (file-change path sets it).
+          cvUploadIdempotencyKeyRef.current = resolveCvUploadIdempotencyKey(
+            cvUploadIdempotencyKeyRef.current,
+            false,
+          );
           const formDataUpload = new FormData();
           formDataUpload.append("file", cvPendingFile);
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            headers: {
-              "Idempotency-Key": cvUploadIdempotencyKeyRef.current,
-            },
-            body: formDataUpload,
-          });
-          if (!response.ok) {
-            const { error } = await response.json();
-            setErrors({ cv_url: error || "Upload failed" });
+          setSubmitPhase("uploading");
+          let response: Response;
+          try {
+            response = await fetch("/api/upload", {
+              method: "POST",
+              headers: {
+                "Idempotency-Key": cvUploadIdempotencyKeyRef.current,
+              },
+              body: formDataUpload,
+            });
+          } catch {
+            // Keep the same idempotency key for retry (F8-063).
+            setErrors({
+              cv_url: messageForUploadNetworkError("cv"),
+            });
             return;
           }
-          const { url } = await response.json();
-          cvUrl = url;
-          uploadedPendingFileRef.current = { signature, url };
+          if (!response.ok) {
+            const body = (await response.json().catch(() => ({}))) as {
+              error?: string;
+            };
+            // Keep key on failure; do not mint a new key here (F8-063).
+            setErrors({
+              cv_url: messageForUploadFailure(
+                "cv",
+                response.status,
+                body.error,
+              ),
+            });
+            return;
+          }
+          const body = (await response.json().catch(() => ({}))) as {
+            url?: string;
+          };
+          if (typeof body.url !== "string" || !body.url) {
+            setErrors({
+              cv_url: messageForUploadFailure("cv", 500, null),
+            });
+            return;
+          }
+          cvUrl = body.url;
+          uploadedPendingFileRef.current = { signature, url: body.url };
+          setSubmitPhase("saving");
         }
         cvFilename = cvPendingFile.name;
       }
@@ -744,6 +790,7 @@ export default function ApplicationForm({
       await onSubmit(payload);
     } finally {
       isSubmittingRef.current = false;
+      setSubmitPhase("idle");
     }
   };
 
@@ -828,7 +875,7 @@ export default function ApplicationForm({
           <button
             type="button"
             onClick={handleResetSlugToSuggested}
-            disabled={!hasCompany || !hasRole || loading}
+            disabled={!hasCompany || !hasRole || formBusy}
             className="text-sm font-medium text-(--brand-primary) hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
           >
             Reset to suggested
@@ -993,7 +1040,10 @@ export default function ApplicationForm({
           // key so Save does not create a duplicate R2 object.
           if (!sameAsCached && !sameAsPending) {
             uploadedPendingFileRef.current = null;
-            cvUploadIdempotencyKeyRef.current = crypto.randomUUID();
+            cvUploadIdempotencyKeyRef.current = resolveCvUploadIdempotencyKey(
+              cvUploadIdempotencyKeyRef.current,
+              true,
+            );
           }
 
           setCvPendingFile(file);
@@ -1030,6 +1080,7 @@ export default function ApplicationForm({
           setFormData((prev) => ({ ...prev, use_original_cv_filename: use }))
         }
         slug={formData.slug}
+        uploading={submitPhase === "uploading"}
       />
 
       <YouTubeUrlInput
@@ -1039,7 +1090,8 @@ export default function ApplicationForm({
       />
 
       <ApplicationFormActions
-        loading={loading}
+        loading={formBusy}
+        loadingLabel={saveLoadingLabel}
         submitLabel="Save Application"
         canSubmit={canSubmit}
         disabledReason={disabledReason}

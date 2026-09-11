@@ -4,12 +4,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'danger';
   loading?: boolean;
+  /** Shown instead of children while `loading` is true. Defaults to "Loading…". */
+  loadingLabel?: string;
 }
 
 export default function Button({
   children,
   variant = 'primary',
   loading = false,
+  loadingLabel = 'Loading…',
   className = '',
   disabled,
   ...props
@@ -27,9 +30,10 @@ export default function Button({
     <button
       className={`${baseStyles} ${variantStyles[variant]} ${className}`}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
     >
-      {loading ? 'Loading...' : children}
+      {loading ? loadingLabel : children}
     </button>
   );
 }

@@ -4,6 +4,8 @@ import Button from '@/components/ui/Button';
 
 interface ApplicationFormActionsProps {
   loading?: boolean;
+  /** Busy-button label while `loading` (e.g. "Uploading…" / "Saving…"). */
+  loadingLabel?: string;
   submitLabel?: string;
   /** When false, the submit button is disabled. */
   canSubmit?: boolean;
@@ -13,6 +15,7 @@ interface ApplicationFormActionsProps {
 
 export default function ApplicationFormActions({
   loading = false,
+  loadingLabel = 'Saving…',
   submitLabel = 'Save Application',
   canSubmit = true,
   disabledReason = null,
@@ -25,6 +28,7 @@ export default function ApplicationFormActions({
         type="button"
         variant="secondary"
         onClick={() => window.history.back()}
+        disabled={loading}
       >
         Cancel
       </Button>
@@ -36,6 +40,7 @@ export default function ApplicationFormActions({
           type="submit"
           variant="primary"
           loading={loading}
+          loadingLabel={loadingLabel}
           disabled={disabled}
           aria-describedby={
             disabled && disabledReason

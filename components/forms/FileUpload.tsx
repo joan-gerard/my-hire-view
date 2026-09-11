@@ -17,6 +17,8 @@ interface FileUploadProps {
   hideLabel?: boolean;
   /** Custom label for the file input affordance (accessibility / helper text). */
   chooseLabel?: string;
+  /** True while the pending file is uploading on Save (F8-051 / F8-055). */
+  uploading?: boolean;
 }
 
 const MAX_SIZE_BYTES = 3 * 1024 * 1024; // 3MB
@@ -30,6 +32,7 @@ export default function FileUpload({
   error,
   hideLabel = false,
   chooseLabel = "CV (PDF)",
+  uploading = false,
 }: FileUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [checkingCv, setCheckingCv] = useState(false);
@@ -103,19 +106,21 @@ export default function FileUpload({
       )}
       <div className={hideLabel ? "flex flex-col gap-2" : "mt-1 flex flex-col gap-2"}>
         <div className="flex items-center gap-4">
-          <input
+            <input
             ref={fileInputRef}
             type="file"
             accept="application/pdf"
             onChange={handleFileChange}
             aria-label={chooseLabel}
-            className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-md file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90"
+            disabled={uploading}
+            className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-md file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90 disabled:opacity-50"
           />
           {showPending && (
             <button
               type="button"
               onClick={handleClearPending}
-              className="text-sm text-[var(--foreground)]/80 hover:text-[var(--foreground)] underline"
+              disabled={uploading}
+              className="text-sm text-[var(--foreground)]/80 hover:text-[var(--foreground)] underline disabled:opacity-50"
             >
               Remove selection
             </button>
@@ -128,7 +133,9 @@ export default function FileUpload({
               Selected: {pendingFile.name}
             </p>
             <p className="text-xs text-[var(--foreground)]/60 mt-0.5">
-              File will be uploaded when you save the application.
+              {uploading
+                ? "Uploading…"
+                : "File will be uploaded when you save the application."}
             </p>
             {canPreview && (
               <button
