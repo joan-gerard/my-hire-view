@@ -4,7 +4,7 @@
 
 **Trello:** Cards live on the [MyHireView](https://trello.com/b/PAn5GrDz/myhireview) board (lists: Pre Launch, Post Launch, Current Sprint, In Progress, Done). Card titles use `[id] Item` (e.g. `[A1-002] CI/CD`) and match rows in this file. Keep this doc and Trello in sync whenever a ticket or PR moves, ships, or is added.
 
-**Context (not the work tracker):** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [API_REFERENCE.md](API_REFERENCE.md) · [CI_CD.md](CI_CD.md) · [CODE_REVIEW.md](CODE_REVIEW.md) · [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) · [GO_TO_MARKET.md](GO_TO_MARKET.md) · [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md) · [retrospectives/SSR_PUBLIC_VIEW.md](retrospectives/SSR_PUBLIC_VIEW.md) · [retrospectives/SECURITY.md](retrospectives/SECURITY.md)
+**Context (not the work tracker):** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [API_REFERENCE.md](API_REFERENCE.md) · [CI_CD.md](CI_CD.md) · [CODE_REVIEW.md](CODE_REVIEW.md) · [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) · [GO_TO_MARKET.md](GO_TO_MARKET.md) · [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md) · [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md) · [retrospectives/SSR_PUBLIC_VIEW.md](retrospectives/SSR_PUBLIC_VIEW.md) · [retrospectives/SECURITY.md](retrospectives/SECURITY.md)
 
 **MoSCoW:** **M**ust · **S**hould · **C**ould · **W**on’t (this time)
 
@@ -341,8 +341,10 @@ First observability step when Vercel Runtime Logs are no longer enough. Upload-s
 
 ### Suggested next PRs (start here)
 
-1. **F17** / other F-batch Shoulds when capacity allows  
-2. **F28** accessibility review when capacity allows (before launch)  
+Full effort rollup and phased order for open before-launch PRs: [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md).
+
+1. **F25 → F11 → F18 → F10** (quick correctness), then **F9**  
+2. Continue the phased sequence in [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md) (integrity → create UX → trust → audits)  
 3. **Before F30:** `F25`, `I2`, `L6` (targeted code-quality / refactor; `F5` shipped)  
 4. **Near launch:** **F29** security review + **F30** refactoring audit, then **E1 → E2** + `A3-015`
 
