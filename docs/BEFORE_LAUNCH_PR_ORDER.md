@@ -10,13 +10,13 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 
 | Effort | Count | PRs |
 | :----: | ----: | --- |
-| **1** | 5 | A3, F11, F18, F22, F24 |
+| **1** | 4 | A3, F18, F22, F24 |
 | **2** | 6 | E1, F10, F12, F20, F23, F26 |
 | **3** | 7 | F9, F13, F15, F19, F28, F30, L6 |
 | **4** | 5 | F16, F17, F21, F29, I2 |
 | **5** | 1 | E2 |
 
-**24 open** (F25 shipped). **Weighted average ≈ 2.6** — many 1–3 polish items; complexity concentrates in **E2**, then **F16 / F17 / F21 / F29 / I2**.
+**23 open** (F11, F25 shipped). **Weighted average ≈ 2.7** — many 1–3 polish items; complexity concentrates in **E2**, then **F16 / F17 / F21 / F29 / I2**.
 
 ---
 
@@ -26,10 +26,10 @@ Order by **dependencies first, then risk/correctness, then UX polish, then near-
 
 ### Phase 0 — Quick correctness wins
 
-**F11 → F18 → F10 → F12 → F26** _(F25 shipped)_
+**F18 → F10 → F12 → F26** _(F11, F25 shipped)_
 
 - Small diffs, low review load, clear “done”
-- Fixes real bugs (list search 500, draft count, public DTO leak risk, Auth name drift)
+- Fixes real bugs (draft count, public DTO leak risk, Auth name drift)
 
 Optional anytime docs/assets: **F22**, **F24** (don’t block engineering).
 
@@ -78,10 +78,10 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering).
 
 ---
 
-## 3. Suggested sequence (all 24 open)
+## 3. Suggested sequence (all 23 open)
 
 ```
-F11 → F18 → F10 → F12 → F26
+F18 → F10 → F12 → F26
   → F9 → F13
   → F15 → F16 → F19 → F17
   → F20 → F23 → F21
@@ -97,4 +97,4 @@ F11 → F18 → F10 → F12 → F26
 3. **Reviews stay useful** — F28/F29/F30 after the bulk of pre-launch code, not before.
 4. **Monetization last** — backlog already defers E1/E2 until launch is imminent.
 
-If capacity is short: start **F11 + F18 + F10**, then **F9**.
+If capacity is short: start **F18 + F10**, then **F9**.

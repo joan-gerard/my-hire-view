@@ -167,6 +167,40 @@ describe("GET /api/applications", () => {
     );
   });
 
+  it("strips quotes and reserved filter chars from q before the or filter", async () => {
+    const chain = okWithCount([LIST_ITEM], 1);
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+
+    const q = new URLSearchParams({ q: '"Acme":Corp' }).toString();
+    const response = await GET(makeGetRequest(q));
+    expect(response.status).toBe(200);
+    expect(chain.or).toHaveBeenCalledWith(
+      'company.ilike."%Acme Corp%",role.ilike."%Acme Corp%",slug.ilike."%Acme Corp%"',
+    );
+  });
+
+  it("keeps apostrophes in q so names like O'Brien still match", async () => {
+    const chain = okWithCount([LIST_ITEM], 1);
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+
+    const q = new URLSearchParams({ q: "O'Brien" }).toString();
+    const response = await GET(makeGetRequest(q));
+    expect(response.status).toBe(200);
+    expect(chain.or).toHaveBeenCalledWith(
+      `company.ilike."%O'Brien%",role.ilike."%O'Brien%",slug.ilike."%O'Brien%"`,
+    );
+  });
+
+  it("skips the search filter when q is only reserved characters", async () => {
+    const chain = okWithCount([LIST_ITEM], 1);
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+
+    const q = new URLSearchParams({ q: '":.()"' }).toString();
+    const response = await GET(makeGetRequest(q));
+    expect(response.status).toBe(200);
+    expect(chain.or).not.toHaveBeenCalled();
+  });
+
   it("returns 401 when unauthenticated", async () => {
     mockWithAuth.mockResolvedValue(authUnauthorized());
     const response = await GET(makeGetRequest());

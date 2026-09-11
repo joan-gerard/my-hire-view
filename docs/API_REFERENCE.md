@@ -69,7 +69,7 @@ List the authenticated user’s applications (newest first), paginated. Returns 
 - **Query:**
   - `limit` — page size (default **20**, max **50**)
   - `offset` — rows to skip (default **0**)
-  - `q` — optional case-insensitive search on `company`, `role`, or `slug` (max 100 chars; filter metacharacters stripped)
+  - `q` — optional case-insensitive search on `company`, `role`, or `slug` (max 100 chars; quotes and other filter metacharacters stripped)
 - **Errors:** `401` `{ error: "Unauthorized" }`; `429`; `500` `{ error: string }` (DB message or `"Failed to fetch applications"`)
 
 **Success — `200`**
@@ -131,7 +131,7 @@ TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_
 - Stable ordering (`created_at` descending) for the dashboard.
 - Clear success shape `{ data, meta }`.
 - Projects only dashboard list fields (not `select("*")`).
-- `normalizeListSearchQuery` caps length and strips common PostgREST/`ilike` metacharacters (`%`, `_`, commas, parens, etc.) before building the `or` filter.
+- `normalizeListSearchQuery` caps length and strips PostgREST/`ilike` metacharacters (`%`, `_`, `"`, `:`, commas, parens, backslash) before building the `or` filter so quoted `q` cannot 500.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
 
