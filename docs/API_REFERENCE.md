@@ -52,7 +52,7 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 
 Related deep-dives: [PDF_AND_R2.md](PDF_AND_R2.md) (CV upload), [PROFILE_PICTURE.md](PROFILE_PICTURE.md), [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
 
-Cross-cutting already in place on many routes: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` (optional log-only `meta`) on public application routes, by-id GET, and CV / profile-picture uploads; `withAuth` in `lib/api/with-auth.ts` so missing sessions stay **401** and are not mislabeled as unauthorized when later work fails. Open cross-cutting work (remaining validation, upload UX, etc.) is tracked in [Backlog.md](Backlog.md). Historical refactors: [CODE_REVIEW.md](CODE_REVIEW.md).
+Cross-cutting already in place on many routes: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` (optional log-only `meta`) on public application routes, by-id GET, and CV / profile-picture uploads; `withAuth` in `lib/api/with-auth.ts` so missing sessions stay **401** and are not mislabeled as unauthorized when later work fails. Open cross-cutting work (upload UX, etc.) is tracked in [Backlog.md](Backlog.md). Historical refactors: [CODE_REVIEW.md](CODE_REVIEW.md).
 
 ---
 
@@ -411,13 +411,14 @@ Upload a PDF to the primary CV library (max **5** per user). Object key: `cvs/{u
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body:** `multipart/form-data` with `file` (PDF, max **3 MB**); optional `label` (max **120** chars)
+- **Body:** `multipart/form-data` with `file` (PDF, max **3 MB**); optional `label` (max **120** chars; over-length → **400**, not truncated)
 - **Success:** `201` `{ data: PrimaryCv & { applications_count: 0, used_by: [] } }`
-- **Errors:** `400` missing file / library at max / validation; `401`; `429`; `500` (R2 not configured / upload failure)
+- **Errors:** `400` missing file / invalid label / library at max / validation; `401`; `429`; `500` (R2 not configured / upload failure)
 
 **What works**
 
 - Auth required; enforces **5** primaries per user before upload.
+- **Schema validation** (`primaryCvLabelSchema` in `lib/validation/primary-cv.ts`): optional `label` trimmed; empty → `null`; max **120**; non-string rejected; clear **400** before count/R2 work.
 - PDF-only, **3 MB** max, `%PDF` magic-byte check.
 - Writes R2 object then inserts `primary_cvs` row; rolls back R2 on insert failure.
 - Returns usage fields (`applications_count: 0`, `used_by: []`) for consistent client shape.
@@ -436,11 +437,12 @@ Remove a primary CV from the library and delete its R2 object. Applications that
 - **Rate limit:** Default (60/min)
 - **Query:** `id` (required, primary CV UUID)
 - **Success:** `200` `{ success: true, applications_affected: number }`
-- **Errors:** `400` missing id / DB error; `401`; `404` not found or not owned; `429`; `500` if R2 cleanup fails
+- **Errors:** `400` missing/invalid id / DB error; `401`; `404` not found or not owned; `429`; `500` if R2 cleanup fails
 
 **What works**
 
 - Auth + ownership check before delete.
+- **Schema validation** (`primaryCvDeleteQuerySchema`): trimmed non-empty UUID `id`; missing/blank → **400** “Primary CV id is required”; malformed → **400** “Primary CV id must be a valid UUID” (before DB lookup).
 - **Fail closed:** deletes the R2 object first (`deleteCvIfOurs`); on R2 failure → **500** and the library row is left intact. Then deletes the `primary_cvs` row.
 - Returns `applications_affected` count for confirm UX (client may show this before calling DELETE).
 
@@ -671,6 +673,7 @@ Canonical TypeScript shapes live in:
 - `lib/validation/application.ts` — `applicationCreateSchema` / `formatApplicationCreateZodError` for `POST /api/applications`; `applicationUpdateSchema` / `formatApplicationUpdateZodError` for `PUT /api/applications`
 - `lib/validation/slug.ts` — `slugReserveSchema` / `formatSlugReserveZodError` for `POST /api/slug`; `slugValidateSchema` / `formatSlugValidateZodError` for `POST /api/slug/validate`
 - `lib/validation/waitlist.ts` — `waitlistBodySchema` / `formatWaitlistZodError` for `POST /api/waitlist`
+- `lib/validation/primary-cv.ts` — `primaryCvLabelSchema` / `primaryCvDeleteQuerySchema` / `formatPrimaryCvZodError` for `POST`/`DELETE /api/profile/primary-cvs`
 - `lib/types/profile.ts` — `Profile`, `ProfileUpdateInput`
 - `lib/types/primary-cv.ts` — `PrimaryCv`, `PrimaryCvApplicationPreview`, `PRIMARY_CV_MAX_PER_USER`
 
