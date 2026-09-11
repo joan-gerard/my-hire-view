@@ -182,6 +182,7 @@ describe("POST /api/upload", () => {
       error:
         "Idempotency-Key was already used with a different file. Use a new key.",
     });
+    expect(mockRelease).toHaveBeenCalledWith(MOCK_USER.id);
   });
 
   it("returns 500 with log-only meta when HeadObject fails unexpectedly", async () => {
