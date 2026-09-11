@@ -84,9 +84,20 @@ Historical record of refactors already applied to the MyHireView codebase. Open 
 
 ---
 
+### 1.7 Upload routes: shared `handleApiError` (F5)
+
+**Before:** CV (`POST /api/upload`) and profile-picture (`POST /api/upload/profile-picture`) unexpected failures used ad-hoc `console.error` + generic JSON, with no structured ops context.
+
+**After:** Both routes use `handleApiError` so the client still sees a generic message while server logs include log-only `meta` (`userId`, file `size`, storage status when present). Expected 400/401/409/429 paths are unchanged.
+
+**Files changed:**  
+`app/api/upload/route.ts`, `app/api/upload/profile-picture/route.ts`
+
+---
+
 ## 2. Open recommendations
 
-Open follow-ups from this review (API validation, middleware entry, DB/app types, upload error/`handleApiError` adoption, upload UX, central API client, etc.) live in **[Backlog.md](Backlog.md)**. Do not re-list them here.
+Open follow-ups from this review (API validation, middleware entry, DB/app types, upload UX, central API client, etc.) live in **[Backlog.md](Backlog.md)**. Do not re-list them here.
 
 ---
 
@@ -101,3 +112,4 @@ Open follow-ups from this review (API validation, middleware entry, DB/app types
 | ApplicationCard  | Done – Button + clipboard util                                         |
 | Edit page fetch  | Done – GET by-id + edit page uses it                                   |
 | Upload/Slug auth | Done – both require auth                                               |
+| Upload errors    | Done – `handleApiError` + log-only meta on CV and profile-picture (F5) |

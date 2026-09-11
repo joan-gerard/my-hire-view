@@ -58,6 +58,7 @@ __tests__/
     api/
       profile.test.ts
       profile-picture-upload.test.ts
+      cv-upload.test.ts
       slug.test.ts
       applications-create.test.ts
       applications-edit.test.ts
@@ -84,7 +85,8 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 | `__tests__/unit/lib/utils/upload-idempotency.test.ts` | **Tailored upload idempotency** — HeadObject replay, size/type mismatch |
 | `__tests__/unit/lib/utils/pdf.test.ts` | **PDF magic bytes** — `%PDF` detection |
 | `__tests__/unit/lib/utils/image.test.ts` | **Image magic bytes** — JPEG / PNG / WebP detection + light header checks |
-| `__tests__/unit/api/profile-picture-upload.test.ts` | **Profile picture upload** — auth **401** vs unexpected **500**, MIME + magic-byte rejects, Storage error logging without leaking messages, purge warning |
+| `__tests__/unit/api/profile-picture-upload.test.ts` | **Profile picture upload** — auth **401** vs unexpected **500**, MIME + magic-byte rejects, Storage/`handleApiError` logging with log-only `meta` (no leak to client), purge warning (F5-056) |
+| `__tests__/unit/api/cv-upload.test.ts` | **Tailored CV upload** — auth **401**, R2 not configured, HeadObject/PutObject **500** via `handleApiError` with log-only `meta` (`userId`, size, storage status), happy-path new upload (F5-056) |
 | `__tests__/unit/lib/utils/public-id.test.ts` | **Public id generation** |
 | `__tests__/unit/lib/utils/resolve-public-application.test.ts` | **Public path resolution** — invalid `publicId` / slug format short-circuits before DB; valid pair resolves via service-role client; missing rows → null; query errors throw |
 | `__tests__/unit/lib/utils/load-public-application-response.test.ts` | **Public share DTO loader** — null when unresolved, active DTO + `cv_exists`, unavailable stub for draft/archived, propagates errors (D1-007) |

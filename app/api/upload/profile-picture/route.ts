@@ -1,3 +1,4 @@
+import { handleApiError } from "@/lib/api/handle-api-error";
 import { withAuth } from "@/lib/api/with-auth";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -20,19 +21,24 @@ import { NextRequest, NextResponse } from "next/server";
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
-function logStorageError(context: string, error: unknown): void {
-  const e = error as {
-    message?: string;
-    name?: string;
-    status?: number;
-    statusCode?: string | number;
+function storageStatusOf(error: unknown): number | string | undefined {
+  if (error == null || typeof error !== "object") return undefined;
+  const e = error as { status?: number; statusCode?: string | number };
+  return e.status ?? e.statusCode;
+}
+
+/** Server-only log fields for unexpected profile-picture upload failures. */
+function pictureUploadErrorMeta(
+  userId: string,
+  size?: number,
+  error?: unknown,
+): Record<string, unknown> {
+  const storageStatus = error != null ? storageStatusOf(error) : undefined;
+  return {
+    userId,
+    ...(size !== undefined ? { size } : {}),
+    ...(storageStatus !== undefined ? { storageStatus } : {}),
   };
-  console.error(context, {
-    message: e.message,
-    name: e.name,
-    status: e.status,
-    statusCode: e.statusCode,
-  });
 }
 
 /**
@@ -47,6 +53,8 @@ export async function POST(request: NextRequest) {
   const auth = await withAuth();
   if (!auth.ok) return auth.response;
   const { user } = auth;
+
+  let uploadSize: number | undefined;
 
   try {
     const supabase = await createClient();
@@ -67,6 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    uploadSize = file.size;
     if (file.size > MAX_SIZE_BYTES) {
       return NextResponse.json(
         { error: "File size must be less than 5MB" },
@@ -91,10 +100,13 @@ export async function POST(request: NextRequest) {
       .upload(path, body, { contentType: detected, upsert: true });
 
     if (error) {
-      logStorageError("Profile picture upload error:", error);
-      return NextResponse.json(
-        { error: "Failed to upload" },
-        { status: 500 },
+      return handleApiError(
+        "POST /api/upload/profile-picture Storage",
+        error,
+        {
+          message: "Failed to upload",
+          meta: pictureUploadErrorMeta(user.id, file.size, error),
+        },
       );
     }
 
@@ -105,8 +117,8 @@ export async function POST(request: NextRequest) {
     );
     if (!purge.ok) {
       console.error(
-        "Profile picture uploaded but failed to remove older objects:",
-        user.id,
+        "POST /api/upload/profile-picture purge",
+        pictureUploadErrorMeta(user.id, file.size),
       );
     }
 
@@ -118,10 +130,9 @@ export async function POST(request: NextRequest) {
       ...(purge.ok ? {} : { warning: "Uploaded but could not remove older files" }),
     });
   } catch (error) {
-    console.error("Profile picture upload unexpected error:", error);
-    return NextResponse.json(
-      { error: "Failed to upload" },
-      { status: 500 },
-    );
+    return handleApiError("POST /api/upload/profile-picture", error, {
+      message: "Failed to upload",
+      meta: pictureUploadErrorMeta(user.id, uploadSize, error),
+    });
   }
 }

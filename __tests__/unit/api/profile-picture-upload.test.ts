@@ -2,7 +2,7 @@
  * Tests for POST /api/upload/profile-picture.
  *
  * Validates auth vs unexpected-error status codes, MIME + magic-byte checks,
- * size limit, and Storage failure logging (without leaking Storage messages).
+ * size limit, and `handleApiError` logging (log-only meta, no leak to client).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
@@ -158,43 +158,66 @@ describe("POST /api/upload/profile-picture", () => {
 
   it("returns 500 with a generic message when Storage upload fails", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const storageError = {
+      message: "Bucket not found",
+      name: "StorageApiError",
+      status: 404,
+      statusCode: "404",
+    };
     const client = makeStorageClient({
       uploadResult: {
         data: null,
-        error: {
-          message: "Bucket not found",
-          name: "StorageApiError",
-          status: 404,
-          statusCode: "404",
-        },
+        error: storageError,
       },
     });
     mockCreateClient.mockResolvedValue(client);
 
-    const response = await POST(makeUploadRequest(jpegFile()));
+    const file = jpegFile();
+    const response = await POST(makeUploadRequest(file));
+    const json = await response.json();
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: "Failed to upload" });
+    expect(json).toEqual({ error: "Failed to upload" });
+    expect(json).not.toHaveProperty("userId");
+    expect(json).not.toHaveProperty("storageStatus");
     expect(errorSpy).toHaveBeenCalledWith(
-      "Profile picture upload error:",
-      expect.objectContaining({
-        message: "Bucket not found",
-        status: 404,
-        statusCode: "404",
-      }),
+      "POST /api/upload/profile-picture Storage",
+      storageError,
+      {
+        userId: MOCK_USER.id,
+        size: file.size,
+        storageStatus: 404,
+      },
     );
     errorSpy.mockRestore();
   });
 
   it("returns 500 (not 401) on unexpected errors after auth", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    mockCreateClient.mockRejectedValue(new Error("boom"));
+    const cause = new Error("boom");
+    mockCreateClient.mockRejectedValue(cause);
 
     const response = await POST(makeUploadRequest(jpegFile()));
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: "Failed to upload" });
     expect(errorSpy).toHaveBeenCalledWith(
-      "Profile picture upload unexpected error:",
-      expect.any(Error),
+      "POST /api/upload/profile-picture",
+      cause,
+      { userId: MOCK_USER.id },
+    );
+    errorSpy.mockRestore();
+  });
+
+  it("returns 500 when an unexpected failure is null", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockCreateClient.mockRejectedValue(null);
+
+    const response = await POST(makeUploadRequest(jpegFile()));
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "Failed to upload" });
+    expect(errorSpy).toHaveBeenCalledWith(
+      "POST /api/upload/profile-picture",
+      null,
+      { userId: MOCK_USER.id },
     );
     errorSpy.mockRestore();
   });

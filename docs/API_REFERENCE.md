@@ -52,7 +52,7 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 
 Related deep-dives: [PDF_AND_R2.md](PDF_AND_R2.md) (CV upload), [PROFILE_PICTURE.md](PROFILE_PICTURE.md), [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
 
-Cross-cutting already in place on many routes: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` (optional log-only `meta`) on public application routes and by-id GET; `withAuth` in `lib/api/with-auth.ts` so missing sessions stay **401** and are not mislabeled as unauthorized when later work fails. Open cross-cutting work (remaining validation, upload observability, etc.) is tracked in [Backlog.md](Backlog.md). Historical refactors: [CODE_REVIEW.md](CODE_REVIEW.md).
+Cross-cutting already in place on many routes: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` (optional log-only `meta`) on public application routes, by-id GET, and CV / profile-picture uploads; `withAuth` in `lib/api/with-auth.ts` so missing sessions stay **401** and are not mislabeled as unauthorized when later work fails. Open cross-cutting work (remaining validation, upload UX, etc.) is tracked in [Backlog.md](Backlog.md). Historical refactors: [CODE_REVIEW.md](CODE_REVIEW.md).
 
 ---
 
@@ -528,7 +528,7 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 - Restricts to PDF MIME type and **3 MB** max size; rejects bodies that do not start with `%PDF` (magic bytes), not MIME alone.
 - Idempotency keys scoped per user (`cvs/{userId}/tailored/<key>.pdf`); HeadObject replay returns the same URL without re-upload when size and content type match.
 - **Atomic create:** `PutObject` uses `IfNoneMatch: "*"` so concurrent creates with the same key cannot overwrite; **412** (and a single **409** retry) re-checks HeadObject and returns `{ url, idempotent: true }` or **409** on mismatch.
-- Fails clearly when R2 is not configured; logs upload/config errors server-side.
+- Fails clearly when R2 is not configured (`handleApiError` without `meta` — the config probe runs before `withAuth()`, so there is no `userId` yet). HeadObject/PutObject failures use `handleApiError` with log-only `meta` (`userId`, file `size`, S3 `storageStatus` when present). Client messages stay generic.
 - Application attach/delete paths authorize object keys per user (`isOwnedTailoredCvUrl` on attach / allow-list `deleteApplicationCvIfTailored` on app delete). Tailored `cv_url` values must be unique across the caller’s applications (**409** if reused; canonical URL + partial unique index); re-uploading the same PDF for another app creates a new object key. Primary CVs are shared via `cv_type: "primary"` and are not subject to the one-URL-per-app rule.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
@@ -550,7 +550,7 @@ Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png
 **What works**
 
 - Canonical path + upsert enforces one picture per user; removes leftover folder objects after upload.
-- Auth required (dedicated check → **401**); unexpected/Storage failures → **500** with generic client message; Storage errors logged with `status` / `statusCode`.
+- Auth required (dedicated check → **401**); Storage / unexpected failures use `handleApiError` → **500** with a generic client message. Server logs include log-only `meta` (`userId`, file `size`, Storage `status` / `statusCode` as `storageStatus`).
 - Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8\*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
