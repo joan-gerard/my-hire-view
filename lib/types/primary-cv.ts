@@ -46,6 +46,18 @@ export function primaryCvDeleteConfirmMessage(applicationsCount: number): string
   return `${n} applications currently use this CV. Deleting it removes the file from storage. Those applications will show “CV missing” on the dashboard until you pick another CV. This cannot be undone.`;
 }
 
+/**
+ * Post-delete warning when applications still pointed at the removed primary CV.
+ * Shown after the library list refreshes so `load()` cannot wipe it (F18-053).
+ */
+export function primaryCvDeletedStillReferencedMessage(
+  applicationsAffected: number,
+): string | null {
+  const n = Math.max(0, Math.floor(applicationsAffected));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return `Primary CV deleted. ${n} application${n === 1 ? "" : "s"} still referenced it and will show “CV missing” until updated.`;
+}
+
 /** Label for one application in the delete preview (company — role). */
 export function primaryCvApplicationPreviewLabel(
   app: Pick<PrimaryCvApplicationPreview, "company" | "role">,

@@ -7,6 +7,7 @@ import type { PrimaryCv, PrimaryCvApplicationPreview } from "@/lib/types/primary
 import {
   PRIMARY_CV_MAX_PER_USER,
   primaryCvDeleteConfirmMessage,
+  primaryCvDeletedStillReferencedMessage,
 } from "@/lib/types/primary-cv";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -50,7 +51,7 @@ export default function PrimaryCvLibrarySection({
     onLibraryChangeRef.current?.(next);
   }, []);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<boolean> => {
     try {
       setError(null);
       const res = await fetch("/api/profile/primary-cvs", {
@@ -59,11 +60,13 @@ export default function PrimaryCvLibrarySection({
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(json.error ?? "Failed to load primary CVs");
-        return;
+        return false;
       }
       applyItems((json.data as PrimaryCv[]) ?? []);
+      return true;
     } catch {
       setError("Failed to load primary CVs");
+      return false;
     } finally {
       setLoading(false);
     }
@@ -122,12 +125,12 @@ export default function PrimaryCvLibrarySection({
         return;
       }
       const affected = Number(json.applications_affected ?? 0);
-      if (affected > 0) {
-        setError(
-          `Primary CV deleted. ${affected} application${affected === 1 ? "" : "s"} still referenced it and will show “CV missing” until updated.`,
-        );
+      // `load()` clears `error` at start; set the still-referenced warning after a successful refresh.
+      const refreshed = await load();
+      const warning = primaryCvDeletedStillReferencedMessage(affected);
+      if (warning && refreshed) {
+        setError(warning);
       }
-      await load();
     } catch {
       setError("Failed to delete primary CV");
     } finally {

@@ -1,5 +1,29 @@
 export type ApplicationStatus = "active" | "draft" | "archived";
 
+/** Status counts for the profile page applications summary (F18-054). */
+export type ApplicationStatusCounts = {
+  active: number;
+  draft: number;
+  archived: number;
+};
+
+/**
+ * Parenthetical breakdown for “You have N applications in total (…)”.
+ * Omits zero counts so copy stays “3 active, 1 archived” when there are no drafts.
+ */
+export function formatApplicationStatusBreakdown(
+  counts: ApplicationStatusCounts,
+): string | null {
+  const active = Math.max(0, Math.floor(counts.active));
+  const draft = Math.max(0, Math.floor(counts.draft));
+  const archived = Math.max(0, Math.floor(counts.archived));
+  const parts: string[] = [];
+  if (active > 0) parts.push(`${active} active`);
+  if (draft > 0) parts.push(`${draft} draft${draft === 1 ? "" : "s"}`);
+  if (archived > 0) parts.push(`${archived} archived`);
+  return parts.length > 0 ? parts.join(", ") : null;
+}
+
 export type ApplicationCvType = "primary" | "tailored";
 
 export interface Application {

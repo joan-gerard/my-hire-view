@@ -27,7 +27,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 **Negative / smoke**
 
 - [ ] `is_active` column is **gone** from `applications` (migration applied)
-- [ ] Profile page application counts still make sense (active vs archived)
+- [ ] Profile page application counts still make sense (active, draft, and archived add up to the total)
 
 ---
 
@@ -53,7 +53,8 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] If more than 10 apps use it, preview shows the first 10 plus “and N more”
 - [ ] Cancel → CV still in list and in R2
 - [ ] Confirm (**I Understand — Delete**) → removed from list; R2 object gone (optional check)
-- [ ] Affected apps: status/message about “CV missing” (see §5)
+- [ ] If applications still referenced it: amber warning **stays visible** after the list refreshes (“still referenced” / “CV missing until updated”)
+- [ ] Affected apps: dashboard **CV missing** (see §5)
 
 **From New / Edit application (same library)**
 
@@ -132,6 +133,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 - [ ] Create two apps pointing at the same primary
 - [ ] Delete that primary from profile (confirm)
+- [ ] Profile library shows the still-referenced warning after the list refreshes
 - [ ] Both apps still exist; dashboard shows **CV missing** on those cards
 - [ ] Public/edit may show missing CV / retry behaviour
 - [ ] Edit an affected app → pick another primary or tailored → Save → badge clears after refresh
