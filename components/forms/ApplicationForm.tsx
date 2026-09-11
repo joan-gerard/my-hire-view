@@ -1041,13 +1041,7 @@ export default function ApplicationForm({
         }}
         onPendingFileChange={async (file) => {
           const gen = ++cvPendingFileGenRef.current;
-          if (!file) {
-            setCvPendingFile(null);
-            setCvPendingDigesting(false);
-            uploadedPendingFileRef.current = null;
-            cvPendingSignatureRef.current = null;
-            cvUploadIdempotencyKeyRef.current = null;
-            // Restored saved tailored URL after clearing a new selection
+          const restoreSavedTailoredForm = () => {
             if (isEdit && initialData?.cv_type === "tailored") {
               setFormData((prev) => ({
                 ...prev,
@@ -1057,6 +1051,15 @@ export default function ApplicationForm({
                 primary_cv_id: null,
               }));
             }
+          };
+
+          if (!file) {
+            setCvPendingFile(null);
+            setCvPendingDigesting(false);
+            uploadedPendingFileRef.current = null;
+            cvPendingSignatureRef.current = null;
+            cvUploadIdempotencyKeyRef.current = null;
+            restoreSavedTailoredForm();
             return;
           }
 
@@ -1064,6 +1067,12 @@ export default function ApplicationForm({
           // saved tailored CV while the content digest is still in flight.
           const previousSignature = cvPendingSignatureRef.current;
           const previousCache = uploadedPendingFileRef.current;
+          const previousFormCv = {
+            cv_url: formData.cv_url,
+            cv_filename: formData.cv_filename,
+            cv_type: formData.cv_type,
+            primary_cv_id: formData.primary_cv_id,
+          };
           setCvPendingFile(file);
           setCvPendingDigesting(true);
           cvPendingSignatureRef.current = null;
@@ -1085,10 +1094,17 @@ export default function ApplicationForm({
             uploadedPendingFileRef.current = null;
             cvPendingSignatureRef.current = null;
             cvUploadIdempotencyKeyRef.current = null;
-            setErrors({
-              cv_url:
-                "Couldn’t read that PDF. Please choose the file again.",
-            });
+            // Restore prior CV fields so Save cannot keep a stale URL under the
+            // failed selection's filename (same restore as clear on edit).
+            if (isEdit && initialData?.cv_type === "tailored") {
+              restoreSavedTailoredForm();
+            } else {
+              setFormData((prev) => ({
+                ...prev,
+                ...previousFormCv,
+              }));
+            }
+            // Let FileUpload surface the selection error (avoid duplicating in CvSourceField).
             throw new Error("CV file digest failed");
           }
           if (gen !== cvPendingFileGenRef.current) return;
