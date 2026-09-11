@@ -207,6 +207,21 @@ describe("POST /api/upload/profile-picture", () => {
     errorSpy.mockRestore();
   });
 
+  it("returns 500 when an unexpected failure is null", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockCreateClient.mockRejectedValue(null);
+
+    const response = await POST(makeUploadRequest(jpegFile()));
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "Failed to upload" });
+    expect(errorSpy).toHaveBeenCalledWith(
+      "POST /api/upload/profile-picture",
+      null,
+      { userId: MOCK_USER.id },
+    );
+    errorSpy.mockRestore();
+  });
+
   it("returns 200 with url on success", async () => {
     const response = await POST(makeUploadRequest(jpegFile()));
     expect(response.status).toBe(200);

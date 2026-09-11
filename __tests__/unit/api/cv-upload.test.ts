@@ -175,6 +175,28 @@ describe("POST /api/upload", () => {
     errorSpy.mockRestore();
   });
 
+  it("returns 500 when PutObject rejects with null", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const send = vi
+      .fn()
+      .mockRejectedValueOnce(s3Error("NotFound", 404))
+      .mockRejectedValueOnce(null);
+    mockGetR2S3Client.mockReturnValue({ send });
+
+    const file = pdfFile();
+    const response = await POST(makeUploadRequest(file));
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json).toEqual({ error: "Failed to upload file" });
+    expect(errorSpy).toHaveBeenCalledWith("POST /api/upload", null, {
+      userId: MOCK_USER.id,
+      size: file.size,
+    });
+    expect(mockRelease).toHaveBeenCalledWith(MOCK_USER.id);
+    errorSpy.mockRestore();
+  });
+
   it("returns 200 with a public URL on a new upload", async () => {
     const send = vi
       .fn()

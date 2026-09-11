@@ -528,7 +528,7 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 - Restricts to PDF MIME type and **3 MB** max size; rejects bodies that do not start with `%PDF` (magic bytes), not MIME alone.
 - Idempotency keys scoped per user (`cvs/{userId}/tailored/<key>.pdf`); HeadObject replay returns the same URL without re-upload when size and content type match.
 - **Atomic create:** `PutObject` uses `IfNoneMatch: "*"` so concurrent creates with the same key cannot overwrite; **412** (and a single **409** retry) re-checks HeadObject and returns `{ url, idempotent: true }` or **409** on mismatch.
-- Fails clearly when R2 is not configured; unexpected R2/HeadObject/PutObject failures use `handleApiError` with log-only `meta` (`userId`, file `size`, S3 `storageStatus` when present). Client messages stay generic.
+- Fails clearly when R2 is not configured (`handleApiError` without `meta` — the config probe runs before `withAuth()`, so there is no `userId` yet). HeadObject/PutObject failures use `handleApiError` with log-only `meta` (`userId`, file `size`, S3 `storageStatus` when present). Client messages stay generic.
 - Application attach/delete paths authorize object keys per user (`isOwnedTailoredCvUrl` on attach / allow-list `deleteApplicationCvIfTailored` on app delete). Tailored `cv_url` values must be unique across the caller’s applications (**409** if reused; canonical URL + partial unique index); re-uploading the same PDF for another app creates a new object key. Primary CVs are shared via `cv_type: "primary"` and are not subject to the one-URL-per-app rule.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.

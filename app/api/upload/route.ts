@@ -26,8 +26,14 @@ const PDF_CONTENT_TYPE = "application/pdf";
 const MAX_CV_BYTES = 3 * 1024 * 1024;
 
 function s3HttpStatus(err: unknown): number | undefined {
+  if (err == null || typeof err !== "object") return undefined;
   return (err as { $metadata?: { httpStatusCode?: number } }).$metadata
     ?.httpStatusCode;
+}
+
+function s3ErrorName(err: unknown): string | undefined {
+  if (err == null || typeof err !== "object") return undefined;
+  return (err as { name?: string }).name;
 }
 
 /** Server-only log fields for unexpected CV upload failures. */
@@ -36,7 +42,7 @@ function cvUploadErrorMeta(
   size?: number,
   err?: unknown,
 ): Record<string, unknown> {
-  const storageStatus = err !== undefined ? s3HttpStatus(err) : undefined;
+  const storageStatus = err != null ? s3HttpStatus(err) : undefined;
   return {
     userId,
     ...(size !== undefined ? { size } : {}),
@@ -45,18 +51,17 @@ function cvUploadErrorMeta(
 }
 
 function isHeadNotFound(err: unknown): boolean {
-  const e = err as { name?: string };
+  const name = s3ErrorName(err);
   return (
-    e.name === "NotFound" ||
-    e.name === "NoSuchKey" ||
+    name === "NotFound" ||
+    name === "NoSuchKey" ||
     s3HttpStatus(err) === 404
   );
 }
 
 /** Conditional put lost the race — object already exists (IfNoneMatch: "*"). */
 function isPutPreconditionFailed(err: unknown): boolean {
-  const e = err as { name?: string };
-  return e.name === "PreconditionFailed" || s3HttpStatus(err) === 412;
+  return s3ErrorName(err) === "PreconditionFailed" || s3HttpStatus(err) === 412;
 }
 
 /**
@@ -64,8 +69,10 @@ function isPutPreconditionFailed(err: unknown): boolean {
  * Retry once; the winner will then cause 412 on the next attempt.
  */
 function isConditionalRequestConflict(err: unknown): boolean {
-  const e = err as { name?: string };
-  return e.name === "ConditionalRequestConflict" || s3HttpStatus(err) === 409;
+  return (
+    s3ErrorName(err) === "ConditionalRequestConflict" ||
+    s3HttpStatus(err) === 409
+  );
 }
 
 function idempotencyKeyConflictResponse(): NextResponse {

@@ -22,6 +22,7 @@ import { NextRequest, NextResponse } from "next/server";
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 function storageStatusOf(error: unknown): number | string | undefined {
+  if (error == null || typeof error !== "object") return undefined;
   const e = error as { status?: number; statusCode?: string | number };
   return e.status ?? e.statusCode;
 }
@@ -32,7 +33,7 @@ function pictureUploadErrorMeta(
   size?: number,
   error?: unknown,
 ): Record<string, unknown> {
-  const storageStatus = error !== undefined ? storageStatusOf(error) : undefined;
+  const storageStatus = error != null ? storageStatusOf(error) : undefined;
   return {
     userId,
     ...(size !== undefined ? { size } : {}),
