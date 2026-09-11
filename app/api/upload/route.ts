@@ -19,7 +19,11 @@ import {
 } from "@/lib/rate-limit";
 import { normalizeUploadIdempotencyKey } from "@/lib/utils/idempotency-key";
 import { hasPdfMagicBytes } from "@/lib/utils/pdf";
-import { existingObjectMatchesUpload } from "@/lib/utils/upload-idempotency";
+import {
+  CV_CONTENT_SHA256_METADATA_KEY,
+  existingObjectMatchesUpload,
+  sha256Hex,
+} from "@/lib/utils/upload-idempotency";
 import { NextRequest, NextResponse } from "next/server";
 
 const PDF_CONTENT_TYPE = "application/pdf";
@@ -89,6 +93,11 @@ export async function POST(request: NextRequest) {
   const ipRate = await checkRateLimit(request, CV_UPLOAD_RATE_LIMIT);
   if (!ipRate.success) return rateLimit429(ipRate);
 
+  // Auth before R2 config so missing env never surfaces as 500 to strangers (F7-035).
+  const auth = await withAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
+
   try {
     getR2PublicBaseUrl();
     getR2Bucket();
@@ -96,12 +105,9 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     return handleApiError("POST /api/upload R2 config", e, {
       message: "File upload is not configured",
+      meta: { userId: user.id },
     });
   }
-
-  const auth = await withAuth();
-  if (!auth.ok) return auth.response;
-  const { user } = auth;
 
   const userRate = await rateLimitAsync(
     CV_UPLOAD_RATE_LIMIT,
@@ -151,6 +157,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: idem.error }, { status: 400 });
     }
 
+    // Validate body + digest before HeadObject replay (F7-036).
+    const body = Buffer.from(await file.arrayBuffer());
+    if (!hasPdfMagicBytes(body)) {
+      return NextResponse.json(
+        { error: "Only PDF files are allowed" },
+        { status: 400 },
+      );
+    }
+    const contentSha256 = sha256Hex(body);
+
     const objectKey = `cvs/${user.id}/tailored/${idem.key}.pdf`;
     const publicBase = getR2PublicBaseUrl();
     const url = `${publicBase}/${objectKey}`;
@@ -161,7 +177,7 @@ export async function POST(request: NextRequest) {
       const head = await client.send(
         new HeadObjectCommand({ Bucket: bucket, Key: objectKey }),
       );
-      if (!existingObjectMatchesUpload(head, file)) {
+      if (!existingObjectMatchesUpload(head, file, contentSha256)) {
         return idempotencyKeyConflictResponse();
       }
       return NextResponse.json({ url, idempotent: true });
@@ -174,19 +190,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const body = Buffer.from(await file.arrayBuffer());
-    if (!hasPdfMagicBytes(body)) {
-      return NextResponse.json(
-        { error: "Only PDF files are allowed" },
-        { status: 400 },
-      );
-    }
-
     const putInput = {
       Bucket: bucket,
       Key: objectKey,
       Body: body,
       ContentType: PDF_CONTENT_TYPE,
+      Metadata: { [CV_CONTENT_SHA256_METADATA_KEY]: contentSha256 },
       IfNoneMatch: "*",
     };
 
@@ -195,7 +204,7 @@ export async function POST(request: NextRequest) {
         const head = await client.send(
           new HeadObjectCommand({ Bucket: bucket, Key: objectKey }),
         );
-        if (!existingObjectMatchesUpload(head, file)) {
+        if (!existingObjectMatchesUpload(head, file, contentSha256)) {
           return idempotencyKeyConflictResponse();
         }
       } catch (verifyErr) {

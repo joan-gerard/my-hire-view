@@ -45,9 +45,9 @@ MyHireView holds career-sensitive data: CVs, profile pictures, application detai
 
 | Concern | How we addressed it | Tickets / refs |
 | -------- | ------------------- | -------------- |
-| Unauthenticated uploads | CV upload and slug routes require auth | Upload / slug APIs |
+| Unauthenticated uploads | CV upload and slug routes require auth; CV upload checks auth **before** R2 config probe (**401** not **500** “not configured”) | Upload / slug APIs; **F7-035** |
 | Fake “PDF” / image payloads | `%PDF` magic bytes; JPEG/PNG/WebP header checks; size caps | Upload routes |
-| Upload replay / burst abuse | Per-user idempotency keys; tight rate limits; concurrency caps | Upload routes |
+| Upload replay / burst abuse | Per-user idempotency keys; content SHA-256 metadata on tailored CV replay; tight rate limits; concurrency caps | Upload routes; **F7-036** |
 | Deleting or pointing at storage outside our allow-list | Allow-listed tailored keys; fail closed when R2 / public base URL missing | **B1-004**, **B1-005** |
 | Profile picture URL pointing at another origin or user folder | Origin + caller-folder checks | **C2-008** |
 
@@ -80,7 +80,6 @@ Keep these visible so product and engineering share one security story. Status i
 | -------- | ---------------- | ------- |
 | No single end-to-end security/safety pass before public launch | Global review of auth, RLS, share URLs, uploads/R2, rate limits, error leakage; file gaps as new backlog tickets | **F29-103** (near launch) |
 | Unconfirmed emails getting sessions in production | Ops: Confirm email ON; production Site URL + redirect URLs | **A3-015** (near launch) |
-| Unauth callers learning R2 is misconfigured (**500** vs **401**) | Check auth before config probe; stronger upload replay identity | **F7-035**, **F7-036** |
 | Misuse of `toPublicApplication` leaking non-active PII | Enforce status in helper / narrow types | **F10-030** |
 | Broader read limits; account-/email-level login throttling; Redis outage noise | Extend limits; circuit breaker after repeated Upstash failures | **L1-076**, **L1-077**, **L1-100** |
 | Signup CAPTCHA; logout hardening (CSRF); in-app forgot-password | After-launch auth polish | **L4-085**, **L4-086**, **L4-098** |

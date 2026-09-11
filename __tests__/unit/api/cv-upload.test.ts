@@ -1,12 +1,14 @@
 /**
  * Tests for POST /api/upload (tailored CV).
  *
- * Focus: unexpected failures go through `handleApiError` with log-only
- * meta (userId, size, storage status) and generic client messages (F5-056).
+ * Focus: auth before R2 config (F7-035); digest-based idempotent replay (F7-036);
+ * unexpected failures via `handleApiError` with log-only meta (F5-056).
  */
+import { createHash } from "crypto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { authOk, authUnauthorized } from "../../helpers/auth-mock";
+import { CV_CONTENT_SHA256_METADATA_KEY } from "@/lib/utils/upload-idempotency";
 
 const {
   mockWithAuth,
@@ -51,6 +53,7 @@ import { POST } from "@/app/api/upload/route";
 
 const MOCK_USER = { id: "user-123" };
 const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]);
+const PDF_SHA256 = createHash("sha256").update(PDF_BYTES).digest("hex");
 const PUBLIC_BASE = "https://files.example.com";
 const BUCKET = "cvs";
 
@@ -61,8 +64,8 @@ function s3Error(name: string, httpStatusCode: number): Error {
   return err;
 }
 
-function pdfFile(): File {
-  return new File([PDF_BYTES], "cv.pdf", { type: "application/pdf" });
+function pdfFile(bytes: Uint8Array = PDF_BYTES): File {
+  return new File([bytes], "cv.pdf", { type: "application/pdf" });
 }
 
 function makeUploadRequest(
@@ -98,15 +101,22 @@ beforeEach(() => {
 });
 
 describe("POST /api/upload", () => {
-  it("returns 401 when unauthenticated", async () => {
+  it("returns 401 when unauthenticated without probing R2 config (F7-035)", async () => {
     mockWithAuth.mockResolvedValue(authUnauthorized());
+    mockGetR2PublicBaseUrl.mockImplementation(() => {
+      throw new Error("Missing R2_PUBLIC_BASE_URL");
+    });
+
     const response = await POST(makeUploadRequest(pdfFile()));
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ error: "Unauthorized" });
+    expect(mockGetR2PublicBaseUrl).not.toHaveBeenCalled();
+    expect(mockGetR2Bucket).not.toHaveBeenCalled();
+    expect(mockGetR2S3Client).not.toHaveBeenCalled();
     expect(mockRelease).not.toHaveBeenCalled();
   });
 
-  it("returns 500 via handleApiError when R2 is not configured", async () => {
+  it("returns 500 via handleApiError when R2 is not configured after auth", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const cause = new Error("Missing R2_PUBLIC_BASE_URL");
     mockGetR2PublicBaseUrl.mockImplementation(() => {
@@ -118,8 +128,60 @@ describe("POST /api/upload", () => {
     expect(await response.json()).toEqual({
       error: "File upload is not configured",
     });
-    expect(errorSpy).toHaveBeenCalledWith("POST /api/upload R2 config", cause);
+    expect(errorSpy).toHaveBeenCalledWith("POST /api/upload R2 config", cause, {
+      userId: MOCK_USER.id,
+    });
     errorSpy.mockRestore();
+  });
+
+  it("returns 400 when the body is not a PDF before HeadObject replay", async () => {
+    const send = vi.fn();
+    mockGetR2S3Client.mockReturnValue({ send });
+
+    const fakePdf = new File([new Uint8Array([0x00, 0x01, 0x02])], "cv.pdf", {
+      type: "application/pdf",
+    });
+    const response = await POST(makeUploadRequest(fakePdf));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      error: "Only PDF files are allowed",
+    });
+    expect(send).not.toHaveBeenCalled();
+    expect(mockRelease).toHaveBeenCalledWith(MOCK_USER.id);
+  });
+
+  it("returns 200 idempotent when HeadObject digest matches (F7-036)", async () => {
+    const send = vi.fn().mockResolvedValueOnce({
+      ContentLength: PDF_BYTES.byteLength,
+      ContentType: "application/pdf",
+      Metadata: { [CV_CONTENT_SHA256_METADATA_KEY]: PDF_SHA256 },
+    });
+    mockGetR2S3Client.mockReturnValue({ send });
+
+    const response = await POST(makeUploadRequest(pdfFile(), "abc12345"));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      url: `${PUBLIC_BASE}/cvs/${MOCK_USER.id}/tailored/abc12345.pdf`,
+      idempotent: true,
+    });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(mockRelease).toHaveBeenCalledWith(MOCK_USER.id);
+  });
+
+  it("returns 409 when an existing object has the same size but a different digest", async () => {
+    const send = vi.fn().mockResolvedValueOnce({
+      ContentLength: PDF_BYTES.byteLength,
+      ContentType: "application/pdf",
+      Metadata: { [CV_CONTENT_SHA256_METADATA_KEY]: "b".repeat(64) },
+    });
+    mockGetR2S3Client.mockReturnValue({ send });
+
+    const response = await POST(makeUploadRequest(pdfFile(), "abc12345"));
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error:
+        "Idempotency-Key was already used with a different file. Use a new key.",
+    });
   });
 
   it("returns 500 with log-only meta when HeadObject fails unexpectedly", async () => {
@@ -197,7 +259,7 @@ describe("POST /api/upload", () => {
     errorSpy.mockRestore();
   });
 
-  it("returns 200 with a public URL on a new upload", async () => {
+  it("returns 200 with a public URL and stores content digest on a new upload", async () => {
     const send = vi
       .fn()
       .mockRejectedValueOnce(s3Error("NotFound", 404))
@@ -210,6 +272,13 @@ describe("POST /api/upload", () => {
     expect(await response.json()).toEqual({
       url: `${PUBLIC_BASE}/cvs/${MOCK_USER.id}/tailored/abc12345.pdf`,
       idempotent: false,
+    });
+
+    const putArg = send.mock.calls[1]?.[0];
+    expect(putArg?.input).toMatchObject({
+      ContentType: "application/pdf",
+      Metadata: { [CV_CONTENT_SHA256_METADATA_KEY]: PDF_SHA256 },
+      IfNoneMatch: "*",
     });
     expect(mockRelease).toHaveBeenCalledWith(MOCK_USER.id);
   });

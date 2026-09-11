@@ -519,18 +519,18 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 - **Auth:** Required
 - **Rate limit:** **10 / minute** per IP and per user; max **2** concurrent uploads per user (best-effort per instance)
 - **Body:** `multipart/form-data` with `file` (PDF, max **3 MB**)
-- **Idempotency:** Header `Idempotency-Key` / `idempotency-key`, or form field `idempotency_key`: 8–128 chars, `[a-zA-Z0-9_-]` only. Object key: `cvs/{userId}/tailored/<key>.pdf`. If the object already exists and size/content-type match the request → `{ url, idempotent: true }` without re-upload; size/type mismatch → **409**.
+- **Idempotency:** Header `Idempotency-Key` / `idempotency-key`, or form field `idempotency_key`: 8–128 chars, `[a-zA-Z0-9_-]` only. Object key: `cvs/{userId}/tailored/<key>.pdf`. Request body is validated as PDF and hashed (SHA-256) **before** replay. If the object already exists and size, content type, and stored content digest match → `{ url, idempotent: true }` without re-upload; mismatch (including legacy objects with no digest metadata) → **409**.
 - **Success:** `200` `{ url: string, idempotent: boolean }`
 - **Errors:** `400` missing/invalid file or key; `401`; `409` idempotency key reused with a different file; `429`; `500` (R2 not configured / upload failure)
 
 **What works**
 
-- Auth required (dedicated check before processing).
+- Auth required (`withAuth()` runs **before** the R2 config probe so unauthenticated callers get **401**, not a **500** “not configured” leak — F7-035).
 - Stricter rate limit than general writes (**10/min** IP + user) and a concurrent upload cap (**2** per user, in-memory / per instance). IP + user counters are durable via Upstash when configured.
-- Restricts to PDF MIME type and **3 MB** max size; rejects bodies that do not start with `%PDF` (magic bytes), not MIME alone.
-- Idempotency keys scoped per user (`cvs/{userId}/tailored/<key>.pdf`); HeadObject replay returns the same URL without re-upload when size and content type match.
+- Restricts to PDF MIME type and **3 MB** max size; rejects bodies that do not start with `%PDF` (magic bytes), not MIME alone — including on idempotent replay (F7-036).
+- Idempotency keys scoped per user (`cvs/{userId}/tailored/<key>.pdf`); `PutObject` stores SHA-256 hex in object metadata (`sha256`); HeadObject replay returns the same URL only when size, content type, and digest match (F7-036).
 - **Atomic create:** `PutObject` uses `IfNoneMatch: "*"` so concurrent creates with the same key cannot overwrite; **412** (and a single **409** retry) re-checks HeadObject and returns `{ url, idempotent: true }` or **409** on mismatch.
-- Fails clearly when R2 is not configured (`handleApiError` without `meta` — the config probe runs before `withAuth()`, so there is no `userId` yet). HeadObject/PutObject failures use `handleApiError` with log-only `meta` (`userId`, file `size`, S3 `storageStatus` when present). Client messages stay generic.
+- Fails clearly when R2 is not configured (`handleApiError` with log-only `meta.userId` after auth). HeadObject/PutObject failures use `handleApiError` with log-only `meta` (`userId`, file `size`, S3 `storageStatus` when present). Client messages stay generic.
 - Application attach/delete paths authorize object keys per user (`isOwnedTailoredCvUrl` on attach / allow-list `deleteApplicationCvIfTailored` on app delete). Tailored `cv_url` values must be unique across the caller’s applications (**409** if reused; canonical URL + partial unique index); re-uploading the same PDF for another app creates a new object key. Primary CVs are shared via `cv_type: "primary"` and are not subject to the one-URL-per-app rule.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
