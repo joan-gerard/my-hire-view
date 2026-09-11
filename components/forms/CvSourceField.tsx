@@ -43,6 +43,8 @@ interface CvSourceFieldProps {
   slug: string;
   /** True while tailored CV is uploading on Save (F8-051 / F8-055). */
   uploading?: boolean;
+  /** True while the selected PDF content digest is still computing. */
+  preparing?: boolean;
 }
 
 /**
@@ -73,6 +75,7 @@ export default function CvSourceField({
   onUseOriginalCvFilenameChange,
   slug,
   uploading = false,
+  preparing = false,
 }: CvSourceFieldProps) {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const selectedPrimary = primaryCvs.find((cv) => cv.id === selectedPrimaryId);
@@ -288,6 +291,7 @@ export default function CvSourceField({
                 hideLabel
                 chooseLabel="Choose PDF"
                 uploading={uploading}
+                preparing={preparing}
               />
             </div>
           )}

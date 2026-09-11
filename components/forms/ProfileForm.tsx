@@ -158,6 +158,9 @@ export default function ProfileForm({
           return;
         }
         profilePictureUrl = upload.url;
+        if (upload.warning) {
+          setError(upload.warning);
+        }
         setSubmitPhase("saving");
       }
 
@@ -183,7 +186,10 @@ export default function ProfileForm({
         return;
       }
       if (Array.isArray(json.warnings) && json.warnings.length > 0) {
-        setError(json.warnings.join(" "));
+        const warningText = json.warnings.join(" ");
+        setError((prev) =>
+          prev ? `${prev} ${warningText}` : warningText,
+        );
       }
       if (profilePictureUrl !== undefined) {
         setSavedUrlOverride(profilePictureUrl);

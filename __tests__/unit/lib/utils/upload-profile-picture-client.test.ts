@@ -60,4 +60,22 @@ describe("uploadProfilePictureFile", () => {
       warning: "Old files could not be cleaned up.",
     });
   });
+
+  it("treats JSON null body as empty object instead of throwing", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response("null", {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    const file = new File(["x"], "a.jpg", { type: "image/jpeg" });
+    const result = await uploadProfilePictureFile(file);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/couldn’t upload your picture/i);
+    }
+  });
 });

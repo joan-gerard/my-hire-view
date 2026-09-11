@@ -164,6 +164,8 @@ export default function ApplicationForm({
   const [slugAutoReserveNonce, setSlugAutoReserveNonce] = useState(0);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
+  /** True while SHA-256 digest of the pending CV is in flight. */
+  const [cvPendingDigesting, setCvPendingDigesting] = useState(false);
   /**
    * Local submit phase so Save stays busy during CV upload (before parent
    * `loading`) and shows honest "Uploading…" / "Saving…" copy (F8-051 / F8-055).
@@ -182,6 +184,16 @@ export default function ApplicationForm({
   const cvPendingFileGenRef = useRef(0);
   /** One key per selected CV file; reused on retry until the file changes (F8-063). */
   const cvUploadIdempotencyKeyRef = useRef<string | null>(null);
+
+  /** Invalidate in-flight digest work and clear pending tailored selection. */
+  const clearPendingCvSelection = () => {
+    cvPendingFileGenRef.current += 1;
+    setCvPendingFile(null);
+    setCvPendingDigesting(false);
+    uploadedPendingFileRef.current = null;
+    cvPendingSignatureRef.current = null;
+    cvUploadIdempotencyKeyRef.current = null;
+  };
 
   const [primaryCvs, setPrimaryCvs] = useState<PrimaryCv[]>([]);
   const [primaryCvsLoading, setPrimaryCvsLoading] = useState(true);
@@ -292,10 +304,7 @@ export default function ApplicationForm({
       const pick = list[0]!;
       setCvMode("primary");
       setSelectedPrimaryId(pick.id);
-      setCvPendingFile(null);
-      uploadedPendingFileRef.current = null;
-      cvPendingSignatureRef.current = null;
-      cvUploadIdempotencyKeyRef.current = null;
+      clearPendingCvSelection();
       setFormData((prev) => ({
         ...prev,
         cv_url: pick.url,
@@ -326,10 +335,15 @@ export default function ApplicationForm({
   const requiredReady =
     hasCompany && hasRole && hasCv && hasVideo && slugReady;
 
-  const formBusy = loading || submitPhase !== "idle";
+  const formBusy =
+    loading || submitPhase !== "idle" || cvPendingDigesting;
   const canSubmit = requiredReady && !formBusy;
   const saveLoadingLabel =
-    submitPhase === "uploading" ? "Uploading…" : "Saving…";
+    cvPendingDigesting
+      ? "Preparing…"
+      : submitPhase === "uploading"
+        ? "Uploading…"
+        : "Saving…";
 
   const disabledReason = (() => {
     if (canSubmit || formBusy) return null;
@@ -975,10 +989,7 @@ export default function ApplicationForm({
         onSwitchToTailored={() => {
           setCvMode("tailored");
           setSelectedPrimaryId(null);
-          setCvPendingFile(null);
-          uploadedPendingFileRef.current = null;
-          cvPendingSignatureRef.current = null;
-          cvUploadIdempotencyKeyRef.current = null;
+          clearPendingCvSelection();
           // Keep saved tailored URL until a new file is chosen; clear if leaving primary.
           if (initialData?.cv_type === "tailored" && isEdit) {
             setFormData((prev) => ({
@@ -1008,9 +1019,7 @@ export default function ApplicationForm({
             return;
           }
           setCvMode("primary");
-          setCvPendingFile(null);
-          uploadedPendingFileRef.current = null;
-          cvPendingSignatureRef.current = null;
+          clearPendingCvSelection();
           const first = primaryCvs[0];
           if (first) {
             setSelectedPrimaryId(first.id);
@@ -1034,6 +1043,7 @@ export default function ApplicationForm({
           const gen = ++cvPendingFileGenRef.current;
           if (!file) {
             setCvPendingFile(null);
+            setCvPendingDigesting(false);
             uploadedPendingFileRef.current = null;
             cvPendingSignatureRef.current = null;
             cvUploadIdempotencyKeyRef.current = null;
@@ -1050,40 +1060,64 @@ export default function ApplicationForm({
             return;
           }
 
-          const signature = await getFileSignature(file);
-          if (gen !== cvPendingFileGenRef.current) return;
-
-          const sameAsCached =
-            uploadedPendingFileRef.current?.signature === signature;
-          const sameAsPending = cvPendingSignatureRef.current === signature;
-          // Reselecting the same PDF (by content) keeps the client upload cache
-          // and idempotency key so Save does not create a duplicate R2 object.
-          if (!sameAsCached && !sameAsPending) {
-            uploadedPendingFileRef.current = null;
-            cvUploadIdempotencyKeyRef.current = resolveCvUploadIdempotencyKey(
-              cvUploadIdempotencyKeyRef.current,
-              true,
-            );
-          }
-
-          cvPendingSignatureRef.current = signature;
+          // Commit selection immediately so Save cannot submit the previous
+          // saved tailored CV while the content digest is still in flight.
+          const previousSignature = cvPendingSignatureRef.current;
+          const previousCache = uploadedPendingFileRef.current;
           setCvPendingFile(file);
+          setCvPendingDigesting(true);
+          cvPendingSignatureRef.current = null;
           setFormData((prev) => ({
             ...prev,
             cv_filename: file.name,
             cv_type: "tailored",
             primary_cv_id: null,
           }));
+          setErrors((prev) => ({ ...prev, cv_url: undefined }));
+
+          let signature: string;
+          try {
+            signature = await getFileSignature(file);
+          } catch {
+            if (gen !== cvPendingFileGenRef.current) return;
+            setCvPendingDigesting(false);
+            setCvPendingFile(null);
+            uploadedPendingFileRef.current = null;
+            cvPendingSignatureRef.current = null;
+            cvUploadIdempotencyKeyRef.current = null;
+            setErrors({
+              cv_url:
+                "Couldn’t read that PDF. Please choose the file again.",
+            });
+            throw new Error("CV file digest failed");
+          }
+          if (gen !== cvPendingFileGenRef.current) return;
+
+          const sameAsCached = previousCache?.signature === signature;
+          const sameAsPending = previousSignature === signature;
+          // Reselecting the same PDF (by content) keeps the client upload cache
+          // and idempotency key so Save does not create a duplicate R2 object.
+          if (sameAsCached && previousCache) {
+            uploadedPendingFileRef.current = previousCache;
+          } else {
+            uploadedPendingFileRef.current = null;
+            if (!sameAsPending) {
+              cvUploadIdempotencyKeyRef.current = resolveCvUploadIdempotencyKey(
+                cvUploadIdempotencyKeyRef.current,
+                true,
+              );
+            }
+          }
+
+          cvPendingSignatureRef.current = signature;
+          setCvPendingDigesting(false);
         }}
         onPrimaryLibraryChange={handlePrimaryLibraryChange}
         switchToPrimaryConfirmOpen={switchToPrimaryConfirmOpen}
         onConfirmSwitchToPrimary={() => {
           setSwitchToPrimaryConfirmOpen(false);
           setCvMode("primary");
-          setCvPendingFile(null);
-          uploadedPendingFileRef.current = null;
-          cvPendingSignatureRef.current = null;
-          cvUploadIdempotencyKeyRef.current = null;
+          clearPendingCvSelection();
           const first = primaryCvs[0];
           if (first) {
             setSelectedPrimaryId(first.id);
@@ -1103,6 +1137,7 @@ export default function ApplicationForm({
         }
         slug={formData.slug}
         uploading={submitPhase === "uploading"}
+        preparing={cvPendingDigesting}
       />
 
       <YouTubeUrlInput

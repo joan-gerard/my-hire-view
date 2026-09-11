@@ -104,6 +104,7 @@ export default function ProfilePictureModal({
     setSubmitPhase(pendingFile ? "uploading" : "saving");
     try {
       let profilePictureUrl: string | null = null;
+      let uploadWarning: string | undefined;
 
       if (removed && !pendingFile) {
         profilePictureUrl = null;
@@ -114,6 +115,7 @@ export default function ProfilePictureModal({
           return;
         }
         profilePictureUrl = upload.url;
+        uploadWarning = upload.warning;
         setSubmitPhase("saving");
       }
 
@@ -127,9 +129,16 @@ export default function ProfilePictureModal({
         setError(json.error ?? "Failed to save profile picture");
         return;
       }
-      if (Array.isArray(json.warnings) && json.warnings.length > 0) {
-        setError(json.warnings.join(" "));
-      }
+
+      const putWarnings = Array.isArray(json.warnings)
+        ? (json.warnings as unknown[]).filter(
+            (w): w is string => typeof w === "string" && Boolean(w.trim()),
+          )
+        : [];
+      const notice = [uploadWarning, ...putWarnings]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join(" ");
+
       const savedUrl =
         typeof json.data?.profile_picture_url === "string"
           ? json.data.profile_picture_url
@@ -142,6 +151,14 @@ export default function ProfilePictureModal({
         url: savedUrl?.trim() || null,
         updated_at: updatedAt,
       });
+      setPendingFile(null);
+      setRemoved(false);
+
+      // Keep the modal open when there is a warning so the user can read it.
+      if (notice) {
+        setError(notice);
+        return;
+      }
       onClose();
     } catch {
       setError("Failed to save profile picture");

@@ -12,6 +12,21 @@ export type ProfilePictureUploadResult =
   | { ok: true; url: string; warning?: string }
   | { ok: false; error: string };
 
+function asUploadJson(value: unknown): {
+  error?: string;
+  url?: string;
+  warning?: string;
+} {
+  if (value && typeof value === "object") {
+    return value as {
+      error?: string;
+      url?: string;
+      warning?: string;
+    };
+  }
+  return {};
+}
+
 /**
  * POST /api/upload/profile-picture and map failures to friendly Save copy.
  */
@@ -31,11 +46,9 @@ export async function uploadProfilePictureFile(
     return { ok: false, error: messageForUploadNetworkError("profile-picture") };
   }
 
-  const uploadJson = (await uploadRes.json().catch(() => ({}))) as {
-    error?: string;
-    url?: string;
-    warning?: string;
-  };
+  const uploadJson = asUploadJson(
+    await uploadRes.json().catch(() => ({})),
+  );
 
   if (!uploadRes.ok) {
     return {
