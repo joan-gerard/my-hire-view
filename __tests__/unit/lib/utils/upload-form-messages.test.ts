@@ -38,6 +38,17 @@ describe("messageForUploadFailure", () => {
     ).toMatch(/couldn’t upload your picture/i);
   });
 
+  it("uses 400-style fallback for other non-5xx statuses", () => {
+    expect(messageForUploadFailure("cv", 403, null)).toMatch(/PDF/i);
+    expect(messageForUploadFailure("cv", 413, "")).toMatch(/PDF/i);
+    expect(
+      messageForUploadFailure("profile-picture", 422, "Unsupported type"),
+    ).toBe("Unsupported type");
+    expect(messageForUploadFailure("cv", 404, "  ")).toMatch(/PDF/i);
+    // Must not tell the user to "try again in a moment" for client errors.
+    expect(messageForUploadFailure("cv", 403)).not.toMatch(/in a moment/i);
+  });
+
   it("maps network errors", () => {
     expect(messageForUploadNetworkError("cv")).toMatch(/Network error/i);
     expect(messageForUploadNetworkError("profile-picture")).toMatch(

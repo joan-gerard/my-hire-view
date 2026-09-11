@@ -55,7 +55,8 @@ export function messageForUploadFailure(
   if (status >= 500) {
     return DEFAULT_500[kind];
   }
-  return trimmed || DEFAULT_500[kind];
+  // Other 4xx (403/404/413/422/…) — actionable client copy, not "try again" 5xx wording.
+  return trimmed || DEFAULT_400[kind];
 }
 
 export function messageForUploadNetworkError(kind: UploadFormKind): string {

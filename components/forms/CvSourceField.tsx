@@ -45,6 +45,8 @@ interface CvSourceFieldProps {
   uploading?: boolean;
   /** True while the selected PDF content digest is still computing. */
   preparing?: boolean;
+  /** Disable file choose/remove for the full Save lifecycle (not only upload). */
+  disabled?: boolean;
 }
 
 /**
@@ -76,6 +78,7 @@ export default function CvSourceField({
   slug,
   uploading = false,
   preparing = false,
+  disabled = false,
 }: CvSourceFieldProps) {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const selectedPrimary = primaryCvs.find((cv) => cv.id === selectedPrimaryId);
@@ -292,6 +295,7 @@ export default function CvSourceField({
                 chooseLabel="Choose PDF"
                 uploading={uploading}
                 preparing={preparing}
+                disabled={disabled}
               />
             </div>
           )}

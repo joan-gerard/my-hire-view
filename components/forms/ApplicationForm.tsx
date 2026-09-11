@@ -988,10 +988,16 @@ export default function ApplicationForm({
         }}
         onSwitchToTailored={() => {
           setCvMode("tailored");
-          setSelectedPrimaryId(null);
           clearPendingCvSelection();
-          // Keep saved tailored URL until a new file is chosen; clear if leaving primary.
+          // Keep primary selection + CV fields when leaving primary so a failed
+          // tailored digest can restore mode/selection and Save stays usable.
+          if (cvMode === "primary") {
+            return;
+          }
+          // Already in tailored (or switching back): restore saved tailored URL
+          // on edit, otherwise clear until a new file is chosen.
           if (initialData?.cv_type === "tailored" && isEdit) {
+            setSelectedPrimaryId(null);
             setFormData((prev) => ({
               ...prev,
               cv_url: initialData.cv_url ?? prev.cv_url,
@@ -1000,6 +1006,7 @@ export default function ApplicationForm({
               cv_type: "tailored",
             }));
           } else {
+            setSelectedPrimaryId(null);
             setFormData((prev) => ({
               ...prev,
               cv_url: "",
@@ -1067,6 +1074,11 @@ export default function ApplicationForm({
           // saved tailored CV while the content digest is still in flight.
           const previousSignature = cvPendingSignatureRef.current;
           const previousCache = uploadedPendingFileRef.current;
+          // Prefer form cv_type so a primary→tailored switch that kept primary
+          // fields can restore mode + selection after a digest failure.
+          const previousCvMode: ApplicationCvType =
+            formData.cv_type === "primary" ? "primary" : cvMode;
+          const previousSelectedPrimaryId = selectedPrimaryId;
           const previousFormCv = {
             cv_url: formData.cv_url,
             cv_filename: formData.cv_filename,
@@ -1076,6 +1088,7 @@ export default function ApplicationForm({
           setCvPendingFile(file);
           setCvPendingDigesting(true);
           cvPendingSignatureRef.current = null;
+          setSelectedPrimaryId(null);
           setFormData((prev) => ({
             ...prev,
             cv_filename: file.name,
@@ -1098,7 +1111,11 @@ export default function ApplicationForm({
             // failed selection's filename (same restore as clear on edit).
             if (isEdit && initialData?.cv_type === "tailored") {
               restoreSavedTailoredForm();
+              setCvMode("tailored");
+              setSelectedPrimaryId(null);
             } else {
+              setCvMode(previousCvMode);
+              setSelectedPrimaryId(previousSelectedPrimaryId);
               setFormData((prev) => ({
                 ...prev,
                 ...previousFormCv,
@@ -1154,6 +1171,7 @@ export default function ApplicationForm({
         slug={formData.slug}
         uploading={submitPhase === "uploading"}
         preparing={cvPendingDigesting}
+        disabled={submitPhase !== "idle"}
       />
 
       <YouTubeUrlInput

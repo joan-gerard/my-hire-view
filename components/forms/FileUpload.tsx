@@ -21,6 +21,11 @@ interface FileUploadProps {
   uploading?: boolean;
   /** True while content digest for the selected file is still computing. */
   preparing?: boolean;
+  /**
+   * Disable choose/remove for the full Save lifecycle (validation + upload + final
+   * save). Separate from `uploading` so the sublabel can still say “Saving…”.
+   */
+  disabled?: boolean;
 }
 
 const MAX_SIZE_BYTES = 3 * 1024 * 1024; // 3MB
@@ -36,12 +41,14 @@ export default function FileUpload({
   chooseLabel = "CV (PDF)",
   uploading = false,
   preparing = false,
+  disabled = false,
 }: FileUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [checkingCv, setCheckingCv] = useState(false);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const selectionLocked = disabled || uploading || preparing;
 
   // Create/revoke object URL for preview when pendingFile changes
   useEffect(() => {
@@ -62,8 +69,10 @@ export default function FileUpload({
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Clear prior digest/selection errors first so a new pick (including
+    // rejected type/size) does not keep showing “Couldn’t read that PDF”.
+    setSelectionError(null);
     if (!file) {
-      setSelectionError(null);
       try {
         await onPendingFileChange(null);
       } catch {
@@ -84,7 +93,6 @@ export default function FileUpload({
       return;
     }
 
-    setSelectionError(null);
     try {
       await onPendingFileChange(file);
     } catch {
@@ -130,14 +138,14 @@ export default function FileUpload({
             accept="application/pdf"
             onChange={handleFileChange}
             aria-label={chooseLabel}
-            disabled={uploading || preparing}
+            disabled={selectionLocked}
             className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-md file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90 disabled:opacity-50"
           />
           {showPending && (
             <button
               type="button"
               onClick={handleClearPending}
-              disabled={uploading || preparing}
+              disabled={selectionLocked}
               className="text-sm text-[var(--foreground)]/80 hover:text-[var(--foreground)] underline disabled:opacity-50"
             >
               Remove selection
@@ -155,7 +163,9 @@ export default function FileUpload({
                 ? "Uploading…"
                 : preparing
                   ? "Preparing file…"
-                  : "File will be uploaded when you save the application."}
+                  : disabled
+                    ? "Saving…"
+                    : "File will be uploaded when you save the application."}
             </p>
             {canPreview && (
               <button

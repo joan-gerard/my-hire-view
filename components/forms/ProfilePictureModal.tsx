@@ -173,8 +173,17 @@ export default function ProfilePictureModal({
       className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,26rem)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       onClose={onClose}
+      onCancel={(e) => {
+        // Keep the dialog open while upload/save is in flight (Escape).
+        if (loading) {
+          e.preventDefault();
+        }
+      }}
       onClick={(e) => {
-        if (e.target === dialogRef.current) onClose();
+        if (e.target === dialogRef.current) {
+          if (loading) return;
+          onClose();
+        }
       }}
     >
       <div className="space-y-4 p-5">
