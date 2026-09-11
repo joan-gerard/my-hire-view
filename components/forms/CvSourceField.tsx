@@ -30,7 +30,7 @@ interface CvSourceFieldProps {
   onSelectPrimary: (primaryId: string) => void;
   onSwitchToTailored: () => void;
   onSwitchToPrimary: () => void;
-  onPendingFileChange: (file: File | null) => void;
+  onPendingFileChange: (file: File | null) => void | Promise<void>;
   /** When set, users can manage the primary library from this form (modal). */
   onPrimaryLibraryChange?: (items: PrimaryCv[]) => void;
 

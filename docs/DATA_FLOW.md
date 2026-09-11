@@ -603,10 +603,10 @@ Candidate fields on the application are either supplied by the form (with toggle
 
 | # | Scenario | Behaviour |
 |---|---|---|
-| 24 | User selects a file, saves (upload succeeds), then selects the same file again before the next save | Selection compares file signature (`name:size:lastModified`); cache + idempotency key are kept, so Save reuses the cached R2 URL — no duplicate upload. |
+| 24 | User selects a file, saves (upload succeeds), then selects the same file again before the next save | Selection compares a **content SHA-256** signature (`size:digest`); cache + idempotency key are kept, so Save reuses the cached R2 URL — no duplicate upload. |
 | 25 | User selects a file, save fails (e.g. slug error), then retries save without changing the file | The same idempotency key is reused; `HeadObject` / conditional `PutObject` (`IfNoneMatch: "*"`) reuse the same per-user R2 object when size/type match. (If upload already succeeded and only a later step failed, Save reuses the cached URL and skips `POST /api/upload`.) |
 | 26 | User selects a different file before retrying | A new idempotency key is generated; the old cached upload is invalidated. |
-| 27 | Upload to R2 fails (HTTP or network) | Friendly `cv_url` error via `messageForUploadFailure` / `messageForUploadNetworkError` (F8-051); Save shows **Uploading…** then returns to idle; the same idempotency key is kept for retry (F8-063). Application not created. |
+| 27 | Upload to R2 fails (HTTP or network) | Friendly `cv_url` error via `messageForUploadFailure` / `messageForUploadNetworkError` (F8-051); Save shows **Uploading…** then returns to idle. On **409**, the client rotates the idempotency key so Save retry can proceed; network / **5xx** keep the same key (F8-063). Application not created. |
 | 28 | User provides a `cv_url` directly (e.g. existing URL on edit) rather than selecting a file | No upload is triggered; the existing URL is passed as-is. |
 
 ### 8.6 Candidate fields

@@ -1,5 +1,7 @@
+import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import {
+  getFileContentDigest,
   getFileSignature,
   resolveCvUploadIdempotencyKey,
 } from "@/lib/utils/cv-upload-client-key";
@@ -24,10 +26,10 @@ describe("messageForUploadFailure", () => {
 
   it("maps 401 / 409 / 429 / 500 to Save-friendly copy", () => {
     expect(messageForUploadFailure("cv", 401)).toMatch(/session expired/i);
-    expect(messageForUploadFailure("cv", 409)).toMatch(/choose the file again/i);
-    expect(messageForUploadFailure("cv", 429, "Too many requests.")).toMatch(
-      /Too many/i,
-    );
+    expect(messageForUploadFailure("cv", 409)).toMatch(/try saving again/i);
+    expect(
+      messageForUploadFailure("cv", 429, "Too many requests. Please try again later."),
+    ).toBe("Too many uploads. Please wait a moment and try again.");
     expect(messageForUploadFailure("cv", 500, "internal detail")).toMatch(
       /couldn’t upload your CV/i,
     );
@@ -66,10 +68,31 @@ describe("resolveCvUploadIdempotencyKey (F8-063)", () => {
     expect(resolveCvUploadIdempotencyKey(null, false, createKey)).toBe("first");
     expect(createKey).toHaveBeenCalledOnce();
   });
+});
 
-  it("builds a stable file signature", () => {
-    const file = new File(["%PDF"], "cv.pdf", { type: "application/pdf" });
-    Object.defineProperty(file, "lastModified", { value: 123 });
-    expect(getFileSignature(file)).toBe(`cv.pdf:${file.size}:123`);
+describe("getFileSignature (content digest)", () => {
+  it("uses SHA-256 content so same metadata with different bytes differ", async () => {
+    const a = new File(["%PDF-a"], "cv.pdf", { type: "application/pdf" });
+    const b = new File(["%PDF-b"], "cv.pdf", { type: "application/pdf" });
+    Object.defineProperty(a, "lastModified", { value: 123 });
+    Object.defineProperty(b, "lastModified", { value: 123 });
+
+    const digestA = await getFileContentDigest(a);
+    const expectedA = createHash("sha256").update("%PDF-a").digest("hex");
+    expect(digestA).toBe(expectedA);
+
+    const sigA = await getFileSignature(a);
+    const sigB = await getFileSignature(b);
+    expect(sigA).not.toBe(sigB);
+    expect(sigA).toBe(`${a.size}:${digestA}`);
+  });
+
+  it("matches for identical content regardless of lastModified", async () => {
+    const a = new File(["%PDF-same"], "a.pdf", { type: "application/pdf" });
+    const b = new File(["%PDF-same"], "b.pdf", { type: "application/pdf" });
+    Object.defineProperty(a, "lastModified", { value: 1 });
+    Object.defineProperty(b, "lastModified", { value: 999 });
+    // Same bytes + size → same signature (name is not part of identity).
+    expect(await getFileSignature(a)).toBe(await getFileSignature(b));
   });
 });

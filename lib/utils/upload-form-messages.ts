@@ -11,6 +11,9 @@ const DEFAULT_400: Record<UploadFormKind, string> = {
     "That picture couldn’t be uploaded. Use a JPEG, PNG, or WebP under 5MB.",
 };
 
+const DEFAULT_429 =
+  "Too many uploads. Please wait a moment and try again.";
+
 const DEFAULT_500: Record<UploadFormKind, string> = {
   cv: "We couldn’t upload your CV. Please try again in a moment.",
   "profile-picture":
@@ -42,11 +45,12 @@ export function messageForUploadFailure(
   }
   if (status === 409) {
     return kind === "cv"
-      ? "This upload conflicted with a previous attempt. Choose the file again and retry."
-      : "This picture couldn’t be saved because of a conflict. Choose the file again and retry.";
+      ? "This upload conflicted with a previous attempt. Please try saving again."
+      : "This picture couldn’t be saved because of a conflict. Please try again.";
   }
   if (status === 429) {
-    return trimmed || "Too many uploads. Please wait a moment and try again.";
+    // Always use fixed copy — never surface endpoint-specific rate-limit text.
+    return DEFAULT_429;
   }
   if (status >= 500) {
     return DEFAULT_500[kind];

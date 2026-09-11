@@ -7,7 +7,7 @@ interface FileUploadProps {
   value?: string;
   /** Called when user selects a file (not uploaded yet; upload happens on form submit). */
   pendingFile?: File | null;
-  onPendingFileChange: (file: File | null) => void;
+  onPendingFileChange: (file: File | null) => void | Promise<void>;
   /** When false, hide the View link (e.g. CV missing in storage). When true or undefined, show View if value is set. */
   cvUrlExists?: boolean;
   /** When provided and cvUrlExists is false, show a "Check again" button to re-run the existence check. */

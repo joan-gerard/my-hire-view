@@ -9,10 +9,7 @@ import {
   PROFILE_URL_MAX_LENGTH,
 } from "@/lib/types/profile";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
-import {
-  messageForUploadFailure,
-  messageForUploadNetworkError,
-} from "@/lib/utils/upload-form-messages";
+import { uploadProfilePictureFile } from "@/lib/utils/upload-profile-picture-client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -155,37 +152,12 @@ export default function ProfileForm({
       if (pictureRemoved && !pendingFile) {
         profilePictureUrl = null;
       } else if (pendingFile) {
-        const fd = new FormData();
-        fd.append("file", pendingFile);
-        let uploadRes: Response;
-        try {
-          uploadRes = await fetch("/api/upload/profile-picture", {
-            method: "POST",
-            body: fd,
-          });
-        } catch {
-          setError(messageForUploadNetworkError("profile-picture"));
+        const upload = await uploadProfilePictureFile(pendingFile);
+        if (!upload.ok) {
+          setError(upload.error);
           return;
         }
-        const uploadJson = (await uploadRes.json().catch(() => ({}))) as {
-          error?: string;
-          url?: string;
-        };
-        if (!uploadRes.ok) {
-          setError(
-            messageForUploadFailure(
-              "profile-picture",
-              uploadRes.status,
-              uploadJson.error,
-            ),
-          );
-          return;
-        }
-        profilePictureUrl = uploadJson.url ?? null;
-        if (!profilePictureUrl) {
-          setError(messageForUploadFailure("profile-picture", 500, null));
-          return;
-        }
+        profilePictureUrl = upload.url;
         setSubmitPhase("saving");
       }
 
