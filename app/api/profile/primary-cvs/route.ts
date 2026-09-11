@@ -19,6 +19,11 @@ import {
 } from "@/lib/types/primary-cv";
 import { deleteCvIfOurs } from "@/lib/utils/cv-storage";
 import { hasPdfMagicBytes } from "@/lib/utils/pdf";
+import {
+  formatPrimaryCvZodError,
+  primaryCvDeleteQuerySchema,
+  primaryCvLabelSchema,
+} from "@/lib/validation/primary-cv";
 import { NextRequest, NextResponse } from "next/server";
 
 const APPLICATION_STATUSES = new Set<ApplicationStatus>([
@@ -137,6 +142,33 @@ export async function POST(request: NextRequest) {
   const { user } = auth;
 
   try {
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+    const labelParsed = primaryCvLabelSchema.safeParse(formData.get("label"));
+    if (!labelParsed.success) {
+      return NextResponse.json(
+        { error: formatPrimaryCvZodError(labelParsed.error) },
+        { status: 400 },
+      );
+    }
+    const label = labelParsed.data;
+
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+    if (file.type !== "application/pdf") {
+      return NextResponse.json(
+        { error: "Only PDF files are allowed" },
+        { status: 400 },
+      );
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "File size must be less than 3MB" },
+        { status: 400 },
+      );
+    }
+
     const supabase = await createClient();
     const { count, error: countError } = await supabase
       .from("primary_cvs")
@@ -151,30 +183,6 @@ export async function POST(request: NextRequest) {
         {
           error: `You can store up to ${PRIMARY_CV_MAX_PER_USER} primary CVs. Delete one to upload another.`,
         },
-        { status: 400 },
-      );
-    }
-
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    const labelRaw = formData.get("label");
-    const label =
-      typeof labelRaw === "string" && labelRaw.trim()
-        ? labelRaw.trim().slice(0, 120)
-        : null;
-
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
-    if (file.type !== "application/pdf") {
-      return NextResponse.json(
-        { error: "Only PDF files are allowed" },
-        { status: 400 },
-      );
-    }
-    if (file.size > 3 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File size must be less than 3MB" },
         { status: 400 },
       );
     }
@@ -242,16 +250,19 @@ export async function DELETE(request: NextRequest) {
   const { user } = auth;
 
   try {
-    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
+    const queryParsed = primaryCvDeleteQuerySchema.safeParse({
+      id: searchParams.get("id"),
+    });
+    if (!queryParsed.success) {
       return NextResponse.json(
-        { error: "Primary CV id is required" },
+        { error: formatPrimaryCvZodError(queryParsed.error) },
         { status: 400 },
       );
     }
+    const { id } = queryParsed.data;
+
+    const supabase = await createClient();
 
     const { data: existing, error: fetchError } = await supabase
       .from("primary_cvs")

@@ -52,11 +52,16 @@ __tests__/
         primary-cv.test.ts
       api/
         handle-api-error.test.ts
+      validation/
+        waitlist.test.ts
+        primary-cv.test.ts
+        auth.test.ts
       rate-limit.test.ts
       profile-validation.test.ts
       ensure-profile.test.ts
     api/
       profile.test.ts
+      primary-cvs.test.ts
       profile-picture-upload.test.ts
       cv-upload.test.ts
       slug.test.ts
@@ -101,6 +106,8 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 | `__tests__/unit/api/signup.test.ts` | **Signup** — F1-040/F1-041 validation, generic Auth errors, duplicate **200** |
 | `__tests__/unit/api/waitlist.test.ts` | **Waitlist** — valid insert, email/name **400**, honeypot silent **200**, duplicate **409**, body size **413**, rate limit **429** (F3-039 / F3-064) |
 | `__tests__/unit/lib/validation/waitlist.test.ts` | **Waitlist Zod schema** — email/name caps, enums, honeypot trigger helper |
+| `__tests__/unit/lib/validation/primary-cv.test.ts` | **Primary CV Zod schemas (F6-024)** — optional label trim/null/max length; delete `id` required UUID |
+| `__tests__/unit/api/primary-cvs.test.ts` | **Primary CV library writes (F6-024)** — POST label **400** before DB/R2; trimmed label on insert; DELETE missing/invalid UUID **400**; happy-path delete |
 | `__tests__/unit/lib/rate-limit.test.ts` | **Rate limiter** — `getClientIdentifier`, in-memory `rateLimit` (windows, isolation, sweep), async `checkRateLimit` / `checkPerSlugRateLimit` (incl. D2 keyPrefix + D3 invalid-path key skip), Upstash path (mocked) + Redis error fallback, `rateLimit429` |
 | `__tests__/unit/lib/api/handle-api-error.test.ts` | **API error helper** — `handleApiError` logs with context, default 500 message, custom message/status, optional log-only `meta` never returned to client |
 | `__tests__/unit/lib/api/same-origin.test.ts` | **Analytics same-origin gate** — matching `Origin` / `Referer` / `Sec-Fetch-Site`, site URL allowlist, rejects foreign or missing signals |
