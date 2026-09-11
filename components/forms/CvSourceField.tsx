@@ -30,7 +30,7 @@ interface CvSourceFieldProps {
   onSelectPrimary: (primaryId: string) => void;
   onSwitchToTailored: () => void;
   onSwitchToPrimary: () => void;
-  onPendingFileChange: (file: File | null) => void;
+  onPendingFileChange: (file: File | null) => void | Promise<void>;
   /** When set, users can manage the primary library from this form (modal). */
   onPrimaryLibraryChange?: (items: PrimaryCv[]) => void;
 
@@ -41,6 +41,12 @@ interface CvSourceFieldProps {
   useOriginalCvFilename: boolean;
   onUseOriginalCvFilenameChange: (use: boolean) => void;
   slug: string;
+  /** True while tailored CV is uploading on Save (F8-051 / F8-055). */
+  uploading?: boolean;
+  /** True while the selected PDF content digest is still computing. */
+  preparing?: boolean;
+  /** Disable file choose/remove for the full Save lifecycle (not only upload). */
+  disabled?: boolean;
 }
 
 /**
@@ -70,6 +76,9 @@ export default function CvSourceField({
   useOriginalCvFilename,
   onUseOriginalCvFilenameChange,
   slug,
+  uploading = false,
+  preparing = false,
+  disabled = false,
 }: CvSourceFieldProps) {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const selectedPrimary = primaryCvs.find((cv) => cv.id === selectedPrimaryId);
@@ -284,6 +293,9 @@ export default function CvSourceField({
                 onPendingFileChange={onPendingFileChange}
                 hideLabel
                 chooseLabel="Choose PDF"
+                uploading={uploading}
+                preparing={preparing}
+                disabled={disabled}
               />
             </div>
           )}

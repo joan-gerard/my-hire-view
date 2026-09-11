@@ -2,6 +2,7 @@
 
 import Button from "@/components/ui/Button";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
+import { uploadProfilePictureFile } from "@/lib/utils/upload-profile-picture-client";
 import { useEffect, useId, useRef, useState } from "react";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -39,7 +40,9 @@ export default function ProfilePictureModal({
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
   const [removed, setRemoved] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<"idle" | "uploading" | "saving">(
+    "idle",
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,6 +75,9 @@ export default function ProfilePictureModal({
   const displayUrl = removed
     ? null
     : (previewObjectUrl ?? savedDisplayUrl);
+  const loading = submitPhase !== "idle";
+  const saveLoadingLabel =
+    submitPhase === "uploading" ? "Uploading…" : "Saving…";
   const dirty = Boolean(pendingFile) || removed;
   const canSave = dirty && !loading;
 
@@ -95,30 +101,22 @@ export default function ProfilePictureModal({
   const handleSave = async () => {
     if (!canSave) return;
     setError(null);
-    setLoading(true);
+    setSubmitPhase(pendingFile ? "uploading" : "saving");
     try {
       let profilePictureUrl: string | null = null;
+      let uploadWarning: string | undefined;
 
       if (removed && !pendingFile) {
         profilePictureUrl = null;
       } else if (pendingFile) {
-        const fd = new FormData();
-        fd.append("file", pendingFile);
-        const uploadRes = await fetch("/api/upload/profile-picture", {
-          method: "POST",
-          body: fd,
-        });
-        const uploadJson = await uploadRes.json().catch(() => ({}));
-        if (!uploadRes.ok) {
-          setError(uploadJson.error ?? "Upload failed");
+        const upload = await uploadProfilePictureFile(pendingFile);
+        if (!upload.ok) {
+          setError(upload.error);
           return;
         }
-        profilePictureUrl =
-          typeof uploadJson.url === "string" ? uploadJson.url : null;
-        if (!profilePictureUrl) {
-          setError("Upload failed");
-          return;
-        }
+        profilePictureUrl = upload.url;
+        uploadWarning = upload.warning;
+        setSubmitPhase("saving");
       }
 
       const response = await fetch("/api/profile", {
@@ -131,9 +129,16 @@ export default function ProfilePictureModal({
         setError(json.error ?? "Failed to save profile picture");
         return;
       }
-      if (Array.isArray(json.warnings) && json.warnings.length > 0) {
-        setError(json.warnings.join(" "));
-      }
+
+      const putWarnings = Array.isArray(json.warnings)
+        ? (json.warnings as unknown[]).filter(
+            (w): w is string => typeof w === "string" && Boolean(w.trim()),
+          )
+        : [];
+      const notice = [uploadWarning, ...putWarnings]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join(" ");
+
       const savedUrl =
         typeof json.data?.profile_picture_url === "string"
           ? json.data.profile_picture_url
@@ -146,11 +151,19 @@ export default function ProfilePictureModal({
         url: savedUrl?.trim() || null,
         updated_at: updatedAt,
       });
+      setPendingFile(null);
+      setRemoved(false);
+
+      // Keep the modal open when there is a warning so the user can read it.
+      if (notice) {
+        setError(notice);
+        return;
+      }
       onClose();
     } catch {
       setError("Failed to save profile picture");
     } finally {
-      setLoading(false);
+      setSubmitPhase("idle");
     }
   };
 
@@ -160,8 +173,17 @@ export default function ProfilePictureModal({
       className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,26rem)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       onClose={onClose}
+      onCancel={(e) => {
+        // Keep the dialog open while upload/save is in flight (Escape).
+        if (loading) {
+          e.preventDefault();
+        }
+      }}
       onClick={(e) => {
-        if (e.target === dialogRef.current) onClose();
+        if (e.target === dialogRef.current) {
+          if (loading) return;
+          onClose();
+        }
       }}
     >
       <div className="space-y-4 p-5">
@@ -172,6 +194,11 @@ export default function ProfilePictureModal({
           One picture per account. Changes are saved when you click Save
           picture — then you can show it on this application.
         </p>
+        {submitPhase === "uploading" && (
+          <p className="text-sm text-[var(--foreground)]/80" role="status">
+            Uploading…
+          </p>
+        )}
 
         {error && (
           <p
@@ -244,6 +271,7 @@ export default function ProfilePictureModal({
             type="button"
             variant="primary"
             loading={loading}
+            loadingLabel={saveLoadingLabel}
             disabled={!canSave}
             onClick={() => void handleSave()}
           >

@@ -9,6 +9,7 @@ import {
   PROFILE_URL_MAX_LENGTH,
 } from "@/lib/types/profile";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
+import { uploadProfilePictureFile } from "@/lib/utils/upload-profile-picture-client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -33,7 +34,9 @@ export default function ProfileForm({
 }: ProfileFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<"idle" | "uploading" | "saving">(
+    "idle",
+  );
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     first_name: initialData?.first_name ?? "",
@@ -104,6 +107,10 @@ export default function ProfileForm({
       normalizeText(initialData?.linkedin_url) ||
     pictureDirty;
 
+  const loading = submitPhase !== "idle";
+  const saveLoadingLabel =
+    submitPhase === "uploading" ? "Uploading…" : "Saving…";
+
   const canSave = namesValid && isDirty && !loading;
 
   const disabledReason = (() => {
@@ -139,28 +146,22 @@ export default function ProfileForm({
     e.preventDefault();
     if (!canSave) return;
     setError(null);
-    setLoading(true);
+    setSubmitPhase(pendingFile ? "uploading" : "saving");
     try {
       let profilePictureUrl: string | null | undefined = undefined;
       if (pictureRemoved && !pendingFile) {
         profilePictureUrl = null;
       } else if (pendingFile) {
-        const fd = new FormData();
-        fd.append("file", pendingFile);
-        const uploadRes = await fetch("/api/upload/profile-picture", {
-          method: "POST",
-          body: fd,
-        });
-        const uploadJson = await uploadRes.json().catch(() => ({}));
-        if (!uploadRes.ok) {
-          setError(uploadJson.error ?? "Upload failed");
+        const upload = await uploadProfilePictureFile(pendingFile);
+        if (!upload.ok) {
+          setError(upload.error);
           return;
         }
-        profilePictureUrl = uploadJson.url ?? null;
-        if (!profilePictureUrl) {
-          setError("Upload failed");
-          return;
+        profilePictureUrl = upload.url;
+        if (upload.warning) {
+          setError(upload.warning);
         }
+        setSubmitPhase("saving");
       }
 
       const body: Record<string, string | null> = {
@@ -185,7 +186,10 @@ export default function ProfileForm({
         return;
       }
       if (Array.isArray(json.warnings) && json.warnings.length > 0) {
-        setError(json.warnings.join(" "));
+        const warningText = json.warnings.join(" ");
+        setError((prev) =>
+          prev ? `${prev} ${warningText}` : warningText,
+        );
       }
       if (profilePictureUrl !== undefined) {
         setSavedUrlOverride(profilePictureUrl);
@@ -201,7 +205,7 @@ export default function ProfileForm({
     } catch {
       setError("Failed to save profile");
     } finally {
-      setLoading(false);
+      setSubmitPhase("idle");
     }
   };
 
@@ -279,6 +283,11 @@ export default function ProfileForm({
           choose whether to show it on each application when creating or
           editing.
         </p>
+        {submitPhase === "uploading" && (
+          <p className="mb-3 text-sm text-[var(--foreground)]/80" role="status">
+            Uploading…
+          </p>
+        )}
         {hadProfilePictureOnLoad && (
           <p className="mb-3 text-sm text-[var(--foreground)]/80">
             When you change your profile picture and save, applications that
@@ -352,6 +361,7 @@ export default function ProfileForm({
           type="submit"
           variant="primary"
           loading={loading}
+          loadingLabel={saveLoadingLabel}
           disabled={!canSave}
           aria-describedby={
             disabledReason ? "save-profile-disabled-reason" : undefined

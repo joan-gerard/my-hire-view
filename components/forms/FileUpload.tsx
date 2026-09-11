@@ -7,7 +7,7 @@ interface FileUploadProps {
   value?: string;
   /** Called when user selects a file (not uploaded yet; upload happens on form submit). */
   pendingFile?: File | null;
-  onPendingFileChange: (file: File | null) => void;
+  onPendingFileChange: (file: File | null) => void | Promise<void>;
   /** When false, hide the View link (e.g. CV missing in storage). When true or undefined, show View if value is set. */
   cvUrlExists?: boolean;
   /** When provided and cvUrlExists is false, show a "Check again" button to re-run the existence check. */
@@ -17,6 +17,15 @@ interface FileUploadProps {
   hideLabel?: boolean;
   /** Custom label for the file input affordance (accessibility / helper text). */
   chooseLabel?: string;
+  /** True while the pending file is uploading on Save (F8-051 / F8-055). */
+  uploading?: boolean;
+  /** True while content digest for the selected file is still computing. */
+  preparing?: boolean;
+  /**
+   * Disable choose/remove for the full Save lifecycle (validation + upload + final
+   * save). Separate from `uploading` so the sublabel can still say “Saving…”.
+   */
+  disabled?: boolean;
 }
 
 const MAX_SIZE_BYTES = 3 * 1024 * 1024; // 3MB
@@ -30,11 +39,16 @@ export default function FileUpload({
   error,
   hideLabel = false,
   chooseLabel = "CV (PDF)",
+  uploading = false,
+  preparing = false,
+  disabled = false,
 }: FileUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [checkingCv, setCheckingCv] = useState(false);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const selectionLocked = disabled || uploading || preparing;
 
   // Create/revoke object URL for preview when pendingFile changes
   useEffect(() => {
@@ -53,10 +67,17 @@ export default function FileUpload({
     return () => URL.revokeObjectURL(url);
   }, [pendingFile]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Clear prior digest/selection errors first so a new pick (including
+    // rejected type/size) does not keep showing “Couldn’t read that PDF”.
+    setSelectionError(null);
     if (!file) {
-      onPendingFileChange(null);
+      try {
+        await onPendingFileChange(null);
+      } catch {
+        // Clear is best-effort.
+      }
       return;
     }
 
@@ -72,11 +93,19 @@ export default function FileUpload({
       return;
     }
 
-    onPendingFileChange(file);
+    try {
+      await onPendingFileChange(file);
+    } catch {
+      setSelectionError(
+        "Couldn’t read that PDF. Please choose the file again.",
+      );
+      e.target.value = '';
+    }
   };
 
   const handleClearPending = () => {
-    onPendingFileChange(null);
+    setSelectionError(null);
+    void onPendingFileChange(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -103,19 +132,21 @@ export default function FileUpload({
       )}
       <div className={hideLabel ? "flex flex-col gap-2" : "mt-1 flex flex-col gap-2"}>
         <div className="flex items-center gap-4">
-          <input
+            <input
             ref={fileInputRef}
             type="file"
             accept="application/pdf"
             onChange={handleFileChange}
             aria-label={chooseLabel}
-            className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-md file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90"
+            disabled={selectionLocked}
+            className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-md file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90 disabled:opacity-50"
           />
           {showPending && (
             <button
               type="button"
               onClick={handleClearPending}
-              className="text-sm text-[var(--foreground)]/80 hover:text-[var(--foreground)] underline"
+              disabled={selectionLocked}
+              className="text-sm text-[var(--foreground)]/80 hover:text-[var(--foreground)] underline disabled:opacity-50"
             >
               Remove selection
             </button>
@@ -128,7 +159,13 @@ export default function FileUpload({
               Selected: {pendingFile.name}
             </p>
             <p className="text-xs text-[var(--foreground)]/60 mt-0.5">
-              File will be uploaded when you save the application.
+              {uploading
+                ? "Uploading…"
+                : preparing
+                  ? "Preparing file…"
+                  : disabled
+                    ? "Saving…"
+                    : "File will be uploaded when you save the application."}
             </p>
             {canPreview && (
               <button
@@ -217,6 +254,11 @@ export default function FileUpload({
         )}
       </div>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {!error && selectionError && (
+        <p className="mt-1 text-sm text-red-600" role="alert">
+          {selectionError}
+        </p>
+      )}
     </div>
   );
 }
