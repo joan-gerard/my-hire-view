@@ -37,6 +37,8 @@ export default function PrimaryCvLibrarySection({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const onLibraryChangeRef = useRef(onLibraryChange);
   onLibraryChangeRef.current = onLibraryChange;
+  /** Serializes upload vs delete so a later `load()` cannot wipe the other op's UI. */
+  const opLockRef = useRef<"idle" | "upload" | "delete">("idle");
   const [items, setItems] = useState<PrimaryCv[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -88,6 +90,8 @@ export default function PrimaryCvLibrarySection({
       setError("File size must be less than 3MB.");
       return;
     }
+    if (opLockRef.current !== "idle") return;
+    opLockRef.current = "upload";
     setUploading(true);
     setError(null);
     try {
@@ -107,11 +111,14 @@ export default function PrimaryCvLibrarySection({
     } catch {
       setError("Upload failed");
     } finally {
+      opLockRef.current = "idle";
       setUploading(false);
     }
   };
 
   const performDelete = async (cv: PrimaryCv) => {
+    if (opLockRef.current !== "idle") return;
+    opLockRef.current = "delete";
     setError(null);
     setDeleting(true);
     try {
@@ -134,11 +141,13 @@ export default function PrimaryCvLibrarySection({
     } catch {
       setError("Failed to delete primary CV");
     } finally {
+      opLockRef.current = "idle";
       setDeleting(false);
     }
   };
 
   const requestDelete = (cv: PrimaryCv) => {
+    if (opLockRef.current !== "idle") return;
     const applicationsCount = Math.max(0, cv.applications_count ?? 0);
     if (applicationsCount === 0) {
       void performDelete(cv);
@@ -159,6 +168,7 @@ export default function PrimaryCvLibrarySection({
   };
 
   const atLimit = items.length >= PRIMARY_CV_MAX_PER_USER;
+  const libraryBusy = uploading || deleting;
   const deleteMessage = pendingDelete
     ? primaryCvDeleteConfirmMessage(pendingDelete.applicationsCount)
     : "";
@@ -228,7 +238,7 @@ export default function PrimaryCvLibrarySection({
                 <Button
                   type="button"
                   variant="secondary"
-                  disabled={deleting}
+                  disabled={libraryBusy}
                   onClick={() => requestDelete(cv)}
                 >
                   Delete
@@ -292,7 +302,7 @@ export default function PrimaryCvLibrarySection({
         <Button
           type="button"
           variant="secondary"
-          disabled={uploading || atLimit || deleting || pendingDelete !== null}
+          disabled={libraryBusy || atLimit || pendingDelete !== null}
           onClick={() => fileInputRef.current?.click()}
           title={
             atLimit

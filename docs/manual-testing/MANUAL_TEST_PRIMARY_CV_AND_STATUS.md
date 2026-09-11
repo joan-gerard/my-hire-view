@@ -54,6 +54,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] Cancel → CV still in list and in R2
 - [ ] Confirm (**I Understand — Delete**) → removed from list; R2 object gone (optional check)
 - [ ] If applications still referenced it: amber warning **stays visible** after the list refreshes (“still referenced” / “CV missing until updated”)
+- [ ] While an upload is in progress, Delete is disabled (and the reverse) so a later list refresh cannot wipe that warning
 - [ ] Affected apps: dashboard **CV missing** (see §5)
 
 **From New / Edit application (same library)**
