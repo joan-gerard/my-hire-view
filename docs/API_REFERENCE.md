@@ -131,7 +131,7 @@ TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_
 - Stable ordering (`created_at` descending) for the dashboard.
 - Clear success shape `{ data, meta }`.
 - Projects only dashboard list fields (not `select("*")`).
-- `normalizeListSearchQuery` caps length and strips PostgREST/`ilike` metacharacters (`%`, `_`, `"`, `:`, commas, parens, backslash) before building the `or` filter so quoted `q` cannot 500.
+- `normalizeListSearchQuery` caps length and strips PostgREST/`ilike` metacharacters (`%`, `_`, `*` as a `%` alias, `"`, `:`, commas, parens, backslash) before building the `or` filter so quoted `q` cannot 500 and users cannot inject wildcards.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
 

@@ -56,9 +56,10 @@ function normalizeListSearchQuery(raw: string | null): string | null {
   const cleaned = raw
     .trim()
     .slice(0, 100)
-    // `%`/`_` are ILIKE wildcards. `"` ends quoted filter values. `,.:()` are
-    // PostgREST reserved filter chars; `\` is the escape prefix.
-    .replace(/[%_":,.()\\]/g, " ")
+    // `%`/`_` are ILIKE wildcards; PostgREST also aliases `*` to `%` in
+    // like/ilike. `"` ends quoted filter values. `,.:()` are reserved filter
+    // chars; `\` is the escape prefix.
+    .replace(/[%_*":,.()\\]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   return cleaned.length > 0 ? cleaned : null;
