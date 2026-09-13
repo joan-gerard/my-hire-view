@@ -198,6 +198,8 @@ export function toPublicApplicationResponse(
   if (application.status !== "active") {
     return toUnavailablePublicApplication();
   }
+  // Narrow Application → ActiveApplication (property narrowing alone is not enough for the alias).
+  assertActiveApplication(application);
   return toPublicApplication(application, cv_exists);
 }
 
