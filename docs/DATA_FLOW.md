@@ -141,13 +141,13 @@ sequenceDiagram
   Page->>API: PUT profile
   API->>API: withAuth, validate URLs + required names
   API->>DB: upsert by user_id
-  API->>Auth: updateUser metadata when names change
+  API->>Auth: updateUser metadata when names change or Auth is stale
   DB-->>API: updated row
   API-->>Page: 200 + data
   Page->>U: Refresh / success
 ```
 
-Profile data is used as the default source for candidate fields when creating a new application; it is not updated from the application form. The row is normally created at signup; PUT merges with the existing row (picture-only updates are valid). If the row is missing or has blank names, omitted names/`public_id` are seeded from Auth `user_metadata` so a picture-only PUT still works (body and metadata-seeded names must be ≤ 100 characters; legacy over-long stored names are preserved).
+Profile data is used as the default source for candidate fields when creating a new application; it is not updated from the application form. The row is normally created at signup; PUT merges with the existing row (picture-only updates are valid). If the row is missing or has blank names, omitted names/`public_id` are seeded from Auth `user_metadata` so a picture-only PUT still works (body and metadata-seeded names must be ≤ 100 characters; legacy over-long stored names are preserved). Auth `user_metadata` is also re-synced when names/`public_id` already match the profiles row but Auth is stale (e.g. a prior sync failed), so a no-op save can repair.
 
 ---
 

@@ -196,20 +196,29 @@ export async function PUT(request: NextRequest) {
 
     const warnings: string[] = [];
 
-    // Keep Auth user_metadata in sync when names or public_id change (or on first save).
+    // Keep Auth user_metadata in sync when names/public_id change, or when Auth is
+    // already stale (e.g. a prior updateUser failed). Same-name PUT must still repair
+    // so a no-op save can heal drift — compare Auth names like we do for public_id (F12-031).
     // Cap names for Auth only — profiles may still hold a legacy over-long stored value.
     const prevFirst = existing?.first_name ?? null;
     const prevLast = existing?.last_name ?? null;
+    const authFirstName = firstName.slice(0, PROFILE_NAME_MAX_LENGTH);
+    const authLastName = lastName.slice(0, PROFILE_NAME_MAX_LENGTH);
     const metaPublicId = publicIdFromUserMetadata(user);
+    const namesOutOfSyncWithAuth =
+      !metaNames ||
+      metaNames.first_name !== authFirstName ||
+      metaNames.last_name !== authLastName;
     if (
       prevFirst !== firstName ||
       prevLast !== lastName ||
-      metaPublicId !== publicId
+      metaPublicId !== publicId ||
+      namesOutOfSyncWithAuth
     ) {
       const { error: metaError } = await supabase.auth.updateUser({
         data: {
-          first_name: firstName.slice(0, PROFILE_NAME_MAX_LENGTH),
-          last_name: lastName.slice(0, PROFILE_NAME_MAX_LENGTH),
+          first_name: authFirstName,
+          last_name: authLastName,
           public_id: publicId,
         },
       });

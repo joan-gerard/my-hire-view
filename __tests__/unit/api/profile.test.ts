@@ -5,8 +5,9 @@
  *        enforces rate limiting, rejects unauthenticated callers.
  * PUT  — upserts profile (creates on first save; seeds names/public_id from
  *        Auth metadata when the row is missing so picture-only first save works),
- *        syncs Auth user_metadata names, validates URL fields, enforces rate
- *        limiting, rejects unauthenticated callers.
+ *        syncs Auth user_metadata names (and repairs stale Auth on same-name
+ *        save — F12-031), validates URL fields, enforces rate limiting, rejects
+ *        unauthenticated callers.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
@@ -171,6 +172,92 @@ describe("PUT /api/profile", () => {
         public_id: "k7x2m9ab",
       },
     });
+  });
+
+  it("re-syncs Auth names on same-name PUT when metadata is stale (F12-031)", async () => {
+    mockWithAuth.mockResolvedValue(
+      authOk({
+        id: "user-123",
+        user_metadata: {
+          first_name: "Old",
+          last_name: "Name",
+          public_id: "k7x2m9ab",
+        },
+      }),
+    );
+    const client = makeSupabaseClient([
+      ok(EXISTING_PROFILE),
+      ok(EXISTING_PROFILE),
+      ok(null),
+    ]);
+    mockCreateClient.mockResolvedValue(client);
+
+    const response = await PUT(
+      makePutRequest({ first_name: "Jane", last_name: "Doe" }),
+    );
+    expect(response.status).toBe(200);
+    expect(client.auth.updateUser).toHaveBeenCalledWith({
+      data: {
+        first_name: "Jane",
+        last_name: "Doe",
+        public_id: "k7x2m9ab",
+      },
+    });
+  });
+
+  it("skips Auth sync when profile names and Auth metadata already match", async () => {
+    mockWithAuth.mockResolvedValue(
+      authOk({
+        id: "user-123",
+        user_metadata: {
+          first_name: "Jane",
+          last_name: "Doe",
+          public_id: "k7x2m9ab",
+        },
+      }),
+    );
+    const updated = { ...EXISTING_PROFILE, location: "Oslo" };
+    const client = makeSupabaseClient([
+      ok(EXISTING_PROFILE),
+      ok(updated),
+      ok(null),
+    ]);
+    mockCreateClient.mockResolvedValue(client);
+
+    const response = await PUT(makePutRequest({ location: "Oslo" }));
+    expect(response.status).toBe(200);
+    expect(client.auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("returns warnings when Auth name sync fails on repair (F12-031)", async () => {
+    mockWithAuth.mockResolvedValue(
+      authOk({
+        id: "user-123",
+        user_metadata: {
+          first_name: "Stale",
+          last_name: "Doe",
+          public_id: "k7x2m9ab",
+        },
+      }),
+    );
+    const client = makeSupabaseClient([
+      ok(EXISTING_PROFILE),
+      ok(EXISTING_PROFILE),
+      ok(null),
+    ]);
+    client.auth.updateUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: "Auth unavailable" },
+    });
+    mockCreateClient.mockResolvedValue(client);
+
+    const response = await PUT(
+      makePutRequest({ first_name: "Jane", last_name: "Doe" }),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data).toMatchObject({ first_name: "Jane" });
+    expect(json.warnings?.[0]).toMatch(/failed to sync name/i);
   });
 
   it("creates a profile on first PUT when none exists and syncs metadata", async () => {

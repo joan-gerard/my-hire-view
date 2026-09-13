@@ -362,7 +362,7 @@ Return the current user’s profile. **Read-only** — does not create a row. If
 
 `PUT /api/profile`
 
-Upsert profile fields (row usually already exists from signup). Requires non-empty `first_name` and `last_name` (after merge with existing — so picture-only updates work). Omitted names and `public_id` are seeded from Auth `user_metadata` when present and the profiles value is missing/blank (C3-026), so a picture-only PUT from `/admin/new` can create or repair the row. Names introduced by this request (body or metadata seed) must satisfy the **100**-character max; an existing over-long stored name is preserved so picture-only updates still succeed. Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change, syncs Auth `user_metadata`. When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upsert profile fields (row usually already exists from signup). Requires non-empty `first_name` and `last_name` (after merge with existing — so picture-only updates work). Omitted names and `public_id` are seeded from Auth `user_metadata` when present and the profiles value is missing/blank (C3-026), so a picture-only PUT from `/admin/new` can create or repair the row. Names introduced by this request (body or metadata seed) must satisfy the **100**-character max; an existing over-long stored name is preserved so picture-only updates still succeed. Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change **or** Auth `user_metadata` names/`public_id` are already out of sync, syncs Auth `user_metadata` (so a same-name save can repair a prior failed sync — F12-031). When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -378,7 +378,7 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 - Deletes previous Storage object after successful write when the URL changes; surfaces partial failures as `warnings`.
 - No applications fan-out for picture URLs (live profile read on view).
 - Dedicated `withAuth` → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
-- Syncs Auth `user_metadata` (`first_name`, `last_name`, `public_id`) when DB names change or Auth `public_id` is out of sync; sync failures become `warnings` while still returning **200** + `data`. Names written to Auth are truncated to **100** characters so metadata never holds an over-long seed (legacy over-long profiles values may still differ until the user edits them).
+- Syncs Auth `user_metadata` (`first_name`, `last_name`, `public_id`) when DB names change **or** Auth names/`public_id` are out of sync (same-name PUT can repair a prior failed `updateUser` — F12-031); sync failures become `warnings` while still returning **200** + `data`. Names written to Auth are truncated to **100** characters so metadata never holds an over-long seed (legacy over-long profiles values may still differ until the user edits them).
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
 
