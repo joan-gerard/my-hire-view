@@ -78,7 +78,7 @@ docs/                — internal documentation
 
 ### Session / auth flow
 
-`**proxy.ts**` (Next.js 16 replacement for `middleware.ts`) refreshes the Supabase session cookie on every request and redirects unauthenticated users away from `/admin`.
+**`proxy.ts`** (Next.js 16+ network proxy; replaces the deprecated `middleware.ts` convention) refreshes the Supabase session cookie on matched requests and redirects unauthenticated users away from `/admin`. Session logic lives in `lib/supabase/middleware.ts`; do not add a root `middleware.ts`.
 
 ---
 
@@ -131,7 +131,7 @@ RLS policies protect all tables. The service-role Supabase client is used server
 ## 6. Authentication & Authorization
 
 - **Supabase Auth** with email/password; sessions stored in HTTP cookies via `@supabase/ssr`.
-- `**proxy.ts`\*\* refreshes the session and guards all `/admin` routes.
+- **`proxy.ts`** refreshes the session and guards all `/admin` routes.
 - `**withAuth()**` in `lib/api/with-auth.ts` is used inside API route handlers to get the authenticated user (or return **401** / Auth-outage **500**). `**requireAuth()**` / `**getSessionUser()**` in `lib/auth.ts` are for pages that need a real session check; soft `**getUser()**` is for optional UI (marketing) and never throws.
 - **RLS** on `applications` and `profiles` enforces data isolation at the database level (owners only; public share pages resolve server-side via the service-role client, not an open anon SELECT).
 - **Public read** of applications by slug is permitted (recruiter view requires no login).
