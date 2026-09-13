@@ -400,6 +400,7 @@ List the authenticated user’s primary CV library (newest first). Each row incl
 - Auth required; scoped to session `user_id`.
 - Rate limited.
 - Joins application references so delete flows can show count + preview without extra round trips.
+- Library UI ignores stale GET responses (so a slow initial load cannot overwrite a later upload/delete refresh) and disables upload until the first load completes.
 
 ---
 

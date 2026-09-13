@@ -37,8 +37,9 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 - [ ] Open `/admin/profile`
 - [ ] See **Primary CVs** section
+- [ ] While the section still shows **Loading…**, **Upload primary CV** is disabled
 - [ ] With empty library: message that none exist yet
-- [ ] **Upload primary CV** → choose PDF → appears in the list with filename
+- [ ] **Upload primary CV** → choose PDF → appears in the list with filename (stays after any in-flight initial load finishes)
 - [ ] Supabase `primary_cvs`: one row (`user_id`, `url`, `filename`)
 - [ ] R2 (optional): object under `cvs/{userId}/primary/…`
 - [ ] **View** link opens the PDF

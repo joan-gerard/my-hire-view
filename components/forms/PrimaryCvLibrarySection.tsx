@@ -39,6 +39,8 @@ export default function PrimaryCvLibrarySection({
   onLibraryChangeRef.current = onLibraryChange;
   /** Serializes upload vs delete so a later `load()` cannot wipe the other op's UI. */
   const opLockRef = useRef<"idle" | "upload" | "delete">("idle");
+  /** Bumped on every `load()` so a slower in-flight GET cannot apply stale items. */
+  const loadGenerationRef = useRef(0);
   const [items, setItems] = useState<PrimaryCv[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -54,12 +56,14 @@ export default function PrimaryCvLibrarySection({
   }, []);
 
   const load = useCallback(async (): Promise<boolean> => {
+    const generation = ++loadGenerationRef.current;
     try {
       setError(null);
       const res = await fetch("/api/profile/primary-cvs", {
         credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
+      if (generation !== loadGenerationRef.current) return false;
       if (!res.ok) {
         setError(json.error ?? "Failed to load primary CVs");
         return false;
@@ -67,10 +71,13 @@ export default function PrimaryCvLibrarySection({
       applyItems((json.data as PrimaryCv[]) ?? []);
       return true;
     } catch {
+      if (generation !== loadGenerationRef.current) return false;
       setError("Failed to load primary CVs");
       return false;
     } finally {
-      setLoading(false);
+      if (generation === loadGenerationRef.current) {
+        setLoading(false);
+      }
     }
   }, [applyItems]);
 
@@ -90,7 +97,7 @@ export default function PrimaryCvLibrarySection({
       setError("File size must be less than 3MB.");
       return;
     }
-    if (opLockRef.current !== "idle") return;
+    if (loading || opLockRef.current !== "idle") return;
     opLockRef.current = "upload";
     setUploading(true);
     setError(null);
@@ -147,7 +154,7 @@ export default function PrimaryCvLibrarySection({
   };
 
   const requestDelete = (cv: PrimaryCv) => {
-    if (opLockRef.current !== "idle") return;
+    if (loading || opLockRef.current !== "idle") return;
     const applicationsCount = Math.max(0, cv.applications_count ?? 0);
     if (applicationsCount === 0) {
       void performDelete(cv);
@@ -168,7 +175,7 @@ export default function PrimaryCvLibrarySection({
   };
 
   const atLimit = items.length >= PRIMARY_CV_MAX_PER_USER;
-  const libraryBusy = uploading || deleting;
+  const libraryBusy = loading || uploading || deleting;
   const deleteMessage = pendingDelete
     ? primaryCvDeleteConfirmMessage(pendingDelete.applicationsCount)
     : "";
@@ -305,9 +312,11 @@ export default function PrimaryCvLibrarySection({
           disabled={libraryBusy || atLimit || pendingDelete !== null}
           onClick={() => fileInputRef.current?.click()}
           title={
-            atLimit
-              ? `Limit of ${PRIMARY_CV_MAX_PER_USER} primary CVs reached`
-              : undefined
+            loading
+              ? "Wait for the library to finish loading"
+              : atLimit
+                ? `Limit of ${PRIMARY_CV_MAX_PER_USER} primary CVs reached`
+                : undefined
           }
         >
           {uploading ? "Uploading…" : "Upload primary CV"}
