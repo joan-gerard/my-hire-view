@@ -7,7 +7,7 @@ import type { PrimaryCv, PrimaryCvApplicationPreview } from "@/lib/types/primary
 import {
   PRIMARY_CV_MAX_PER_USER,
   primaryCvDeleteConfirmMessage,
-  primaryCvDeletedStillReferencedMessage,
+  primaryCvPostDeleteStatusMessage,
 } from "@/lib/types/primary-cv";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -83,6 +83,11 @@ export default function PrimaryCvLibrarySection({
 
   useEffect(() => {
     void load();
+    return () => {
+      // Invalidate in-flight GETs so an unmounted Manage-library instance cannot
+      // call onLibraryChange after a newer modal upload (close/reopen race).
+      loadGenerationRef.current += 1;
+    };
   }, [load]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,11 +144,15 @@ export default function PrimaryCvLibrarySection({
         return;
       }
       const affected = Number(json.applications_affected ?? 0);
-      // `load()` clears `error` at start; set the still-referenced warning after a successful refresh.
+      // `load()` clears `error` at start; restore still-referenced warning after
+      // refresh (including when refresh fails so the user still sees the risk).
       const refreshed = await load();
-      const warning = primaryCvDeletedStillReferencedMessage(affected);
-      if (warning && refreshed) {
-        setError(warning);
+      const status = primaryCvPostDeleteStatusMessage({
+        applicationsAffected: affected,
+        refreshed,
+      });
+      if (status) {
+        setError(status);
       }
     } catch {
       setError("Failed to delete primary CV");

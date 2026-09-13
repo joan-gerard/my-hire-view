@@ -55,6 +55,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] Cancel → CV still in list and in R2
 - [ ] Confirm (**I Understand — Delete**) → removed from list; R2 object gone (optional check)
 - [ ] If applications still referenced it: amber warning **stays visible** after the list refreshes (“still referenced” / “CV missing until updated”)
+- [ ] If the post-delete list refresh fails, the still-referenced warning is still shown (with a refresh note)
 - [ ] While an upload is in progress, Delete is disabled (and the reverse) so a later list refresh cannot wipe that warning
 - [ ] Affected apps: dashboard **CV missing** (see §5)
 
@@ -64,6 +65,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] With empty library: **Upload one to your library** / **Upload primary CV** opens the modal
 - [ ] Upload a PDF in the modal → list updates; create form switches to **primary** and selects the new file
 - [ ] That selection **stays** even if the new-application page was still loading the library in the background (does not flip to tailored or drop the new CV from the dropdown)
+- [ ] Close modal while Loading…, reopen and upload → selection still sticks (a late response from the closed modal must not wipe the new CV)
 - [ ] Close modal (**Done**) → dropdown includes the new primary
 - [ ] Delete a selected primary in the modal → if unused, gone immediately; if used, inline confirm with count → selection moves to another primary (or switches to tailored if none left)
 - [ ] Library on `/admin/profile` matches what you changed from New/Edit

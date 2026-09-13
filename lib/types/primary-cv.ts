@@ -58,6 +58,22 @@ export function primaryCvDeletedStillReferencedMessage(
   return `Primary CV deleted. ${n} application${n === 1 ? "" : "s"} still referenced it and will show “CV missing” until updated.`;
 }
 
+/**
+ * Status after a successful primary-CV delete + follow-up list refresh.
+ * Keeps the still-referenced warning even when the refresh fails.
+ */
+export function primaryCvPostDeleteStatusMessage(args: {
+  applicationsAffected: number;
+  refreshed: boolean;
+}): string | null {
+  const warning = primaryCvDeletedStillReferencedMessage(
+    args.applicationsAffected,
+  );
+  if (!warning) return null;
+  if (args.refreshed) return warning;
+  return `${warning} The library list could not be refreshed — try again.`;
+}
+
 /** Label for one application in the delete preview (company — role). */
 export function primaryCvApplicationPreviewLabel(
   app: Pick<PrimaryCvApplicationPreview, "company" | "role">,

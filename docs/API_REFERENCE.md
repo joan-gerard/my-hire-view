@@ -400,7 +400,7 @@ List the authenticated user’s primary CV library (newest first). Each row incl
 - Auth required; scoped to session `user_id`.
 - Rate limited.
 - Joins application references so delete flows can show count + preview without extra round trips.
-- Library UI ignores stale GET responses (so a slow initial load cannot overwrite a later upload/delete refresh) and disables upload until the first load completes.
+- Library UI ignores stale GET responses (so a slow initial load cannot overwrite a later upload/delete refresh) and disables upload until the first load completes. Closing the Manage-library modal invalidates that instance’s in-flight GET so it cannot call `onLibraryChange` after a newer reopen/upload.
 - Create/edit forms ignore a slower initial library GET after the Manage-library modal has applied a newer list, so an upload cannot be overwritten (dropdown emptied / create flow flipped to tailored).
 
 ---
@@ -447,7 +447,7 @@ Remove a primary CV from the library and delete its R2 object. Applications that
 - **Schema validation** (`primaryCvDeleteQuerySchema`): trimmed non-empty UUID `id`; missing/blank → **400** “Primary CV id is required”; malformed → **400** “Primary CV id must be a valid UUID” (before DB lookup).
 - **Fail closed:** deletes the R2 object first (`deleteCvIfOurs`); on R2 failure → **500** and the library row is left intact. Then deletes the `primary_cvs` row.
 - Returns `applications_affected` count for confirm UX (client may show this before calling DELETE).
-- After a successful delete, the library UI refreshes the list **then** shows a still-referenced warning when `applications_affected` > 0 (so the refresh cannot wipe the message). Upload and delete are serialized in the library UI so an in-flight upload refresh cannot clear that warning.
+- After a successful delete, the library UI refreshes the list **then** shows a still-referenced warning when `applications_affected` > 0 (so the refresh cannot wipe the message). If the refresh fails, the warning is still shown and notes that the list could not be refreshed. Upload and delete are serialized in the library UI so an in-flight upload refresh cannot clear that warning.
 
 **Accepted limitations**
 

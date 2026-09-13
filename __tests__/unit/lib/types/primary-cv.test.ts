@@ -6,6 +6,7 @@ import {
   primaryCvApplicationPreviewLabel,
   primaryCvDeleteConfirmMessage,
   primaryCvDeletedStillReferencedMessage,
+  primaryCvPostDeleteStatusMessage,
 } from "@/lib/types/primary-cv";
 
 describe("primaryCvDeleteConfirmMessage", () => {
@@ -52,6 +53,45 @@ describe("primaryCvDeletedStillReferencedMessage", () => {
   it("floors non-integer counts", () => {
     expect(primaryCvDeletedStillReferencedMessage(2.9)).toContain(
       "2 applications",
+    );
+  });
+});
+
+describe("primaryCvPostDeleteStatusMessage", () => {
+  it("returns null when no applications were affected", () => {
+    expect(
+      primaryCvPostDeleteStatusMessage({
+        applicationsAffected: 0,
+        refreshed: true,
+      }),
+    ).toBeNull();
+    expect(
+      primaryCvPostDeleteStatusMessage({
+        applicationsAffected: 0,
+        refreshed: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("returns the still-referenced warning after a successful refresh", () => {
+    expect(
+      primaryCvPostDeleteStatusMessage({
+        applicationsAffected: 2,
+        refreshed: true,
+      }),
+    ).toBe(
+      "Primary CV deleted. 2 applications still referenced it and will show “CV missing” until updated.",
+    );
+  });
+
+  it("keeps the warning and notes refresh failure when the list reload fails", () => {
+    expect(
+      primaryCvPostDeleteStatusMessage({
+        applicationsAffected: 1,
+        refreshed: false,
+      }),
+    ).toBe(
+      "Primary CV deleted. 1 application still referenced it and will show “CV missing” until updated. The library list could not be refreshed — try again.",
     );
   });
 });
