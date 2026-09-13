@@ -400,7 +400,7 @@ List the authenticated user’s primary CV library (newest first). Each row incl
 - Auth required; scoped to session `user_id`.
 - Rate limited.
 - Joins application references so delete flows can show count + preview without extra round trips.
-- Library UI ignores stale GET responses (so a slow initial load cannot overwrite a later upload/delete refresh) and disables upload until the first load completes. Closing the Manage-library modal invalidates that instance’s in-flight GET so it cannot call `onLibraryChange` after a newer reopen/upload.
+- Library UI ignores stale GET responses (so a slow initial load cannot overwrite a later upload/delete refresh) and disables upload until the first load completes. Closing the Manage-library modal marks that instance unmounted and invalidates its in-flight GET so upload/delete follow-up refreshes cannot call `onLibraryChange` after a newer reopen.
 - Create/edit forms ignore a slower initial library GET after the Manage-library modal has applied a newer list, so an upload cannot be overwritten (dropdown emptied / create flow flipped to tailored).
 
 ---

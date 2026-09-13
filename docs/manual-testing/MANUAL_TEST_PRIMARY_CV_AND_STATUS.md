@@ -66,6 +66,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] Upload a PDF in the modal → list updates; create form switches to **primary** and selects the new file
 - [ ] That selection **stays** even if the new-application page was still loading the library in the background (does not flip to tailored or drop the new CV from the dropdown)
 - [ ] Close modal while Loading…, reopen and upload → selection still sticks (a late response from the closed modal must not wipe the new CV)
+- [ ] Close modal during an in-progress upload/delete → reopening and selecting a CV is not overwritten by the closed instance’s follow-up refresh
 - [ ] Close modal (**Done**) → dropdown includes the new primary
 - [ ] Delete a selected primary in the modal → if unused, gone immediately; if used, inline confirm with count → selection moves to another primary (or switches to tailored if none left)
 - [ ] Library on `/admin/profile` matches what you changed from New/Edit

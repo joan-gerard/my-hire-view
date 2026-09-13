@@ -41,6 +41,8 @@ export default function PrimaryCvLibrarySection({
   const opLockRef = useRef<"idle" | "upload" | "delete">("idle");
   /** Bumped on every `load()` so a slower in-flight GET cannot apply stale items. */
   const loadGenerationRef = useRef(0);
+  /** False after unmount — blocks mutation follow-up `load()` / parent callbacks. */
+  const mountedRef = useRef(true);
   const [items, setItems] = useState<PrimaryCv[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -51,11 +53,13 @@ export default function PrimaryCvLibrarySection({
   const [deleting, setDeleting] = useState(false);
 
   const applyItems = useCallback((next: PrimaryCv[]) => {
+    if (!mountedRef.current) return;
     setItems(next);
     onLibraryChangeRef.current?.(next);
   }, []);
 
   const load = useCallback(async (): Promise<boolean> => {
+    if (!mountedRef.current) return false;
     const generation = ++loadGenerationRef.current;
     try {
       setError(null);
@@ -63,7 +67,12 @@ export default function PrimaryCvLibrarySection({
         credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
-      if (generation !== loadGenerationRef.current) return false;
+      if (
+        !mountedRef.current ||
+        generation !== loadGenerationRef.current
+      ) {
+        return false;
+      }
       if (!res.ok) {
         setError(json.error ?? "Failed to load primary CVs");
         return false;
@@ -71,19 +80,29 @@ export default function PrimaryCvLibrarySection({
       applyItems((json.data as PrimaryCv[]) ?? []);
       return true;
     } catch {
-      if (generation !== loadGenerationRef.current) return false;
+      if (
+        !mountedRef.current ||
+        generation !== loadGenerationRef.current
+      ) {
+        return false;
+      }
       setError("Failed to load primary CVs");
       return false;
     } finally {
-      if (generation === loadGenerationRef.current) {
+      if (
+        mountedRef.current &&
+        generation === loadGenerationRef.current
+      ) {
         setLoading(false);
       }
     }
   }, [applyItems]);
 
   useEffect(() => {
+    mountedRef.current = true;
     void load();
     return () => {
+      mountedRef.current = false;
       // Invalidate in-flight GETs so an unmounted Manage-library instance cannot
       // call onLibraryChange after a newer modal upload (close/reopen race).
       loadGenerationRef.current += 1;
@@ -115,16 +134,21 @@ export default function PrimaryCvLibrarySection({
         credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
+      if (!mountedRef.current) return;
       if (!res.ok) {
         setError(json.error ?? "Upload failed");
         return;
       }
       await load();
     } catch {
-      setError("Upload failed");
+      if (mountedRef.current) {
+        setError("Upload failed");
+      }
     } finally {
       opLockRef.current = "idle";
-      setUploading(false);
+      if (mountedRef.current) {
+        setUploading(false);
+      }
     }
   };
 
@@ -139,6 +163,7 @@ export default function PrimaryCvLibrarySection({
         credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
+      if (!mountedRef.current) return;
       if (!res.ok) {
         setError(json.error ?? "Failed to delete primary CV");
         return;
@@ -147,6 +172,7 @@ export default function PrimaryCvLibrarySection({
       // `load()` clears `error` at start; restore still-referenced warning after
       // refresh (including when refresh fails so the user still sees the risk).
       const refreshed = await load();
+      if (!mountedRef.current) return;
       const status = primaryCvPostDeleteStatusMessage({
         applicationsAffected: affected,
         refreshed,
@@ -155,10 +181,14 @@ export default function PrimaryCvLibrarySection({
         setError(status);
       }
     } catch {
-      setError("Failed to delete primary CV");
+      if (mountedRef.current) {
+        setError("Failed to delete primary CV");
+      }
     } finally {
       opLockRef.current = "idle";
-      setDeleting(false);
+      if (mountedRef.current) {
+        setDeleting(false);
+      }
     }
   };
 
