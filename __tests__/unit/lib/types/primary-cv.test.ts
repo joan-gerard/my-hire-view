@@ -1,13 +1,26 @@
 /**
- * Tests for primary CV delete confirm copy, post-delete warning, and preview labels.
+ * Tests for primary CV library constants, delete confirm copy, post-delete
+ * warning, and preview labels.
  */
 import { describe, it, expect } from "vitest";
 import {
+  PRIMARY_CV_DELETE_PREVIEW_LIMIT,
+  PRIMARY_CV_MAX_PER_USER,
   primaryCvApplicationPreviewLabel,
   primaryCvDeleteConfirmMessage,
   primaryCvDeletedStillReferencedMessage,
   primaryCvPostDeleteStatusMessage,
 } from "@/lib/types/primary-cv";
+
+describe("primary CV library constants", () => {
+  it("caps the library at five primaries per user", () => {
+    expect(PRIMARY_CV_MAX_PER_USER).toBe(5);
+  });
+
+  it("limits delete-confirm previews to ten applications", () => {
+    expect(PRIMARY_CV_DELETE_PREVIEW_LIMIT).toBe(10);
+  });
+});
 
 describe("primaryCvDeleteConfirmMessage", () => {
   it("uses singular wording for one application", () => {
