@@ -146,7 +146,7 @@ export function assertActiveApplication(
 ): asserts application is ActiveApplication {
   if (!isApplicationPubliclyVisible(application.status)) {
     throw new Error(
-      `toPublicApplication requires status "active", got "${application.status}"`,
+      `Application status must be "active", got "${application.status}"`,
     );
   }
 }
@@ -195,10 +195,10 @@ export function toPublicApplicationResponse(
   application: Application,
   cv_exists?: boolean,
 ): PublicApplicationResponse {
-  if (application.status !== "active") {
+  if (!isApplicationPubliclyVisible(application.status)) {
     return toUnavailablePublicApplication();
   }
-  // Narrow Application → ActiveApplication (property narrowing alone is not enough for the alias).
+  // Narrow Application → ActiveApplication (helper return type alone is not enough for the alias).
   assertActiveApplication(application);
   return toPublicApplication(application, cv_exists);
 }

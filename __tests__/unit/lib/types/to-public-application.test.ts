@@ -49,10 +49,10 @@ describe("assertActiveApplication", () => {
   it("rejects draft and archived applications", () => {
     expect(() =>
       assertActiveApplication({ ...BASE_APP, status: "draft" }),
-    ).toThrow(/requires status "active".*draft/);
+    ).toThrow(/status must be "active".*draft/);
     expect(() =>
       assertActiveApplication({ ...BASE_APP, status: "archived" }),
-    ).toThrow(/requires status "active".*archived/);
+    ).toThrow(/status must be "active".*archived/);
   });
 });
 
@@ -83,7 +83,7 @@ describe("toPublicApplication", () => {
     } as unknown as ActiveApplication;
 
     expect(() => toPublicApplication(draftAsActive)).toThrow(
-      /requires status "active".*draft/,
+      /status must be "active".*draft/,
     );
   });
 });

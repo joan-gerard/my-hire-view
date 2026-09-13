@@ -54,6 +54,7 @@ __tests__/
       types/
         primary-cv.test.ts
         application-status-summary.test.ts
+        to-public-application.test.ts
       api/
         handle-api-error.test.ts
       validation/
