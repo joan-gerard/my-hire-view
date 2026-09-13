@@ -87,7 +87,8 @@ type StorageBucket = {
 
 /**
  * Deletes every object in the user's folder except `keepPath` (full object path).
- * Used after canonical upload so only one avatar file remains.
+ * Call after a successful profile URL commit so only the committed avatar remains
+ * (F9-037 / F9-062 — do not purge on upload before PUT).
  */
 export async function removeOtherProfilePicturesInFolder(
   supabase: { storage: { from: (bucket: string) => StorageBucket } },

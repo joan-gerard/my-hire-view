@@ -17,7 +17,7 @@ RLS policies for this bucket are in migration `014_storage_profile_pictures_poli
 
 ### Canonical object path
 
-Uploads write `{user_id}/avatar.{jpg|png|webp}` with `upsert: true`, then remove any other objects in that folder so only one file remains. `POST /api/upload/profile-picture` checks allowed MIME types and validates JPEG / PNG / WebP magic bytes (plus light headers: PNG IHDR, WebP VP8*); the stored extension and `contentType` follow the detected bytes. Auth failures return **401**; Storage / unexpected failures return **500** via `handleApiError` (generic client message; log-only `meta` with `userId`, size, and Storage status).
+Uploads write `{user_id}/avatar.{jpg|png|webp}` with `upsert: true`. Folder cleanup (other extensions / leftovers) runs only after a successful `PUT /api/profile` commits that URL — not on upload — so a failed save cannot leave the profile pointing at a deleted object (F9-037 / F9-062). `POST /api/upload/profile-picture` checks allowed MIME types and validates JPEG / PNG / WebP magic bytes (plus light headers: PNG IHDR, WebP VP8*); the stored extension and `contentType` follow the detected bytes. Auth failures return **401**; Storage / unexpected failures return **500** via `handleApiError` (generic client message; log-only `meta` with `userId`, size, and Storage status).
 
 ## Data model
 
@@ -28,7 +28,7 @@ Public and enriched reads set a display-only `profile_picture_url` on the applic
 
 ## Behaviour
 
-- **admin/profile (upload-on-save):** Choosing a file shows a local preview only. On **Save profile**, the client uploads to the canonical path, then `PUT /api/profile` with the new URL (or `null` to remove). After a successful profile write, the previous Storage object is deleted when the URL changed. Side-effect failures (Storage delete, Auth metadata sync) are returned as `warnings` while still returning **200** + `data`.
+- **admin/profile (upload-on-save):** Choosing a file shows a local preview only. On **Save profile**, the client uploads to the canonical path, then `PUT /api/profile` with the new URL (or `null` to remove). After a successful profile write, the previous Storage object is deleted when the URL changed, and other objects in the user’s folder are swept while keeping the newly committed path. Side-effect failures (Storage delete, folder purge, Auth metadata sync) are returned as `warnings` while still returning **200** + `data`. `ProfileForm` and `ProfilePictureModal` show those warnings (modal stays open until dismissed when a notice is present — F9-052).
 - **admin/new and admin/edit:** “Show profile picture for this application” Yes/No (enabled when the live profile has a picture). Users can **Add / Change picture** via a shared `ProfilePictureModal` (upload-on-save → `PUT` picture URL only — works because names already exist from signup). Server stores only `show_profile_picture` on the application.
 - **view/[publicId]/[slug]:** Resolves the application and, when `show_profile_picture` is true, attaches the current `profiles.profile_picture_url` for the avatar. Changing the profile picture updates all such applications immediately (no fan-out sync).
 
@@ -42,4 +42,4 @@ Non-null `profile_picture_url` must be a `profile-pictures` public URL whose **o
 
 ## Cleanup
 
-Replacing or clearing the picture deletes the previous Storage object after a successful profile upsert. Upload also purges non-canonical leftovers in the user’s folder.
+Replacing or clearing the picture deletes the previous Storage object after a successful profile upsert. When a new URL is committed, `PUT /api/profile` also purges other objects in the user’s folder (keeping the committed path). Upload itself does not purge. Partial cleanup failures currently return `warnings` to the client (F9); after-launch `L11-114` adds an orphan-avatar cleanup cron and drops those user-facing delete/sweep warnings (server logs only).

@@ -5,7 +5,9 @@ import { generatePublicId } from "@/lib/utils/public-id";
 import { createClient } from "@/lib/supabase/server";
 import {
   deleteProfilePictureIfOurs,
+  getProfilePictureStoragePath,
   isOwnedProfilePictureUrl,
+  removeOtherProfilePicturesInFolder,
 } from "@/lib/utils/profile-picture-storage";
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from "@/lib/rate-limit";
 import {
@@ -239,6 +241,26 @@ export async function PUT(request: NextRequest) {
         warnings.push(
           "Saved profile but failed to delete the previous profile picture from storage",
         );
+      }
+    }
+
+    // Sweep other objects in the user's folder only after the URL is committed
+    // (F9-037 / F9-062). Keeps the newly committed path; removes other extensions
+    // and concurrent-upload leftovers without risking a failed PUT pointing at a
+    // deleted file.
+    if (newPictureUrl) {
+      const keepPath = getProfilePictureStoragePath(newPictureUrl);
+      if (keepPath) {
+        const purged = await removeOtherProfilePicturesInFolder(
+          supabase,
+          user.id,
+          keepPath,
+        );
+        if (!purged.ok) {
+          warnings.push(
+            "Saved profile but could not remove older profile picture files from storage",
+          );
+        }
       }
     }
 
