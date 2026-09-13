@@ -1,11 +1,26 @@
 /**
- * Tests for primary CV delete confirm copy and preview labels.
+ * Tests for primary CV library constants, delete confirm copy, post-delete
+ * warning, and preview labels.
  */
 import { describe, it, expect } from "vitest";
 import {
+  PRIMARY_CV_DELETE_PREVIEW_LIMIT,
+  PRIMARY_CV_MAX_PER_USER,
   primaryCvApplicationPreviewLabel,
   primaryCvDeleteConfirmMessage,
+  primaryCvDeletedStillReferencedMessage,
+  primaryCvPostDeleteStatusMessage,
 } from "@/lib/types/primary-cv";
+
+describe("primary CV library constants", () => {
+  it("caps the library at five primaries per user", () => {
+    expect(PRIMARY_CV_MAX_PER_USER).toBe(5);
+  });
+
+  it("limits delete-confirm previews to ten applications", () => {
+    expect(PRIMARY_CV_DELETE_PREVIEW_LIMIT).toBe(10);
+  });
+});
 
 describe("primaryCvDeleteConfirmMessage", () => {
   it("uses singular wording for one application", () => {
@@ -25,6 +40,71 @@ describe("primaryCvDeleteConfirmMessage", () => {
   it("floors non-integer counts", () => {
     expect(primaryCvDeleteConfirmMessage(2.9).startsWith("2 applications")).toBe(
       true,
+    );
+  });
+});
+
+describe("primaryCvDeletedStillReferencedMessage", () => {
+  it("returns null when no applications were affected", () => {
+    expect(primaryCvDeletedStillReferencedMessage(0)).toBeNull();
+    expect(primaryCvDeletedStillReferencedMessage(-1)).toBeNull();
+    expect(primaryCvDeletedStillReferencedMessage(Number.NaN)).toBeNull();
+  });
+
+  it("uses singular wording for one application", () => {
+    expect(primaryCvDeletedStillReferencedMessage(1)).toBe(
+      "Primary CV deleted. 1 application still referenced it and will show “CV missing” until updated.",
+    );
+  });
+
+  it("uses plural wording for multiple applications", () => {
+    expect(primaryCvDeletedStillReferencedMessage(2)).toBe(
+      "Primary CV deleted. 2 applications still referenced it and will show “CV missing” until updated.",
+    );
+  });
+
+  it("floors non-integer counts", () => {
+    expect(primaryCvDeletedStillReferencedMessage(2.9)).toContain(
+      "2 applications",
+    );
+  });
+});
+
+describe("primaryCvPostDeleteStatusMessage", () => {
+  it("returns null when no applications were affected", () => {
+    expect(
+      primaryCvPostDeleteStatusMessage({
+        applicationsAffected: 0,
+        refreshed: true,
+      }),
+    ).toBeNull();
+    expect(
+      primaryCvPostDeleteStatusMessage({
+        applicationsAffected: 0,
+        refreshed: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("returns the still-referenced warning after a successful refresh", () => {
+    expect(
+      primaryCvPostDeleteStatusMessage({
+        applicationsAffected: 2,
+        refreshed: true,
+      }),
+    ).toBe(
+      "Primary CV deleted. 2 applications still referenced it and will show “CV missing” until updated.",
+    );
+  });
+
+  it("keeps the warning and notes refresh failure when the list reload fails", () => {
+    expect(
+      primaryCvPostDeleteStatusMessage({
+        applicationsAffected: 1,
+        refreshed: false,
+      }),
+    ).toBe(
+      "Primary CV deleted. 1 application still referenced it and will show “CV missing” until updated. The library list could not be refreshed — try again.",
     );
   });
 });

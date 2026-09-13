@@ -27,7 +27,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 **Negative / smoke**
 
 - [ ] `is_active` column is **gone** from `applications` (migration applied)
-- [ ] Profile page application counts still make sense (active vs archived)
+- [ ] Profile page application counts still make sense (active, draft, and archived add up to the total)
 
 ---
 
@@ -37,8 +37,9 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 - [ ] Open `/admin/profile`
 - [ ] See **Primary CVs** section
+- [ ] While the section still shows **Loading…**, **Upload primary CV** is disabled
 - [ ] With empty library: message that none exist yet
-- [ ] **Upload primary CV** → choose PDF → appears in the list with filename
+- [ ] **Upload primary CV** → choose PDF → appears in the list with filename (stays after any in-flight initial load finishes)
 - [ ] Supabase `primary_cvs`: one row (`user_id`, `url`, `filename`)
 - [ ] R2 (optional): object under `cvs/{userId}/primary/…`
 - [ ] **View** link opens the PDF
@@ -53,13 +54,19 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] If more than 10 apps use it, preview shows the first 10 plus “and N more”
 - [ ] Cancel → CV still in list and in R2
 - [ ] Confirm (**I Understand — Delete**) → removed from list; R2 object gone (optional check)
-- [ ] Affected apps: status/message about “CV missing” (see §5)
+- [ ] If applications still referenced it: amber warning **stays visible** after the list refreshes (“still referenced” / “CV missing until updated”)
+- [ ] If the post-delete list refresh fails, the still-referenced warning is still shown (with a refresh note)
+- [ ] While an upload is in progress, Delete is disabled (and the reverse) so a later list refresh cannot wipe that warning
+- [ ] Affected apps: dashboard **CV missing** (see §5)
 
 **From New / Edit application (same library)**
 
 - [ ] Open `/admin/new` (or edit) → CV section shows **Manage library**
 - [ ] With empty library: **Upload one to your library** / **Upload primary CV** opens the modal
 - [ ] Upload a PDF in the modal → list updates; create form switches to **primary** and selects the new file
+- [ ] That selection **stays** even if the new-application page was still loading the library in the background (does not flip to tailored or drop the new CV from the dropdown)
+- [ ] Close modal while Loading…, reopen and upload → selection still sticks (a late response from the closed modal must not wipe the new CV)
+- [ ] Close modal during an in-progress upload/delete → reopening and selecting a CV is not overwritten by the closed instance’s follow-up refresh
 - [ ] Close modal (**Done**) → dropdown includes the new primary
 - [ ] Delete a selected primary in the modal → if unused, gone immediately; if used, inline confirm with count → selection moves to another primary (or switches to tailored if none left)
 - [ ] Library on `/admin/profile` matches what you changed from New/Edit
@@ -132,6 +139,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 - [ ] Create two apps pointing at the same primary
 - [ ] Delete that primary from profile (confirm)
+- [ ] Profile library shows the still-referenced warning after the list refreshes
 - [ ] Both apps still exist; dashboard shows **CV missing** on those cards
 - [ ] Public/edit may show missing CV / retry behaviour
 - [ ] Edit an affected app → pick another primary or tailored → Save → badge clears after refresh

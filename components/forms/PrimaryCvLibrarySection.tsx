@@ -7,6 +7,7 @@ import type { PrimaryCv, PrimaryCvApplicationPreview } from "@/lib/types/primary
 import {
   PRIMARY_CV_MAX_PER_USER,
   primaryCvDeleteConfirmMessage,
+  primaryCvPostDeleteStatusMessage,
 } from "@/lib/types/primary-cv";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -36,6 +37,12 @@ export default function PrimaryCvLibrarySection({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const onLibraryChangeRef = useRef(onLibraryChange);
   onLibraryChangeRef.current = onLibraryChange;
+  /** Serializes upload vs delete so a later `load()` cannot wipe the other op's UI. */
+  const opLockRef = useRef<"idle" | "upload" | "delete">("idle");
+  /** Bumped on every `load()` so a slower in-flight GET cannot apply stale items. */
+  const loadGenerationRef = useRef(0);
+  /** False after unmount — blocks mutation follow-up `load()` / parent callbacks. */
+  const mountedRef = useRef(true);
   const [items, setItems] = useState<PrimaryCv[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -46,31 +53,60 @@ export default function PrimaryCvLibrarySection({
   const [deleting, setDeleting] = useState(false);
 
   const applyItems = useCallback((next: PrimaryCv[]) => {
+    if (!mountedRef.current) return;
     setItems(next);
     onLibraryChangeRef.current?.(next);
   }, []);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<boolean> => {
+    if (!mountedRef.current) return false;
+    const generation = ++loadGenerationRef.current;
     try {
       setError(null);
       const res = await fetch("/api/profile/primary-cvs", {
         credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
+      if (
+        !mountedRef.current ||
+        generation !== loadGenerationRef.current
+      ) {
+        return false;
+      }
       if (!res.ok) {
         setError(json.error ?? "Failed to load primary CVs");
-        return;
+        return false;
       }
       applyItems((json.data as PrimaryCv[]) ?? []);
+      return true;
     } catch {
+      if (
+        !mountedRef.current ||
+        generation !== loadGenerationRef.current
+      ) {
+        return false;
+      }
       setError("Failed to load primary CVs");
+      return false;
     } finally {
-      setLoading(false);
+      if (
+        mountedRef.current &&
+        generation === loadGenerationRef.current
+      ) {
+        setLoading(false);
+      }
     }
   }, [applyItems]);
 
   useEffect(() => {
+    mountedRef.current = true;
     void load();
+    return () => {
+      mountedRef.current = false;
+      // Invalidate in-flight GETs so an unmounted Manage-library instance cannot
+      // call onLibraryChange after a newer modal upload (close/reopen race).
+      loadGenerationRef.current += 1;
+    };
   }, [load]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,6 +121,8 @@ export default function PrimaryCvLibrarySection({
       setError("File size must be less than 3MB.");
       return;
     }
+    if (loading || opLockRef.current !== "idle") return;
+    opLockRef.current = "upload";
     setUploading(true);
     setError(null);
     try {
@@ -96,19 +134,27 @@ export default function PrimaryCvLibrarySection({
         credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
+      if (!mountedRef.current) return;
       if (!res.ok) {
         setError(json.error ?? "Upload failed");
         return;
       }
       await load();
     } catch {
-      setError("Upload failed");
+      if (mountedRef.current) {
+        setError("Upload failed");
+      }
     } finally {
-      setUploading(false);
+      opLockRef.current = "idle";
+      if (mountedRef.current) {
+        setUploading(false);
+      }
     }
   };
 
   const performDelete = async (cv: PrimaryCv) => {
+    if (opLockRef.current !== "idle") return;
+    opLockRef.current = "delete";
     setError(null);
     setDeleting(true);
     try {
@@ -117,25 +163,37 @@ export default function PrimaryCvLibrarySection({
         credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
+      if (!mountedRef.current) return;
       if (!res.ok) {
         setError(json.error ?? "Failed to delete primary CV");
         return;
       }
       const affected = Number(json.applications_affected ?? 0);
-      if (affected > 0) {
-        setError(
-          `Primary CV deleted. ${affected} application${affected === 1 ? "" : "s"} still referenced it and will show “CV missing” until updated.`,
-        );
+      // `load()` clears `error` at start; restore still-referenced warning after
+      // refresh (including when refresh fails so the user still sees the risk).
+      const refreshed = await load();
+      if (!mountedRef.current) return;
+      const status = primaryCvPostDeleteStatusMessage({
+        applicationsAffected: affected,
+        refreshed,
+      });
+      if (status) {
+        setError(status);
       }
-      await load();
     } catch {
-      setError("Failed to delete primary CV");
+      if (mountedRef.current) {
+        setError("Failed to delete primary CV");
+      }
     } finally {
-      setDeleting(false);
+      opLockRef.current = "idle";
+      if (mountedRef.current) {
+        setDeleting(false);
+      }
     }
   };
 
   const requestDelete = (cv: PrimaryCv) => {
+    if (loading || opLockRef.current !== "idle") return;
     const applicationsCount = Math.max(0, cv.applications_count ?? 0);
     if (applicationsCount === 0) {
       void performDelete(cv);
@@ -156,6 +214,7 @@ export default function PrimaryCvLibrarySection({
   };
 
   const atLimit = items.length >= PRIMARY_CV_MAX_PER_USER;
+  const libraryBusy = loading || uploading || deleting;
   const deleteMessage = pendingDelete
     ? primaryCvDeleteConfirmMessage(pendingDelete.applicationsCount)
     : "";
@@ -225,7 +284,7 @@ export default function PrimaryCvLibrarySection({
                 <Button
                   type="button"
                   variant="secondary"
-                  disabled={deleting}
+                  disabled={libraryBusy}
                   onClick={() => requestDelete(cv)}
                 >
                   Delete
@@ -289,12 +348,14 @@ export default function PrimaryCvLibrarySection({
         <Button
           type="button"
           variant="secondary"
-          disabled={uploading || atLimit || deleting || pendingDelete !== null}
+          disabled={libraryBusy || atLimit || pendingDelete !== null}
           onClick={() => fileInputRef.current?.click()}
           title={
-            atLimit
-              ? `Limit of ${PRIMARY_CV_MAX_PER_USER} primary CVs reached`
-              : undefined
+            loading
+              ? "Wait for the library to finish loading"
+              : atLimit
+                ? `Limit of ${PRIMARY_CV_MAX_PER_USER} primary CVs reached`
+                : undefined
           }
         >
           {uploading ? "Uploading…" : "Upload primary CV"}

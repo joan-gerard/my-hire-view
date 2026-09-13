@@ -20,6 +20,10 @@ import {
   messageForUploadNetworkError,
 } from "@/lib/utils/upload-form-messages";
 import { getApplicationUrl } from "@/lib/utils/url";
+import {
+  isCurrentPrimaryCvLoad,
+  shouldAutoSelectFirstPrimaryOnLibraryFill,
+} from "@/lib/utils/primary-cv-form-sync";
 import { useEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
 import type { CandidateFieldKey } from "./CandidateFieldsSection";
@@ -197,6 +201,8 @@ export default function ApplicationForm({
 
   const [primaryCvs, setPrimaryCvs] = useState<PrimaryCv[]>([]);
   const [primaryCvsLoading, setPrimaryCvsLoading] = useState(true);
+  /** Bumped by modal library updates so a slower form GET cannot overwrite them. */
+  const primaryCvLoadGenerationRef = useRef(0);
   const [cvMode, setCvMode] = useState<ApplicationCvType>(() => {
     if (initialData?.cv_type === "primary" || initialData?.cv_type === "tailored") {
       return initialData.cv_type;
@@ -214,13 +220,22 @@ export default function ApplicationForm({
 
   useEffect(() => {
     let cancelled = false;
+    const generation = ++primaryCvLoadGenerationRef.current;
     async function loadPrimaryCvs() {
       try {
         const res = await fetch("/api/profile/primary-cvs", {
           credentials: "include",
         });
         const json = await res.json().catch(() => ({}));
-        if (cancelled) return;
+        if (
+          !isCurrentPrimaryCvLoad(
+            generation,
+            primaryCvLoadGenerationRef.current,
+            cancelled,
+          )
+        ) {
+          return;
+        }
         const list = (json.data as PrimaryCv[] | undefined) ?? [];
         setPrimaryCvs(list);
         if (!initialData?.cv_type) {
@@ -246,7 +261,15 @@ export default function ApplicationForm({
           setSelectedPrimaryId(null);
         }
       } finally {
-        if (!cancelled) setPrimaryCvsLoading(false);
+        if (
+          isCurrentPrimaryCvLoad(
+            generation,
+            primaryCvLoadGenerationRef.current,
+            cancelled,
+          )
+        ) {
+          setPrimaryCvsLoading(false);
+        }
       }
     }
     void loadPrimaryCvs();
@@ -259,6 +282,7 @@ export default function ApplicationForm({
 
   /** Sync form selection after library modal upload/delete. */
   const handlePrimaryLibraryChange = (list: PrimaryCv[]) => {
+    primaryCvLoadGenerationRef.current += 1;
     const hadPrimaryCvs = primaryCvs.length > 0;
     const prevSelected = selectedPrimaryId;
     setPrimaryCvs(list);
@@ -299,8 +323,14 @@ export default function ApplicationForm({
     }
 
     // First primary CV(s) added while empty — prefer primary mode (create-form default).
-    // Skip while the form's own initial fetch is still in flight to avoid racing edit mode.
-    if (!hadPrimaryCvs && !primaryCvsLoading) {
+    // Use create vs edit, not form-GET loading, so a modal update can win the race.
+    if (
+      shouldAutoSelectFirstPrimaryOnLibraryFill({
+        hadPrimaryCvs,
+        isCreate: !initialData?.cv_type,
+        listLength: list.length,
+      })
+    ) {
       const pick = list[0]!;
       setCvMode("primary");
       setSelectedPrimaryId(pick.id);
