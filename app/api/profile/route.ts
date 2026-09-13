@@ -233,33 +233,50 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // After successful write: delete previous Storage object when the URL changed.
-    // Applications no longer store a copy — they read profiles.profile_picture_url live.
-    if (oldPictureUrl && oldPictureUrl !== newPictureUrl) {
-      const deleted = await deleteProfilePictureIfOurs(supabase, oldPictureUrl);
-      if (!deleted.ok) {
-        warnings.push(
-          "Saved profile but failed to delete the previous profile picture from storage",
-        );
-      }
-    }
+    // After successful write: only clean Storage when this request changed the
+    // picture URL (avoids name-only saves sweeping a freshly uploaded but not
+    // yet committed other-extension file). Re-read before delete/purge so a
+    // concurrent PUT that won cannot have its committed avatar deleted by us.
+    const pictureUrlChanged = oldPictureUrl !== newPictureUrl;
+    if (pictureUrlChanged) {
+      const { data: latestPicture } = await supabase
+        .from("profiles")
+        .select("profile_picture_url")
+        .eq("user_id", user.id)
+        .single();
+      const livePictureUrl =
+        typeof latestPicture?.profile_picture_url === "string"
+          ? latestPicture.profile_picture_url.trim() || null
+          : (latestPicture?.profile_picture_url ?? null);
+      const stillCurrentPicture = livePictureUrl === newPictureUrl;
 
-    // Sweep other objects in the user's folder only after the URL is committed
-    // (F9-037 / F9-062). Keeps the newly committed path; removes other extensions
-    // and concurrent-upload leftovers without risking a failed PUT pointing at a
-    // deleted file.
-    if (newPictureUrl) {
-      const keepPath = getProfilePictureStoragePath(newPictureUrl);
-      if (keepPath) {
-        const purged = await removeOtherProfilePicturesInFolder(
-          supabase,
-          user.id,
-          keepPath,
-        );
-        if (!purged.ok) {
-          warnings.push(
-            "Saved profile but could not remove older profile picture files from storage",
+      if (stillCurrentPicture) {
+        if (oldPictureUrl) {
+          const deleted = await deleteProfilePictureIfOurs(
+            supabase,
+            oldPictureUrl,
           );
+          if (!deleted.ok) {
+            warnings.push(
+              "Saved profile but failed to delete the previous profile picture from storage",
+            );
+          }
+        }
+
+        if (newPictureUrl) {
+          const keepPath = getProfilePictureStoragePath(newPictureUrl);
+          if (keepPath) {
+            const purged = await removeOtherProfilePicturesInFolder(
+              supabase,
+              user.id,
+              keepPath,
+            );
+            if (!purged.ok) {
+              warnings.push(
+                "Saved profile but could not remove older profile picture files from storage",
+              );
+            }
+          }
         }
       }
     }

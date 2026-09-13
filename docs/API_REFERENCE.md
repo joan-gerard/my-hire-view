@@ -375,7 +375,7 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 - Auth required; upsert keyed by `user_id` (create-on-first-save).
 - Rate limited; Zod validation; ownership check on picture URLs (origin must match `NEXT_PUBLIC_SUPABASE_URL`; path-only lookalikes on other hosts → **400**).
 - Omitted `first_name` / `last_name` / `public_id` are seeded from Auth `user_metadata` when the profiles value is missing or blank (picture-only create/repair); body and metadata-seeded names are capped at **100** characters (legacy over-long stored names are left as-is).
-- Deletes previous Storage object after successful write when the URL changes; when a new URL is committed, also purges other folder objects keeping that path (F9); surfaces partial failures as `warnings`.
+- Deletes previous Storage object after successful write when the URL changes; re-reads live URL before cleanup so a concurrent PUT that won is not swept; when still current and a new URL was committed, also purges other folder objects keeping that path (F9); name-only saves do not purge; surfaces partial failures as `warnings`.
 - No applications fan-out for picture URLs (live profile read on view).
 - Dedicated `withAuth` → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
 - Syncs Auth `user_metadata` (`first_name`, `last_name`, `public_id`) when DB names change **or** Auth names/`public_id` are out of sync (same-name PUT can repair a prior failed `updateUser` — F12-031); sync failures become `warnings` while still returning **200** + `data`. Names written to Auth are truncated to **100** characters so metadata never holds an over-long seed (legacy over-long profiles values may still differ until the user edits them).
