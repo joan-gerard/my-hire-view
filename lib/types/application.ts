@@ -117,6 +117,9 @@ export type PublicApplicationResponse =
   | PublicApplication
   | UnavailablePublicApplication;
 
+/** Application known to be live on the public share URL (`status = active`). */
+export type ActiveApplication = Application & { status: "active" };
+
 /** True when recruiters may see CV/video and candidate details. */
 export function isApplicationPubliclyVisible(
   status: ApplicationStatus,
@@ -135,13 +138,31 @@ export function toUnavailablePublicApplication(): UnavailablePublicApplication {
 }
 
 /**
- * Maps a full application row (plus optional `cv_exists`) to the public share DTO.
- * Non-active statuses return the unavailable stub (no media or PII).
+ * Runtime guard for callers that already checked status, or for misuse of
+ * `toPublicApplication` via type escapes (`as ActiveApplication`).
+ */
+export function assertActiveApplication(
+  application: Application,
+): asserts application is ActiveApplication {
+  if (!isApplicationPubliclyVisible(application.status)) {
+    throw new Error(
+      `toPublicApplication requires status "active", got "${application.status}"`,
+    );
+  }
+}
+
+/**
+ * Maps an **active** application row (plus optional `cv_exists`) to the public
+ * share DTO. Callers that may receive draft/archived rows must use
+ * `toPublicApplicationResponse` instead — this helper throws if status is not
+ * `"active"` so a mistaken direct call cannot leak PII as a live profile.
  */
 export function toPublicApplication(
-  application: Application,
+  application: ActiveApplication,
   cv_exists?: boolean,
 ): PublicApplication {
+  assertActiveApplication(application);
+
   const dto: PublicApplication = {
     company: application.company,
     role: application.role,
@@ -174,7 +195,7 @@ export function toPublicApplicationResponse(
   application: Application,
   cv_exists?: boolean,
 ): PublicApplicationResponse {
-  if (!isApplicationPubliclyVisible(application.status)) {
+  if (application.status !== "active") {
     return toUnavailablePublicApplication();
   }
   return toPublicApplication(application, cv_exists);

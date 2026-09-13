@@ -57,6 +57,7 @@ MyHireView holds career-sensitive data: CVs, profile pictures, application detai
 | -------- | ------------------- | -------------- |
 | Guessable global slug URLs | Opaque `public_id` in path: `/view/{publicId}/{slug}` (Option B) | [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md) |
 | Archived/draft apps leaking via share URL | Active-only content; shared empty state; `noindex` + referrer policy on `/view/*` | Public view |
+| Misuse of `toPublicApplication` leaking non-active PII | `ActiveApplication` + runtime assert; public path uses `toPublicApplicationResponse` | **F10-030** |
 | SSR burning the public rate-limit bucket for everyone | In-process public load (no self-HTTP); production site URL fail-fast | **D1-007**, **D1-061** — [SSR_PUBLIC_VIEW.md](SSR_PUBLIC_VIEW.md) |
 | View/download analytics spam | Per-IP + per-path caps; same-origin checks; httpOnly dedupe cookies; owner actions not counted | View/download routes |
 | Junk paths growing in-memory rate-limit maps | Validate `publicId`/slug before per-path keys; soft cap / sweep on memory fallback | **D3-001** |
@@ -80,7 +81,6 @@ Keep these visible so product and engineering share one security story. Status i
 | -------- | ---------------- | ------- |
 | No single end-to-end security/safety pass before public launch | Global review of auth, RLS, share URLs, uploads/R2, rate limits, error leakage; file gaps as new backlog tickets | **F29-103** (near launch) |
 | Unconfirmed emails getting sessions in production | Ops: Confirm email ON; production Site URL + redirect URLs | **A3-015** (near launch) |
-| Misuse of `toPublicApplication` leaking non-active PII | Enforce status in helper / narrow types | **F10-030** |
 | Broader read limits; account-/email-level login throttling; Redis outage noise | Extend limits; circuit breaker after repeated Upstash failures | **L1-076**, **L1-077**, **L1-100** |
 | Signup CAPTCHA; logout hardening (CSRF); in-app forgot-password | After-launch auth polish | **L4-085**, **L4-086**, **L4-098** |
 | Auth `user_id` visible in avatar public URLs | Store under `public_id` (or similar) + migrate | **L5-087** |

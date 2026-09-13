@@ -236,7 +236,7 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 
 - Public by design for shareable recruiter links; no login required.
 - Per-IP rate limit (120/min) tuned for viewing while limiting scraping.
-- Active apps return a **public DTO** (`toPublicApplication`): company/role, candidate identity & links, avatar, CV/video media, `status: "active"`, and optional `cv_exists` — not the full applications row.
+- Active apps return a **public DTO** (`toPublicApplication`): company/role, candidate identity & links, avatar, CV/video media, `status: "active"`, and optional `cv_exists` — not the full applications row. That helper accepts only `ActiveApplication` and **throws** if status is not `"active"` (defense against mistaken direct use). Callers that may see draft/archived rows must use `toPublicApplicationResponse`.
 - **Unavailable stub:** archived and draft apps return `{ status: "unavailable" }` only (no PII or media). Skips R2 `HeadObject`. The public view page shows one empty state for unavailable **and** for **404** (deleted / unknown URL).
 - `cv_exists` helps the UI avoid broken “View CV” links when an **R2** object is missing (active apps only). Omitted for non-R2 URLs.
 - Clear **404** when the public id + slug pair does not resolve.
@@ -674,7 +674,7 @@ Pre-launch landing-page signup. Inserts into `waitlist_signups` via the service-
 
 Canonical TypeScript shapes live in:
 
-- `lib/types/application.ts` — `Application`, `PublicApplication` / `UnavailablePublicApplication` / `PublicApplicationResponse`, `toPublicApplication` / `toPublicApplicationResponse`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
+- `lib/types/application.ts` — `Application` / `ActiveApplication`, `PublicApplication` / `UnavailablePublicApplication` / `PublicApplicationResponse`, `assertActiveApplication`, `toPublicApplication` / `toPublicApplicationResponse`, `ApplicationListItem`, `ApplicationListResponse`, `ApplicationCreateInput`, `ApplicationUpdateInput`, `ApplicationCvType` (`"primary"` | `"tailored"`)
 - `lib/validation/application.ts` — `applicationCreateSchema` / `formatApplicationCreateZodError` for `POST /api/applications`; `applicationUpdateSchema` / `formatApplicationUpdateZodError` for `PUT /api/applications`
 - `lib/validation/slug.ts` — `slugReserveSchema` / `formatSlugReserveZodError` for `POST /api/slug`; `slugValidateSchema` / `formatSlugValidateZodError` for `POST /api/slug/validate`
 - `lib/validation/waitlist.ts` — `waitlistBodySchema` / `formatWaitlistZodError` for `POST /api/waitlist`
