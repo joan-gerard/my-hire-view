@@ -194,7 +194,7 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
   - **Server (Server Components, server-side logic):** `lib/supabase/server.ts` — `createClient()` using `cookies()` from `next/headers`.
   - **Route handler (login/signup/logout):** `lib/supabase/route-client.ts` — `createSupabaseRouteClient({ request, response })` so the response carries `Set-Cookie` headers.
   - **Admin (server-only, privileged):** `lib/supabase/admin.ts` — `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; used for RLS-bypass ops (public application resolution, view/download count RPCs) and creating the initial `profiles` row at signup when there may be no session yet. Never used from the client.
-  - **Middleware:** `lib/supabase/middleware.ts` — `updateSession(request)`: refreshes session and redirects unauthenticated users from `/admin` to `/login`. Intended to be invoked from root middleware (e.g. `middleware.ts` that re-exports or calls this; current entry is `proxy.ts` with matcher config).
+  - **Proxy / session guard:** Root `proxy.ts` is the Next.js 16+ file convention (named export `proxy`; replaces deprecated root `middleware.ts`). It calls `updateSession` in `lib/supabase/middleware.ts`, which refreshes the session and redirects unauthenticated users from `/admin` to `/login`. Do not add a root `middleware.ts` alongside `proxy.ts`.
   - **Callback:** `app/auth/callback/route.ts` — GET handler that takes `code` and `next` from query, exchanges code for session, ensures a profiles row exists (`bootstrapInitialProfile` → `createInitialProfile`, idempotent), redirects via `safeNextPath` to a safe same-origin `next` (default `/admin`; rejects `//…` and backslash open-redirect tricks).
   - **Login bootstrap:** `POST /api/auth/login` also runs `bootstrapInitialProfile` so immediate-session signups that missed the callback still get a profiles row.
 
@@ -377,7 +377,7 @@ my-hire-view/
 │   ├── types/                  # application, profile, database
 │   └── utils/                  # url, slug, slug-generate, youtube, clipboard
 ├── supabase/migrations/        # ordered SQL (001–025); apply all in numeric order
-├── proxy.ts                    # Middleware entry (session + /admin guard)
+├── proxy.ts                    # Next.js 16+ proxy entry (session + /admin guard)
 └── docs/                       # ARCHITECTURE, API_REFERENCE, CI_CD, CODE_REVIEW, SUPABASE_AUTH_SETUP
 ```
 

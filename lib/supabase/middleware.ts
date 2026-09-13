@@ -1,3 +1,9 @@
+/**
+ * Supabase session refresh + `/admin` redirect helper.
+ *
+ * Invoked only from the root Next.js proxy entry (`proxy.ts`). This module is
+ * not a Next file convention — do not rename/move it to root as `middleware.ts`.
+ */
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseEnv } from './env';
