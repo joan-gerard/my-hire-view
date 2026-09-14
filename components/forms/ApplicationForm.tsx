@@ -260,6 +260,11 @@ export default function ApplicationForm({
   const [selectedPrimaryId, setSelectedPrimaryId] = useState<string | null>(
     restoredDraft?.selectedPrimaryId ?? initialData?.primary_cv_id ?? null,
   );
+  /** Keep load/timeout handlers off stale mount closures (F15-049). */
+  const cvModeRef = useRef(cvMode);
+  cvModeRef.current = cvMode;
+  const selectedPrimaryIdRef = useRef(selectedPrimaryId);
+  selectedPrimaryIdRef.current = selectedPrimaryId;
   const [switchToPrimaryConfirmOpen, setSwitchToPrimaryConfirmOpen] =
     useState(false);
   /** Tracks whether the current edit still has an unsaved tailored file that would be abandoned. */
@@ -331,7 +336,8 @@ export default function ApplicationForm({
           }
         } else if (!initialData?.cv_type) {
           // Draft / explicit choice: keep mode when possible; repair stale primary ids.
-          if (cvMode === "primary") {
+          // Use refs — after a timeout unlock the user may already have switched mode.
+          if (cvModeRef.current === "primary") {
             if (list.length === 0) {
               setSelectedPrimaryId(null);
               setCvMode("tailored");
@@ -343,9 +349,10 @@ export default function ApplicationForm({
                 cv_type: "tailored",
               }));
             } else {
+              const currentSelected = selectedPrimaryIdRef.current;
               const preferred =
-                (selectedPrimaryId &&
-                  list.find((m) => m.id === selectedPrimaryId)) ||
+                (currentSelected &&
+                  list.find((m) => m.id === currentSelected)) ||
                 list[0]!;
               setSelectedPrimaryId(preferred.id);
               setFormData((prev) => ({

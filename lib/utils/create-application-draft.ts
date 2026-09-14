@@ -196,8 +196,9 @@ export function parseCreateApplicationDraft(
     if (typeof obj.cvModeUserChosen !== "boolean") return null;
     cvModeUserChosen = obj.cvModeUserChosen;
   } else {
-    // v1 had no flag; treat as automatic so library defaults can still apply.
-    cvModeUserChosen = false;
+    // v1 had no flag. Tailored in a saved draft was almost always an explicit
+    // choice — preserve it so a late library load cannot flip back to primary.
+    cvModeUserChosen = obj.cvMode === "tailored";
   }
 
   return {

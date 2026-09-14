@@ -81,15 +81,28 @@ describe("parseCreateApplicationDraft", () => {
     expect(parseCreateApplicationDraft(draft)?.cvModeUserChosen).toBe(true);
   });
 
-  it("migrates v1 drafts with cvModeUserChosen false", () => {
-    const v1 = {
-      ...sampleDraft({ cvModeUserChosen: true }),
+  it("migrates v1 tailored drafts as user-chosen and primary as automatic", () => {
+    const v1Tailored = {
+      ...sampleDraft({
+        cvMode: "tailored",
+        selectedPrimaryId: null,
+        cvModeUserChosen: true,
+      }),
       v: 1,
     };
-    delete (v1 as { cvModeUserChosen?: boolean }).cvModeUserChosen;
-    const parsed = parseCreateApplicationDraft(v1);
-    expect(parsed?.v).toBe(2);
-    expect(parsed?.cvModeUserChosen).toBe(false);
+    delete (v1Tailored as { cvModeUserChosen?: boolean }).cvModeUserChosen;
+    const tailored = parseCreateApplicationDraft(v1Tailored);
+    expect(tailored?.v).toBe(2);
+    expect(tailored?.cvModeUserChosen).toBe(true);
+
+    const v1Primary = {
+      ...sampleDraft({ cvMode: "primary", cvModeUserChosen: true }),
+      v: 1,
+    };
+    delete (v1Primary as { cvModeUserChosen?: boolean }).cvModeUserChosen;
+    expect(parseCreateApplicationDraft(v1Primary)?.cvModeUserChosen).toBe(
+      false,
+    );
   });
 
   it("rejects wrong version, corrupt include, and expired drafts", () => {
@@ -232,8 +245,29 @@ describe("isCreateApplicationDraftBlank", () => {
   it("keeps drafts with company", () => {
     expect(
       isCreateApplicationDraftBlank({
-        ...sampleDraft(),
         company: "Acme",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "",
+        last_name: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: false,
+          last_name: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugNamePosition: null,
+        slugManuallyEdited: false,
+        showProfilePicture: true,
+        cvMode: "primary",
+        cvModeUserChosen: false,
+        selectedPrimaryId: null,
+        use_original_cv_filename: true,
       }),
     ).toBe(false);
   });
