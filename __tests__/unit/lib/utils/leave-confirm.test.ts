@@ -68,6 +68,30 @@ describe("leaveRelevantDraftSnapshot", () => {
     expect(a).toBe(b);
   });
 
+  it("tracks manual slug text while ignoring auto slug updates", () => {
+    const baseline = leaveRelevantDraftSnapshot({
+      ...blank,
+      slugManuallyEdited: true,
+      slug: "custom-one",
+    });
+    expect(
+      hasLeaveRelevantDraftChanges(baseline, {
+        ...blank,
+        slugManuallyEdited: true,
+        slug: "custom-two",
+      }),
+    ).toBe(true);
+    expect(
+      hasLeaveRelevantDraftChanges(
+        leaveRelevantDraftSnapshot(blank),
+        {
+          ...blank,
+          slug: "only-auto-changed",
+        },
+      ),
+    ).toBe(false);
+  });
+
   it("detects company edits and explicit CV choice", () => {
     const baseline = leaveRelevantDraftSnapshot(blank);
     expect(

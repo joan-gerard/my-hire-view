@@ -6,10 +6,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type PendingLeave = { kind: "href"; href: string } | { kind: "back" };
 
+const GUARD_STATE = { __mhvLeaveGuard: true } as const;
+
+function isGuardHistoryState(state: unknown): boolean {
+  return (
+    !!state &&
+    typeof state === "object" &&
+    (state as { __mhvLeaveGuard?: boolean }).__mhvLeaveGuard === true
+  );
+}
+
 /**
  * When `enabled`, intercept same-origin link clicks and browser Back, show a
  * confirm dialog, and only leave after `onDiscard` + confirm.
  * Refresh / tab close are intentionally not blocked (draft restore still helps).
+ *
+ * Uses a single history sentinel: push once while armed, remove on disarm /
+ * unmount, never stack duplicates when progress flickers.
  */
 export function useLeaveConfirm(
   enabled: boolean,
@@ -25,33 +38,59 @@ export function useLeaveConfirm(
   const bypassRef = useRef(false);
   const pendingRef = useRef<PendingLeave | null>(null);
   const onDiscardRef = useRef(onDiscard);
+  /** True while we believe our sentinel entry is on top of history. */
+  const guardActiveRef = useRef(false);
   enabledRef.current = enabled;
   onDiscardRef.current = onDiscard;
 
+  const removeSentinel = useCallback(() => {
+    if (!guardActiveRef.current) return;
+    guardActiveRef.current = false;
+    // Only step back when the current entry is ours — avoids leaving the page
+    // on Strict Mode remount or if history got out of sync.
+    if (isGuardHistoryState(window.history.state)) {
+      bypassRef.current = true;
+      window.history.back();
+    }
+  }, []);
+
+  const ensureSentinel = useCallback(() => {
+    if (guardActiveRef.current && isGuardHistoryState(window.history.state)) {
+      return;
+    }
+    window.history.pushState(GUARD_STATE, "", window.location.href);
+    guardActiveRef.current = true;
+  }, []);
+
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      setOpen(false);
+      pendingRef.current = null;
+      removeSentinel();
+      return;
+    }
 
     const onPopState = () => {
-      if (bypassRef.current || !enabledRef.current) return;
-      window.history.pushState(
-        { __mhvLeaveGuard: true },
-        "",
-        window.location.href,
-      );
+      if (bypassRef.current) {
+        bypassRef.current = false;
+        return;
+      }
+      if (!enabledRef.current) return;
+
+      // Browser already consumed the previous sentinel.
+      guardActiveRef.current = false;
+      ensureSentinel();
       pendingRef.current = { kind: "back" };
       setOpen(true);
     };
 
-    window.history.pushState(
-      { __mhvLeaveGuard: true },
-      "",
-      window.location.href,
-    );
+    ensureSentinel();
     window.addEventListener("popstate", onPopState);
     return () => {
       window.removeEventListener("popstate", onPopState);
+      removeSentinel();
     };
-  }, [enabled]);
+  }, [enabled, ensureSentinel, removeSentinel]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -102,14 +141,24 @@ export function useLeaveConfirm(
     setOpen(false);
     onDiscardRef.current();
     bypassRef.current = true;
+    guardActiveRef.current = false;
 
     if (!pending) return;
     if (pending.kind === "href") {
       router.push(pending.href);
       return;
     }
-    // Sentinel was re-pushed on popstate; go back past this page.
+
+    // After popstate + re-push we are on the sentinel. go(-2) leaves the page
+    // when a prior entry exists; if create was the first history entry, fall
+    // back to the admin dashboard so Back can still exit.
+    const createPath = window.location.pathname;
     window.history.go(-2);
+    window.setTimeout(() => {
+      if (window.location.pathname === createPath) {
+        router.replace("/admin");
+      }
+    }, 50);
   }, [router]);
 
   return { open, onConfirm, onCancel };

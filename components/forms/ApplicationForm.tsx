@@ -155,11 +155,9 @@ export default function ApplicationForm({
   const [leaveGuardArmed, setLeaveGuardArmed] = useState(
     Boolean(persistDraftKey),
   );
-  /** Prompt leave when a restored draft already has progress. */
-  const [restoredDraftProgress] = useState(() =>
-    Boolean(
-      restoredDraft && !isCreateApplicationDraftBlank(restoredDraft),
-    ),
+  /** True when mount restored a non-blank draft (cleared once the form is blank again). */
+  const hadRestoredDraftRef = useRef(
+    Boolean(restoredDraft && !isCreateApplicationDraftBlank(restoredDraft)),
   );
   const leaveBaselineRef = useRef<string | null>(null);
 
@@ -548,10 +546,19 @@ export default function ApplicationForm({
   if (persistDraftKey && leaveBaselineRef.current === null) {
     leaveBaselineRef.current = leaveRelevantDraftSnapshot(draftSnapshot);
   }
+  if (
+    hadRestoredDraftRef.current &&
+    isCreateApplicationDraftBlank(draftSnapshot) &&
+    !cvPendingFile
+  ) {
+    // User cleared the restored draft back to empty — stop treating it as progress.
+    hadRestoredDraftRef.current = false;
+  }
   const hasCreateProgress =
     Boolean(persistDraftKey) &&
-    (restoredDraftProgress ||
-      Boolean(cvPendingFile) ||
+    (Boolean(cvPendingFile) ||
+      (hadRestoredDraftRef.current &&
+        !isCreateApplicationDraftBlank(draftSnapshot)) ||
       (leaveBaselineRef.current != null &&
         hasLeaveRelevantDraftChanges(
           leaveBaselineRef.current,

@@ -43,7 +43,7 @@ export function shouldBlockSameOriginNavigation(
 
 /**
  * Fields that count as user progress for leave-confirm (ignores auto slug and
- * automatic CV library defaults).
+ * automatic CV library defaults; keeps manual slug text when edited).
  */
 export function leaveRelevantDraftSnapshot(
   draft: CreateApplicationDraftInput,
@@ -60,6 +60,7 @@ export function leaveRelevantDraftSnapshot(
     include: draft.include,
     slugNamePosition: draft.slugNamePosition,
     slugManuallyEdited: draft.slugManuallyEdited,
+    slug: draft.slugManuallyEdited ? draft.slug : null,
     showProfilePicture: draft.showProfilePicture,
     use_original_cv_filename: draft.use_original_cv_filename,
     cvModeUserChosen: draft.cvModeUserChosen,
