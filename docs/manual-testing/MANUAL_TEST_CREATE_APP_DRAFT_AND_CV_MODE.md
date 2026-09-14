@@ -23,6 +23,8 @@ Covers **F15-045** (local form draft) and **F15-049** (CV source while library l
 - [ ] If draft restored **Upload a different CV**, re-choose the PDF (files are not stored in the draft).
 - [ ] Restore a draft whose primary CV was deleted meanwhile: Save is not ready with a stale id; mode falls back to tailored when the library is empty, or another primary when one remains.
 - [ ] Fail Save (e.g. offline create / forced API error): draft remains. Succeed Save → `/admin/new` is clean afterward.
+- [ ] With progress on the form, click **Dashboard** / **Profile** / browser **Back**: confirm dialog appears (“Leaving this page will discard this draft…”). **No, stay** keeps you on the page with the draft. **Yes, I'm sure** leaves and clears the draft — reopening New Application is clean.
+- [ ] Untouched form (profile prefills only): leaving does not prompt.
 - [ ] Two accounts on one browser: drafts do not overwrite each other.
 - [ ] Leave a fully empty new form idle: no stale draft on a later visit.
 

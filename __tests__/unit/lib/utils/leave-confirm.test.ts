@@ -1,0 +1,85 @@
+/**
+ * Tests for same-origin leave-intercept helpers (create-app draft guard).
+ */
+import { describe, expect, it } from "vitest";
+import {
+  hasLeaveRelevantDraftChanges,
+  leaveRelevantDraftSnapshot,
+  shouldBlockSameOriginNavigation,
+} from "@/lib/utils/leave-confirm";
+
+const HERE = "https://app.example/admin/new";
+
+describe("shouldBlockSameOriginNavigation", () => {
+  it("blocks other same-origin paths", () => {
+    expect(shouldBlockSameOriginNavigation("/admin", HERE)).toBe("/admin");
+    expect(shouldBlockSameOriginNavigation("/admin/profile", HERE)).toBe(
+      "/admin/profile",
+    );
+    expect(
+      shouldBlockSameOriginNavigation("https://app.example/admin", HERE),
+    ).toBe("/admin");
+  });
+
+  it("allows same page, hashes, mailto, and external links", () => {
+    expect(shouldBlockSameOriginNavigation("/admin/new", HERE)).toBeNull();
+    expect(shouldBlockSameOriginNavigation("#section", HERE)).toBeNull();
+    expect(shouldBlockSameOriginNavigation("mailto:a@b.c", HERE)).toBeNull();
+    expect(
+      shouldBlockSameOriginNavigation("https://other.example/x", HERE),
+    ).toBeNull();
+  });
+});
+
+describe("leaveRelevantDraftSnapshot", () => {
+  const blank = {
+    company: "",
+    role: "",
+    slug: "auto",
+    video_url: "",
+    first_name: "Ada",
+    last_name: "",
+    location: "",
+    portfolio_url: "",
+    linkedin_url: "",
+    include: {
+      first_name: true,
+      last_name: false,
+      location: false,
+      portfolio_url: false,
+      linkedin_url: false,
+    },
+    slugNamePosition: null as const,
+    slugManuallyEdited: false,
+    showProfilePicture: true,
+    cvMode: "primary" as const,
+    cvModeUserChosen: false,
+    selectedPrimaryId: "cv-1",
+    use_original_cv_filename: true,
+  };
+
+  it("ignores auto slug and automatic primary selection", () => {
+    const a = leaveRelevantDraftSnapshot(blank);
+    const b = leaveRelevantDraftSnapshot({
+      ...blank,
+      slug: "different-auto-slug",
+      selectedPrimaryId: "cv-2",
+    });
+    expect(a).toBe(b);
+  });
+
+  it("detects company edits and explicit CV choice", () => {
+    const baseline = leaveRelevantDraftSnapshot(blank);
+    expect(
+      hasLeaveRelevantDraftChanges(baseline, { ...blank, company: "Acme" }),
+    ).toBe(true);
+    expect(
+      hasLeaveRelevantDraftChanges(baseline, {
+        ...blank,
+        cvModeUserChosen: true,
+        cvMode: "tailored",
+        selectedPrimaryId: null,
+      }),
+    ).toBe(true);
+  });
+});

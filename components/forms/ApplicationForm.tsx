@@ -27,10 +27,16 @@ import {
 } from "@/lib/utils/primary-cv-form-sync";
 import {
   clearCreateApplicationDraft,
+  isCreateApplicationDraftBlank,
   loadCreateApplicationDraft,
   saveCreateApplicationDraft,
   type CreateApplicationDraft,
 } from "@/lib/utils/create-application-draft";
+import {
+  hasLeaveRelevantDraftChanges,
+  leaveRelevantDraftSnapshot,
+} from "@/lib/utils/leave-confirm";
+import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
 import { useEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
 import type { CandidateFieldKey } from "./CandidateFieldsSection";
@@ -39,6 +45,7 @@ import CvSourceField from "./CvSourceField";
 import NameInUrlField, { type SlugNamePosition } from "./NameInUrlField";
 import ProfilePictureField from "./ProfilePictureField";
 import YouTubeUrlInput from "./YouTubeUrlInput";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { FiAlertCircle, FiCheck, FiRefreshCw } from "react-icons/fi";
 
 function hasValue(v: string | null | undefined): boolean {
@@ -144,6 +151,17 @@ export default function ApplicationForm({
   );
   /** After a successful create, ignore further draft writes (F15-045). */
   const skipDraftSaveRef = useRef(false);
+  /** Disarm leave confirm after discard or successful save. */
+  const [leaveGuardArmed, setLeaveGuardArmed] = useState(
+    Boolean(persistDraftKey),
+  );
+  /** Prompt leave when a restored draft already has progress. */
+  const [restoredDraftProgress] = useState(() =>
+    Boolean(
+      restoredDraft && !isCreateApplicationDraftBlank(restoredDraft),
+    ),
+  );
+  const leaveBaselineRef = useRef<string | null>(null);
 
   const showProfilePictureDefault =
     restoredDraft?.showProfilePicture !== undefined
@@ -507,6 +525,53 @@ export default function ApplicationForm({
     cvMode,
     selectedPrimaryId,
   ]);
+
+  const draftSnapshot = {
+    company: formData.company,
+    role: formData.role,
+    slug: formData.slug,
+    video_url: formData.video_url,
+    first_name: formData.first_name ?? "",
+    last_name: formData.last_name ?? "",
+    location: formData.location ?? "",
+    portfolio_url: formData.portfolio_url ?? "",
+    linkedin_url: formData.linkedin_url ?? "",
+    include,
+    slugNamePosition,
+    slugManuallyEdited,
+    showProfilePicture,
+    cvMode,
+    cvModeUserChosen: cvModeUserChosenRef.current,
+    selectedPrimaryId,
+    use_original_cv_filename: formData.use_original_cv_filename ?? true,
+  };
+  if (persistDraftKey && leaveBaselineRef.current === null) {
+    leaveBaselineRef.current = leaveRelevantDraftSnapshot(draftSnapshot);
+  }
+  const hasCreateProgress =
+    Boolean(persistDraftKey) &&
+    (restoredDraftProgress ||
+      Boolean(cvPendingFile) ||
+      (leaveBaselineRef.current != null &&
+        hasLeaveRelevantDraftChanges(
+          leaveBaselineRef.current,
+          draftSnapshot,
+        )));
+  const leaveConfirmEnabled =
+    Boolean(persistDraftKey) && leaveGuardArmed && hasCreateProgress;
+
+  const discardCreateDraft = () => {
+    if (!persistDraftKey) return;
+    skipDraftSaveRef.current = true;
+    setLeaveGuardArmed(false);
+    clearCreateApplicationDraft(persistDraftKey);
+  };
+
+  const {
+    open: leaveConfirmOpen,
+    onConfirm: onConfirmLeave,
+    onCancel: onCancelLeave,
+  } = useLeaveConfirm(leaveConfirmEnabled, discardCreateDraft);
 
   const hasCompany = Boolean(formData.company.trim());
   const hasRole = Boolean(formData.role.trim());
@@ -1016,6 +1081,7 @@ export default function ApplicationForm({
       await onSubmit(payload);
       if (persistDraftKey) {
         skipDraftSaveRef.current = true;
+        setLeaveGuardArmed(false);
         clearCreateApplicationDraft(persistDraftKey);
       }
     } catch {
@@ -1392,6 +1458,18 @@ export default function ApplicationForm({
         canSubmit={canSubmit}
         disabledReason={disabledReason}
       />
+
+      {persistDraftKey ? (
+        <ConfirmDialog
+          open={leaveConfirmOpen}
+          title="Leave this page?"
+          message="Leaving this page will discard this draft. Are you sure?"
+          confirmLabel="Yes, I'm sure"
+          cancelLabel="No, stay on this page"
+          onConfirm={onConfirmLeave}
+          onCancel={onCancelLeave}
+        />
+      ) : null}
     </form>
   );
 }
