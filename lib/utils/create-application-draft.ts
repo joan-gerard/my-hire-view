@@ -64,13 +64,13 @@ function isDraftFieldKey(key: string): key is CreateApplicationDraftFieldKey {
 function parseInclude(raw: unknown): CreateApplicationDraftInclude | null {
   if (!raw || typeof raw !== "object") return null;
   const obj = raw as Record<string, unknown>;
-  const include = {
+  const include: CreateApplicationDraftInclude = {
     first_name: false,
     last_name: false,
     location: false,
     portfolio_url: false,
     linkedin_url: false,
-  } satisfies CreateApplicationDraftInclude;
+  };
   for (const key of Object.keys(include) as CreateApplicationDraftFieldKey[]) {
     if (typeof obj[key] !== "boolean") return null;
     include[key] = obj[key];
