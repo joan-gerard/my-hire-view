@@ -105,7 +105,7 @@ describe("parseCreateApplicationDraft", () => {
     );
   });
 
-  it("rejects wrong version, corrupt include, and expired drafts", () => {
+  it("rejects wrong version, corrupt include, expired, and future-dated drafts", () => {
     expect(
       parseCreateApplicationDraft({ ...sampleDraft(), v: 999 }),
     ).toBeNull();
@@ -121,6 +121,10 @@ describe("parseCreateApplicationDraft", () => {
       ).toISOString(),
     });
     expect(parseCreateApplicationDraft(old)).toBeNull();
+    const future = sampleDraft({
+      savedAt: new Date(Date.now() + 2 * 60_000).toISOString(),
+    });
+    expect(parseCreateApplicationDraft(future)).toBeNull();
   });
 });
 
@@ -150,6 +154,36 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
+        use_original_cv_filename: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("treats auto slug and automatic primary selection as blank", () => {
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "",
+        role: "",
+        slug: "acme-engineer-auto",
+        video_url: "",
+        first_name: "",
+        last_name: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: false,
+          last_name: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugNamePosition: null,
+        slugManuallyEdited: false,
+        showProfilePicture: true,
+        cvMode: "primary",
+        cvModeUserChosen: false,
+        selectedPrimaryId: "cv-auto",
         use_original_cv_filename: true,
       }),
     ).toBe(true);

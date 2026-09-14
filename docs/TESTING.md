@@ -50,6 +50,8 @@ __tests__/
         load-public-application-response.test.ts
         url.test.ts
         primary-cv-form-sync.test.ts
+        create-application-draft.test.ts
+        leave-confirm.test.ts
       auth/
         safe-next-path.test.ts
       types/

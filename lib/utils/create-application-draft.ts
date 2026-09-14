@@ -69,6 +69,16 @@ export function createApplicationDraftStorageKey(
   return `${STORAGE_PREFIX}${trimmed}`;
 }
 
+/** Resolve localStorage without throwing when access is denied. */
+function getBrowserLocalStorage(): Storage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 function isDraftFieldKey(key: string): key is CreateApplicationDraftFieldKey {
   return (
     key === "first_name" ||
@@ -235,10 +245,8 @@ export function isCreateApplicationDraftBlank(
   const noCoreProgress =
     !draft.company.trim() &&
     !draft.role.trim() &&
-    !draft.slug.trim() &&
     !draft.video_url.trim() &&
     !draft.cvModeUserChosen &&
-    draft.selectedPrimaryId == null &&
     !draft.slugManuallyEdited &&
     draft.slugNamePosition == null &&
     draft.showProfilePicture === true &&
@@ -257,10 +265,7 @@ export function isCreateApplicationDraftBlank(
 
 export function loadCreateApplicationDraft(
   storageKey: string,
-  storage: Pick<Storage, "getItem" | "removeItem"> | null = typeof window !==
-  "undefined"
-    ? window.localStorage
-    : null,
+  storage: Pick<Storage, "getItem" | "removeItem"> | null = getBrowserLocalStorage(),
   nowMs: number = Date.now(),
 ): CreateApplicationDraft | null {
   if (!storage) return null;
@@ -287,10 +292,7 @@ export function loadCreateApplicationDraft(
 export function saveCreateApplicationDraft(
   storageKey: string,
   draft: CreateApplicationDraftInput,
-  storage: Pick<Storage, "setItem" | "removeItem"> | null = typeof window !==
-  "undefined"
-    ? window.localStorage
-    : null,
+  storage: Pick<Storage, "setItem" | "removeItem"> | null = getBrowserLocalStorage(),
 ): void {
   if (!storage) return;
   try {
@@ -327,9 +329,7 @@ export function saveCreateApplicationDraft(
 
 export function clearCreateApplicationDraft(
   storageKey: string,
-  storage: Pick<Storage, "removeItem"> | null = typeof window !== "undefined"
-    ? window.localStorage
-    : null,
+  storage: Pick<Storage, "removeItem"> | null = getBrowserLocalStorage(),
 ): void {
   if (!storage) return;
   try {

@@ -34,11 +34,12 @@ export function shouldBlockSameOriginNavigation(
 
   if (url.origin !== current.origin) return null;
 
-  const next = `${url.pathname}${url.search}${url.hash}`;
-  const here = `${current.pathname}${current.search}${current.hash}`;
-  if (next === here) return null;
+  // Same document + fragment-only changes are not leaving the page.
+  const nextDoc = `${url.pathname}${url.search}`;
+  const hereDoc = `${current.pathname}${current.search}`;
+  if (nextDoc === hereDoc) return null;
 
-  return next;
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 /**

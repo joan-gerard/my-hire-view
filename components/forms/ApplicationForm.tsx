@@ -340,13 +340,18 @@ export default function ApplicationForm({
         if (applyDefault) {
           if (list.length > 0) {
             const pick = list[0]!;
+            const prevId = selectedPrimaryIdRef.current;
+            const stillValid =
+              prevId != null && list.some((m) => m.id === prevId);
+            const next =
+              (stillValid && list.find((m) => m.id === prevId)) || pick;
             setCvMode("primary");
-            setSelectedPrimaryId((prev) => prev ?? pick.id);
+            setSelectedPrimaryId(next.id);
             setFormData((prev) => ({
               ...prev,
-              cv_url: pick.url,
-              cv_filename: pick.filename,
-              primary_cv_id: pick.id,
+              cv_url: next.url,
+              cv_filename: next.filename,
+              primary_cv_id: next.id,
               cv_type: "primary",
             }));
           } else {
@@ -524,6 +529,7 @@ export default function ApplicationForm({
     showProfilePicture,
     cvMode,
     selectedPrimaryId,
+    cvPendingFile,
   ]);
 
   const draftSnapshot = {
@@ -601,8 +607,7 @@ export default function ApplicationForm({
     cvMode === "primary"
       ? Boolean(
           selectedPrimaryId &&
-            (primaryCvsLoading ||
-              primaryCvs.some((m) => m.id === selectedPrimaryId)),
+            primaryCvs.some((m) => m.id === selectedPrimaryId),
         )
       : Boolean(
           cvPendingFile ||

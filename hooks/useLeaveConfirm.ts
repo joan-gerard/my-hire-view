@@ -36,6 +36,10 @@ export function useLeaveConfirm(
   const [open, setOpen] = useState(false);
   const enabledRef = useRef(enabled);
   const bypassRef = useRef(false);
+  /** True until the intentional sentinel-removal `popstate` is consumed. */
+  const pendingRemovalRef = useRef(false);
+  /** After dropping create+sentinel, navigate here (confirmed link leave). */
+  const pendingHrefAfterBackRef = useRef<string | null>(null);
   const pendingRef = useRef<PendingLeave | null>(null);
   const onDiscardRef = useRef(onDiscard);
   /** True while we believe our sentinel entry is on top of history. */
@@ -49,19 +53,16 @@ export function useLeaveConfirm(
     // Only step back when the current entry is ours — avoids leaving the page
     // on Strict Mode remount or if history got out of sync.
     if (isGuardHistoryState(window.history.state)) {
+      pendingRemovalRef.current = true;
       bypassRef.current = true;
       window.history.back();
-      // Cleanup may have already removed the popstate listener that clears
-      // bypassRef — drop it on the next microtask so a later re-arm works.
-      queueMicrotask(() => {
-        if (bypassRef.current && !guardActiveRef.current) {
-          bypassRef.current = false;
-        }
-      });
     }
   }, []);
 
   const ensureSentinel = useCallback(() => {
+    // Do not clear pendingRemoval here — a delayed removal popstate must still
+    // be consumed as intentional, not as a user Back.
+    if (pendingRemovalRef.current) return;
     bypassRef.current = false;
     if (guardActiveRef.current && isGuardHistoryState(window.history.state)) {
       return;
@@ -78,10 +79,22 @@ export function useLeaveConfirm(
       return;
     }
 
-    // Re-arming after a disable must not inherit a stuck bypass from sentinel removal.
-    bypassRef.current = false;
-
     const onPopState = () => {
+      if (pendingRemovalRef.current) {
+        pendingRemovalRef.current = false;
+        bypassRef.current = false;
+        const hrefAfter = pendingHrefAfterBackRef.current;
+        if (hrefAfter) {
+          pendingHrefAfterBackRef.current = null;
+          router.replace(hrefAfter);
+          return;
+        }
+        // Re-arm only if progress is still enabled after the intentional pop.
+        if (enabledRef.current) {
+          ensureSentinel();
+        }
+        return;
+      }
       if (bypassRef.current) {
         bypassRef.current = false;
         return;
@@ -95,19 +108,29 @@ export function useLeaveConfirm(
       setOpen(true);
     };
 
-    ensureSentinel();
+    // If a removal popstate is still in flight, wait for it before pushing.
+    if (!pendingRemovalRef.current) {
+      bypassRef.current = false;
+      ensureSentinel();
+    }
     window.addEventListener("popstate", onPopState);
     return () => {
       window.removeEventListener("popstate", onPopState);
       removeSentinel();
     };
-  }, [enabled, ensureSentinel, removeSentinel]);
+  }, [enabled, ensureSentinel, removeSentinel, router]);
 
   useEffect(() => {
     if (!enabled) return;
 
     const onClick = (event: MouseEvent) => {
-      if (bypassRef.current || !enabledRef.current) return;
+      if (
+        bypassRef.current ||
+        pendingRemovalRef.current ||
+        !enabledRef.current
+      ) {
+        return;
+      }
       if (event.defaultPrevented || event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
         return;
@@ -156,7 +179,24 @@ export function useLeaveConfirm(
 
     if (!pending) return;
     if (pending.kind === "href") {
-      router.push(pending.href);
+      // Drop the sentinel, then replace the create entry so Back from the
+      // destination does not return to a discarded /admin/new.
+      pendingHrefAfterBackRef.current = pending.href;
+      pendingRemovalRef.current = true;
+      if (isGuardHistoryState(window.history.state)) {
+        window.history.back();
+      } else {
+        pendingHrefAfterBackRef.current = null;
+        pendingRemovalRef.current = false;
+        router.replace(pending.href);
+      }
+      window.setTimeout(() => {
+        if (pendingHrefAfterBackRef.current === pending.href) {
+          pendingHrefAfterBackRef.current = null;
+          pendingRemovalRef.current = false;
+          router.replace(pending.href);
+        }
+      }, 50);
       return;
     }
 

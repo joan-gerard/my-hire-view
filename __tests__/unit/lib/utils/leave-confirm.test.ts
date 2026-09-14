@@ -25,6 +25,9 @@ describe("shouldBlockSameOriginNavigation", () => {
   it("allows same page, hashes, mailto, and external links", () => {
     expect(shouldBlockSameOriginNavigation("/admin/new", HERE)).toBeNull();
     expect(shouldBlockSameOriginNavigation("#section", HERE)).toBeNull();
+    expect(
+      shouldBlockSameOriginNavigation("/admin/new#section", HERE),
+    ).toBeNull();
     expect(shouldBlockSameOriginNavigation("mailto:a@b.c", HERE)).toBeNull();
     expect(
       shouldBlockSameOriginNavigation("https://other.example/x", HERE),
