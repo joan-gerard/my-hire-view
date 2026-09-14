@@ -140,8 +140,7 @@ export default function ApplicationForm({
    * library fetch must not overwrite it.
    */
   const cvModeUserChosenRef = useRef(
-    Boolean(restoredDraft?.cvMode) ||
-      restoredDraft?.selectedPrimaryId != null,
+    Boolean(restoredDraft?.cvModeUserChosen),
   );
   /** After a successful create, ignore further draft writes (F15-045). */
   const skipDraftSaveRef = useRef(false);
@@ -270,6 +269,30 @@ export default function ApplicationForm({
   useEffect(() => {
     let cancelled = false;
     const generation = ++primaryCvLoadGenerationRef.current;
+    /** Unlock CV radios if the library GET hangs (F15-049 review). */
+    const PRIMARY_CV_LOAD_TIMEOUT_MS = 12_000;
+    const timeoutId = window.setTimeout(() => {
+      if (
+        !isCurrentPrimaryCvLoad(
+          generation,
+          primaryCvLoadGenerationRef.current,
+          cancelled,
+        )
+      ) {
+        return;
+      }
+      setPrimaryCvsLoading(false);
+      // No list yet — unlock tailored upload when defaults would have applied.
+      if (
+        shouldApplyInitialCvModeDefault({
+          hasSavedCvType: Boolean(initialData?.cv_type),
+          userChoseCvMode: cvModeUserChosenRef.current,
+        })
+      ) {
+        setCvMode("tailored");
+      }
+    }, PRIMARY_CV_LOAD_TIMEOUT_MS);
+
     async function loadPrimaryCvs() {
       try {
         const res = await fetch("/api/profile/primary-cvs", {
@@ -306,20 +329,34 @@ export default function ApplicationForm({
           } else {
             setCvMode("tailored");
           }
-        } else if (!initialData?.cv_type && list.length > 0 && cvMode === "primary") {
-          // Draft / explicit primary choice: keep mode; refresh URL from library.
-          const preferred =
-            (selectedPrimaryId &&
-              list.find((m) => m.id === selectedPrimaryId)) ||
-            list[0]!;
-          setSelectedPrimaryId(preferred.id);
-          setFormData((prev) => ({
-            ...prev,
-            cv_url: preferred.url,
-            cv_filename: preferred.filename,
-            primary_cv_id: preferred.id,
-            cv_type: "primary",
-          }));
+        } else if (!initialData?.cv_type) {
+          // Draft / explicit choice: keep mode when possible; repair stale primary ids.
+          if (cvMode === "primary") {
+            if (list.length === 0) {
+              setSelectedPrimaryId(null);
+              setCvMode("tailored");
+              setFormData((prev) => ({
+                ...prev,
+                cv_url: "",
+                cv_filename: null,
+                primary_cv_id: null,
+                cv_type: "tailored",
+              }));
+            } else {
+              const preferred =
+                (selectedPrimaryId &&
+                  list.find((m) => m.id === selectedPrimaryId)) ||
+                list[0]!;
+              setSelectedPrimaryId(preferred.id);
+              setFormData((prev) => ({
+                ...prev,
+                cv_url: preferred.url,
+                cv_filename: preferred.filename,
+                primary_cv_id: preferred.id,
+                cv_type: "primary",
+              }));
+            }
+          }
         } else if (
           initialData?.cv_type === "primary" &&
           initialData.primary_cv_id &&
@@ -329,6 +366,7 @@ export default function ApplicationForm({
           setSelectedPrimaryId(null);
         }
       } finally {
+        window.clearTimeout(timeoutId);
         if (
           isCurrentPrimaryCvLoad(
             generation,
@@ -343,6 +381,7 @@ export default function ApplicationForm({
     void loadPrimaryCvs();
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutId);
     };
     // Only on mount / when initial identity changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -436,6 +475,7 @@ export default function ApplicationForm({
         slugManuallyEdited,
         showProfilePicture,
         cvMode,
+        cvModeUserChosen: cvModeUserChosenRef.current,
         selectedPrimaryId,
         use_original_cv_filename: formData.use_original_cv_filename ?? true,
       });
@@ -466,7 +506,11 @@ export default function ApplicationForm({
   const hasSlug = Boolean(formData.slug.trim());
   const hasCv =
     cvMode === "primary"
-      ? Boolean(selectedPrimaryId)
+      ? Boolean(
+          selectedPrimaryId &&
+            (primaryCvsLoading ||
+              primaryCvs.some((m) => m.id === selectedPrimaryId)),
+        )
       : Boolean(
           cvPendingFile ||
             (formData.cv_url &&
@@ -967,6 +1011,8 @@ export default function ApplicationForm({
         skipDraftSaveRef.current = true;
         clearCreateApplicationDraft(persistDraftKey);
       }
+    } catch {
+      // Parent surfaces the error (alert). Keep the local draft for retry.
     } finally {
       isSubmittingRef.current = false;
       setSubmitPhase("idle");

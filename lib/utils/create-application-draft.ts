@@ -1,11 +1,13 @@
 /**
  * Local draft for `/admin/new` so refresh / navigation does not wipe progress
  * (F15-045). File selections are not persisted (browser File objects).
+ *
+ * Drafts are keyed by authenticated `user.id` only — never a shared fallback.
  */
 
 import type { ApplicationCvType } from "@/lib/types/application";
 
-export const CREATE_APPLICATION_DRAFT_VERSION = 1 as const;
+export const CREATE_APPLICATION_DRAFT_VERSION = 2 as const;
 
 /** Drop drafts older than this so stale PII does not linger indefinitely. */
 export const CREATE_APPLICATION_DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -42,12 +44,28 @@ export type CreateApplicationDraft = {
   slugManuallyEdited: boolean;
   showProfilePicture: boolean;
   cvMode: ApplicationCvType;
+  /** True only when the user (or an explicit prior choice) picked the CV source. */
+  cvModeUserChosen: boolean;
   selectedPrimaryId: string | null;
   use_original_cv_filename: boolean;
 };
 
-export function createApplicationDraftStorageKey(scope: string): string {
-  const trimmed = scope.trim() || "local";
+export type CreateApplicationDraftInput = Omit<
+  CreateApplicationDraft,
+  "v" | "savedAt"
+> & {
+  savedAt?: string;
+};
+
+/**
+ * Build a per-user storage key. Returns null when `userId` is empty so callers
+ * never share a `"local"` bucket across signed-in accounts.
+ */
+export function createApplicationDraftStorageKey(
+  userId: string,
+): string | null {
+  const trimmed = userId.trim();
+  if (!trimmed) return null;
   return `${STORAGE_PREFIX}${trimmed}`;
 }
 
@@ -92,6 +110,28 @@ function isSlugNamePosition(
   return value === "start" || value === "end" || value === null;
 }
 
+function defaultIncludeFromValues(
+  draft: Pick<
+    CreateApplicationDraftInput,
+    CreateApplicationDraftFieldKey
+  >,
+): CreateApplicationDraftInclude {
+  return {
+    first_name: draft.first_name.trim() !== "",
+    last_name: draft.last_name.trim() !== "",
+    location: draft.location.trim() !== "",
+    portfolio_url: draft.portfolio_url.trim() !== "",
+    linkedin_url: draft.linkedin_url.trim() !== "",
+  };
+}
+
+function includeMatchesDefault(draft: CreateApplicationDraftInput): boolean {
+  const expected = defaultIncludeFromValues(draft);
+  return (
+    Object.keys(expected) as CreateApplicationDraftFieldKey[]
+  ).every((key) => draft.include[key] === expected[key]);
+}
+
 /** Validate and normalize a parsed JSON value into a draft, or null. */
 export function parseCreateApplicationDraft(
   raw: unknown,
@@ -99,7 +139,11 @@ export function parseCreateApplicationDraft(
 ): CreateApplicationDraft | null {
   if (!raw || typeof raw !== "object") return null;
   const obj = raw as Record<string, unknown>;
-  if (obj.v !== CREATE_APPLICATION_DRAFT_VERSION) return null;
+  const version = obj.v;
+  // Accept v1 (pre-flag) and migrate; require current fields on v2+.
+  if (version !== 1 && version !== CREATE_APPLICATION_DRAFT_VERSION) {
+    return null;
+  }
   if (typeof obj.savedAt !== "string") return null;
   const savedAtMs = Date.parse(obj.savedAt);
   if (!Number.isFinite(savedAtMs)) return null;
@@ -147,6 +191,15 @@ export function parseCreateApplicationDraft(
     return null;
   }
 
+  let cvModeUserChosen: boolean;
+  if (version === CREATE_APPLICATION_DRAFT_VERSION) {
+    if (typeof obj.cvModeUserChosen !== "boolean") return null;
+    cvModeUserChosen = obj.cvModeUserChosen;
+  } else {
+    // v1 had no flag; treat as automatic so library defaults can still apply.
+    cvModeUserChosen = false;
+  }
+
   return {
     v: CREATE_APPLICATION_DRAFT_VERSION,
     savedAt: obj.savedAt,
@@ -164,25 +217,41 @@ export function parseCreateApplicationDraft(
     slugManuallyEdited: obj.slugManuallyEdited,
     showProfilePicture: obj.showProfilePicture,
     cvMode: obj.cvMode,
+    cvModeUserChosen,
     selectedPrimaryId: obj.selectedPrimaryId,
     use_original_cv_filename: obj.use_original_cv_filename,
   };
 }
 
-/** True when there is nothing worth restoring (avoid writing empty noise). */
+/**
+ * True when there is nothing worth restoring (avoid writing empty noise).
+ * Includes candidate fields / include toggles / picture + filename prefs so
+ * personal-only progress is not discarded (F15-045 review).
+ */
 export function isCreateApplicationDraftBlank(
-  draft: Omit<CreateApplicationDraft, "v" | "savedAt">,
+  draft: CreateApplicationDraftInput,
 ): boolean {
-  return (
+  const noCoreProgress =
     !draft.company.trim() &&
     !draft.role.trim() &&
     !draft.slug.trim() &&
     !draft.video_url.trim() &&
-    draft.cvMode === "primary" &&
+    !draft.cvModeUserChosen &&
     draft.selectedPrimaryId == null &&
     !draft.slugManuallyEdited &&
-    draft.slugNamePosition == null
-  );
+    draft.slugNamePosition == null &&
+    draft.showProfilePicture === true &&
+    draft.use_original_cv_filename === true;
+
+  const noPersonalProgress =
+    !draft.first_name.trim() &&
+    !draft.last_name.trim() &&
+    !draft.location.trim() &&
+    !draft.portfolio_url.trim() &&
+    !draft.linkedin_url.trim() &&
+    includeMatchesDefault(draft);
+
+  return noCoreProgress && noPersonalProgress;
 }
 
 export function loadCreateApplicationDraft(
@@ -216,9 +285,7 @@ export function loadCreateApplicationDraft(
 
 export function saveCreateApplicationDraft(
   storageKey: string,
-  draft: Omit<CreateApplicationDraft, "v" | "savedAt"> & {
-    savedAt?: string;
-  },
+  draft: CreateApplicationDraftInput,
   storage: Pick<Storage, "setItem" | "removeItem"> | null = typeof window !==
   "undefined"
     ? window.localStorage
@@ -247,6 +314,7 @@ export function saveCreateApplicationDraft(
       slugManuallyEdited: draft.slugManuallyEdited,
       showProfilePicture: draft.showProfilePicture,
       cvMode: draft.cvMode,
+      cvModeUserChosen: draft.cvModeUserChosen,
       selectedPrimaryId: draft.selectedPrimaryId,
       use_original_cv_filename: draft.use_original_cv_filename,
     };

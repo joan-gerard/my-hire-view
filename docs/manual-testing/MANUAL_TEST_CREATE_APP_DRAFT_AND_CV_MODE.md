@@ -5,22 +5,26 @@ Covers **F15-045** (local form draft) and **F15-049** (CV source while library l
 ## Setup
 
 - Signed in as a user with at least one **primary CV** in the library (for most CV checks).
-- Optional: a second browser profile / private window to confirm drafts are scoped per account key.
+- Optional: a second account on the same browser to confirm drafts are scoped by auth `user.id` (not a shared `local` key).
 
 ## F15-049 — CV source while library loads
 
-- [ ] Open `/admin/new`. While “Loading your CV library…” is visible, both **Use a primary CV** and **Upload a different CV** radios are disabled.
+- [ ] Open `/admin/new`. While “Loading your CV library…” is visible, both **Use a primary CV** and **Upload a different CV** radios are disabled (**create only**).
+- [ ] On **Edit**, radios stay usable while the library loads (saved CV source is not overwritten by the fetch).
 - [ ] After load finishes with primaries present, **Use a primary CV** is selected by default and a library CV is chosen.
-- [ ] Switch to **Upload a different CV**, choose a PDF, then confirm Save would use tailored (filename shown; primary select hidden). Refresh is covered under draft below — mode must stay tailored after any library re-fetch is not forced back to primary.
-- [ ] With an empty primary library: after load, mode defaults to tailored; Manage library still works. After uploading the first primary via the modal **without** having chosen tailored first, create can prefer primary. If you already chose tailored before adding a primary, mode stays tailored.
+- [ ] Switch to **Upload a different CV**, choose a PDF — mode must stay tailored after refresh (draft) and must not flip back when the library finishes loading.
+- [ ] With an empty primary library: after load, mode defaults to tailored. After uploading the first primary via the modal **without** having chosen tailored first, create can prefer primary. If you already chose tailored before adding a primary, mode stays tailored.
+- [ ] (Optional) Throttle / block `/api/profile/primary-cvs`: within ~12s radios unlock so a tailored CV can still be chosen.
 
 ## F15-045 — Persist create draft
 
-- [ ] On `/admin/new`, fill **Company**, **Role**, **YouTube URL**, tweak a candidate field, set **Name in URL**, and (optionally) switch CV mode / primary selection.
-- [ ] Refresh the page (or navigate to `/admin` and back to `/admin/new`). Typed fields and CV **mode** / primary selection restore. Profile prefills do not wipe restored values.
+- [ ] On `/admin/new`, edit only candidate fields (e.g. location) then refresh — those edits restore (personal-only progress is kept).
+- [ ] Fill **Company**, **Role**, **YouTube URL**, Name in URL, and CV mode / primary selection; refresh — fields restore. Profile prefills do not wipe restored values.
 - [ ] If draft restored **Upload a different CV**, re-choose the PDF (files are not stored in the draft).
-- [ ] Complete Save successfully → land on `/admin`. Re-open `/admin/new`: form is clean (no previous company/role).
-- [ ] Leave an empty new form idle: no stale draft appears on a later visit (blank drafts are not kept).
+- [ ] Restore a draft whose primary CV was deleted meanwhile: Save is not ready with a stale id; mode falls back to tailored when the library is empty, or another primary when one remains.
+- [ ] Fail Save (e.g. offline create / forced API error): draft remains. Succeed Save → `/admin/new` is clean afterward.
+- [ ] Two accounts on one browser: drafts do not overwrite each other.
+- [ ] Leave a fully empty new form idle: no stale draft on a later visit.
 
 ## Done when
 

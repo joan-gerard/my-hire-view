@@ -40,6 +40,7 @@ function sampleDraft(
     slugManuallyEdited: false,
     showProfilePicture: true,
     cvMode: "primary",
+    cvModeUserChosen: false,
     selectedPrimaryId: "cv-1",
     use_original_cv_filename: true,
     ...overrides,
@@ -61,20 +62,34 @@ function memoryStorage(initial: Record<string, string> = {}) {
 }
 
 describe("createApplicationDraftStorageKey", () => {
-  it("scopes keys and falls back when scope is blank", () => {
+  it("scopes keys by user id and refuses a shared fallback", () => {
     expect(createApplicationDraftStorageKey("abc123")).toBe(
       "myhireview:create-application-draft:abc123",
     );
-    expect(createApplicationDraftStorageKey("  ")).toBe(
-      "myhireview:create-application-draft:local",
-    );
+    expect(createApplicationDraftStorageKey("  ")).toBeNull();
+    expect(createApplicationDraftStorageKey("")).toBeNull();
   });
 });
 
 describe("parseCreateApplicationDraft", () => {
-  it("accepts a valid draft", () => {
-    const draft = sampleDraft({ cvMode: "tailored", selectedPrimaryId: null });
-    expect(parseCreateApplicationDraft(draft)?.cvMode).toBe("tailored");
+  it("accepts a valid v2 draft", () => {
+    const draft = sampleDraft({
+      cvMode: "tailored",
+      selectedPrimaryId: null,
+      cvModeUserChosen: true,
+    });
+    expect(parseCreateApplicationDraft(draft)?.cvModeUserChosen).toBe(true);
+  });
+
+  it("migrates v1 drafts with cvModeUserChosen false", () => {
+    const v1 = {
+      ...sampleDraft({ cvModeUserChosen: true }),
+      v: 1,
+    };
+    delete (v1 as { cvModeUserChosen?: boolean }).cvModeUserChosen;
+    const parsed = parseCreateApplicationDraft(v1);
+    expect(parsed?.v).toBe(2);
+    expect(parsed?.cvModeUserChosen).toBe(false);
   });
 
   it("rejects wrong version, corrupt include, and expired drafts", () => {
@@ -97,21 +112,21 @@ describe("parseCreateApplicationDraft", () => {
 });
 
 describe("isCreateApplicationDraftBlank", () => {
-  it("treats an untouched create form as blank", () => {
+  it("treats a fully empty create form as blank", () => {
     expect(
       isCreateApplicationDraftBlank({
         company: "",
         role: "",
         slug: "",
         video_url: "",
-        first_name: "Ada",
-        last_name: "Lovelace",
+        first_name: "",
+        last_name: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
-          first_name: true,
-          last_name: true,
+          first_name: false,
+          last_name: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -120,28 +135,105 @@ describe("isCreateApplicationDraftBlank", () => {
         slugManuallyEdited: false,
         showProfilePicture: true,
         cvMode: "primary",
+        cvModeUserChosen: false,
         selectedPrimaryId: null,
         use_original_cv_filename: true,
       }),
     ).toBe(true);
   });
 
-  it("keeps drafts with company or tailored mode", () => {
+  it("keeps drafts with personal-only progress or explicit CV choice", () => {
     expect(
       isCreateApplicationDraftBlank({
-        ...sampleDraft(),
-        company: "Acme",
-      }),
-    ).toBe(false);
-    expect(
-      isCreateApplicationDraftBlank({
-        ...sampleDraft(),
         company: "",
         role: "",
         slug: "",
         video_url: "",
+        first_name: "Ada",
+        last_name: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: true,
+          last_name: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugNamePosition: null,
+        slugManuallyEdited: false,
+        showProfilePicture: true,
+        cvMode: "primary",
+        cvModeUserChosen: false,
         selectedPrimaryId: null,
+        use_original_cv_filename: true,
+      }),
+    ).toBe(false);
+
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "",
+        last_name: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: false,
+          last_name: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugNamePosition: null,
+        slugManuallyEdited: false,
+        showProfilePicture: true,
         cvMode: "tailored",
+        cvModeUserChosen: true,
+        selectedPrimaryId: null,
+        use_original_cv_filename: true,
+      }),
+    ).toBe(false);
+
+    // Auto-default tailored (empty library) with no other edits is still blank.
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "",
+        last_name: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: false,
+          last_name: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugNamePosition: null,
+        slugManuallyEdited: false,
+        showProfilePicture: true,
+        cvMode: "tailored",
+        cvModeUserChosen: false,
+        selectedPrimaryId: null,
+        use_original_cv_filename: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps drafts with company", () => {
+    expect(
+      isCreateApplicationDraftBlank({
+        ...sampleDraft(),
+        company: "Acme",
       }),
     ).toBe(false);
   });
@@ -155,11 +247,12 @@ describe("load/save/clearCreateApplicationDraft", () => {
   it("round-trips through storage and clears blank payloads", () => {
     const storage = memoryStorage();
     const key = createApplicationDraftStorageKey("user-1");
-    saveCreateApplicationDraft(key, sampleDraft(), storage);
-    expect(loadCreateApplicationDraft(key, storage)?.company).toBe("Acme");
+    expect(key).not.toBeNull();
+    saveCreateApplicationDraft(key!, sampleDraft(), storage);
+    expect(loadCreateApplicationDraft(key!, storage)?.company).toBe("Acme");
 
     saveCreateApplicationDraft(
-      key,
+      key!,
       {
         company: "",
         role: "",
@@ -181,22 +274,24 @@ describe("load/save/clearCreateApplicationDraft", () => {
         slugManuallyEdited: false,
         showProfilePicture: true,
         cvMode: "primary",
+        cvModeUserChosen: false,
         selectedPrimaryId: null,
         use_original_cv_filename: true,
       },
       storage,
     );
-    expect(storage.getItem(key)).toBeNull();
+    expect(storage.getItem(key!)).toBeNull();
 
-    saveCreateApplicationDraft(key, sampleDraft(), storage);
-    clearCreateApplicationDraft(key, storage);
-    expect(loadCreateApplicationDraft(key, storage)).toBeNull();
+    saveCreateApplicationDraft(key!, sampleDraft(), storage);
+    clearCreateApplicationDraft(key!, storage);
+    expect(loadCreateApplicationDraft(key!, storage)).toBeNull();
   });
 
   it("removes corrupt JSON on load", () => {
     const key = createApplicationDraftStorageKey("user-2");
-    const storage = memoryStorage({ [key]: "{not-json" });
-    expect(loadCreateApplicationDraft(key, storage)).toBeNull();
-    expect(storage.getItem(key)).toBeNull();
+    expect(key).not.toBeNull();
+    const storage = memoryStorage({ [key!]: "{not-json" });
+    expect(loadCreateApplicationDraft(key!, storage)).toBeNull();
+    expect(storage.getItem(key!)).toBeNull();
   });
 });

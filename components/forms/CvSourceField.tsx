@@ -84,6 +84,8 @@ export default function CvSourceField({
   const selectedPrimary = primaryCvs.find((cv) => cv.id === selectedPrimaryId);
   const hasPrimaryCvs = primaryCvs.length > 0;
   const canManageLibrary = typeof onPrimaryLibraryChange === "function";
+  /** Create-only lock while library loads (F15-049); edit keeps saved cv_type. */
+  const lockCvSourceWhileLoading = !isEdit && primaryCvsLoading;
 
   const pendingOrCurrentName =
     pendingFile?.name ??
@@ -179,16 +181,17 @@ export default function CvSourceField({
         )}
 
         <div className="space-y-3">
-          {/* F15-049: lock source radios until the library finishes loading so
-              a mid-load “Upload a different CV” choice cannot be overwritten. */}
-          {primaryCvsLoading && (
+          {/* F15-049: on create only, lock source radios until the library finishes
+              loading so a mid-load choice cannot be overwritten. Edit keeps the
+              saved cv_type, so locking there only blocks switching. */}
+          {lockCvSourceWhileLoading && (
             <p className="text-xs text-[var(--foreground)]/60" role="status">
               Loading your CV library…
             </p>
           )}
           <label
             className={`flex items-start gap-2.5 ${
-              primaryCvsLoading
+              lockCvSourceWhileLoading
                 ? "cursor-not-allowed opacity-60"
                 : "cursor-pointer"
             }`}
@@ -198,7 +201,7 @@ export default function CvSourceField({
               name="cvSource"
               className="mt-1 h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
               checked={mode === "primary"}
-              disabled={primaryCvsLoading || !hasPrimaryCvs}
+              disabled={lockCvSourceWhileLoading || !hasPrimaryCvs}
               onChange={() => onSwitchToPrimary()}
             />
             <span className="min-w-0 flex-1">
@@ -282,7 +285,7 @@ export default function CvSourceField({
 
           <label
             className={`flex items-start gap-2.5 ${
-              primaryCvsLoading
+              lockCvSourceWhileLoading
                 ? "cursor-not-allowed opacity-60"
                 : "cursor-pointer"
             }`}
@@ -292,7 +295,7 @@ export default function CvSourceField({
               name="cvSource"
               className="mt-1 h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
               checked={mode === "tailored"}
-              disabled={primaryCvsLoading}
+              disabled={lockCvSourceWhileLoading}
               onChange={() => onSwitchToTailored()}
             />
             <span className="min-w-0 flex-1">
