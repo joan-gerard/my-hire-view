@@ -1,13 +1,21 @@
 /**
- * Tests for POST/DELETE /api/profile/primary-cvs schema validation (F6-024).
+ * Tests for POST/DELETE /api/profile/primary-cvs (F6-024 schema + F13-032 cap).
  *
- * Focus: clear 400s for invalid label / id before storage or DB work.
+ * Focus: clear 400s for invalid label / id before storage or DB work;
+ * library-at-cap early reject; DB cap trigger → friendly 400 + R2 rollback.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { authOk, authUnauthorized } from "../../helpers/auth-mock";
-import { ok, okWithCount, makeSupabaseClient } from "../../helpers/supabase-mock";
-import { PRIMARY_CV_LABEL_MAX_LENGTH } from "@/lib/validation/primary-cv";
+import { ok, okWithCount, dbError, makeSupabaseClient } from "../../helpers/supabase-mock";
+import {
+  PRIMARY_CV_LABEL_MAX_LENGTH,
+} from "@/lib/validation/primary-cv";
+import {
+  PRIMARY_CV_LIBRARY_CAP_ERROR_MARKER,
+  PRIMARY_CV_MAX_PER_USER,
+  primaryCvLibraryCapMessage,
+} from "@/lib/types/primary-cv";
 
 const {
   mockWithAuth,
@@ -141,6 +149,41 @@ describe("POST /api/profile/primary-cvs", () => {
     expect(response.status).toBe(201);
     expect(insertChain.insert).toHaveBeenCalledWith(
       expect.objectContaining({ label: "Master CV" }),
+    );
+  });
+
+  it("returns 400 before R2 when the library is already at the early cap", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([okWithCount([], PRIMARY_CV_MAX_PER_USER)]),
+    );
+
+    const response = await POST(makePostRequest({ file: pdfFile() }));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      error: primaryCvLibraryCapMessage(PRIMARY_CV_MAX_PER_USER),
+    });
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(mockDeleteCvIfOurs).not.toHaveBeenCalled();
+  });
+
+  it("maps the DB library-cap trigger to a friendly 400 and rolls back R2 (F13-032)", async () => {
+    const capError = dbError(
+      `${PRIMARY_CV_LIBRARY_CAP_ERROR_MARKER}:user=${MOCK_USER.id}:max=5`,
+      "P0001",
+    );
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([okWithCount([], 4), capError]),
+    );
+
+    const response = await POST(makePostRequest({ file: pdfFile() }));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      error: primaryCvLibraryCapMessage(5),
+    });
+    expect(mockSend).toHaveBeenCalled();
+    expect(mockDeleteCvIfOurs).toHaveBeenCalledWith(
+      expect.stringContaining(`/cvs/${MOCK_USER.id}/primary/`),
+      MOCK_USER.id,
     );
   });
 });

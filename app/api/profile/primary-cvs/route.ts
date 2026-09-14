@@ -15,6 +15,9 @@ import type { ApplicationStatus } from "@/lib/types/application";
 import {
   PRIMARY_CV_DELETE_PREVIEW_LIMIT,
   PRIMARY_CV_MAX_PER_USER,
+  isPrimaryCvLibraryCapError,
+  primaryCvLibraryCapMaxFromDbError,
+  primaryCvLibraryCapMessage,
   type PrimaryCvApplicationPreview,
 } from "@/lib/types/primary-cv";
 import { deleteCvIfOurs } from "@/lib/utils/cv-storage";
@@ -117,7 +120,8 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/profile/primary-cvs — upload a PDF and add it to the primary library (max 5).
+ * POST /api/profile/primary-cvs — upload a PDF and add it to the primary library
+ * (max `PRIMARY_CV_MAX_PER_USER`; DB trigger is the concurrency backstop — F13-032).
  * Body: multipart FormData with `file` (PDF). Optional `label`.
  * Object key: `cvs/{userId}/primary/{id}.pdf`.
  */
@@ -180,9 +184,7 @@ export async function POST(request: NextRequest) {
     }
     if ((count ?? 0) >= PRIMARY_CV_MAX_PER_USER) {
       return NextResponse.json(
-        {
-          error: `You can store up to ${PRIMARY_CV_MAX_PER_USER} primary CVs. Delete one to upload another.`,
-        },
+        { error: primaryCvLibraryCapMessage(PRIMARY_CV_MAX_PER_USER) },
         { status: 400 },
       );
     }
@@ -221,6 +223,14 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       await deleteCvIfOurs(url, user.id);
+      if (isPrimaryCvLibraryCapError(error)) {
+        const max =
+          primaryCvLibraryCapMaxFromDbError(error) ?? PRIMARY_CV_MAX_PER_USER;
+        return NextResponse.json(
+          { error: primaryCvLibraryCapMessage(max) },
+          { status: 400 },
+        );
+      }
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
