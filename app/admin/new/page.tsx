@@ -180,6 +180,8 @@ export default function NewApplicationPage() {
         body: JSON.stringify({
           ...dataForApi,
           slug: finalSlug,
+          // F16-050: save as draft, then preview / publish on the share URL.
+          status: "draft",
         }),
       });
 
@@ -188,7 +190,16 @@ export default function NewApplicationPage() {
         throw new Error(error || "Failed to create application");
       }
 
-      router.push("/admin");
+      const json: { data?: { slug?: string } } = await response
+        .json()
+        .catch(() => ({}));
+      const createdSlug =
+        typeof json.data?.slug === "string" ? json.data.slug.trim() : "";
+      if (publicId && createdSlug) {
+        router.push(`/view/${publicId}/${createdSlug}`);
+      } else {
+        router.push("/admin");
+      }
     } catch (err) {
       alert(
         err instanceof Error ? err.message : "Failed to create application",
@@ -261,6 +272,7 @@ export default function NewApplicationPage() {
             initialData={initialData}
             onSubmit={handleSubmit}
             loading={loading}
+            submitLabel="Save Draft"
             profilePictureUrl={profile?.profile_picture_url ?? null}
             profilePictureVersion={profile?.updated_at ?? null}
             onProfilePictureSaved={({ url, updated_at }) =>

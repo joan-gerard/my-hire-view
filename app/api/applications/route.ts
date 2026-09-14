@@ -382,7 +382,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const status: ApplicationStatus = body.status ?? "active";
+    // F16-050: create defaults to draft so candidates preview before publish.
+    // Callers may still send status: "active" to publish immediately.
+    const status: ApplicationStatus = body.status ?? "draft";
 
     const { data, error } = await supabase
       .from("applications")

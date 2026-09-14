@@ -13,6 +13,8 @@ interface ApplicationPageContentProps {
   refetchApplication: () => Promise<void>;
   isVideoModalOpen: boolean;
   onCloseVideoModal: () => void;
+  /** When false, skip ViewTracker (owner draft preview — F16-050). Default true. */
+  trackViews?: boolean;
 }
 
 /**
@@ -26,10 +28,11 @@ export default function ApplicationPageContent({
   refetchApplication,
   isVideoModalOpen,
   onCloseVideoModal,
+  trackViews = true,
 }: ApplicationPageContentProps) {
   return (
     <div className="pb-12">
-      <ViewTracker publicId={publicId} slug={slug} />
+      {trackViews ? <ViewTracker publicId={publicId} slug={slug} /> : null}
       <div className="space-y-12">
         <section className="bg-[var(--secondary-background)] rounded-xl border border-[var(--foreground)]/10">
           {application.cv_exists === false ? (

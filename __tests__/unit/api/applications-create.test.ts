@@ -3,6 +3,7 @@
  *
  * Covers:
  * - Happy path: inserts new application row and returns 201.
+ * - Defaults status to draft when omitted (F16-050); accepts explicit active.
  * - Profile fallback: candidate fields pulled from profile when not in body.
  * - Profile picture preference: persists show_profile_picture (URL comes from profile at view time).
  * - Schema validation → clear 400s before insert.
@@ -140,15 +141,49 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 describe("POST /api/applications", () => {
   it("returns 201 with the created application on success", async () => {
-    const newApp = { id: "app-1", ...BASE_APP_INPUT, user_id: MOCK_USER.id };
+    const newApp = {
+      id: "app-1",
+      ...BASE_APP_INPUT,
+      user_id: MOCK_USER.id,
+      status: "draft",
+    };
+    const insertChain = ok(newApp);
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient(tailoredCreateChains(ok(newApp))),
+      makeSupabaseClient(tailoredCreateChains(insertChain)),
     );
 
     const response = await POST(makePostRequest(BASE_APP_INPUT));
     expect(response.status).toBe(201);
     const json = await response.json();
-    expect(json.data).toMatchObject({ id: "app-1", slug: "volvo-software-engineer" });
+    expect(json.data).toMatchObject({
+      id: "app-1",
+      slug: "volvo-software-engineer",
+      status: "draft",
+    });
+    expect(insertChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "draft", archived_at: null }),
+    );
+  });
+
+  it("persists status active when the body explicitly requests it", async () => {
+    const newApp = {
+      id: "app-active",
+      ...BASE_APP_INPUT,
+      user_id: MOCK_USER.id,
+      status: "active",
+    };
+    const insertChain = ok(newApp);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient(tailoredCreateChains(insertChain)),
+    );
+
+    const response = await POST(
+      makePostRequest({ ...BASE_APP_INPUT, status: "active" }),
+    );
+    expect(response.status).toBe(201);
+    expect(insertChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "active", archived_at: null }),
+    );
   });
 
   it("fills candidate fields from profile when not supplied in body", async () => {

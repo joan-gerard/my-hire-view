@@ -84,3 +84,23 @@ export async function restoreApplication(id: string): Promise<Application> {
   const { data } = await response.json();
   return data;
 }
+
+/**
+ * Publishes a draft application (`status = active`, clears `archived_at`).
+ * Same PUT as restore; named for the draft → live UX (F16-050).
+ * @returns The updated application from the API
+ * @throws Error with message on non-OK response
+ */
+export async function publishApplication(id: string): Promise<Application> {
+  const response = await fetch('/api/applications', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, status: 'active' }),
+  });
+  if (!response.ok) {
+    const { error } = await response.json().catch(() => ({}));
+    throw new Error((error as string) || 'Failed to publish application');
+  }
+  const { data } = await response.json();
+  return data;
+}

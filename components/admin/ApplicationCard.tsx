@@ -23,6 +23,7 @@ interface ApplicationCardProps {
   onDelete: (id: string) => void;
   onArchive?: (id: string) => void;
   onRestore?: (id: string) => void;
+  onPublish?: (id: string) => void;
 }
 
 function StatusIcon({
@@ -32,7 +33,6 @@ function StatusIcon({
   status: ApplicationListItem['status'];
   viewCount: number;
 }) {
-  const isActive = status === 'active';
   const hasBeenViewed = viewCount > 0;
   const title =
     status === 'archived'
@@ -99,6 +99,7 @@ export default function ApplicationCard({
   onDelete,
   onArchive,
   onRestore,
+  onPublish,
 }: ApplicationCardProps) {
   const [copied, setCopied] = useState(false);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
@@ -107,9 +108,11 @@ export default function ApplicationCard({
     ? getApplicationUrl(application.public_id!, application.slug)
     : null;
   const isArchived = application.status === 'archived';
+  const isDraft = application.status === 'draft';
+  const canCopyLink = canShare && !isDraft && !isArchived;
 
   const handleCopyLink = async () => {
-    if (!shareableUrl) return;
+    if (!shareableUrl || !canCopyLink) return;
     const success = await copyToClipboard(shareableUrl);
     if (success) {
       setCopied(true);
@@ -134,7 +137,18 @@ export default function ApplicationCard({
 
           <div className="hidden flex-1 sm:block" aria-hidden="true" />
 
-          {canShare ? (
+          {isDraft && onPublish ? (
+            <button
+              type="button"
+              onClick={() => onPublish(application.id)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-1"
+            >
+              <CheckIcon className="h-4 w-4" />
+              Publish
+            </button>
+          ) : null}
+
+          {canCopyLink ? (
             <button
               type="button"
               onClick={handleCopyLink}
@@ -146,10 +160,16 @@ export default function ApplicationCard({
           ) : (
             <span
               className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--foreground)]/50"
-              title="Complete your profile to get a share link"
+              title={
+                isDraft
+                  ? 'Publish this application before sharing the link'
+                  : isArchived
+                    ? 'Restore this application before sharing the link'
+                    : 'Complete your profile to get a share link'
+              }
             >
               <CopyIcon className="h-4 w-4" />
-              Link unavailable
+              {isDraft ? 'Publish to share' : 'Link unavailable'}
             </span>
           )}
 
@@ -175,7 +195,7 @@ export default function ApplicationCard({
               className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
             >
               <ExternalLinkIcon className="h-4 w-4" />
-              View Application
+              {isDraft ? 'Preview' : 'View Application'}
             </Link>
           ) : (
             <span
@@ -190,9 +210,11 @@ export default function ApplicationCard({
           <ApplicationCardDropdown
             applicationId={application.id}
             isArchived={isArchived}
+            isDraft={isDraft}
             onDelete={onDelete}
             onArchive={onArchive}
             onRestore={onRestore}
+            onPublish={onPublish}
           />
         </div>
 

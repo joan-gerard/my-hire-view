@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import {
   ArchiveIcon,
+  CheckIcon,
   EllipsisIcon,
   PencilIcon,
   TrashIcon,
@@ -12,17 +13,21 @@ import {
 export interface ApplicationCardDropdownProps {
   applicationId: string;
   isArchived: boolean;
+  isDraft?: boolean;
   onDelete: (id: string) => void;
   onArchive?: (id: string) => void;
   onRestore?: (id: string) => void;
+  onPublish?: (id: string) => void;
 }
 
 export default function ApplicationCardDropdown({
   applicationId,
   isArchived,
+  isDraft = false,
   onDelete,
   onArchive,
   onRestore,
+  onPublish,
 }: ApplicationCardDropdownProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -72,7 +77,20 @@ export default function ApplicationCardDropdown({
             <PencilIcon className="h-4 w-4" />
             Edit
           </Link>
-          {isArchived && onRestore ? (
+          {isDraft && onPublish ? (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
+              role="menuitem"
+              onClick={() => {
+                setDropdownOpen(false);
+                onPublish(applicationId);
+              }}
+            >
+              <CheckIcon className="h-4 w-4" />
+              Publish
+            </button>
+          ) : isArchived && onRestore ? (
             <button
               type="button"
               className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
@@ -85,7 +103,7 @@ export default function ApplicationCardDropdown({
               <ArchiveIcon className="h-4 w-4" />
               Restore
             </button>
-          ) : onArchive ? (
+          ) : !isDraft && onArchive ? (
             <button
               type="button"
               className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"

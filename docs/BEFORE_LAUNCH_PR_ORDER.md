@@ -12,11 +12,11 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 | :----: | ----: | --- |
 | **1** | 3 | A3, F22, F24 |
 | **2** | 3 | E1, F20, F23 |
-| **3** | 5 | F15, F19, F28, F30, L6 |
+| **3** | 4 | F19, F28, F30, L6 |
 | **4** | 5 | F16, F17, F21, F29, I2 |
 | **5** | 1 | E2 |
 
-**17 open** (F9, F10, F11, F12, F13, F18, F25, F26 shipped). **Weighted average ≈ 2.88** — many 1–3 polish items; complexity concentrates in **E2**, then **F16 / F17 / F21 / F29 / I2**.
+**16 open** (F9, F10, F11, F12, F13, F15, F18, F25, F26 shipped; **F16 in progress**). **Weighted average ≈ 2.88** — many 1–3 polish items; complexity concentrates in **E2**, then **F16 / F17 / F21 / F29 / I2**.
 
 ---
 
@@ -40,7 +40,7 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering).
 
 ### Phase 2 — Create-application UX chain
 
-**F15 → F16**, then **F19**, then **F17**
+**F15 shipped** → **F16 (in progress)**, then **F19**, then **F17**
 
 - Strict dependency: draft persistence / CV-mode race before preview/draft-publish
 - **F19** (onboarding + Public id copy + legend) while create flows are fresh
@@ -75,10 +75,10 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering).
 
 ---
 
-## 3. Suggested sequence (all 17 open)
+## 3. Suggested sequence (all 16 open)
 
 ```
-F15 → F16 → F19 → F17
+F16 → F19 → F17
   → F20 → F23 → F21
   → F22 / F24 (whenever)
   → L6 → I2 → F28 → F29 → F30
@@ -92,4 +92,4 @@ F15 → F16 → F19 → F17
 3. **Reviews stay useful** — F28/F29/F30 after the bulk of pre-launch code, not before.
 4. **Monetization last** — backlog already defers E1/E2 until launch is imminent.
 
-If capacity is short: start **F15**.
+If capacity is short: finish **F16**, then **F19**.
