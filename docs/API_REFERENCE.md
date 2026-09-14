@@ -420,7 +420,7 @@ Upload a PDF to the primary CV library (max **5** per user today — Free/Pro de
 **What works**
 
 - Auth required; early count check against `PRIMARY_CV_MAX_PER_USER` (**5**) before R2 upload.
-- **Atomic cap (F13-032):** migration `028` — BEFORE INSERT trigger `primary_cvs_library_cap` takes a per-user advisory lock, counts rows, and rejects when at `primary_cv_library_max_for_user()` (today returns **5**; single place to raise for Premium). Concurrent POSTs cannot slip past the max; insert failure rolls back R2 and returns the same friendly **400** copy (not the raw Postgres message).
+- **Atomic cap (F13-032):** migration `028` — BEFORE INSERT trigger `primary_cvs_library_cap` takes a per-user advisory lock, counts rows, and rejects when at `primary_cv_library_max_for_user()` (today returns **5**). Concurrent POSTs cannot slip past the max; insert failure rolls back R2 and returns the same friendly **400** copy (not the raw Postgres message). When Premium raises the limit (E2), update **both** `primary_cv_library_max_for_user()` and the early API check (`PRIMARY_CV_MAX_PER_USER` / plan-aware equivalent) — raising only the DB function would still block Premium users at **5** before upload.
 - **Schema validation** (`primaryCvLabelSchema` in `lib/validation/primary-cv.ts`): optional `label` trimmed; empty → `null`; max **120**; non-string rejected; clear **400** before count/R2 work.
 - PDF-only, **3 MB** max, `%PDF` magic-byte check.
 - Writes R2 object then inserts `primary_cvs` row; rolls back R2 on insert failure.

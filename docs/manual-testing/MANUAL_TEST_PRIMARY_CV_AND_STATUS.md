@@ -5,7 +5,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 **Prerequisites**
 
 - [ ] `pnpm run dev` running
-- [ ] Migrations `021`–`027` applied in Supabase
+- [ ] Migrations `021`–`028` applied in Supabase
 - [ ] R2 configured (`R2_*` in `.env.local`); uploads succeed
 - [ ] Logged in as a user who can open `/admin`, `/admin/profile`, `/admin/new`
 - [ ] Access to Supabase **Table Editor** → `applications`, `primary_cvs` (and R2 dashboard optional)
