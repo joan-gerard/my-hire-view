@@ -19,12 +19,16 @@ const {
   mockCheckRateLimit,
   mockDeleteProfilePicture,
   mockRemoveOther,
+  mockTryAcquirePictureSlot,
+  mockReleasePictureSlot,
 } = vi.hoisted(() => ({
   mockWithAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockDeleteProfilePicture: vi.fn(),
   mockRemoveOther: vi.fn(),
+  mockTryAcquirePictureSlot: vi.fn(),
+  mockReleasePictureSlot: vi.fn(),
 }));
 
 vi.mock("@/lib/api/with-auth", () => ({ withAuth: mockWithAuth }));
@@ -37,6 +41,8 @@ vi.mock("@/lib/rate-limit", () => ({
       status: 429,
     }),
   ),
+  tryAcquireUserProfilePictureSlot: mockTryAcquirePictureSlot,
+  releaseUserProfilePictureSlot: mockReleasePictureSlot,
 }));
 vi.mock("@/lib/utils/profile-picture-storage", async (importOriginal) => {
   const actual =
@@ -86,6 +92,7 @@ beforeEach(() => {
   });
   mockDeleteProfilePicture.mockResolvedValue({ ok: true });
   mockRemoveOther.mockResolvedValue({ ok: true });
+  mockTryAcquirePictureSlot.mockReturnValue(true);
 });
 
 afterEach(() => {
@@ -701,7 +708,7 @@ describe("PUT /api/profile", () => {
     );
   });
 
-  it("does not folder-purge when the picture URL is unchanged (name-only save)", async () => {
+  it("does not folder-purge when the picture URL is unchanged (non-picture save)", async () => {
     const pictureUrl =
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
     const existingWithPicture = {
@@ -717,6 +724,7 @@ describe("PUT /api/profile", () => {
 
     const response = await PUT(makePutRequest({ location: "Oslo" }));
     expect(response.status).toBe(200);
+    expect(mockTryAcquirePictureSlot).not.toHaveBeenCalled();
     expect(mockDeleteProfilePicture).not.toHaveBeenCalled();
     expect(mockRemoveOther).not.toHaveBeenCalled();
   });
@@ -743,6 +751,99 @@ describe("PUT /api/profile", () => {
     expect(response.status).toBe(200);
     expect(mockDeleteProfilePicture).not.toHaveBeenCalled();
     expect(mockRemoveOther).not.toHaveBeenCalled();
+    expect(mockReleasePictureSlot).toHaveBeenCalledWith("user-123");
+  });
+
+  it("returns 429 when another picture-changing PUT is already in flight", async () => {
+    mockTryAcquirePictureSlot.mockReturnValue(false);
+    const newUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.png";
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(EXISTING_PROFILE)]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: newUrl }),
+    );
+    expect(response.status).toBe(429);
+    const json = await response.json();
+    expect(json.error).toMatch(/concurrent profile picture/i);
+    expect(mockReleasePictureSlot).not.toHaveBeenCalled();
+  });
+
+  it("skips cleanup with a warning when re-read returns a PostgREST error", async () => {
+    const oldUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    const newUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.png";
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_PROFILE, profile_picture_url: oldUrl }),
+        ok({ ...EXISTING_PROFILE, profile_picture_url: newUrl }),
+        dbError("connection reset"),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: newUrl }),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.warnings?.[0]).toMatch(/could not verify/i);
+    expect(mockDeleteProfilePicture).not.toHaveBeenCalled();
+    expect(mockRemoveOther).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("skips cleanup with a warning when clearing and re-read errors (does not treat null as current)", async () => {
+    const oldUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_PROFILE, profile_picture_url: oldUrl }),
+        ok({ ...EXISTING_PROFILE, profile_picture_url: null }),
+        dbError("timeout"),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: null }),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.warnings?.[0]).toMatch(/could not verify/i);
+    expect(mockDeleteProfilePicture).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("returns 200 with a warning when picture cleanup throws after upsert", async () => {
+    const newUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.png";
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const reReadChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockRejectedValue(new Error("network down")),
+    };
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(EXISTING_PROFILE),
+        ok({ ...EXISTING_PROFILE, profile_picture_url: newUrl }),
+        reReadChain as never,
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: newUrl }),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data).toMatchObject({ profile_picture_url: newUrl });
+    expect(json.warnings?.[0]).toMatch(/failed during profile picture storage cleanup/i);
+    expect(mockDeleteProfilePicture).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 
   it("returns warnings when deleting the previous picture fails", async () => {

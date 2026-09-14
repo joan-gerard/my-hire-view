@@ -169,6 +169,39 @@ describe("tryAcquireUserUploadSlot / releaseUserUploadSlot", () => {
   });
 });
 
+describe("tryAcquireUserProfilePictureSlot / releaseUserProfilePictureSlot", () => {
+  it("allows only one concurrent picture-changing PUT per user", async () => {
+    const {
+      tryAcquireUserProfilePictureSlot,
+      releaseUserProfilePictureSlot,
+    } = await import("@/lib/rate-limit");
+    const userId = `picture-user-${uniqueId()}`;
+    expect(tryAcquireUserProfilePictureSlot(userId)).toBe(true);
+    expect(tryAcquireUserProfilePictureSlot(userId)).toBe(false);
+    releaseUserProfilePictureSlot(userId);
+    expect(tryAcquireUserProfilePictureSlot(userId)).toBe(true);
+    releaseUserProfilePictureSlot(userId);
+  });
+
+  it("tracks users independently from each other and from CV upload slots", async () => {
+    const {
+      tryAcquireUserProfilePictureSlot,
+      releaseUserProfilePictureSlot,
+      tryAcquireUserUploadSlot,
+      releaseUserUploadSlot,
+    } = await import("@/lib/rate-limit");
+    const a = `picture-a-${uniqueId()}`;
+    const b = `picture-b-${uniqueId()}`;
+    expect(tryAcquireUserProfilePictureSlot(a)).toBe(true);
+    expect(tryAcquireUserProfilePictureSlot(a)).toBe(false);
+    expect(tryAcquireUserProfilePictureSlot(b)).toBe(true);
+    expect(tryAcquireUserUploadSlot(a)).toBe(true);
+    releaseUserProfilePictureSlot(a);
+    releaseUserProfilePictureSlot(b);
+    releaseUserUploadSlot(a);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // checkPerSlugRateLimit
 // ---------------------------------------------------------------------------
