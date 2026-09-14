@@ -275,6 +275,31 @@ export function releaseUserUploadSlot(userId: string): void {
 }
 
 /**
+ * Best-effort: at most one in-flight profile-picture URL change per user
+ * (per server instance). Holds across upsert + Storage cleanup so overlapping
+ * PUTs cannot purge each other's committed avatar on this instance.
+ */
+const MAX_CONCURRENT_PROFILE_PICTURE_PUTS_PER_USER = 1;
+const profilePictureInFlight = new Map<string, number>();
+
+/**
+ * Tries to reserve a profile-picture mutation slot for `userId`.
+ * Call `releaseUserProfilePictureSlot` in a `finally` when the request finishes.
+ */
+export function tryAcquireUserProfilePictureSlot(userId: string): boolean {
+  const n = profilePictureInFlight.get(userId) ?? 0;
+  if (n >= MAX_CONCURRENT_PROFILE_PICTURE_PUTS_PER_USER) return false;
+  profilePictureInFlight.set(userId, n + 1);
+  return true;
+}
+
+export function releaseUserProfilePictureSlot(userId: string): void {
+  const n = (profilePictureInFlight.get(userId) ?? 1) - 1;
+  if (n <= 0) profilePictureInFlight.delete(userId);
+  else profilePictureInFlight.set(userId, n);
+}
+
+/**
  * Convenience: rate limit by request IP (optionally namespaced via
  * `options.keyPrefix`) and return a result the caller can turn into 429.
  */

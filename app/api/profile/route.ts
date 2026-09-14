@@ -5,9 +5,17 @@ import { generatePublicId } from "@/lib/utils/public-id";
 import { createClient } from "@/lib/supabase/server";
 import {
   deleteProfilePictureIfOurs,
+  getProfilePictureStoragePath,
   isOwnedProfilePictureUrl,
+  removeOtherProfilePicturesInFolder,
 } from "@/lib/utils/profile-picture-storage";
-import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from "@/lib/rate-limit";
+import {
+  checkRateLimit,
+  DEFAULT_API_RATE_LIMIT,
+  rateLimit429,
+  releaseUserProfilePictureSlot,
+  tryAcquireUserProfilePictureSlot,
+} from "@/lib/rate-limit";
 import {
   formatProfileUpdateZodError,
   PROFILE_NAME_MAX_LENGTH,
@@ -72,6 +80,8 @@ export async function PUT(request: NextRequest) {
   if (!auth.ok) return auth.response;
   const { user } = auth;
 
+  let pictureSlotHeld = false;
+
   try {
     const supabase = await createClient();
     const raw: unknown = await request.json();
@@ -110,6 +120,22 @@ export async function PUT(request: NextRequest) {
         : (existing?.profile_picture_url ?? null);
 
     const oldPictureUrl = existing?.profile_picture_url ?? null;
+    const pictureUrlChanged = oldPictureUrl !== newPictureUrl;
+
+    // Serialize picture URL changes on this instance through upsert + cleanup
+    // so overlapping PUTs cannot purge each other's committed avatar.
+    if (pictureUrlChanged) {
+      if (!tryAcquireUserProfilePictureSlot(user.id)) {
+        return NextResponse.json(
+          {
+            error:
+              "Too many concurrent profile picture updates. Please try again.",
+          },
+          { status: 429 },
+        );
+      }
+      pictureSlotHeld = true;
+    }
 
     // Seed omitted names from Auth metadata so a picture-only PUT works when
     // the profiles row is missing or has blank names (e.g. minimal ensureProfilePublicId
@@ -231,13 +257,69 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // After successful write: delete previous Storage object when the URL changed.
-    // Applications no longer store a copy — they read profiles.profile_picture_url live.
-    if (oldPictureUrl && oldPictureUrl !== newPictureUrl) {
-      const deleted = await deleteProfilePictureIfOurs(supabase, oldPictureUrl);
-      if (!deleted.ok) {
+    // After successful write: only clean Storage when this request changed the
+    // picture URL (avoids non-picture saves sweeping a freshly uploaded but not
+    // yet committed other-extension file). Re-read before delete/purge so a
+    // concurrent PUT that already won is skipped. Hold the per-user slot through
+    // this block so another picture change cannot commit between re-read and purge
+    // on this instance. Never let cleanup failures turn a committed save into 500.
+    if (pictureUrlChanged) {
+      try {
+        const { data: latestPicture, error: latestError } = await supabase
+          .from("profiles")
+          .select("profile_picture_url")
+          .eq("user_id", user.id)
+          .single();
+
+        if (latestError) {
+          console.error(
+            "PUT /api/profile re-read before picture cleanup:",
+            latestError,
+          );
+          warnings.push(
+            "Saved profile but could not verify the current picture before storage cleanup",
+          );
+        } else {
+          const livePictureUrl =
+            typeof latestPicture?.profile_picture_url === "string"
+              ? latestPicture.profile_picture_url.trim() || null
+              : (latestPicture?.profile_picture_url ?? null);
+          const stillCurrentPicture = livePictureUrl === newPictureUrl;
+
+          if (stillCurrentPicture) {
+            if (oldPictureUrl) {
+              const deleted = await deleteProfilePictureIfOurs(
+                supabase,
+                oldPictureUrl,
+              );
+              if (!deleted.ok) {
+                warnings.push(
+                  "Saved profile but failed to delete the previous profile picture from storage",
+                );
+              }
+            }
+
+            if (newPictureUrl) {
+              const keepPath = getProfilePictureStoragePath(newPictureUrl);
+              if (keepPath) {
+                const purged = await removeOtherProfilePicturesInFolder(
+                  supabase,
+                  user.id,
+                  keepPath,
+                );
+                if (!purged.ok) {
+                  warnings.push(
+                    "Saved profile but could not remove older profile picture files from storage",
+                  );
+                }
+              }
+            }
+          }
+        }
+      } catch (cleanupErr) {
+        console.error("PUT /api/profile picture cleanup:", cleanupErr);
         warnings.push(
-          "Saved profile but failed to delete the previous profile picture from storage",
+          "Saved profile but failed during profile picture storage cleanup",
         );
       }
     }
@@ -251,5 +333,7 @@ export async function PUT(request: NextRequest) {
       { error: "Failed to update profile" },
       { status: 500 },
     );
+  } finally {
+    if (pictureSlotHeld) releaseUserProfilePictureSlot(user.id);
   }
 }

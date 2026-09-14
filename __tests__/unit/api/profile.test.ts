@@ -18,11 +18,17 @@ const {
   mockCreateClient,
   mockCheckRateLimit,
   mockDeleteProfilePicture,
+  mockRemoveOther,
+  mockTryAcquirePictureSlot,
+  mockReleasePictureSlot,
 } = vi.hoisted(() => ({
   mockWithAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
   mockDeleteProfilePicture: vi.fn(),
+  mockRemoveOther: vi.fn(),
+  mockTryAcquirePictureSlot: vi.fn(),
+  mockReleasePictureSlot: vi.fn(),
 }));
 
 vi.mock("@/lib/api/with-auth", () => ({ withAuth: mockWithAuth }));
@@ -35,6 +41,8 @@ vi.mock("@/lib/rate-limit", () => ({
       status: 429,
     }),
   ),
+  tryAcquireUserProfilePictureSlot: mockTryAcquirePictureSlot,
+  releaseUserProfilePictureSlot: mockReleasePictureSlot,
 }));
 vi.mock("@/lib/utils/profile-picture-storage", async (importOriginal) => {
   const actual =
@@ -42,6 +50,7 @@ vi.mock("@/lib/utils/profile-picture-storage", async (importOriginal) => {
   return {
     ...actual,
     deleteProfilePictureIfOurs: mockDeleteProfilePicture,
+    removeOtherProfilePicturesInFolder: mockRemoveOther,
   };
 });
 
@@ -81,6 +90,9 @@ beforeEach(() => {
     remaining: 59,
     resetAt: Date.now() + 60_000,
   });
+  mockDeleteProfilePicture.mockResolvedValue({ ok: true });
+  mockRemoveOther.mockResolvedValue({ ok: true });
+  mockTryAcquirePictureSlot.mockReturnValue(true);
 });
 
 afterEach(() => {
@@ -655,7 +667,7 @@ describe("PUT /api/profile", () => {
     expect(json.error).toBe("Failed to update profile");
   });
 
-  it("calls deleteProfilePicture after a successful picture URL change", async () => {
+  it("calls deleteProfilePicture and folder purge after a successful picture URL change (F9-037)", async () => {
     const oldUrl =
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
     const newUrl =
@@ -673,7 +685,8 @@ describe("PUT /api/profile", () => {
       makeSupabaseClient([
         ok(existingWithPicture),
         ok(updatedProfile),
-        ok(null),
+        // Re-read before Storage cleanup — still current.
+        ok({ profile_picture_url: newUrl }),
       ]),
     );
 
@@ -688,6 +701,149 @@ describe("PUT /api/profile", () => {
       expect.anything(),
       oldUrl,
     );
+    expect(mockRemoveOther).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-123",
+      "user-123/avatar.png",
+    );
+  });
+
+  it("does not folder-purge when the picture URL is unchanged (non-picture save)", async () => {
+    const pictureUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    const existingWithPicture = {
+      ...EXISTING_PROFILE,
+      profile_picture_url: pictureUrl,
+    };
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(existingWithPicture),
+        ok({ ...existingWithPicture, location: "Oslo" }),
+      ]),
+    );
+
+    const response = await PUT(makePutRequest({ location: "Oslo" }));
+    expect(response.status).toBe(200);
+    expect(mockTryAcquirePictureSlot).not.toHaveBeenCalled();
+    expect(mockDeleteProfilePicture).not.toHaveBeenCalled();
+    expect(mockRemoveOther).not.toHaveBeenCalled();
+  });
+
+  it("skips Storage cleanup when a concurrent PUT already committed a different URL", async () => {
+    const oldUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    const thisRequestUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.png";
+    const otherRequestUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.webp";
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_PROFILE, profile_picture_url: oldUrl }),
+        ok({ ...EXISTING_PROFILE, profile_picture_url: thisRequestUrl }),
+        // Another overlapping save won after our upsert.
+        ok({ profile_picture_url: otherRequestUrl }),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: thisRequestUrl }),
+    );
+    expect(response.status).toBe(200);
+    expect(mockDeleteProfilePicture).not.toHaveBeenCalled();
+    expect(mockRemoveOther).not.toHaveBeenCalled();
+    expect(mockReleasePictureSlot).toHaveBeenCalledWith("user-123");
+  });
+
+  it("returns 429 when another picture-changing PUT is already in flight", async () => {
+    mockTryAcquirePictureSlot.mockReturnValue(false);
+    const newUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.png";
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(EXISTING_PROFILE)]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: newUrl }),
+    );
+    expect(response.status).toBe(429);
+    const json = await response.json();
+    expect(json.error).toMatch(/concurrent profile picture/i);
+    expect(mockReleasePictureSlot).not.toHaveBeenCalled();
+  });
+
+  it("skips cleanup with a warning when re-read returns a PostgREST error", async () => {
+    const oldUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    const newUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.png";
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_PROFILE, profile_picture_url: oldUrl }),
+        ok({ ...EXISTING_PROFILE, profile_picture_url: newUrl }),
+        dbError("connection reset"),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: newUrl }),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.warnings?.[0]).toMatch(/could not verify/i);
+    expect(mockDeleteProfilePicture).not.toHaveBeenCalled();
+    expect(mockRemoveOther).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("skips cleanup with a warning when clearing and re-read errors (does not treat null as current)", async () => {
+    const oldUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_PROFILE, profile_picture_url: oldUrl }),
+        ok({ ...EXISTING_PROFILE, profile_picture_url: null }),
+        dbError("timeout"),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: null }),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.warnings?.[0]).toMatch(/could not verify/i);
+    expect(mockDeleteProfilePicture).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("returns 200 with a warning when picture cleanup throws after upsert", async () => {
+    const newUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.png";
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const reReadChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockRejectedValue(new Error("network down")),
+    };
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(EXISTING_PROFILE),
+        ok({ ...EXISTING_PROFILE, profile_picture_url: newUrl }),
+        reReadChain as never,
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: newUrl }),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data).toMatchObject({ profile_picture_url: newUrl });
+    expect(json.warnings?.[0]).toMatch(/failed during profile picture storage cleanup/i);
+    expect(mockDeleteProfilePicture).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 
   it("returns warnings when deleting the previous picture fails", async () => {
@@ -700,7 +856,7 @@ describe("PUT /api/profile", () => {
       makeSupabaseClient([
         ok({ ...EXISTING_PROFILE, profile_picture_url: oldUrl }),
         ok({ ...EXISTING_PROFILE, profile_picture_url: newUrl }),
-        ok(null),
+        ok({ profile_picture_url: newUrl }),
       ]),
     );
 
@@ -710,6 +866,31 @@ describe("PUT /api/profile", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.warnings?.[0]).toMatch(/failed to delete/i);
+  });
+
+  it("returns warnings when folder purge after commit fails (F9-037)", async () => {
+    const newUrl =
+      "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.png";
+    mockRemoveOther.mockResolvedValue({ ok: false });
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(EXISTING_PROFILE),
+        ok({ ...EXISTING_PROFILE, profile_picture_url: newUrl }),
+        ok({ profile_picture_url: newUrl }),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({ profile_picture_url: newUrl }),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.warnings?.[0]).toMatch(/could not remove older/i);
+    expect(mockRemoveOther).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-123",
+      "user-123/avatar.png",
+    );
   });
 
   it("returns 400 when profile_picture_url is not an owned storage URL", async () => {
@@ -753,7 +934,11 @@ describe("PUT /api/profile", () => {
       profile_picture_url: ownedUrl,
     };
     mockCreateClient.mockResolvedValue(
-      makeSupabaseClient([ok(EXISTING_PROFILE), ok(updatedProfile), ok(null)]),
+      makeSupabaseClient([
+        ok(EXISTING_PROFILE),
+        ok(updatedProfile),
+        ok({ profile_picture_url: ownedUrl }),
+      ]),
     );
 
     const response = await PUT(
@@ -777,7 +962,7 @@ describe("PUT /api/profile", () => {
       makeSupabaseClient([
         ok(existingWithPicture),
         ok(updatedProfile),
-        ok(null),
+        ok({ profile_picture_url: null }),
       ]),
     );
 
@@ -786,5 +971,6 @@ describe("PUT /api/profile", () => {
     );
     expect(response.status).toBe(200);
     expect(mockDeleteProfilePicture).toHaveBeenCalledOnce();
+    expect(mockRemoveOther).not.toHaveBeenCalled();
   });
 });

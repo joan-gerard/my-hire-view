@@ -15,7 +15,6 @@ import {
 import {
   PROFILE_PICTURES_BUCKET,
   canonicalProfilePicturePath,
-  removeOtherProfilePicturesInFolder,
 } from "@/lib/utils/profile-picture-storage";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -43,8 +42,9 @@ function pictureUploadErrorMeta(
 
 /**
  * Upload (or overwrite) the caller's canonical profile picture at
- * `{user_id}/avatar.{ext}`. Removes other objects in that folder so only one
- * file remains. Prefer calling from profile Save (upload-on-save), not on file pick.
+ * `{user_id}/avatar.{ext}`. Does **not** purge other folder objects — that runs
+ * after a successful `PUT /api/profile` URL commit (F9-037 / F9-062). Prefer
+ * calling from profile Save (upload-on-save), not on file pick.
  */
 export async function POST(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
@@ -110,25 +110,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const purge = await removeOtherProfilePicturesInFolder(
-      supabase,
-      user.id,
-      data.path,
-    );
-    if (!purge.ok) {
-      console.error(
-        "POST /api/upload/profile-picture purge",
-        pictureUploadErrorMeta(user.id, file.size),
-      );
-    }
-
     const { data: urlData } = supabase.storage
       .from(PROFILE_PICTURES_BUCKET)
       .getPublicUrl(data.path);
-    return NextResponse.json({
-      url: urlData.publicUrl,
-      ...(purge.ok ? {} : { warning: "Uploaded but could not remove older files" }),
-    });
+    return NextResponse.json({ url: urlData.publicUrl });
   } catch (error) {
     return handleApiError("POST /api/upload/profile-picture", error, {
       message: "Failed to upload",

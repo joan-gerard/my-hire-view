@@ -2,7 +2,8 @@
  * Tests for POST /api/upload/profile-picture.
  *
  * Validates auth vs unexpected-error status codes, MIME + magic-byte checks,
- * size limit, and `handleApiError` logging (log-only meta, no leak to client).
+ * size limit, `handleApiError` logging (log-only meta, no leak to client),
+ * and that folder purge is deferred to PUT /api/profile (F9-037).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
@@ -12,12 +13,10 @@ const {
   mockWithAuth,
   mockCreateClient,
   mockCheckRateLimit,
-  mockRemoveOther,
 } = vi.hoisted(() => ({
   mockWithAuth: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCheckRateLimit: vi.fn(),
-  mockRemoveOther: vi.fn(),
 }));
 
 vi.mock("@/lib/api/with-auth", () => ({ withAuth: mockWithAuth }));
@@ -31,16 +30,9 @@ vi.mock("@/lib/rate-limit", () => ({
     }),
   ),
 }));
-vi.mock("@/lib/utils/profile-picture-storage", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/lib/utils/profile-picture-storage")>();
-  return {
-    ...actual,
-    removeOtherProfilePicturesInFolder: mockRemoveOther,
-  };
-});
 
 import { POST } from "@/app/api/upload/profile-picture/route";
+import * as profilePictureStorage from "@/lib/utils/profile-picture-storage";
 
 const MOCK_USER = { id: "user-123" };
 const PUBLIC_URL =
@@ -95,7 +87,6 @@ beforeEach(() => {
     remaining: 59,
     resetAt: Date.now() + 60_000,
   });
-  mockRemoveOther.mockResolvedValue({ ok: true });
   mockCreateClient.mockResolvedValue(makeStorageClient());
 });
 
@@ -222,23 +213,17 @@ describe("POST /api/upload/profile-picture", () => {
     errorSpy.mockRestore();
   });
 
-  it("returns 200 with url on success", async () => {
+  it("returns 200 with url on success and does not purge the folder (F9-037)", async () => {
+    const purgeSpy = vi.spyOn(
+      profilePictureStorage,
+      "removeOtherProfilePicturesInFolder",
+    );
+
     const response = await POST(makeUploadRequest(jpegFile()));
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ url: PUBLIC_URL });
-    expect(mockRemoveOther).toHaveBeenCalled();
-  });
+    expect(purgeSpy).not.toHaveBeenCalled();
 
-  it("includes warning when purge of older files fails", async () => {
-    mockRemoveOther.mockResolvedValue({ ok: false });
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-    const response = await POST(makeUploadRequest(jpegFile()));
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      url: PUBLIC_URL,
-      warning: "Uploaded but could not remove older files",
-    });
-    errorSpy.mockRestore();
+    purgeSpy.mockRestore();
   });
 });

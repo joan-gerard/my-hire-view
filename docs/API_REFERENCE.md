@@ -362,7 +362,7 @@ Return the current user’s profile. **Read-only** — does not create a row. If
 
 `PUT /api/profile`
 
-Upsert profile fields (row usually already exists from signup). Requires non-empty `first_name` and `last_name` (after merge with existing — so picture-only updates work). Omitted names and `public_id` are seeded from Auth `user_metadata` when present and the profiles value is missing/blank (C3-026), so a picture-only PUT from `/admin/new` can create or repair the row. Names introduced by this request (body or metadata seed) must satisfy the **100**-character max; an existing over-long stored name is preserved so picture-only updates still succeed. Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change **or** Auth `user_metadata` names/`public_id` are already out of sync, syncs Auth `user_metadata` (so a same-name save can repair a prior failed sync — F12-031). When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upsert profile fields (row usually already exists from signup). Requires non-empty `first_name` and `last_name` (after merge with existing — so picture-only updates work). Omitted names and `public_id` are seeded from Auth `user_metadata` when present and the profiles value is missing/blank (C3-026), so a picture-only PUT from `/admin/new` can create or repair the row. Names introduced by this request (body or metadata seed) must satisfy the **100**-character max; an existing over-long stored name is preserved so picture-only updates still succeed. Assigns or preserves `public_id`. Body is schema-validated with Zod. When names/`public_id` change **or** Auth `user_metadata` names/`public_id` are already out of sync, syncs Auth `user_metadata` (so a same-name save can repair a prior failed sync — F12-031). When `profile_picture_url` changes, **after** a successful upsert deletes the previous Storage object. When a non-null picture URL is committed, also sweeps other objects in the user’s Storage folder while keeping the committed path (F9-037 / F9-062 — purge is not done on upload). Applications do not store a picture URL copy — they read the live profile URL when `show_profile_picture` is true. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -375,7 +375,7 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 - Auth required; upsert keyed by `user_id` (create-on-first-save).
 - Rate limited; Zod validation; ownership check on picture URLs (origin must match `NEXT_PUBLIC_SUPABASE_URL`; path-only lookalikes on other hosts → **400**).
 - Omitted `first_name` / `last_name` / `public_id` are seeded from Auth `user_metadata` when the profiles value is missing or blank (picture-only create/repair); body and metadata-seeded names are capped at **100** characters (legacy over-long stored names are left as-is).
-- Deletes previous Storage object after successful write when the URL changes; surfaces partial failures as `warnings`.
+- Deletes previous Storage object after successful write when the URL changes; picture-changing PUTs are serialized per user on this instance (best-effort); re-reads live URL before cleanup (failed re-read → `warnings`, no false “still clear”); when still current, also purges other folder objects keeping that path (F9); non-picture saves do not purge; surfaces partial failures as `warnings`. Concurrent picture updates may return **429**.
 - No applications fan-out for picture URLs (live profile read on view).
 - Dedicated `withAuth` → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
 - Syncs Auth `user_metadata` (`first_name`, `last_name`, `public_id`) when DB names change **or** Auth names/`public_id` are out of sync (same-name PUT can repair a prior failed `updateUser` — F12-031); sync failures become `warnings` while still returning **200** + `data`. Names written to Auth are truncated to **100** characters so metadata never holds an over-long seed (legacy over-long profiles values may still differ until the user edits them).
@@ -545,20 +545,20 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 
 `POST /api/upload/profile-picture`
 
-Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png|webp}` in the `profile-pictures` bucket, purge other objects in that folder, and return the public URL. Intended to be called from profile **Save** (upload-on-save), not on file pick. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png|webp}` in the `profile-pictures` bucket and return the public URL. Does **not** purge other folder objects — that runs on successful `PUT /api/profile` after the URL is committed (F9-037 / F9-062). Intended to be called from profile **Save** (upload-on-save), not on file pick. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
 - **Body:** `multipart/form-data` with `file` (JPEG, PNG, or WebP; max **5 MB**)
-- **Success:** `200` `{ url: string }` optionally `{ warning }` if purge of older files failed
+- **Success:** `200` `{ url: string }`
 - **Errors:** `400` missing/invalid file; `401`; `429`; `500`
 
 **What works**
 
-- Canonical path + upsert enforces one picture per user; removes leftover folder objects after upload.
+- Canonical path + upsert; folder leftovers are cleaned on profile URL commit, not on upload.
 - Auth required (dedicated check → **401**); Storage / unexpected failures use `handleApiError` → **500** with a generic client message. Server logs include log-only `meta` (`userId`, file `size`, Storage `status` / `statusCode` as `storageStatus`).
 - Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8\*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
-- **Client Save UX (F8):** `ProfileForm` and `ProfilePictureModal` share `uploadProfilePictureFile` for request + friendly error mapping (null JSON bodies are safe); Save shows **Uploading…** during `POST /api/upload/profile-picture`, then **Saving…**. Upload `warning` and PUT `warnings` are shown to the user (modal stays open until dismissed when a warning is present). While upload/save is in flight, `ProfilePictureModal` ignores Escape and backdrop dismiss so the request can finish.
+- **Client Save UX (F8 / F9-052):** `ProfileForm` and `ProfilePictureModal` share `uploadProfilePictureFile` for request + friendly error mapping (null JSON bodies are safe); Save shows **Uploading…** during `POST /api/upload/profile-picture`, then **Saving…**. PUT `warnings` (and any legacy upload `warning`) are shown to the user (modal stays open until dismissed when a warning is present). While upload/save is in flight, `ProfilePictureModal` ignores Escape and backdrop dismiss so the request can finish.
 
 **Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
 
