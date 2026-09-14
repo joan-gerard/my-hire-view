@@ -1,6 +1,6 @@
 # Manual test — create-application draft + CV source (F15)
 
-Covers **F15-045** (local form draft) and **F15-049** (CV source while library loads) on `/admin/new`.
+Covers **F15-045** (local form draft) and **F15-049** (CV source while library loads) on `/admin/new`. Design rationale (keep draft on refresh; discard on confirmed intentional leave): [CREATE_APP_DRAFT_AND_LEAVE.md](../retrospectives/CREATE_APP_DRAFT_AND_LEAVE.md).
 
 ## Setup
 
