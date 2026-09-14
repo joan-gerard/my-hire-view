@@ -2,6 +2,7 @@
  * Tests for same-origin leave-intercept helpers (create-app draft guard).
  */
 import { describe, expect, it } from "vitest";
+import type { ApplicationCvType } from "@/lib/types/application";
 import {
   hasLeaveRelevantDraftChanges,
   leaveRelevantDraftSnapshot,
@@ -49,10 +50,10 @@ describe("leaveRelevantDraftSnapshot", () => {
       portfolio_url: false,
       linkedin_url: false,
     },
-    slugNamePosition: null as const,
+    slugNamePosition: null as "start" | "end" | null,
     slugManuallyEdited: false,
     showProfilePicture: true,
-    cvMode: "primary" as const,
+    cvMode: "primary" as ApplicationCvType,
     cvModeUserChosen: false,
     selectedPrimaryId: "cv-1",
     use_original_cv_filename: true,

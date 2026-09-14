@@ -51,10 +51,18 @@ export function useLeaveConfirm(
     if (isGuardHistoryState(window.history.state)) {
       bypassRef.current = true;
       window.history.back();
+      // Cleanup may have already removed the popstate listener that clears
+      // bypassRef — drop it on the next microtask so a later re-arm works.
+      queueMicrotask(() => {
+        if (bypassRef.current && !guardActiveRef.current) {
+          bypassRef.current = false;
+        }
+      });
     }
   }, []);
 
   const ensureSentinel = useCallback(() => {
+    bypassRef.current = false;
     if (guardActiveRef.current && isGuardHistoryState(window.history.state)) {
       return;
     }
@@ -69,6 +77,9 @@ export function useLeaveConfirm(
       removeSentinel();
       return;
     }
+
+    // Re-arming after a disable must not inherit a stuck bypass from sentinel removal.
+    bypassRef.current = false;
 
     const onPopState = () => {
       if (bypassRef.current) {

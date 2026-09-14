@@ -37,7 +37,7 @@ import {
   leaveRelevantDraftSnapshot,
 } from "@/lib/utils/leave-confirm";
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
 import type { CandidateFieldKey } from "./CandidateFieldsSection";
 import CandidateFieldsSection from "./CandidateFieldsSection";
@@ -160,6 +160,8 @@ export default function ApplicationForm({
     Boolean(restoredDraft && !isCreateApplicationDraftBlank(restoredDraft)),
   );
   const leaveBaselineRef = useRef<string | null>(null);
+  /** Flush localStorage clear after a restored draft is emptied (before paint). */
+  const pendingClearRestoredDraftRef = useRef(false);
 
   const showProfilePictureDefault =
     restoredDraft?.showProfilePicture !== undefined
@@ -551,9 +553,21 @@ export default function ApplicationForm({
     isCreateApplicationDraftBlank(draftSnapshot) &&
     !cvPendingFile
   ) {
-    // User cleared the restored draft back to empty — stop treating it as progress.
+    // User cleared the restored draft back to empty — stop treating it as
+    // progress and realign the leave baseline so blank ≠ "changed from draft".
     hadRestoredDraftRef.current = false;
+    leaveBaselineRef.current = leaveRelevantDraftSnapshot(draftSnapshot);
+    pendingClearRestoredDraftRef.current = true;
   }
+
+  useLayoutEffect(() => {
+    if (!persistDraftKey || !pendingClearRestoredDraftRef.current) return;
+    pendingClearRestoredDraftRef.current = false;
+    // Drop storage immediately so a fast navigate cannot restore the old draft
+    // before the debounced autosave runs.
+    clearCreateApplicationDraft(persistDraftKey);
+  });
+
   const hasCreateProgress =
     Boolean(persistDraftKey) &&
     (Boolean(cvPendingFile) ||
