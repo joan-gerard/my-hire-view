@@ -1,6 +1,7 @@
 /**
- * Profile-owned primary CV (library entry). Max 5 per user.
- * See docs/PDF_AND_R2.md
+ * Profile-owned primary CV (library entry). Free/Pro max 5 per user
+ * (`PRIMARY_CV_MAX_PER_USER`); DB enforces via `primary_cv_library_max_for_user`
+ * + trigger `primary_cvs_library_cap` (F13-032). See docs/PDF_AND_R2.md.
  */
 import type { ApplicationStatus } from "@/lib/types/application";
 
@@ -32,7 +33,47 @@ export interface PrimaryCvCreateResult {
   data: PrimaryCv;
 }
 
+/**
+ * Free/Pro primary library max (UI + early API check).
+ * Must stay aligned with `primary_cv_library_max_for_user()` until E2 makes
+ * the DB function plan-aware (Premium planned max 15).
+ */
 export const PRIMARY_CV_MAX_PER_USER = 5;
+
+/** Stable marker from trigger `primary_cvs_library_cap` (migration 028). */
+export const PRIMARY_CV_LIBRARY_CAP_ERROR_MARKER =
+  "primary_cvs_library_cap_exceeded";
+
+/** User-facing copy when the primary library is at capacity. */
+export function primaryCvLibraryCapMessage(
+  max: number = PRIMARY_CV_MAX_PER_USER,
+): string {
+  const n = Math.max(1, Math.floor(max));
+  return `You can store up to ${n} primary CVs. Delete one to upload another.`;
+}
+
+/**
+ * True when a PostgREST/Postgres error is the F13 library-cap trigger.
+ * Optionally parses `:max=N` from the exception so Premium can raise later.
+ */
+export function isPrimaryCvLibraryCapError(
+  error: { message?: string | null; code?: string | null } | null | undefined,
+): boolean {
+  const message = error?.message;
+  return typeof message === "string" && message.includes(PRIMARY_CV_LIBRARY_CAP_ERROR_MARKER);
+}
+
+/** Parses `:max=N` from a cap exception message; null if absent/invalid. */
+export function primaryCvLibraryCapMaxFromDbError(
+  error: { message?: string | null } | null | undefined,
+): number | null {
+  const message = error?.message;
+  if (typeof message !== "string") return null;
+  const match = message.match(/:max=(\d+)\b/);
+  if (!match) return null;
+  const n = Number(match[1]);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
 
 /** Max application rows shown in the delete-confirm preview list. */
 export const PRIMARY_CV_DELETE_PREVIEW_LIMIT = 10;

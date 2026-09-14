@@ -5,10 +5,14 @@
 import { describe, it, expect } from "vitest";
 import {
   PRIMARY_CV_DELETE_PREVIEW_LIMIT,
+  PRIMARY_CV_LIBRARY_CAP_ERROR_MARKER,
   PRIMARY_CV_MAX_PER_USER,
+  isPrimaryCvLibraryCapError,
   primaryCvApplicationPreviewLabel,
   primaryCvDeleteConfirmMessage,
   primaryCvDeletedStillReferencedMessage,
+  primaryCvLibraryCapMaxFromDbError,
+  primaryCvLibraryCapMessage,
   primaryCvPostDeleteStatusMessage,
 } from "@/lib/types/primary-cv";
 
@@ -19,6 +23,39 @@ describe("primary CV library constants", () => {
 
   it("limits delete-confirm previews to ten applications", () => {
     expect(PRIMARY_CV_DELETE_PREVIEW_LIMIT).toBe(10);
+  });
+});
+
+describe("primary CV library cap helpers (F13-032)", () => {
+  it("builds the user-facing at-capacity message", () => {
+    expect(primaryCvLibraryCapMessage()).toBe(
+      "You can store up to 5 primary CVs. Delete one to upload another.",
+    );
+    expect(primaryCvLibraryCapMessage(15)).toBe(
+      "You can store up to 15 primary CVs. Delete one to upload another.",
+    );
+  });
+
+  it("detects the DB trigger marker", () => {
+    expect(
+      isPrimaryCvLibraryCapError({
+        message: `${PRIMARY_CV_LIBRARY_CAP_ERROR_MARKER}:user=abc:max=5`,
+        code: "P0001",
+      }),
+    ).toBe(true);
+    expect(isPrimaryCvLibraryCapError({ message: "other error" })).toBe(false);
+    expect(isPrimaryCvLibraryCapError(null)).toBe(false);
+  });
+
+  it("parses max from the DB exception message", () => {
+    expect(
+      primaryCvLibraryCapMaxFromDbError({
+        message: `${PRIMARY_CV_LIBRARY_CAP_ERROR_MARKER}:user=abc:max=15`,
+      }),
+    ).toBe(15);
+    expect(
+      primaryCvLibraryCapMaxFromDbError({ message: "unrelated" }),
+    ).toBeNull();
   });
 });
 

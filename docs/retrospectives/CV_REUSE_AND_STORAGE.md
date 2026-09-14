@@ -62,7 +62,7 @@ Prefill `cv_url` from the user’s most recent application.
 
 | Piece | Behaviour |
 |-------|-----------|
-| **Primary CVs** | Up to **5** PDFs managed from the **profile** or from **New** / **Edit application** (same library). Stored under `cvs/{userId}/primary/…`; URLs listed via `primary_cvs`. |
+| **Primary CVs** | Up to **5** PDFs (Free/Pro; Premium planned **15**) managed from the **profile** or from **New** / **Edit application** (same library). Stored under `cvs/{userId}/primary/…`; URLs listed via `primary_cvs`. Cap enforced in API and atomically in Postgres (`028` / F13-032). |
 | **Tailored CVs** | Per-application upload when the candidate needs a one-off version (`cvs/{userId}/tailored/…`). |
 | **Create UX** | Default: pick from primary library. Override: “Upload a different CV for this application.” |
 | **Edit UX** | Show current mode (primary vs tailored) and filename; allow switching either way. |
@@ -114,7 +114,7 @@ This prepares for a future hard-delete of long-archived applications without enc
 | API | `GET/POST/DELETE /api/profile/primary-cvs` |
 | Docs | This retrospective + backlog tickets for retention |
 
-**Migrations:** `021_application_status_and_archived_at.sql`, `022_master_cvs.sql`, `024_primary_cvs_rename.sql`, `027_applications_primary_cv_same_user.sql` (same-user ownership trigger for `primary_cv_id` + immutable `primary_cvs.user_id` + quarantine of cross-user rows).
+**Migrations:** `021_application_status_and_archived_at.sql`, `022_master_cvs.sql`, `024_primary_cvs_rename.sql`, `027_applications_primary_cv_same_user.sql` (same-user ownership trigger for `primary_cv_id` + immutable `primary_cvs.user_id` + quarantine of cross-user rows), `028_primary_cvs_library_cap.sql` (atomic per-user library max via `primary_cv_library_max_for_user` + advisory lock — F13-032).
 
 ---
 

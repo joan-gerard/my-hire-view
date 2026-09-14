@@ -409,7 +409,7 @@ List the authenticated user’s primary CV library (newest first). Each row incl
 
 `POST /api/profile/primary-cvs`
 
-Upload a PDF to the primary CV library (max **5** per user). Object key: `cvs/{userId}/primary/{id}.pdf`. See [PDF_AND_R2.md](PDF_AND_R2.md).
+Upload a PDF to the primary CV library (max **5** per user today — Free/Pro default; Premium planned **15**). Object key: `cvs/{userId}/primary/{id}.pdf`. See [PDF_AND_R2.md](PDF_AND_R2.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -419,7 +419,8 @@ Upload a PDF to the primary CV library (max **5** per user). Object key: `cvs/{u
 
 **What works**
 
-- Auth required; enforces **5** primaries per user before upload.
+- Auth required; early count check against `PRIMARY_CV_MAX_PER_USER` (**5**) before R2 upload.
+- **Atomic cap (F13-032):** migration `028` — BEFORE INSERT trigger `primary_cvs_library_cap` takes a per-user advisory lock, counts rows, and rejects when at `primary_cv_library_max_for_user()` (today returns **5**; single place to raise for Premium). Concurrent POSTs cannot slip past the max; insert failure rolls back R2 and returns the same friendly **400** copy (not the raw Postgres message).
 - **Schema validation** (`primaryCvLabelSchema` in `lib/validation/primary-cv.ts`): optional `label` trimmed; empty → `null`; max **120**; non-string rejected; clear **400** before count/R2 work.
 - PDF-only, **3 MB** max, `%PDF` magic-byte check.
 - Writes R2 object then inserts `primary_cvs` row; rolls back R2 on insert failure.
@@ -680,6 +681,6 @@ Canonical TypeScript shapes live in:
 - `lib/validation/waitlist.ts` — `waitlistBodySchema` / `formatWaitlistZodError` for `POST /api/waitlist`
 - `lib/validation/primary-cv.ts` — `primaryCvLabelSchema` / `primaryCvDeleteQuerySchema` / `formatPrimaryCvZodError` for `POST`/`DELETE /api/profile/primary-cvs`
 - `lib/types/profile.ts` — `Profile`, `ProfileUpdateInput`
-- `lib/types/primary-cv.ts` — `PrimaryCv`, `PrimaryCvApplicationPreview`, `PRIMARY_CV_MAX_PER_USER`
+- `lib/types/primary-cv.ts` — `PrimaryCv`, `PrimaryCvApplicationPreview`, `PRIMARY_CV_MAX_PER_USER`, library-cap helpers (`isPrimaryCvLibraryCapError`, `primaryCvLibraryCapMessage`)
 
 Client helpers for some application calls: `lib/api/applications.ts`.

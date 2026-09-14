@@ -132,7 +132,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | **Custom vanity public id** | LinkedIn-style branded public id (e.g. `/view/joan-gerard/...`). | [Backlog.md](Backlog.md) (After launch → Could), [PUBLIC_URL_OPTION_B.md](retrospectives/PUBLIC_URL_OPTION_B.md#future-custom-public-id-vanity-handle) |
 | **Unlimited applications** | Marketed as unlimited; internal fair-use soft ceiling **100** (protects R2 storage). Soft-ceiling UX copy TBD (§5). | Working decision (this doc) |
 | **Richer analytics** | Beyond Pro: view duration, geographic origin, referrer/traffic source, video-pitch engagement (played vs page-only), CSV export, side-by-side comparison across the candidate’s own applications. | Working decision (this doc) |
-| **Primary library up to 15** | Raise above Free/Pro’s 5. | Working decision (this doc); today Free/Pro still use `PRIMARY_CV_MAX_PER_USER` = 5 until Premium gating ships |
+| **Primary library up to 15** | Raise above Free/Pro’s 5. | Working decision (this doc); Free/Pro still use `PRIMARY_CV_MAX_PER_USER` = 5 and DB `primary_cv_library_max_for_user()` = 5 (F13-032); raise that function (and the early API check) when Premium gating ships (E2) |
 | **Public view personalization** (planned) | Optional personality / branding on `/view` beyond name, picture, video, CV — e.g. theme/accent colors, headline, quotes, extra photos. **After launch**; design brainstorm `N0-109`, scope `N1-106`, then `N2-107` / `N3-108`. Natural **Premium** unlock alongside vanity public id. | [Backlog.md](Backlog.md) (After launch → Could, Epic N) |
 | **Price** | **$14/mo** or **$59/yr** (~$4.92/mo effective). | Working decision (this doc) |
 

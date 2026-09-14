@@ -7,7 +7,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 ## Overview
 
 - **What we store:** CV PDFs in Cloudflare R2.
-  - **Primary CVs** — up to 5 per user, managed from the profile or from **New** / **Edit application** (`primary_cvs` table, keys `cvs/{userId}/primary/…`).
+  - **Primary CVs** — up to 5 per user (Free/Pro default; DB-enforced via migration `028` / F13-032), managed from the profile or from **New** / **Edit application** (`primary_cvs` table, keys `cvs/{userId}/primary/…`).
   - **Tailored CVs** — one optional per-application upload (keys `cvs/{userId}/tailored/…` via idempotent upload).
 - **Where:** Cloudflare R2. Objects are uploaded with a **public URL** so the shareable application page can load the PDF.
 - **Policy:** Upload on save for tailored CVs. Application delete/replace removes **tailored** objects only; primary CVs are deleted only from the library (profile or in-form modal). See [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md).
@@ -42,7 +42,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 | Piece | Role |
 |-------|------|
 | `POST /api/upload` | Tailored CV upload (auth + idempotency). Keys `cvs/{userId}/tailored/<key>.pdf`. |
-| `GET/POST/DELETE /api/profile/primary-cvs` | Primary CV library (max 5). Keys `cvs/{userId}/primary/{id}.pdf`. GET includes `applications_count` and a `used_by` preview per row. |
+| `GET/POST/DELETE /api/profile/primary-cvs` | Primary CV library (max 5 Free/Pro; insert capped atomically by trigger `primary_cvs_library_cap`). Keys `cvs/{userId}/primary/{id}.pdf`. GET includes `applications_count` and a `used_by` preview per row. |
 | `lib/storage/r2-client.ts` | S3-compatible R2 client. |
 | `lib/utils/cv-storage.ts` | `getCvObjectKeyFromPublicUrl`, `toCanonicalCvPublicUrl`, `isOwnedTailoredCvUrl`, `isOwnedCvUrl`, `deleteCvIfOurs(url, userId)`, `deleteApplicationCvIfTailored` (allow-list tailored only; fail closed if `R2_PUBLIC_BASE_URL` unset), `checkCvObjectExists` (`true` / `false` for R2 URLs; `undefined` when the URL is outside our R2 public base). |
 
