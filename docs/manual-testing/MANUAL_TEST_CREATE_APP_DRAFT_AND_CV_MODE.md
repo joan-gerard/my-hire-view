@@ -24,7 +24,8 @@ Covers **F15-045** (local form draft) and **F15-049** (CV source while library l
 - [ ] Restore a draft whose primary CV was deleted meanwhile: Save is not ready with a stale id; mode falls back to tailored when the library is empty, or another primary when one remains.
 - [ ] Fail Save (e.g. offline create / forced API error): draft remains. Succeed Save → `/admin/new` is clean afterward.
 - [ ] With progress on the form, click **Dashboard** / **Profile** / browser **Back**: confirm dialog appears (“Leaving this page will discard this draft…”). **No, stay** keeps you on the page with the draft. **Yes, I'm sure** leaves and clears the draft — reopening New Application is clean.
-- [ ] Edit then clear fields back to empty: leave no longer prompts (and Back does not require an extra press).
+- [ ] After confirming a Dashboard/Profile link leave, you land on the target and **Back does not return to `/admin/new`** (sentinel was dropped before replace).
+- [ ] Edit then clear fields back to empty: leave no longer prompts (and Back does not require an extra press). Then type again so progress returns: leave prompts again (sentinel re-armed after the clear).
 - [ ] Untouched form (profile prefills only): leaving does not prompt.
 - [ ] Manual slug edits are protected by the leave dialog; auto slug updates alone are not.
 - [ ] Opening `/admin/new` as the first tab history entry, then confirming Back, still leaves create (falls back to dashboard if needed).
