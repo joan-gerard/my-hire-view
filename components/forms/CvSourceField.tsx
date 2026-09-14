@@ -179,13 +179,26 @@ export default function CvSourceField({
         )}
 
         <div className="space-y-3">
-          <label className="flex cursor-pointer items-start gap-2.5">
+          {/* F15-049: lock source radios until the library finishes loading so
+              a mid-load “Upload a different CV” choice cannot be overwritten. */}
+          {primaryCvsLoading && (
+            <p className="text-xs text-[var(--foreground)]/60" role="status">
+              Loading your CV library…
+            </p>
+          )}
+          <label
+            className={`flex items-start gap-2.5 ${
+              primaryCvsLoading
+                ? "cursor-not-allowed opacity-60"
+                : "cursor-pointer"
+            }`}
+          >
             <input
               type="radio"
               name="cvSource"
               className="mt-1 h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
               checked={mode === "primary"}
-              disabled={!hasPrimaryCvs && !primaryCvsLoading}
+              disabled={primaryCvsLoading || !hasPrimaryCvs}
               onChange={() => onSwitchToPrimary()}
             />
             <span className="min-w-0 flex-1">
@@ -267,12 +280,19 @@ export default function CvSourceField({
             </div>
           )}
 
-          <label className="flex cursor-pointer items-start gap-2.5">
+          <label
+            className={`flex items-start gap-2.5 ${
+              primaryCvsLoading
+                ? "cursor-not-allowed opacity-60"
+                : "cursor-pointer"
+            }`}
+          >
             <input
               type="radio"
               name="cvSource"
               className="mt-1 h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
               checked={mode === "tailored"}
+              disabled={primaryCvsLoading}
               onChange={() => onSwitchToTailored()}
             />
             <span className="min-w-0 flex-1">

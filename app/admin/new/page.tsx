@@ -7,6 +7,7 @@ import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
 import type { ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
+import { createApplicationDraftStorageKey } from "@/lib/utils/create-application-draft";
 import { validateSlugFormat } from "@/lib/utils/slug-generate";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -266,6 +267,9 @@ export default function NewApplicationPage() {
             }
             publicId={publicId ?? undefined}
             resolveSlugOnCreate
+            persistDraftKey={createApplicationDraftStorageKey(
+              publicId ?? profile?.user_id ?? "local",
+            )}
           />
         )}
       </div>

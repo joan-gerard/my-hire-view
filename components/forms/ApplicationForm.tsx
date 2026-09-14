@@ -22,8 +22,15 @@ import {
 import { getApplicationUrl } from "@/lib/utils/url";
 import {
   isCurrentPrimaryCvLoad,
+  shouldApplyInitialCvModeDefault,
   shouldAutoSelectFirstPrimaryOnLibraryFill,
 } from "@/lib/utils/primary-cv-form-sync";
+import {
+  clearCreateApplicationDraft,
+  loadCreateApplicationDraft,
+  saveCreateApplicationDraft,
+  type CreateApplicationDraft,
+} from "@/lib/utils/create-application-draft";
 import { useEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
 import type { CandidateFieldKey } from "./CandidateFieldsSection";
@@ -93,6 +100,11 @@ interface ApplicationFormProps {
    * and validate manual slugs before submit.
    */
   resolveSlugOnCreate?: boolean;
+  /**
+   * When set (create flow only), autosave form fields to localStorage under this
+   * key and restore on mount (F15-045). Cleared after a successful submit.
+   */
+  persistDraftKey?: string;
 }
 
 export default function ApplicationForm({
@@ -106,42 +118,75 @@ export default function ApplicationForm({
   publicId,
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
+  persistDraftKey,
 }: ApplicationFormProps) {
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
+
+  /** Load once per mount; ignore later key changes while the form is open. */
+  const restoredDraftRef = useRef<CreateApplicationDraft | null | undefined>(
+    undefined,
+  );
+  if (restoredDraftRef.current === undefined) {
+    restoredDraftRef.current = persistDraftKey
+      ? loadCreateApplicationDraft(persistDraftKey)
+      : null;
+  }
+  const restoredDraft = restoredDraftRef.current;
+
+  /**
+   * F15-049: once the user (or a restored draft) picks a CV source, the primary
+   * library fetch must not overwrite it.
+   */
+  const cvModeUserChosenRef = useRef(
+    Boolean(restoredDraft?.cvMode) ||
+      restoredDraft?.selectedPrimaryId != null,
+  );
+  /** After a successful create, ignore further draft writes (F15-045). */
+  const skipDraftSaveRef = useRef(false);
+
   const showProfilePictureDefault =
-    initialData?.show_profile_picture !== undefined
-      ? initialData.show_profile_picture === true
-      : true;
+    restoredDraft?.showProfilePicture !== undefined
+      ? restoredDraft.showProfilePicture
+      : initialData?.show_profile_picture !== undefined
+        ? initialData.show_profile_picture === true
+        : true;
   const [showProfilePicture, setShowProfilePicture] = useState(
     showProfilePictureDefault,
   );
 
   const [formData, setFormData] = useState<ApplicationFormData>({
-    company: initialData?.company || "",
-    role: initialData?.role || "",
-    slug: initialData?.slug || "",
+    company: restoredDraft?.company || initialData?.company || "",
+    role: restoredDraft?.role || initialData?.role || "",
+    slug: restoredDraft?.slug || initialData?.slug || "",
     cv_url: initialData?.cv_url || "",
-    video_url: initialData?.video_url || "",
-    first_name: initialData?.first_name ?? "",
-    last_name: initialData?.last_name ?? "",
-    location: initialData?.location ?? "",
-    portfolio_url: initialData?.portfolio_url ?? "",
-    linkedin_url: initialData?.linkedin_url ?? "",
+    video_url: restoredDraft?.video_url || initialData?.video_url || "",
+    first_name:
+      restoredDraft?.first_name ?? initialData?.first_name ?? "",
+    last_name: restoredDraft?.last_name ?? initialData?.last_name ?? "",
+    location: restoredDraft?.location ?? initialData?.location ?? "",
+    portfolio_url:
+      restoredDraft?.portfolio_url ?? initialData?.portfolio_url ?? "",
+    linkedin_url:
+      restoredDraft?.linkedin_url ?? initialData?.linkedin_url ?? "",
     cv_filename: initialData?.cv_filename ?? null,
-    use_original_cv_filename: initialData?.use_original_cv_filename ?? true,
-    cv_type: initialData?.cv_type,
-    primary_cv_id: initialData?.primary_cv_id ?? null,
+    use_original_cv_filename:
+      restoredDraft?.use_original_cv_filename ??
+      initialData?.use_original_cv_filename ??
+      true,
+    cv_type: restoredDraft?.cvMode ?? initialData?.cv_type,
+    primary_cv_id:
+      restoredDraft?.selectedPrimaryId ?? initialData?.primary_cv_id ?? null,
   });
 
   const [include, setInclude] = useState<Record<CandidateFieldKey, boolean>>(
-    () => defaultInclude(initialData),
+    () => restoredDraft?.include ?? defaultInclude(initialData),
   );
 
   const [slugNamePosition, setSlugNamePosition] = useState<
     "start" | "end" | null
-  >(initialData?.slugNamePosition ?? null);
+  >(restoredDraft?.slugNamePosition ?? initialData?.slugNamePosition ?? null);
   const [errors, setErrors] = useState<
     Partial<Record<keyof ApplicationFormData, string>>
   >({});
@@ -149,16 +194,17 @@ export default function ApplicationForm({
     kind: "idle",
   });
   /** Edit: treat a non-derived saved slug as manual so mount auto-rebuild does not wipe it (F14-099). */
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(() =>
-    isCustomSlug(
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(() => {
+    if (restoredDraft) return restoredDraft.slugManuallyEdited;
+    return isCustomSlug(
       initialData?.slug ?? "",
       initialData?.company ?? "",
       initialData?.role ?? "",
       initialData?.first_name,
       initialData?.last_name,
       initialData?.slugNamePosition ?? null,
-    ),
-  );
+    );
+  });
   const slugManuallyEditedRef = useRef(false);
   slugManuallyEditedRef.current = slugManuallyEdited;
   /**
@@ -204,13 +250,16 @@ export default function ApplicationForm({
   /** Bumped by modal library updates so a slower form GET cannot overwrite them. */
   const primaryCvLoadGenerationRef = useRef(0);
   const [cvMode, setCvMode] = useState<ApplicationCvType>(() => {
+    if (restoredDraft?.cvMode === "primary" || restoredDraft?.cvMode === "tailored") {
+      return restoredDraft.cvMode;
+    }
     if (initialData?.cv_type === "primary" || initialData?.cv_type === "tailored") {
       return initialData.cv_type;
     }
     return "primary";
   });
   const [selectedPrimaryId, setSelectedPrimaryId] = useState<string | null>(
-    initialData?.primary_cv_id ?? null,
+    restoredDraft?.selectedPrimaryId ?? initialData?.primary_cv_id ?? null,
   );
   const [switchToPrimaryConfirmOpen, setSwitchToPrimaryConfirmOpen] =
     useState(false);
@@ -238,22 +287,41 @@ export default function ApplicationForm({
         }
         const list = (json.data as PrimaryCv[] | undefined) ?? [];
         setPrimaryCvs(list);
-        if (!initialData?.cv_type) {
+        const applyDefault = shouldApplyInitialCvModeDefault({
+          hasSavedCvType: Boolean(initialData?.cv_type),
+          userChoseCvMode: cvModeUserChosenRef.current,
+        });
+        if (applyDefault) {
           if (list.length > 0) {
+            const pick = list[0]!;
             setCvMode("primary");
-            setSelectedPrimaryId((prev) => prev ?? list[0]!.id);
+            setSelectedPrimaryId((prev) => prev ?? pick.id);
             setFormData((prev) => ({
               ...prev,
-              cv_url: list[0]!.url,
-              cv_filename: list[0]!.filename,
-              primary_cv_id: list[0]!.id,
+              cv_url: pick.url,
+              cv_filename: pick.filename,
+              primary_cv_id: pick.id,
               cv_type: "primary",
             }));
           } else {
             setCvMode("tailored");
           }
+        } else if (!initialData?.cv_type && list.length > 0 && cvMode === "primary") {
+          // Draft / explicit primary choice: keep mode; refresh URL from library.
+          const preferred =
+            (selectedPrimaryId &&
+              list.find((m) => m.id === selectedPrimaryId)) ||
+            list[0]!;
+          setSelectedPrimaryId(preferred.id);
+          setFormData((prev) => ({
+            ...prev,
+            cv_url: preferred.url,
+            cv_filename: preferred.filename,
+            primary_cv_id: preferred.id,
+            cv_type: "primary",
+          }));
         } else if (
-          initialData.cv_type === "primary" &&
+          initialData?.cv_type === "primary" &&
           initialData.primary_cv_id &&
           !list.some((m) => m.id === initialData.primary_cv_id)
         ) {
@@ -324,11 +392,13 @@ export default function ApplicationForm({
 
     // First primary CV(s) added while empty — prefer primary mode (create-form default).
     // Use create vs edit, not form-GET loading, so a modal update can win the race.
+    // F15-049: skip if the user already chose tailored (or primary) explicitly.
     if (
       shouldAutoSelectFirstPrimaryOnLibraryFill({
         hadPrimaryCvs,
         isCreate: !initialData?.cv_type,
         listLength: list.length,
+        userChoseCvMode: cvModeUserChosenRef.current,
       })
     ) {
       const pick = list[0]!;
@@ -345,6 +415,51 @@ export default function ApplicationForm({
       setErrors((prev) => ({ ...prev, cv_url: undefined }));
     }
   };
+
+  /** F15-045: debounced local draft while creating (not on edit). */
+  useEffect(() => {
+    if (!persistDraftKey || skipDraftSaveRef.current) return;
+    const timer = window.setTimeout(() => {
+      if (skipDraftSaveRef.current) return;
+      saveCreateApplicationDraft(persistDraftKey, {
+        company: formData.company,
+        role: formData.role,
+        slug: formData.slug,
+        video_url: formData.video_url,
+        first_name: formData.first_name ?? "",
+        last_name: formData.last_name ?? "",
+        location: formData.location ?? "",
+        portfolio_url: formData.portfolio_url ?? "",
+        linkedin_url: formData.linkedin_url ?? "",
+        include,
+        slugNamePosition,
+        slugManuallyEdited,
+        showProfilePicture,
+        cvMode,
+        selectedPrimaryId,
+        use_original_cv_filename: formData.use_original_cv_filename ?? true,
+      });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [
+    persistDraftKey,
+    formData.company,
+    formData.role,
+    formData.slug,
+    formData.video_url,
+    formData.first_name,
+    formData.last_name,
+    formData.location,
+    formData.portfolio_url,
+    formData.linkedin_url,
+    formData.use_original_cv_filename,
+    include,
+    slugNamePosition,
+    slugManuallyEdited,
+    showProfilePicture,
+    cvMode,
+    selectedPrimaryId,
+  ]);
 
   const hasCompany = Boolean(formData.company.trim());
   const hasRole = Boolean(formData.role.trim());
@@ -848,6 +963,10 @@ export default function ApplicationForm({
         slugManuallyEdited,
       };
       await onSubmit(payload);
+      if (persistDraftKey) {
+        skipDraftSaveRef.current = true;
+        clearCreateApplicationDraft(persistDraftKey);
+      }
     } finally {
       isSubmittingRef.current = false;
       setSubmitPhase("idle");
@@ -1006,6 +1125,7 @@ export default function ApplicationForm({
         onSelectPrimary={(primaryId) => {
           const primary = primaryCvs.find((m) => m.id === primaryId);
           if (!primary) return;
+          cvModeUserChosenRef.current = true;
           setSelectedPrimaryId(primaryId);
           setFormData((prev) => ({
             ...prev,
@@ -1017,6 +1137,7 @@ export default function ApplicationForm({
           setErrors((prev) => ({ ...prev, cv_url: undefined }));
         }}
         onSwitchToTailored={() => {
+          cvModeUserChosenRef.current = true;
           setCvMode("tailored");
           clearPendingCvSelection();
           // Keep primary selection + CV fields when leaving primary so a failed
@@ -1055,6 +1176,7 @@ export default function ApplicationForm({
             setSwitchToPrimaryConfirmOpen(true);
             return;
           }
+          cvModeUserChosenRef.current = true;
           setCvMode("primary");
           clearPendingCvSelection();
           const first = primaryCvs[0];
@@ -1100,8 +1222,7 @@ export default function ApplicationForm({
             return;
           }
 
-          // Commit selection immediately so Save cannot submit the previous
-          // saved tailored CV while the content digest is still in flight.
+          cvModeUserChosenRef.current = true;
           const previousSignature = cvPendingSignatureRef.current;
           const previousCache = uploadedPendingFileRef.current;
           // Prefer form cv_type so a primary→tailored switch that kept primary
@@ -1179,6 +1300,7 @@ export default function ApplicationForm({
         switchToPrimaryConfirmOpen={switchToPrimaryConfirmOpen}
         onConfirmSwitchToPrimary={() => {
           setSwitchToPrimaryConfirmOpen(false);
+          cvModeUserChosenRef.current = true;
           setCvMode("primary");
           clearPendingCvSelection();
           const first = primaryCvs[0];

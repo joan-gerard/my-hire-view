@@ -81,6 +81,7 @@ __tests__/
 ```
 
 Manual QA for primary/tailored CVs and application status: [manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md](manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md).
+Manual QA for create-application draft + CV source race (F15): [manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md).
 
 ---
 
@@ -105,7 +106,8 @@ Manual QA for primary/tailored CVs and application status: [manual-testing/MANUA
 | `__tests__/unit/lib/utils/resolve-public-application.test.ts` | **Public path resolution** — invalid `publicId` / slug format short-circuits before DB; valid pair resolves via service-role client; missing rows → null; query errors throw |
 | `__tests__/unit/lib/utils/load-public-application-response.test.ts` | **Public share DTO loader** — null when unresolved, active DTO + `cv_exists`, unavailable stub for draft/archived, propagates errors (D1-007) |
 | `__tests__/unit/lib/utils/url.test.ts` | **Site URL helpers** — localhost fallback in dev (unset, invalid, non-http(s)), trim trailing slash via origin, production fail-fast without `NEXT_PUBLIC_SITE_URL`, reject loopback hosts (127.0.0.0/8, aliases, IPv4-mapped IPv6) and non-http(s) schemes, share link builder (D1-061) |
-| `__tests__/unit/lib/utils/primary-cv-form-sync.test.ts` | **Form vs library modal load races (F18)** — ignore stale ApplicationForm GET after modal update; auto-select first primary on create only |
+| `__tests__/unit/lib/utils/primary-cv-form-sync.test.ts` | **Form vs library modal load races (F18 / F15-049)** — ignore stale ApplicationForm GET after modal update; auto-select first primary on create only; skip default/auto-select when the user already chose a CV source |
+| `__tests__/unit/lib/utils/create-application-draft.test.ts` | **Create-application local draft (F15-045)** — storage key scope, parse/version/expiry, blank detection, save/load/clear and corrupt JSON cleanup |
 | `__tests__/unit/lib/auth/safe-next-path.test.ts` | **Auth callback redirect sanitizer** — allows same-origin relative paths; rejects `//…`, backslash tricks (`/\evil.com`), and ASCII control characters (CR/LF/tab) |
 | `__tests__/unit/lib/types/primary-cv.test.ts` | **Primary CV types** — `PRIMARY_CV_MAX_PER_USER` / `PRIMARY_CV_DELETE_PREVIEW_LIMIT`, library-cap helpers (F13-032), delete confirm copy, post-delete still-referenced warning (F18-053), warning kept when list refresh fails |
 | `__tests__/unit/lib/types/application-status-summary.test.ts` | **Profile applications summary (F18-054)** — `formatApplicationStatusBreakdown` includes drafts; omits zero counts |
