@@ -56,9 +56,10 @@ At **Dashboard** (`/admin`) you can:
    - **Company name** and **Role/Position** (required).
    - **Name in URL** (optional): choose **None**, **At start** (e.g. `john-doe-acme-software-engineer`), or **At end** (e.g. `acme-software-engineer-john-doe`). The slug preview updates as you type.
    - **Slug** (used in the URL; auto-generated from company and role, and from your name and position if you chose; you can change it manually). Use **Reset to suggested** to go back to the automatic link from the current company, role, and Name in URL choice.
-   - **CV**: choose a **primary CV** from your library (preferred) or upload a **tailored** PDF for this application only. Use **Manage library** to upload or delete primary CVs without leaving the page (same library as on Profile).
+   - **CV**: choose a **primary CV** from your library (preferred) or upload a **tailored** PDF for this application only. CV source options stay locked briefly while your library loads, so a mid-load choice cannot be overwritten. Use **Manage library** to upload or delete primary CVs without leaving the page (same library as on Profile).
    - **YouTube URL** for your video pitch.
-5. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy Link** to share it.
+5. Progress on this form is **remembered in this browser** if you refresh (up to about a week). Drafts are stored per signed-in account. If you leave via Back or another admin link, you are asked to confirm — confirming **discards** the draft so the next New Application starts clean. After a successful Save, the draft is cleared; a failed Save keeps it. A tailored PDF file itself is not restored — re-choose the file if you had one selected.
+6. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy Link** to share it.
 
 ### Editing an application
 

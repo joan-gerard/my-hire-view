@@ -7,6 +7,7 @@ import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
 import type { ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
+import { createApplicationDraftStorageKey } from "@/lib/utils/create-application-draft";
 import { validateSlugFormat } from "@/lib/utils/slug-generate";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,12 +23,23 @@ export default function NewApplicationPage() {
     last_name: string;
   } | null>(null);
   const [publicId, setPublicId] = useState<string | null>(null);
+  /** Stable auth id for draft scoping — never a shared fallback (F15-045). */
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (cancelled) return;
+        if (user?.id) {
+          setAuthUserId(user.id);
+        }
+
         const res = await fetch("/api/profile", { credentials: "include" });
         const json = await res.json().catch(() => ({}));
         if (cancelled) return;
@@ -37,15 +49,17 @@ export default function NewApplicationPage() {
           if (typeof json.data.public_id === "string") {
             setPublicId(json.data.public_id);
           }
+          if (
+            typeof json.data.user_id === "string" &&
+            json.data.user_id.trim()
+          ) {
+            setAuthUserId(json.data.user_id);
+          }
           return;
         }
 
         // No profiles row yet — seed names and public id from Auth user_metadata.
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!cancelled && user) {
+        if (user) {
           setMetaNames(namesFromUserMetadata(user));
           const pid = publicIdFromUserMetadata(user);
           if (pid) setPublicId(pid);
@@ -179,6 +193,10 @@ export default function NewApplicationPage() {
       alert(
         err instanceof Error ? err.message : "Failed to create application",
       );
+      // Re-throw so ApplicationForm keeps the local draft after a failed create.
+      throw err instanceof Error
+        ? err
+        : new Error("Failed to create application");
     } finally {
       isSubmittingRef.current = false;
       setLoading(false);
@@ -194,6 +212,9 @@ export default function NewApplicationPage() {
     !profile?.profile_picture_url?.trim();
   const showProfileNudge =
     !profileLoading && (!hasSavedProfile || profileNeedsOptionalFields);
+  const draftStorageKey = authUserId
+    ? createApplicationDraftStorageKey(authUserId)
+    : null;
   const initialData: Partial<ApplicationFormData> = {
     company: "",
     role: "",
@@ -266,6 +287,7 @@ export default function NewApplicationPage() {
             }
             publicId={publicId ?? undefined}
             resolveSlugOnCreate
+            persistDraftKey={draftStorageKey ?? undefined}
           />
         )}
       </div>
