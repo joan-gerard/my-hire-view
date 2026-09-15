@@ -11,8 +11,8 @@ Related: local browser form draft (F15) is separate — [MANUAL_TEST_CREATE_APP_
 
 ## Happy path
 
-- [ ] `/admin/new` → fill form → **Save Draft**
-- [ ] Redirects to `/view/{publicId}/{slug}` with an amber **Draft preview** banner (Edit / Publish / Dashboard)
+- [ ] `/admin/new` → fill form → **Save & Preview**
+- [ ] Redirects to `/view/{publicId}/{slug}` with an amber **Draft preview** banner (Edit / Publish / Dashboard). If you land on `/admin` instead, open **Preview** on the draft card (missing Public id is the only expected fallback).
 - [ ] Page shows CV, video, and candidate fields as recruiters will see them after publish
 - [ ] Open the same URL in a private/incognito window (or signed out) → empty “doesn’t have an active application” state (no CV/video)
 - [ ] Click **Publish** on the banner → banner disappears; page stays as the live public view

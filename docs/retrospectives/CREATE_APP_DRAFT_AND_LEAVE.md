@@ -85,6 +85,7 @@ Once discard-on-confirm was the rule, leave navigation had to be correct:
 - Single history sentinel (no stacked guards when progress flickers).
 - Long-lived `popstate` listener so sentinel-removal events are consumed even if `enabled` toggled off mid-flight.
 - Confirmed link leave: drop sentinel, then `replace` only after history is off the guard (avoid bouncing back to `/admin/new`).
+- Successful **Save & Preview**: disarm leave-confirm (`disarmForNavigation`) **before** `router.push` to the share URL so sentinel `history.back()` cannot cancel the preview redirect (F16). `waitUntilLeaveGuardCleared` races RAF with a `setTimeout` deadline so a backgrounded tab (paused RAF) cannot hang navigation.
 
 Those are implementation hardening around the UX decision above, not a change to the product rule.
 

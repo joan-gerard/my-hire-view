@@ -15,7 +15,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 ## 1. Application status (replaces `is_active`)
 
-- [ ] Create a new application → **Save Draft** → row has `status = draft`, `archived_at` is null
+- [ ] Create a new application → **Save & Preview** → row has `status = draft`, `archived_at` is null
 - [ ] Dashboard card shows **draft** status icon; **Publish** / **Preview**; Copy Link is replaced by **Publish to share**
 - [ ] Open the public view URL while signed in as owner → draft preview banner + full page content
 - [ ] Same URL signed out / other user → “doesn’t have an active application” empty state; public GET returns `{ status: "unavailable" }`

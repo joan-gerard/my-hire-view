@@ -78,3 +78,54 @@ export function hasLeaveRelevantDraftChanges(
 ): boolean {
   return baseline !== leaveRelevantDraftSnapshot(current);
 }
+
+/** History state marker used by `useLeaveConfirm` sentinel entries. */
+export function isLeaveGuardHistoryState(state: unknown): boolean {
+  return (
+    !!state &&
+    typeof state === "object" &&
+    (state as { __mhvLeaveGuard?: boolean }).__mhvLeaveGuard === true
+  );
+}
+
+/**
+ * Wait until the leave-confirm history sentinel is gone (or timeout).
+ * Call after disarming the guard and before programmatic navigation so
+ * `history.back()` from sentinel removal cannot race `router.push`.
+ *
+ * RAF polls for a fast clear while the tab is visible; a `setTimeout`
+ * deadline always wins so backgrounded tabs (where RAF may pause) cannot
+ * hang Save & Preview forever.
+ */
+export function waitUntilLeaveGuardCleared(timeoutMs = 500): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (!isLeaveGuardHistoryState(window.history.state)) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    let settled = false;
+    let rafId = 0;
+
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(deadlineId);
+      if (rafId !== 0) {
+        window.cancelAnimationFrame(rafId);
+      }
+      resolve();
+    };
+
+    const deadlineId = window.setTimeout(done, timeoutMs);
+
+    const tick = () => {
+      if (settled) return;
+      if (!isLeaveGuardHistoryState(window.history.state)) {
+        done();
+        return;
+      }
+      rafId = window.requestAnimationFrame(tick);
+    };
+    rafId = window.requestAnimationFrame(tick);
+  });
+}

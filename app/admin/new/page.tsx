@@ -190,13 +190,15 @@ export default function NewApplicationPage() {
         throw new Error(error || "Failed to create application");
       }
 
-      const json: { data?: { slug?: string } } = await response
-        .json()
-        .catch(() => ({}));
+      const json: { data?: { slug?: string }; public_id?: string } =
+        await response.json().catch(() => ({}));
       const createdSlug =
         typeof json.data?.slug === "string" ? json.data.slug.trim() : "";
-      if (publicId && createdSlug) {
-        router.push(`/view/${publicId}/${createdSlug}`);
+      const responsePublicId =
+        typeof json.public_id === "string" ? json.public_id.trim() : "";
+      const sharePublicId = responsePublicId || publicId;
+      if (sharePublicId && createdSlug) {
+        router.push(`/view/${sharePublicId}/${createdSlug}`);
       } else {
         router.push("/admin");
       }
@@ -272,7 +274,7 @@ export default function NewApplicationPage() {
             initialData={initialData}
             onSubmit={handleSubmit}
             loading={loading}
-            submitLabel="Save Draft"
+            submitLabel="Save & Preview"
             profilePictureUrl={profile?.profile_picture_url ?? null}
             profilePictureVersion={profile?.updated_at ?? null}
             onProfilePictureSaved={({ url, updated_at }) =>

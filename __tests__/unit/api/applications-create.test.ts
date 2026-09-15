@@ -160,6 +160,7 @@ describe("POST /api/applications", () => {
       slug: "volvo-software-engineer",
       status: "draft",
     });
+    expect(json.public_id).toBe("k7x2m9ab");
     expect(insertChain.insert).toHaveBeenCalledWith(
       expect.objectContaining({ status: "draft", archived_at: null }),
     );
