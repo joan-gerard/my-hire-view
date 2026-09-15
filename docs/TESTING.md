@@ -54,6 +54,7 @@ __tests__/
         load-owner-draft-preview.test.ts
         load-view-page-application.test.ts
         leave-confirm.test.ts
+      marketing-assets.test.ts
       auth/
         safe-next-path.test.ts
       types/
@@ -99,7 +100,8 @@ Manual QA for draft → preview → publish (F16): [manual-testing/MANUAL_TEST_A
 | `__tests__/unit/lib/utils/slug-generate.test.ts` | **Pure slug utilities** — `validateSlugFormat` (empty input, too long, invalid chars, valid slugs), `generateSlug` (normalisation, special-char stripping, space collapsing), `buildSlug` (position `start`/`end`, partial and missing names, name-preserving clamp), `isCustomSlug` (edit-load custom vs derived) |
 | `__tests__/unit/lib/utils/slug.test.ts` | **Server-side slug helpers** — `checkSlugUniqueness` (unique, taken, DB error), `validateSlugForApplication` (format short-circuits DB call, available, taken), `reserveBaseSlug` (name positions, collision throws `SlugCollisionError`), `SlugCollisionError` (shape and default message) |
 | `__tests__/unit/lib/utils/profile-picture-storage.test.ts` | **Profile picture Storage URLs** — path parse, canonical `avatar.*`, ownership (canonical + legacy under user folder), reject lookalike paths on foreign origins (C2-008) |
-| `__tests__/unit/lib/utils/cv-storage.test.ts` | **CV R2 ownership & delete** — `getCvObjectKeyFromPublicUrl` / `toCanonicalCvPublicUrl`, `isOwnedTailoredCvUrl`, `isOwnedPrimaryCvObjectKey`, allow-list `deleteApplicationCvIfTailored`, fail closed when `R2_PUBLIC_BASE_URL` unset, `deleteCvIfOurs`, `checkCvObjectExists` (`true` / object NotFound→`false` / NoSuchBucket+infra→`undefined`)
+| `__tests__/unit/lib/marketing-assets.test.ts` | **Marketing R2 URLs** — `marketingAssetUrl` uses `NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL`, else root-relative `/filename` |
+| `__tests__/unit/lib/utils/cv-storage.test.ts` | **CV R2 ownership & delete** — `getCvObjectKeyFromPublicUrl` / `toCanonicalCvPublicUrl`, `isOwnedTailoredCvUrl`, `isOwnedPrimaryCvObjectKey`, allow-list `deleteApplicationCvIfTailored`, fail closed when `R2_PUBLIC_BASE_URL` unset, `deleteCvIfOurs`, `checkCvObjectExists` (`true` / object NotFound→`false` / NoSuchBucket+infra→`undefined`) |
 | `__tests__/unit/lib/utils/upload-idempotency.test.ts` | **Tailored upload idempotency** — SHA-256 digest match; size/type/digest mismatch; legacy objects without digest rejected |
 | `__tests__/unit/lib/utils/upload-form-messages.test.ts` | **Upload Save UX helpers (F8)** — friendly **400**/**401**/**409**/**429**/**5xx**/network copy; other non-5xx → **400**-style fallback; fixed **429** text; CV content-digest signatures; idempotency key reuse vs rotate |
 | `__tests__/unit/lib/utils/upload-profile-picture-client.test.ts` | **Shared profile-picture upload client (F8)** — network / **429** mapping; success URL + optional warning; JSON `null` body does not throw |

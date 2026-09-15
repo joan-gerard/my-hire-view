@@ -12,7 +12,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 /** Unsplash: career success / ready to start theme (professional, aspirational). */
-const CTA_IMAGE = "/solution-1-1.png";
+const CTA_IMAGE = "/solution-1-1.webp";
 
 export interface CTASectionProps {
   /** CTA destination. Defaults to on-page waitlist anchor (home). */

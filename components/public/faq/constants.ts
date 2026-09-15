@@ -10,7 +10,7 @@ export interface FAQItemData {
 }
 
 /** Decorative image shown next to the FAQ list. */
-export const FAQ_IMAGE = "/customer-service-250x250.png";
+export const FAQ_IMAGE = "/customer-service-250x250.webp";
 
 export const FAQ_ITEMS: readonly FAQItemData[] = [
   {

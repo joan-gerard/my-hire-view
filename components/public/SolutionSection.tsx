@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 /** Unsplash image: professional / career theme (no SVG in Image per requirements). */
-const SOLUTION_HERO_IMAGE = "/solution-2.jpg";
+const SOLUTION_HERO_IMAGE = "/solution-2.webp";
 
 const FEATURES = [
   {
