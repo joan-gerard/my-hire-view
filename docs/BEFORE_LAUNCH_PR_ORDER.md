@@ -43,8 +43,8 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering).
 **F15 shipped** → **F16 shipped**, then **F19**, then **F17**
 
 - Strict dependency: draft persistence / CV-mode race before preview/draft-publish
-- **F19** (onboarding + Public id copy + legend) while create flows are fresh
-- **F17** branding after those flows stabilize (avoid restyling half-finished UI twice)
+- **F19** (onboarding + Public id copy + card legend / draft action clarity) while create flows are fresh
+- **F17** branding after those flows stabilize (avoid restyling half-finished UI twice; includes dashboard card visual skin)
 
 ### Phase 3 — Trust / compliance Shoulds
 

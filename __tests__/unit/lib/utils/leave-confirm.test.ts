@@ -1,13 +1,14 @@
 /**
  * Tests for same-origin leave-intercept helpers (create-app draft guard).
  */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ApplicationCvType } from "@/lib/types/application";
 import {
   hasLeaveRelevantDraftChanges,
   isLeaveGuardHistoryState,
   leaveRelevantDraftSnapshot,
   shouldBlockSameOriginNavigation,
+  waitUntilLeaveGuardCleared,
 } from "@/lib/utils/leave-confirm";
 
 const HERE = "https://app.example/admin/new";
@@ -119,5 +120,62 @@ describe("isLeaveGuardHistoryState", () => {
     expect(isLeaveGuardHistoryState({ __mhvLeaveGuard: false })).toBe(false);
     expect(isLeaveGuardHistoryState(null)).toBe(false);
     expect(isLeaveGuardHistoryState({})).toBe(false);
+  });
+});
+
+describe("waitUntilLeaveGuardCleared", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it("resolves immediately when history is not on the leave guard", async () => {
+    vi.stubGlobal("window", {
+      history: { state: null },
+      requestAnimationFrame: vi.fn(),
+      cancelAnimationFrame: vi.fn(),
+      setTimeout,
+      clearTimeout,
+    });
+    await expect(waitUntilLeaveGuardCleared(50)).resolves.toBeUndefined();
+    expect(window.requestAnimationFrame).not.toHaveBeenCalled();
+  });
+
+  it("resolves on setTimeout deadline when RAF never fires (background tab)", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", {
+      history: { state: { __mhvLeaveGuard: true } },
+      requestAnimationFrame: vi.fn(() => 1),
+      cancelAnimationFrame: vi.fn(),
+      setTimeout: globalThis.setTimeout.bind(globalThis),
+      clearTimeout: globalThis.clearTimeout.bind(globalThis),
+    });
+
+    const pending = waitUntilLeaveGuardCleared(100);
+    await vi.advanceTimersByTimeAsync(100);
+    await expect(pending).resolves.toBeUndefined();
+    expect(window.cancelAnimationFrame).toHaveBeenCalledWith(1);
+  });
+
+  it("resolves early when the sentinel clears before the deadline", async () => {
+    vi.useFakeTimers();
+    const history = { state: { __mhvLeaveGuard: true } as unknown };
+    const rafCallbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal("window", {
+      history,
+      requestAnimationFrame: vi.fn((cb: FrameRequestCallback) => {
+        rafCallbacks.push(cb);
+        return rafCallbacks.length;
+      }),
+      cancelAnimationFrame: vi.fn(),
+      setTimeout: globalThis.setTimeout.bind(globalThis),
+      clearTimeout: globalThis.clearTimeout.bind(globalThis),
+    });
+
+    const pending = waitUntilLeaveGuardCleared(5000);
+    expect(rafCallbacks).toHaveLength(1);
+    history.state = null;
+    rafCallbacks[0](0);
+    await expect(pending).resolves.toBeUndefined();
   });
 });
