@@ -54,6 +54,11 @@ export default function ViewPageContent({
         `/api/applications/by-id/${draftPreviewApplicationId}`,
         { credentials: "include" },
       );
+      if (response.status === 404) {
+        setApplication({ status: "unavailable" });
+        return;
+      }
+      // Other errors (network / 5xx / 429): keep current preview; retry can try again.
       if (!response.ok) return;
       const { data } = (await response.json()) as {
         data: Application & { cv_exists?: boolean };

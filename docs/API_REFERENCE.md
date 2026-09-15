@@ -161,7 +161,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 - **Tailored CV:** when `cv_type` is `"tailored"` (default), `cv_url` must be a caller-owned tailored upload (`cvs/{userId}/tailored/…`); not a primary library key. The server stores a **canonical** public URL (pathname/object key only — search/hash stripped; path segments percent-encoded; `.`/`..` rejected or resolved via URL parsing). Reusing another application’s tailored object (same key / URL, including percent-encoded or query/fragment variants) returns **409**. Uniqueness: exact match on canonical `cv_url`, then keyset-paginated object-key scan for legacy variants (continues until an empty page, so a lower PostgREST `max_rows` cannot truncate the scan); Postgres partial unique index `applications_user_id_tailored_cv_url_key` is the race backstop.
 - **Slug uniqueness:** calls `validateSlugForApplication` (same helper as `POST /api/slug/validate`) before insert so a taken slug returns **409** with `SLUG_COLLISION_USER_MESSAGE` without relying only on the DB. Postgres unique violations (`23505`) remain a race backstop: slug → same **409** message; tailored `cv_url` → tailored-in-use **409**.
 - Returns **201** with the created row.
-- **Draft by default (F16-050):** omitted `status` inserts as `"draft"` (not publicly visible). The create form sends `status: "draft"` and redirects the owner to the share URL for preview; **Publish** (dashboard or draft banner) sets `status: "active"`. Explicit `status: "active"` on create still works for callers that need an immediately live app.
+- **Draft by default (F16-050):** omitted `status` inserts as `"draft"` (not publicly visible). The create form sends `status: "draft"` and, when a usable Public id is available, redirects the owner to `/view/{publicId}/{slug}` for preview; otherwise it returns to `/admin`. **Publish** (dashboard or draft banner) sets `status: "active"`. Explicit `status: "active"` on create still works for callers that need an immediately live app.
 - **Owner draft preview:** anonymous public GET still returns `{ status: "unavailable" }` for drafts. When the signed-in owner opens `/view/{publicId}/{slug}`, the page loads an owner-only preview of the public UI (banner + Publish / Edit) via a **single** `resolvePublicApplication` (`loadViewPageApplication` → `buildOwnerDraftPreview`) — recruiters never see draft content.
 
 ---
@@ -236,7 +236,7 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 
 - Public by design for shareable recruiter links; no login required.
 - Per-IP rate limit (120/min) tuned for viewing while limiting scraping.
-- Active apps return a **public DTO** (`toPublicApplication`): company/role, candidate identity & links, avatar, CV/video media, `status: "active"`, and optional `cv_exists` — not the full applications row. That helper accepts only `ActiveApplication` and **throws** if status is not `"active"` (defense against mistaken direct use). Callers that may see draft/archived rows must use `toPublicApplicationResponse`. Owner draft preview uses `toOwnerPreviewApplication` / `loadOwnerDraftPreview` (never on the anonymous GET path).
+- Active apps return a **public DTO** (`toPublicApplication`): company/role, candidate identity & links, avatar, CV/video media, `status: "active"`, and optional `cv_exists` — not the full applications row. That helper accepts only `ActiveApplication` and **throws** if status is not `"active"` (defense against mistaken direct use). Callers that may see draft/archived rows must use `toPublicApplicationResponse`. Owner draft preview uses `toOwnerPreviewApplication` / `buildOwnerDraftPreview` (never on the anonymous GET path).
 - **Unavailable stub:** archived and draft apps return `{ status: "unavailable" }` only (no PII or media) on the public GET. Skips R2 `HeadObject`. The public view page shows one empty state for unavailable **and** for **404** (deleted / unknown URL), except when the signed-in owner is previewing their own draft (F16-050).
 - `cv_exists` helps the UI avoid broken “View CV” links when an **R2** object is missing (active apps only). Omitted for non-R2 URLs.
 - Clear **404** when the public id + slug pair does not resolve.
@@ -251,11 +251,11 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 
 `GET /api/applications/by-id/[id]`
 
-Owner-only fetch for the edit page. Same `cv_exists` behaviour as the public slug GET.
+Owner-only fetch for the edit page and draft-preview CV retry. Same `cv_exists` behaviour as the public slug GET. When `show_profile_picture` is true, also attaches display-only `profile_picture_url` from the owner's profile (cache-busted), matching public share / draft preview SSR.
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Success:** `200` `{ data: Application & { cv_exists?: boolean } }`
+- **Success:** `200` `{ data: Application & { cv_exists?: boolean; profile_picture_url: string | null } }`
 - **Errors:** `400` invalid UUID; `401`; `404` if missing or not owned; `429`; `500` `{ error: "Failed to fetch application" }`
 
 **What works**
@@ -263,6 +263,7 @@ Owner-only fetch for the edit page. Same `cv_exists` behaviour as the public slu
 - Auth required; filters by both `id` and `user_id` so owners cannot load another user’s row.
 - Dedicated by-id endpoint avoids fetching the full list just to edit one application.
 - Same `cv_exists` enrichment as the public slug GET for consistent edit UX.
+- Resolves live profile picture when the application shows it (so draft-preview refetch keeps the avatar).
 - Rate limited (default 60/min) before auth/query work — same as other authenticated application/profile reads.
 - Validates `id` as a UUID (**400** when malformed) before querying.
 - Auth failures stay **401**; unexpected errors are logged via `handleApiError` and return **500**.

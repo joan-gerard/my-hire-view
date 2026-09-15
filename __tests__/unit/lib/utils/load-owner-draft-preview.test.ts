@@ -1,26 +1,21 @@
 /**
- * Tests for owner draft preview loader (F16-050).
+ * Tests for owner draft preview builder (F16-050).
+ * Production path: `loadViewPageApplication` → `buildOwnerDraftPreview`
+ * (no separate resolve wrapper).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Application } from "@/lib/types/application";
 
-const { mockResolvePublicApplication, mockCheckCvObjectExists } = vi.hoisted(
-  () => ({
-    mockResolvePublicApplication: vi.fn(),
-    mockCheckCvObjectExists: vi.fn(),
-  }),
-);
-
-vi.mock("@/lib/utils/resolve-public-application", () => ({
-  resolvePublicApplication: mockResolvePublicApplication,
+const { mockCheckCvObjectExists } = vi.hoisted(() => ({
+  mockCheckCvObjectExists: vi.fn(),
 }));
+
 vi.mock("@/lib/utils/cv-storage", () => ({
   checkCvObjectExists: mockCheckCvObjectExists,
 }));
 
-import { loadOwnerDraftPreview } from "@/lib/utils/load-owner-draft-preview";
+import { buildOwnerDraftPreview } from "@/lib/utils/load-owner-draft-preview";
 
-const PUBLIC_ID = "k7x2m9ab";
 const SLUG = "volvo-engineer";
 
 const DRAFT_APP: Application = {
@@ -52,61 +47,50 @@ const DRAFT_APP: Application = {
   updated_at: "2026-01-01T00:00:00Z",
 };
 
+function resolved(
+  application: Application,
+  ownerUserId = "owner-id",
+) {
+  return { application, ownerUserId };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("loadOwnerDraftPreview", () => {
-  it("returns null when the public id + slug do not resolve", async () => {
-    mockResolvePublicApplication.mockResolvedValue(null);
-
-    await expect(
-      loadOwnerDraftPreview(PUBLIC_ID, SLUG, "owner-id"),
-    ).resolves.toBeNull();
-  });
-
+describe("buildOwnerDraftPreview", () => {
   it("returns null when the viewer is not the owner", async () => {
-    mockResolvePublicApplication.mockResolvedValue({
-      application: DRAFT_APP,
-      ownerUserId: "owner-id",
-    });
-
     await expect(
-      loadOwnerDraftPreview(PUBLIC_ID, SLUG, "other-user"),
+      buildOwnerDraftPreview(resolved(DRAFT_APP), "other-user"),
     ).resolves.toBeNull();
     expect(mockCheckCvObjectExists).not.toHaveBeenCalled();
   });
 
   it("returns null for active applications (public loader handles those)", async () => {
-    mockResolvePublicApplication.mockResolvedValue({
-      application: { ...DRAFT_APP, status: "active" },
-      ownerUserId: "owner-id",
-    });
-
     await expect(
-      loadOwnerDraftPreview(PUBLIC_ID, SLUG, "owner-id"),
+      buildOwnerDraftPreview(
+        resolved({ ...DRAFT_APP, status: "active" }),
+        "owner-id",
+      ),
     ).resolves.toBeNull();
   });
 
   it("returns null for archived applications", async () => {
-    mockResolvePublicApplication.mockResolvedValue({
-      application: { ...DRAFT_APP, status: "archived" },
-      ownerUserId: "owner-id",
-    });
-
     await expect(
-      loadOwnerDraftPreview(PUBLIC_ID, SLUG, "owner-id"),
+      buildOwnerDraftPreview(
+        resolved({ ...DRAFT_APP, status: "archived" }),
+        "owner-id",
+      ),
     ).resolves.toBeNull();
   });
 
   it("returns the public DTO + application id for the owning viewer of a draft", async () => {
-    mockResolvePublicApplication.mockResolvedValue({
-      application: DRAFT_APP,
-      ownerUserId: "owner-id",
-    });
     mockCheckCvObjectExists.mockResolvedValue(true);
 
-    const result = await loadOwnerDraftPreview(PUBLIC_ID, SLUG, "owner-id");
+    const result = await buildOwnerDraftPreview(
+      resolved(DRAFT_APP),
+      "owner-id",
+    );
     expect(result).toEqual({
       applicationId: "app-draft",
       application: {
@@ -129,12 +113,10 @@ describe("loadOwnerDraftPreview", () => {
   });
 
   it("omits cv_exists and skips HeadObject when the draft has no cv_url", async () => {
-    mockResolvePublicApplication.mockResolvedValue({
-      application: { ...DRAFT_APP, cv_url: "" },
-      ownerUserId: "owner-id",
-    });
-
-    const result = await loadOwnerDraftPreview(PUBLIC_ID, SLUG, "owner-id");
+    const result = await buildOwnerDraftPreview(
+      resolved({ ...DRAFT_APP, cv_url: "" }),
+      "owner-id",
+    );
     expect(mockCheckCvObjectExists).not.toHaveBeenCalled();
     expect(result).not.toBeNull();
     expect(result!.application.cv_url).toBe("");
