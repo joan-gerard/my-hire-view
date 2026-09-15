@@ -58,6 +58,12 @@ export default function ViewPageContent({
       const { data } = (await response.json()) as {
         data: Application & { cv_exists?: boolean };
       };
+      // Archived (or any non-previewable status) mid-session → empty state,
+      // not a throw from toOwnerPreviewApplication.
+      if (data.status !== "draft" && data.status !== "active") {
+        setApplication({ status: "unavailable" });
+        return;
+      }
       // Same mapper as SSR owner preview — keep field mapping in one place.
       setApplication(toOwnerPreviewApplication(data, data.cv_exists));
       return;

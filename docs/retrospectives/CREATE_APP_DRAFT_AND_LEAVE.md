@@ -96,5 +96,5 @@ Those are implementation hardening around the UX decision above, not a change to
 |-----|------|
 | [USER_GUIDE.md](../USER_GUIDE.md) | What candidates see |
 | [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) | Manual verification |
-| [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) | Server `status = draft` / archive (different from this browser draft); **F16-050** draft → preview → publish |
-| [Backlog.md](../Backlog.md) | `F15-045`, `F15-049` (shipped); `F16-050` |
+| [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) | Server `status = draft` / archive (different from this browser draft); **F16-050** draft → preview → publish (shipped) |
+| [Backlog.md](../Backlog.md) | `F15-045`, `F15-049`, `F16-050` (shipped) |
