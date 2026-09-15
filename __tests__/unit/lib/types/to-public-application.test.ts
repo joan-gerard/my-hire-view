@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import type { Application } from "@/lib/types/application";
 import {
   assertActiveApplication,
+  toOwnerPreviewApplication,
   toPublicApplication,
   toPublicApplicationResponse,
   type ActiveApplication,
@@ -85,6 +86,42 @@ describe("toPublicApplication", () => {
     expect(() => toPublicApplication(draftAsActive)).toThrow(
       /status must be "active".*draft/,
     );
+  });
+});
+
+describe("toOwnerPreviewApplication", () => {
+  it("maps draft applications to the public page DTO for owner preview", () => {
+    expect(
+      toOwnerPreviewApplication({ ...BASE_APP, status: "draft" }, true),
+    ).toEqual({
+      company: "Acme",
+      role: "Engineer",
+      first_name: "Jane",
+      last_name: "Doe",
+      location: "Stockholm",
+      portfolio_url: "https://jane.dev",
+      linkedin_url: "https://linkedin.com/in/jane",
+      profile_picture_url: "https://r2.example.com/avatar.jpg",
+      cv_url: "https://r2.example.com/cv.pdf",
+      cv_filename: "Jane-CV.pdf",
+      use_original_cv_filename: true,
+      video_url: "https://youtube.com/watch?v=abc",
+      status: "active",
+      cv_exists: true,
+    });
+  });
+
+  it("maps active applications the same way (owner checking a live page)", () => {
+    expect(toOwnerPreviewApplication(ACTIVE_APP)).toMatchObject({
+      status: "active",
+      company: "Acme",
+    });
+  });
+
+  it("rejects archived applications", () => {
+    expect(() =>
+      toOwnerPreviewApplication({ ...BASE_APP, status: "archived" }),
+    ).toThrow(/Owner preview requires status "draft" or "active".*archived/);
   });
 });
 

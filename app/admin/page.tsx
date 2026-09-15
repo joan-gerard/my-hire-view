@@ -29,6 +29,7 @@ export default function AdminDashboard() {
     handleDelete,
     handleArchive,
     handleRestore,
+    handlePublish,
   } = useApplications();
 
   if (loading) {
@@ -69,6 +70,7 @@ export default function AdminDashboard() {
                 onDelete={handleDelete}
                 onArchive={handleArchive}
                 onRestore={handleRestore}
+                onPublish={handlePublish}
               />
             ))}
           </div>

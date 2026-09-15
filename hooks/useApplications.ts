@@ -6,6 +6,7 @@ import {
   deleteApplication as deleteApplicationApi,
   archiveApplication as archiveApplicationApi,
   restoreApplication as restoreApplicationApi,
+  publishApplication as publishApplicationApi,
 } from '@/lib/api/applications';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -30,6 +31,7 @@ export interface UseApplicationsResult {
   handleDelete: (id: string) => Promise<void>;
   handleArchive: (id: string) => Promise<void>;
   handleRestore: (id: string) => Promise<void>;
+  handlePublish: (id: string) => Promise<void>;
 }
 
 /**
@@ -159,6 +161,27 @@ export function useApplications(): UseApplicationsResult {
     }
   }, []);
 
+  const handlePublish = useCallback(async (id: string) => {
+    try {
+      const data = await publishApplicationApi(id);
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === id
+            ? {
+                ...app,
+                status: data.status,
+                archived_at: data.archived_at ?? null,
+              }
+            : app
+        )
+      );
+    } catch (err) {
+      alert(
+        err instanceof Error ? err.message : 'Failed to publish application'
+      );
+    }
+  }, []);
+
   return {
     applications,
     searchQuery,
@@ -179,5 +202,6 @@ export function useApplications(): UseApplicationsResult {
     handleDelete,
     handleArchive,
     handleRestore,
+    handlePublish,
   };
 }

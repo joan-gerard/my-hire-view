@@ -1,6 +1,6 @@
 # Create-application local draft and intentional leave
 
-**Actionable work** lives in [Backlog.md](../Backlog.md) (`F15-045`, `F15-049`). This retrospective is design/context only — not a second checklist.
+**Shipped design context** for create-form local draft + leave confirm (`F15-045`, `F15-049`). This retrospective is not a second checklist — see [Backlog.md](../Backlog.md) PR groups F15/F16 (shipped).
 
 How we landed on **keep a browser draft for accidents**, but **discard it when the user deliberately leaves** `/admin/new` (Back or in-app navigation), after confirming.
 
@@ -74,7 +74,7 @@ Related: **F15-049** (CV mode while the primary library loads) is orthogonal cor
 | Always keep draft, never prompt | Intentional leave feels sticky; next New Application is surprising |
 | Always keep draft, prompt only as “are you sure?” without discard | Confirm without discard trains users that Leave doesn’t mean Leave |
 | Block refresh / tab close too (`beforeunload`) | Annoying; draft already covers accidents |
-| Server-side draft application (`status = draft`) for this | Heavier; overlaps **F16-050** preview/publish flows; local draft is enough for pre-submit create |
+| Server-side draft application (`status = draft`) for this | Heavier for pre-submit autosave; local draft is enough. Server draft + publish shipped separately as **F16-050**. |
 
 ---
 
@@ -96,5 +96,5 @@ Those are implementation hardening around the UX decision above, not a change to
 |-----|------|
 | [USER_GUIDE.md](../USER_GUIDE.md) | What candidates see |
 | [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) | Manual verification |
-| [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) | Server `status = draft` / archive (different from this browser draft) |
-| [Backlog.md](../Backlog.md) | `F15-045`, `F15-049`, `F16-050` |
+| [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) | Server `status = draft` / archive (different from this browser draft); **F16-050** draft → preview → publish (shipped) |
+| [Backlog.md](../Backlog.md) | `F15-045`, `F15-049`, `F16-050` (shipped) |

@@ -152,17 +152,14 @@ export function assertActiveApplication(
 }
 
 /**
- * Maps an **active** application row (plus optional `cv_exists`) to the public
- * share DTO. Callers that may receive draft/archived rows must use
- * `toPublicApplicationResponse` instead — this helper throws if status is not
- * `"active"` so a mistaken direct call cannot leak PII as a live profile.
+ * Field mapping shared by live public GET and owner draft preview.
+ * Always emits `status: "active"` on the DTO so the public view UI can render;
+ * callers must gate who is allowed to see this payload.
  */
-export function toPublicApplication(
-  application: ActiveApplication,
+function mapApplicationToPublicDto(
+  application: Application,
   cv_exists?: boolean,
 ): PublicApplication {
-  assertActiveApplication(application);
-
   const dto: PublicApplication = {
     company: application.company,
     role: application.role,
@@ -186,6 +183,38 @@ export function toPublicApplication(
     dto.cv_exists = cv_exists;
   }
   return dto;
+}
+
+/**
+ * Maps an **active** application row (plus optional `cv_exists`) to the public
+ * share DTO. Callers that may receive draft/archived rows must use
+ * `toPublicApplicationResponse` instead — this helper throws if status is not
+ * `"active"` so a mistaken direct call cannot leak PII as a live profile.
+ */
+export function toPublicApplication(
+  application: ActiveApplication,
+  cv_exists?: boolean,
+): PublicApplication {
+  assertActiveApplication(application);
+  return mapApplicationToPublicDto(application, cv_exists);
+}
+
+/**
+ * Owner-only preview mapper (F16-050): same public page shape for **draft** or
+ * **active** rows so candidates can check the share page before publish.
+ * Never use for anonymous/recruiter responses — those must go through
+ * `toPublicApplicationResponse` (drafts stay unavailable).
+ */
+export function toOwnerPreviewApplication(
+  application: Application,
+  cv_exists?: boolean,
+): PublicApplication {
+  if (application.status !== "draft" && application.status !== "active") {
+    throw new Error(
+      `Owner preview requires status "draft" or "active", got "${application.status}"`,
+    );
+  }
+  return mapApplicationToPublicDto(application, cv_exists);
 }
 
 /**

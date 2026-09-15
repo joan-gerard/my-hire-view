@@ -84,6 +84,8 @@ interface ApplicationFormProps {
   initialData?: ApplicationFormInitialData;
   onSubmit: (data: ApplicationFormData) => Promise<void>;
   loading?: boolean;
+  /** Primary submit button label (create uses “Save Draft”; edit keeps “Save Application”). */
+  submitLabel?: string;
   /** When provided, passed to FileUpload so user can re-check CV existence (edit page). */
   onRetryCvCheck?: () => Promise<void>;
   /** Profile picture URL; when set, Yes/No toggle is enabled; when null, toggle is disabled with No selected. */
@@ -118,6 +120,7 @@ export default function ApplicationForm({
   initialData,
   onSubmit,
   loading = false,
+  submitLabel = "Save Application",
   onRetryCvCheck,
   profilePictureUrl,
   profilePictureVersion,
@@ -1480,7 +1483,7 @@ export default function ApplicationForm({
       <ApplicationFormActions
         loading={formBusy}
         loadingLabel={saveLoadingLabel}
-        submitLabel="Save Application"
+        submitLabel={submitLabel}
         canSubmit={canSubmit}
         disabledReason={disabledReason}
       />

@@ -15,11 +15,14 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 ## 1. Application status (replaces `is_active`)
 
-- [ ] Create (or use) an application → row has `status = active`, `archived_at` is null
-- [ ] Dashboard card shows **active** status icon (not archived)
+- [ ] Create a new application → **Save Draft** → row has `status = draft`, `archived_at` is null
+- [ ] Dashboard card shows **draft** status icon; **Publish** / **Preview**; Copy Link is replaced by **Publish to share**
+- [ ] Open the public view URL while signed in as owner → draft preview banner + full page content
+- [ ] Same URL signed out / other user → “doesn’t have an active application” empty state; public GET returns `{ status: "unavailable" }`
+- [ ] **Publish** (banner or card) → `status = active`, `archived_at` null; Copy Link works
 - [ ] From the card menu → **Archive**
 - [ ] Card shows archived state; Supabase: `status = archived`, `archived_at` is set (recent timestamp)
-- [ ] Open the public view URL → “doesn’t have an active application” empty state; no CV/video/header candidate details; public GET returns `{ status: "unavailable" }`
+- [ ] Open the public view URL → “doesn’t have an active application” empty state; no CV/video/header candidate details; public GET returns `{ status: "unavailable" }` (owner also sees empty state — no draft preview for archived)
 - [ ] From the card menu → **Restore**
 - [ ] Card active again; Supabase: `status = active`, `archived_at` is **null**
 - [ ] Archive again → `archived_at` is a **new** timestamp (clock reset)

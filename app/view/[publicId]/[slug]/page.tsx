@@ -1,7 +1,6 @@
-import ViewPageContent from '@/components/view/ViewPageContent';
-import UnavailableApplicationView from '@/components/view/UnavailableApplicationView';
-import { isUnavailablePublicApplication } from '@/lib/types/application';
-import { loadPublicApplicationResponse } from '@/lib/utils/load-public-application-response';
+import ViewPageContent from "@/components/view/ViewPageContent";
+import UnavailableApplicationView from "@/components/view/UnavailableApplicationView";
+import { loadViewPageApplication } from "@/lib/utils/load-view-page-application";
 
 export const metadata = {
   robots: {
@@ -16,17 +15,28 @@ export default async function ApplicationPage({
   params: Promise<{ publicId: string; slug: string }>;
 }) {
   const { publicId, slug } = await params;
-  const application = await loadPublicApplicationResponse(publicId, slug);
+  const result = await loadViewPageApplication(publicId, slug);
 
-  if (!application || isUnavailablePublicApplication(application)) {
-    return <UnavailableApplicationView />;
+  if (result.kind === "live") {
+    return (
+      <ViewPageContent
+        initialApplication={result.application}
+        publicId={publicId}
+        slug={slug}
+      />
+    );
   }
 
-  return (
-    <ViewPageContent
-      initialApplication={application}
-      publicId={publicId}
-      slug={slug}
-    />
-  );
+  if (result.kind === "owner_draft_preview") {
+    return (
+      <ViewPageContent
+        initialApplication={result.application}
+        publicId={publicId}
+        slug={slug}
+        draftPreviewApplicationId={result.applicationId}
+      />
+    );
+  }
+
+  return <UnavailableApplicationView />;
 }

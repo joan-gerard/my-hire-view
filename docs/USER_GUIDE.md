@@ -58,25 +58,25 @@ At **Dashboard** (`/admin`) you can:
    - **Slug** (used in the URL; auto-generated from company and role, and from your name and position if you chose; you can change it manually). Use **Reset to suggested** to go back to the automatic link from the current company, role, and Name in URL choice.
    - **CV**: choose a **primary CV** from your library (preferred) or upload a **tailored** PDF for this application only. CV source options stay locked briefly while your library loads, so a mid-load choice cannot be overwritten. Use **Manage library** to upload or delete primary CVs without leaving the page (same library as on Profile).
    - **YouTube URL** for your video pitch.
-5. Progress on this form is **remembered in this browser** if you refresh (up to about a week). Drafts are stored per signed-in account. If you leave via Back or another admin link, you are asked to confirm — confirming **discards** the draft so the next New Application starts clean. After a successful Save, the draft is cleared; a failed Save keeps it. A tailored PDF file itself is not restored — re-choose the file if you had one selected.
-6. Click **Save Application**. You are returned to the dashboard. The shareable link is shown on the application card; use **Copy Link** to share it.
+5. Progress on this form is **remembered in this browser** if you refresh (up to about a week). These browser drafts are stored per signed-in account (separate from a saved application draft). If you leave via Back or another admin link, you are asked to confirm — confirming **discards** the browser draft so the next New Application starts clean. After a successful Save Draft, the browser draft is cleared; a failed Save keeps it. A tailored PDF file itself is not restored — re-choose the file if you had one selected.
+6. Click **Save Draft**. When your account has a Public id, you are taken to a **preview** of the public page (same link recruiters will use later). If the Public id is not ready yet, you return to the dashboard instead — open **Preview** from the draft card once the id is available. Recruiters still cannot see the page until you publish. Use **Publish** on the preview banner or on the dashboard card when it looks right. Until then the card shows **Publish to share** instead of **Copy Link**.
 
 ### Editing an application
 
 1. On the dashboard, open the **3-dot menu** on the application card and click **Edit**.
 2. A notice reminds you that candidate details come from when this application was saved — not from your live profile. Changing your profile does not update existing applications.
 3. The form is pre-filled from **that application only** (including which candidate fields are on or off and their values). You can change **Name in URL** (None / At start / At end) when you save. If you previously customized the slug, use **Reset to suggested** to restore the automatic link from company, role, and Name in URL. Your profile is not changed when you save.
-4. Change any fields or toggles, then click **Save Application**.
+4. Change any fields or toggles, then click **Save Application**. Draft apps stay drafts until you **Publish**; active apps stay active.
 
 ### Sharing with recruiters
 
 - Each application has a **unique link** for that user. The shape is `https://yoursite.com/view/{publicId}/{slug}` — for example `https://yoursite.com/view/k7x2m9ab/acme-software-engineer`. The middle segment is an opaque id assigned to your account (not your name). The last segment is based on company and role, or — if you chose **Name in URL** — includes your name at the start or end (e.g. `john-doe-acme-software-engineer`).
-- Use **Copy Link** on the dashboard card and send it by email, LinkedIn, or job portal.
+- **Publish** the application first (from the draft preview banner or the dashboard). Then use **Copy Link** on the dashboard card and send it by email, LinkedIn, or job portal.
 - Recruiters can open the link without signing in. You can see how many times the page was viewed and when it was last viewed (view count and last viewed date in View Insights; one count per recruiter session).
 
 ### Archiving and deleting
 
-- **Archive:** The link still opens, but recruiters see that it **doesn’t have an active application** (no CV, video, or candidate details). You can **Restore** later to make it active again.
+- **Archive:** Only for published (active) applications. The link still opens, but recruiters see that it **doesn’t have an active application** (no CV, video, or candidate details). You can **Restore** later to make it active again.
 - **Delete:** The application is removed. Opening the old link shows the **same** empty-state message.
 
 ---

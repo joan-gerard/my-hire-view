@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { checkCvObjectExists } from '@/lib/utils/cv-storage';
+import { cacheBustProfilePictureUrl } from '@/lib/utils/profile-picture-storage';
 import { checkRateLimit, DEFAULT_API_RATE_LIMIT, rateLimit429 } from '@/lib/rate-limit';
 import { handleApiError } from '@/lib/api/handle-api-error';
 import { withAuth } from '@/lib/api/with-auth';
@@ -10,6 +11,8 @@ import { withAuth } from '@/lib/api/with-auth';
  * GET a single application by id. Requires auth; returns 404 if not found or not owned by user.
  * When `cv_url` is our R2 public URL, adds `cv_exists` (HeadObject). URLs outside our
  * R2 public base omit `cv_exists` so the edit UI does not treat them as missing.
+ * When `show_profile_picture` is true, attaches display-only `profile_picture_url`
+ * from the owner's profile (same resolution as public share / draft preview SSR).
  */
 export async function GET(
   request: NextRequest,
@@ -56,8 +59,29 @@ export async function GET(
       ? await checkCvObjectExists(data.cv_url)
       : undefined;
 
+    let profile_picture_url: string | null = null;
+    if (data.show_profile_picture === true) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('profile_picture_url, updated_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (profileError) {
+        return handleApiError(
+          'GET /api/applications/by-id/[id] profile',
+          profileError,
+          { message: 'Failed to fetch application' },
+        );
+      }
+      const liveUrl = profile?.profile_picture_url?.trim() || null;
+      profile_picture_url = cacheBustProfilePictureUrl(
+        liveUrl,
+        profile?.updated_at ?? null,
+      );
+    }
+
     return NextResponse.json({
-      data: { ...data, cv_exists },
+      data: { ...data, cv_exists, profile_picture_url },
     });
   } catch (error) {
     return handleApiError(

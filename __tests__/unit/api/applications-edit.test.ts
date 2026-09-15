@@ -15,6 +15,7 @@
  *
  * GET by-id covers:
  * - Returns 200 + application data (incl. cv_exists) for the owner.
+ * - Attaches profile_picture_url when show_profile_picture is true (F16 draft preview).
  * - Returns 404 when not found or not owned.
  * - Returns 401 for unauthenticated requests.
  * - Returns 400 for invalid UUID; 429 when rate limited.
@@ -581,8 +582,68 @@ describe("GET /api/applications/by-id/[id]", () => {
     });
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.data).toMatchObject({ id: APP_ID, slug: "volvo-engineer" });
+    expect(json.data).toMatchObject({
+      id: APP_ID,
+      slug: "volvo-engineer",
+      profile_picture_url: null,
+    });
     expect(json.data.cv_exists).toBe(true);
+  });
+
+  it("attaches cache-busted profile_picture_url when show_profile_picture is true", async () => {
+    mockCheckCvObjectExists.mockResolvedValue(true);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_APP, show_profile_picture: true }),
+        ok({
+          profile_picture_url: "https://example.supabase.co/storage/v1/object/public/profile-pictures/user/avatar.jpg",
+          updated_at: "2026-01-02T00:00:00.000Z",
+        }),
+      ]),
+    );
+
+    const response = await getById(makeGetRequest(), {
+      params: Promise.resolve({ id: APP_ID }),
+    });
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data.profile_picture_url).toBe(
+      "https://example.supabase.co/storage/v1/object/public/profile-pictures/user/avatar.jpg?v=2026-01-02T00%3A00%3A00.000Z",
+    );
+  });
+
+  it("returns 500 when the profile lookup fails (does not silently drop the avatar)", async () => {
+    mockCheckCvObjectExists.mockResolvedValue(true);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_APP, show_profile_picture: true }),
+        dbError("profiles unavailable"),
+      ]),
+    );
+
+    const response = await getById(makeGetRequest(), {
+      params: Promise.resolve({ id: APP_ID }),
+    });
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Failed to fetch application");
+  });
+
+  it("returns null profile_picture_url when show_profile_picture is true but no profile row exists", async () => {
+    mockCheckCvObjectExists.mockResolvedValue(true);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_APP, show_profile_picture: true }),
+        ok(null),
+      ]),
+    );
+
+    const response = await getById(makeGetRequest(), {
+      params: Promise.resolve({ id: APP_ID }),
+    });
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data.profile_picture_url).toBeNull();
   });
 
   it("returns cv_exists:false when the CV file is missing", async () => {
