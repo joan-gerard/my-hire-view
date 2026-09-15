@@ -11,6 +11,7 @@ const HOME_HERO_IMAGE_CREDIT = {
   name: "Pawel Czerwinski",
 } as const;
 
+/** R2 key under `marketing/`. Rename (new key) if the video file changes — see `lib/marketing-assets.ts`. */
 const HERO_VIDEO = marketingAssetUrl("hero-video.mp4");
 
 /**

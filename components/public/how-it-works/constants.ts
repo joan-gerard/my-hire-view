@@ -13,6 +13,7 @@ export interface HowItWorksStep {
   video: string;
 }
 
+/** Filenames are immutable R2 keys; use a new name if a step video is replaced. */
 export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
   {
     id: 1,

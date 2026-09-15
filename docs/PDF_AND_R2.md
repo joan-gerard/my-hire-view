@@ -106,6 +106,8 @@ pnpm marketing:upload
 
 That reads `.env` / `.env.local` (same R2 credentials as CV uploads) and PUTs the four files from `public/*.mp4`. After a successful upload, set `NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL` and delete those mp4s from `public/` so they are not copied into each Vercel deployment.
 
+Objects are uploaded with `Cache-Control: public, max-age=31536000, immutable`. **Do not overwrite an existing key** after changing the video: browsers keep the old bytes for up to a year. Upload a new key (version suffix or content hash), update `marketingAssetUrl("…")` in `app/(marketing)/page.tsx` and `components/public/how-it-works/constants.ts` to match, then deploy. Optionally delete the old object later.
+
 Marketing **stills** stay in `public/` as compressed WebP (`hero-image.webp`, `remote-work-2.webp`, `solution-2.webp`, `solution-1-1.webp`, `customer-service-250x250.webp`). Recompress with `cwebp -q 78 -resize 1920 0 input -o output.webp` if you replace a photo.
 
 ## Local development

@@ -1,9 +1,13 @@
 /**
  * Upload landing-page videos to R2 under `marketing/`.
  *
- * Reads `.env.local` (same R2_* vars as CV uploads). Does not print secrets.
+ * Reads `.env` / `.env.local` (same R2_* vars as CV uploads). Does not print secrets.
  *
  * Usage: node scripts/upload-marketing-assets.mjs
+ *
+ * Cache-Control is `immutable` for one year. Do not overwrite an existing key after
+ * changing the file bytes — browsers will keep the old video. Upload a new key
+ * (version suffix or content hash) and point `marketingAssetUrl(...)` at that name.
  */
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -13,6 +17,7 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PREFIX = "marketing";
 
+/** Object keys must change when the video content changes (see file header). */
 const FILES = [
   { local: "public/hero-video.mp4", key: `${PREFIX}/hero-video.mp4`, type: "video/mp4" },
   { local: "public/step-1.mp4", key: `${PREFIX}/step-1.mp4`, type: "video/mp4" },
@@ -69,6 +74,7 @@ const client = new S3Client({
   credentials: { accessKeyId, secretAccessKey },
 });
 
+/** Safe only because keys are treated as unique forever; see file header. */
 const cacheControl = "public, max-age=31536000, immutable";
 
 for (const file of FILES) {

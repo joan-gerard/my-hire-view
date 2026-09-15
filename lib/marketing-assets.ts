@@ -8,6 +8,9 @@
  * Set `NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL` to the public origin plus
  * `/marketing` (no trailing slash), e.g. `https://pub-xxxxx.r2.dev/marketing`.
  * When unset, URLs fall back to `/{filename}` so local `public/*.mp4` still work.
+ *
+ * R2 objects are cached as immutable for a year. Pass a new filename when the
+ * video changes (e.g. `hero-video-v2.mp4`); do not reuse the old key.
  */
 
 export const MARKETING_OBJECT_PREFIX = "marketing";
@@ -20,7 +23,10 @@ export function getMarketingAssetsBaseUrl(): string | undefined {
   return explicit || undefined;
 }
 
-/** Absolute R2 URL, or `/{filename}` when no public base is configured. */
+/**
+ * Absolute R2 URL, or `/{filename}` when no public base is configured.
+ * `filename` is the R2 object name under `marketing/` (must change if the video bytes change).
+ */
 export function marketingAssetUrl(filename: string): string {
   const name = filename.replace(/^\//, "");
   const base = getMarketingAssetsBaseUrl();
