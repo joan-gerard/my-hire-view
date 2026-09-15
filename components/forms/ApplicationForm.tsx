@@ -84,7 +84,7 @@ interface ApplicationFormProps {
   initialData?: ApplicationFormInitialData;
   onSubmit: (data: ApplicationFormData) => Promise<void>;
   loading?: boolean;
-  /** Primary submit button label (create uses “Save Draft”; edit keeps “Save Application”). */
+  /** Primary submit button label (create uses “Save & Preview”; edit keeps “Save Application”). */
   submitLabel?: string;
   /** When provided, passed to FileUpload so user can re-check CV existence (edit page). */
   onRetryCvCheck?: () => Promise<void>;
@@ -601,6 +601,7 @@ export default function ApplicationForm({
     open: leaveConfirmOpen,
     onConfirm: onConfirmLeave,
     onCancel: onCancelLeave,
+    disarmForNavigation,
   } = useLeaveConfirm(leaveConfirmEnabled, discardCreateDraft);
 
   const hasCompany = Boolean(formData.company.trim());
@@ -1107,14 +1108,27 @@ export default function ApplicationForm({
         // Create and edit both need this so handlers keep a validated typed slug.
         slugManuallyEdited,
       };
-      await onSubmit(payload);
+      // Disarm leave-confirm before parent navigates. Clearing the history
+      // sentinel after router.push can race and cancel the redirect (F16).
       if (persistDraftKey) {
         skipDraftSaveRef.current = true;
         setLeaveGuardArmed(false);
-        clearCreateApplicationDraft(persistDraftKey);
+        await disarmForNavigation();
+      }
+      try {
+        await onSubmit(payload);
+        if (persistDraftKey) {
+          clearCreateApplicationDraft(persistDraftKey);
+        }
+      } catch {
+        if (persistDraftKey) {
+          skipDraftSaveRef.current = false;
+          setLeaveGuardArmed(true);
+        }
+        // Parent surfaces the error (alert). Keep the local draft for retry.
       }
     } catch {
-      // Parent surfaces the error (alert). Keep the local draft for retry.
+      // Validation / upload errors above — parent or field UI already informed.
     } finally {
       isSubmittingRef.current = false;
       setSubmitPhase("idle");

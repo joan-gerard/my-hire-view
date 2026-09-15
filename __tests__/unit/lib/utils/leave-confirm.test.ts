@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import type { ApplicationCvType } from "@/lib/types/application";
 import {
   hasLeaveRelevantDraftChanges,
+  isLeaveGuardHistoryState,
   leaveRelevantDraftSnapshot,
   shouldBlockSameOriginNavigation,
 } from "@/lib/utils/leave-confirm";
@@ -109,5 +110,14 @@ describe("leaveRelevantDraftSnapshot", () => {
         selectedPrimaryId: null,
       }),
     ).toBe(true);
+  });
+});
+
+describe("isLeaveGuardHistoryState", () => {
+  it("detects the leave-confirm sentinel marker", () => {
+    expect(isLeaveGuardHistoryState({ __mhvLeaveGuard: true })).toBe(true);
+    expect(isLeaveGuardHistoryState({ __mhvLeaveGuard: false })).toBe(false);
+    expect(isLeaveGuardHistoryState(null)).toBe(false);
+    expect(isLeaveGuardHistoryState({})).toBe(false);
   });
 });

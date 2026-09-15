@@ -1,20 +1,16 @@
 "use client";
 
-import { shouldBlockSameOriginNavigation } from "@/lib/utils/leave-confirm";
+import {
+  isLeaveGuardHistoryState,
+  shouldBlockSameOriginNavigation,
+  waitUntilLeaveGuardCleared,
+} from "@/lib/utils/leave-confirm";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type PendingLeave = { kind: "href"; href: string } | { kind: "back" };
 
 const GUARD_STATE = { __mhvLeaveGuard: true } as const;
-
-function isGuardHistoryState(state: unknown): boolean {
-  return (
-    !!state &&
-    typeof state === "object" &&
-    (state as { __mhvLeaveGuard?: boolean }).__mhvLeaveGuard === true
-  );
-}
 
 /**
  * When `enabled`, intercept same-origin link clicks and browser Back, show a
@@ -35,6 +31,12 @@ export function useLeaveConfirm(
   open: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  /**
+   * Drop the history sentinel immediately and wait until it is gone.
+   * Call before programmatic navigation (successful create) so sentinel
+   * `history.back()` cannot race `router.push`.
+   */
+  disarmForNavigation: () => Promise<void>;
 } {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -54,7 +56,7 @@ export function useLeaveConfirm(
   onDiscardRef.current = onDiscard;
 
   const pushSentinel = useCallback(() => {
-    if (guardActiveRef.current && isGuardHistoryState(window.history.state)) {
+    if (guardActiveRef.current && isLeaveGuardHistoryState(window.history.state)) {
       return;
     }
     window.history.pushState(GUARD_STATE, "", window.location.href);
@@ -74,7 +76,7 @@ export function useLeaveConfirm(
   const tryCompleteHrefAfterRemoval = useCallback((): boolean => {
     const href = pendingHrefAfterBackRef.current;
     if (!href) return false;
-    if (isGuardHistoryState(window.history.state)) return false;
+    if (isLeaveGuardHistoryState(window.history.state)) return false;
     pendingHrefAfterBackRef.current = null;
     pendingRemovalRef.current = false;
     bypassRef.current = false;
@@ -96,7 +98,7 @@ export function useLeaveConfirm(
   const removeSentinel = useCallback(() => {
     if (!guardActiveRef.current) return;
     guardActiveRef.current = false;
-    if (isGuardHistoryState(window.history.state)) {
+    if (isLeaveGuardHistoryState(window.history.state)) {
       pendingRemovalRef.current = true;
       bypassRef.current = true;
       window.history.back();
@@ -156,7 +158,7 @@ export function useLeaveConfirm(
 
     // Removal already finished while we were disabled (listener consumed it, or
     // history moved off the guard without us). Clear a stale flag and arm.
-    if (pendingRemovalRef.current && !isGuardHistoryState(window.history.state)) {
+    if (pendingRemovalRef.current && !isLeaveGuardHistoryState(window.history.state)) {
       pendingRemovalRef.current = false;
       bypassRef.current = false;
     }
@@ -221,6 +223,14 @@ export function useLeaveConfirm(
     setOpen(false);
   }, []);
 
+  const disarmForNavigation = useCallback(async () => {
+    enabledRef.current = false;
+    setOpen(false);
+    pendingRef.current = null;
+    removeSentinel();
+    await waitUntilLeaveGuardCleared(2000);
+  }, [removeSentinel]);
+
   const onConfirm = useCallback(() => {
     const pending = pendingRef.current;
     pendingRef.current = null;
@@ -234,7 +244,7 @@ export function useLeaveConfirm(
     if (pending.kind === "href") {
       // Drop the sentinel, then replace the create entry once traversal lands.
       pendingHrefAfterBackRef.current = pending.href;
-      if (isGuardHistoryState(window.history.state)) {
+      if (isLeaveGuardHistoryState(window.history.state)) {
         pendingRemovalRef.current = true;
         window.history.back();
         // Poll until off the sentinel (popstate may have already run). Never
@@ -283,5 +293,5 @@ export function useLeaveConfirm(
     window.requestAnimationFrame(tick);
   }, [router, tryCompleteExitCreate, tryCompleteHrefAfterRemoval]);
 
-  return { open, onConfirm, onCancel };
+  return { open, onConfirm, onCancel, disarmForNavigation };
 }

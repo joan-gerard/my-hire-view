@@ -317,7 +317,7 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
-    await ensureProfilePublicId(supabase, user);
+    const ensuredPublicId = await ensureProfilePublicId(supabase, user);
     const snapshot = await getProfileSnapshot(supabase, user.id);
 
     const candidateFields = {
@@ -416,7 +416,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ data }, { status: 201 });
+    return NextResponse.json(
+      { data, public_id: ensuredPublicId },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("POST /api/applications:", error);
     return NextResponse.json(

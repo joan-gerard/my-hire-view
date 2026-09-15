@@ -78,3 +78,38 @@ export function hasLeaveRelevantDraftChanges(
 ): boolean {
   return baseline !== leaveRelevantDraftSnapshot(current);
 }
+
+/** History state marker used by `useLeaveConfirm` sentinel entries. */
+export function isLeaveGuardHistoryState(state: unknown): boolean {
+  return (
+    !!state &&
+    typeof state === "object" &&
+    (state as { __mhvLeaveGuard?: boolean }).__mhvLeaveGuard === true
+  );
+}
+
+/**
+ * Wait until the leave-confirm history sentinel is gone (or timeout).
+ * Call after disarming the guard and before programmatic navigation so
+ * `history.back()` from sentinel removal cannot race `router.push`.
+ */
+export function waitUntilLeaveGuardCleared(timeoutMs = 500): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (!isLeaveGuardHistoryState(window.history.state)) {
+    return Promise.resolve();
+  }
+  const started = Date.now();
+  return new Promise((resolve) => {
+    const tick = () => {
+      if (
+        !isLeaveGuardHistoryState(window.history.state) ||
+        Date.now() - started > timeoutMs
+      ) {
+        resolve();
+        return;
+      }
+      window.requestAnimationFrame(tick);
+    };
+    window.requestAnimationFrame(tick);
+  });
+}
