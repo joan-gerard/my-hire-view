@@ -10,7 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ApplicationViewFooter from "./ApplicationViewFooter";
 
-const BACKGROUND_IMAGE = "/hero-image.jpg";
+const BACKGROUND_IMAGE = "/hero-image.webp";
 
 /**
  * Single recruiter-facing empty state for archived, draft, deleted, or

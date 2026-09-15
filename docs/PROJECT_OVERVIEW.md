@@ -168,7 +168,8 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 | `NEXT_PUBLIC_SUPABASE_URL`                                                                          | Supabase project URL (public)                                               |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`                                                                     | Supabase anon key (public)                                                  |
 | `SUPABASE_SERVICE_ROLE_KEY`                                                                         | Server-only; used for privileged RPCs and waitlist inserts                  |
-| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL` | Cloudflare R2 for CV PDFs (server-only); see [PDF_AND_R2.md](PDF_AND_R2.md) |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL` | Cloudflare R2 for CV PDFs (server-only) and landing videos under `marketing/`; see [PDF_AND_R2.md](PDF_AND_R2.md) |
+| `NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL` | Public origin for landing videos (`$R2_PUBLIC_BASE_URL/marketing`). **Required** on Vercel (and locally) now that `public/*.mp4` are not in the repo. |
 | `NEXT_PUBLIC_SITE_URL`                                                                              | Canonical site URL for share links; **required in production** on the server (`getBaseUrl()` fails fast if unset). Dev falls back to localhost. Client uses `window.location.origin`. |
 
 > Note: `.env.local.example` lists required variables including R2 credentials for CV uploads.

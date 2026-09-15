@@ -2,15 +2,16 @@ import FixedBackgroundHero from "@/components/public/FixedBackgroundHero";
 import LandingPageSections from "@/components/public/LandingPageSections";
 import PreventOverscrollReveal from "@/components/public/PreventOverscrollReveal";
 import ScrollCoverSection from "@/components/public/ScrollCoverSection";
+import { marketingAssetUrl } from "@/lib/marketing-assets";
 
-const HOME_HERO_IMAGE = "/hero-image.jpg";
+const HOME_HERO_IMAGE = "/hero-image.webp";
 const HOME_HERO_IMAGE_CREDIT = {
   label: "Photo by",
   href: "https://unsplash.com/@pawel_czerwinski",
   name: "Pawel Czerwinski",
 } as const;
 
-const HERO_VIDEO = "/hero-video.mp4";
+const HERO_VIDEO = marketingAssetUrl("hero-video.mp4");
 
 /**
  * Pre-launch "Coming Soon" landing page. Structure and copy follow docs/LANDING_PAGE_BRIEF.md.

@@ -79,10 +79,34 @@ That improves delete UX during R2 outages at the cost of temporary orphans and a
 | `R2_SECRET_ACCESS_KEY` | R2 API token secret. |
 | `R2_BUCKET_NAME` | Bucket name for CV PDFs. |
 | `R2_PUBLIC_BASE_URL` | Public origin for objects, **no trailing slash** (e.g. `https://pub-xxxxx.r2.dev` or `https://cv.yourdomain.com`). Must match how browsers resolve CV URLs. |
+| `NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL` | Public origin for landing videos, **no trailing slash** (`$R2_PUBLIC_BASE_URL/marketing`). Required in the Vercel project (and locally after deleting `public/*.mp4`). |
 
 Create an R2 bucket, enable **public access** on that bucket (custom hostname or r2.dev), and create an **API token** with permission to read/write objects in that bucket. See [Cloudflare R2 documentation](https://developers.cloudflare.com/r2/).
 
 Object keys use per-user prefixes: `cvs/{userId}/tailored/<key>.pdf` (tailored) and `cvs/{userId}/primary/{id}.pdf` (primary library).
+
+## Marketing videos (Deployment Storage)
+
+Landing-page **videos** live in the same bucket under `marketing/` (not under `cvs/`). CV delete helpers allow-list `cvs/{userId}/…` only, so they never touch these objects.
+
+| Object key | Used on |
+| --- | --- |
+| `marketing/hero-video.mp4` | Home hero |
+| `marketing/step-1.mp4` | How it works, step 1 |
+| `marketing/step-2.mp4` | How it works, step 2 |
+| `marketing/step-3.mp4` | How it works, step 3 |
+
+`next.config.ts` does not rewrite these URLs. Set **`NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL`** to `$R2_PUBLIC_BASE_URL/marketing` (no trailing slash) in `.env` / `.env.local` and in Vercel so the client bundle can load the videos. When that variable is unset, the app falls back to `public/*.mp4` (those files are no longer in the repo).
+
+**Upload (once, or after replacing a video):**
+
+```bash
+pnpm marketing:upload
+```
+
+That reads `.env` / `.env.local` (same R2 credentials as CV uploads) and PUTs the four files from `public/*.mp4`. After a successful upload, set `NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL` and delete those mp4s from `public/` so they are not copied into each Vercel deployment.
+
+Marketing **stills** stay in `public/` as compressed WebP (`hero-image.webp`, `remote-work-2.webp`, `solution-2.webp`, `solution-1-1.webp`, `customer-service-250x250.webp`). Recompress with `cwebp -q 78 -resize 1920 0 input -o output.webp` if you replace a photo.
 
 ## Local development
 

@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest",
     "test:ci": "vitest run",
+    "marketing:upload": "node scripts/upload-marketing-assets.mjs",
     "prepare": "husky"
   },
   "dependencies": {

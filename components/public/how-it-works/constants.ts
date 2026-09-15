@@ -4,6 +4,8 @@
  * thresholds can be tuned in one place.
  */
 
+import { marketingAssetUrl } from "@/lib/marketing-assets";
+
 export interface HowItWorksStep {
   id: number;
   title: string;
@@ -17,21 +19,21 @@ export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
     title: "Create Your Application",
     description:
       "Upload your CV, record a video pitch, and add your portfolio link.",
-    video: "/step-1.mp4",
+    video: marketingAssetUrl("step-1.mp4"),
   },
   {
     id: 2,
     title: "Share Your Link",
     description:
       "Send your custom URL to recruiters via email, LinkedIn, or job applications.",
-    video: "/step-2.mp4",
+    video: marketingAssetUrl("step-2.mp4"),
   },
   {
     id: 3,
     title: "Track & Follow Up",
     description:
       "See when recruiters view your application and follow up strategically.",
-    video: "/step-3.mp4",
+    video: marketingAssetUrl("step-3.mp4"),
   },
 ];
 

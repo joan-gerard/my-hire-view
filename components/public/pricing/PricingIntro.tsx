@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 /** Same brand still as home — compact band, not a full-viewport fixed hero. */
-const INTRO_IMAGE = "/hero-image.jpg";
+const INTRO_IMAGE = "/hero-image.webp";
 
 /**
  * Short brand intro for /pricing. Keeps homepage visual language (photo,

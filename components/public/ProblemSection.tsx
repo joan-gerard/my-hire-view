@@ -12,7 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 /** Image for the problem section bento (left column). */
-const PROBLEM_SECTION_IMAGE = "/remote-work-2.jpg";
+const PROBLEM_SECTION_IMAGE = "/remote-work-2.webp";
 
 const PROBLEMS = [
   {
