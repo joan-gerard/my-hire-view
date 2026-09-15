@@ -1,7 +1,9 @@
 /**
  * Upload landing-page videos to R2 under `marketing/`.
  *
- * Reads `.env` / `.env.local` (same R2_* vars as CV uploads). Does not print secrets.
+ * Reads `.env` then `.env.local` (local overrides `.env`). Keys already set in
+ * the process environment (shell / CI) are never overwritten. Env files are
+ * optional when `R2_*` is already present.
  *
  * Usage: node scripts/upload-marketing-assets.mjs
  *
@@ -15,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+/** Must match the `marketing/` prefix documented in `lib/marketing-assets.ts`. */
 const PREFIX = "marketing";
 
 /** Object keys must change when the video content changes (see file header). */
@@ -24,6 +27,9 @@ const FILES = [
   { local: "public/step-2.mp4", key: `${PREFIX}/step-2.mp4`, type: "video/mp4" },
   { local: "public/step-3.mp4", key: `${PREFIX}/step-3.mp4`, type: "video/mp4" },
 ];
+
+/** Keys present before dotenv files are loaded (shell / CI). Never overwritten. */
+const ENV_FROM_PROCESS = new Set(Object.keys(process.env));
 
 function loadEnvFile(filename, { override = false } = {}) {
   const path = resolve(ROOT, filename);
@@ -41,21 +47,19 @@ function loadEnvFile(filename, { override = false } = {}) {
     ) {
       value = value.slice(1, -1);
     }
+    if (ENV_FROM_PROCESS.has(key)) continue;
     if (override || process.env[key] === undefined) process.env[key] = value;
   }
   return true;
 }
 
-function loadEnvLocal() {
-  // Next.js loads `.env` then `.env.local` (local wins). This script matches that.
-  const loadedEnv = loadEnvFile(".env");
-  const loadedLocal = loadEnvFile(".env.local", { override: true });
-  if (!loadedEnv && !loadedLocal) {
-    throw new Error("Missing .env or .env.local — copy .env.local.example and set R2_*");
-  }
+function loadDotenvFiles() {
+  // Next.js: `.env` then `.env.local` (local wins). Pre-set process.env still wins.
+  loadEnvFile(".env");
+  loadEnvFile(".env.local", { override: true });
 }
 
-loadEnvLocal();
+loadDotenvFiles();
 
 const accountId = process.env.R2_ACCOUNT_ID;
 const accessKeyId = process.env.R2_ACCESS_KEY_ID;
@@ -64,7 +68,7 @@ const bucket = process.env.R2_BUCKET_NAME?.trim();
 
 if (!accountId || !accessKeyId || !secretAccessKey || !bucket) {
   throw new Error(
-    "Missing R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, or R2_BUCKET_NAME",
+    "Missing R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, or R2_BUCKET_NAME (set them in the environment or in .env / .env.local)",
   );
 }
 
@@ -95,6 +99,6 @@ for (const file of FILES) {
   console.log(`uploaded ${file.key} (${body.length} bytes)`);
 }
 
-  console.log(
-    "Done. Set NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL to R2_PUBLIC_BASE_URL + /marketing in .env and Vercel, then delete public/*.mp4.",
-  );
+console.log(
+  "Done. Set NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL to R2_PUBLIC_BASE_URL + /marketing in .env and Vercel, then delete public/*.mp4.",
+);

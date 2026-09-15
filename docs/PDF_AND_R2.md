@@ -104,7 +104,7 @@ Landing-page **videos** live in the same bucket under `marketing/` (not under `c
 pnpm marketing:upload
 ```
 
-That reads `.env` / `.env.local` (same R2 credentials as CV uploads) and PUTs the four files from `public/*.mp4`. After a successful upload, set `NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL` and delete those mp4s from `public/` so they are not copied into each Vercel deployment.
+That loads `R2_*` from the process environment, then `.env`, then `.env.local` (local overrides `.env`; already-set env vars are never overwritten) and PUTs the four files from `public/*.mp4`. After a successful upload, set `NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL` and delete those mp4s from `public/` so they are not copied into each Vercel deployment.
 
 Objects are uploaded with `Cache-Control: public, max-age=31536000, immutable`. **Do not overwrite an existing key** after changing the video: browsers keep the old bytes for up to a year. Upload a new key (version suffix or content hash), update `marketingAssetUrl("…")` in `app/(marketing)/page.tsx` and `components/public/how-it-works/constants.ts` to match, then deploy. Optionally delete the old object later.
 

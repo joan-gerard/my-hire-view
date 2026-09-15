@@ -7,13 +7,12 @@
  *
  * Set `NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL` to the public origin plus
  * `/marketing` (no trailing slash), e.g. `https://pub-xxxxx.r2.dev/marketing`.
+ * That prefix must match `PREFIX` in `scripts/upload-marketing-assets.mjs`.
  * When unset, URLs fall back to `/{filename}` so local `public/*.mp4` still work.
  *
  * R2 objects are cached as immutable for a year. Pass a new filename when the
  * video changes (e.g. `hero-video-v2.mp4`); do not reuse the old key.
  */
-
-export const MARKETING_OBJECT_PREFIX = "marketing";
 
 export function getMarketingAssetsBaseUrl(): string | undefined {
   const explicit = process.env.NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL?.trim().replace(
