@@ -264,6 +264,7 @@ Owner-only fetch for the edit page and draft-preview CV retry. Same `cv_exists` 
 - Dedicated by-id endpoint avoids fetching the full list just to edit one application.
 - Same `cv_exists` enrichment as the public slug GET for consistent edit UX.
 - Resolves live profile picture when the application shows it (so draft-preview refetch keeps the avatar).
+- Profile lookup failures return **500** via `handleApiError` (a missing profiles row still yields `profile_picture_url: null`).
 - Rate limited (default 60/min) before auth/query work — same as other authenticated application/profile reads.
 - Validates `id` as a UUID (**400** when malformed) before querying.
 - Auth failures stay **401**; unexpected errors are logged via `handleApiError` and return **500**.

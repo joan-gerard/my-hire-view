@@ -612,6 +612,40 @@ describe("GET /api/applications/by-id/[id]", () => {
     );
   });
 
+  it("returns 500 when the profile lookup fails (does not silently drop the avatar)", async () => {
+    mockCheckCvObjectExists.mockResolvedValue(true);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_APP, show_profile_picture: true }),
+        dbError("profiles unavailable"),
+      ]),
+    );
+
+    const response = await getById(makeGetRequest(), {
+      params: Promise.resolve({ id: APP_ID }),
+    });
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Failed to fetch application");
+  });
+
+  it("returns null profile_picture_url when show_profile_picture is true but no profile row exists", async () => {
+    mockCheckCvObjectExists.mockResolvedValue(true);
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok({ ...EXISTING_APP, show_profile_picture: true }),
+        ok(null),
+      ]),
+    );
+
+    const response = await getById(makeGetRequest(), {
+      params: Promise.resolve({ id: APP_ID }),
+    });
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data.profile_picture_url).toBeNull();
+  });
+
   it("returns cv_exists:false when the CV file is missing", async () => {
     mockCheckCvObjectExists.mockResolvedValue(false);
     mockCreateClient.mockResolvedValue(makeSupabaseClient([ok(EXISTING_APP)]));

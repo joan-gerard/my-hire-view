@@ -61,11 +61,18 @@ export async function GET(
 
     let profile_picture_url: string | null = null;
     if (data.show_profile_picture === true) {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('profile_picture_url, updated_at')
         .eq('user_id', user.id)
         .maybeSingle();
+      if (profileError) {
+        return handleApiError(
+          'GET /api/applications/by-id/[id] profile',
+          profileError,
+          { message: 'Failed to fetch application' },
+        );
+      }
       const liveUrl = profile?.profile_picture_url?.trim() || null;
       profile_picture_url = cacheBustProfilePictureUrl(
         liveUrl,
