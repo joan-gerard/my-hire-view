@@ -127,4 +127,17 @@ describe("loadOwnerDraftPreview", () => {
       },
     });
   });
+
+  it("omits cv_exists and skips HeadObject when the draft has no cv_url", async () => {
+    mockResolvePublicApplication.mockResolvedValue({
+      application: { ...DRAFT_APP, cv_url: "" },
+      ownerUserId: "owner-id",
+    });
+
+    const result = await loadOwnerDraftPreview(PUBLIC_ID, SLUG, "owner-id");
+    expect(mockCheckCvObjectExists).not.toHaveBeenCalled();
+    expect(result).not.toBeNull();
+    expect(result!.application.cv_url).toBe("");
+    expect(result!.application).not.toHaveProperty("cv_exists");
+  });
 });

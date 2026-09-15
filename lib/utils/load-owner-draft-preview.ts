@@ -3,7 +3,10 @@ import {
   type PublicApplication,
 } from "@/lib/types/application";
 import { checkCvObjectExists } from "@/lib/utils/cv-storage";
-import { resolvePublicApplication } from "@/lib/utils/resolve-public-application";
+import {
+  resolvePublicApplication,
+  type ResolvedPublicApplication,
+} from "@/lib/utils/resolve-public-application";
 
 export type OwnerDraftPreview = {
   application: PublicApplication;
@@ -11,20 +14,13 @@ export type OwnerDraftPreview = {
 };
 
 /**
- * Owner-only draft preview for the public share URL (F16-050).
- * Returns content when the viewer owns a **draft** at this publicId+slug.
- * Recruiters and non-owners still get the normal unavailable path from
- * `loadPublicApplicationResponse`.
+ * Build an owner draft preview from an already-resolved public application.
+ * Returns null when the viewer is not the owner or the row is not a draft.
  */
-export async function loadOwnerDraftPreview(
-  publicId: string,
-  slug: string,
+export async function buildOwnerDraftPreview(
+  resolved: ResolvedPublicApplication,
   viewerUserId: string,
 ): Promise<OwnerDraftPreview | null> {
-  const resolved = await resolvePublicApplication(publicId, slug);
-  if (!resolved) {
-    return null;
-  }
   if (resolved.ownerUserId !== viewerUserId) {
     return null;
   }
@@ -40,4 +36,23 @@ export async function loadOwnerDraftPreview(
     application: toOwnerPreviewApplication(resolved.application, cv_exists),
     applicationId: resolved.application.id,
   };
+}
+
+/**
+ * Owner-only draft preview for the public share URL (F16-050).
+ * Returns content when the viewer owns a **draft** at this publicId+slug.
+ * Recruiters and non-owners still get the normal unavailable path from
+ * `loadPublicApplicationResponse`. Prefer {@link buildOwnerDraftPreview}
+ * when the row was already resolved (e.g. view page) to avoid a second fetch.
+ */
+export async function loadOwnerDraftPreview(
+  publicId: string,
+  slug: string,
+  viewerUserId: string,
+): Promise<OwnerDraftPreview | null> {
+  const resolved = await resolvePublicApplication(publicId, slug);
+  if (!resolved) {
+    return null;
+  }
+  return buildOwnerDraftPreview(resolved, viewerUserId);
 }

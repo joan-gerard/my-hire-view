@@ -181,6 +181,11 @@ describe("POST /api/applications", () => {
       makePostRequest({ ...BASE_APP_INPUT, status: "active" }),
     );
     expect(response.status).toBe(201);
+    const json = await response.json();
+    expect(json.data).toMatchObject({
+      id: "app-active",
+      status: "active",
+    });
     expect(insertChain.insert).toHaveBeenCalledWith(
       expect.objectContaining({ status: "active", archived_at: null }),
     );

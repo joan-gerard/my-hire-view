@@ -162,7 +162,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 - **Slug uniqueness:** calls `validateSlugForApplication` (same helper as `POST /api/slug/validate`) before insert so a taken slug returns **409** with `SLUG_COLLISION_USER_MESSAGE` without relying only on the DB. Postgres unique violations (`23505`) remain a race backstop: slug → same **409** message; tailored `cv_url` → tailored-in-use **409**.
 - Returns **201** with the created row.
 - **Draft by default (F16-050):** omitted `status` inserts as `"draft"` (not publicly visible). The create form sends `status: "draft"` and redirects the owner to the share URL for preview; **Publish** (dashboard or draft banner) sets `status: "active"`. Explicit `status: "active"` on create still works for callers that need an immediately live app.
-- **Owner draft preview:** anonymous public GET still returns `{ status: "unavailable" }` for drafts. When the signed-in owner opens `/view/{publicId}/{slug}`, the page loads an owner-only preview of the public UI (banner + Publish / Edit) via `loadOwnerDraftPreview` — recruiters never see draft content.
+- **Owner draft preview:** anonymous public GET still returns `{ status: "unavailable" }` for drafts. When the signed-in owner opens `/view/{publicId}/{slug}`, the page loads an owner-only preview of the public UI (banner + Publish / Edit) via a **single** `resolvePublicApplication` (`loadViewPageApplication` → `buildOwnerDraftPreview`) — recruiters never see draft content.
 
 ---
 

@@ -2,10 +2,14 @@
 
 import ApplicationPageHeader from "@/components/public/ApplicationPageHeader";
 import type {
+  Application,
   PublicApplication,
   PublicApplicationResponse,
 } from "@/lib/types/application";
-import { isUnavailablePublicApplication } from "@/lib/types/application";
+import {
+  isUnavailablePublicApplication,
+  toOwnerPreviewApplication,
+} from "@/lib/types/application";
 import { useCallback, useEffect, useState } from "react";
 import ApplicationPageContent from "./ApplicationPageContent";
 import ApplicationViewFooter from "./ApplicationViewFooter";
@@ -52,28 +56,10 @@ export default function ViewPageContent({
       );
       if (!response.ok) return;
       const { data } = (await response.json()) as {
-        data: PublicApplication & { cv_exists?: boolean };
+        data: Application & { cv_exists?: boolean };
       };
-      setApplication({
-        company: data.company,
-        role: data.role,
-        first_name: data.first_name,
-        last_name: data.last_name,
-        location: data.location,
-        portfolio_url: data.portfolio_url,
-        linkedin_url: data.linkedin_url,
-        profile_picture_url: data.profile_picture_url ?? null,
-        cv_url: data.cv_url,
-        video_url: data.video_url,
-        status: "active",
-        ...(data.cv_filename !== undefined
-          ? { cv_filename: data.cv_filename }
-          : {}),
-        ...(data.use_original_cv_filename !== undefined
-          ? { use_original_cv_filename: data.use_original_cv_filename }
-          : {}),
-        ...(data.cv_exists !== undefined ? { cv_exists: data.cv_exists } : {}),
-      });
+      // Same mapper as SSR owner preview — keep field mapping in one place.
+      setApplication(toOwnerPreviewApplication(data, data.cv_exists));
       return;
     }
 

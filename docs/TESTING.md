@@ -52,6 +52,7 @@ __tests__/
         primary-cv-form-sync.test.ts
         create-application-draft.test.ts
         load-owner-draft-preview.test.ts
+        load-view-page-application.test.ts
         leave-confirm.test.ts
       auth/
         safe-next-path.test.ts
@@ -109,7 +110,8 @@ Manual QA for draft → preview → publish (F16): [manual-testing/MANUAL_TEST_A
 | `__tests__/unit/lib/utils/public-id.test.ts` | **Public id generation** |
 | `__tests__/unit/lib/utils/resolve-public-application.test.ts` | **Public path resolution** — invalid `publicId` / slug format short-circuits before DB; valid pair resolves via service-role client; missing rows → null; query errors throw |
 | `__tests__/unit/lib/utils/load-public-application-response.test.ts` | **Public share DTO loader** — null when unresolved, active DTO + `cv_exists`, unavailable stub for draft/archived, propagates errors (D1-007) |
-| `__tests__/unit/lib/utils/load-owner-draft-preview.test.ts` | **Owner draft preview (F16-050)** — owner+draft → public DTO; non-owner / active / archived → null |
+| `__tests__/unit/lib/utils/load-owner-draft-preview.test.ts` | **Owner draft preview (F16-050)** — owner+draft → public DTO; no-`cv_url` skips HeadObject / omits `cv_exists`; non-owner / active / archived → null |
+| `__tests__/unit/lib/utils/load-view-page-application.test.ts` | **View page loader (F16-050)** — single resolve for live / owner-draft / unavailable; session only checked for non-live rows |
 | `__tests__/unit/lib/utils/url.test.ts` | **Site URL helpers** — localhost fallback in dev (unset, invalid, non-http(s)), trim trailing slash via origin, production fail-fast without `NEXT_PUBLIC_SITE_URL`, reject loopback hosts (127.0.0.0/8, aliases, IPv4-mapped IPv6) and non-http(s) schemes, share link builder (D1-061) |
 | `__tests__/unit/lib/utils/primary-cv-form-sync.test.ts` | **Form vs library modal load races (F18 / F15-049)** — ignore stale ApplicationForm GET after modal update; auto-select first primary on create only; skip default/auto-select when the user already chose a CV source |
 | `__tests__/unit/lib/utils/create-application-draft.test.ts` | **Create-application local draft (F15-045)** — storage key scope, parse/version/expiry, blank detection, save/load/clear and corrupt JSON cleanup |
