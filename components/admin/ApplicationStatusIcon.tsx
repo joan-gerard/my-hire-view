@@ -20,19 +20,38 @@ type ApplicationStatusIconBadgeProps = {
   visual: ApplicationStatusVisualKey;
   /** Accessible name; defaults to the status label. */
   label?: string;
+  /**
+   * When true, hide from assistive tech (visible text nearby provides the name).
+   * Use on the legend; leave false on cards where the badge is the status name.
+   */
+  decorative?: boolean;
 };
 
 function StatusBadgeShell({
   label,
   description,
+  decorative,
   children,
 }: {
   label: string;
   description: string;
+  decorative?: boolean;
   children: ReactNode;
 }) {
+  if (decorative) {
+    return (
+      <div
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+        aria-hidden
+      >
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div
+      role="img"
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
       title={`${label}: ${description}`}
       aria-label={label}
@@ -46,13 +65,18 @@ function StatusBadgeShell({
 export function ApplicationStatusIconBadge({
   visual,
   label,
+  decorative = false,
 }: ApplicationStatusIconBadgeProps) {
   const display = getApplicationStatusDisplayByKey(visual);
   const displayLabel = label ?? display.label;
 
   if (visual === 'archived') {
     return (
-      <StatusBadgeShell label={displayLabel} description={display.description}>
+      <StatusBadgeShell
+        label={displayLabel}
+        description={display.description}
+        decorative={decorative}
+      >
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)]/10">
           <ArchiveIcon className="h-5 w-5 text-[var(--foreground)]/60" />
         </span>
@@ -62,7 +86,11 @@ export function ApplicationStatusIconBadge({
 
   if (visual === 'draft') {
     return (
-      <StatusBadgeShell label={displayLabel} description={display.description}>
+      <StatusBadgeShell
+        label={displayLabel}
+        description={display.description}
+        decorative={decorative}
+      >
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100">
           <ClockIcon className="h-5 w-5 text-amber-700" />
         </span>
@@ -71,7 +99,11 @@ export function ApplicationStatusIconBadge({
   }
 
   return (
-    <StatusBadgeShell label={displayLabel} description={display.description}>
+    <StatusBadgeShell
+      label={displayLabel}
+      description={display.description}
+      decorative={decorative}
+    >
       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
         {visual === 'active_viewed' ? (
           <CheckIcon className="h-5 w-5 text-emerald-600" />

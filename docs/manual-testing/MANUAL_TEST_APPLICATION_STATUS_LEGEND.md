@@ -16,6 +16,7 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 - [ ] Modal lists: Draft, Active (not viewed yet), Active (viewed), Archived, and CV missing — with matching icons/badge
 - [ ] Same modal explains draft actions: **Publish**, **Preview**, **Publish to share**
 - [ ] Close via **Close** button, Escape, or backdrop click; focus returns to the page
+- [ ] On open, keyboard focus starts on the modal heading (not the Close button)
 - [ ] While the modal is open, the dashboard page behind it does **not** scroll (body scroll locked)
 
 ## Cards stay consistent

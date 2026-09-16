@@ -19,25 +19,49 @@ export type ApplicationStatusLegendProps = {
 
 /**
  * Modal help for dashboard status icons and draft card actions (F19-047).
+ *
+ * Dismissal (Close, backdrop, Escape) goes through `dialog.close()`;
+ * `onClose` is emitted only from the native `close` event so it runs once.
  */
 export default function ApplicationStatusLegend({
   open,
   onClose,
 }: ApplicationStatusLegendProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const closeEmittedRef = useRef(false);
   const titleId = useId();
   const statusHeadingId = useId();
   const draftHeadingId = useId();
+
+  const requestDismiss = () => {
+    dialogRef.current?.close();
+  };
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (open && !dialog.open) {
+      closeEmittedRef.current = false;
       dialog.showModal();
+      // Prefer the heading over the first tabbable control (Close at the bottom).
+      titleRef.current?.focus();
     } else if (!open && dialog.open) {
       dialog.close();
     }
   }, [open]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const handleClose = () => {
+      if (closeEmittedRef.current) return;
+      closeEmittedRef.current = true;
+      onClose();
+    };
+    dialog.addEventListener('close', handleClose);
+    return () => dialog.removeEventListener('close', handleClose);
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -53,14 +77,20 @@ export default function ApplicationStatusLegend({
       ref={dialogRef}
       className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,32rem)] max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
-      onClose={onClose}
       onClick={(e) => {
-        if (e.target === dialogRef.current) onClose();
+        if (e.target === dialogRef.current) {
+          requestDismiss();
+        }
       }}
     >
       <div className="space-y-5 p-5">
         <div>
-          <h2 id={titleId} className="text-lg font-semibold">
+          <h2
+            ref={titleRef}
+            id={titleId}
+            tabIndex={-1}
+            className="text-lg font-semibold outline-none"
+          >
             Status icons & draft actions
           </h2>
           <p className="mt-1 text-sm text-[var(--foreground)]/80">
@@ -82,6 +112,7 @@ export default function ApplicationStatusLegend({
                 <ApplicationStatusIconBadge
                   visual={item.key}
                   label={item.label}
+                  decorative
                 />
                 <div className="min-w-0 pt-1">
                   <p className="font-medium text-[var(--foreground)]">
@@ -94,7 +125,7 @@ export default function ApplicationStatusLegend({
               </li>
             ))}
             <li className="flex items-start gap-3">
-              <div className="flex h-9 shrink-0 items-center">
+              <div className="flex h-9 shrink-0 items-center" aria-hidden>
                 <MissingCvBadge />
               </div>
               <div className="min-w-0 pt-1">
@@ -131,7 +162,7 @@ export default function ApplicationStatusLegend({
         </section>
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--foreground)]/10 pt-4">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={requestDismiss}>
             Close
           </Button>
         </div>
