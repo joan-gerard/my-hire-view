@@ -2,6 +2,8 @@
 
 Covers **F19-044**: floating Getting started checklist on all `/admin` routes for profile, photo, primary CV, first application, and publish/share.
 
+Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../DATA_FLOW_ONBOARDING_CHECKLIST.md).
+
 ## Prerequisites
 
 - [ ] Prefer a **fresh account** (or clear prior photo/CVs/apps) so incomplete steps are visible

@@ -1,6 +1,6 @@
 # MyHireView — Data Flow
 
-This document describes how data moves through the system using Mermaid diagrams. For system architecture and design, see [ARCHITECTURE.md](ARCHITECTURE.md). For the full API catalog, see [API_REFERENCE.md](API_REFERENCE.md).
+This document describes how data moves through the system using Mermaid diagrams. For system architecture and design, see [ARCHITECTURE.md](ARCHITECTURE.md). For the full API catalog, see [API_REFERENCE.md](API_REFERENCE.md). Getting started checklist (F19-044): [DATA_FLOW_ONBOARDING_CHECKLIST.md](DATA_FLOW_ONBOARDING_CHECKLIST.md).
 
 ---
 
@@ -34,6 +34,8 @@ This document describes how data moves through the system using Mermaid diagrams
   - [8.8 Rate limiting](#88-rate-limiting)
   - [8.9 Session / auth](#89-session--auth)
   - [8.10 Double-submit](#810-double-submit)
+
+Related: [Getting started checklist data flow](DATA_FLOW_ONBOARDING_CHECKLIST.md).
 
 ---
 
