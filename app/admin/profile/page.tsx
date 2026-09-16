@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { requireAuth } from "@/lib/auth";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
+import { resolvePublicIdReadOnly } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/server";
+import PublicIdAccountField from "@/components/admin/PublicIdAccountField";
 import PrimaryCvLibrarySection from "@/components/forms/PrimaryCvLibrarySection";
 import ProfileForm from "@/components/forms/ProfileForm";
 import { formatApplicationStatusBreakdown } from "@/lib/types/application";
@@ -24,6 +26,8 @@ export default async function AdminProfilePage() {
     .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  const publicId = await resolvePublicIdReadOnly(supabase, user);
 
   const metaNames = namesFromUserMetadata(user);
   const initialData: Profile | null = profile
@@ -101,6 +105,7 @@ export default async function AdminProfilePage() {
               </dd>
             </div>
           )}
+          <PublicIdAccountField publicId={publicId} />
         </dl>
       </section>
 

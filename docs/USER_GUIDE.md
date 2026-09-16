@@ -17,7 +17,7 @@ This guide describes what you can do with MyHireView as a **candidate** (job see
 
 From the header, open **Profile** (`/admin/profile`). You can:
 
-- See your **account email** and **member since** date.
+- See your **account email**, **member since** date, and **Public id** (the private account segment in every share link — not your name). Helper text and an example `/view/{publicId}/…` path explain how it is used.
 - Edit **profile details** used as defaults when you create applications:
   - First name (required)
   - Last name (required)
@@ -56,7 +56,7 @@ At **Dashboard** (`/admin`) you can:
 4. Fill in the **application form**:
    - **Company name** and **Role/Position** (required).
    - **Name in URL** (optional): choose **None**, **At start** (e.g. `john-doe-acme-software-engineer`), or **At end** (e.g. `acme-software-engineer-john-doe`). The slug preview updates as you type.
-   - **Slug** (used in the URL; auto-generated from company and role, and from your name and position if you chose; you can change it manually). Use **Reset to suggested** to go back to the automatic link from the current company, role, and Name in URL choice.
+   - **Slug** (used in the URL; auto-generated from company and role, and from your name and position if you chose; you can change it manually). Use **Reset to suggested** to go back to the automatic link from the current company, role, and Name in URL choice. Below the slug, a **Share link preview** shows the final `/view/{publicId}/{slug}` URL and explains your **Public id**.
    - **CV**: choose a **primary CV** from your library (preferred) or upload a **tailored** PDF for this application only. CV source options stay locked briefly while your library loads, so a mid-load choice cannot be overwritten. Use **Manage library** to upload or delete primary CVs without leaving the page (same library as on Profile).
    - **YouTube URL** for your video pitch.
 5. Progress on this form is **remembered in this browser** if you refresh (up to about a week). These browser drafts are stored per signed-in account (separate from a saved application draft). If you leave via Back or another admin link, you are asked to confirm — confirming **discards** the browser draft so the next New Application starts clean. After a successful **Save & Preview**, the browser draft is cleared; a failed save keeps it. A tailored PDF file itself is not restored — re-choose the file if you had one selected.
