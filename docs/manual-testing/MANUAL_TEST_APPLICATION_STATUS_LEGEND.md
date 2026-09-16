@@ -11,7 +11,7 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 ## Legend modal
 
-- [ ] `/admin` header shows a **What do these icons mean?** button (next to Applications)
+- [ ] With at least one application, `/admin` header shows a **What do these icons mean?** button (next to Applications)
 - [ ] Clicking it opens a modal titled **Status icons & draft actions**
 - [ ] Modal lists: Draft, Active (not viewed yet), Active (viewed), Archived, and CV missing — with matching icons/badge
 - [ ] Same modal explains draft actions: **Publish**, **Preview**, **Publish to share**
@@ -29,5 +29,8 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 ## Smoke
 
-- [ ] Empty dashboard (no apps) still shows the legend button
+- [ ] Empty dashboard (no apps, no search) hides the legend button and search bar
+- [ ] After creating the first application, legend button and search bar appear
+- [ ] Search with no matches still shows the legend button and search bar (Clear search works)
+- [ ] Clearing a no-match search does **not** briefly flash the first-run empty state or hide the search bar before the full list returns
 - [ ] Search / pagination still work after opening and closing the modal
