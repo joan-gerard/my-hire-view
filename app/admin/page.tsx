@@ -79,7 +79,10 @@ export default function AdminDashboard() {
       />
 
       {applications.length === 0 ? (
-        <AdminDashboardEmpty hasSearchQuery={searchQuery.trim() !== ''} />
+        <AdminDashboardEmpty
+          hasSearchQuery={searchQuery.trim() !== ''}
+          onClearSearch={() => setSearchQuery('')}
+        />
       ) : (
         <>
           <div

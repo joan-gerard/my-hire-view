@@ -388,7 +388,7 @@ export default function OnboardingChecklist({
           <>
             Getting started
             <span className="rounded-full bg-[var(--brand-primary)]/15 px-2 py-0.5 text-xs font-medium text-[var(--brand-primary)]">
-              {allDone ? 'Done' : `${completed}/{total}`}
+              {allDone ? 'Done' : `${completed}/${total}`}
             </span>
             <ChevronUpIcon className="h-4 w-4 text-[var(--foreground)]/60" />
           </>
