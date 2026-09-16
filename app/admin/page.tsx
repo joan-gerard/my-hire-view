@@ -44,6 +44,10 @@ export default function AdminDashboard() {
     return <AdminDashboardError message={error} />;
   }
 
+  // Keep search/legend when a filter returns no rows so users can clear the query.
+  const showListChrome =
+    applications.length > 0 || searchQuery.trim() !== '';
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -51,15 +55,17 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold text-[var(--foreground)]">
             Applications
           </h1>
-          <button
-            type="button"
-            onClick={() => setLegendOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--foreground)]/80 hover:bg-[var(--foreground)]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1"
-            aria-haspopup="dialog"
-          >
-            <QuestionIcon className="h-4 w-4" />
-            What do these icons mean?
-          </button>
+          {showListChrome ? (
+            <button
+              type="button"
+              onClick={() => setLegendOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--foreground)]/80 hover:bg-[var(--foreground)]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1"
+              aria-haspopup="dialog"
+            >
+              <QuestionIcon className="h-4 w-4" />
+              What do these icons mean?
+            </button>
+          ) : null}
         </div>
         <Link
           href="/admin/new"
@@ -69,12 +75,14 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      <div className="max-w-md">
-        <SearchBar value={searchQuery} onChange={setSearchQuery} />
-      </div>
+      {showListChrome ? (
+        <div className="max-w-md">
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        </div>
+      ) : null}
 
       <ApplicationStatusLegend
-        open={legendOpen}
+        open={showListChrome && legendOpen}
         onClose={() => setLegendOpen(false)}
       />
 
