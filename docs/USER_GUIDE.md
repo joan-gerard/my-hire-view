@@ -35,13 +35,14 @@ Changing your name also updates the name stored on your account. Location and UR
 
 At **Dashboard** (`/admin`) you can:
 
-- See all your applications in horizontal cards showing: status (active/archived), company, role, and action buttons.
+- See all your applications in horizontal cards showing: status icon, company, role, and action buttons.
+- Open **What do these icons mean?** (header button) for a modal legend of status icons (**draft**, **active not viewed**, **active viewed**, **archived**, and **CV missing**) and a short explanation of draft actions (**Publish**, **Preview**, **Publish to share** vs **Copy Link**).
 - **Search** by company or role.
 - **Create** a new application (New Application).
-- **Copy Link** to copy the shareable link to send to recruiters.
+- **Copy Link** to copy the shareable link to send to recruiters (after the application is published).
 - **View Insights** to expand a card and see view count, CV downloads, creation date, and last viewed date/time.
-- **View Application** to open the application page in a new tab.
-- Use the **3-dot menu** on each card to **Edit**, **Archive** (or **Restore** if archived), or **Delete**.
+- **View Application** to open a live application page in a new tab, or **Preview** for a draft (recruiters cannot see drafts until you publish).
+- Use the **3-dot menu** on each card to **Edit**, **Archive** (or **Restore** if archived), **Publish** (drafts), or **Delete**.
 
 ### Creating an application
 
