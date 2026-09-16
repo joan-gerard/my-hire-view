@@ -1,13 +1,13 @@
-import Link from "next/link";
-import { requireAuth } from "@/lib/auth";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
-import { resolvePublicIdReadOnly } from "@/lib/auth/ensure-public-id";
+import { resolvePublicIdFromLoadedProfile } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/server";
 import PublicIdAccountField from "@/components/admin/PublicIdAccountField";
 import PrimaryCvLibrarySection from "@/components/forms/PrimaryCvLibrarySection";
 import ProfileForm from "@/components/forms/ProfileForm";
 import { formatApplicationStatusBreakdown } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
+import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
 
 /**
  * Profile page for the account owner. Shows identity from Supabase Auth,
@@ -27,7 +27,10 @@ export default async function AdminProfilePage() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const publicId = await resolvePublicIdReadOnly(supabase, user);
+  const publicId = resolvePublicIdFromLoadedProfile(
+    profile as Profile | null,
+    user,
+  );
 
   const metaNames = namesFromUserMetadata(user);
   const initialData: Profile | null = profile

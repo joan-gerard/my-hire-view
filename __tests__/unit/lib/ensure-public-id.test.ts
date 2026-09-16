@@ -10,8 +10,44 @@ import {
 } from "../../helpers/supabase-mock";
 import {
   ensureProfilePublicId,
+  resolvePublicIdFromLoadedProfile,
   resolvePublicIdReadOnly,
 } from "@/lib/auth/ensure-public-id";
+
+describe("resolvePublicIdFromLoadedProfile", () => {
+  it("returns a valid profiles.public_id", () => {
+    expect(
+      resolvePublicIdFromLoadedProfile({ public_id: "k7x2m9ab" }, { id: "u1" }),
+    ).toBe("k7x2m9ab");
+  });
+
+  it("returns null when a profiles row exists with an invalid public_id (no Auth fallback)", () => {
+    expect(
+      resolvePublicIdFromLoadedProfile(
+        { public_id: "BAD!" },
+        { id: "u1", user_metadata: { public_id: "k7x2m9ab" } },
+      ),
+    ).toBeNull();
+  });
+
+  it("falls back to Auth metadata only when no profiles row exists", () => {
+    expect(
+      resolvePublicIdFromLoadedProfile(null, {
+        id: "u1",
+        user_metadata: { public_id: "k7x2m9ab" },
+      }),
+    ).toBe("k7x2m9ab");
+  });
+
+  it("returns null when both profile and metadata are invalid/missing", () => {
+    expect(
+      resolvePublicIdFromLoadedProfile(
+        { public_id: "BAD!" },
+        { id: "u1", user_metadata: { public_id: "also-bad" } },
+      ),
+    ).toBeNull();
+  });
+});
 
 describe("resolvePublicIdReadOnly", () => {
   it("returns a valid profiles.public_id", async () => {
