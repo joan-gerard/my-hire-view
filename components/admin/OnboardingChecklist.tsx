@@ -101,6 +101,9 @@ export default function OnboardingChecklist({
   }, [persistSkipped]);
 
   const dismiss = useCallback(() => {
+    // Invalidate any in-flight load so a late reject cannot clear account state
+    // and re-enable mutation refetches for a dismissed checklist.
+    loadGenerationRef.current += 1;
     persistPrefs({ ...prefs, dismissed: true });
   }, [persistPrefs, prefs]);
 
@@ -108,6 +111,9 @@ export default function OnboardingChecklist({
     if (dismissedRef.current) return;
 
     const generation = ++loadGenerationRef.current;
+    const isStale = () =>
+      generation !== loadGenerationRef.current || dismissedRef.current;
+
     try {
       setLoadError(false);
       const [profileRes, cvsRes, appsRes, activeRes] = await Promise.all([
@@ -119,9 +125,7 @@ export default function OnboardingChecklist({
         }),
       ]);
 
-      if (generation !== loadGenerationRef.current || dismissedRef.current) {
-        return;
-      }
+      if (isStale()) return;
 
       const profileMissing = profileRes.status === 404;
       if (
@@ -130,6 +134,7 @@ export default function OnboardingChecklist({
         !appsRes.ok ||
         !activeRes.ok
       ) {
+        if (isStale()) return;
         setLoadError(true);
         setSnapshot(null);
         setAccountKey(null);
@@ -151,9 +156,7 @@ export default function OnboardingChecklist({
         meta?: { total?: number };
       };
 
-      if (generation !== loadGenerationRef.current || dismissedRef.current) {
-        return;
-      }
+      if (isStale()) return;
 
       const profile = profileJson.data ?? null;
       const supabase = createClient();
@@ -161,9 +164,7 @@ export default function OnboardingChecklist({
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (generation !== loadGenerationRef.current || dismissedRef.current) {
-        return;
-      }
+      if (isStale()) return;
 
       const nextAccountKey = resolveOnboardingAccountKey({
         profilePublicId: profile?.public_id ?? null,
@@ -172,6 +173,7 @@ export default function OnboardingChecklist({
       });
 
       if (!nextAccountKey) {
+        if (isStale()) return;
         setLoadError(true);
         setSnapshot(null);
         setAccountKey(null);
@@ -195,7 +197,7 @@ export default function OnboardingChecklist({
             : 0,
       });
     } catch {
-      if (generation !== loadGenerationRef.current) return;
+      if (isStale()) return;
       setLoadError(true);
       setSnapshot(null);
       setAccountKey(null);
