@@ -8,14 +8,16 @@ import { useState } from 'react';
 import ApplicationCardDropdown from '@/components/admin/ApplicationCardDropdown';
 import ApplicationCardInsights from '@/components/admin/ApplicationCardInsights';
 import {
-  ArchiveIcon,
+  ApplicationStatusIcon,
+  MissingCvBadge,
+} from '@/components/admin/ApplicationStatusIcon';
+import {
   ChartIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   CopyIcon,
   ExternalLinkIcon,
-  ClockIcon,
 } from '@/components/admin/icons';
 
 interface ApplicationCardProps {
@@ -24,74 +26,6 @@ interface ApplicationCardProps {
   onArchive?: (id: string) => void;
   onRestore?: (id: string) => void;
   onPublish?: (id: string) => void;
-}
-
-function StatusIcon({
-  status,
-  viewCount,
-}: {
-  status: ApplicationListItem['status'];
-  viewCount: number;
-}) {
-  const hasBeenViewed = viewCount > 0;
-  const title =
-    status === 'archived'
-      ? 'Archived'
-      : status === 'draft'
-        ? 'Draft'
-        : hasBeenViewed
-          ? 'Active (viewed)'
-          : 'Active (not viewed yet)';
-
-  return (
-    <div
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-      title={title}
-      aria-label={title}
-    >
-      {status === 'archived' ? (
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)]/10">
-          <ArchiveIcon className="h-5 w-5 text-[var(--foreground)]/60" />
-        </span>
-      ) : status === 'draft' ? (
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100">
-          <ClockIcon className="h-5 w-5 text-amber-700" />
-        </span>
-      ) : (
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
-          {hasBeenViewed ? (
-            <CheckIcon className="h-5 w-5 text-emerald-600" />
-          ) : (
-            <ClockIcon className="h-5 w-5 text-emerald-600" />
-          )}
-        </span>
-      )}
-    </div>
-  );
-}
-
-function MissingCvBadge() {
-  return (
-    <span
-      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-500/40 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900"
-      title="The CV file is missing from storage. Edit this application or restore a primary CV."
-      aria-label="CV file missing"
-    >
-      <svg
-        className="h-3.5 w-3.5"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-        aria-hidden
-      >
-        <path
-          fillRule="evenodd"
-          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.518 11.594c.75 1.335-.213 2.982-1.742 2.982H3.48c-1.53 0-2.493-1.647-1.743-2.982L8.257 3.1zM11 14a1 1 0 10-2 0 1 1 0 002 0zm-1-2a1 1 0 01-1-1V8a1 1 0 112 0v3a1 1 0 01-1 1z"
-          clipRule="evenodd"
-        />
-      </svg>
-      CV missing
-    </span>
-  );
 }
 
 export default function ApplicationCard({
@@ -124,7 +58,7 @@ export default function ApplicationCard({
     <div className="relative overflow-visible rounded-lg bg-[var(--secondary-background)] shadow border border-[var(--foreground)]/10">
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
-          <StatusIcon
+          <ApplicationStatusIcon
             status={application.status}
             viewCount={application.view_count}
           />
@@ -142,6 +76,7 @@ export default function ApplicationCard({
               type="button"
               onClick={() => onPublish(application.id)}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-1"
+              title="Make this application live so recruiters can open the share link"
             >
               <CheckIcon className="h-4 w-4" />
               Publish
@@ -193,6 +128,11 @@ export default function ApplicationCard({
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
+              title={
+                isDraft
+                  ? 'Preview the public page (recruiters cannot see it until you publish)'
+                  : 'Open the live public application page'
+              }
             >
               <ExternalLinkIcon className="h-4 w-4" />
               {isDraft ? 'Preview' : 'View Application'}

@@ -26,6 +26,35 @@ export function publicIdFromUserMetadata(user: AuthUserLike): string | null {
   return raw;
 }
 
+type ProfilePublicIdRow = {
+  public_id?: string | null;
+} | null;
+
+/**
+ * Same read-only semantics as resolvePublicIdReadOnly, but for an already-loaded
+ * profiles row (avoids a second round-trip on pages that already fetched it).
+ *
+ * - Valid row public_id → that id
+ * - Row exists with invalid/missing public_id → null (no Auth fallback)
+ * - No row → Auth metadata only
+ */
+export function resolvePublicIdFromLoadedProfile(
+  profile: ProfilePublicIdRow,
+  user: AuthUserLike,
+): string | null {
+  if (profile) {
+    if (
+      typeof profile.public_id === "string" &&
+      isValidPublicId(profile.public_id)
+    ) {
+      return profile.public_id;
+    }
+    return null;
+  }
+
+  return publicIdFromUserMetadata(user);
+}
+
 /**
  * Read-only: valid profiles.public_id if present, else Auth user_metadata
  * only when no profiles row exists yet.
@@ -44,17 +73,7 @@ export async function resolvePublicIdReadOnly(
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (existing) {
-    if (
-      typeof existing.public_id === "string" &&
-      isValidPublicId(existing.public_id)
-    ) {
-      return existing.public_id;
-    }
-    return null;
-  }
-
-  return publicIdFromUserMetadata(user);
+  return resolvePublicIdFromLoadedProfile(existing, user);
 }
 
 async function syncPublicIdToUserMetadata(

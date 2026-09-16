@@ -78,6 +78,13 @@ export async function GET(request: NextRequest) {
     const limit = parseLimit(searchParams.get("limit"));
     const offset = parseOffset(searchParams.get("offset"));
     const q = normalizeListSearchQuery(searchParams.get("q"));
+    const statusRaw = searchParams.get("status");
+    const statusFilter =
+      statusRaw === "active" ||
+      statusRaw === "draft" ||
+      statusRaw === "archived"
+        ? statusRaw
+        : null;
 
     const supabase = await createClient();
 
@@ -85,6 +92,10 @@ export async function GET(request: NextRequest) {
       .from("applications")
       .select(APPLICATION_LIST_SELECT, { count: "exact" })
       .eq("user_id", user.id);
+
+    if (statusFilter) {
+      query = query.eq("status", statusFilter);
+    }
 
     if (q) {
       const pattern = `%${q}%`;

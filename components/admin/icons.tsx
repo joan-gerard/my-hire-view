@@ -346,6 +346,7 @@ export function QuestionIcon({ className }: IconProps) {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
+      aria-hidden
     >
       <path
         strokeLinecap="round"

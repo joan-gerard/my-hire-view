@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
 import { createApplicationDraftStorageKey } from "@/lib/utils/create-application-draft";
+import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
 import { validateSlugFormat } from "@/lib/utils/slug-generate";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -189,6 +190,8 @@ export default function NewApplicationPage() {
         const { error } = await response.json();
         throw new Error(error || "Failed to create application");
       }
+
+      notifyOnboardingChecklistChanged();
 
       const json: { data?: { slug?: string }; public_id?: string } =
         await response.json().catch(() => ({}));

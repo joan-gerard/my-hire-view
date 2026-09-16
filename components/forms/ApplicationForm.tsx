@@ -19,7 +19,6 @@ import {
   messageForUploadFailure,
   messageForUploadNetworkError,
 } from "@/lib/utils/upload-form-messages";
-import { getApplicationUrl } from "@/lib/utils/url";
 import {
   isCurrentPrimaryCvLoad,
   shouldApplyInitialCvModeDefault,
@@ -44,6 +43,7 @@ import CandidateFieldsSection from "./CandidateFieldsSection";
 import CvSourceField from "./CvSourceField";
 import NameInUrlField, { type SlugNamePosition } from "./NameInUrlField";
 import ProfilePictureField from "./ProfilePictureField";
+import ShareUrlPreview from "./ShareUrlPreview";
 import YouTubeUrlInput from "./YouTubeUrlInput";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { FiAlertCircle, FiCheck, FiRefreshCw } from "react-icons/fi";
@@ -1157,11 +1157,6 @@ export default function ApplicationForm({
     setInclude((prev) => ({ ...prev, [field]: included }));
   };
 
-  const shareableUrl =
-    publicId && formData.slug
-      ? getApplicationUrl(publicId, formData.slug)
-      : "";
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <CandidateFieldsSection
@@ -1267,9 +1262,7 @@ export default function ApplicationForm({
             <span>{slugLiveStatus.message}</span>
           </p>
         )}
-      <p className="text-xs text-(--foreground)/60">
-        This will be used in the URL: {shareableUrl || "..."}
-      </p>
+      <ShareUrlPreview publicId={publicId} slug={formData.slug} />
 
       <CvSourceField
         isEdit={isEdit}
