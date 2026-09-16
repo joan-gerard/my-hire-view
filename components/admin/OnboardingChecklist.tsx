@@ -30,16 +30,30 @@ import { subscribeOnboardingChecklistChanged } from '@/lib/utils/onboarding-chec
 
 type OnboardingSnapshot = OnboardingChecklistInput;
 
+export type OnboardingChecklistProps = {
+  /** From admin layout server load — avoids four /api GETs on first paint. */
+  initialAccountKey: string | null;
+  initialSnapshot: OnboardingChecklistInput | null;
+};
+
 /**
  * Floating Getting started checklist for all `/admin` routes (F19-044).
  * Stays visible after every step is complete or skipped until the user dismisses it.
  * Prefs are one localStorage blob scoped by account key (public_id or user id).
- * Refetches on mount and when mutations notify — not on every navigation/focus.
+ * Initial data comes from the admin layout (Supabase); client refetches only when
+ * mutations notify — not on every navigation/focus.
  */
-export default function OnboardingChecklist() {
+export default function OnboardingChecklist({
+  initialAccountKey,
+  initialSnapshot,
+}: OnboardingChecklistProps) {
   const panelId = useId();
-  const [snapshot, setSnapshot] = useState<OnboardingSnapshot | null>(null);
-  const [accountKey, setAccountKey] = useState<string | null>(null);
+  const [snapshot, setSnapshot] = useState<OnboardingSnapshot | null>(
+    initialSnapshot,
+  );
+  const [accountKey, setAccountKey] = useState<string | null>(
+    initialAccountKey,
+  );
   const [loadError, setLoadError] = useState(false);
   const [prefs, setPrefs] = useState<OnboardingChecklistPrefs>(
     DEFAULT_ONBOARDING_CHECKLIST_PREFS,
@@ -176,9 +190,12 @@ export default function OnboardingChecklist() {
     }
   }, []);
 
+  // Prefer layout bootstrap; fall back to client fetch only if the server
+  // snapshot was unavailable. Otherwise refetch only on mutation notify.
   useEffect(() => {
+    if (initialSnapshot && initialAccountKey) return;
     void load();
-  }, [load]);
+  }, [load, initialSnapshot, initialAccountKey]);
 
   useEffect(() => {
     const unsubscribe = subscribeOnboardingChecklistChanged(() => {
@@ -211,7 +228,7 @@ export default function OnboardingChecklist() {
     writeOnboardingChecklistStorage({ accountKey, ...next });
   }, [accountKey, snapshot]);
 
-  if (loadError || !snapshot || prefs.dismissed) {
+  if (loadError || !snapshot || !accountKey || prefs.dismissed) {
     return null;
   }
 
