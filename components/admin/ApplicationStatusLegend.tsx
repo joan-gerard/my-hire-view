@@ -89,7 +89,7 @@ export default function ApplicationStatusLegend({
             ref={titleRef}
             id={titleId}
             tabIndex={-1}
-            className="text-lg font-semibold outline-none"
+            className="text-lg font-semibold outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2"
           >
             Status icons & draft actions
           </h2>
