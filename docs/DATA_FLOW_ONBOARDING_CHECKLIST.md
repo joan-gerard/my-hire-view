@@ -91,6 +91,8 @@ sequenceDiagram
   Panel->>U: Render (or hide if bootstrap null / dismissed)
 ```
 
+When the layout later re-renders with a new bootstrap (for example after `router.refresh()`), the panel **copies** those props into React state. A failed notify-triggered `/api` load can therefore recover on the next successful bootstrap instead of staying blank or stale.
+
 **Account key** (prefs scope), in order:
 
 1. `profiles.public_id` when present  

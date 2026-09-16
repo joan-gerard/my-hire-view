@@ -190,10 +190,15 @@ export default function OnboardingChecklist({
     }
   }, []);
 
-  // Prefer layout bootstrap; fall back to client fetch only if the server
-  // snapshot was unavailable. Otherwise refetch only on mutation notify.
+  // Sync layout bootstrap into state when it arrives or updates (e.g. after
+  // router.refresh). Only fall back to a client fetch when bootstrap is missing.
   useEffect(() => {
-    if (initialSnapshot && initialAccountKey) return;
+    if (initialSnapshot && initialAccountKey) {
+      setSnapshot(initialSnapshot);
+      setAccountKey(initialAccountKey);
+      setLoadError(false);
+      return;
+    }
     void load();
   }, [load, initialSnapshot, initialAccountKey]);
 
