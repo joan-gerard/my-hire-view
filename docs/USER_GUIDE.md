@@ -35,7 +35,7 @@ Changing your name also updates the name stored on your account. Location and UR
 
 At **Dashboard** (`/admin`) you can:
 
-- See all your applications in horizontal cards showing: status icon, company, role, and action buttons.
+- See all your applications in horizontal cards showing: status icon, company, role, and action buttons. If you have none yet, the dashboard explains the next step and links to **New application**; a search with no matches offers **Clear search**.
 - Use the floating **Getting started** checklist (while incomplete) on any admin page for create profile, add location or a link, photo, primary CV, first application, and publish/share. You can skip steps or skip all.
 - Open **What do these icons mean?** (header button) for a modal legend of status icons (**draft**, **active not viewed**, **active viewed**, **archived**, and **CV missing**) and a short explanation of draft actions (**Publish**, **Preview**, **Publish to share** vs **Copy Link**).
 - **Search** by company or role.
