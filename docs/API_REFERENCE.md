@@ -70,6 +70,7 @@ List the authenticated user’s applications (newest first), paginated. Returns 
   - `limit` — page size (default **20**, max **50**)
   - `offset` — rows to skip (default **0**)
   - `q` — optional case-insensitive search on `company`, `role`, or `slug` (max 100 chars; quotes and other filter metacharacters stripped)
+  - `status` — optional filter: `active` \| `draft` \| `archived` (invalid values ignored; used by the onboarding checklist for an active-app count)
 - **Errors:** `401` `{ error: "Unauthorized" }`; `429`; `500` `{ error: string }` (DB message or `"Failed to fetch applications"`)
 
 **Success — `200`**

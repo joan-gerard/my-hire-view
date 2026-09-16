@@ -1,5 +1,6 @@
 import { requireAuth } from '@/lib/auth';
 import AdminHeader from '@/components/admin/AdminHeader';
+import OnboardingChecklist from '@/components/admin/OnboardingChecklist';
 
 export default async function AdminLayout({
   children,
@@ -14,6 +15,7 @@ export default async function AdminLayout({
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {children}
       </main>
+      <OnboardingChecklist />
     </div>
   );
 }

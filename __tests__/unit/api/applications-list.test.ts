@@ -167,6 +167,26 @@ describe("GET /api/applications", () => {
     );
   });
 
+  it("filters by status when status=active|draft|archived (F19-044)", async () => {
+    const chain = okWithCount([LIST_ITEM], 1);
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+
+    const response = await GET(makeGetRequest("status=active&limit=1"));
+    expect(response.status).toBe(200);
+    expect(chain.eq).toHaveBeenCalledWith("user_id", MOCK_USER.id);
+    expect(chain.eq).toHaveBeenCalledWith("status", "active");
+  });
+
+  it("ignores invalid status query values", async () => {
+    const chain = okWithCount([LIST_ITEM], 1);
+    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+
+    const response = await GET(makeGetRequest("status=nope"));
+    expect(response.status).toBe(200);
+    expect(chain.eq).toHaveBeenCalledWith("user_id", MOCK_USER.id);
+    expect(chain.eq).not.toHaveBeenCalledWith("status", "nope");
+  });
+
   it("strips quotes and reserved filter chars from q before the or filter", async () => {
     const chain = okWithCount([LIST_ITEM], 1);
     mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));

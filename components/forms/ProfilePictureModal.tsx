@@ -2,6 +2,7 @@
 
 import Button from "@/components/ui/Button";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
+import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
 import { uploadProfilePictureFile } from "@/lib/utils/upload-profile-picture-client";
 import { useEffect, useId, useRef, useState } from "react";
 
@@ -153,6 +154,7 @@ export default function ProfilePictureModal({
       });
       setPendingFile(null);
       setRemoved(false);
+      notifyOnboardingChecklistChanged();
 
       // Keep the modal open when there is a warning so the user can read it.
       if (notice) {

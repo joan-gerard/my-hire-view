@@ -12,7 +12,7 @@ This guide describes what you can do with MyHireView as a **candidate** (job see
 
 - **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your first name, last name, email, password, and confirm password. Confirm your email if your Supabase project requires it. Your name is stored on your account and a profile record is created with that name (you can add location, links, and a picture later).
 - **Sign in:** Use **Sign in** and enter your email and password. After signing in, you are taken to your **Dashboard** (`/admin`).
-
+- **Getting started checklist:** Across `/admin` routes, a floating **Getting started** panel guides new accounts until you: create your profile (name), add location or a link (LinkedIn or portfolio), add a profile photo, upload a primary CV, create your first application, and **publish** so you can share the link. Steps tick off as you complete them (no refresh needed) and stay checked in this browser for your **Public id** even if you later remove the data that completed them. You can **Skip** individual steps or **Skip all**, and minimize it to a compact control (prefs are remembered per Public id in this browser). When everything is done or skipped, **Skip all** becomes **Dismiss** — use that to hide the panel. Recreating an account (new Public id) starts the checklist fresh.
 ### Profile
 
 From the header, open **Profile** (`/admin/profile`). You can:
@@ -36,6 +36,7 @@ Changing your name also updates the name stored on your account. Location and UR
 At **Dashboard** (`/admin`) you can:
 
 - See all your applications in horizontal cards showing: status icon, company, role, and action buttons.
+- Use the floating **Getting started** checklist (while incomplete) on any admin page for create profile, add location or a link, photo, primary CV, first application, and publish/share. You can skip steps or skip all.
 - Open **What do these icons mean?** (header button) for a modal legend of status icons (**draft**, **active not viewed**, **active viewed**, **archived**, and **CV missing**) and a short explanation of draft actions (**Publish**, **Preview**, **Publish to share** vs **Copy Link**).
 - **Search** by company or role.
 - **Create** a new application (New Application).

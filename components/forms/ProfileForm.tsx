@@ -9,6 +9,7 @@ import {
   PROFILE_URL_MAX_LENGTH,
 } from "@/lib/types/profile";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
+import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
 import { uploadProfilePictureFile } from "@/lib/utils/upload-profile-picture-client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -201,6 +202,7 @@ export default function ProfileForm({
       }
       setPendingFile(null);
       setPictureRemoved(false);
+      notifyOnboardingChecklistChanged();
       router.refresh();
     } catch {
       setError("Failed to save profile");

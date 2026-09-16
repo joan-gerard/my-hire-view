@@ -9,6 +9,7 @@ import {
   primaryCvDeleteConfirmMessage,
   primaryCvPostDeleteStatusMessage,
 } from "@/lib/types/primary-cv";
+import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type PrimaryCvLibrarySectionProps = {
@@ -140,6 +141,7 @@ export default function PrimaryCvLibrarySection({
         return;
       }
       await load();
+      notifyOnboardingChecklistChanged();
     } catch {
       if (mountedRef.current) {
         setError("Upload failed");
@@ -172,6 +174,7 @@ export default function PrimaryCvLibrarySection({
       // `load()` clears `error` at start; restore still-referenced warning after
       // refresh (including when refresh fails so the user still sees the risk).
       const refreshed = await load();
+      notifyOnboardingChecklistChanged();
       if (!mountedRef.current) return;
       const status = primaryCvPostDeleteStatusMessage({
         applicationsAffected: affected,

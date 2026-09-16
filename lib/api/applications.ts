@@ -7,6 +7,7 @@ import type {
 import {
   APPLICATION_LIST_DEFAULT_LIMIT,
 } from '@/lib/types/application';
+import { notifyOnboardingChecklistChanged } from '@/lib/utils/onboarding-checklist-sync';
 
 /**
  * Fetches a page of the current user's applications (dashboard list fields).
@@ -45,6 +46,7 @@ export async function deleteApplication(id: string): Promise<void> {
   if (!response.ok) {
     throw new Error('Failed to delete application');
   }
+  notifyOnboardingChecklistChanged();
 }
 
 /**
@@ -63,6 +65,7 @@ export async function archiveApplication(id: string): Promise<Application> {
     throw new Error((error as string) || 'Failed to archive application');
   }
   const { data } = await response.json();
+  notifyOnboardingChecklistChanged();
   return data;
 }
 
@@ -82,6 +85,7 @@ export async function restoreApplication(id: string): Promise<Application> {
     throw new Error((error as string) || 'Failed to restore application');
   }
   const { data } = await response.json();
+  notifyOnboardingChecklistChanged();
   return data;
 }
 
@@ -102,5 +106,6 @@ export async function publishApplication(id: string): Promise<Application> {
     throw new Error((error as string) || 'Failed to publish application');
   }
   const { data } = await response.json();
+  notifyOnboardingChecklistChanged();
   return data;
 }
