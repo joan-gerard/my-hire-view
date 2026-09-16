@@ -4,7 +4,7 @@
 
 **Trello:** Cards live on the [MyHireView](https://trello.com/b/PAn5GrDz/myhireview) board (lists: Pre Launch, Post Launch, Current Sprint, In Progress, Done). Card titles use `[id] Item` (e.g. `[A1-002] CI/CD`) and match rows in this file. Keep this doc and Trello in sync whenever a ticket or PR moves, ships, or is added.
 
-**Context (not the work tracker):** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [API_REFERENCE.md](API_REFERENCE.md) · [CI_CD.md](CI_CD.md) · [CODE_REVIEW.md](CODE_REVIEW.md) · [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) · [GO_TO_MARKET.md](GO_TO_MARKET.md) · [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md) · [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md) · [retrospectives/SSR_PUBLIC_VIEW.md](retrospectives/SSR_PUBLIC_VIEW.md) · [retrospectives/SECURITY.md](retrospectives/SECURITY.md) · [retrospectives/CREATE_APP_DRAFT_AND_LEAVE.md](retrospectives/CREATE_APP_DRAFT_AND_LEAVE.md)
+**Context (not the work tracker):** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [API_REFERENCE.md](API_REFERENCE.md) · [CI_CD.md](CI_CD.md) · [CODE_REVIEW.md](CODE_REVIEW.md) · [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) · [GO_TO_MARKET.md](GO_TO_MARKET.md) · [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md) · [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md) · [retrospectives/SSR_PUBLIC_VIEW.md](retrospectives/SSR_PUBLIC_VIEW.md) · [retrospectives/SECURITY.md](retrospectives/SECURITY.md) · [retrospectives/CREATE_APP_DRAFT_AND_LEAVE.md](retrospectives/CREATE_APP_DRAFT_AND_LEAVE.md) · [retrospectives/ACTIVATION_UX_F19.md](retrospectives/ACTIVATION_UX_F19.md)
 
 **MoSCoW:** **M**ust · **S**hould · **C**ould · **W**on’t (this time)
 
@@ -41,6 +41,7 @@ Work needed before a public launch with paid access (free tier / trial only — 
 | F28-102 | Accessibility | App-wide accessibility review                           | Keyboard, focus, labels/ARIA, contrast, landmarks, and screen-reader smoke across marketing, auth, `/admin`, and `/view`. File follow-up tickets for fixes; prefer WCAG 2.2 AA as the bar. Can start anytime; finish before public launch.                                                                                                                                                                              | —                                                                      |
 | F29-103 | Security    | Global security / safety review                           | End-to-end pass over auth, RLS, public share URLs, uploads/R2, rate limits, and error leakage — using [retrospectives/SECURITY.md](retrospectives/SECURITY.md) as the index. Confirm open backlog security items still accurate; file new tickets for gaps. **Prefer near public launch** (after major pre-launch hardening has landed).                                                                               | [retrospectives/SECURITY.md](retrospectives/SECURITY.md)               |
 | F30-104 | Code quality | Global refactoring audit                                  | App-wide pass for duplication, dead code, inconsistent patterns, and missing shared helpers — using [CODE_REVIEW.md](CODE_REVIEW.md) as the index. File follow-up tickets; do not turn this into a big-bang rewrite. **Near public launch**, and only **after** remaining targeted code-quality/refactor work: `I2-078`, `L6-088` (`F5-056`, `F25-058` shipped).                                                                        | [CODE_REVIEW.md](CODE_REVIEW.md)                                       |
+| F32-115 | QA          | Pre-launch end-to-end manual test                         | Full candidate journey before public launch: marketing/waitlist, signup → profile (picture + primary CVs) → create/edit/publish/archive/delete several applications, Getting started checklist, dashboard search/pagination/legend/insights, public `/view` (owner vs recruiter), cross-account isolation. Checklist: [manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md](manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md). Run after remaining user-facing work you intend to ship (at least `F17`); file follow-up tickets for failures. Feature-specific manuals stay as storage/API deep dives. | —                                                                      |
 
 ### Could
 
@@ -220,6 +221,7 @@ Ship these when capacity allows; prefer attaching to a Must PR only if the same 
 | I2  | `refactor/i2-db-types-single-source`     | `I2-078`                        | Single source of truth for DB types — **before launch** (prerequisite for F30)                                   |
 | L6  | `refactor/l6-central-api-client`         | `L6-088`                        | Central API client — **before launch** (prerequisite for F30)                                                    |
 | F30 | `chore/f30-refactoring-audit`            | `F30-104`                       | Global refactoring audit near launch — after `I2`, `L6` (`F5`, `F25` shipped); file follow-ups from [CODE_REVIEW.md](CODE_REVIEW.md) |
+| F32 | `docs/f32-pre-launch-manual-qa`          | `F32-115`                       | Pre-launch end-to-end manual QA — [MANUAL_TEST_PRE_LAUNCH_E2E.md](manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md); after remaining user-facing work (`F17`+) |
 
 ---
 
@@ -333,6 +335,6 @@ Full effort rollup and phased order for open before-launch PRs: [BEFORE_LAUNCH_P
 
 1. Continue the phased sequence in [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md) — next: **F17** (admin/view/auth branding)  
 2. **Before F30:** `I2`, `L6` (targeted code-quality / refactor; `F5`, `F25` shipped)  
-3. **Near launch:** **F29** security review + **F30** refactoring audit, then **E1 → E2** + `A3-015`
+3. **Near launch:** **F32** end-to-end manual QA + **F29** security review + **F30** refactoring audit, then **E1 → E2** + `A3-015`
 
 **Near launch (not now):** **E1 → E2** — `docs/e1-pricing-tiers` → `feat/e2-payment-membership` (plus `A3-015`). Keep the working draft in [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) / `/pricing` updated if product thinking changes, but do not lock or build billing until launch is imminent.

@@ -1,6 +1,6 @@
 # Testing
 
-> Last updated: September 13, 2026
+> Last updated: September 16, 2026
 
 ---
 
@@ -85,9 +85,16 @@ __tests__/
       waitlist.test.ts
 ```
 
-Manual QA for primary/tailored CVs and application status: [manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md](manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md).
-Manual QA for create-application draft + CV source race (F15): [manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md).
-Manual QA for draft → preview → publish (F16): [manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md).
+Pre-launch end-to-end manual QA (`F32-115`): [manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md](manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md).
+
+Feature-specific deep dives:
+
+- Primary/tailored CVs and application status: [manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md](manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md)
+- Create-application draft + CV source race (F15): [manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md)
+- Draft → preview → publish (F16): [manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md)
+- Signup profiles + picture from New/Edit: [manual-testing/MANUAL_TEST_PROFILE_CREATE_ON_PUT.md](manual-testing/MANUAL_TEST_PROFILE_CREATE_ON_PUT.md)
+- Getting started checklist (F19-044): [manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md](manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md)
+- Application card status legend (F19-047): [manual-testing/MANUAL_TEST_APPLICATION_STATUS_LEGEND.md](manual-testing/MANUAL_TEST_APPLICATION_STATUS_LEGEND.md)
 
 ---
 
