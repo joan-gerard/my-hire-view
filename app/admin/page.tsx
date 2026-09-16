@@ -18,6 +18,7 @@ export default function AdminDashboard() {
     applications,
     searchQuery,
     setSearchQuery,
+    debouncedQuery,
     loading,
     isFetching,
     error,
@@ -44,9 +45,12 @@ export default function AdminDashboard() {
     return <AdminDashboardError message={error} />;
   }
 
-  // Keep search/legend when a filter returns no rows so users can clear the query.
+  // Keep chrome while the input or committed query is non-empty, and through the
+  // in-flight refetch after clearing a no-match search (stale applications=[]).
+  const hasSearchFilter =
+    searchQuery.trim() !== '' || debouncedQuery.trim() !== '';
   const showListChrome =
-    applications.length > 0 || searchQuery.trim() !== '';
+    applications.length > 0 || hasSearchFilter || isFetching;
 
   return (
     <div className="space-y-6">
@@ -87,10 +91,13 @@ export default function AdminDashboard() {
       />
 
       {applications.length === 0 ? (
-        <AdminDashboardEmpty
-          hasSearchQuery={searchQuery.trim() !== ''}
-          onClearSearch={() => setSearchQuery('')}
-        />
+        // Avoid flashing the first-run empty CTA while an unfiltered refetch settles.
+        hasSearchFilter || !isFetching ? (
+          <AdminDashboardEmpty
+            hasSearchQuery={hasSearchFilter}
+            onClearSearch={() => setSearchQuery('')}
+          />
+        ) : null
       ) : (
         <>
           <div

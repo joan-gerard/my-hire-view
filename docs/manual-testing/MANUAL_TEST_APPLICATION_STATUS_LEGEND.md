@@ -32,4 +32,5 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 - [ ] Empty dashboard (no apps, no search) hides the legend button and search bar
 - [ ] After creating the first application, legend button and search bar appear
 - [ ] Search with no matches still shows the legend button and search bar (Clear search works)
+- [ ] Clearing a no-match search does **not** briefly flash the first-run empty state or hide the search bar before the full list returns
 - [ ] Search / pagination still work after opening and closing the modal

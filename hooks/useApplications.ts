@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import type { ApplicationListItem } from '@/lib/types/application';
 import { APPLICATION_LIST_DEFAULT_LIMIT } from '@/lib/types/application';
 import {
@@ -15,6 +20,8 @@ export interface UseApplicationsResult {
   applications: ApplicationListItem[];
   searchQuery: string;
   setSearchQuery: (value: string) => void;
+  /** Trimmed query actually sent to the API (lags `searchQuery` by the debounce). */
+  debouncedQuery: string;
   loading: boolean;
   isFetching: boolean;
   error: string | null;
@@ -59,6 +66,12 @@ export function useApplications(): UseApplicationsResult {
 
   useEffect(() => {
     setOffset(0);
+  }, [debouncedQuery]);
+
+  // Mark fetching before paint when the committed query changes so UI that keys
+  // off isFetching (e.g. dashboard chrome) does not flash for one frame.
+  useLayoutEffect(() => {
+    setIsFetching(true);
   }, [debouncedQuery]);
 
   const fetchApplications = useCallback(async () => {
@@ -186,6 +199,7 @@ export function useApplications(): UseApplicationsResult {
     applications,
     searchQuery,
     setSearchQuery,
+    debouncedQuery,
     loading,
     isFetching,
     error,
