@@ -1,7 +1,8 @@
 /**
  * localStorage blob for onboarding checklist UX prefs (F19-044).
- * Scoped by `publicId` so delete + recreate (new public id) does not inherit
- * another account’s skips / sticky completions / dismiss.
+ * Scoped by `accountKey` (profile public_id, else Auth metadata public_id,
+ * else `user:{authUserId}`) so delete + recreate does not inherit prefs, and
+ * accounts without a profiles row can still persist skips/dismiss.
  */
 
 import {
@@ -12,7 +13,7 @@ import {
 export const ONBOARDING_CHECKLIST_STORAGE_KEY =
   "myhireview:onboarding-checklist";
 
-/** Legacy keys from before the single publicId-scoped blob. */
+/** Legacy keys from before the single account-scoped blob. */
 const LEGACY_STORAGE_KEYS = [
   "myhireview:onboarding-checklist-expanded",
   "myhireview:onboarding-checklist-skipped",
@@ -28,7 +29,7 @@ export type OnboardingChecklistPrefs = {
 };
 
 export type OnboardingChecklistStorage = OnboardingChecklistPrefs & {
-  publicId: string;
+  accountKey: string;
 };
 
 export const DEFAULT_ONBOARDING_CHECKLIST_PREFS: OnboardingChecklistPrefs = {
@@ -42,16 +43,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Parse a stored JSON value; returns null when shape/publicId is unusable. */
+function readAccountKey(raw: Record<string, unknown>): string {
+  if (typeof raw.accountKey === "string" && raw.accountKey.trim()) {
+    return raw.accountKey.trim();
+  }
+  // Legacy field name from the first publicId-scoped blob.
+  if (typeof raw.publicId === "string" && raw.publicId.trim()) {
+    return raw.publicId.trim();
+  }
+  return "";
+}
+
+/** Parse a stored JSON value; returns null when shape/accountKey is unusable. */
 export function parseOnboardingChecklistStorage(
   raw: unknown,
 ): OnboardingChecklistStorage | null {
   if (!isRecord(raw)) return null;
-  const publicId =
-    typeof raw.publicId === "string" ? raw.publicId.trim() : "";
-  if (!publicId) return null;
+  const accountKey = readAccountKey(raw);
+  if (!accountKey) return null;
   return {
-    publicId,
+    accountKey,
     skipped: parseStoredStepIds(raw.skipped),
     completed: parseStoredStepIds(raw.completed),
     dismissed: raw.dismissed === true,
@@ -60,14 +71,14 @@ export function parseOnboardingChecklistStorage(
 }
 
 /**
- * Prefs for `publicId`. Mismatched or missing storage → defaults (fresh account).
+ * Prefs for `accountKey`. Mismatched or missing storage → defaults (fresh account).
  */
-export function prefsForPublicId(
+export function prefsForAccountKey(
   stored: OnboardingChecklistStorage | null,
-  publicId: string,
+  accountKey: string,
 ): OnboardingChecklistPrefs {
-  const id = publicId.trim();
-  if (!id || !stored || stored.publicId !== id) {
+  const id = accountKey.trim();
+  if (!id || !stored || stored.accountKey !== id) {
     return { ...DEFAULT_ONBOARDING_CHECKLIST_PREFS };
   }
   return {
@@ -77,6 +88,9 @@ export function prefsForPublicId(
     expanded: stored.expanded,
   };
 }
+
+/** @deprecated Prefer `prefsForAccountKey`. */
+export const prefsForPublicId = prefsForAccountKey;
 
 function getBrowserLocalStorage(): Storage | null {
   try {
@@ -99,7 +113,7 @@ function clearLegacyKeys(localStorage: Storage): void {
 }
 
 export function readOnboardingChecklistPrefs(
-  publicId: string,
+  accountKey: string,
 ): OnboardingChecklistPrefs {
   const localStorage = getBrowserLocalStorage();
   if (!localStorage) {
@@ -110,7 +124,7 @@ export function readOnboardingChecklistPrefs(
     const stored = raw
       ? parseOnboardingChecklistStorage(JSON.parse(raw) as unknown)
       : null;
-    return prefsForPublicId(stored, publicId);
+    return prefsForAccountKey(stored, accountKey);
   } catch {
     return { ...DEFAULT_ONBOARDING_CHECKLIST_PREFS };
   }
@@ -121,11 +135,11 @@ export function writeOnboardingChecklistStorage(
 ): void {
   const localStorage = getBrowserLocalStorage();
   if (!localStorage) return;
-  const publicId = value.publicId.trim();
-  if (!publicId) return;
+  const accountKey = value.accountKey.trim();
+  if (!accountKey) return;
   try {
     const payload: OnboardingChecklistStorage = {
-      publicId,
+      accountKey,
       skipped: parseStoredStepIds(value.skipped),
       completed: parseStoredStepIds(value.completed),
       dismissed: value.dismissed === true,
@@ -139,4 +153,33 @@ export function writeOnboardingChecklistStorage(
   } catch {
     // ignore quota / private mode
   }
+}
+
+/**
+ * Resolve a stable browser prefs key for the signed-in user.
+ * Prefer share public_id; fall back to Auth user id when the profiles row
+ * (and metadata public_id) are missing.
+ */
+export function resolveOnboardingAccountKey(input: {
+  profilePublicId?: string | null;
+  metadataPublicId?: string | null;
+  authUserId?: string | null;
+}): string | null {
+  const fromProfile =
+    typeof input.profilePublicId === "string"
+      ? input.profilePublicId.trim()
+      : "";
+  if (fromProfile) return fromProfile;
+
+  const fromMeta =
+    typeof input.metadataPublicId === "string"
+      ? input.metadataPublicId.trim()
+      : "";
+  if (fromMeta) return fromMeta;
+
+  const userId =
+    typeof input.authUserId === "string" ? input.authUserId.trim() : "";
+  if (userId) return `user:${userId}`;
+
+  return null;
 }

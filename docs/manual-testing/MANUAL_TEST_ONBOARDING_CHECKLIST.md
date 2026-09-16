@@ -6,7 +6,7 @@ Covers **F19-044**: floating Getting started checklist on all `/admin` routes fo
 
 - [ ] Prefer a **fresh account** (or clear prior photo/CVs/apps) so incomplete steps are visible
 - [ ] Logged in
-- [ ] To reset in this browser: clear `localStorage` key `myhireview:onboarding-checklist` (single blob: `publicId`, `completed`, `skipped`, `dismissed`, `expanded`)
+- [ ] To reset in this browser: clear `localStorage` key `myhireview:onboarding-checklist` (single blob: `accountKey`, `completed`, `skipped`, `dismissed`, `expanded`)
 
 ## Floating availability
 
@@ -32,12 +32,13 @@ Covers **F19-044**: floating Getting started checklist on all `/admin` routes fo
 
 ## Completion
 
-- [ ] After a step ticks off from real data, it **stays checked** even if that data is later removed (e.g. publish → delete the only application; Publish & share remains complete in this browser **for that public id**)
-- [ ] Delete account + recreate with the same email (new public id) → checklist starts fresh (does not inherit the previous account’s completed/skipped/dismissed prefs)
+- [ ] After a step ticks off from real data, it **stays checked** even if that data is later removed (e.g. publish → delete the only application; Publish & share remains complete in this browser **for that account key**)
+- [ ] Account **without** a profiles row (GET `/api/profile` → 404) still shows the checklist with **Create your profile** incomplete
+- [ ] Delete account + recreate with the same email (new public id / user) → checklist starts fresh (does not inherit the previous account’s completed/skipped/dismissed prefs)
 - [ ] After all six are done or skipped, the panel stays visible with progress **All set** (minimized chip shows **Done**) and **Dismiss** instead of **Skip all**
-- [ ] **Dismiss** hides the checklist for this browser + public id (survives refresh); clearing the storage key brings it back
+- [ ] **Dismiss** hides the checklist for this browser + account (survives refresh); clearing the storage key brings it back
 - [ ] Completing a step (save profile, upload photo/CV, create app, publish) ticks it off **without** a full page refresh while you stay on `/admin`
-- [ ] Completing a step then navigating (or focusing the window) also refreshes progress
+- [ ] Navigating between admin routes does **not** refetch checklist counts by itself; saving/publishing (or remounting admin) does
 
 ## Smoke
 

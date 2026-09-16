@@ -1,14 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
 } from '@/components/admin/icons';
+import { publicIdFromUserMetadata } from '@/lib/auth/ensure-public-id';
 import type { Profile } from '@/lib/types/profile';
+import { createClient } from '@/lib/supabase/client';
 import {
   ONBOARDING_STEP_IDS,
   buildOnboardingSteps,
@@ -21,6 +22,7 @@ import {
 import {
   DEFAULT_ONBOARDING_CHECKLIST_PREFS,
   readOnboardingChecklistPrefs,
+  resolveOnboardingAccountKey,
   writeOnboardingChecklistStorage,
   type OnboardingChecklistPrefs,
 } from '@/lib/utils/onboarding-checklist-storage';
@@ -31,14 +33,13 @@ type OnboardingSnapshot = OnboardingChecklistInput;
 /**
  * Floating Getting started checklist for all `/admin` routes (F19-044).
  * Stays visible after every step is complete or skipped until the user dismisses it.
- * Prefs (skips, sticky completions, dismiss, expand) are one localStorage blob
- * scoped by profile `publicId`.
+ * Prefs are one localStorage blob scoped by account key (public_id or user id).
+ * Refetches on mount and when mutations notify — not on every navigation/focus.
  */
 export default function OnboardingChecklist() {
-  const pathname = usePathname();
   const panelId = useId();
   const [snapshot, setSnapshot] = useState<OnboardingSnapshot | null>(null);
-  const [publicId, setPublicId] = useState<string | null>(null);
+  const [accountKey, setAccountKey] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [prefs, setPrefs] = useState<OnboardingChecklistPrefs>(
     DEFAULT_ONBOARDING_CHECKLIST_PREFS,
@@ -48,10 +49,10 @@ export default function OnboardingChecklist() {
   const persistPrefs = useCallback(
     (next: OnboardingChecklistPrefs) => {
       setPrefs(next);
-      if (!publicId) return;
-      writeOnboardingChecklistStorage({ publicId, ...next });
+      if (!accountKey) return;
+      writeOnboardingChecklistStorage({ accountKey, ...next });
     },
-    [publicId],
+    [accountKey],
   );
 
   const setExpandedAndPersist = useCallback(
@@ -100,16 +101,24 @@ export default function OnboardingChecklist() {
 
       if (generation !== loadGenerationRef.current) return;
 
-      if (!profileRes.ok || !cvsRes.ok || !appsRes.ok || !activeRes.ok) {
+      const profileMissing = profileRes.status === 404;
+      if (
+        (!profileRes.ok && !profileMissing) ||
+        !cvsRes.ok ||
+        !appsRes.ok ||
+        !activeRes.ok
+      ) {
         setLoadError(true);
         setSnapshot(null);
-        setPublicId(null);
+        setAccountKey(null);
         return;
       }
 
-      const profileJson = (await profileRes.json().catch(() => ({}))) as {
-        data?: Profile | null;
-      };
+      const profileJson = profileMissing
+        ? { data: null }
+        : ((await profileRes.json().catch(() => ({}))) as {
+            data?: Profile | null;
+          });
       const cvsJson = (await cvsRes.json().catch(() => ({}))) as {
         data?: unknown[];
       };
@@ -123,11 +132,27 @@ export default function OnboardingChecklist() {
       if (generation !== loadGenerationRef.current) return;
 
       const profile = profileJson.data ?? null;
-      const nextPublicId =
-        typeof profile?.public_id === 'string' && profile.public_id.trim()
-          ? profile.public_id.trim()
-          : null;
-      setPublicId(nextPublicId);
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (generation !== loadGenerationRef.current) return;
+
+      const nextAccountKey = resolveOnboardingAccountKey({
+        profilePublicId: profile?.public_id ?? null,
+        metadataPublicId: user ? publicIdFromUserMetadata(user) : null,
+        authUserId: user?.id ?? null,
+      });
+
+      if (!nextAccountKey) {
+        setLoadError(true);
+        setSnapshot(null);
+        setAccountKey(null);
+        return;
+      }
+
+      setAccountKey(nextAccountKey);
       setSnapshot({
         firstName: profile?.first_name ?? null,
         lastName: profile?.last_name ?? null,
@@ -147,35 +172,28 @@ export default function OnboardingChecklist() {
       if (generation !== loadGenerationRef.current) return;
       setLoadError(true);
       setSnapshot(null);
-      setPublicId(null);
+      setAccountKey(null);
     }
   }, []);
 
   useEffect(() => {
     void load();
-  }, [load, pathname]);
+  }, [load]);
 
   useEffect(() => {
-    const onFocus = () => {
-      void load();
-    };
-    window.addEventListener('focus', onFocus);
     const unsubscribe = subscribeOnboardingChecklistChanged(() => {
       void load();
     });
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      unsubscribe();
-    };
+    return unsubscribe;
   }, [load]);
 
-  // Hydrate prefs for this publicId; merge any new live completions into storage.
+  // Hydrate prefs for this account; merge any new live completions into storage.
   useEffect(() => {
-    if (!publicId) {
+    if (!accountKey) {
       setPrefs(DEFAULT_ONBOARDING_CHECKLIST_PREFS);
       return;
     }
-    const current = readOnboardingChecklistPrefs(publicId);
+    const current = readOnboardingChecklistPrefs(accountKey);
     if (!snapshot) {
       setPrefs(current);
       return;
@@ -190,8 +208,8 @@ export default function OnboardingChecklist() {
     }
     const next = { ...current, completed: mergedCompleted };
     setPrefs(next);
-    writeOnboardingChecklistStorage({ publicId, ...next });
-  }, [publicId, snapshot]);
+    writeOnboardingChecklistStorage({ accountKey, ...next });
+  }, [accountKey, snapshot]);
 
   if (loadError || !snapshot || prefs.dismissed) {
     return null;

@@ -3,8 +3,9 @@ import {
   DEFAULT_ONBOARDING_CHECKLIST_PREFS,
   ONBOARDING_CHECKLIST_STORAGE_KEY,
   parseOnboardingChecklistStorage,
-  prefsForPublicId,
+  prefsForAccountKey,
   readOnboardingChecklistPrefs,
+  resolveOnboardingAccountKey,
   writeOnboardingChecklistStorage,
 } from "@/lib/utils/onboarding-checklist-storage";
 
@@ -12,20 +13,63 @@ describe("parseOnboardingChecklistStorage", () => {
   it("returns null for invalid payloads", () => {
     expect(parseOnboardingChecklistStorage(null)).toBeNull();
     expect(parseOnboardingChecklistStorage({})).toBeNull();
-    expect(parseOnboardingChecklistStorage({ publicId: "  " })).toBeNull();
+    expect(parseOnboardingChecklistStorage({ accountKey: "  " })).toBeNull();
   });
 
   it("normalizes step ids and booleans", () => {
     expect(
       parseOnboardingChecklistStorage({
-        publicId: " abc ",
+        accountKey: " abc ",
         skipped: ["photo", "nope"],
         completed: ["publish_share"],
         dismissed: true,
         expanded: false,
       }),
     ).toEqual({
-      publicId: "abc",
+      accountKey: "abc",
+      skipped: ["photo"],
+      completed: ["publish_share"],
+      dismissed: true,
+      expanded: false,
+    });
+  });
+
+  it("accepts legacy publicId field as accountKey", () => {
+    expect(
+      parseOnboardingChecklistStorage({
+        publicId: "legacy-pid",
+        skipped: [],
+        completed: [],
+        dismissed: false,
+        expanded: true,
+      }),
+    ).toMatchObject({ accountKey: "legacy-pid" });
+  });
+});
+
+describe("prefsForAccountKey", () => {
+  it("returns defaults when account keys do not match", () => {
+    const stored = parseOnboardingChecklistStorage({
+      accountKey: "old-id",
+      skipped: ["photo"],
+      completed: ["publish_share"],
+      dismissed: true,
+      expanded: false,
+    });
+    expect(prefsForAccountKey(stored, "new-id")).toEqual(
+      DEFAULT_ONBOARDING_CHECKLIST_PREFS,
+    );
+  });
+
+  it("returns stored prefs when account keys match", () => {
+    const stored = parseOnboardingChecklistStorage({
+      accountKey: "same-id",
+      skipped: ["photo"],
+      completed: ["publish_share"],
+      dismissed: true,
+      expanded: false,
+    });
+    expect(prefsForAccountKey(stored, "same-id")).toEqual({
       skipped: ["photo"],
       completed: ["publish_share"],
       dismissed: true,
@@ -34,34 +78,36 @@ describe("parseOnboardingChecklistStorage", () => {
   });
 });
 
-describe("prefsForPublicId", () => {
-  it("returns defaults when public ids do not match", () => {
-    const stored = parseOnboardingChecklistStorage({
-      publicId: "old-id",
-      skipped: ["photo"],
-      completed: ["publish_share"],
-      dismissed: true,
-      expanded: false,
-    });
-    expect(prefsForPublicId(stored, "new-id")).toEqual(
-      DEFAULT_ONBOARDING_CHECKLIST_PREFS,
-    );
-  });
-
-  it("returns stored prefs when public ids match", () => {
-    const stored = parseOnboardingChecklistStorage({
-      publicId: "same-id",
-      skipped: ["photo"],
-      completed: ["publish_share"],
-      dismissed: true,
-      expanded: false,
-    });
-    expect(prefsForPublicId(stored, "same-id")).toEqual({
-      skipped: ["photo"],
-      completed: ["publish_share"],
-      dismissed: true,
-      expanded: false,
-    });
+describe("resolveOnboardingAccountKey", () => {
+  it("prefers profile public id, then metadata, then user id", () => {
+    expect(
+      resolveOnboardingAccountKey({
+        profilePublicId: "from-profile",
+        metadataPublicId: "from-meta",
+        authUserId: "uid",
+      }),
+    ).toBe("from-profile");
+    expect(
+      resolveOnboardingAccountKey({
+        profilePublicId: null,
+        metadataPublicId: "from-meta",
+        authUserId: "uid",
+      }),
+    ).toBe("from-meta");
+    expect(
+      resolveOnboardingAccountKey({
+        profilePublicId: null,
+        metadataPublicId: null,
+        authUserId: "uid",
+      }),
+    ).toBe("user:uid");
+    expect(
+      resolveOnboardingAccountKey({
+        profilePublicId: "  ",
+        metadataPublicId: null,
+        authUserId: null,
+      }),
+    ).toBeNull();
   });
 });
 
@@ -86,7 +132,7 @@ describe("read/write OnboardingChecklistStorage", () => {
     store.set("myhireview:onboarding-checklist-dismissed", "true");
 
     writeOnboardingChecklistStorage({
-      publicId: "pid-1",
+      accountKey: "pid-1",
       skipped: ["primary_cv"],
       completed: ["create_profile"],
       dismissed: false,
@@ -95,7 +141,7 @@ describe("read/write OnboardingChecklistStorage", () => {
 
     expect(store.get(ONBOARDING_CHECKLIST_STORAGE_KEY)).toBe(
       JSON.stringify({
-        publicId: "pid-1",
+        accountKey: "pid-1",
         skipped: ["primary_cv"],
         completed: ["create_profile"],
         dismissed: false,
@@ -106,12 +152,12 @@ describe("read/write OnboardingChecklistStorage", () => {
     expect(store.has("myhireview:onboarding-checklist-dismissed")).toBe(false);
   });
 
-  it("reads defaults when stored publicId belongs to another account", () => {
+  it("reads defaults when stored accountKey belongs to another account", () => {
     const store = new Map<string, string>([
       [
         ONBOARDING_CHECKLIST_STORAGE_KEY,
         JSON.stringify({
-          publicId: "old-account",
+          accountKey: "old-account",
           skipped: [],
           completed: ["publish_share"],
           dismissed: true,
