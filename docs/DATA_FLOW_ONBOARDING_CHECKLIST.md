@@ -155,6 +155,7 @@ Single key: `myhireview:onboarding-checklist`.
 
 - Mismatched `accountKey` → defaults (fresh checklist for a new account on the same browser).  
 - Legacy field `publicId` is still accepted when reading.  
+- Older multi-key prefs (`…-skipped`, `…-completed`, `…-dismissed`, `…-expanded`) are **migrated once** into this blob for the current account key, then removed.  
 - Expand / skip / sticky complete / dismiss all write this blob.
 
 ---

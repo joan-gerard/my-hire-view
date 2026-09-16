@@ -54,7 +54,7 @@ export const APPLICATION_STATUS_LEGEND_ITEMS: readonly ApplicationStatusDisplay[
 export const CV_MISSING_LEGEND = {
   label: 'CV missing',
   description:
-    'The CV file is missing from storage. Edit this application or restore a primary CV.',
+    'The CV file is missing from storage. Edit this application and select or upload an available CV.',
 } as const;
 
 export type DraftActionLegendItem = {

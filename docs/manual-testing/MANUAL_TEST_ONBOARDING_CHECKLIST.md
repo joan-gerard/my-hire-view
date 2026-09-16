@@ -30,7 +30,7 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../DATA_FLOW_ONBOARDING
 - [ ] Each incomplete step has **Skip**; skipped steps show as **Skipped**, count toward progress, and survive refresh
 - [ ] Completing a previously skipped step via real data shows it as completed (not Skipped)
 - [ ] **Skip all** marks every step skipped; the panel **stays open** and footer switches to **Dismiss**
-- [ ] After Skip all, clearing the skipped localStorage key brings incomplete steps back (if not dismissed)
+- [ ] After Skip all, clear the `skipped` array inside the `myhireview:onboarding-checklist` blob (or clear that whole key per Prerequisites) to bring incomplete steps back if not dismissed
 
 ## Completion
 
@@ -45,6 +45,6 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../DATA_FLOW_ONBOARDING
 
 ## Smoke
 
-- [ ] Users who dismissed (or never see incomplete work after dismiss) do not see the floating control
-- [ ] Create/edit forms remain usable with the panel minimized
-- [ ] Search / legend / create still work with the checklist visible
+- [ ] First paint does not flash an expanded panel when the checklist was previously minimized or dismissed (prefs hydrate before display)
+- [ ] Dismissed users do not trigger checklist `/api` refetches on later profile/CV/application saves
+- [ ] Keyboard: Tab to the disclosure control, Enter/Space toggles expand/collapse; focus stays on the control; `aria-controls` targets the panel (panel may be `hidden` when collapsed)

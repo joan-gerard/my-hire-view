@@ -48,6 +48,7 @@ export default function OnboardingChecklist({
   initialSnapshot,
 }: OnboardingChecklistProps) {
   const panelId = useId();
+  const toggleId = useId();
   const [snapshot, setSnapshot] = useState<OnboardingSnapshot | null>(
     initialSnapshot,
   );
@@ -58,10 +59,13 @@ export default function OnboardingChecklist({
   const [prefs, setPrefs] = useState<OnboardingChecklistPrefs>(
     DEFAULT_ONBOARDING_CHECKLIST_PREFS,
   );
+  const [prefsHydrated, setPrefsHydrated] = useState(false);
   const loadGenerationRef = useRef(0);
+  const dismissedRef = useRef(false);
 
   const persistPrefs = useCallback(
     (next: OnboardingChecklistPrefs) => {
+      dismissedRef.current = next.dismissed;
       setPrefs(next);
       if (!accountKey) return;
       writeOnboardingChecklistStorage({ accountKey, ...next });
@@ -101,6 +105,8 @@ export default function OnboardingChecklist({
   }, [persistPrefs, prefs]);
 
   const load = useCallback(async () => {
+    if (dismissedRef.current) return;
+
     const generation = ++loadGenerationRef.current;
     try {
       setLoadError(false);
@@ -113,7 +119,9 @@ export default function OnboardingChecklist({
         }),
       ]);
 
-      if (generation !== loadGenerationRef.current) return;
+      if (generation !== loadGenerationRef.current || dismissedRef.current) {
+        return;
+      }
 
       const profileMissing = profileRes.status === 404;
       if (
@@ -143,7 +151,9 @@ export default function OnboardingChecklist({
         meta?: { total?: number };
       };
 
-      if (generation !== loadGenerationRef.current) return;
+      if (generation !== loadGenerationRef.current || dismissedRef.current) {
+        return;
+      }
 
       const profile = profileJson.data ?? null;
       const supabase = createClient();
@@ -151,7 +161,9 @@ export default function OnboardingChecklist({
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (generation !== loadGenerationRef.current) return;
+      if (generation !== loadGenerationRef.current || dismissedRef.current) {
+        return;
+      }
 
       const nextAccountKey = resolveOnboardingAccountKey({
         profilePublicId: profile?.public_id ?? null,
@@ -199,11 +211,13 @@ export default function OnboardingChecklist({
       setLoadError(false);
       return;
     }
+    if (dismissedRef.current) return;
     void load();
   }, [load, initialSnapshot, initialAccountKey]);
 
   useEffect(() => {
     const unsubscribe = subscribeOnboardingChecklistChanged(() => {
+      if (dismissedRef.current) return;
       void load();
     });
     return unsubscribe;
@@ -212,28 +226,41 @@ export default function OnboardingChecklist({
   // Hydrate prefs for this account; merge any new live completions into storage.
   useEffect(() => {
     if (!accountKey) {
+      dismissedRef.current = false;
       setPrefs(DEFAULT_ONBOARDING_CHECKLIST_PREFS);
+      setPrefsHydrated(false);
       return;
     }
     const current = readOnboardingChecklistPrefs(accountKey);
-    if (!snapshot) {
-      setPrefs(current);
-      return;
+    const withLive =
+      snapshot == null
+        ? current
+        : (() => {
+            const mergedCompleted = mergeStepIdLists(
+              current.completed,
+              liveCompletedStepIds(snapshot),
+            );
+            if (mergedCompleted.join(',') === current.completed.join(',')) {
+              return current;
+            }
+            return { ...current, completed: mergedCompleted };
+          })();
+
+    dismissedRef.current = withLive.dismissed;
+    setPrefs(withLive);
+    setPrefsHydrated(true);
+    if (withLive !== current) {
+      writeOnboardingChecklistStorage({ accountKey, ...withLive });
     }
-    const mergedCompleted = mergeStepIdLists(
-      current.completed,
-      liveCompletedStepIds(snapshot),
-    );
-    if (mergedCompleted.join(',') === current.completed.join(',')) {
-      setPrefs(current);
-      return;
-    }
-    const next = { ...current, completed: mergedCompleted };
-    setPrefs(next);
-    writeOnboardingChecklistStorage({ accountKey, ...next });
   }, [accountKey, snapshot]);
 
-  if (loadError || !snapshot || !accountKey || prefs.dismissed) {
+  if (
+    !prefsHydrated ||
+    loadError ||
+    !snapshot ||
+    !accountKey ||
+    prefs.dismissed
+  ) {
     return null;
   }
 
@@ -246,123 +273,125 @@ export default function OnboardingChecklist({
 
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex max-w-[min(100vw-2rem,22rem)] flex-col items-end gap-2 sm:bottom-6 sm:right-6">
-      {prefs.expanded ? (
-        <section
-          id={panelId}
-          className="pointer-events-auto max-h-[min(70vh,32rem)] w-[min(100vw-2rem,22rem)] overflow-y-auto rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-4 shadow-lg"
-          aria-labelledby="onboarding-checklist-heading"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h2
-                id="onboarding-checklist-heading"
-                className="text-base font-semibold text-[var(--foreground)]"
-              >
-                Getting started
-              </h2>
-              <p className="mt-0.5 text-sm text-[var(--foreground)]/60">
-                {allDone ? 'All set' : `${completed} of ${total} complete`}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setExpandedAndPersist(false)}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/70 hover:bg-[var(--foreground)]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-              aria-expanded={true}
-              aria-controls={panelId}
-            >
-              Minimize
-              <ChevronDownIcon className="h-3.5 w-3.5" />
-            </button>
-          </div>
-          <ol className="mt-3 space-y-0.5">
-            {steps.map((step) => (
-              <li key={step.id}>
-                {step.done ? (
-                  <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--foreground)]/55">
+      <section
+        id={panelId}
+        hidden={!prefs.expanded}
+        className="pointer-events-auto max-h-[min(70vh,32rem)] w-[min(100vw-2rem,22rem)] overflow-y-auto rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-4 shadow-lg"
+        aria-labelledby="onboarding-checklist-heading"
+      >
+        <div className="min-w-0">
+          <h2
+            id="onboarding-checklist-heading"
+            className="text-base font-semibold text-[var(--foreground)]"
+          >
+            Getting started
+          </h2>
+          <p className="mt-0.5 text-sm text-[var(--foreground)]/60">
+            {allDone ? 'All set' : `${completed} of ${total} complete`}
+          </p>
+        </div>
+        <ol className="mt-3 space-y-0.5">
+          {steps.map((step) => (
+            <li key={step.id}>
+              {step.done ? (
+                <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--foreground)]/55">
+                  <span
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+                    aria-hidden
+                  >
+                    <CheckIcon className="h-3.5 w-3.5" />
+                  </span>
+                  <p className="min-w-0 flex-1 text-sm font-medium line-through">
+                    {step.label}
+                  </p>
+                  <span className="sr-only">Completed</span>
+                </div>
+              ) : step.skipped ? (
+                <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--foreground)]/45">
+                  <span
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--foreground)]/25"
+                    aria-hidden
+                  />
+                  <p className="min-w-0 flex-1 text-sm font-medium line-through">
+                    {step.label}
+                  </p>
+                  <span className="shrink-0 text-xs">Skipped</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
+                  <Link
+                    href={step.href}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-[var(--foreground)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1"
+                  >
                     <span
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
-                      aria-hidden
-                    >
-                      <CheckIcon className="h-3.5 w-3.5" />
-                    </span>
-                    <p className="min-w-0 flex-1 text-sm font-medium line-through">
-                      {step.label}
-                    </p>
-                    <span className="sr-only">Completed</span>
-                  </div>
-                ) : step.skipped ? (
-                  <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--foreground)]/45">
-                    <span
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--foreground)]/25"
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--foreground)]/25"
                       aria-hidden
                     />
-                    <p className="min-w-0 flex-1 text-sm font-medium line-through">
+                    <p className="min-w-0 text-sm font-medium text-[var(--brand-primary)]">
                       {step.label}
                     </p>
-                    <span className="shrink-0 text-xs">Skipped</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
-                    <Link
-                      href={step.href}
-                      className="flex min-w-0 flex-1 items-center gap-3 text-[var(--foreground)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1"
-                    >
-                      <span
-                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--foreground)]/25"
-                        aria-hidden
-                      />
-                      <p className="min-w-0 text-sm font-medium text-[var(--brand-primary)]">
-                        {step.label}
-                      </p>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => skipStep(step.id)}
-                      className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-                    >
-                      Skip
-                    </button>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ol>
-          <div className="mt-3 flex justify-end border-t border-[var(--foreground)]/10 pt-3">
-            {allDone ? (
-              <button
-                type="button"
-                onClick={dismiss}
-                className="rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-              >
-                Dismiss
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={skipAll}
-                className="rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-              >
-                Skip all
-              </button>
-            )}
-          </div>
-        </section>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setExpandedAndPersist(true)}
-          className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] shadow-lg hover:bg-[var(--foreground)]/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-          aria-expanded={false}
-          aria-controls={panelId}
-        >
-          Getting started
-          <span className="rounded-full bg-[var(--brand-primary)]/15 px-2 py-0.5 text-xs font-medium text-[var(--brand-primary)]">
-            {allDone ? 'Done' : `${completed}/${total}`}
-          </span>
-          <ChevronUpIcon className="h-4 w-4 text-[var(--foreground)]/60" />
-        </button>
-      )}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => skipStep(step.id)}
+                    className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+                  >
+                    Skip
+                  </button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
+        <div className="mt-3 flex justify-end border-t border-[var(--foreground)]/10 pt-3">
+          {allDone ? (
+            <button
+              type="button"
+              onClick={dismiss}
+              className="rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            >
+              Dismiss
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={skipAll}
+              className="rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            >
+              Skip all
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* Stable disclosure control — stays mounted so focus and aria-controls remain valid. */}
+      <button
+        id={toggleId}
+        type="button"
+        onClick={() => setExpandedAndPersist(!prefs.expanded)}
+        className={
+          prefs.expanded
+            ? 'pointer-events-auto inline-flex items-center gap-1 rounded-md border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/70 shadow-lg hover:bg-[var(--foreground)]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]'
+            : 'pointer-events-auto inline-flex items-center gap-2 rounded-full border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] shadow-lg hover:bg-[var(--foreground)]/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2'
+        }
+        aria-expanded={prefs.expanded}
+        aria-controls={panelId}
+      >
+        {prefs.expanded ? (
+          <>
+            Minimize
+            <ChevronDownIcon className="h-3.5 w-3.5" />
+          </>
+        ) : (
+          <>
+            Getting started
+            <span className="rounded-full bg-[var(--brand-primary)]/15 px-2 py-0.5 text-xs font-medium text-[var(--brand-primary)]">
+              {allDone ? 'Done' : `${completed}/{total}`}
+            </span>
+            <ChevronUpIcon className="h-4 w-4 text-[var(--foreground)]/60" />
+          </>
+        )}
+      </button>
     </div>
   );
 }

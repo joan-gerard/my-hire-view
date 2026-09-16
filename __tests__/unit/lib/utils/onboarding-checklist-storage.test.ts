@@ -175,4 +175,40 @@ describe("read/write OnboardingChecklistStorage", () => {
       DEFAULT_ONBOARDING_CHECKLIST_PREFS,
     );
   });
+
+  it("migrates legacy keys into the account blob before clearing them", () => {
+    const store = new Map<string, string>([
+      ["myhireview:onboarding-checklist-skipped", '["photo"]'],
+      ["myhireview:onboarding-checklist-completed", '["publish_share"]'],
+      ["myhireview:onboarding-checklist-dismissed", "true"],
+      ["myhireview:onboarding-checklist-expanded", "false"],
+    ]);
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      },
+    });
+
+    expect(readOnboardingChecklistPrefs("pid-legacy")).toEqual({
+      skipped: ["photo"],
+      completed: ["publish_share"],
+      dismissed: true,
+      expanded: false,
+    });
+    expect(JSON.parse(store.get(ONBOARDING_CHECKLIST_STORAGE_KEY)!)).toEqual({
+      accountKey: "pid-legacy",
+      skipped: ["photo"],
+      completed: ["publish_share"],
+      dismissed: true,
+      expanded: false,
+    });
+    expect(store.has("myhireview:onboarding-checklist-skipped")).toBe(false);
+    expect(store.has("myhireview:onboarding-checklist-completed")).toBe(false);
+    expect(store.has("myhireview:onboarding-checklist-dismissed")).toBe(false);
+    expect(store.has("myhireview:onboarding-checklist-expanded")).toBe(false);
+  });
 });

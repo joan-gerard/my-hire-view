@@ -13,12 +13,17 @@ import {
 export const ONBOARDING_CHECKLIST_STORAGE_KEY =
   "myhireview:onboarding-checklist";
 
+const LEGACY_EXPANDED_KEY = "myhireview:onboarding-checklist-expanded";
+const LEGACY_SKIPPED_KEY = "myhireview:onboarding-checklist-skipped";
+const LEGACY_COMPLETED_KEY = "myhireview:onboarding-checklist-completed";
+const LEGACY_DISMISSED_KEY = "myhireview:onboarding-checklist-dismissed";
+
 /** Legacy keys from before the single account-scoped blob. */
 const LEGACY_STORAGE_KEYS = [
-  "myhireview:onboarding-checklist-expanded",
-  "myhireview:onboarding-checklist-skipped",
-  "myhireview:onboarding-checklist-completed",
-  "myhireview:onboarding-checklist-dismissed",
+  LEGACY_EXPANDED_KEY,
+  LEGACY_SKIPPED_KEY,
+  LEGACY_COMPLETED_KEY,
+  LEGACY_DISMISSED_KEY,
 ] as const;
 
 export type OnboardingChecklistPrefs = {
@@ -112,6 +117,43 @@ function clearLegacyKeys(localStorage: Storage): void {
   }
 }
 
+function hasLegacyKeys(localStorage: Storage): boolean {
+  return LEGACY_STORAGE_KEYS.some((key) => localStorage.getItem(key) != null);
+}
+
+/** Read pre-blob checklist prefs (returns null when none are present). */
+export function readLegacyOnboardingChecklistPrefs(
+  localStorage: Storage,
+): OnboardingChecklistPrefs | null {
+  if (!hasLegacyKeys(localStorage)) return null;
+
+  let skipped: OnboardingStepId[] = [];
+  let completed: OnboardingStepId[] = [];
+  try {
+    const skippedRaw = localStorage.getItem(LEGACY_SKIPPED_KEY);
+    if (skippedRaw) {
+      skipped = parseStoredStepIds(JSON.parse(skippedRaw) as unknown);
+    }
+  } catch {
+    skipped = [];
+  }
+  try {
+    const completedRaw = localStorage.getItem(LEGACY_COMPLETED_KEY);
+    if (completedRaw) {
+      completed = parseStoredStepIds(JSON.parse(completedRaw) as unknown);
+    }
+  } catch {
+    completed = [];
+  }
+
+  return {
+    skipped,
+    completed,
+    dismissed: localStorage.getItem(LEGACY_DISMISSED_KEY) === "true",
+    expanded: localStorage.getItem(LEGACY_EXPANDED_KEY) !== "false",
+  };
+}
+
 export function readOnboardingChecklistPrefs(
   accountKey: string,
 ): OnboardingChecklistPrefs {
@@ -119,12 +161,38 @@ export function readOnboardingChecklistPrefs(
   if (!localStorage) {
     return { ...DEFAULT_ONBOARDING_CHECKLIST_PREFS };
   }
+  const id = accountKey.trim();
+  if (!id) {
+    return { ...DEFAULT_ONBOARDING_CHECKLIST_PREFS };
+  }
+
   try {
     const raw = localStorage.getItem(ONBOARDING_CHECKLIST_STORAGE_KEY);
     const stored = raw
       ? parseOnboardingChecklistStorage(JSON.parse(raw) as unknown)
       : null;
-    return prefsForAccountKey(stored, accountKey);
+
+    if (stored && stored.accountKey === id) {
+      // Matching blob wins; drop any leftover legacy keys from older builds.
+      if (hasLegacyKeys(localStorage)) {
+        clearLegacyKeys(localStorage);
+      }
+      return {
+        skipped: stored.skipped,
+        completed: stored.completed,
+        dismissed: stored.dismissed,
+        expanded: stored.expanded,
+      };
+    }
+
+    // No blob for this account — migrate unscoped legacy prefs once, then clear.
+    const legacy = readLegacyOnboardingChecklistPrefs(localStorage);
+    if (legacy) {
+      writeOnboardingChecklistStorage({ accountKey: id, ...legacy });
+      return legacy;
+    }
+
+    return { ...DEFAULT_ONBOARDING_CHECKLIST_PREFS };
   } catch {
     return { ...DEFAULT_ONBOARDING_CHECKLIST_PREFS };
   }

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { ApplicationStatus } from '@/lib/types/application';
 import {
+  CV_MISSING_LEGEND,
   getApplicationStatusDisplay,
   getApplicationStatusDisplayByKey,
   type ApplicationStatusVisualKey,
@@ -131,7 +132,7 @@ export function MissingCvBadge() {
   return (
     <span
       className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-500/40 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900"
-      title="The CV file is missing from storage. Edit this application or restore a primary CV."
+      title={CV_MISSING_LEGEND.description}
       aria-label="CV file missing"
     >
       <svg

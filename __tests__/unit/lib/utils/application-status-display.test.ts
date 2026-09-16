@@ -44,6 +44,8 @@ describe('legend copy', () => {
   it('includes status, CV missing, and draft action rows', () => {
     expect(APPLICATION_STATUS_LEGEND_ITEMS).toHaveLength(4);
     expect(CV_MISSING_LEGEND.label).toBe('CV missing');
+    expect(CV_MISSING_LEGEND.description).toContain('select or upload');
+    expect(CV_MISSING_LEGEND.description).not.toContain('restore a primary CV');
     expect(DRAFT_ACTION_LEGEND_ITEMS.map((item) => item.label)).toEqual([
       'Publish',
       'Preview',
