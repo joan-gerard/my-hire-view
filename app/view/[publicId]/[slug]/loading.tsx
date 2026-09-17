@@ -6,9 +6,11 @@ export default function Loading() {
   return (
     <div
       className="min-h-screen bg-[var(--background)]"
+      role="status"
+      aria-live="polite"
       aria-busy="true"
-      aria-label="Loading application"
     >
+      <span className="sr-only">Loading application</span>
       <div className="px-2 pt-5 sm:px-6 sm:pt-6 lg:px-8">
         <div className="mb-4 h-8 w-40 animate-pulse rounded-xl bg-[var(--foreground)]/10" />
         <div className="mx-auto max-w-6xl space-y-3">

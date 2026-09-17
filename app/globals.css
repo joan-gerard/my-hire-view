@@ -87,6 +87,8 @@
   --status-warning-fg: #7a4e1e;
   --status-danger-bg: #fde8e4;
   --status-danger-fg: #b42318;
+  /* Solid fill for danger buttons — keep separate from fg so text can be tuned independently */
+  --status-danger-solid: #b42318;
 
   /* Typography */
   --font-faunaone: "FaunaOne", serif;

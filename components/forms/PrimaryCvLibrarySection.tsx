@@ -307,11 +307,14 @@ export default function PrimaryCvLibrarySection({
         >
           <p
             id="primary-cv-delete-title"
-            className="text-sm font-semibold text-amber-950"
+            className="text-sm font-semibold text-[var(--status-warning-fg)]"
           >
             Delete primary CV?
           </p>
-          <p id="primary-cv-delete-desc" className="text-sm text-amber-900">
+          <p
+            id="primary-cv-delete-desc"
+            className="text-sm text-[var(--status-warning-fg)]"
+          >
             {deleteMessage}
           </p>
           <PrimaryCvUsedByPreview

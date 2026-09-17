@@ -41,7 +41,7 @@ export default function CvUnavailableWithRetry({
         type="button"
         onClick={handleTryAgain}
         disabled={retrying || !onRetry}
-        className={`mt-4 flex items-center justify-center gap-2 rounded-xl bg-[var(--brand-accent-1)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--brand-accent-2)] disabled:opacity-90 ${
+        className={`mt-4 flex items-center justify-center gap-2 rounded-xl bg-[var(--brand-accent-2)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-90 disabled:hover:bg-[var(--brand-accent-2)] ${
           retrying ? 'animate-pulse' : ''
         }`}
       >

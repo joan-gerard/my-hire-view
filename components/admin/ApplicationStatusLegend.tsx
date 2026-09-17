@@ -44,8 +44,14 @@ export default function ApplicationStatusLegend({
     if (open && !dialog.open) {
       closeEmittedRef.current = false;
       dialog.showModal();
-      // Prefer the heading over the first tabbable control (Close at the bottom).
-      titleRef.current?.focus();
+      // Prefer the heading over Close; suppress the open-time focus ring (FocusOptions.focusVisible).
+      const title = titleRef.current;
+      if (title) {
+        title.focus({
+          preventScroll: true,
+          focusVisible: false,
+        } as FocusOptions & { focusVisible?: boolean });
+      }
     } else if (!open && dialog.open) {
       dialog.close();
     }
@@ -89,7 +95,7 @@ export default function ApplicationStatusLegend({
             ref={titleRef}
             id={titleId}
             tabIndex={-1}
-            className="text-lg font-semibold outline-none"
+            className="text-lg font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]"
           >
             Status icons & draft actions
           </h2>

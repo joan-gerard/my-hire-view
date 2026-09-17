@@ -26,7 +26,7 @@ export default function Button({
     secondary:
       'bg-[var(--brand-secondary)] text-[var(--brand-secondary-text)] hover:opacity-90 focus-visible:outline-[var(--brand-primary)]',
     danger:
-      'bg-[var(--status-danger-fg)] text-white hover:opacity-90 focus-visible:outline-[var(--status-danger-fg)]',
+      'bg-[var(--status-danger-solid)] text-white hover:opacity-90 focus-visible:outline-[var(--status-danger-solid)]',
   };
 
   return (

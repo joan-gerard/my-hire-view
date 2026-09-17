@@ -36,9 +36,9 @@ const SECONDARY_ACTION_CLASS =
 const PRIMARY_ACTION_CLASS =
   'inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1';
 
-/** Positive action (Publish) — homepage teal accent. */
+/** Positive action (Publish) — darker teal for WCAG AA contrast with white text. */
 const ACCENT_ACTION_CLASS =
-  'inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--brand-accent-1)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand-accent-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1';
+  'inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--brand-accent-2)] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-2)] focus-visible:ring-offset-1';
 
 const DISABLED_ACTION_CLASS =
   'inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--foreground)]/10 bg-[var(--surface)] px-3 py-1.5 text-sm font-medium text-[var(--foreground)]/45';

@@ -1,6 +1,7 @@
 export default function Loading() {
   return (
-    <div className="space-y-6" aria-busy="true" aria-label="Loading">
+    <div className="space-y-6" role="status" aria-live="polite" aria-busy="true">
+      <span className="sr-only">Loading</span>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="h-9 w-48 animate-pulse rounded-xl bg-[var(--foreground)]/10" />
         <div className="h-10 w-44 animate-pulse rounded-xl bg-[var(--foreground)]/10" />

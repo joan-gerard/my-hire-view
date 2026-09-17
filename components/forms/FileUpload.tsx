@@ -227,13 +227,13 @@ export default function FileUpload({
             className="rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--status-warning-fg)]"
           >
             <p className="font-semibold">CV file not found in storage</p>
-            <p className="mt-0.5 text-amber-800">
+            <p className="mt-0.5 text-[var(--status-warning-fg)]">
               The file may have been removed from storage (e.g. Cloudflare R2).
               Please upload a new CV below to replace it.
             </p>
             {onRetryCvCheck && (
               <>
-                <p className="mt-2 text-xs text-amber-700">
+                <p className="mt-2 text-xs text-[var(--status-warning-fg)]/80">
                   If this might be a temporary issue (e.g. network), you can check again.
                 </p>
                 <button
@@ -244,7 +244,7 @@ export default function FileUpload({
                     setCheckingCv(false);
                   }}
                   disabled={checkingCv}
-                  className="mt-2 rounded-xl bg-[var(--brand-accent-1)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--brand-accent-2)] disabled:opacity-50"
+                  className="mt-2 rounded-xl bg-[var(--brand-accent-2)] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
                 >
                   {checkingCv ? 'Checking…' : 'Check again'}
                 </button>
