@@ -1,15 +1,20 @@
 /**
  * Loading skeleton for the admin dashboard (applications list).
+ * Matches list chrome: title row + stacked application cards (F17-017).
  */
 export default function AdminDashboardSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="h-8 w-64 animate-pulse rounded bg-[var(--foreground)]/10" />
+    <div className="space-y-6" aria-busy="true" aria-label="Loading applications">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="h-9 w-48 animate-pulse rounded-xl bg-[var(--foreground)]/10" />
+        <div className="h-10 w-48 animate-pulse rounded-xl bg-[var(--foreground)]/10" />
+      </div>
+      <div className="h-10 max-w-md animate-pulse rounded-xl bg-[var(--foreground)]/10" />
       <div className="flex flex-col gap-4">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-16 animate-pulse rounded-lg bg-[var(--foreground)]/10"
+            className="h-20 animate-pulse rounded-2xl border border-[var(--foreground)]/5 bg-[var(--secondary-background)]"
           />
         ))}
       </div>

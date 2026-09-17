@@ -25,8 +25,8 @@ export default function PrimaryCvUsedByPreview({
   const remaining = Math.max(0, totalCount - applications.length);
   const listClass =
     tone === "warning"
-      ? "max-h-40 space-y-1.5 overflow-y-auto rounded-md border border-amber-300/80 bg-amber-100/60 px-3 py-2"
-      : "max-h-40 space-y-1.5 overflow-y-auto rounded-md border border-[var(--foreground)]/10 bg-[var(--background)] px-3 py-2";
+      ? "max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--status-warning-fg)]/30 bg-[var(--status-warning-bg)] px-3 py-2"
+      : "max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--foreground)]/10 bg-[var(--background)] px-3 py-2";
   const metaClass =
     tone === "warning"
       ? "shrink-0 text-xs capitalize text-amber-900/70"

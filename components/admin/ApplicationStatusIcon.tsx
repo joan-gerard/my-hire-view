@@ -79,7 +79,7 @@ export function ApplicationStatusIconBadge({
         decorative={decorative}
       >
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)]/10">
-          <ArchiveIcon className="h-5 w-5 text-[var(--foreground)]/60" />
+          <ArchiveIcon className="h-5 w-5 text-[var(--foreground)]/55" />
         </span>
       </StatusBadgeShell>
     );
@@ -92,8 +92,8 @@ export function ApplicationStatusIconBadge({
         description={display.description}
         decorative={decorative}
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100">
-          <ClockIcon className="h-5 w-5 text-amber-700" />
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--status-draft-bg)]">
+          <ClockIcon className="h-5 w-5 text-[var(--status-draft-fg)]" />
         </span>
       </StatusBadgeShell>
     );
@@ -105,11 +105,11 @@ export function ApplicationStatusIconBadge({
       description={display.description}
       decorative={decorative}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--status-success-bg)]">
         {visual === 'active_viewed' ? (
-          <CheckIcon className="h-5 w-5 text-emerald-600" />
+          <CheckIcon className="h-5 w-5 text-[var(--status-success-fg)]" />
         ) : (
-          <ClockIcon className="h-5 w-5 text-emerald-600" />
+          <ClockIcon className="h-5 w-5 text-[var(--status-success-fg)]" />
         )}
       </span>
     </StatusBadgeShell>
@@ -131,7 +131,7 @@ export function ApplicationStatusIcon({
 export function MissingCvBadge() {
   return (
     <span
-      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-500/40 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900"
+      className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--status-warning-fg)]/30 bg-[var(--status-warning-bg)] px-2 py-0.5 text-xs font-medium text-[var(--status-warning-fg)]"
       title={CV_MISSING_LEGEND.description}
       aria-label="CV file missing"
     >

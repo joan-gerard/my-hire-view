@@ -85,11 +85,11 @@ export default function SignUpForm() {
       alternateHref="/login"
       alternateLabel="sign in to your existing account"
     >
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-5" onSubmit={handleSubmit}>
         {error && <AuthErrorAlert message={error} />}
         {notice && <AuthNoticeAlert message={notice} />}
-        <div className="space-y-0 rounded-md shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-2">
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="first-name" className="sr-only">
                 First name
@@ -100,7 +100,7 @@ export default function SignUpForm() {
                 type="text"
                 autoComplete="given-name"
                 required
-                className={`${AUTH_INPUT_CLASS} rounded-t-md sm:rounded-tr-none sm:rounded-tl-md`}
+                className={AUTH_INPUT_CLASS}
                 placeholder="First name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -116,7 +116,7 @@ export default function SignUpForm() {
                 type="text"
                 autoComplete="family-name"
                 required
-                className={`${AUTH_INPUT_CLASS} sm:rounded-tr-md`}
+                className={AUTH_INPUT_CLASS}
                 placeholder="Last name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
@@ -158,7 +158,6 @@ export default function SignUpForm() {
             autoComplete="new-password"
             required
             minLength={SIGNUP_PASSWORD_MIN_LENGTH}
-            className="rounded-b-md"
             placeholder="Confirm password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

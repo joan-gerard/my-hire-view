@@ -56,14 +56,14 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <h1 className="text-3xl font-bold text-[var(--foreground)]">
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
             Applications
           </h1>
           {showListChrome ? (
             <button
               type="button"
               onClick={() => setLegendOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--foreground)]/80 hover:bg-[var(--foreground)]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--foreground)]/12 bg-[var(--brand-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-secondary-text)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1"
               aria-haspopup="dialog"
             >
               <QuestionIcon className="h-4 w-4" />
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
         </div>
         <Link
           href="/admin/new"
-          className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95"
+          className="rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
         >
           Create New Application
         </Link>

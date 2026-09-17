@@ -203,15 +203,17 @@ export default function EditApplicationPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-[var(--foreground)]">Edit Application</h1>
-      <p className="rounded-md border border-[var(--foreground)]/10 bg-[var(--brand-secondary)]/40 px-4 py-3 text-sm text-[var(--foreground)]">
+      <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+        Edit Application
+      </h1>
+      <p className="rounded-xl border border-[var(--foreground)]/10 bg-[var(--brand-secondary)]/50 px-4 py-3 text-sm text-[var(--foreground)]">
         The candidate details below (name, location, links) are from when this
         application was saved, not from your current profile. Updating your
         profile does not change those fields here. Your profile picture is
         live: if this application shows it, recruiters see the current picture
         from your profile.
       </p>
-      <div className="rounded-lg bg-[var(--secondary-background)] p-6 shadow border border-[var(--foreground)]/10">
+      <div className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
         <ApplicationForm
           initialData={initialData}
           onSubmit={handleSubmit}

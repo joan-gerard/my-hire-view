@@ -189,7 +189,7 @@ How people discover the app and become paid users (channels, phases, specialist 
 - Well-structured internal docs in `docs/` (ARCHITECTURE, API_REFERENCE, CI_CD, DATA_FLOW, BUILD_SUMMARY, CODE_REVIEW, etc.).
 - Clear separation between marketing and product surfaces.
 - Security-conscious patterns: RLS, owner exclusion from analytics, URL validation, PDF type/size validation.
-- CSS design system with CSS variables (warm neutrals, brand colors) and consistent typography.
+- CSS design system with CSS variables (warm neutrals, brand colors, product status tokens) and consistent typography across marketing, auth, `/admin`, and `/view`.
 - Clean component breakdown across `public/`, `admin/`, `forms/`, `pdf/`, `video/`, `view/`, `ui/`.
 
 ---

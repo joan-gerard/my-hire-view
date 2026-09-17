@@ -246,11 +246,11 @@ export default function NewApplicationPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-[var(--foreground)]">
+      <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
         Create New Application
       </h1>
       {showProfileNudge && (
-        <p className="flex items-start gap-2 rounded-md border border-[var(--foreground)]/10 bg-[var(--brand-secondary)]/40 px-4 py-3 text-sm text-[var(--foreground)]">
+        <p className="flex items-start gap-2 rounded-xl border border-[var(--foreground)]/10 bg-[var(--brand-secondary)]/50 px-4 py-3 text-sm text-[var(--foreground)]">
           <span className="min-w-0 flex-1">
             {hasSavedProfile
               ? "Add location, links, or a picture on your profile for richer prefills — or use Add picture below."
@@ -258,7 +258,7 @@ export default function NewApplicationPage() {
           </span>
           <Link
             href="/admin/profile"
-            className="mt-0.5 inline-flex shrink-0 rounded p-0.5 text-[var(--brand-primary)] hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]"
+            className="mt-0.5 inline-flex shrink-0 rounded-lg p-0.5 text-[var(--brand-accent-2)] hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-accent-1)]"
             aria-label="Go to profile"
             title="Go to profile"
           >
@@ -266,11 +266,11 @@ export default function NewApplicationPage() {
           </Link>
         </p>
       )}
-      <div className="rounded-lg bg-[var(--secondary-background)] p-6 shadow border border-[var(--foreground)]/10">
+      <div className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
         {profileLoading ? (
           <div className="space-y-4">
-            <div className="h-24 animate-pulse rounded-lg bg-[var(--background)]" />
-            <div className="h-96 animate-pulse rounded-lg bg-[var(--background)]" />
+            <div className="h-24 animate-pulse rounded-xl bg-[var(--background)]" />
+            <div className="h-96 animate-pulse rounded-xl bg-[var(--background)]" />
           </div>
         ) : (
           <ApplicationForm

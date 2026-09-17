@@ -240,7 +240,7 @@ export default function PrimaryCvLibrarySection({
 
       {error && (
         <p
-          className={`${embedded ? "mt-0" : "mt-3"} rounded-md bg-amber-50 p-3 text-sm text-amber-900`}
+          className={`${embedded ? "mt-0" : "mt-3"} rounded-xl border border-[var(--status-warning-fg)]/20 bg-[var(--status-warning-bg)] p-3 text-sm text-[var(--status-warning-fg)]`}
           role="status"
         >
           {error}
@@ -300,7 +300,7 @@ export default function PrimaryCvLibrarySection({
 
       {embedded && pendingDelete && (
         <div
-          className="mt-4 space-y-3 rounded-md border border-amber-300 bg-amber-50 p-3"
+          className="mt-4 space-y-3 rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] p-3"
           role="alertdialog"
           aria-labelledby="primary-cv-delete-title"
           aria-describedby="primary-cv-delete-desc"
@@ -397,7 +397,7 @@ export default function PrimaryCvLibrarySection({
   }
 
   return (
-    <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+    <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
       {body}
     </section>
   );

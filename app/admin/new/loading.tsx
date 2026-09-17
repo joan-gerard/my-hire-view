@@ -1,8 +1,8 @@
 export default function Loading() {
   return (
-    <div className="space-y-6">
-      <div className="h-8 w-64 animate-pulse rounded bg-[var(--foreground)]/10"></div>
-      <div className="h-96 animate-pulse rounded-lg bg-[var(--foreground)]/10"></div>
+    <div className="space-y-6" aria-busy="true" aria-label="Loading">
+      <div className="h-9 w-64 animate-pulse rounded-xl bg-[var(--foreground)]/10" />
+      <div className="h-96 animate-pulse rounded-2xl border border-[var(--foreground)]/5 bg-[var(--secondary-background)]" />
     </div>
   );
 }
