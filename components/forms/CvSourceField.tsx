@@ -130,10 +130,10 @@ export default function CvSourceField({
               {cvUrlExists === false && (
                 <div
                   role="alert"
-                  className="mt-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                  className="mt-2 rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--status-warning-fg)]"
                 >
                   <p className="font-semibold">CV file missing</p>
-                  <p className="mt-0.5 text-amber-800">
+                  <p className="mt-0.5 text-[var(--status-warning-fg)]">
                     The file is no longer in storage. Choose a primary CV or
                     upload a new tailored PDF below.
                   </p>
@@ -141,7 +141,7 @@ export default function CvSourceField({
                     <button
                       type="button"
                       onClick={() => void onRetryCvCheck()}
-                      className="mt-2 rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500"
+                      className="mt-2 rounded-xl bg-[var(--brand-accent-2)] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
                     >
                       Check again
                     </button>

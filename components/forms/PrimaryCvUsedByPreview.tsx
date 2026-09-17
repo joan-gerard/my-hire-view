@@ -25,19 +25,19 @@ export default function PrimaryCvUsedByPreview({
   const remaining = Math.max(0, totalCount - applications.length);
   const listClass =
     tone === "warning"
-      ? "max-h-40 space-y-1.5 overflow-y-auto rounded-md border border-amber-300/80 bg-amber-100/60 px-3 py-2"
-      : "max-h-40 space-y-1.5 overflow-y-auto rounded-md border border-[var(--foreground)]/10 bg-[var(--background)] px-3 py-2";
+      ? "max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--status-warning-fg)]/30 bg-[var(--status-warning-bg)] px-3 py-2"
+      : "max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--foreground)]/10 bg-[var(--background)] px-3 py-2";
   const metaClass =
     tone === "warning"
-      ? "shrink-0 text-xs capitalize text-amber-900/70"
+      ? "shrink-0 text-xs capitalize text-[var(--status-warning-fg)]"
       : "shrink-0 text-xs capitalize text-[var(--foreground)]/60";
   const linkClass =
     tone === "warning"
-      ? "min-w-0 truncate text-sm font-medium text-amber-950 underline-offset-2 hover:underline"
+      ? "min-w-0 truncate text-sm font-medium text-[var(--status-warning-fg)] underline-offset-2 hover:underline"
       : "min-w-0 truncate text-sm font-medium text-[var(--brand-primary)] hover:underline";
   const moreClass =
     tone === "warning"
-      ? "pt-1 text-xs text-amber-900/80"
+      ? "pt-1 text-xs text-[var(--status-warning-fg)]"
       : "pt-1 text-xs text-[var(--foreground)]/60";
 
   return (
@@ -45,7 +45,7 @@ export default function PrimaryCvUsedByPreview({
       <p
         className={
           tone === "warning"
-            ? "text-xs font-medium text-amber-950"
+            ? "text-xs font-medium text-[var(--status-warning-fg)]"
             : "text-xs font-medium text-[var(--foreground)]/70"
         }
       >

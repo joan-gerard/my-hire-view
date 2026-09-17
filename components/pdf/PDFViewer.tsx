@@ -49,12 +49,12 @@ export default function PDFViewer({
     return (
       <div
         role="alert"
-        className="rounded-lg border border-amber-300 bg-amber-50 px-6 py-8 text-center"
+        className="rounded-2xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-6 py-8 text-center"
       >
-        <p className="font-semibold text-amber-900">
+        <p className="font-semibold text-[var(--status-warning-fg)]">
           {isMissingOrUnavailable ? "CV is not available" : "Failed to load CV"}
         </p>
-        <p className="mt-2 text-sm text-amber-800">
+        <p className="mt-2 text-sm text-[var(--status-warning-fg)]">
           {isMissingOrUnavailable
             ? "The resume file is no longer available. It may have been removed from storage. Please contact the candidate if you need their CV."
             : `The document could not be loaded. (${error})`}

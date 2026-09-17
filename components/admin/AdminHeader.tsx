@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogoGradient } from "../ui/Logo";
+import { LogoBlack } from "../ui/Logo";
 import SecondaryButton from "../ui/SecondaryButton";
 
 interface AdminHeaderProps {
@@ -33,7 +33,7 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
 
   return (
     <nav
-      className="border-b border-[var(--foreground)]/10 bg-[var(--secondary-background)] shadow-sm"
+      className="sticky top-0 z-30 border-b border-[var(--foreground)]/10 bg-[var(--secondary-background)]/95 shadow-sm backdrop-blur-sm"
       aria-label="Admin"
     >
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
@@ -60,7 +60,7 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
             })}
           </div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <LogoGradient />
+            <LogoBlack />
           </div>
           <div className="flex flex-1 items-center justify-end gap-3">
             <span className="text-sm text-[var(--foreground)]/80">

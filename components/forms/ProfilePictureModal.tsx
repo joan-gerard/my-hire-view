@@ -172,7 +172,7 @@ export default function ProfilePictureModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,26rem)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,26rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       onClose={onClose}
       onCancel={(e) => {
@@ -204,7 +204,7 @@ export default function ProfilePictureModal({
 
         {error && (
           <p
-            className="rounded-md bg-red-50 p-3 text-sm text-red-700"
+            className="rounded-xl border border-[var(--status-danger-fg)]/20 bg-[var(--status-danger-bg)] p-3 text-sm text-[var(--status-danger-fg)]"
             role="alert"
           >
             {error}

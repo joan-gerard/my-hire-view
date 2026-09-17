@@ -73,7 +73,7 @@ export default function ConfirmDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,28rem)] max-h-[min(90vh,36rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,28rem)] max-h-[min(90vh,36rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       aria-describedby={messageId}
       onClick={(e) => {
@@ -95,7 +95,7 @@ export default function ConfirmDialog({
             <button
               type="button"
               onClick={requestDismiss}
-              className="rounded-md border border-[var(--foreground)]/20 px-3 py-1.5 text-sm font-medium hover:bg-[var(--foreground)]/5"
+              className="rounded-xl border border-[var(--foreground)]/15 bg-[var(--brand-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-secondary-text)] hover:opacity-90"
             >
               {cancelLabel}
             </button>
@@ -106,7 +106,7 @@ export default function ConfirmDialog({
               confirmedRef.current = true;
               onConfirm();
             }}
-            className="rounded-md bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95"
+            className="rounded-xl bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95"
           >
             {confirmLabel}
           </button>

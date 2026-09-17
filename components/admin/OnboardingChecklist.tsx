@@ -278,7 +278,7 @@ export default function OnboardingChecklist({
       <section
         id={panelId}
         hidden={!prefs.expanded}
-        className="pointer-events-auto max-h-[min(70vh,32rem)] w-[min(100vw-2rem,22rem)] overflow-y-auto rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-4 shadow-lg"
+        className="pointer-events-auto max-h-[min(70vh,32rem)] w-[min(100vw-2rem,22rem)] overflow-y-auto rounded-2xl border border-[var(--foreground)]/12 bg-[var(--secondary-background)] p-4 shadow-lg"
         aria-labelledby="onboarding-checklist-heading"
       >
         <div className="min-w-0">
@@ -298,7 +298,7 @@ export default function OnboardingChecklist({
               {step.done ? (
                 <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--foreground)]/55">
                   <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--status-success-bg)] text-[var(--status-success-fg)]"
                     aria-hidden
                   >
                     <CheckIcon className="h-3.5 w-3.5" />

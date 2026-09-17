@@ -34,7 +34,7 @@ export default function ApplicationPageContent({
     <div className="pb-12">
       {trackViews ? <ViewTracker publicId={publicId} slug={slug} /> : null}
       <div className="space-y-12">
-        <section className="bg-[var(--secondary-background)] rounded-xl border border-[var(--foreground)]/10">
+        <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] shadow-sm">
           {application.cv_exists === false ? (
             <CvUnavailableWithRetry onRetry={refetchApplication} />
           ) : (

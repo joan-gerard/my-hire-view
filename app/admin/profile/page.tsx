@@ -81,9 +81,9 @@ export default async function AdminProfilePage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-[var(--foreground)]">Profile</h1>
+      <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">Profile</h1>
 
-      <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+      <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-[var(--foreground)]">
           Account
         </h2>
@@ -112,7 +112,7 @@ export default async function AdminProfilePage() {
         </dl>
       </section>
 
-      <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+      <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-[var(--foreground)]">
           Profile details
         </h2>
@@ -136,7 +136,7 @@ export default async function AdminProfilePage() {
 
       <PrimaryCvLibrarySection />
 
-      <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+      <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-[var(--foreground)]">
           Applications
         </h2>

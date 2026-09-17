@@ -1,8 +1,8 @@
 "use client";
 
 import ExternalLinkButton from "@/components/ui/ExternalLinkButton";
+import { LogoBlack } from "@/components/ui/Logo";
 import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
-import Link from "next/link";
 import { useState } from "react";
 import { BriefcaseIcon, BuildingIcon, LinkedInIcon } from "../admin/icons";
 
@@ -110,14 +110,14 @@ export default function ApplicationPageHeader({
   };
 
   return (
-    <header className="pt-5 shadow-sm sm:pt-6 px-2 sm:px-6 lg:px-8">
-      <Link href="/" className="text-xl font-bold text-[var(--foreground)]">
-        MyHireView
-      </Link>
+    <header className="px-2 pt-5 sm:px-6 sm:pt-6 lg:px-8">
+      <div className="mb-4">
+        <LogoBlack />
+      </div>
 
-      <div className="mx-auto max-w-6xl ">
+      <div className="mx-auto max-w-6xl">
         {/* Primary: name + Portfolio/LinkedIn + profile picture */}
-        <div className="flex flex-col-reverse gap-6 border-b border-[var(--foreground)]/10 pb-6 sm:flex-row sm:items-stretch sm:justify-between sm:gap-8 p-4 sm:p-6 lg:p-8 bg-[var(--secondary-background)] rounded-xl border border-[var(--foreground)]/10">
+        <div className="flex flex-col-reverse gap-6 rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-4 shadow-sm sm:flex-row sm:items-stretch sm:justify-between sm:gap-8 sm:p-6 lg:p-8">
           {hasProfileImage && (
             <div className="flex shrink-0 items-center justify-start sm:justify-end">
               <div
@@ -138,7 +138,7 @@ export default function ApplicationPageHeader({
           )}
 
           <div className="flex w-full flex-col justify-between gap-6 py-2">
-            <h1 className="text-xl sm:text-5xl font-bold tracking-tight text-[var(--foreground)]">
+            <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)] sm:text-5xl">
               {displayName}
             </h1>
             {hasLinks && (
@@ -168,7 +168,7 @@ export default function ApplicationPageHeader({
               <button
                 type="button"
                 onClick={onWatchVideo}
-                className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--brand-primary-text)] transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
                 aria-label="Watch video pitch"
               >
                 <svg
@@ -187,7 +187,7 @@ export default function ApplicationPageHeader({
 
         {/* Job (company + role) and optional candidate info */}
         <div
-          className="mt-2 flex flex-wrap items-center justify-between gap-4 p-4 sm:p-6 lg:p-8 bg-[var(--secondary-background)] rounded-xl border border-[var(--foreground)]/10"
+          className="mt-3 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-4 shadow-sm sm:p-6 lg:p-8"
           aria-label="Job and candidate details"
         >
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xl text-[var(--foreground)]/80 sm:gap-y-1 sm:text-2xl">
@@ -204,14 +204,14 @@ export default function ApplicationPageHeader({
             <div className="flex gap-2">
               <button
                 onClick={handleViewFile}
-                className="rounded-md bg-[var(--brand-secondary)] px-4 py-2 text-sm font-semibold text-[var(--brand-secondary-text)] hover:opacity-90"
+                className="rounded-xl bg-[var(--brand-secondary)] px-4 py-2 text-sm font-semibold text-[var(--brand-secondary-text)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1"
               >
                 View CV
               </button>
               <button
                 onClick={handleDownload}
                 disabled={downloading}
-                className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95 disabled:opacity-50"
+                className="rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1 disabled:opacity-50"
               >
                 {downloading ? "Downloading…" : "Download CV"}
               </button>

@@ -43,7 +43,7 @@ export default function ApplicationsPagination({
           type="button"
           onClick={onPrev}
           disabled={!hasPrevPage || isFetching}
-          className="rounded-md border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--brand-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-xl border border-[var(--foreground)]/12 bg-[var(--brand-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-secondary-text)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Previous
         </button>
@@ -54,7 +54,7 @@ export default function ApplicationsPagination({
           type="button"
           onClick={onNext}
           disabled={!hasNextPage || isFetching}
-          className="rounded-md border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--brand-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-xl border border-[var(--foreground)]/12 bg-[var(--brand-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-secondary-text)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Next
         </button>

@@ -56,7 +56,7 @@ export default function ApplicationCardDropdown({
       <button
         type="button"
         onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--foreground)]/60 hover:bg-[var(--brand-secondary)] hover:text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-1"
+        className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--foreground)]/60 hover:bg-[var(--brand-secondary)] hover:text-[var(--foreground)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1"
         aria-label="Open menu"
         aria-expanded={dropdownOpen}
         aria-haspopup="true"
@@ -65,7 +65,7 @@ export default function ApplicationCardDropdown({
       </button>
       {dropdownOpen && (
         <div
-          className="absolute right-0 top-full z-50 mt-1 w-48 rounded-md border border-[var(--foreground)]/10 bg-[var(--secondary-background)] py-1 shadow-lg"
+          className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] py-1 shadow-lg"
           role="menu"
         >
           <Link
@@ -80,7 +80,7 @@ export default function ApplicationCardDropdown({
           {isDraft && onPublish ? (
             <button
               type="button"
-              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
+              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--status-success-fg)] hover:bg-[var(--status-success-bg)]"
               role="menuitem"
               onClick={() => {
                 setDropdownOpen(false);
@@ -93,7 +93,7 @@ export default function ApplicationCardDropdown({
           ) : isArchived && onRestore ? (
             <button
               type="button"
-              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
+              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--status-success-fg)] hover:bg-[var(--status-success-bg)]"
               role="menuitem"
               onClick={() => {
                 setDropdownOpen(false);
@@ -106,7 +106,7 @@ export default function ApplicationCardDropdown({
           ) : !isDraft && onArchive ? (
             <button
               type="button"
-              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"
+              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--status-draft-fg)] hover:bg-[var(--status-draft-bg)]"
               role="menuitem"
               onClick={() => {
                 setDropdownOpen(false);
@@ -119,7 +119,7 @@ export default function ApplicationCardDropdown({
           ) : null}
           <button
             type="button"
-            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-700 hover:bg-red-50"
+            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--status-danger-fg)] hover:bg-[var(--status-danger-bg)]"
             role="menuitem"
             onClick={handleDelete}
           >

@@ -44,8 +44,14 @@ export default function ApplicationStatusLegend({
     if (open && !dialog.open) {
       closeEmittedRef.current = false;
       dialog.showModal();
-      // Prefer the heading over the first tabbable control (Close at the bottom).
-      titleRef.current?.focus();
+      // Prefer the heading over Close; suppress the open-time focus ring (FocusOptions.focusVisible).
+      const title = titleRef.current;
+      if (title) {
+        title.focus({
+          preventScroll: true,
+          focusVisible: false,
+        } as FocusOptions & { focusVisible?: boolean });
+      }
     } else if (!open && dialog.open) {
       dialog.close();
     }
@@ -75,7 +81,7 @@ export default function ApplicationStatusLegend({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,32rem)] max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,32rem)] max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       onClick={(e) => {
         if (e.target === dialogRef.current) {
@@ -89,7 +95,7 @@ export default function ApplicationStatusLegend({
             ref={titleRef}
             id={titleId}
             tabIndex={-1}
-            className="text-lg font-semibold outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2"
+            className="text-lg font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]"
           >
             Status icons & draft actions
           </h2>

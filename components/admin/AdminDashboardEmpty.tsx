@@ -17,7 +17,7 @@ export default function AdminDashboardEmpty({
   if (hasSearchQuery) {
     return (
       <div
-        className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] px-6 py-14 text-center sm:px-10"
+        className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] px-6 py-14 text-center sm:px-10"
         role="status"
       >
         <h2 className="text-lg font-semibold text-[var(--foreground)]">
@@ -31,7 +31,7 @@ export default function AdminDashboardEmpty({
           <button
             type="button"
             onClick={onClearSearch}
-            className="mt-6 rounded-md border border-[var(--foreground)]/15 bg-[var(--background)] px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--foreground)]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1"
+            className="mt-6 rounded-xl border border-[var(--foreground)]/15 bg-[var(--brand-secondary)] px-4 py-2 text-sm font-semibold text-[var(--brand-secondary-text)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1"
           >
             Clear search
           </button>
@@ -42,11 +42,11 @@ export default function AdminDashboardEmpty({
 
   return (
     <div
-      className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] px-6 py-14 text-center sm:px-10"
+      className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] px-6 py-14 text-center sm:px-10"
       role="status"
     >
       <div
-        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
+        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-accent-1)]/15 text-[var(--brand-accent-2)]"
         aria-hidden
       >
         <DocumentIcon className="h-6 w-6" />
@@ -60,7 +60,7 @@ export default function AdminDashboardEmpty({
       </p>
       <Link
         href="/admin/new"
-        className="mt-6 inline-flex items-center justify-center rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+        className="mt-6 inline-flex items-center justify-center rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
       >
         New application
       </Link>

@@ -215,7 +215,7 @@ export default function ProfileForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <p
-          className="rounded-md bg-red-50 p-3 text-sm text-red-700"
+          className="rounded-xl border border-[var(--status-danger-fg)]/20 bg-[var(--status-danger-bg)] p-3 text-sm text-[var(--status-danger-fg)]"
           role="alert"
         >
           {error}

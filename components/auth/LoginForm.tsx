@@ -48,9 +48,9 @@ export default function LoginForm() {
       alternateHref="/signup"
       alternateLabel="create a new account"
     >
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-5" onSubmit={handleSubmit}>
         {error && <AuthErrorAlert message={error} />}
-        <div className="-space-y-px rounded-md shadow-sm">
+        <div className="space-y-3">
           <div>
             <label htmlFor="email-address" className="sr-only">
               Email address
@@ -61,7 +61,7 @@ export default function LoginForm() {
               type="email"
               autoComplete="email"
               required
-              className={`${AUTH_INPUT_CLASS} rounded-t-md`}
+              className={AUTH_INPUT_CLASS}
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -73,7 +73,6 @@ export default function LoginForm() {
             label="Password"
             autoComplete="current-password"
             required
-            className="rounded-b-md"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

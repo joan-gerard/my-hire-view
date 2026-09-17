@@ -67,7 +67,7 @@
   --brand-surface: #f6f0e9;
   --brand-accent: #f0e7dd;
 
-  /* Homepage accent options (muted teal) – use for CTAs, highlights, focus rings on landing only */
+  /* Accent (muted teal) – homepage CTAs; also positive product actions (Publish, success) */
   --brand-accent-1: #0d9488;
   --brand-accent-2: #0f766e;
 
@@ -77,6 +77,18 @@
 
   /* Header: mobile nav menu – warm grey to match palette */
   --header-mobile-menu-bg: #e2ddd6;
+
+  /* Product status / feedback (warm brand + teal accent — avoid generic SaaS greens) */
+  --status-success-bg: #d8f3ef;
+  --status-success-fg: #0f766e;
+  --status-draft-bg: #f3e4d4;
+  --status-draft-fg: #8a5a2b;
+  --status-warning-bg: #f8edd9;
+  --status-warning-fg: #7a4e1e;
+  --status-danger-bg: #fde8e4;
+  --status-danger-fg: #b42318;
+  /* Solid fill for danger buttons — keep separate from fg so text can be tuned independently */
+  --status-danger-solid: #b42318;
 
   /* Typography */
   --font-faunaone: "FaunaOne", serif;

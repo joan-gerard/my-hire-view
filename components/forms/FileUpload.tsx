@@ -139,7 +139,7 @@ export default function FileUpload({
             onChange={handleFileChange}
             aria-label={chooseLabel}
             disabled={selectionLocked}
-            className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-md file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90 disabled:opacity-50"
+            className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-xl file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90 disabled:opacity-50"
           />
           {showPending && (
             <button
@@ -224,16 +224,16 @@ export default function FileUpload({
         {showSaved && !cvUrlExists && (
           <div
             role="alert"
-            className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            className="rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--status-warning-fg)]"
           >
             <p className="font-semibold">CV file not found in storage</p>
-            <p className="mt-0.5 text-amber-800">
+            <p className="mt-0.5 text-[var(--status-warning-fg)]">
               The file may have been removed from storage (e.g. Cloudflare R2).
               Please upload a new CV below to replace it.
             </p>
             {onRetryCvCheck && (
               <>
-                <p className="mt-2 text-xs text-amber-700">
+                <p className="mt-2 text-xs text-[var(--status-warning-fg)]">
                   If this might be a temporary issue (e.g. network), you can check again.
                 </p>
                 <button
@@ -244,7 +244,7 @@ export default function FileUpload({
                     setCheckingCv(false);
                   }}
                   disabled={checkingCv}
-                  className="mt-2 rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500 disabled:opacity-50"
+                  className="mt-2 rounded-xl bg-[var(--brand-accent-2)] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
                 >
                   {checkingCv ? 'Checking…' : 'Check again'}
                 </button>
