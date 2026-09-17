@@ -233,7 +233,7 @@ export default function FileUpload({
             </p>
             {onRetryCvCheck && (
               <>
-                <p className="mt-2 text-xs text-[var(--status-warning-fg)]/80">
+                <p className="mt-2 text-xs text-[var(--status-warning-fg)]">
                   If this might be a temporary issue (e.g. network), you can check again.
                 </p>
                 <button

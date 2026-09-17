@@ -54,7 +54,7 @@ export default function PDFViewer({
         <p className="font-semibold text-[var(--status-warning-fg)]">
           {isMissingOrUnavailable ? "CV is not available" : "Failed to load CV"}
         </p>
-        <p className="mt-2 text-sm text-[var(--status-warning-fg)]/90">
+        <p className="mt-2 text-sm text-[var(--status-warning-fg)]">
           {isMissingOrUnavailable
             ? "The resume file is no longer available. It may have been removed from storage. Please contact the candidate if you need their CV."
             : `The document could not be loaded. (${error})`}

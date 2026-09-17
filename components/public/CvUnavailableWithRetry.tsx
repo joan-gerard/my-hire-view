@@ -30,11 +30,11 @@ export default function CvUnavailableWithRetry({
       <p className="font-semibold text-[var(--status-warning-fg)]">
         CV is not available
       </p>
-      <p className="mt-2 text-sm text-[var(--status-warning-fg)]/90">
+      <p className="mt-2 text-sm text-[var(--status-warning-fg)]">
         The resume file is no longer available. It may have been removed from
         storage. Please contact the candidate if you need their CV.
       </p>
-      <p className="mt-3 text-xs text-[var(--status-warning-fg)]/75">
+      <p className="mt-3 text-xs text-[var(--status-warning-fg)]">
         If this might be a temporary issue (e.g. network), you can try again.
       </p>
       <button

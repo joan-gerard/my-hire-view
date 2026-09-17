@@ -29,7 +29,7 @@ export default function PrimaryCvUsedByPreview({
       : "max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--foreground)]/10 bg-[var(--background)] px-3 py-2";
   const metaClass =
     tone === "warning"
-      ? "shrink-0 text-xs capitalize text-[var(--status-warning-fg)]/70"
+      ? "shrink-0 text-xs capitalize text-[var(--status-warning-fg)]"
       : "shrink-0 text-xs capitalize text-[var(--foreground)]/60";
   const linkClass =
     tone === "warning"
@@ -37,7 +37,7 @@ export default function PrimaryCvUsedByPreview({
       : "min-w-0 truncate text-sm font-medium text-[var(--brand-primary)] hover:underline";
   const moreClass =
     tone === "warning"
-      ? "pt-1 text-xs text-[var(--status-warning-fg)]/80"
+      ? "pt-1 text-xs text-[var(--status-warning-fg)]"
       : "pt-1 text-xs text-[var(--foreground)]/60";
 
   return (
