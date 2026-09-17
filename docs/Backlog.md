@@ -217,11 +217,11 @@ Ship these when capacity allows; prefer attaching to a Must PR only if the same 
 | F26 | `chore/f26-middleware-entry`             | `F26-060`                       | ~~Middleware entry clarity (`proxy.ts` vs `middleware.ts`)~~ (shipped)                                             |
 | F27 | `feat/f27-slug-regenerate-button`        | `F27-101`                       | ~~Reset / auto-generate slug button on create & edit (after F14)~~ (shipped)                                      |
 | F28 | `chore/f28-accessibility-review`         | `F28-102`                       | App-wide accessibility review (WCAG 2.2 AA bar); file fix tickets from findings                                  |
+| F32 | `docs/f32-pre-launch-manual-qa`          | `F32-115`                       | Pre-launch end-to-end manual QA — [MANUAL_TEST_PRE_LAUNCH_E2E.md](manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md); after remaining user-facing work (`F17`+); before `F29` / `F30` |
 | F29 | `chore/f29-security-safety-review`       | `F29-103`                       | Global security/safety review near launch; update [SECURITY.md](retrospectives/SECURITY.md) + backlog as needed  |
 | I2  | `refactor/i2-db-types-single-source`     | `I2-078`                        | Single source of truth for DB types — **before launch** (prerequisite for F30)                                   |
 | L6  | `refactor/l6-central-api-client`         | `L6-088`                        | Central API client — **before launch** (prerequisite for F30)                                                    |
 | F30 | `chore/f30-refactoring-audit`            | `F30-104`                       | Global refactoring audit near launch — after `I2`, `L6` (`F5`, `F25` shipped); file follow-ups from [CODE_REVIEW.md](CODE_REVIEW.md) |
-| F32 | `docs/f32-pre-launch-manual-qa`          | `F32-115`                       | Pre-launch end-to-end manual QA — [MANUAL_TEST_PRE_LAUNCH_E2E.md](manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md); after remaining user-facing work (`F17`+) |
 
 ---
 

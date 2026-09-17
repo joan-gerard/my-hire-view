@@ -12,7 +12,7 @@ After signup and profile work, candidates still hit a **trust and clarity gap** 
 
 1. **Dashboard glyphs were opaque** — draft / active / viewed / archived / CV missing looked intentional, but nothing explained them, and draft actions (Publish vs Preview vs Copy Link) were easy to misread after F16.
 2. **Share URLs looked magical** — `/view/{publicId}/{slug}` appeared on cards and forms without a plain-language account for the opaque segment (not their name, not vanity yet).
-3. **First-session progress was invisible** — profile photo, primary CV, first draft, publish/share were required for a real link, but nothing sat beside the user across `/admin` and said “you’re N of six toward sharing.”
+3. **First-session progress was invisible** — the Getting started checklist asks for a photo, a primary CV, a first draft, and publish/share so new users move toward a shareable link. Those are **activation nudges**, not hard requirements for a live page: a published application needs a CV (**primary or tailored**) and a **YouTube URL**; showing a profile picture is optional.
 4. **An empty Applications list felt dead** — a single muted sentence next to search and a legend button competed with the real next step: create.
 
 None of that blocks a power user. All of it costs **buy-in** for someone who signed up because they want recruiters to *see* them.

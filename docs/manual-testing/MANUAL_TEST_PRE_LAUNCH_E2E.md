@@ -44,7 +44,7 @@ Create these as you go so later sections have the right mix. Reuse the same prim
 | # | Company / role (example) | Status by the end | Notes |
 | - | ------------------------ | ----------------- | ----- |
 | 1 | Acme / Software Engineer | **active**, viewed | Full: all candidate fields on, picture shown, primary CV, YouTube, Name in URL **At start** |
-| 2 | Globex / Product Manager | **active**, never viewed | Picture **off**; location + LinkedIn on; portfolio off; primary CV; no video |
+| 2 | Globex / Product Manager | **active**, never viewed | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required** |
 | 3 | Initech / Designer | **draft** | Tailored CV; Name in URL **None**; custom slug |
 | 4 | Umbrella / Data Analyst | **archived** | Publish first, then archive; Name in URL **At end** |
 | 5 | Soylent / QA Engineer | **active** | Same **primary CV** as #1 (reuse) |
@@ -123,7 +123,10 @@ Use a dedicated waitlist email (not Account A) so signup later is clean.
 
 - [ ] Required: email, first name, job-search status
 - [ ] Optional: primary goal, career stage
-- [ ] All job-search, goal, and career-stage dropdown values submit
+- [ ] Job search, primary goal, and career stage are **three independent radio groups** (selecting a goal or stage does **not** clear job-search status)
+- [ ] Every job-search option submits (Actively searching, Casually looking, Career planning, Other)
+- [ ] Every primary-goal option submits, including **Network with recruiters** (also: Get more interviews, Track my applications, Stand out to recruiters, Other)
+- [ ] Every career-stage option submits (Entry-level, Junior, Mid-level, Senior, Other)
 - [ ] Success state / early-bird message after a valid submit; form does not stay in a loading spinner
 - [ ] Duplicate email → error (API **409**); UI shows a clear message
 - [ ] Same email with different **casing** (`You@x.com` vs `you@x.com`) is treated as a duplicate (or documented if not)
@@ -347,7 +350,7 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 - [ ] Valid `youtube.com/embed/…` accepted
 - [ ] Valid Shorts URL accepted
 - [ ] Invalid URL (Vimeo, example.com, garbage) → “Please enter a valid YouTube URL”; Save blocked
-- [ ] Empty video is allowed (no Watch Video Pitch on `/view`)
+- [ ] Empty video is **not** allowed — Save stays blocked with “YouTube URL is required” (create and edit)
 
 ### Local browser draft (create only)
 
@@ -373,7 +376,7 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 - [ ] Session expired mid-form (optional: delete cookies then Save): 401 surfaces in the form/alert; no half-created app; tailored file is not “lost” into an orphan row
 - [ ] Success → `/view/{publicId}/{slug}` with amber **Draft preview** banner (Edit / Publish / Dashboard). If Public id were missing, fallback is `/admin` + **Preview** on the card
 - [ ] Two `/admin/new` tabs: save in tab 1; tab 2 save with a **different** slug creates a second draft (or a clear collision error — not a 500 / silent overwrite)
-- [ ] Owner sees full page (CV, optional video, candidate fields) behind the banner
+- [ ] Owner sees full page (CV, video, candidate fields) behind the banner
 - [ ] Same URL in incognito → **unavailable** empty state (recruiters cannot see drafts)
 - [ ] Owner draft preview does **not** increment Views
 
@@ -546,7 +549,6 @@ Use incognito / signed-out (and owner, where noted).
 
 - [ ] Picture off / no picture → no avatar; layout still balanced
 - [ ] All candidate toggles off → header still shows company/role; no name/location/links
-- [ ] No YouTube → no Watch Video Pitch
 - [ ] Name in URL at start / at end / none → URL shape matches; page still resolves
 - [ ] Custom slug resolves; a typo slug → unavailable empty state (not another user’s app)
 - [ ] Wrong **publicId** with a valid-looking slug → unavailable (no leak of another account)

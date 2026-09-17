@@ -2,29 +2,38 @@
 
 import { AUTH_EMAIL_MAX_LENGTH } from "@/lib/validation/auth";
 import { PROFILE_NAME_MAX_LENGTH } from "@/lib/validation/profile";
-import { WAITLIST_HONEYPOT_FIELD } from "@/lib/validation/waitlist";
+import {
+  WAITLIST_CAREER_STAGES,
+  WAITLIST_HONEYPOT_FIELD,
+  WAITLIST_JOB_SEARCH_STATUSES,
+  WAITLIST_PRIMARY_GOALS,
+} from "@/lib/validation/waitlist";
 
-export const JOB_SEARCH_OPTIONS = [
-  { value: "Actively searching", label: "Actively searching" },
-  { value: "Casually looking", label: "Casually looking" },
-  { value: "Career planning", label: "Career planning" },
-  { value: "Other", label: "Other" },
-] as const;
+function optionsFromValues<T extends string>(
+  values: readonly T[],
+): { value: T; label: T }[] {
+  return values.map((value) => ({ value, label: value }));
+}
 
-export const PRIMARY_GOAL_OPTIONS = [
-  { value: "Get more interviews", label: "Get more interviews" },
-  { value: "Track my applications", label: "Track my applications" },
-  { value: "Stand out to recruiters", label: "Stand out to recruiters" },
-  { value: "Other", label: "Other" },
-] as const;
+export const JOB_SEARCH_OPTIONS = optionsFromValues(
+  WAITLIST_JOB_SEARCH_STATUSES,
+);
 
-export const CAREER_STAGE_OPTIONS = [
-  { value: "Entry-level", label: "Entry-level" },
-  { value: "Junior (1–3 years)", label: "Junior" },
-  { value: "Mid-level (3–7 years)", label: "Mid-level" },
-  { value: "Senior (7+ years)", label: "Senior" },
-  { value: "Other", label: "Other" },
-] as const;
+export const PRIMARY_GOAL_OPTIONS = optionsFromValues(WAITLIST_PRIMARY_GOALS);
+
+const CAREER_STAGE_LABELS: Record<(typeof WAITLIST_CAREER_STAGES)[number], string> =
+  {
+    "Entry-level": "Entry-level",
+    "Junior (1–3 years)": "Junior",
+    "Mid-level (3–7 years)": "Mid-level",
+    "Senior (7+ years)": "Senior",
+    Other: "Other",
+  };
+
+export const CAREER_STAGE_OPTIONS = WAITLIST_CAREER_STAGES.map((value) => ({
+  value,
+  label: CAREER_STAGE_LABELS[value],
+}));
 
 /** Shared styles for text inputs and select to keep appearance consistent. */
 const CONTROL_CLASS =
@@ -183,6 +192,7 @@ function WaitlistRadioFieldsets({
     <>
       <RadioFieldset
         id="waitlist-status"
+        name="waitlist-job-search-status"
         label="Current job search status (required)"
         description="Select your status*"
         options={JOB_SEARCH_OPTIONS}
@@ -193,6 +203,7 @@ function WaitlistRadioFieldsets({
       />
       <RadioFieldset
         id="waitlist-primary-goal"
+        name="waitlist-primary-goal"
         label="Primary goal (optional)"
         options={PRIMARY_GOAL_OPTIONS}
         value={primaryGoal}
@@ -201,6 +212,7 @@ function WaitlistRadioFieldsets({
       />
       <RadioFieldset
         id="waitlist-career-stage"
+        name="waitlist-career-stage"
         label="Career stage / seniority (optional)"
         options={CAREER_STAGE_OPTIONS}
         value={careerStage}
@@ -214,6 +226,7 @@ function WaitlistRadioFieldsets({
 /** Reusable single-select radio group for waitlist form (status, primary goal, career stage). */
 function RadioFieldset({
   id,
+  name,
   label,
   description,
   options,
@@ -223,6 +236,8 @@ function RadioFieldset({
   required = false,
 }: {
   id: string;
+  /** Native radio `name` — must be unique per group so status/goal/stage stay independent. */
+  name: string;
   label: string;
   description?: string;
   options: readonly { value: string; label: string }[];
@@ -243,6 +258,7 @@ function RadioFieldset({
           <StatusRadioOption
             key={opt.value}
             id={`${id}-${opt.value}`}
+            name={name}
             value={opt.value}
             label={opt.label}
             checked={value === opt.value}
@@ -258,6 +274,7 @@ function RadioFieldset({
 
 function StatusRadioOption({
   id,
+  name,
   value,
   label,
   checked,
@@ -266,6 +283,7 @@ function StatusRadioOption({
   required,
 }: {
   id: string;
+  name: string;
   value: string;
   label: string;
   checked: boolean;
@@ -291,7 +309,7 @@ function StatusRadioOption({
       <input
         type="radio"
         id={id}
-        name="waitlist-status"
+        name={name}
         value={value}
         checked={checked}
         onChange={() => onSelect(value)}
