@@ -1,6 +1,6 @@
 # Testing
 
-> Last updated: September 13, 2026
+> Last updated: September 17, 2026
 
 ---
 
@@ -34,6 +34,7 @@ __tests__/
     components/
       public/
         pricing-tiers.test.ts
+        waitlist-options.test.ts
     lib/
       utils/
         slug-generate.test.ts
@@ -85,9 +86,16 @@ __tests__/
       waitlist.test.ts
 ```
 
-Manual QA for primary/tailored CVs and application status: [manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md](manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md).
-Manual QA for create-application draft + CV source race (F15): [manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md).
-Manual QA for draft → preview → publish (F16): [manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md).
+Pre-launch end-to-end manual QA (`F32-115`): [manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md](manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md).
+
+Feature-specific deep dives:
+
+- Primary/tailored CVs and application status: [manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md](manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md)
+- Create-application draft + CV source race (F15): [manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md)
+- Draft → preview → publish (F16): [manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md)
+- Signup profiles + picture from New/Edit: [manual-testing/MANUAL_TEST_PROFILE_CREATE_ON_PUT.md](manual-testing/MANUAL_TEST_PROFILE_CREATE_ON_PUT.md)
+- Getting started checklist (F19-044): [manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md](manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md)
+- Application card status legend (F19-047): [manual-testing/MANUAL_TEST_APPLICATION_STATUS_LEGEND.md](manual-testing/MANUAL_TEST_APPLICATION_STATUS_LEGEND.md)
 
 ---
 
@@ -97,6 +105,7 @@ Manual QA for draft → preview → publish (F16): [manual-testing/MANUAL_TEST_A
 |------|---------------|
 | `__tests__/unit/proxy-entry.test.ts` | **Next.js proxy entry (F26-060)** — root `proxy.ts` present with named `proxy` export; no deprecated root/`src` `middleware.ts`; helper import from `lib/supabase/middleware` |
 | `__tests__/unit/components/public/pricing-tiers.test.ts` | **Pricing tiers (E3-014)** — Free/Pro/Premium ids & names, Pro highlighted, working-draft monthly/annual USD (Pro $9/$39, Premium $14/$59; final lock with E1), annual savings nudge for monthly view, video pitch, firm caps, FAQ, waitlist CTAs |
+| `__tests__/unit/components/public/waitlist-options.test.ts` | **Waitlist radio options** — form values and `WAITLIST_*` schema enums both match independent literal lists (incl. **Network with recruiters**) |
 | `__tests__/unit/lib/utils/slug-generate.test.ts` | **Pure slug utilities** — `validateSlugFormat` (empty input, too long, invalid chars, valid slugs), `generateSlug` (normalisation, special-char stripping, space collapsing), `buildSlug` (position `start`/`end`, partial and missing names, name-preserving clamp), `isCustomSlug` (edit-load custom vs derived) |
 | `__tests__/unit/lib/utils/slug.test.ts` | **Server-side slug helpers** — `checkSlugUniqueness` (unique, taken, DB error), `validateSlugForApplication` (format short-circuits DB call, available, taken), `reserveBaseSlug` (name positions, collision throws `SlugCollisionError`), `SlugCollisionError` (shape and default message) |
 | `__tests__/unit/lib/utils/profile-picture-storage.test.ts` | **Profile picture Storage URLs** — path parse, canonical `avatar.*`, ownership (canonical + legacy under user folder), reject lookalike paths on foreign origins (C2-008) |

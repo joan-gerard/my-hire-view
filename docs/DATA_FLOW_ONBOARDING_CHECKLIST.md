@@ -1,6 +1,6 @@
 # Getting started checklist — data flow (F19-044)
 
-How the floating **Getting started** checklist loads, updates, and persists across `/admin` routes. For the wider app data model, see [DATA_FLOW.md](DATA_FLOW.md). Manual checks: [MANUAL_TEST_ONBOARDING_CHECKLIST.md](manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md). Product copy: [USER_GUIDE.md](USER_GUIDE.md).
+How the floating **Getting started** checklist loads, updates, and persists across `/admin` routes. For the wider app data model, see [DATA_FLOW.md](DATA_FLOW.md). Design / buy-in context for F19 (legend, Public id, checklist, empty state): [ACTIVATION_UX_F19.md](retrospectives/ACTIVATION_UX_F19.md). Manual checks: [MANUAL_TEST_ONBOARDING_CHECKLIST.md](manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md). Product copy: [USER_GUIDE.md](USER_GUIDE.md).
 
 ---
 

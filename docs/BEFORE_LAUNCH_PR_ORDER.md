@@ -10,13 +10,13 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 
 | Effort | Count | PRs               |
 | :----: | ----: | ----------------- |
-| **1**  |     3 | A3, F22, F24      |
+| **1**  |     4 | A3, F22, F24, F32 |
 | **2**  |     3 | E1, F20, F23      |
 | **3**  |     3 | F28, F30, L6      |
 | **4**  |     4 | F17, F21, F29, I2 |
 | **5**  |     1 | E2                |
 
-**14 open** (F9, F10, F11, F12, F13, F15, F16, F18, F19, F25, F26 shipped). **Weighted average ≈ 2.79** — many 1–3 polish items; complexity concentrates in **E2**, then **F17 / F21 / F29 / I2**.
+**15 open** (F9, F10, F11, F12, F13, F15, F16, F18, F19, F25, F26 shipped). **Weighted average ≈ 2.67** — many 1–3 polish items; complexity concentrates in **E2**, then **F17 / F21 / F29 / I2**.
 
 ---
 
@@ -28,7 +28,7 @@ Order by **dependencies first, then risk/correctness, then UX polish, then near-
 
 **F26 shipped** _(also F10, F11, F12, F18, F25)_
 
-Optional anytime docs/assets: **F22**, **F24** (don’t block engineering).
+Optional anytime docs/assets: **F22**, **F24** (don’t block engineering). **F32** (end-to-end manual QA) is a near-launch pass, not an anytime docs chore — see Phase 4 / sequence.
 
 ### Phase 1 — Upload / profile integrity
 
@@ -43,7 +43,7 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering).
 **F15 shipped** → **F16 shipped** → **F19 shipped**, then **F17**
 
 - Strict dependency: draft persistence / CV-mode race before preview/draft-publish
-- **F19** (onboarding + Public id copy + card legend / draft action clarity) shipped while create flows were fresh
+- **F19** (onboarding + Public id copy + card legend / draft action clarity) shipped while create flows were fresh — design context: [ACTIVATION_UX_F19.md](retrospectives/ACTIVATION_UX_F19.md)
 - **F17** branding after those flows stabilize (avoid restyling half-finished UI twice; includes dashboard card visual skin)
 
 ### Phase 3 — Trust / compliance Shoulds
@@ -56,12 +56,13 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering).
 
 ### Phase 4 — Refactor prerequisites, then audits
 
-**L6 → I2 → F28 → F29 → F30**
+**L6 → I2 → F28 → F32 → F29 → F30**
 
 | Order                  | Why                                                                                   |
 | ---------------------- | ------------------------------------------------------------------------------------- |
 | **L6** then **I2**     | Central client + single DB types; both are **F30** prereqs                            |
 | **F28** a11y           | Can run anytime; finish before launch; file follow-up tickets                         |
+| **F32** manual QA      | End-to-end candidate journey; after remaining user-facing work (`F17`+); file bugs    |
 | **F29** security       | Prefer **after** major hardening (**F9/F13/F10/F12**, etc.) so the review isn’t stale |
 | **F30** refactor audit | Last among audits — only after **L6 + I2** (`F25` shipped)                            |
 
@@ -75,13 +76,13 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering).
 
 ---
 
-## 3. Suggested sequence (all 14 open)
+## 3. Suggested sequence (all 15 open)
 
 ```
 F17
   → F20 → F23 → F21
   → F22 / F24 (whenever)
-  → L6 → I2 → F28 → F29 → F30
+  → L6 → I2 → F28 → F32 → F29 → F30
   → E1 → E2 → A3
 ```
 
