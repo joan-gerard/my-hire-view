@@ -1,0 +1,2258 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400;1,9..40,500;1,9..40,600&family=Geist:wght@400;500;600&display=swap");
+
+/* ============================================================
+   PARLEY — single home page
+   Merged from parley-hero, parley-cards-v2, parley-testimonials,
+   parley-pricing + new sections (how-it-works, faq, integrations,
+   cta, footer) matching parley.framer.ai structure.
+   ============================================================ */
+
+.parley-demo,
+html.parley-demo-page {
+  --bg: #f7f7f4;
+  --surface: #eeede6;
+  --surface-hover: #e8e6dd;
+  --surface-warm: #f5f4f0;
+  --warm-tint: #fbf8f3;
+  --white: #ffffff;
+  --grey-900: #251f19;
+  --grey-800: #251f19;
+  --grey-700: #5c544c;
+  --grey-600: #68615a;
+  --grey-500: #8e867d;
+  --grey-400: #948b81;
+  --grey-300: #dcd8cc;
+  --orange-500: #f48d16;
+  --grey-f400: #d4cdc7;
+  --grey-f200: #e4e0dd;
+  --grey-f100: #ebe8e4;
+  --grey-f50: rgba(235, 232, 228, 0.6);
+  --card-line: #ddd8d3;
+  --orange-300: #f8c28a;
+  --green-500: #1fbe6d;
+  --ink: #251f19;
+
+  /* Card body copy — darker than grey-600 so secondary text clears AA 4.5:1
+     over the amber portion of the cloud bg. */
+  --card-body: #3d342c;
+
+  --hairline: rgba(26, 23, 20, 0.08);
+  --hairline-strong: rgba(26, 23, 20, 0.14);
+
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* why-cards timing */
+  --d-grow: 380ms;
+  --d-content: 280ms;
+  --d-quick: 140ms;
+
+  --wcard-h: 567px;
+  --wcol-base: 278px;
+  --wcol-active: 330px;
+}
+
+.parley-demo *,
+.parley-demo *::before,
+.parley-demo *::after {
+  box-sizing: border-box;
+}
+
+html.parley-demo-page {
+  scroll-behavior: smooth;
+}
+
+html.parley-demo-page,
+html.parley-demo-page body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--grey-800);
+  font-family:
+    "Geist",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  scrollbar-width: none;
+}
+
+html.parley-demo-page::-webkit-scrollbar,
+html.parley-demo-page body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.parley-demo img {
+  display: block;
+  max-width: 100%;
+}
+
+.parley-demo {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--grey-800);
+  font-family:
+    "Geist",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.parley-demo .page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.parley-demo .container {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Full-bleed helper: section escapes the 1200 container */
+.parley-demo .bleed {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+/* ---------- shared type ---------- */
+
+.parley-demo .badge {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--orange-500);
+}
+
+.parley-demo .h2 {
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  font-size: 52px;
+  line-height: 1.05;
+  color: var(--grey-800);
+  letter-spacing: -0.01em;
+  font-variation-settings: "opsz" 14;
+  text-wrap: balance;
+}
+
+.parley-demo .h2 em {
+  font-style: italic;
+  color: var(--grey-400);
+  font-weight: 500;
+}
+
+.parley-demo .h2--center {
+  text-align: center;
+}
+
+/* ============ TOP NAV ============ */
+
+.parley-demo .nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--bg);
+  display: flex;
+  justify-content: center;
+  transform: translateY(0);
+  transition:
+    transform 320ms var(--ease-standard),
+    background-color 240ms var(--ease-standard),
+    backdrop-filter 240ms var(--ease-standard);
+  will-change: transform;
+}
+
+.parley-demo .nav-bar.is-over-hero {
+  background: rgba(247, 247, 244, 0.55);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+.parley-demo .nav-bar.is-hidden {
+  transform: translateY(-100%);
+}
+
+.parley-demo .nav {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 0;
+}
+
+.parley-demo .nav__brand {
+  display: inline-flex;
+  align-items: center;
+}
+
+.parley-demo .nav__brand img {
+  display: block;
+  height: 18px;
+  width: auto;
+}
+
+.parley-demo .nav__right {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.parley-demo .nav__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.parley-demo .nav__links a {
+  font-family: "Geist", sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--grey-800);
+  text-decoration: none;
+  transition: opacity 200ms var(--ease-standard);
+}
+
+.parley-demo .nav__links a:hover {
+  opacity: 0.65;
+}
+
+.parley-demo .nav__sep {
+  width: 4px;
+  height: 4px;
+  background: var(--grey-900);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.parley-demo .nav__cta,
+.parley-demo .hero__cta {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  transition: transform 200ms var(--ease-standard);
+}
+
+.parley-demo .nav__cta img,
+.parley-demo .hero__cta img {
+  display: block;
+  height: 42px;
+  width: auto;
+}
+
+.parley-demo .nav__cta:hover,
+.parley-demo .hero__cta:hover {
+  transform: translateY(-1px);
+}
+
+/* ============ HERO ============ */
+
+.parley-demo .hero {
+  position: relative;
+  width: 100%;
+  padding-top: 80px;
+  height: 700px;
+  z-index: 1;
+}
+
+.parley-demo .hero__sticky {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.parley-demo .hero__media {
+  --w: 100%;
+  --h: 600px;
+  --l: 0px;
+  --t: 0px;
+  --radius: 18px;
+  position: absolute;
+  width: var(--w);
+  height: var(--h);
+  left: var(--l);
+  top: var(--t);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #c8855d;
+  will-change: width, height, left, top, border-radius;
+}
+
+.parley-demo .hero__img {
+  --img-scale: 1.8;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 70%;
+  transform: scale(var(--img-scale));
+  transform-origin: center 70%;
+}
+
+.parley-demo .hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.parley-demo .hero__content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+  text-align: center;
+  color: var(--white);
+  z-index: 2;
+}
+
+.parley-demo .hero__headline {
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 600;
+  font-size: clamp(40px, 5.4vw, 68px);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--white);
+  text-wrap: balance;
+  max-width: 1200px;
+  text-shadow: 0 2px 24px rgba(26, 23, 20, 0.18);
+}
+
+.parley-demo .hero__headline em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.parley-demo .hero__lede {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
+  max-width: 480px;
+  text-shadow: 0 1px 12px rgba(26, 23, 20, 0.25);
+}
+
+.parley-demo .hero__cta {
+  margin-top: 8px;
+}
+
+/* ============ LOGO STRIP ============ */
+
+.parley-demo .logos {
+  position: relative;
+  z-index: 2;
+  background: var(--bg);
+  width: 100%;
+  padding: 60px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.parley-demo .logos__label {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--grey-800);
+  letter-spacing: 0.01em;
+}
+
+.parley-demo .logos__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+}
+
+.parley-demo .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.parley-demo .logo__part {
+  position: relative;
+  display: inline-block;
+  width: var(--w);
+  height: var(--h);
+  flex-shrink: 0;
+}
+
+.parley-demo .logo__part img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.parley-demo .logo__part .logo__d {
+  opacity: 1;
+  transition: opacity 240ms var(--ease-standard);
+}
+
+.parley-demo .logo__part .logo__h {
+  opacity: 0;
+  transition: opacity 240ms var(--ease-standard);
+}
+
+.parley-demo .logo:hover .logo__d {
+  opacity: 0;
+}
+
+.parley-demo .logo:hover .logo__h {
+  opacity: 1;
+}
+
+/* ============ WHY PARLEY (expanding cards) ============ */
+
+.parley-demo .why {
+  width: 100%;
+  padding: 140px 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.parley-demo .why__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  width: 100%;
+}
+
+.parley-demo .why__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 540px;
+}
+
+.parley-demo .why__lede {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--grey-600);
+  width: 420px;
+  text-wrap: pretty;
+}
+
+@keyframes parley-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(2px, -3px);
+  }
+  50% {
+    transform: translate(-1px, 2px);
+  }
+  75% {
+    transform: translate(-2px, -1px);
+  }
+}
+
+/* ============ DELEGATION ============ */
+
+.parley-demo .delegation {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  background: var(--bg);
+}
+
+.parley-demo .delegation__scroll {
+  position: relative;
+  width: 100%;
+  height: 380vh;
+}
+
+.parley-demo .trigger {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.parley-demo .trigger[data-step="0"] {
+  top: 0;
+}
+.parley-demo .trigger[data-step="1"] {
+  top: 25%;
+}
+.parley-demo .trigger[data-step="2"] {
+  top: 50%;
+}
+.parley-demo .trigger[data-step="3"] {
+  top: 75%;
+}
+
+.parley-demo .delegation__pin {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 40px;
+  padding: 96px 0 32px;
+  box-sizing: border-box;
+}
+
+.parley-demo .delegation__header,
+.parley-demo .delegation__inner {
+  transform: none;
+}
+
+.parley-demo .delegation__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.parley-demo .delegation__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 540px;
+}
+
+.parley-demo .delegation__lede {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--grey-600);
+  width: 420px;
+}
+
+.parley-demo .delegation__inner {
+  display: flex;
+  align-items: stretch;
+  gap: 40px;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-left: 36px;
+}
+
+.parley-demo .features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 438px;
+  flex-shrink: 0;
+  min-height: 0;
+}
+
+.parley-demo .feature__btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 20px 0;
+  width: 100%;
+  display: block;
+  position: relative;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.parley-demo .feature__btn:focus-visible {
+  outline: 2px solid var(--orange-500);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.parley-demo .feature__chevron {
+  position: absolute;
+  left: -32px;
+  top: 28px;
+  width: 21px;
+  height: 16px;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-10px) scale(0.7);
+  transition:
+    opacity 0s,
+    transform 0s,
+    visibility 0s 100ms;
+}
+
+.parley-demo .feature__head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.parley-demo .feature__label {
+  font-family: "Geist", sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--grey-400);
+  transition: color 320ms var(--ease-standard);
+}
+
+.parley-demo .feature__desc {
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--grey-600);
+  max-width: 360px;
+  text-wrap: balance;
+  display: block;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height 320ms var(--ease-spring),
+    opacity 240ms var(--ease-standard);
+}
+
+.parley-demo .feature__btn[aria-selected="true"] .feature__chevron {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) scale(1);
+  transition:
+    opacity 280ms var(--ease-standard) 80ms,
+    transform 480ms var(--ease-spring) 80ms,
+    visibility 0s;
+}
+
+.parley-demo .feature__btn[aria-selected="true"] .feature__label {
+  color: var(--grey-800);
+}
+
+.parley-demo .feature__btn[aria-selected="true"] .feature__desc {
+  max-height: 200px;
+  opacity: 1;
+}
+
+.parley-demo .stage {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  max-height: 564px;
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.parley-demo .mock {
+  position: absolute;
+  inset: 0;
+  padding: 48px 0 0 54px;
+  opacity: 0;
+  transform: translateY(12px) scale(0.99);
+  transition:
+    opacity 360ms var(--ease-standard),
+    transform 480ms var(--ease-spring);
+  pointer-events: none;
+}
+
+.parley-demo .mock[hidden] {
+  /* Beat Tailwind preflight's `[hidden] { display: none !important }` so
+     inactive mocks can fade/rise instead of popping in and out. */
+  display: block !important;
+}
+
+.parley-demo .mock.is-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.parley-demo .mock__img {
+  display: block;
+  width: 860px;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  border-radius: 24px;
+  box-shadow: 0 28px 70px -23px rgba(26, 23, 20, 0.18);
+}
+
+/* ============ TESTIMONIALS ============ */
+
+.parley-demo .testimonials {
+  position: relative;
+  padding: 120px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  background: var(--bg);
+}
+
+.parley-demo .testimonials__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  padding: 0 24px;
+}
+
+.parley-demo .testimonials__lede {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--grey-600);
+  max-width: 480px;
+  text-wrap: balance;
+}
+
+.parley-demo .marquee {
+  position: relative;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  overflow-x: clip;
+  overflow-y: visible;
+  padding: 24px 0;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 100px,
+    black calc(100% - 100px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 100px,
+    black calc(100% - 100px),
+    transparent 100%
+  );
+}
+
+/* ============ PRICING ============ */
+
+.parley-demo .pricing {
+  padding: 120px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+}
+
+.parley-demo .pricing__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.parley-demo .pricing__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 600px;
+}
+
+.parley-demo .pricing__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 40px;
+  max-width: 420px;
+  /* Align description first line with the h2 first line */
+  padding-top: 26px;
+}
+
+.parley-demo .pricing__lede {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--grey-600);
+  text-align: right;
+}
+
+/* ============ HOW IT WORKS ============ */
+
+.parley-demo .hiw {
+  padding: 40px 0 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.parley-demo .hiw__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+/* ============ FAQ ============ */
+
+.parley-demo .faq {
+  padding: 40px 0 140px;
+  display: grid;
+  grid-template-columns: 5fr 6fr;
+  gap: 60px;
+  align-items: start;
+}
+
+.parley-demo .faq__left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.parley-demo .faq__sub {
+  margin: 20px 0 6px;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--grey-600);
+}
+
+.parley-demo .faq__mosaic {
+  margin-top: 48px;
+  width: 530px;
+  max-width: 90%;
+  height: auto;
+}
+
+.parley-demo .faq__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.parley-demo .faq__item {
+  background: var(--surface);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.parley-demo .faq__item summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px;
+  cursor: pointer;
+  font-family: "Geist", sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--grey-900);
+  transition: background-color 200ms var(--ease-standard);
+}
+
+.parley-demo .faq__item summary::-webkit-details-marker {
+  display: none;
+}
+
+.parley-demo .faq__item summary:hover {
+  background: var(--surface-hover);
+}
+
+.parley-demo .faq__plus {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--orange-500);
+  transition: transform 320ms var(--ease-spring);
+}
+
+.parley-demo .faq__item[open] .faq__plus {
+  transform: rotate(45deg);
+}
+
+.parley-demo .faq__answer {
+  padding: 0 24px;
+  overflow: hidden;
+}
+
+.parley-demo .faq__answer p {
+  margin: 0;
+  padding: 2px 0 24px;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--grey-600);
+  max-width: 560px;
+}
+
+/* ============ INTEGRATIONS ============ */
+
+.parley-demo .integrations {
+  padding: 0 0 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.parley-demo .integrations__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.parley-demo .integrations__lede {
+  margin: 4px 0 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--grey-600);
+  max-width: 460px;
+  text-wrap: balance;
+}
+
+/* ============ CTA ============ */
+
+.parley-demo .cta {
+  padding: 0 0 20px;
+}
+
+/* ============ FOOTER ============ */
+
+.parley-demo .footer {
+  width: 100%;
+  background: #efeee8;
+  margin-top: 100px;
+}
+
+.parley-demo .footer__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.parley-demo .footer__logo {
+  height: 22px;
+  width: auto;
+}
+
+.parley-demo .footer__mid {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 60px;
+  padding: 36px 0 10px;
+}
+
+.parley-demo .footer__tagline {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--grey-600);
+  max-width: 300px;
+}
+
+.parley-demo .footer__cols {
+  display: flex;
+  gap: 80px;
+}
+
+.parley-demo .footer__col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.parley-demo .footer__col-title {
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Geist", sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--grey-900);
+}
+
+.parley-demo .footer__square {
+  width: 7px;
+  height: 7px;
+  background: var(--orange-500);
+  flex-shrink: 0;
+}
+
+.parley-demo .footer__col a {
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--grey-600);
+  text-decoration: none;
+  padding-left: 17px;
+  transition: color 180ms var(--ease-standard);
+}
+
+.parley-demo .footer__col a:hover {
+  color: var(--grey-900);
+}
+
+/* framer footer [logo] block: 235px clipped window; the wordmark is
+   pinned at bottom:-101px so its lower third sits below the page edge. */
+.parley-demo .footer__mark {
+  position: relative;
+  margin-top: 20px;
+  height: 235px;
+  overflow: hidden;
+}
+
+.parley-demo .footer__watermark {
+  position: absolute;
+  left: 0;
+  bottom: -101px;
+  width: 100%;
+  height: 307px;
+  object-fit: cover;
+  display: block;
+}
+
+.parley-demo .footer__mosaic {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 624px;
+  max-width: 80%;
+  height: auto;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.parley-demo .footer__bottom {
+  position: absolute;
+  left: 0;
+  bottom: 23px;
+  width: 100%;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--grey-600);
+}
+
+.parley-demo .footer__bottom p {
+  margin: 0;
+}
+
+.parley-demo .footer__bottom a {
+  color: var(--grey-600);
+  text-decoration: none;
+  transition: color 180ms var(--ease-standard);
+}
+
+.parley-demo .footer__bottom a:hover {
+  color: var(--grey-900);
+}
+
+/* ============ REDUCED MOTION ============ */
+
+@media (prefers-reduced-motion: reduce) {
+  html.parley-demo-page {
+    scroll-behavior: auto;
+  }
+  .parley-demo .hero {
+    height: auto;
+  }
+  .parley-demo .hero__sticky {
+    position: static;
+    height: 100vh;
+  }
+  .parley-demo .delegation__scroll {
+    height: auto;
+  }
+  .parley-demo .delegation__pin {
+    position: static;
+    height: auto;
+    overflow: visible;
+    padding: 60px 0;
+  }
+  .parley-demo *,
+  .parley-demo *::before,
+  .parley-demo *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============ TABLET / MOBILE ============ */
+
+@media (max-width: 1240px) {
+  .parley-demo .container {
+    padding: 0 20px;
+  }
+  .parley-demo .nav {
+    padding: 16px 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .parley-demo .nav {
+    padding: 14px 16px;
+  }
+  .parley-demo .nav__links {
+    display: none;
+  }
+
+  .parley-demo .hero__headline {
+    font-size: clamp(32px, 7vw, 48px);
+  }
+
+  .parley-demo .logos__list {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px;
+    padding: 0 16px;
+  }
+
+  .parley-demo .h2 {
+    font-size: 38px;
+  }
+
+  /* why cards: vertical stack, all expanded */
+  .parley-demo .why {
+    padding: 90px 0 0;
+  }
+  .parley-demo .why__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .parley-demo .why__heading,
+  .parley-demo .why__lede {
+    width: 100%;
+  }
+
+  /* delegation flows naturally on mobile */
+  .parley-demo .delegation__scroll {
+    width: 100%;
+    height: auto;
+  }
+  .parley-demo .delegation__pin {
+    position: static;
+    height: auto;
+    overflow: visible;
+    padding: 60px 0;
+  }
+  .parley-demo .delegation__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .parley-demo .delegation__heading,
+  .parley-demo .delegation__lede {
+    width: 100%;
+  }
+  .parley-demo .delegation__inner {
+    flex-direction: column;
+    gap: 24px;
+  }
+  .parley-demo .features {
+    width: 100%;
+  }
+  .parley-demo .stage {
+    height: 460px;
+  }
+
+  .parley-demo .testimonials {
+    padding: 80px 0;
+    gap: 40px;
+  }
+  .parley-demo .marquee {
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      black 40px,
+      black calc(100% - 40px),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      black 40px,
+      black calc(100% - 40px),
+      transparent 100%
+    );
+  }
+
+  .parley-demo .pricing {
+    padding: 80px 0;
+    gap: 40px;
+  }
+  .parley-demo .pricing__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .parley-demo .pricing__side {
+    align-items: flex-start;
+    padding-top: 0;
+  }
+  .parley-demo .pricing__lede {
+    text-align: left;
+  }
+
+  /* how-it-works: window scrolls naturally, no pan */
+  .parley-demo .hiw {
+    padding: 20px 0 80px;
+    gap: 36px;
+  }
+
+  .parley-demo .faq {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 20px 0 90px;
+  }
+  .parley-demo .faq__mosaic {
+    margin-top: 24px;
+    width: 320px;
+  }
+
+  .parley-demo .integrations {
+    padding: 0 0 90px;
+  }
+
+  .parley-demo .footer__inner {
+    padding: 40px 20px 24px;
+  }
+  .parley-demo .footer__mid {
+    flex-direction: column;
+    gap: 32px;
+  }
+  .parley-demo .footer__cols {
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .parley-demo .footer__mark {
+    height: 150px;
+  }
+  .parley-demo .footer__watermark {
+    height: 140px;
+    bottom: -46px;
+  }
+  .parley-demo .footer__bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    bottom: 60px;
+    padding: 0 4px;
+  }
+}
+
+@media (max-width: 560px) {
+  .parley-demo .hero {
+    height: 620px;
+  }
+  .parley-demo .hero__media {
+    --h: 520px;
+  }
+  .parley-demo .footer__cols {
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+
+/* ================================================================
+   FRAMER COMPONENT PORTS — exact specs from project M9cZnnZEzzWUCV6nAPp1
+   ================================================================ */
+
+/* ---------- Buttons/button (Y7iLraJCB) ---------- */
+
+.parley-demo .fbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 8px;
+  text-decoration: none;
+  overflow: hidden;
+  transition: background-color 200ms var(--ease-standard);
+}
+
+.parley-demo .fbtn--primary {
+  background: var(--grey-900);
+}
+.parley-demo .fbtn--secondary {
+  background: var(--white);
+}
+.parley-demo .fbtn--full {
+  width: 100%;
+}
+
+.parley-demo .fbtn__chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  background: var(--orange-500);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* 25px window, two 24px chevrons; default shows the right one,
+   hover slides to the left one (framer end→start distribution swap) */
+.parley-demo .fbtn__arrows {
+  display: inline-flex;
+  align-items: center;
+  width: 25px;
+  height: 24px;
+  overflow: hidden;
+}
+
+.parley-demo .fbtn__arrows svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: var(--grey-900);
+  transform: translateX(-23px);
+  transition: transform 400ms var(--ease-spring);
+}
+
+.parley-demo .fbtn:hover .fbtn__arrows svg {
+  transform: translateX(0);
+}
+
+/* label roller: 18px window, two stacked copies */
+.parley-demo .fbtn__label {
+  display: inline-flex;
+  flex-direction: column;
+  height: 18px;
+  overflow: hidden;
+  font-family: "Geist", sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.parley-demo .fbtn__label span {
+  display: block;
+  height: 18px;
+  line-height: 18px;
+  opacity: 0.9;
+  transform: translateY(0);
+  transition: transform 400ms var(--ease-spring);
+}
+
+.parley-demo .fbtn:hover .fbtn__label span {
+  transform: translateY(-18px);
+}
+
+.parley-demo .fbtn--primary .fbtn__label {
+  color: var(--white);
+}
+.parley-demo .fbtn--secondary .fbtn__label {
+  color: var(--grey-900);
+}
+
+/* ---------- Cards/Benefit cards (OA43R7kz7 + L54dG_oz5) ---------- */
+
+.parley-demo .why-cards {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 420px;
+}
+
+.parley-demo .wcard {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 420px;
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: clip;
+  cursor: pointer;
+  outline: none;
+  /* framer: tween 0.34,1.2,0.64,1 0.4s on the card variant switch */
+  transition:
+    flex-basis 400ms cubic-bezier(0.34, 1.2, 0.64, 1),
+    flex-grow 400ms cubic-bezier(0.34, 1.2, 0.64, 1),
+    height 400ms cubic-bezier(0.34, 1.2, 0.64, 1),
+    background-color 400ms cubic-bezier(0.34, 1.2, 0.64, 1),
+    border-radius 400ms cubic-bezier(0.34, 1.2, 0.64, 1),
+    box-shadow 400ms cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.parley-demo .wcard.is-active {
+  flex: 0 0 352px;
+  height: 440px;
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: 0 12px 16px 0 var(--grey-f100);
+}
+
+.parley-demo .wcard:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 4px var(--orange-500);
+}
+
+/* closed state: number / mosaic / title, space-between */
+.parley-demo .wcard__closed {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 20px 40px;
+  opacity: 1;
+  transition: opacity 240ms var(--ease-standard) 120ms;
+}
+
+.parley-demo .wcard.is-active .wcard__closed {
+  opacity: 0;
+  transition-delay: 0ms;
+  pointer-events: none;
+}
+
+.parley-demo .wcard__number {
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  font-size: 52px;
+  line-height: 1.05;
+  color: rgb(221, 216, 211);
+  font-variation-settings: "opsz" 14;
+}
+
+.parley-demo .wcard__mosaic {
+  width: 100%;
+  height: 164px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.parley-demo .wcard__mosaic img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  animation: parley-drift 9s ease-in-out infinite;
+}
+
+.parley-demo .wcard[data-index="02"] .wcard__mosaic img {
+  animation-delay: -2s;
+}
+.parley-demo .wcard[data-index="03"] .wcard__mosaic img {
+  animation-delay: -4s;
+}
+.parley-demo .wcard[data-index="04"] .wcard__mosaic img {
+  animation-delay: -6s;
+}
+
+.parley-demo .wcard__title-closed {
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.1;
+  color: var(--grey-900);
+  font-variation-settings: "opsz" 14;
+}
+
+/* opened state: image (radius 12) + content, padding 8 */
+.parley-demo .wcard__open {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms var(--ease-standard);
+}
+
+.parley-demo .wcard.is-active .wcard__open {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 120ms;
+}
+
+.parley-demo .wcard__img {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.parley-demo .wcard__img img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.parley-demo .wcard__content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.parley-demo .wcard__title {
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  font-size: 32px;
+  line-height: 1.1;
+  color: var(--grey-900);
+  font-variation-settings: "opsz" 14;
+  text-wrap: balance;
+}
+
+.parley-demo .wcard__desc {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--grey-900);
+  text-wrap: pretty;
+}
+
+/* ---------- Cards/Review (G8EVipizY) ---------- */
+
+.parley-demo .marquee__track {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 10px;
+  width: max-content;
+  animation: parley-marquee 60s linear infinite;
+  will-change: transform;
+}
+
+@keyframes parley-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - 5px));
+  }
+}
+
+.parley-demo .tcard {
+  flex: 0 0 373px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 20px;
+  height: 346px;
+  border-radius: 12px;
+  background: var(--white);
+  isolation: isolate;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* hover: cloud painting fades in (no scrim — exact framer behavior) */
+.parley-demo .tcard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url("https://parley-home.vercel.app/assets/tcard-cloud.jpg")
+    center / cover no-repeat;
+  opacity: 0;
+  transition: opacity 400ms var(--ease-standard);
+  pointer-events: none;
+}
+
+.parley-demo .tcard:hover::before {
+  opacity: 1;
+}
+
+.parley-demo .tcard__quote {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--grey-900);
+  opacity: 0.8;
+  text-wrap: pretty;
+  transition: opacity 300ms var(--ease-standard);
+}
+
+.parley-demo .tcard:hover .tcard__quote {
+  opacity: 1;
+}
+
+.parley-demo .tcard__author {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.parley-demo .tcard__avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+  background: #ffd8a8;
+  border: 1.5px solid var(--white);
+}
+
+.parley-demo .tcard__name {
+  display: block;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.1;
+  color: var(--grey-900);
+  font-variation-settings: "opsz" 14;
+}
+
+.parley-demo .tcard__role {
+  display: block;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--grey-900);
+  opacity: 0.5;
+  margin-top: 5px;
+  transition: opacity 300ms var(--ease-standard);
+}
+
+.parley-demo .tcard:hover .tcard__role {
+  opacity: 0.7;
+}
+
+.parley-demo .tcard__source {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--grey-900);
+  color: var(--grey-f100);
+  border-radius: 4px;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms var(--ease-standard);
+}
+
+.parley-demo .tcard__source-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.parley-demo .tcard:hover .tcard__source {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.parley-demo .tcard__source:focus-visible {
+  outline: 2px solid var(--orange-500);
+  outline-offset: 2px;
+}
+
+/* ---------- Sections/Pricing (Xithlzoxo) ---------- */
+
+.parley-demo .toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  background: var(--surface);
+  border-radius: 8px;
+}
+
+.parley-demo .toggle__btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--grey-600);
+  border-radius: 8px;
+  transition:
+    background 240ms var(--ease-standard),
+    color 240ms var(--ease-standard);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.parley-demo .toggle__btn.is-active {
+  background: var(--white);
+  color: var(--grey-900);
+}
+
+.parley-demo .toggle__off {
+  font-family: "Geist", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--grey-900);
+  line-height: 1.2;
+}
+
+.parley-demo .plans {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+
+.parley-demo .plan {
+  position: relative;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--card-line);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  isolation: isolate;
+  overflow: hidden;
+  cursor: default;
+}
+
+/* per-card cloud (portrait painting) cross-fade — kept from the approved
+   interaction, styled with the exact framer pro-card asset */
+.parley-demo .plan::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: url("https://parley-home.vercel.app/assets/pro-cloud.png")
+    center / cover no-repeat;
+  opacity: 0;
+  transition: opacity 260ms var(--ease-standard);
+  pointer-events: none;
+}
+
+.parley-demo .plan.is-featured::before {
+  opacity: 1;
+}
+.parley-demo .plans:hover .plan.is-featured:not(:hover)::before {
+  opacity: 0;
+}
+.parley-demo .plans .plan:hover::before {
+  opacity: 1;
+}
+
+.parley-demo .plan.is-featured,
+.parley-demo .plans .plan:hover {
+  background-color: transparent;
+}
+.parley-demo .plans:hover .plan.is-featured:not(:hover) {
+  background-color: var(--surface);
+}
+
+.parley-demo .plan__name {
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--grey-900);
+}
+
+.parley-demo .plan__price {
+  display: block;
+}
+
+.parley-demo .plan__price .plan__currency,
+.parley-demo .plan__price .plan__amount {
+  display: inline;
+}
+
+.parley-demo .plan__amount,
+.parley-demo .plan__currency {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  font-size: 32px;
+  line-height: 1.1;
+  color: var(--grey-900);
+  font-variation-settings: "opsz" 14;
+}
+
+.parley-demo .plan__period {
+  margin: 8px 0 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--grey-600);
+}
+
+.parley-demo .plan__desc {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--grey-600);
+  text-wrap: pretty;
+  min-height: 58px;
+}
+
+.parley-demo .plan-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.parley-demo .plan-features li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--grey-900);
+}
+
+.parley-demo .plan-features__dot {
+  width: 8px;
+  height: 8px;
+  background: var(--orange-500);
+  flex-shrink: 0;
+}
+
+/* disabled rows: square stays in layout at opacity 0, text at 0.6 */
+.parley-demo .plan-features li.is-off {
+  opacity: 1;
+  color: var(--grey-900);
+}
+.parley-demo .plan-features li.is-off .plan-features__dot {
+  display: block;
+  opacity: 0;
+}
+.parley-demo .plan-features li.is-off {
+  color: rgba(37, 31, 25, 0.6);
+}
+
+.parley-demo .plan .fbtn {
+  margin-top: auto;
+}
+
+/* ---------- Sections/Tab+images (uHCAWDn2h) ---------- */
+
+.parley-demo .hiw__panel {
+  position: relative;
+  width: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  background: url("https://parley-home.vercel.app/assets/canyon.png") center /
+    cover no-repeat;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.parley-demo .hiw__pills {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  position: relative;
+  z-index: 3;
+}
+
+.parley-demo .hiw__pill {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--grey-900);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background-color 260ms var(--ease-standard);
+}
+
+.parley-demo .hiw__pill.is-active {
+  background: var(--white);
+}
+
+.parley-demo .hiw__stage {
+  position: relative;
+  width: 100%;
+  border-radius: 25px;
+  overflow: hidden;
+  background: var(--bg);
+  aspect-ratio: 1.53;
+}
+
+.parley-demo .hiw__lottie {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 320ms var(--ease-standard);
+}
+
+.parley-demo .hiw__lottie.is-active {
+  opacity: 1;
+}
+
+.parley-demo .hiw__lottie[hidden] {
+  display: block !important;
+}
+
+.parley-demo .hiw__lottie canvas,
+.parley-demo .hiw__lottie svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* ---------- Integrations ticker (oEMyWBkEX) ---------- */
+
+.parley-demo .int-marquee {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: 12px;
+  -webkit-mask-image: radial-gradient(
+    50% 122% at 50% 50%,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.8) 80.63%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  mask-image: radial-gradient(
+    50% 122% at 50% 50%,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.8) 80.63%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.parley-demo .int-marquee__row {
+  display: flex;
+  gap: 20px;
+  width: max-content;
+  border-radius: 10px;
+}
+
+/* velocity 20px/s over half-set width 928px → 46.4s */
+.parley-demo .int-marquee__row[data-dir="left"] {
+  animation: parley-int-left 46.4s linear infinite;
+}
+.parley-demo .int-marquee__row[data-dir="right"] {
+  animation: parley-int-right 46.4s linear infinite;
+}
+
+@keyframes parley-int-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - 10px));
+  }
+}
+
+@keyframes parley-int-right {
+  from {
+    transform: translateX(calc(-50% - 10px));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.parley-demo .int-marquee__set {
+  display: flex;
+  gap: 20px;
+}
+
+.parley-demo .int-tile {
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  background: var(--grey-f50);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.parley-demo .int-tile img {
+  width: 96px;
+  height: 96px;
+}
+
+/* ---------- Sections/Final CTA (IlMg0EFiD / RVGavsn11) ---------- */
+
+.parley-demo .cta {
+  padding: 0 0 20px;
+}
+
+.parley-demo .cta__panel {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+}
+
+.parley-demo .cta__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+.parley-demo .cta__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--grey-900);
+  opacity: 0.25;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.parley-demo .cta__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  padding: 40px 24px;
+  max-width: 700px;
+}
+
+.parley-demo .cta__title {
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  font-size: 52px;
+  line-height: 1.05;
+  letter-spacing: 0;
+  color: var(--white);
+  font-variation-settings: "opsz" 14;
+  text-wrap: balance;
+}
+
+.parley-demo .cta__title em {
+  font-style: italic;
+  font-weight: 500;
+}
+
+.parley-demo .cta__lede {
+  margin: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--white);
+  max-width: 500px;
+}
+
+/* ---------- Navigation/Footer (pAQMlpg20) ---------- */
+
+.parley-demo .footer {
+  width: 100%;
+  background: var(--surface);
+  margin-top: 100px;
+}
+
+.parley-demo .footer__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--grey-f400);
+}
+
+.parley-demo .footer__social {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+}
+
+.parley-demo .footer__social-label {
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--grey-600);
+}
+
+.parley-demo .footer__social-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.parley-demo .footer__social-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background: var(--grey-f200);
+  color: var(--grey-600);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 200ms var(--ease-standard);
+}
+
+.parley-demo .footer__social-btn:hover {
+  background: var(--bg);
+}
+
+.parley-demo .footer__social-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---------- responsive overrides for ported components ---------- */
+
+@media (max-width: 900px) {
+  .parley-demo .why-cards {
+    flex-direction: column;
+    height: auto;
+    align-items: stretch;
+  }
+  .parley-demo .wcard,
+  .parley-demo .wcard.is-active {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    background: var(--white);
+    border-radius: 12px;
+  }
+  .parley-demo .wcard__closed {
+    display: none;
+  }
+  .parley-demo .wcard__open {
+    position: relative;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .parley-demo .plans {
+    grid-template-columns: 1fr;
+  }
+  .parley-demo .cta__panel {
+    height: 420px;
+  }
+  .parley-demo .cta__title {
+    font-size: 32px;
+  }
+  .parley-demo .hiw__pills {
+    flex-wrap: wrap;
+  }
+  .parley-demo .int-tile,
+  .parley-demo .int-tile img {
+    width: 76px;
+    height: 76px;
+  }
+  .parley-demo .fbtn--full {
+    width: 100%;
+  }
+}

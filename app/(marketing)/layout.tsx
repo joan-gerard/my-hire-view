@@ -1,4 +1,5 @@
 import MarketingHeader from "@/components/public/MarketingHeader";
+import { SmoothScrollHandler } from "@/components/SmoothScrollHandler";
 import { HeroEntranceProvider } from "@/contexts/HeroEntranceContext";
 import { ScrollCoverProvider } from "@/contexts/ScrollCoverContext";
 import { getUser } from "@/lib/auth";
@@ -18,6 +19,7 @@ export default async function MarketingLayout({
     <HeroEntranceProvider>
       <ScrollCoverProvider>
         <div className="flex min-h-screen flex-col bg-white">
+          <SmoothScrollHandler />
           <MarketingHeader user={user} />
           {children}
         </div>
