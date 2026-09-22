@@ -18,12 +18,12 @@ const PAGE_LINKS = [
 ];
 
 const HERO_IMAGES = [
-  { src: `${CDN}/afw1G5EoyulJLLKmxhN05XqXkU.jpg`, width: 430 },
-  { src: `${CDN}/pEikbe0b6xluvfmxSfsrSlik.jpg`, width: 350 },
-  { src: `${CDN}/fKFTNCI0snuqREqnlHnGu73IBs.jpg`, width: 290 },
-  { src: `${CDN}/hLzPqxmratunlN3QQoWnmKVDra0.jpg`, width: 430 },
-  { src: `${CDN}/7jqUEAuM8oZzZOPKD4yxX6ZTPOU.jpg`, width: 350 },
-  { src: `${CDN}/OOvEZXgpeDxOvgd3xtVwUls.jpg`, width: 290 },
+  { src: "/demo/hero-image-1.webp", width: 430 },
+  { src: "/demo/hero-image-2.webp", width: 350 },
+  { src: "/demo/hero-image-3.webp", width: 290 },
+  { src: "/demo/hero-image-4.webp", width: 430 },
+  { src: "/demo/hero-image-5.webp", width: 350 },
+  { src: "/demo/hero-image-6.webp", width: 290 },
 ];
 
 const LOGOS = [
