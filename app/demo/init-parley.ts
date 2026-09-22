@@ -1,87 +1,16 @@
-const ASSETS = "https://parley-home.vercel.app/assets/";
-const LOTTIE_SRC = `${ASSETS}lottie.min.js`;
-
-type LottiePlayer = {
-  play: () => void;
-  pause: () => void;
-  destroy: () => void;
-};
-
-type LottieAPI = {
-  loadAnimation: (opts: {
-    container: Element;
-    renderer: string;
-    loop: boolean;
-    autoplay: boolean;
-    path: string;
-  }) => LottiePlayer;
-};
-
-declare global {
-  interface Window {
-    lottie?: LottieAPI;
-  }
-}
-
-function loadLottie(): Promise<LottieAPI> {
-  if (window.lottie) return Promise.resolve(window.lottie);
-
-  const existing = document.querySelector<HTMLScriptElement>(
-    `script[src="${LOTTIE_SRC}"]`,
-  );
-  if (existing) {
-    return new Promise((resolve, reject) => {
-      existing.addEventListener("load", () => {
-        if (window.lottie) resolve(window.lottie);
-        else reject(new Error("lottie failed to initialize"));
-      });
-      existing.addEventListener("error", () =>
-        reject(new Error("Failed to load lottie")),
-      );
-    });
-  }
-
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = LOTTIE_SRC;
-    script.async = true;
-    script.onload = () => {
-      if (window.lottie) resolve(window.lottie);
-      else reject(new Error("lottie failed to initialize"));
-    };
-    script.onerror = () => reject(new Error("Failed to load lottie"));
-    document.head.appendChild(script);
-  });
-}
-
 export function initParley(root: HTMLElement): () => void {
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const cleanups: Array<() => void> = [];
-  let cancelled = false;
 
   initNav(root, cleanups);
   initHero(root, reduced, cleanups);
-  initWhyCards(root, cleanups);
   initMarquee(root, cleanups);
-  initPricingToggle(root, cleanups);
   initFaq(root, reduced, cleanups);
 
-  void loadLottie()
-    .then((lottie) => {
-      if (cancelled) return;
-      const hiwCleanup = initHowItWorks(root, reduced, lottie);
-      if (cancelled) {
-        hiwCleanup?.();
-        return;
-      }
-      if (hiwCleanup) cleanups.push(hiwCleanup);
-    })
-    .catch(() => {
-      // Lottie is progressive enhancement for the How-it-works stage.
-    });
+  const hiwCleanup = initHowItWorks(root, reduced);
+  if (hiwCleanup) cleanups.push(hiwCleanup);
 
   return () => {
-    cancelled = true;
     while (cleanups.length) {
       cleanups.pop()?.();
     }
@@ -191,34 +120,6 @@ function initHero(
   });
 }
 
-function initWhyCards(root: HTMLElement, cleanups: Array<() => void>) {
-  const whyRow = root.querySelector<HTMLElement>("#why-cards");
-  if (!whyRow) return;
-
-  const wcards = Array.from(whyRow.querySelectorAll<HTMLElement>(".wcard"));
-  const activate = (card: HTMLElement) => {
-    if (card.classList.contains("is-active")) return;
-    wcards.forEach((c) => c.classList.toggle("is-active", c === card));
-  };
-
-  const onEnter = (event: Event) => {
-    const card = event.currentTarget;
-    if (card instanceof HTMLElement) activate(card);
-  };
-
-  wcards.forEach((card) => {
-    card.addEventListener("pointerenter", onEnter);
-    card.addEventListener("focus", onEnter);
-  });
-
-  cleanups.push(() => {
-    wcards.forEach((card) => {
-      card.removeEventListener("pointerenter", onEnter);
-      card.removeEventListener("focus", onEnter);
-    });
-  });
-}
-
 function initMarquee(root: HTMLElement, cleanups: Array<() => void>) {
   const track = root.querySelector<HTMLElement>("#track");
   if (!track) return;
@@ -239,35 +140,9 @@ function initMarquee(root: HTMLElement, cleanups: Array<() => void>) {
   });
 }
 
-function initPricingToggle(root: HTMLElement, cleanups: Array<() => void>) {
-  const toggleBtns = Array.from(
-    root.querySelectorAll<HTMLButtonElement>(".toggle__btn"),
-  );
-
-  const onClick = (button: HTMLButtonElement) => () => {
-    toggleBtns.forEach((other) => {
-      const active = other === button;
-      other.classList.toggle("is-active", active);
-      other.setAttribute("aria-selected", active ? "true" : "false");
-    });
-  };
-
-  const handlers = toggleBtns.map((button) => onClick(button));
-  toggleBtns.forEach((button, i) => {
-    button.addEventListener("click", handlers[i]);
-  });
-
-  cleanups.push(() => {
-    toggleBtns.forEach((button, i) => {
-      button.removeEventListener("click", handlers[i]);
-    });
-  });
-}
-
 function initHowItWorks(
   root: HTMLElement,
   reduced: boolean,
-  lottie: LottieAPI,
 ): (() => void) | undefined {
   const hiwPanel = root.querySelector<HTMLElement>("#hiw-panel");
   if (!hiwPanel) return;
@@ -278,32 +153,27 @@ function initHowItWorks(
   const stages = Array.from(
     hiwPanel.querySelectorAll<HTMLElement>(".hiw__lottie"),
   );
-  const files = [
-    "/demo/hiw/hiw-1.json",
-    "/demo/hiw/hiw-2.json",
-    "/demo/hiw/hiw-3.json",
-  ];
-  const players: Array<LottiePlayer | null> = new Array(files.length).fill(
-    null,
-  );
-
-  const load = (i: number) => {
-    const existing = players[i];
-    if (existing) return existing;
-    const player = lottie.loadAnimation({
-      container: stages[i],
-      renderer: "svg",
-      loop: true,
-      autoplay: false,
-      path: files[i],
-    });
-    players[i] = player;
-    return player;
-  };
+  const videos = stages.map((stage) => stage.querySelector("video"));
 
   let current = 0;
+  const playStep = (index: number) => {
+    videos.forEach((video, i) => {
+      if (!video) return;
+      if (i === index && !reduced) {
+        void video.play().catch(() => {
+          /* Autoplay or missing remote file is non-fatal. */
+        });
+      } else {
+        video.pause();
+      }
+    });
+  };
+
   const setStep = (next: number) => {
-    if (next === current && players[next]) return;
+    if (next === current) {
+      playStep(next);
+      return;
+    }
     current = next;
     pills.forEach((pill, i) => {
       pill.classList.toggle("is-active", i === next);
@@ -314,14 +184,8 @@ function initHowItWorks(
       stage.classList.toggle("is-active", active);
       if (active) stage.removeAttribute("hidden");
       else stage.setAttribute("hidden", "");
-      const player = players[i];
-      if (player) {
-        if (active) player.play();
-        else player.pause();
-      }
     });
-    const player = load(next);
-    if (!reduced) player.play();
+    playStep(next);
   };
 
   const onPillClick = (i: number) => () => setStep(i);
@@ -331,8 +195,7 @@ function initHowItWorks(
   const io = new IntersectionObserver(
     (entries) => {
       if (entries.some((entry) => entry.isIntersecting)) {
-        const player = load(0);
-        if (!reduced) player.play();
+        playStep(current);
         io.disconnect();
       }
     },
@@ -345,7 +208,7 @@ function initHowItWorks(
     pills.forEach((pill, i) =>
       pill.removeEventListener("click", pillHandlers[i]),
     );
-    players.forEach((player) => player?.destroy());
+    videos.forEach((video) => video?.pause());
   };
 }
 

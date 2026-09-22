@@ -1,36 +1,148 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 
-const ASSETS = "https://parley-home.vercel.app/assets/";
-const ARROWS = `${ASSETS}arrows.svg`;
+const ARROWS = "https://parley-home.vercel.app/assets/arrows.svg";
 const STEP_COUNT = 4;
 
 const FEATURES = [
   {
-    label: "Natural language commands",
-    desc: 'Just speak naturally — "prep my Monday morning" or "follow up with leads who haven\'t replied in 5 days."',
-    src: `${ASSETS}mock-0.png`,
-    srcSet: `${ASSETS}mock-0.png 1x, ${ASSETS}mock-0@2x.png 2x`,
+    label: "Video pitch",
+    desc: "Let recruiters see and hear you. A 60–90 second intro showcases communication and personality a PDF never will.",
   },
   {
-    label: "Multi-step task execution",
-    desc: "From a single intent, Parley plans the full sequence, runs every step, and recovers when something breaks.",
-    src: `${ASSETS}mock-2.png`,
-    srcSet: `${ASSETS}mock-2.png 1x, ${ASSETS}mock-2@2x.png 2x`,
+    label: "A page for every role",
+    desc: "Upload your CV, add a portfolio link, and tailor each application so the hiring team sees the most relevant you.",
   },
   {
-    label: "Human-in-the-loop control",
-    desc: "Stay in charge of high-stakes actions. Parley pauses for approval whenever the call should be yours.",
-    src: `${ASSETS}mock-1.png`,
-    srcSet: `${ASSETS}mock-1.png 1x, ${ASSETS}mock-1@2x.png 2x`,
+    label: "Private shareable link",
+    desc: "Send a professional URL by email, LinkedIn, or the job form. Recruiters open it instantly — no account required.",
   },
   {
-    label: "Persistent user profile",
-    desc: "Knows your team, your tools, your customers, across every session, never starting from zero.",
-    src: `${ASSETS}mock-3.png`,
-    srcSet: `${ASSETS}mock-3.png 1x, ${ASSETS}mock-3@2x.png 2x`,
+    label: "Know when they looked",
+    desc: "Track views, CV downloads, and last seen. Follow up when the page is warm, not when you are guessing.",
   },
+] as const;
+
+function VideoPitchMock() {
+  return (
+    <div className="mock__frame mock__frame--split">
+      <div className="mock__media">
+        <img src="/solution-2.webp" alt="" />
+        <span className="mock__play" aria-hidden="true">
+          ▶
+        </span>
+        <span className="mock__chip">90s pitch</span>
+      </div>
+      <div className="mock__body">
+        <p className="mock__kicker">Application page</p>
+        <h3 className="mock__name">Alex Chen</h3>
+        <p className="mock__role">Product designer · San Francisco</p>
+        <p className="mock__blurb">
+          A short intro, then the CV. Recruiters watch, download, and remember
+          a person — not another attachment.
+        </p>
+        <div className="mock__actions">
+          <span className="mock__btn">Watch pitch</span>
+          <span className="mock__btn mock__btn--ghost">Download CV</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RolePagesMock() {
+  const rows = [
+    { role: "Product Designer", company: "Stripe", status: "Live" },
+    { role: "Product Manager", company: "Notion", status: "Live" },
+    { role: "Design Engineer", company: "Linear", status: "Draft" },
+  ];
+  return (
+    <div className="mock__frame">
+      <div className="mock__body mock__body--full">
+        <p className="mock__kicker">Your applications</p>
+        <h3 className="mock__name">One page per role</h3>
+        <ul className="mock__rows">
+          {rows.map((row) => (
+            <li className="mock__row" key={row.role}>
+              <span>
+                <strong>{row.role}</strong>
+                <em>{row.company}</em>
+              </span>
+              <span className="mock__status">{row.status}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function ShareLinkMock() {
+  return (
+    <div className="mock__frame">
+      <div className="mock__body mock__body--full">
+        <p className="mock__kicker">Shareable link</p>
+        <h3 className="mock__name">No login required</h3>
+        <p className="mock__url">myhireview.com/view/alex-chen/product-designer</p>
+        <p className="mock__blurb">
+          Private by default — the public id is not derived from your name. Send
+          it in an email, a LinkedIn note, or the application form.
+        </p>
+        <div className="mock__actions">
+          <span className="mock__btn">Copy link</span>
+          <span className="mock__btn mock__btn--ghost">Preview</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsMock() {
+  return (
+    <div className="mock__frame">
+      <div className="mock__body mock__body--full">
+        <p className="mock__kicker">Analytics</p>
+        <h3 className="mock__name">Follow up with proof</h3>
+        <div className="mock__stats">
+          <div>
+            <strong>12</strong>
+            <span>Views</span>
+          </div>
+          <div>
+            <strong>4</strong>
+            <span>CV downloads</span>
+          </div>
+          <div>
+            <strong>2h</strong>
+            <span>Last viewed</span>
+          </div>
+        </div>
+        <div className="mock__bars" aria-hidden="true">
+          <span style={{ height: "42%" }} />
+          <span style={{ height: "68%" }} />
+          <span style={{ height: "35%" }} />
+          <span style={{ height: "88%" }} />
+          <span style={{ height: "54%" }} />
+          <span style={{ height: "72%" }} />
+          <span style={{ height: "46%" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const MOCKS = [
+  VideoPitchMock,
+  RolePagesMock,
+  ShareLinkMock,
+  AnalyticsMock,
 ] as const;
 
 export function DelegationSection() {
@@ -80,61 +192,47 @@ export function DelegationSection() {
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
     onUpdate();
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
+    return () => window.removeEventListener("scroll", onScroll);
   }, [goToStep]);
 
   const onTabClick = (index: number) => {
     const scroll = scrollRef.current;
-    if (!scroll) return;
-    const sectionTop = scroll.getBoundingClientRect().top + window.scrollY;
-    const target =
-      sectionTop +
-      (index / STEP_COUNT) * (scroll.offsetHeight - window.innerHeight) +
-      20;
-    const preferReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const trigger = scroll?.querySelectorAll<HTMLElement>(".trigger")[index];
+    if (!trigger) {
+      goToStep(index);
+      return;
+    }
     lockUntil.current = Number.POSITIVE_INFINITY;
-    setStep(index);
-    window.scrollTo({
-      top: target,
-      behavior: preferReduced ? "auto" : "smooth",
-    });
-    const release = () => {
+    const y = trigger.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: y, behavior: "smooth" });
+    goToStep(index);
+
+    const unlock = () => {
       lockUntil.current = 0;
-      window.removeEventListener("scrollend", release);
+      window.removeEventListener("scrollend", unlock);
     };
-    window.addEventListener("scrollend", release, { once: true });
-    window.setTimeout(release, preferReduced ? 50 : 1200);
+    window.addEventListener("scrollend", unlock);
+    window.setTimeout(unlock, 1200);
   };
 
-  const onTabKeyDown = (
-    event: KeyboardEvent<HTMLButtonElement>,
-    index: number,
-  ) => {
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     if (event.key === "ArrowDown" || event.key === "ArrowRight") {
       event.preventDefault();
-      const next = (index + 1) % STEP_COUNT;
-      onTabClick(next);
-      document.getElementById(`feature-tab-${next}`)?.focus();
-    }
-    if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      onTabClick(Math.min(STEP_COUNT - 1, index + 1));
+    } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
       event.preventDefault();
-      const next = (index - 1 + STEP_COUNT) % STEP_COUNT;
-      onTabClick(next);
-      document.getElementById(`feature-tab-${next}`)?.focus();
+      onTabClick(Math.max(0, index - 1));
     }
   };
 
   return (
     <section className="delegation" id="delegation">
-      <div className="delegation__scroll" id="delegation-scroll" ref={scrollRef}>
+      <div
+        className="delegation__scroll"
+        id="delegation-scroll"
+        ref={scrollRef}
+      >
         <div className="trigger" data-step="0"></div>
         <div className="trigger" data-step="1"></div>
         <div className="trigger" data-step="2"></div>
@@ -142,17 +240,16 @@ export function DelegationSection() {
         <div className="delegation__pin">
           <header className="delegation__header">
             <div className="delegation__heading">
-              <p className="badge">Intelligent Delegation</p>
+              <p className="badge">Your application page</p>
               <h2 className="h2">
-                Tell Parley once.
+                Create once.
                 <br />
-                <em>It handles the rest.</em>
+                <em>Share a link they open.</em>
               </h2>
             </div>
             <p className="delegation__lede">
-              Describe a goal in plain language and Parley breaks it into steps,
-              selects the right tools, and executes, keeping you updated along
-              the way.
+              Upload your CV, record a short pitch, and send a professional URL.
+              Recruiters see you. You see when they looked.
             </p>
           </header>
           <div className="delegation__inner">
@@ -186,21 +283,16 @@ export function DelegationSection() {
             </ol>
 
             <div className="stage" aria-live="polite">
-              {FEATURES.map((feature, index) => (
+              {MOCKS.map((Mock, index) => (
                 <div
                   className={step === index ? "mock is-active" : "mock"}
                   id={`mock-${index}`}
                   role="tabpanel"
                   data-step={index}
                   hidden={step !== index}
-                  key={feature.src}
+                  key={FEATURES[index].label}
                 >
-                  <img
-                    className="mock__img"
-                    src={feature.src}
-                    srcSet={feature.srcSet}
-                    alt=""
-                  />
+                  <Mock />
                 </div>
               ))}
             </div>
