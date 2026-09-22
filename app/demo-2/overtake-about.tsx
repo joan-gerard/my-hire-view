@@ -280,33 +280,31 @@ export function OvertakeAbout() {
           <div className="ot-wrap ot-story-grid">
             <div className="ot-story-copy">
               <h2>
-                Our founders spent a decade inside agencies that billed for
-                activity and hid behind reach metrics. Growth teams deserved
-                better.
+                Hiring still treats people like unread files. You apply, you
+                follow up, then nothing: no signal that anyone looked.
               </h2>
               <p>
-                So in 2019 we built the opposite: a small, senior team that ties
-                every decision to revenue, runs creative and media as one loop,
-                and reports numbers a CFO would sign off on. Six years later,
-                that discipline manages over $180M in spend for brands that
-                refuse to plateau.
+                So we built MyHireView: one page per role with your CV, an
+                optional video pitch, and a link you can share anywhere.
+                Recruiters open it with no account. You see when they viewed it,
+                so follow-ups aren&apos;t guesswork.
               </p>
             </div>
             <div className="ot-stats">
               <article className="ot-stat ot-stat-a">
-                <p>Brands scaled past $1M/mo</p>
+                <p>Recruiter scan time</p>
                 <p className="ot-stat-num">
-                  40<span>+</span>
+                  6<span>s</span>
                 </p>
               </article>
               <article className="ot-stat ot-stat-b">
-                <p>Brands scaled past $1M/mo</p>
-                <p className="ot-stat-num">10+</p>
+                <p>Engagement with video</p>
+                <p className="ot-stat-num">3×</p>
               </article>
               <article className="ot-stat ot-stat-c">
-                <p>Client retention rate</p>
+                <p>Time to share a page</p>
                 <p className="ot-stat-num ot-stat-num-light">
-                  94<span>%</span>
+                  &lt;2<span>m</span>
                 </p>
               </article>
             </div>

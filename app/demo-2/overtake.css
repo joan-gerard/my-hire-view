@@ -404,30 +404,36 @@
 
 .ot-stats {
   position: relative;
-  min-height: 460px;
+  width: 100%;
+  max-width: 400px;
+  min-height: 420px;
+  justify-self: end;
 }
 
 .ot-stat {
   position: absolute;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 28px;
-  padding: 30px;
-  border-radius: 30px;
-  text-align: center;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 176px;
+  height: 176px;
+  padding: 20px 20px 28px;
+  border-radius: 28px;
+  text-align: left;
 }
 
 .ot-stat p:first-child {
-  max-width: 140px;
-  font-size: 14px;
+  max-width: 120px;
+  font-size: 13px;
   line-height: 1.2;
 }
 
 .ot-stat-num {
+  align-self: flex-end;
   font-family: Switzer, sans-serif;
-  font-size: 52px;
+  font-size: 44px;
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -439,12 +445,12 @@
 }
 
 .ot-stat-a {
-  top: 0;
-  left: 4%;
-  width: 234px;
-  min-height: 241px;
+  top: 24px;
+  left: 0;
   background: var(--paper);
   color: var(--muted);
+  transform: rotate(-12deg);
+  z-index: 2;
 }
 
 .ot-stat-a .ot-stat-num {
@@ -452,12 +458,12 @@
 }
 
 .ot-stat-b {
-  top: 38px;
-  right: 4%;
-  width: 238px;
-  min-height: 244px;
+  top: 0;
+  right: 0;
   background: var(--pink);
   color: rgba(11, 11, 12, 0.7);
+  transform: rotate(15deg);
+  z-index: 1;
 }
 
 .ot-stat-b .ot-stat-num {
@@ -465,12 +471,13 @@
 }
 
 .ot-stat-c {
-  top: 220px;
-  left: 28%;
-  width: 210px;
-  min-height: 219px;
+  top: 210px;
+  left: 50%;
+  margin-left: -88px;
   background: var(--deep);
   color: var(--mist);
+  transform: rotate(-8deg);
+  z-index: 3;
 }
 
 .ot-stat-num-light {
@@ -957,6 +964,8 @@
 
   .ot-stats {
     min-height: 0;
+    max-width: none;
+    justify-self: stretch;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
@@ -965,7 +974,10 @@
   .ot-stat {
     position: static;
     width: auto;
+    height: auto;
     min-height: 200px;
+    margin-left: 0;
+    transform: none;
   }
 
   .ot-stat-c {
