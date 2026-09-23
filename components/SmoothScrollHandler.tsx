@@ -10,6 +10,8 @@ const SCROLL_DURATION_MS = 1400;
  * Listens for clicks on in-page anchor links (e.g. href="#early-access") and
  * scrolls to the target with a custom smooth animation instead of the browser default.
  * Skips modified clicks and non-primary buttons so Cmd/Ctrl/middle-click keep working.
+ * Updates the URL hash via pushState so the section remains refreshable, shareable,
+ * and reachable via browser history without a native jump that fights the animation.
  */
 export function SmoothScrollHandler() {
   useEffect(() => {
@@ -33,6 +35,9 @@ export function SmoothScrollHandler() {
       if (!element) return;
 
       e.preventDefault();
+      if (window.location.hash !== href) {
+        window.history.pushState(null, "", href);
+      }
       smoothScrollToElement(element, { duration: SCROLL_DURATION_MS });
     }
 
