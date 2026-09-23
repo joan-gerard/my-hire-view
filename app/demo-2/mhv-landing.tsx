@@ -12,8 +12,8 @@ import {
   type PricingFeature,
   type PricingTier,
 } from "@/components/public/pricing/constants";
+import Link from "next/link";
 import {
-  FormEvent,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -29,7 +29,7 @@ const NAV = [
   { label: "Home", href: "#top" },
   { label: "How to", href: "#how" },
   { label: "Pricing", href: "#pricing" },
-  { label: "About", href: "#top", current: true },
+  { label: "FAQs", href: "#faq" },
 ];
 
 const BILLING_OPTIONS = [
@@ -42,11 +42,11 @@ function withoutEmDash(text: string): string {
   return text.replace(/\u2014/g, " -");
 }
 
-const PAGE_LINKS = [
-  { label: "Contact", href: "#contact" },
-  { label: "FAQs", href: "#faq" },
-  { label: "Privacy Policy", href: "#legal" },
-];
+const LEGAL_LINKS = [
+  { label: "Terms of Service", href: "/terms" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Cookies", href: "/cookies" },
+] as const;
 
 const HERO_IMAGES = [
   { src: "/demo/hero-image-1.webp", width: 430 },
@@ -90,29 +90,6 @@ function dailyLogoDotColor(date = new Date()): string {
   const day = Math.floor(date.getTime() / 86_400_000);
   return LOGO_DOT_COLORS[day % LOGO_DOT_COLORS.length];
 }
-
-const SOCIALS = [
-  {
-    label: "Instagram",
-    href: "https://www.instagram.com/",
-    src: `${CDN}/UNHWO6o4eJm1sJGkiuTB3wK7g.svg`,
-  },
-  {
-    label: "X",
-    href: "https://x.com/",
-    src: `${CDN}/SH6Bc51sN5nPuXONzfaEO0z5Wg.svg`,
-  },
-  {
-    label: "LinkedIn",
-    href: "https://www.linkedin.com/",
-    src: `${CDN}/XnrugqEPDcER7y3bawXIhRoS8.svg`,
-  },
-  {
-    label: "Facebook",
-    href: "https://www.facebook.com/",
-    src: `${CDN}/RfHkggb4cyU4G40c636RUhlKF4.svg`,
-  },
-];
 
 function RollLabel({ text }: { text: string }) {
   return (
@@ -347,8 +324,6 @@ function PricingTierCard({
 
 export function MhvLanding() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [pagesOpen, setPagesOpen] = useState(false);
-  const [joined, setJoined] = useState(false);
   const [billingInterval, setBillingInterval] =
     useState<BillingInterval>("annual");
   const [faqOpen, setFaqOpen] = useState<ReadonlySet<number>>(
@@ -438,14 +413,6 @@ export function MhvLanding() {
     };
   }, []);
 
-  function onSubscribe(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const email = String(data.get("email") ?? "").trim();
-    if (!email) return;
-    setJoined(true);
-  }
-
   return (
     <div className="mhv-landing ot-nav-deferred" id="top">
       <header className="ot-header">
@@ -460,44 +427,10 @@ export function MhvLanding() {
 
         <nav className="ot-nav" aria-label="Primary">
           {NAV.map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              aria-current={item.current ? "page" : undefined}
-            >
+            <a key={item.label} href={item.href}>
               {item.label}
             </a>
           ))}
-          <div
-            className={`ot-pages${pagesOpen ? " is-open" : ""}`}
-            onMouseEnter={() => setPagesOpen(true)}
-            onMouseLeave={() => setPagesOpen(false)}
-          >
-            <button
-              type="button"
-              className="ot-pages-trigger"
-              aria-expanded={pagesOpen}
-              onClick={() => setPagesOpen((open) => !open)}
-            >
-              Pages
-              <svg viewBox="0 0 12 8" width="10" height="7" aria-hidden="true">
-                <path
-                  d="M1 1.2 6 6.2 11 1.2"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-            <div className="ot-pages-menu" role="menu">
-              {PAGE_LINKS.map((item) => (
-                <a key={item.label} href={item.href} role="menuitem">
-                  {item.label}
-                </a>
-              ))}
-            </div>
-          </div>
         </nav>
 
         <div className="ot-header-end">
@@ -517,7 +450,7 @@ export function MhvLanding() {
 
       {menuOpen ? (
         <div className="ot-drawer">
-          {[...NAV, ...PAGE_LINKS].map((item) => (
+          {NAV.map((item) => (
             <a
               key={item.label}
               href={item.href}
@@ -801,7 +734,7 @@ export function MhvLanding() {
         </section>
       </main>
 
-      <footer className="ot-footer" id="contact">
+      <footer className="ot-footer">
         <div className="ot-footer-card">
           <div className="ot-footer-inner">
             <div className="ot-footer-cta">
@@ -809,83 +742,18 @@ export function MhvLanding() {
               <ArrowButton href="/login" label="Login" tone="lime" />
             </div>
 
-            <div className="ot-footer-mid">
-              <div className="ot-news">
-                <div>
-                  <h3>Stay connected</h3>
-                  <p>
-                    Join our newsletter for tips, updates, and project
-                    highlights only the good stuff.
-                  </p>
-                </div>
-                {joined ? (
-                  <p className="ot-joined" role="status">
-                    You&apos;re on the list.
-                  </p>
-                ) : (
-                  <form onSubmit={onSubscribe}>
-                    <label className="ot-email">
-                      <span className="ot-sr">Email</span>
-                      <input
-                        name="email"
-                        type="email"
-                        required
-                        placeholder="Your email address*"
-                        autoComplete="email"
-                      />
-                      <button type="submit" aria-label="Subscribe">
-                        <img
-                          src={`${CDN}/5neo2o4T9lq8ZcucmEfXT4A3ec0.svg`}
-                          alt=""
-                          width={23}
-                          height={19}
-                        />
-                      </button>
-                    </label>
-                  </form>
-                )}
-                <div className="ot-follow">
-                  <p>Follow us on:</p>
-                  <ul>
-                    {SOCIALS.map((social) => (
-                      <li key={social.label}>
-                        <a href={social.href} aria-label="Social Link">
-                          <img src={social.src} alt="" />
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="ot-footer-links">
-                <div>
-                  <p className="ot-footer-label">Pages</p>
-                  <a href="#top">Home</a>
-                  <a href="#top">About</a>
-                  <a href="#how">How to</a>
-                  <a href="#pricing">Pricing</a>
-                </div>
-                <div>
-                  <p className="ot-footer-label">Support</p>
-                  <a href="#faq">FAQs</a>
-                  <a href="#legal">Terms</a>
-                  <a href="#legal">Privacy Policy</a>
-                  <a href="#legal">Cookies</a>
-                </div>
-              </div>
-
-              <div className="ot-footer-contact">
-                <div>
-                  <p className="ot-footer-label">Stay Connected</p>
-                  <a href="mailto:hello@yourbrand.com">hello@yourbrand.com</a>
-                  <a href="tel:+12025550147">+1 (202) 555 0147</a>
-                </div>
-              </div>
-            </div>
-
-            <div className="ot-copyright" id="legal">
-              <p>© 2026 MyHireView</p>
+            <div className="ot-footer-bar">
+              <a className="ot-footer-brand" href="#top">
+                MyHireView
+              </a>
+              <nav className="ot-footer-legal" aria-label="Legal links">
+                {LEGAL_LINKS.map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+              <p className="ot-copyright">© 2026 MyHireView</p>
             </div>
           </div>
         </div>
