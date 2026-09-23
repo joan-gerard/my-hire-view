@@ -124,7 +124,7 @@ export function OvertakeAbout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pagesOpen, setPagesOpen] = useState(false);
   const [joined, setJoined] = useState(false);
-  const caseRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const caseRefs = useRef<Array<HTMLElement | null>>([]);
 
   useEffect(() => {
     const desktopQuery = window.matchMedia("(min-width: 721px)");
@@ -146,7 +146,7 @@ export function OvertakeAbout() {
       return t * t * (3 - 2 * t);
     }
 
-    function setRecess(el: HTMLAnchorElement | null, value: number) {
+    function setRecess(el: HTMLElement | null, value: number) {
       if (!el) return;
       el.style.setProperty("--ot-recess", value.toFixed(4));
     }
@@ -398,13 +398,12 @@ export function OvertakeAbout() {
             </div>
             <div className="ot-work-list">
               {HOW_IT_WORKS_STEPS.map((step, index) => (
-                <a
+                <article
                   key={step.id}
                   ref={(node) => {
                     caseRefs.current[index] = node;
                   }}
                   className="ot-case"
-                  href="/login"
                 >
                   <div className="ot-case-media" aria-hidden="true">
                     <video
@@ -433,7 +432,7 @@ export function OvertakeAbout() {
                         </p>
                         <p className="ot-case-metric-label">of three steps</p>
                       </div>
-                      <span className="ot-case-cta">
+                      <a className="ot-case-cta" href="/login">
                         <RollLabel text="Get started" />
                         <span className="ot-case-cta-icon" aria-hidden="true">
                           <img
@@ -443,10 +442,10 @@ export function OvertakeAbout() {
                             height={16}
                           />
                         </span>
-                      </span>
+                      </a>
                     </div>
                   </div>
-                </a>
+                </article>
               ))}
               <div className="ot-work-spacer" aria-hidden="true" />
             </div>

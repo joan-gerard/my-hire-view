@@ -738,11 +738,11 @@
   height: 16px;
 }
 
-.ot-case:hover .ot-roll span:first-child {
+.ot-case-cta:hover .ot-roll span:first-child {
   transform: translateY(-110%);
 }
 
-.ot-case:hover .ot-roll span:last-child {
+.ot-case-cta:hover .ot-roll span:last-child {
   transform: translateY(0);
 }
 
