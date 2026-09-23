@@ -9,7 +9,6 @@ const NAV = [
   { label: "Home", href: "#top" },
   { label: "How to", href: "#how" },
   { label: "About", href: "#top", current: true },
-  { label: "Blog", href: "#team" },
 ];
 
 const PAGE_LINKS = [
@@ -47,18 +46,18 @@ const LOGOS = [
 const PRINCIPLES = [
   {
     n: "01",
-    title: "Outcomes over activity",
-    body: "If it doesn't move revenue, CAC, or payback, we don't count it as work.",
+    title: "Video Pitch",
+    body: "Let recruiters see and hear you. Upload a 60–90 second video pitch to showcase your communication skills and personality.",
   },
   {
     n: "02",
-    title: "Truth in the numbers",
-    body: "We'd rather show an uncomfortable metric than a flattering vanity one.",
+    title: "Smart Analytics",
+    body: "Know when recruiters view your application. Track engagement and follow up at the perfect time.",
   },
   {
     n: "03",
-    title: "Senior hands only",
-    body: "The people who win your pitch are the people who run your account.",
+    title: "Shareable Links",
+    body: "Create custom applications for each role with unique, professional URLs. No login required for recruiters.",
   },
 ];
 
@@ -76,29 +75,6 @@ function dailyLogoDotColor(date = new Date()): string {
   const day = Math.floor(date.getTime() / 86_400_000);
   return LOGO_DOT_COLORS[day % LOGO_DOT_COLORS.length];
 }
-
-const TEAM = [
-  {
-    name: "Maya Chen",
-    role: "Founder, Media",
-    src: `${CDN}/eOi6ikxEOa6cyZHnVHIWZiMzcFY.jpg`,
-  },
-  {
-    name: "Dev Okafor",
-    role: "Head of Creative",
-    src: `${CDN}/ohkx1aSG8d7DdRjW6fpYGxZWA.jpg`,
-  },
-  {
-    name: "Priya Raman",
-    role: "Head of Analytics",
-    src: `${CDN}/JhMntRZ4YJoZLBup4uG7ZuP460s.jpg`,
-  },
-  {
-    name: "Liam Novak",
-    role: "Head of Growth Strategy",
-    src: `${CDN}/wGBT6a6I8Ai2j9ur0WMB6IiiB9M.jpg`,
-  },
-];
 
 const SOCIALS = [
   {
@@ -293,7 +269,6 @@ export function OvertakeAbout() {
               ))}
             </div>
           </div>
-          <a href="#team">Blog</a>
         </nav>
 
         <div className="ot-header-end">
@@ -474,7 +449,15 @@ export function OvertakeAbout() {
         <section className="ot-principles" aria-labelledby="principles-title">
           <div className="ot-principles-slab">
             <div className="ot-principles-panel">
-              <h2 id="principles-title">What we stand on</h2>
+              <div className="ot-principles-intro">
+                <h2 id="principles-title">
+                  Introducing MyHireView: Your application, elevated
+                </h2>
+                <p>
+                  Stand out with a video pitch, smart analytics, and shareable
+                  links, so recruiters see the real you.
+                </p>
+              </div>
               <div className="ot-principle-grid">
                 {PRINCIPLES.map((item) => (
                   <article key={item.n} className="ot-principle">
@@ -500,47 +483,6 @@ export function OvertakeAbout() {
                 ))}
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="ot-team" id="team">
-          <div className="ot-wrap">
-            <div className="ot-team-intro">
-              <p className="ot-pill">The senior team promise</p>
-              <h2>No juniors hiding behind the pitch deck.</h2>
-            </div>
-            <ul className="ot-team-grid">
-              {TEAM.map((person) => (
-                <li key={person.name}>
-                  <div className="ot-portrait">
-                    <img src={person.src} alt="" width={400} height={450} />
-                    <div className="ot-portrait-socials">
-                      <a href="https://x.com/" aria-label="Social Link">
-                        <img
-                          src={SOCIALS[1].src}
-                          alt=""
-                          width={14}
-                          height={14}
-                        />
-                      </a>
-                      <a
-                        href="https://www.linkedin.com/"
-                        aria-label="Social Link"
-                      >
-                        <img
-                          src={SOCIALS[2].src}
-                          alt=""
-                          width={14}
-                          height={14}
-                        />
-                      </a>
-                    </div>
-                  </div>
-                  <h3>{person.name}</h3>
-                  <p>{person.role}</p>
-                </li>
-              ))}
-            </ul>
           </div>
         </section>
       </main>
@@ -608,7 +550,6 @@ export function OvertakeAbout() {
                   <a href="#top">Home</a>
                   <a href="#top">About</a>
                   <a href="#how">How to</a>
-                  <a href="#team">Blog</a>
                 </div>
                 <div>
                   <p className="ot-footer-label">Support</p>
