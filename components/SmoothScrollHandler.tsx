@@ -9,14 +9,21 @@ const SCROLL_DURATION_MS = 1400;
 /**
  * Listens for clicks on in-page anchor links (e.g. href="#early-access") and
  * scrolls to the target with a custom smooth animation instead of the browser default.
+ * Skips modified clicks and non-primary buttons so Cmd/Ctrl/middle-click keep working.
  */
 export function SmoothScrollHandler() {
   useEffect(() => {
     function handleClick(e: MouseEvent): void {
-      const target = e.target;
-      if (!(target instanceof HTMLAnchorElement)) return;
+      // Preserve browser behavior for new-tab / modified clicks.
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 
-      const href = target.getAttribute("href");
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      const anchor = target.closest("a[href]");
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+
+      const href = anchor.getAttribute("href");
       if (!href || !href.startsWith("#")) return;
 
       const id = href.slice(1);
