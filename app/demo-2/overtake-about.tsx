@@ -27,22 +27,6 @@ const HERO_IMAGES = [
   { src: "/demo/hero-image-7.webp", width: 290 },
 ];
 
-const LOGOS = [
-  "8YlmHQ6DeSu2sqoakhkKMQnSuQ.svg",
-  "3AK7KxQNH7ppyFRSwQBDI3f8o.svg",
-  "DHF0voxCUcjFEAyv97qvaX3HVLE.svg",
-  "g1UWMIrGG8yG26lxcWec8dFWtwA.svg",
-  "f4IlrsMoqnBBanfpbMaX2mRu7E.svg",
-  "ixrMK3y6OQfsKnXYVi0raeGyzr0.svg",
-  "gr5FR1ur6D0LFO5mGwsz1kkwKsA.svg",
-  "Qr6tFNDxPPnhk1QJ8V8g7TfQzo.svg",
-  "Nr35cpkJsk84ucWJCUulLR9g8.svg",
-  "SImeSdIBL90qXoq2K7XpmFQmHs.svg",
-  "8RZwGfryj1qwZKhPkz14lJxt8A.svg",
-  "asUrOQQtLkTWQdGdQJH06UhH0c.svg",
-  "ZnfT2OdBvt6TAB7N8vgaRPPkc.svg",
-];
-
 const PRINCIPLES = [
   {
     n: "01",
@@ -376,6 +360,29 @@ export function OvertakeAbout() {
           </div>
         </section>
 
+        <section className="ot-principles" aria-labelledby="principles-title">
+          <div className="ot-principles-panel">
+            <div className="ot-principles-intro">
+              <h2 id="principles-title">
+                Introducing MyHireView: Your application, elevated
+              </h2>
+              <p>
+                Stand out with a video pitch, smart analytics, and shareable
+                links, so recruiters see the real you.
+              </p>
+            </div>
+            <div className="ot-principle-grid">
+              {PRINCIPLES.map((item) => (
+                <article key={item.n} className="ot-principle">
+                  <span className="ot-principle-n">{item.n}</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="ot-work" id="how" aria-labelledby="how-title">
           <div className="ot-wrap">
             <div className="ot-work-top">
@@ -442,46 +449,6 @@ export function OvertakeAbout() {
                 </a>
               ))}
               <div className="ot-work-spacer" aria-hidden="true" />
-            </div>
-          </div>
-        </section>
-
-        <section className="ot-principles" aria-labelledby="principles-title">
-          <div className="ot-principles-slab">
-            <div className="ot-principles-panel">
-              <div className="ot-principles-intro">
-                <h2 id="principles-title">
-                  Introducing MyHireView: Your application, elevated
-                </h2>
-                <p>
-                  Stand out with a video pitch, smart analytics, and shareable
-                  links, so recruiters see the real you.
-                </p>
-              </div>
-              <div className="ot-principle-grid">
-                {PRINCIPLES.map((item) => (
-                  <article key={item.n} className="ot-principle">
-                    <span className="ot-principle-n">{item.n}</span>
-                    <h3>{item.title}</h3>
-                    <p>{item.body}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
-            <div className="ot-marquee ot-logo-marquee" aria-hidden="true">
-              <div className="ot-marquee-track ot-logo-track">
-                {[0, 1].map((copy) => (
-                  <div className="ot-logo-set" key={copy}>
-                    {LOGOS.map((file) => (
-                      <img
-                        key={`${copy}-${file}`}
-                        src={`${CDN}/${file}`}
-                        alt=""
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </section>
