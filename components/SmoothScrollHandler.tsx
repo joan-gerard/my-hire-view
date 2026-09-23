@@ -22,10 +22,6 @@ export function SmoothScrollHandler() {
       const id = href.slice(1);
       if (!id) return;
 
-      if (document.documentElement.classList.contains("parley-demo-page")) {
-        return;
-      }
-
       const element = document.getElementById(id);
       if (!element) return;
 
