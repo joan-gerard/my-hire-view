@@ -1,12 +1,13 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { HOW_IT_WORKS_STEPS } from "@/components/public/how-it-works";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 const CDN = "https://framerusercontent.com/images";
 
 const NAV = [
   { label: "Home", href: "#top" },
-  { label: "Case Studies", href: "#story" },
+  { label: "How to", href: "#how" },
   { label: "About", href: "#top", current: true },
   { label: "Blog", href: "#team" },
 ];
@@ -24,6 +25,7 @@ const HERO_IMAGES = [
   { src: "/demo/hero-image-4.webp", width: 430 },
   { src: "/demo/hero-image-5.webp", width: 350 },
   { src: "/demo/hero-image-6.webp", width: 290 },
+  { src: "/demo/hero-image-7.webp", width: 290 },
 ];
 
 const LOGOS = [
@@ -59,6 +61,21 @@ const PRINCIPLES = [
     body: "The people who win your pitch are the people who run your account.",
   },
 ];
+
+/** Brand-adjacent accents; index advances once per UTC day. */
+const LOGO_DOT_COLORS = [
+  "#9efc65",
+  "#ffbcfc",
+  "#7dd3c0",
+  "#ffd36a",
+  "#8ec5ff",
+  "#ff8f6b",
+] as const;
+
+function dailyLogoDotColor(date = new Date()): string {
+  const day = Math.floor(date.getTime() / 86_400_000);
+  return LOGO_DOT_COLORS[day % LOGO_DOT_COLORS.length];
+}
 
 const TEAM = [
   {
@@ -147,6 +164,74 @@ export function OvertakeAbout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pagesOpen, setPagesOpen] = useState(false);
   const [joined, setJoined] = useState(false);
+  const caseRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 721px)");
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    function coverage(current: DOMRect, next: DOMRect): number {
+      if (current.height <= 0) return 0;
+      return Math.min(
+        1,
+        Math.max(0, (current.bottom - next.top) / current.height),
+      );
+    }
+
+    /** Ease recess from ~half covered through nearly full cover. */
+    function recessProgress(amount: number): number {
+      const start = 0.45;
+      const end = 0.95;
+      const t = Math.min(1, Math.max(0, (amount - start) / (end - start)));
+      return t * t * (3 - 2 * t);
+    }
+
+    function setRecess(el: HTMLAnchorElement | null, value: number) {
+      if (!el) return;
+      el.style.setProperty("--ot-recess", value.toFixed(4));
+    }
+
+    function update() {
+      const [first, second, third] = caseRefs.current;
+
+      if (!desktopQuery.matches || motionQuery.matches) {
+        setRecess(first, 0);
+        setRecess(second, 0);
+        setRecess(third, 0);
+        return;
+      }
+
+      if (!first || !second || !third) return;
+
+      const firstRect = first.getBoundingClientRect();
+      const secondRect = second.getBoundingClientRect();
+      const thirdRect = third.getBoundingClientRect();
+
+      setRecess(first, recessProgress(coverage(firstRect, secondRect)));
+      setRecess(second, recessProgress(coverage(secondRect, thirdRect)));
+      setRecess(third, 0);
+    }
+
+    let frame = 0;
+    function onScrollOrResize() {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    }
+
+    update();
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize);
+    desktopQuery.addEventListener("change", onScrollOrResize);
+    motionQuery.addEventListener("change", onScrollOrResize);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
+      desktopQuery.removeEventListener("change", onScrollOrResize);
+      motionQuery.removeEventListener("change", onScrollOrResize);
+    };
+  }, []);
 
   function onSubscribe(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -161,6 +246,11 @@ export function OvertakeAbout() {
       <header className="ot-header">
         <a className="ot-logo" href="#top">
           MyHireView
+          <span
+            className="ot-logo-dot"
+            style={{ backgroundColor: dailyLogoDotColor() }}
+            aria-hidden="true"
+          />
         </a>
 
         <nav className="ot-nav" aria-label="Primary">
@@ -311,6 +401,76 @@ export function OvertakeAbout() {
           </div>
         </section>
 
+        <section className="ot-work" id="how" aria-labelledby="how-title">
+          <div className="ot-wrap">
+            <div className="ot-work-top">
+              <div className="ot-work-intro">
+                <h2 id="how-title">How to</h2>
+                <p>
+                  Our platform helps you stand out in your job search by
+                  providing you with the tools and resources you need to
+                  succeed.
+                </p>
+              </div>
+              <ArrowButton href="/login" label="Get started" tone="dark" />
+            </div>
+            <div className="ot-work-list">
+              {HOW_IT_WORKS_STEPS.map((step, index) => (
+                <a
+                  key={step.id}
+                  ref={(node) => {
+                    caseRefs.current[index] = node;
+                  }}
+                  className="ot-case"
+                  href="/login"
+                >
+                  <div className="ot-case-media" aria-hidden="true">
+                    <video
+                      src={step.video}
+                      muted
+                      loop
+                      playsInline
+                      autoPlay
+                      aria-label={step.title}
+                    />
+                  </div>
+                  <div className="ot-case-info">
+                    <div className="ot-case-top">
+                      <div className="ot-case-badges">
+                        <span className="ot-case-badge">Step {step.id}</span>
+                      </div>
+                      <div className="ot-case-copy">
+                        <h3>{step.title}</h3>
+                        <p>{step.description}</p>
+                      </div>
+                    </div>
+                    <div className="ot-case-bottom">
+                      <div className="ot-case-metric">
+                        <p className="ot-case-metric-value">
+                          {String(step.id).padStart(2, "0")}
+                        </p>
+                        <p className="ot-case-metric-label">of three steps</p>
+                      </div>
+                      <span className="ot-case-cta">
+                        <RollLabel text="Get started" />
+                        <span className="ot-case-cta-icon" aria-hidden="true">
+                          <img
+                            src={`${CDN}/fwz16wJTN5Rg5RsxBmmMoSp6qy0.svg`}
+                            alt=""
+                            width={16}
+                            height={16}
+                          />
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+              <div className="ot-work-spacer" aria-hidden="true" />
+            </div>
+          </div>
+        </section>
+
         <section className="ot-principles" aria-labelledby="principles-title">
           <div className="ot-principles-slab">
             <div className="ot-principles-panel">
@@ -389,7 +549,7 @@ export function OvertakeAbout() {
         <div className="ot-footer-card">
           <div className="ot-footer-inner">
             <div className="ot-footer-cta">
-              <h2>Ready to outpace your category?</h2>
+              <h2>Ready to transform your job search?</h2>
               <ArrowButton href="/login" label="Login" tone="lime" />
             </div>
 
@@ -447,14 +607,15 @@ export function OvertakeAbout() {
                   <p className="ot-footer-label">Pages</p>
                   <a href="#top">Home</a>
                   <a href="#top">About</a>
-                  <a href="#story">Case Studies</a>
+                  <a href="#how">How to</a>
                   <a href="#team">Blog</a>
                 </div>
                 <div>
                   <p className="ot-footer-label">Support</p>
                   <a href="#contact">FAQs</a>
-                  <a href="#contact">Contact us</a>
+                  <a href="#legal">Terms</a>
                   <a href="#legal">Privacy Policy</a>
+                  <a href="#legal">Cookies</a>
                 </div>
               </div>
 
@@ -464,22 +625,11 @@ export function OvertakeAbout() {
                   <a href="mailto:hello@yourbrand.com">hello@yourbrand.com</a>
                   <a href="tel:+12025550147">+1 (202) 555 0147</a>
                 </div>
-                <div>
-                  <p className="ot-footer-label">Offline</p>
-                  <a href="https://www.google.com/maps">
-                    1238 Echo Ridge Blvd, Suite 400, San Francisco, CA 94103,
-                    United States
-                  </a>
-                </div>
               </div>
             </div>
 
             <div className="ot-copyright" id="legal">
-              <p>© 2026 Overtake Growth Inc.</p>
-              <p>
-                Design by <a href="https://www.webestica.com/">Webestica</a>,
-                Powered by <a href="https://framer.com/">Framer</a>
-              </p>
+              <p>© 2026 MyHireView</p>
             </div>
           </div>
         </div>
