@@ -1,5 +1,5 @@
-import { OvertakeAbout } from "./overtake-about";
+import { MhvLanding } from "./mhv-landing";
 
 export default function Demo2Page() {
-  return <OvertakeAbout />;
+  return <MhvLanding />;
 }

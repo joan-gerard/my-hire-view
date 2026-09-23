@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import "./overtake.css";
+import "./mhv-demo.css";
 
 export const metadata: Metadata = {
   title: "MyHireView — Our story",

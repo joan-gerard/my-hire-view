@@ -345,7 +345,7 @@ function PricingTierCard({
   );
 }
 
-export function OvertakeAbout() {
+export function MhvLanding() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pagesOpen, setPagesOpen] = useState(false);
   const [joined, setJoined] = useState(false);
@@ -447,7 +447,7 @@ export function OvertakeAbout() {
   }
 
   return (
-    <div className="overtake ot-nav-deferred" id="top">
+    <div className="mhv-landing ot-nav-deferred" id="top">
       <header className="ot-header">
         <a className="ot-logo" href="#top">
           MyHireView
@@ -890,16 +890,6 @@ export function OvertakeAbout() {
           </div>
         </div>
       </footer>
-
-      <a className="ot-get" href="https://framer.link/overtake">
-        <RollLabel text="Get it for FREE" />
-        <img
-          src={`${CDN}/JCDk8i61Ec1N2laCFRxqdUPv0sM.svg`}
-          alt=""
-          width={21}
-          height={21}
-        />
-      </a>
     </div>
   );
 }
