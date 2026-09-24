@@ -10,6 +10,8 @@ function useCaseRecess(
   useEffect(() => {
     const desktopQuery = window.matchMedia("(min-width: 721px)");
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const workTop = document.querySelector<HTMLElement>(".ot-work-top");
+    const workList = document.querySelector<HTMLElement>(".ot-work-list");
 
     function coverage(current: DOMRect, next: DOMRect): number {
       if (current.height <= 0) return 0;
@@ -32,10 +34,26 @@ function useCaseRecess(
       el.style.setProperty("--ot-recess", value.toFixed(4));
     }
 
+    /** Keep cards below the sticky How-to header (taller when Get started wraps). */
+    function syncCaseStickyTop(enabled: boolean) {
+      if (!workList) return;
+      if (!enabled || !workTop) {
+        workList.style.removeProperty("--ot-case-sticky-top");
+        return;
+      }
+      const stickyOffset = Number.parseFloat(getComputedStyle(workTop).top) || 0;
+      const gap = 16;
+      const top = Math.ceil(stickyOffset + workTop.offsetHeight + gap);
+      workList.style.setProperty("--ot-case-sticky-top", `${top}px`);
+    }
+
     function update() {
+      const stacking = desktopQuery.matches && !motionQuery.matches;
+      syncCaseStickyTop(stacking);
+
       const [first, second, third] = caseRefs.current;
 
-      if (!desktopQuery.matches || motionQuery.matches) {
+      if (!stacking) {
         setRecess(first, 0);
         setRecess(second, 0);
         setRecess(third, 0);
@@ -71,6 +89,7 @@ function useCaseRecess(
       window.removeEventListener("resize", onScrollOrResize);
       desktopQuery.removeEventListener("change", onScrollOrResize);
       motionQuery.removeEventListener("change", onScrollOrResize);
+      workList?.style.removeProperty("--ot-case-sticky-top");
     };
   }, []);
 }
