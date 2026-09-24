@@ -2,7 +2,7 @@
 
 **Purpose of this doc:** Working decisions on Free / Pro / Premium for MyHireView. It is **not** a second backlog — actionable engineering work lives in [Backlog.md](Backlog.md).
 
-**Status:** Plan names, monthly and annual USD prices, numeric caps, Free primary-only, analytics split, and application-cap counting rules below are **working decisions** — expected to change before launch. **E1** (lock tiers) and **E2** (Stripe checkout / gates) are **deferred until near public launch**; do not treat this matrix as final. Display currency on `/pricing` is **USD**; Stripe adaptive/local presentment can come later with checkout.
+**Status:** Plan names, monthly and annual USD prices, numeric caps, Free primary-only, analytics split, and application-cap counting rules below are **working decisions** — expected to change before launch. **E1** (lock tiers) and **E2** (Stripe checkout / gates) are **deferred until near public launch**; do not treat this matrix as final. Display currency on the homepage `#pricing` section is **USD**; Stripe adaptive/local presentment can come later with checkout.
 
 Homepage marketing FAQ copy is **placeholder** and is intentionally **not** used here as input for what tiers should offer.
 
@@ -15,7 +15,7 @@ Homepage marketing FAQ copy is **placeholder** and is intentionally **not** used
 | [§3 Tiers](#3-tiers--free--pro--premium) | Free · Pro · Premium matrix, enforcement, adjacent features |
 | [§4 Source excerpts](#4-source-excerpts-verbatim-intent) | Verbatim intent from earlier docs |
 | [§5 Still open](#5-still-open) | Remaining TBD items (checkout UX, when to build adjacent features, API gates) |
-| [§6 How to keep this current](#6-how-to-keep-this-current) | Maintenance rules for this doc and `/pricing` |
+| [§6 How to keep this current](#6-how-to-keep-this-current) | Maintenance rules for this doc and the homepage `#pricing` section |
 
 ---
 
@@ -29,7 +29,7 @@ There are two product surfaces:
 
 | Surface | Who | Role |
 | ------- | --- | ---- |
-| **Marketing** (`/`, `/pricing`) | Visitors | Explain the product, waitlist / launch interest, plan overview |
+| **Marketing** (`/`, in-page `#pricing`) | Visitors | Explain the product and show the plan overview. Login and Get started go to `/login`. |
 | **Product** (`/admin`, public `/view/…`) | Candidates + recruiters | Create and manage applications; recruiters view shared pages |
 
 ### Who uses it
@@ -76,7 +76,7 @@ Unless a row in §3 says otherwise, candidates on **any** plan are expected to u
 | Free access, if any, is a **free tier and/or trial only** — not unlimited free use of the app. | Same |
 | Creating / using applications should be **gated** behind an active plan or trial. | Same |
 | Billing provider direction: **Stripe (or similar)** — checkout, webhooks, Supabase subscription state. | Same |
-| `/pricing` must ship **real tiers aligned with billing**, not a stub. | Same; `/pricing` shows Free/Pro/Premium from §3 (E3-014) with current working USD prices; **E1 locks** near launch, then checkout in **E2**. |
+| The homepage `#pricing` section must show **real tiers aligned with billing**, not a stub. | Same; `#pricing` shows Free/Pro/Premium from §3 (E3-014) with current working USD prices; **E1 locks** near launch, then checkout in **E2**. |
 
 ---
 
@@ -86,7 +86,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 
 **Design intent:** Tailored CVs are the main paid unlock on **Pro** (core product promise: a CV that matches the role). **Premium** adds branding, unlimited scale (with a fair-use soft ceiling), and richer analytics — not “you may finally tailor a CV.”
 
-**Billing interval:** **Monthly and annual** (USD on `/pricing`). Annual is the default toggle on `/pricing` (highlights savings). Effective monthly on annual (~$3.25 Pro / ~$4.92 Premium) is marketing copy only — billed amounts are `$39/yr` and `$59/yr`. Stripe adaptive/local currency at checkout can come later with E2.
+**Billing interval:** **Monthly and annual** (USD on the homepage `#pricing` section). Annual is the default toggle (highlights savings). Effective monthly on annual (~$3.25 Pro / ~$4.92 Premium) is marketing copy only — billed amounts are `$39/yr` and `$59/yr`. Stripe adaptive/local currency at checkout can come later with E2.
 
 ### 3.1 Comparison matrix (at a glance)
 
@@ -181,7 +181,7 @@ These rules are product truth for when E2 gates ship; not implemented in API/UI 
 
 Remaining TBD items (treat §3 as a **working** matrix until E1 locks it near launch):
 
-- Stripe adaptive / local-currency presentment at checkout (E2) — `/pricing` stays USD for now.
+- Stripe adaptive / local-currency presentment at checkout (E2) — the homepage `#pricing` section stays USD for now.
 - Exact customer-facing copy when a Premium user approaches or hits the soft ceiling of 100.
 - When to build in-app video recording and which of Pro / Premium gets it.
 - When to ship AI interview prep as a paid add-on.
@@ -194,5 +194,5 @@ Remaining TBD items (treat §3 as a **working** matrix until E1 locks it near la
 ## 6. How to keep this current
 
 1. Treat this doc as the **working** source of truth for pricing and membership until E1 locks it near launch; tighten §5 as remaining items land.
-2. Keep `/pricing` aligned with this matrix — tier copy lives in `components/public/pricing/constants.ts`. If product thinking changes before launch, update this doc and the pricing page together; leave E1/E2 tickets deferred.
+2. Keep the homepage `#pricing` section aligned with this matrix — tier copy lives in `components/public/pricing/constants.ts`. If product thinking changes before launch, update this doc and those constants together; leave E1/E2 tickets deferred.
 3. When E1 (lock) and E2 (billing) ship near launch, update [Backlog.md](Backlog.md) (remove or strike the rows). Do not keep a parallel open checklist here.

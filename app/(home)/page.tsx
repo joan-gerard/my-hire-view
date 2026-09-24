@@ -1,5 +1,5 @@
 import { MhvLanding } from "./mhv-landing";
 
-export default function Demo2Page() {
+export default function HomePage() {
   return <MhvLanding />;
 }

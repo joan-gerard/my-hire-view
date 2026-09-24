@@ -8,7 +8,6 @@ type ApplicationViewFooterProps = {
 /**
  * Compact footer for `/view/[publicId]/[slug]`. Kept short so branding
  * and legal links stay present without competing with the application.
- * (Marketing pages use the larger `ViewPageFooter` via `Footer`.)
  */
 export default function ApplicationViewFooter({
   variant = "light",

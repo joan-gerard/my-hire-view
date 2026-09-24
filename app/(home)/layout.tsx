@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     "We built MyHireView because good applications kept vanishing in the void. Create a personalized job application page with CV, video pitch, and proof they looked.",
 };
 
-export default function Demo2Layout({ children }: { children: ReactNode }) {
+export default function HomeLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <link rel="preconnect" href="https://api.fontshare.com" />

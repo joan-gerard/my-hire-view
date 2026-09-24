@@ -35,7 +35,7 @@ const BILLING_OPTIONS = [
   { id: "annual", label: "Annual" },
 ] as const;
 
-/** Prefer ASCII punctuation in demo-2 copy (shared constants may use em dashes). */
+/** Prefer ASCII punctuation in homepage copy (shared constants may use em dashes). */
 function withoutEmDash(text: string): string {
   return text.replace(/\u2014/g, " -");
 }

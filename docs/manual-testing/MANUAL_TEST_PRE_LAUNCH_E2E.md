@@ -77,65 +77,34 @@ Do this signed out (incognito is fine).
 ### Header
 
 - [ ] Logo / wordmark present
-- [ ] Nav includes **Pricing**
-- [ ] Avatar menu → **Sign In** → `/login`
-- [ ] Mobile: hamburger opens menu (Pricing + Sign In); close / overlay works; header stays usable
-- [ ] On home, mobile header starts transparent over the hero and becomes solid after scrolling the cover section to the top
+- [ ] Nav includes **Home**, **How to**, **Pricing**, and **FAQs** (in-page anchors: `#top`, `#how`, `#pricing`, `#faq`)
+- [ ] **Login** goes to `/login`
+- [ ] Mobile: menu opens those same links plus Login; closing it returns to the page
 
-### Hero
+### Hero and sections
 
-- [ ] Headline **Stand out. Get Seen.** and subtitle render
-- [ ] Background video or fallback image loads
-- [ ] **Get Early Access** scrolls to the waitlist (`#early-access`)
-- [ ] **See pricing** goes to `/pricing`
+- [ ] Hero copy and images render
+- [ ] **Get started** goes to `/login`
+- [ ] How-it-works steps show titles and videos (or a graceful empty media state)
+- [ ] **Pricing** (`#pricing`): **Free / Pro / Premium** cards; **Pro** is highlighted
+- [ ] Monthly / annual toggle: default **annual**; switching updates prices; annual savings nudge appears on monthly
+- [ ] Each tier **Get started** goes to `/login` (checkout is **not** live — `E2-013`)
+- [ ] FAQ items expand and collapse
+- [ ] Footer: **Terms of Service** → `/terms`; **Privacy Policy** → `/privacy`; **Cookies** → `/cookies`
 
-### Page sections
-
-- [ ] Problem, solution, how-it-works steps, FAQ (expand/collapse items), and final CTA render without layout collapse
-- [ ] FAQ contact card / waitlist CTA (if present) still reaches the form
-- [ ] Smooth-scroll / hash links do not leave a broken offset under the header
-- [ ] Images and marketing video do not flash broken icons
-
-### Footer (marketing)
-
-- [ ] MyHireView wordmark links home; slogan present
-- [ ] **Terms of Service** → `/terms`; **Privacy Policy** → `/privacy`
-- [ ] Copyright year is current
-- [ ] Twitter / LinkedIn icons open the intended profiles in a new tab (`rel=noopener`)
+There is no `/pricing` route and no email-capture form on this page.
 
 ---
 
-## 2. Marketing — pricing (`/pricing`)
+## 2. Marketing — pricing (homepage `#pricing`)
 
-- [ ] Same header as home, but **solid** (not transparent-over-hero) from the first paint
-- [ ] Intro copy + **Free / Pro / Premium** cards
-- [ ] **Pro** is visually highlighted
-- [ ] Monthly / annual toggle: default **annual**; switching updates prices; annual savings nudge appears on monthly
-- [ ] Caps / FAQ copy matches the working draft (checkout is **not** live — `E2-013`)
-- [ ] Waitlist / early-access CTA on this page works (same API as home)
-- [ ] Footer matches home
+Covered in section 1. Do not look for a standalone `/pricing` page; that route should 404.
 
 ---
 
 ## 3. Waitlist
 
-Use a dedicated waitlist email (not Account A) so signup later is clean.
-
-- [ ] Required: email, first name, job-search status
-- [ ] Optional: primary goal, career stage
-- [ ] Job search, primary goal, and career stage are **three independent radio groups** (selecting a goal or stage does **not** clear job-search status)
-- [ ] Every job-search option submits (Actively searching, Casually looking, Career planning, Other)
-- [ ] Every primary-goal option submits, including **Network with recruiters** (also: Get more interviews, Track my applications, Stand out to recruiters, Other)
-- [ ] Every career-stage option submits (Entry-level, Junior, Mid-level, Senior, Other)
-- [ ] Success state / early-bird message after a valid submit; form does not stay in a loading spinner
-- [ ] Duplicate email → error (API **409**); UI shows a clear message
-- [ ] Same email with different **casing** (`You@x.com` vs `you@x.com`) is treated as a duplicate (or documented if not)
-- [ ] After success, submitting a **different** email still works (form can be used again, or reload)
-- [ ] Invalid email / empty first name / whitespace-only first name blocked (HTML and/or API **400**)
-- [ ] Email longer than **254** chars is rejected
-- [ ] Honeypot field is not visible; leaving it empty still succeeds
-- [ ] Submit button disables while loading; error path re-enables it
-- [ ] Double-click submit does not create two waitlist rows
+The homepage no longer includes the waitlist form. `POST /api/waitlist` still exists for a later surface. Do not expect `#early-access` on `/`.
 
 ---
 
@@ -612,8 +581,8 @@ On a published app with 0 views:
 - [ ] Deep-link `/admin/new` and `/admin/profile` while signed in works
 - [ ] After login, landing on `/admin` (not a blank page)
 - [ ] Public view loading state (`app/view/.../loading`) appears on a slow load (optional)
-- [ ] `/?` and `/#early-access` (direct load) still render home and scroll to waitlist
-- [ ] Browser Back/Forward between `/` ↔ `/pricing` ↔ `/login` does not duplicate headers or leave a stuck mobile menu
+- [ ] `/` and `/#pricing` (direct load) still render the homepage; `#pricing` scrolls to the tier cards
+- [ ] Browser Back/Forward between `/` and `/login` does not duplicate headers or leave a stuck mobile menu
 - [ ] Confirm dialogs (leave create, delete primary, switch CV): **Escape** and backdrop/cancel are equivalent; they do not submit the parent form
 
 ---
@@ -661,9 +630,8 @@ These are easy to skip on the happy path. Do them once you have applications in 
 
 ### Marketing / pricing leftovers
 
-- [ ] Signed-in user can still submit the waitlist (or sees a sensible state — not a 500)
 - [ ] Pricing monthly ↔ annual toggle several times does not glitch prices or highlight the wrong tier
-- [ ] Home hero **Get Early Access** from a scrolled page still hits `#early-access`
+- [ ] Homepage **Get started** and tier **Get started** go to `/login`
 
 ### Keyboard / focus
 

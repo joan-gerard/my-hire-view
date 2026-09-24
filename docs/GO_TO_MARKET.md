@@ -51,7 +51,7 @@ Every channel should feed this loop. If an activity cannot be mapped here, it is
 
 ```
 Stranger hears about MyHireView
-        → lands on / or /pricing (or a public /view demo)
+        → lands on / (pricing is the #pricing section, or a public /view demo)
         → waitlist (now) or signup (at launch)
         → first application + shareable link   ← “aha”
         → recruiter opens the page (views / CV download)
@@ -240,7 +240,7 @@ Channels fail without these. Most are writing and proof, not new product feature
 | **Real screenshots** of dashboard + public view | Landing page still uses SVG placeholders (`F24-043`) |
 | **One-liner + 3-sentence pitch** | Profile bios, emails, partner intros |
 | **Waitlist / launch email sequence** | Converts the list you already have |
-| **Pricing page aligned with billing** | `/pricing` exists; E1 must lock it before you sell |
+| **Pricing section aligned with billing** | Homepage `#pricing` exists; E1 must lock it before you sell |
 | **Onboarding path to first share** | Activation (`F19-044`) |
 | **2–3 testimonials** | After the first users; even first-name + role is enough |
 | **Legal + support** | People hesitate to pay a new tool with no Terms or a way to ask for help |
