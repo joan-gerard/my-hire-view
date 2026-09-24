@@ -180,7 +180,7 @@ flowchart LR
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
-- **Home (`app/(home)/layout.tsx`):** Serves `/` only. Loads Switzer and Stack Sans Headline, plus `mhv-demo.css`. The page component is `MhvLanding` (header, sections, and footer live in that file, not a shared marketing header). The header always links to `/login`; it does not switch to Dashboard when a session exists.
+- **Home (`app/(home)/layout.tsx`):** Serves `/` only. Loads Switzer and Stack Sans Headline, plus `mhv-demo.css`. The page component is `MhvLanding` (`mhv-landing.tsx` composes `components/marketing/`; helpers in `lib/marketing/`; not a shared marketing header). The header always links to `/login`; it does not switch to Dashboard when a session exists.
 - **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (MyHireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
 API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE.md)** (endpoint index, request/response shapes, auth, and rate limits).
