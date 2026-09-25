@@ -42,3 +42,40 @@ export function smoothScrollToElement(
 
   requestAnimationFrame(step);
 }
+
+/**
+ * Scroll to an in-page hash target (`#how`, `#pricing`, …).
+ * Uses smooth animation unless the user prefers reduced motion.
+ * Updates the URL hash without a jump.
+ */
+export function scrollToHash(
+  hash: string,
+  options: SmoothScrollOptions = {},
+): boolean {
+  const id = hash.startsWith("#") ? hash.slice(1) : hash;
+  if (!id) return false;
+
+  const element = document.getElementById(id);
+  if (!element) return false;
+
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+
+  if (reduceMotion) {
+    const { offset = 0 } = options;
+    const top =
+      element.getBoundingClientRect().top +
+      (window.scrollY ?? window.pageYOffset) -
+      offset;
+    window.scrollTo(0, top);
+  } else {
+    smoothScrollToElement(element, options);
+  }
+
+  if (typeof history !== "undefined" && history.pushState) {
+    history.pushState(null, "", `#${id}`);
+  }
+
+  return true;
+}

@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Faq,
   Footer,
@@ -13,7 +11,7 @@ import {
 
 export function MhvLanding() {
   return (
-    <div className="mhv-landing ot-nav-deferred" id="top">
+    <div className="mhv-landing" id="top">
       <Header />
       <main>
         <Hero />

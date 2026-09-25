@@ -23,7 +23,7 @@ There are two distinct surfaces:
 | ----------------- | --------------------------------------------------- |
 | Framework         | Next.js 16 (App Router)                             |
 | UI                | React 19, Tailwind CSS 4, Framer Motion             |
-| Fonts / Icons     | Geist, FaunaOne, FunnelSans, `react-icons`          |
+| Fonts / Icons     | Geist (`next/font/google`); homepage Switzer (`next/font/local`) + Stack Sans Headline (`next/font/google`); FaunaOne, FunnelSans; `react-icons` |
 | Auth + DB         | Supabase (email/password, PostgreSQL, RLS, Storage) |
 | CV storage        | Cloudflare R2                                       |
 | Video             | YouTube embed (URL only, no upload)                 |

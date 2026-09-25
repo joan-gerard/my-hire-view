@@ -77,9 +77,11 @@ Do this signed out (incognito is fine).
 ### Header
 
 - [ ] Logo / wordmark present
-- [ ] Nav includes **Home**, **How to**, **Pricing**, and **FAQs** (in-page anchors: `#top`, `#how`, `#pricing`, `#faq`)
+- [ ] Nav includes **How to**, **Pricing**, and **FAQs** (in-page anchors: `#how`, `#pricing`, `#faq`); logo returns to `#top`
 - [ ] **Login** goes to `/login`
 - [ ] Mobile: menu opens those same links plus Login; closing it returns to the page
+- [ ] Header hides smoothly when scrolling down and reappears when scrolling up (stays visible while the mobile menu is open)
+- [ ] Nav / logo in-page links smooth-scroll to the target section (instant if reduced motion is preferred)
 
 ### Hero and sections
 

@@ -1,17 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { NAV } from "@/lib/marketing/constants";
 import { dailyLogoDotColor } from "@/lib/marketing/utils";
+import { scrollToHash } from "@/lib/smooth-scroll";
 import { ArrowButton } from "./ArrowButton";
+
+const SCROLL_DELTA = 6;
+const TOP_REVEAL = 12;
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(0);
+  const menuOpenRef = useRef(menuOpen);
+  menuOpenRef.current = menuOpen;
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    let frame = 0;
+    function onScroll() {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (menuOpenRef.current) {
+          setHidden(false);
+          lastScrollY.current = window.scrollY;
+          return;
+        }
+
+        const y = window.scrollY;
+        const delta = y - lastScrollY.current;
+
+        if (y <= TOP_REVEAL) {
+          setHidden(false);
+        } else if (delta > SCROLL_DELTA) {
+          setHidden(true);
+        } else if (delta < -SCROLL_DELTA) {
+          setHidden(false);
+        }
+
+        lastScrollY.current = y;
+      });
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (menuOpen) setHidden(false);
+  }, [menuOpen]);
+
+  function handleHashClick(event: MouseEvent<HTMLAnchorElement>) {
+    const href = event.currentTarget.getAttribute("href");
+    if (!href?.startsWith("#")) return;
+
+    event.preventDefault();
+    setMenuOpen(false);
+    scrollToHash(href);
+  }
 
   return (
-    <>
+    <div className={`ot-header-shell${hidden ? " is-hidden" : ""}`}>
       <header className="ot-header">
-        <a className="ot-logo" href="#top">
+        <a className="ot-logo" href="#top" onClick={handleHashClick}>
           MyHireView
           <span
             className="ot-logo-dot"
@@ -22,7 +78,7 @@ export function Header() {
 
         <nav className="ot-nav" aria-label="Primary">
           {NAV.map((item) => (
-            <a key={item.label} href={item.href}>
+            <a key={item.label} href={item.href} onClick={handleHashClick}>
               {item.label}
             </a>
           ))}
@@ -49,7 +105,7 @@ export function Header() {
             <a
               key={item.label}
               href={item.href}
-              onClick={() => setMenuOpen(false)}
+              onClick={handleHashClick}
             >
               {item.label}
             </a>
@@ -57,6 +113,6 @@ export function Header() {
           <ArrowButton href="/login" label="Login" tone="dark" />
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
