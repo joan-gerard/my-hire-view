@@ -9,6 +9,16 @@ import { ArrowButton } from "./ArrowButton";
 const SCROLL_DELTA = 6;
 const TOP_REVEAL = 12;
 
+function isModifiedClick(event: MouseEvent<HTMLAnchorElement>): boolean {
+  return (
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey
+  );
+}
+
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -58,14 +68,33 @@ export function Header() {
   function handleHashClick(event: MouseEvent<HTMLAnchorElement>) {
     const href = event.currentTarget.getAttribute("href");
     if (!href?.startsWith("#")) return;
+    // Keep browser defaults for new-tab / modified clicks.
+    if (isModifiedClick(event)) return;
 
     event.preventDefault();
+    const closingDrawer = menuOpen;
     setMenuOpen(false);
-    scrollToHash(href);
+
+    const run = () => {
+      scrollToHash(href);
+    };
+
+    if (closingDrawer) {
+      // Wait until the drawer unmounts so its height is not in getBoundingClientRect math.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(run);
+      });
+    } else {
+      run();
+    }
   }
 
   return (
-    <div className={`ot-header-shell${hidden ? " is-hidden" : ""}`}>
+    <div
+      className={`ot-header-shell${hidden ? " is-hidden" : ""}`}
+      // Off-screen sticky header must not remain in the tab order.
+      {...(hidden ? { inert: true } : {})}
+    >
       <header className="ot-header">
         <a className="ot-logo" href="#top" onClick={handleHashClick}>
           MyHireView
@@ -102,11 +131,7 @@ export function Header() {
       {menuOpen ? (
         <div className="ot-drawer">
           {NAV.map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              onClick={handleHashClick}
-            >
+            <a key={item.label} href={item.href} onClick={handleHashClick}>
               {item.label}
             </a>
           ))}

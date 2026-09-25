@@ -44,6 +44,9 @@ export default function ApplicationViewFooter({
           <Link href="/privacy" className={linkClass(isDark)}>
             Privacy
           </Link>
+          <Link href="/cookies" className={linkClass(isDark)}>
+            Cookies
+          </Link>
         </nav>
 
         <p

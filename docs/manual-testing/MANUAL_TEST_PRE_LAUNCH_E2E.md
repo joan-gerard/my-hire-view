@@ -513,7 +513,7 @@ Use incognito / signed-out (and owner, where noted).
 - [ ] **View CV** / open-in-tab works
 - [ ] **Download CV** downloads; filename is original **or** `CV-{Slug}.pdf` per the toggle
 - [ ] Download failure (block the PDF URL once) does not crash the page
-- [ ] Compact footer: MyHireView, Terms, Privacy, © — present for owners and recruiters
+- [ ] Compact footer: MyHireView, Terms, Privacy, Cookies, © — present for owners and recruiters
 - [ ] Page is `noindex` / does not invite indexing (optional: view source / head)
 
 ### Variants
