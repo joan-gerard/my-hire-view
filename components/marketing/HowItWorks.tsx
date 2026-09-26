@@ -83,8 +83,24 @@ function useCaseRecess(
     desktopQuery.addEventListener("change", onScrollOrResize);
     motionQuery.addEventListener("change", onScrollOrResize);
 
+    // Font swap / wrap can change .ot-work-top height without scroll or resize.
+    const workTopObserver =
+      workTop && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(onScrollOrResize)
+        : null;
+    workTopObserver?.observe(workTop);
+
+    let cancelled = false;
+    if (document.fonts?.ready) {
+      void document.fonts.ready.then(() => {
+        if (!cancelled) onScrollOrResize();
+      });
+    }
+
     return () => {
+      cancelled = true;
       cancelAnimationFrame(frame);
+      workTopObserver?.disconnect();
       window.removeEventListener("scroll", onScrollOrResize);
       window.removeEventListener("resize", onScrollOrResize);
       desktopQuery.removeEventListener("change", onScrollOrResize);
