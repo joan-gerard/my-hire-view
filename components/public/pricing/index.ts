@@ -1,7 +1,3 @@
-export { default as PricingFaq } from "./PricingFaq";
-export { default as PricingIntro } from "./PricingIntro";
-export { default as PricingPageSections } from "./PricingPageSections";
-export { default as PricingTiersSection } from "./PricingTiersSection";
 export {
   ANNUAL_SAVINGS_LABEL,
   getAnnualNudge,

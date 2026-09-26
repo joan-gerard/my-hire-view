@@ -1,0 +1,1807 @@
+.mhv-landing {
+  --ink: #0b0b0c;
+  --muted: #6a6e6e;
+  --mist: #b7bcbc;
+  --lime: #9efc65;
+  --pink: #ffbcfc;
+  /* Text on white/paper: bright --pink is ~1.5:1; this hits WCAG AA (~5.1:1). */
+  --pink-text: #c026a8;
+  --paper: #f0f0f0;
+  --card: #171718;
+  --deep: #122020;
+  --deep-2: #1e2b2b;
+  --white: #fff;
+  min-height: 100vh;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-stack-sans-headline), sans-serif;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.mhv-landing *,
+.mhv-landing *::before,
+.mhv-landing *::after {
+  box-sizing: border-box;
+}
+
+.mhv-landing img {
+  display: block;
+  max-width: 100%;
+}
+
+.mhv-landing a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mhv-landing h1,
+.mhv-landing h2,
+.mhv-landing h3,
+.mhv-landing p {
+  margin: 0;
+}
+
+.mhv-landing h1,
+.mhv-landing h2,
+.mhv-landing h3 {
+  font-family: var(--font-switzer), sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.ot-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ot-wrap {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 0 30px;
+}
+
+.ot-header-shell {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--white);
+  transform: translateY(0);
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.ot-header-shell.is-hidden {
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+.ot-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  min-height: 102px;
+  padding: 30px;
+  gap: 16px;
+}
+
+.ot-logo {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  justify-self: start;
+  width: max-content;
+  font-family: var(--font-switzer), sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.ot-logo-dot {
+  width: 7px;
+  height: 7px;
+  margin-bottom: 3px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ot-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ot-nav > a,
+.ot-pages-trigger {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.1;
+  padding: 8px 16px;
+  border-radius: 100px;
+  cursor: pointer;
+}
+
+.ot-nav > a[aria-current="page"] {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.ot-nav > a:hover,
+.ot-pages-trigger:hover {
+  color: var(--ink);
+}
+
+.ot-pages {
+  position: relative;
+}
+
+.ot-pages-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ot-pages-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 180px;
+  padding: 8px;
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(11, 11, 12, 0.12);
+  display: none;
+  z-index: 20;
+}
+
+.ot-pages.is-open .ot-pages-menu,
+.ot-pages:focus-within .ot-pages-menu {
+  display: grid;
+}
+
+.ot-pages-menu a {
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.ot-pages-menu a:hover {
+  background: var(--paper);
+}
+
+.ot-header-end {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ot-arrow-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: max-content;
+  height: 42px;
+  padding: 0 46px 0 20px;
+  border-radius: 100px;
+  font-size: 16px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.mhv-landing a.ot-arrow-btn-dark {
+  background: #101011;
+  color: var(--white);
+}
+
+.mhv-landing a.ot-arrow-btn-lime {
+  background: var(--lime);
+  color: var(--ink);
+  height: 48px;
+}
+
+.ot-arrow-btn-icon {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  margin-top: -15px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--white);
+  color: var(--ink);
+}
+
+.ot-arrow-btn-lime .ot-arrow-btn-icon {
+  background: var(--ink);
+  color: var(--white);
+  width: 34px;
+  height: 34px;
+  margin-top: -17px;
+}
+
+.ot-arrow-btn-icon svg {
+  width: 11px;
+  height: 11px;
+}
+
+.ot-arrow-btn-lime .ot-arrow-btn-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ot-roll {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  height: 1.1em;
+}
+
+.ot-roll span {
+  display: block;
+  transition: transform 0.45s ease;
+}
+
+.ot-roll span:last-child {
+  position: absolute;
+  inset: 0 auto auto 0;
+  transform: translateY(110%);
+}
+
+.ot-arrow-btn:hover .ot-roll span:first-child {
+  transform: translateY(-110%);
+}
+
+.ot-arrow-btn:hover .ot-roll span:last-child {
+  transform: translateY(0);
+}
+
+.ot-menu-btn {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--paper);
+  padding: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.ot-menu-btn span {
+  display: block;
+  width: 16px;
+  height: 1.5px;
+  background: var(--ink);
+}
+
+.ot-drawer {
+  display: none;
+}
+
+.ot-hero {
+  padding-top: 98px;
+}
+
+.ot-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 30px;
+}
+
+.ot-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  border-radius: 100px;
+  font-size: 14px;
+  line-height: 1.2;
+  padding: 6px 14px;
+  border: 1px solid rgba(11, 11, 12, 0.1);
+  color: var(--ink);
+}
+
+.ot-eyebrow i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.ot-hero-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+  max-width: 1140px;
+  font-size: clamp(42px, 5.7vw, 82px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.ot-word-lime {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 16px 10px;
+  border-radius: 50px;
+  background: var(--lime);
+}
+
+.ot-word-pink {
+  color: var(--pink-text);
+}
+
+.ot-marquee {
+  overflow: hidden;
+  margin-top: 100px;
+}
+
+.ot-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: ot-marquee 46s linear infinite;
+}
+
+.ot-hero-set {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  padding-right: 20px;
+}
+
+.ot-hero-set img {
+  height: 430px;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+.ot-story {
+  padding: 140px 0 180px;
+}
+
+.ot-story-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 30px;
+  align-items: start;
+}
+
+.ot-story-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 560px;
+  padding-top: 60px;
+}
+
+.ot-story-copy h2 {
+  font-size: 36px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.ot-story-copy p,
+.ot-principle p {
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.ot-stats {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  min-height: 420px;
+  justify-self: end;
+}
+
+.ot-stat {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 176px;
+  height: 176px;
+  padding: 20px 20px 28px;
+  border-radius: 28px;
+  text-align: left;
+}
+
+.ot-stat p:first-child {
+  max-width: 120px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.ot-stat-num {
+  align-self: flex-end;
+  font-family: var(--font-switzer), sans-serif;
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.ot-stat-a .ot-stat-num span,
+.ot-stat-c .ot-stat-num span {
+  color: var(--pink-text);
+}
+
+.ot-stat-a {
+  top: 24px;
+  left: 0;
+  background: var(--paper);
+  color: var(--muted);
+  transform: rotate(-12deg);
+  z-index: 2;
+}
+
+.ot-stat-a .ot-stat-num {
+  color: var(--ink);
+}
+
+.ot-stat-b {
+  top: 0;
+  right: 0;
+  background: var(--pink);
+  color: rgba(11, 11, 12, 0.7);
+  transform: rotate(15deg);
+  z-index: 1;
+}
+
+.ot-stat-b .ot-stat-num {
+  color: var(--ink);
+}
+
+.ot-stat-c {
+  top: 210px;
+  left: 50%;
+  margin-left: -88px;
+  background: var(--deep);
+  color: var(--mist);
+  transform: rotate(-8deg);
+  z-index: 3;
+}
+
+.ot-stat-num-light {
+  color: var(--white);
+}
+
+.ot-work {
+  padding: 0 0 120px;
+}
+
+.ot-pricing {
+  padding: 0 0 120px;
+}
+
+.ot-pricing > .ot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ot-pricing-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 0 40px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.ot-pricing-intro h2 {
+  font-size: 42px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.ot-pricing-intro > p:not(.ot-eyebrow) {
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.ot-billing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.ot-billing-toggle {
+  position: relative;
+  display: inline-flex;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 100px;
+  background: var(--paper);
+}
+
+.ot-billing-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 108px;
+  height: 40px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 100px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-stack-sans-headline), sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.ot-billing-option.is-selected {
+  background: var(--ink);
+  color: var(--white);
+}
+
+.ot-billing-option:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
+.ot-billing-save {
+  position: absolute;
+  top: -10px;
+  right: -6px;
+  padding: 3px 7px;
+  border-radius: 8px;
+  background: var(--lime);
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ot-billing-option.is-selected .ot-billing-save {
+  background: var(--pink);
+  color: var(--ink);
+}
+
+.ot-billing-hint {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.ot-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+  margin-bottom: 40px;
+  width: 100%;
+}
+
+.ot-price-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-height: 100%;
+  padding: 36px 28px 28px;
+  border-radius: 30px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.ot-price-card.is-featured {
+  background: var(--ink);
+  color: var(--white);
+}
+
+.ot-price-badge {
+  position: absolute;
+  top: -12px;
+  left: 28px;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 100px;
+  background: var(--lime);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.ot-price-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ot-price-header h3 {
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.ot-price-header p {
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.35;
+  min-height: 2.7em;
+}
+
+.ot-price-card.is-featured .ot-price-header p {
+  color: var(--mist);
+}
+
+.ot-price-amount {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ot-price-value {
+  font-family: var(--font-switzer), sans-serif;
+  font-size: 48px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.ot-price-note {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.ot-price-card.is-featured .ot-price-note {
+  color: var(--mist);
+}
+
+.ot-price-nudge {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-stack-sans-headline), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ot-price-card.is-featured .ot-price-nudge {
+  color: var(--lime);
+}
+
+.ot-price-nudge:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
+.ot-price-features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ot-price-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.ot-price-check {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: inset 0 0 0 4px var(--paper);
+}
+
+.ot-price-card.is-featured .ot-price-check {
+  box-shadow: inset 0 0 0 4px var(--ink);
+}
+
+.ot-price-feature-text {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ot-price-tip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-stack-sans-headline), sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: help;
+}
+
+.ot-price-card.is-featured .ot-price-tip-btn {
+  border-color: color-mix(in srgb, var(--white) 30%, transparent);
+  color: var(--mist);
+}
+
+.ot-price-tip-btn:hover,
+.ot-price-tip-btn:focus-visible {
+  border-color: var(--lime);
+  color: var(--ink);
+}
+
+.ot-price-card.is-featured .ot-price-tip-btn:hover,
+.ot-price-card.is-featured .ot-price-tip-btn:focus-visible {
+  color: var(--lime);
+}
+
+.ot-price-tip {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  z-index: 4;
+  display: none;
+  width: max-content;
+  max-width: min(100%, 18rem);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.ot-price-card.is-featured .ot-price-tip {
+  background: var(--white);
+  color: var(--ink);
+}
+
+.ot-price-feature-text:hover .ot-price-tip,
+.ot-price-feature-text:focus-within .ot-price-tip {
+  display: block;
+}
+
+.ot-price-cta {
+  width: 100%;
+  max-width: none;
+  margin-top: auto;
+  box-sizing: border-box;
+}
+
+.ot-pricing-draft {
+  width: 100%;
+  max-width: 560px;
+  margin: 96px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.ot-faq {
+  padding: 0 0 120px;
+}
+
+.ot-faq > .ot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ot-faq-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.ot-faq-intro h2 {
+  font-size: 42px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.ot-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.ot-faq-item {
+  border-radius: 20px;
+  background: var(--paper);
+  overflow: clip;
+}
+
+.ot-faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  padding: 22px 24px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-stack-sans-headline), sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ot-faq-question:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: -2px;
+}
+
+.ot-faq-switch {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 100px;
+  background: var(--ink);
+}
+
+.ot-faq-switch-bar {
+  position: absolute;
+  border-radius: 2px;
+  background: var(--white);
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.45s ease;
+}
+
+.ot-faq-switch-bar-h {
+  width: 12px;
+  height: 2px;
+}
+
+.ot-faq-switch-bar-v {
+  width: 2px;
+  height: 12px;
+}
+
+.ot-faq-item.is-open .ot-faq-switch-bar-v {
+  transform: rotate(90deg);
+  opacity: 0;
+}
+
+.ot-faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ot-faq-item.is-open .ot-faq-answer {
+  grid-template-rows: 1fr;
+}
+
+.ot-faq-answer-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0 24px;
+  transition: padding-bottom 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ot-faq-item.is-open .ot-faq-answer-inner {
+  padding-bottom: 22px;
+}
+
+.ot-faq-answer p {
+  max-width: 640px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+  transition:
+    opacity 0.55s ease,
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ot-faq-item.is-open .ot-faq-answer p {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ot-faq-answer,
+  .ot-faq-answer-inner,
+  .ot-faq-answer p,
+  .ot-faq-switch-bar {
+    transition: none;
+  }
+
+  .ot-faq-answer p {
+    transform: none;
+  }
+}
+
+.ot-work-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.ot-work-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+}
+
+.ot-work-top h2 {
+  font-size: 42px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.ot-work-intro p {
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.ot-work-list {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.ot-work-spacer {
+  display: none;
+}
+
+.ot-case {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  min-height: 470px;
+  border-radius: 30px;
+  overflow: clip;
+  color: inherit;
+}
+
+@media (min-width: 721px) {
+  .ot-work-top {
+    position: sticky;
+    top: 50px;
+    z-index: 0;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    background: linear-gradient(
+      to bottom,
+      var(--white) 70%,
+      rgba(255, 255, 255, 0)
+    );
+  }
+
+  .ot-work-list {
+    gap: 60px;
+  }
+
+  .ot-case {
+    --ot-recess: 0;
+    position: sticky;
+    top: var(--ot-case-sticky-top, 200px);
+    transform: scale(calc(1 - 0.1 * var(--ot-recess)))
+      rotate(calc(2deg * var(--ot-recess)));
+    transform-origin: center center;
+    will-change: transform;
+  }
+
+  .ot-case:nth-child(1) {
+    z-index: 1;
+  }
+
+  .ot-case:nth-child(2) {
+    z-index: 2;
+  }
+
+  .ot-case:nth-child(3) {
+    z-index: 3;
+  }
+
+  .ot-work-spacer {
+    display: block;
+    height: 180px;
+    flex-shrink: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ot-work-top,
+  .ot-case {
+    position: relative;
+    top: auto;
+  }
+
+  .ot-case {
+    --ot-recess: 0;
+    transform: none;
+  }
+
+  .ot-work-spacer {
+    display: none;
+  }
+}
+
+.ot-case-media {
+  position: absolute;
+  inset: 0;
+}
+
+.ot-case-media img,
+.ot-case-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ot-case-info {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 100px;
+  width: min(360px, calc(100% - 20px));
+  margin: 10px;
+  padding: 30px;
+  border-radius: 26px;
+  background: var(--ink);
+}
+
+.ot-case-top,
+.ot-case-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.ot-case-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ot-case-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--card);
+  color: var(--white);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.ot-case-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ot-case-copy h3 {
+  color: var(--white);
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.ot-case-copy p {
+  color: var(--mist);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.ot-case-bottom {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ot-case-metric {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.ot-case-metric-value {
+  color: var(--lime);
+  font-family: var(--font-switzer), sans-serif;
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.ot-case-metric-label {
+  color: var(--mist);
+  font-size: 16px;
+  line-height: 1.2;
+  text-align: end;
+}
+
+.mhv-landing a.ot-case-cta,
+.ot-case-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  height: 48px;
+  padding: 0 52px 0 24px;
+  border-radius: 100px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.1;
+  box-sizing: border-box;
+}
+
+.ot-case-cta-icon {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  margin-top: -17px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--white);
+}
+
+.ot-case-cta-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ot-case-cta:hover .ot-roll span:first-child {
+  transform: translateY(-110%);
+}
+
+.ot-case-cta:hover .ot-roll span:last-child {
+  transform: translateY(0);
+}
+
+.ot-principles {
+  padding: 0 30px 200px;
+}
+
+.ot-principles-panel {
+  position: relative;
+  background: var(--ink);
+  border-radius: 30px;
+  padding: 120px 30px;
+  text-align: center;
+}
+
+.ot-principles-panel::before,
+.ot-principles-panel::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ot-principles-panel::before {
+  left: 18%;
+}
+
+.ot-principles-panel::after {
+  left: 50%;
+}
+
+.ot-principles-intro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: min(700px, 100%);
+  margin: 0 auto 60px;
+  text-align: center;
+}
+
+.ot-principles-panel h2 {
+  width: 100%;
+  margin: 0;
+  color: var(--paper);
+  font-size: clamp(36px, 3.6vw, 52px);
+  line-height: 1.1;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.ot-principles-intro p {
+  margin: 0;
+  color: var(--mist);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.35;
+  max-width: 34em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.ot-principle-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 340px));
+  justify-content: center;
+  gap: 30px;
+}
+
+.ot-principle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  min-height: 276px;
+  padding: 40px;
+  border-radius: 30px;
+  background: var(--card);
+  text-align: center;
+}
+
+.ot-principle-n {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--pink);
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.ot-principle h3 {
+  color: var(--white);
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+.ot-principle p {
+  color: var(--mist);
+}
+
+.ot-footer {
+  padding: 0 30px 30px;
+}
+
+.ot-footer-card {
+  background: var(--deep);
+  border-radius: 30px;
+  color: var(--white);
+}
+
+.ot-footer-inner {
+  width: min(1220px, 100%);
+  margin: 0 auto;
+  padding: 120px 40px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 96px;
+}
+
+.ot-footer-cta {
+  width: min(800px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.ot-footer-cta h2 {
+  width: 100%;
+  color: var(--paper);
+  font-size: clamp(52px, 7vw, 100px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ot-footer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 32px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.ot-footer-brand {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--white);
+}
+
+.ot-footer-brand:hover {
+  color: var(--lime);
+}
+
+.ot-footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 24px;
+}
+
+.ot-footer-legal a {
+  color: var(--mist);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.ot-footer-legal a:hover {
+  color: var(--white);
+}
+
+.ot-copyright {
+  margin: 0;
+  color: var(--mist);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.mhv-landing :focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.ot-footer :focus-visible,
+.ot-principle :focus-visible {
+  outline-color: var(--lime);
+}
+
+@keyframes ot-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 1100px) {
+  .ot-nav {
+    display: none;
+  }
+
+  .ot-header {
+    grid-template-columns: 1fr auto;
+  }
+
+  .ot-header .ot-arrow-btn {
+    display: none;
+  }
+
+  .ot-menu-btn {
+    display: flex;
+  }
+
+  .ot-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 30px 24px;
+  }
+
+  .ot-drawer > a {
+    padding: 12px 0;
+    font-size: 22px;
+    font-family: var(--font-switzer), sans-serif;
+  }
+
+  .ot-drawer > a.ot-arrow-btn {
+    display: inline-flex;
+    align-self: flex-start;
+    width: max-content;
+    margin-top: 12px;
+    padding: 0 46px 0 20px;
+    font-family: var(--font-stack-sans-headline), sans-serif;
+    font-size: 16px;
+  }
+
+  .ot-story-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ot-story-copy {
+    padding-top: 0;
+  }
+
+  .ot-story-copy h2 {
+    font-size: 30px;
+  }
+
+  .ot-principle-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ot-stats {
+    min-height: 0;
+    max-width: 500px;
+    justify-self: start;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .ot-stat {
+    position: static;
+    width: auto;
+    height: auto;
+    min-height: 200px;
+    margin-left: 0;
+    transform: none;
+  }
+
+  .ot-stat-c {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .ot-work-top {
+    flex-wrap: wrap;
+  }
+
+  .ot-work-top h2 {
+    font-size: 34px;
+  }
+
+  .ot-pricing-intro h2 {
+    font-size: 34px;
+  }
+
+  .ot-faq-intro h2 {
+    font-size: 34px;
+  }
+
+  .ot-pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+    margin-inline: auto;
+  }
+
+  .ot-price-header p {
+    min-height: 0;
+  }
+
+  .ot-case {
+    min-height: 420px;
+  }
+
+  .ot-case-info {
+    width: min(320px, calc(100% - 20px));
+    gap: 48px;
+    padding: 24px;
+  }
+
+  .ot-hero-set img {
+    height: 280px;
+  }
+
+  .ot-hero-set img:nth-child(2),
+  .ot-hero-set img:nth-child(5) {
+    width: 230px !important;
+  }
+
+  .ot-hero-set img:nth-child(3),
+  .ot-hero-set img:nth-child(6) {
+    width: 190px !important;
+  }
+
+  .ot-hero-set img:nth-child(1),
+  .ot-hero-set img:nth-child(4) {
+    width: 280px !important;
+  }
+
+  .ot-marquee {
+    margin-top: 56px;
+  }
+
+  .ot-story {
+    padding: 80px 0 96px;
+  }
+
+  .ot-principles-panel {
+    padding-top: 72px;
+    padding-bottom: 72px;
+  }
+
+  .ot-footer-inner {
+    padding-top: 80px;
+    padding-bottom: 40px;
+    gap: 64px;
+  }
+
+  .ot-principles {
+    padding-bottom: 80px;
+  }
+
+  .ot-pricing {
+    padding-bottom: 80px;
+  }
+
+  .ot-faq {
+    padding-bottom: 80px;
+  }
+}
+
+@media (max-width: 720px) {
+  .ot-header,
+  .ot-wrap,
+  .ot-footer,
+  .ot-principles {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .ot-faq-question {
+    padding: 18px 18px;
+    font-size: 16px;
+  }
+
+  .ot-faq-answer-inner {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .ot-faq-item.is-open .ot-faq-answer-inner {
+    padding-bottom: 18px;
+  }
+
+  .ot-faq-answer p {
+    font-size: 15px;
+  }
+
+  .ot-header {
+    padding-top: 16px;
+    padding-bottom: 16px;
+    min-height: 72px;
+  }
+
+  .ot-logo {
+    font-size: 22px;
+  }
+
+  .ot-hero {
+    padding-top: 36px;
+  }
+
+  .ot-marquee {
+    margin-top: 40px;
+  }
+
+  .ot-story {
+    padding: 64px 0 72px;
+  }
+
+  .ot-story-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ot-story-copy {
+    padding-top: 0;
+  }
+
+  .ot-story-copy h2 {
+    font-size: 26px;
+  }
+
+  .ot-principles {
+    padding-bottom: 64px;
+  }
+
+  .ot-principles-panel {
+    padding: 48px 20px;
+    border-radius: 24px;
+  }
+
+  .ot-principles-intro {
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+
+  .ot-principles-panel h2 {
+    font-size: 28px;
+  }
+
+  .ot-principles-intro p {
+    font-size: 16px;
+  }
+
+  .ot-principle-grid {
+    gap: 16px;
+  }
+
+  .ot-principle {
+    gap: 20px;
+    min-height: 0;
+    padding: 24px;
+    border-radius: 20px;
+  }
+
+  .ot-principle-n {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .ot-principle h3 {
+    font-size: 18px;
+  }
+
+  .ot-principle p {
+    font-size: 15px;
+  }
+
+  .ot-stats {
+    max-width: none;
+    justify-self: stretch;
+  }
+
+  .ot-stat {
+    /* 8/5 at ~164px wide only allows ~102px height; label + 44px metric overflow. */
+    min-height: 132px;
+    aspect-ratio: auto;
+    padding: 16px 16px 20px;
+  }
+
+  .ot-stat-c {
+    width: 100%;
+    justify-self: stretch;
+    min-height: 120px;
+    aspect-ratio: auto;
+  }
+
+  .ot-work {
+    padding-bottom: 80px;
+  }
+
+  .ot-work-top h2 {
+    font-size: 30px;
+  }
+
+  .ot-case {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    min-height: 0;
+  }
+
+  .ot-case-media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+  }
+
+  .ot-case-info {
+    width: auto;
+    margin: 0;
+    border-radius: 0 0 30px 30px;
+    gap: 36px;
+  }
+
+  .ot-case-metric-value {
+    font-size: 36px;
+  }
+
+  .ot-footer-cta h2 {
+    font-size: 32px;
+  }
+
+  .ot-footer-bar {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .ot-footer-legal {
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ot-marquee-track,
+  .ot-roll span {
+    animation: none;
+    transition: none;
+  }
+
+  .ot-header-shell {
+    transition: none;
+  }
+}

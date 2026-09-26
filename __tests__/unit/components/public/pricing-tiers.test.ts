@@ -79,9 +79,10 @@ describe("pricing tier data (E3-014)", () => {
     expect(getAnnualNudge(premium)).toMatch(/\$4\.92/);
   });
 
-  it("routes all tier CTAs to the waitlist until billing ships", () => {
-    expect(PRICING_WAITLIST_HREF).toBe("/#early-access");
+  it("routes all tier CTAs to login until billing ships", () => {
+    expect(PRICING_WAITLIST_HREF).toBe("/login");
     for (const tier of PRICING_TIERS) {
+      expect(tier.cta.label).toBe("Get started");
       expect(tier.cta.href).toBe(PRICING_WAITLIST_HREF);
     }
   });

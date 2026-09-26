@@ -168,8 +168,7 @@ flowchart LR
 
 | Route               | Purpose                                                                                                                                                                                                                                                                                                            | Auth |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
-| `/`                 | Pre-launch landing page (see [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md)): hero, email capture form (waitlist), problem/solution, how it works, FAQ, final CTA, footer. Shares `MarketingHeader` with other marketing routes via `app/(marketing)/layout.tsx`.                                                                                                                                 | No   |
-| `/pricing`          | Pricing page (E3-014): compact intro + Free/Pro/Premium tiers with monthly/annual toggle (default annual; locked USD prices in `components/public/pricing/`), caps FAQ, waitlist CTA, footer. Same `MarketingHeader` as `/` (solid header — no fixed full-viewport hero). Matrix in [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md); checkout still E2.                                                                                                                                                                                      | No   |
+| `/`                 | Marketing homepage (`app/(home)/`): own header (How to, Pricing, FAQs, Login; logo → `#top`), hero, story, principles, how-it-works, in-page `#pricing` (Free/Pro/Premium, monthly/annual), FAQ, footer. Tier copy is in `components/public/pricing/constants.ts` ([PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md)); checkout still E2. Login and Get started go to `/login`. There is no separate `/pricing` route. | No   |
 | `/login`, `/signup` | Auth forms; submit to `/api/auth/*`                                                                                                                                                                                                                                                                                | No   |
 | `/auth/callback`    | Supabase email confirmation / magic link; exchanges `code` for session                                                                                                                                                                                                                                             | No   |
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                                                                                                                                                                                                   | Yes  |
@@ -181,7 +180,7 @@ flowchart LR
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
-- **Marketing (`app/(marketing)/layout.tsx`):** Wraps with `HeroEntranceProvider` and `ScrollCoverProvider`, then renders `MarketingHeader` (logo, nav: Pricing; avatar dropdown with Sign In or Dashboard + Sign out) and `children`. Used by `/` and `/pricing`. The header is implemented as a module under `components/public/MarketingHeader/` (index, constants, signOut, UserDropdown, MobileMenuContent, MobileMenuToggle). On **home**, the mobile header background is transparent over the hero and switches to white once the user has scrolled so that `ScrollCoverSection` has reached the top of the viewport (via `ScrollCoverContext` and a 1px sentinel in `ScrollCoverSection`). On **`/pricing`** (and other non-home marketing routes), there is no fixed hero — `ScrollCoverProvider` keeps the header solid white from the start. Mobile viewport detection uses the shared hook `hooks/useMobileViewport` (which also exports `MOBILE_BREAKPOINT_PX`).
+- **Home (`app/(home)/layout.tsx`):** Serves `/` only. Self-hosts Switzer (`next/font/local`) and Stack Sans Headline (`next/font/google`), plus `mhv-demo.css`. The page component is `MhvLanding` (`mhv-landing.tsx` composes `components/marketing/`; helpers in `lib/marketing/`; not a shared marketing header). The header always links to `/login`; it does not switch to Dashboard when a session exists.
 - **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (MyHireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
 API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE.md)** (endpoint index, request/response shapes, auth, and rate limits).
@@ -350,10 +349,7 @@ View count and `last_viewed_at` are only updated when the viewer is not the appl
 my-hire-view/
 ├── app/
 │   ├── layout.tsx              # Root layout
-│   ├── (marketing)/            # Public marketing routes (shared MarketingHeader)
-│   │   ├── layout.tsx          # Marketing layout (header + children)
-│   │   ├── page.tsx            # Home (landing)
-│   │   └── pricing/            # Pricing page (Free/Pro/Premium draft tiers; E3-014)
+│   ├── (home)/                 # Marketing homepage at / (own header, #pricing)
 │   ├── login/, signup/         # Auth pages
 │   ├── auth/callback/          # Supabase OAuth/email callback
 │   ├── admin/                  # Dashboard, new, edit (layout uses requireAuth)
@@ -364,7 +360,7 @@ my-hire-view/
 │   ├── auth/                   # SignOutButton
 │   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, NameInUrlField, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
-│   ├── public/                 # ApplicationPageHeader, EmailCaptureForm, FAQSection (re-export from public/faq), CTASection, FixedBackgroundHero, Footer (→ ViewPageFooter), HowItWorksSection (see public/how-it-works/), LandingPageSections, MarketingHeader, pricing/ (tiers for /pricing), ProblemSection, ScrollCoverSection, SolutionSection, ViewPageFooter
+│   ├── public/                 # ApplicationPageHeader, CvUnavailableWithRetry, faq/constants (homepage FAQ copy), how-it-works/constants (step videos), pricing/constants (homepage #pricing tiers)
 │   ├── ui/                     # Button, Input, Textarea
 │   ├── video/                  # YouTubeEmbed
 │   └── view/                   # ApplicationViewFooter, ViewPageContent, UnavailableApplicationView, ViewTracker (public application page UI)

@@ -50,7 +50,7 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering). **F3
 
 **F20 → F23 → F21**
 
-- **F20** legal pages: already linked from footer/waitlist with no pages
+- **F20** legal pages: already linked from marketing footer and `/view` footer with no pages
 - **F23** support entry: cheap once legal/marketing surfaces exist
 - **F21** delete account after upload/profile integrity (**F9/F13**) so deletion isn’t fighting known storage bugs
 

@@ -34,7 +34,6 @@ __tests__/
     components/
       public/
         pricing-tiers.test.ts
-        waitlist-options.test.ts
     lib/
       utils/
         slug-generate.test.ts
@@ -104,8 +103,7 @@ Feature-specific deep dives:
 | File | What it covers |
 |------|---------------|
 | `__tests__/unit/proxy-entry.test.ts` | **Next.js proxy entry (F26-060)** — root `proxy.ts` present with named `proxy` export; no deprecated root/`src` `middleware.ts`; helper import from `lib/supabase/middleware` |
-| `__tests__/unit/components/public/pricing-tiers.test.ts` | **Pricing tiers (E3-014)** — Free/Pro/Premium ids & names, Pro highlighted, working-draft monthly/annual USD (Pro $9/$39, Premium $14/$59; final lock with E1), annual savings nudge for monthly view, video pitch, firm caps, FAQ, waitlist CTAs |
-| `__tests__/unit/components/public/waitlist-options.test.ts` | **Waitlist radio options** — form values and `WAITLIST_*` schema enums both match independent literal lists (incl. **Network with recruiters**) |
+| `__tests__/unit/components/public/pricing-tiers.test.ts` | **Pricing tiers (E3-014)** — Free/Pro/Premium ids & names, Pro highlighted, working-draft monthly/annual USD (Pro $9/$39, Premium $14/$59; final lock with E1), annual savings nudge for monthly view, video pitch, firm caps, FAQ, Get started CTAs to `/login` |
 | `__tests__/unit/lib/utils/slug-generate.test.ts` | **Pure slug utilities** — `validateSlugFormat` (empty input, too long, invalid chars, valid slugs), `generateSlug` (normalisation, special-char stripping, space collapsing), `buildSlug` (position `start`/`end`, partial and missing names, name-preserving clamp), `isCustomSlug` (edit-load custom vs derived) |
 | `__tests__/unit/lib/utils/slug.test.ts` | **Server-side slug helpers** — `checkSlugUniqueness` (unique, taken, DB error), `validateSlugForApplication` (format short-circuits DB call, available, taken), `reserveBaseSlug` (name positions, collision throws `SlugCollisionError`), `SlugCollisionError` (shape and default message) |
 | `__tests__/unit/lib/utils/profile-picture-storage.test.ts` | **Profile picture Storage URLs** — path parse, canonical `avatar.*`, ownership (canonical + legacy under user folder), reject lookalike paths on foreign origins (C2-008) |

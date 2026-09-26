@@ -23,7 +23,7 @@ There are two distinct surfaces:
 | ----------------- | --------------------------------------------------- |
 | Framework         | Next.js 16 (App Router)                             |
 | UI                | React 19, Tailwind CSS 4, Framer Motion             |
-| Fonts / Icons     | Geist, FaunaOne, FunnelSans, `react-icons`          |
+| Fonts / Icons     | Geist (`next/font/google`); homepage Switzer (`next/font/local`) + Stack Sans Headline (`next/font/google`); FaunaOne, FunnelSans; `react-icons` |
 | Auth + DB         | Supabase (email/password, PostgreSQL, RLS, Storage) |
 | CV storage        | Cloudflare R2                                       |
 | Video             | YouTube embed (URL only, no upload)                 |
@@ -41,7 +41,7 @@ Single Next.js app (no monorepo). All UI, API routes, and session logic live in 
 
 ```
 app/
-  (marketing)/       — marketing pages with shared layout
+  (home)/            — marketing homepage (/) with its own header and in-page pricing
   admin/             — protected dashboard (list, new, edit, profile)
   view/[slug]/       — public recruiter-facing application page
   login/             — sign-in page
@@ -132,7 +132,7 @@ RLS policies protect all tables. The service-role Supabase client is used server
 
 - **Supabase Auth** with email/password; sessions stored in HTTP cookies via `@supabase/ssr`.
 - **`proxy.ts`** refreshes the session and guards all `/admin` routes.
-- `**withAuth()**` in `lib/api/with-auth.ts` is used inside API route handlers to get the authenticated user (or return **401** / Auth-outage **500**). `**requireAuth()**` / `**getSessionUser()**` in `lib/auth.ts` are for pages that need a real session check; soft `**getUser()**` is for optional UI (marketing) and never throws.
+- `**withAuth()**` in `lib/api/with-auth.ts` is used inside API route handlers to get the authenticated user (or return **401** / Auth-outage **500**). `**requireAuth()**` / `**getSessionUser()**` in `lib/auth.ts` are for pages that need a real session check; soft `**getUser()**` never throws.
 - **RLS** on `applications` and `profiles` enforces data isolation at the database level (owners only; public share pages resolve server-side via the service-role client, not an open anon SELECT).
 - **Public read** of applications by slug is permitted (recruiter view requires no login).
 
