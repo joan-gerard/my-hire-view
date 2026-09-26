@@ -1735,15 +1735,17 @@
   }
 
   .ot-stat {
-    min-height: 0;
-    aspect-ratio: 8 / 5;
+    /* 8/5 at ~164px wide only allows ~102px height; label + 44px metric overflow. */
+    min-height: 132px;
+    aspect-ratio: auto;
     padding: 16px 16px 20px;
   }
 
   .ot-stat-c {
     width: 100%;
     justify-self: stretch;
-    aspect-ratio: 16 / 5;
+    min-height: 120px;
+    aspect-ratio: auto;
   }
 
   .ot-work {
