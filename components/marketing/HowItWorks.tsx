@@ -14,9 +14,12 @@ function useStepVideoAutoplay(
   src: string,
 ) {
   useEffect(() => {
-    const video = videoRef.current;
-    const root = rootRef.current;
-    if (!video || !root) return;
+    const videoNode = videoRef.current;
+    const rootNode = rootRef.current;
+    if (!videoNode || !rootNode) return;
+    // Explicit non-null locals so nested closures keep the narrowed type.
+    const video: HTMLVideoElement = videoNode;
+    const root: HTMLElement = rootNode;
 
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     let playTimeout: ReturnType<typeof setTimeout> | null = null;
