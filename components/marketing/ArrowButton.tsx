@@ -2,7 +2,7 @@ export function RollLabel({ text }: { text: string }) {
   return (
     <span className="ot-roll">
       <span>{text}</span>
-      <span>{text}</span>
+      <span aria-hidden="true">{text}</span>
     </span>
   );
 }

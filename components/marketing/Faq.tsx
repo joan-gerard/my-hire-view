@@ -6,7 +6,7 @@ import { useState } from "react";
 
 export function Faq() {
   const [faqOpen, setFaqOpen] = useState<ReadonlySet<number>>(
-    () => new Set([0]),
+    () => new Set(),
   );
 
   return (

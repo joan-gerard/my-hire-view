@@ -22,9 +22,14 @@ function isModifiedClick(event: MouseEvent<HTMLAnchorElement>): boolean {
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [dotColor, setDotColor] = useState<string | undefined>(undefined);
   const lastScrollY = useRef(0);
   const menuOpenRef = useRef(menuOpen);
   menuOpenRef.current = menuOpen;
+
+  useEffect(() => {
+    setDotColor(dailyLogoDotColor());
+  }, []);
 
   useEffect(() => {
     lastScrollY.current = window.scrollY;
@@ -100,7 +105,7 @@ export function Header() {
           MyHireView
           <span
             className="ot-logo-dot"
-            style={{ backgroundColor: dailyLogoDotColor() }}
+            style={dotColor ? { backgroundColor: dotColor } : undefined}
             aria-hidden="true"
           />
         </a>

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { HERO_IMAGES } from "@/lib/marketing/constants";
 
 export function Hero() {
@@ -28,11 +29,13 @@ export function Hero() {
           {[0, 1].map((copy) => (
             <div className="ot-hero-set" key={copy}>
               {HERO_IMAGES.map((image) => (
-                <img
+                <Image
                   key={`${copy}-${image.src}`}
                   src={image.src}
                   alt=""
-                  style={{ width: image.width }}
+                  width={image.width}
+                  height={430}
+                  style={{ objectFit: "cover" }}
                 />
               ))}
             </div>

@@ -1,9 +1,9 @@
 export function Story() {
   return (
-    <section className="ot-story" id="story">
+    <section className="ot-story" id="story" aria-labelledby="story-title">
       <div className="ot-wrap ot-story-grid">
         <div className="ot-story-copy">
-          <h2>
+          <h2 id="story-title">
             Hiring still treats people like unread files. You apply, you follow
             up, then nothing: no signal that anyone looked.
           </h2>

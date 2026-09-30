@@ -2,7 +2,7 @@ import { LOGO_DOT_COLORS } from "@/lib/marketing/constants";
 
 /** Prefer ASCII punctuation in homepage copy (shared constants may use em dashes). */
 export function withoutEmDash(text: string): string {
-  return text.replace(/\u2014/g, " -");
+  return text.replace(/\s*\u2014\s*/g, " - ");
 }
 
 export function dailyLogoDotColor(date = new Date()): string {

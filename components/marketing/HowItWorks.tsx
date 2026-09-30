@@ -1,8 +1,112 @@
 "use client";
 
-import { HOW_IT_WORKS_STEPS } from "@/components/public/how-it-works";
+import {
+  AUTOPLAY_DELAY_MS,
+  AUTOPLAY_VIEW_THRESHOLD,
+  HOW_IT_WORKS_STEPS,
+} from "@/components/public/how-it-works";
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { ArrowButton, ArrowIcon, RollLabel } from "./ArrowButton";
+
+function useStepVideoAutoplay(
+  videoRef: MutableRefObject<HTMLVideoElement | null>,
+  rootRef: MutableRefObject<HTMLElement | null>,
+  src: string,
+) {
+  useEffect(() => {
+    const video = videoRef.current;
+    const root = rootRef.current;
+    if (!video || !root) return;
+
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let playTimeout: ReturnType<typeof setTimeout> | null = null;
+    let inView = false;
+
+    function clearPending() {
+      if (playTimeout !== null) {
+        clearTimeout(playTimeout);
+        playTimeout = null;
+      }
+    }
+
+    function stopAndUnload() {
+      clearPending();
+      video.pause();
+      if (video.getAttribute("src")) {
+        video.removeAttribute("src");
+        video.load();
+      }
+    }
+
+    function pausePlayback() {
+      clearPending();
+      video.pause();
+    }
+
+    function schedulePlay() {
+      if (motionQuery.matches || !inView) return;
+      clearPending();
+      if (!video.getAttribute("src")) {
+        video.src = src;
+      }
+      playTimeout = setTimeout(() => {
+        playTimeout = null;
+        if (motionQuery.matches || !inView) return;
+        void video.play().catch(() => {
+          /* Decorative autoplay may be blocked; ignore. */
+        });
+      }, AUTOPLAY_DELAY_MS);
+    }
+
+    function sync() {
+      if (motionQuery.matches) {
+        stopAndUnload();
+        return;
+      }
+      if (inView) {
+        schedulePlay();
+      } else {
+        pausePlayback();
+      }
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        inView = Boolean(entry?.isIntersecting);
+        sync();
+      },
+      { threshold: AUTOPLAY_VIEW_THRESHOLD },
+    );
+    observer.observe(root);
+    motionQuery.addEventListener("change", sync);
+
+    return () => {
+      clearPending();
+      observer.disconnect();
+      motionQuery.removeEventListener("change", sync);
+      video.pause();
+    };
+  }, [src]);
+}
+
+function StepVideo({ src, title }: { src: string; title: string }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  useStepVideoAutoplay(videoRef, rootRef, src);
+
+  return (
+    <div ref={rootRef} className="ot-case-media" aria-hidden="true">
+      <video
+        ref={videoRef}
+        muted
+        loop
+        playsInline
+        preload="none"
+        aria-label={title}
+      />
+    </div>
+  );
+}
 
 function useCaseRecess(
   caseRefs: MutableRefObject<Array<HTMLElement | null>>,
@@ -136,16 +240,7 @@ export function HowItWorks() {
               }}
               className="ot-case"
             >
-              <div className="ot-case-media" aria-hidden="true">
-                <video
-                  src={step.video}
-                  muted
-                  loop
-                  playsInline
-                  autoPlay
-                  aria-label={step.title}
-                />
-              </div>
+              <StepVideo src={step.video} title={step.title} />
               <div className="ot-case-info">
                 <div className="ot-case-top">
                   <div className="ot-case-badges">
