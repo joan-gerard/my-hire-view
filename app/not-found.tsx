@@ -1,6 +1,6 @@
 import { stackSansHeadline, switzer } from "@/app/(home)/fonts";
 import { MarketingNotFound } from "@/components/marketing";
-import "@/app/(home)/mhv-demo.css";
+import "@/app/(home)/mhv-404.css";
 
 export default function NotFound() {
   return (

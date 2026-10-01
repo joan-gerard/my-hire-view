@@ -181,7 +181,7 @@ flowchart LR
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
-- **Home (`app/(home)/layout.tsx`):** Serves `/` plus draft legal routes (`/terms`, `/privacy`, `/cookies`). Self-hosts Switzer (`next/font/local`) and Stack Sans Headline (`next/font/google`), plus `mhv-demo.css`. Homepage uses `MarketingShell`; legal pages and the generic 404 use standalone dark void compositions (`LegalDocument`, `MarketingNotFound`). The marketing header always links to `/login`; it does not switch to Dashboard when a session exists.
+- **Home (`app/(home)/layout.tsx`):** Serves `/` plus draft legal routes (`/terms`, `/privacy`, `/cookies`). Self-hosts Switzer (`next/font/local`) and Stack Sans Headline (`next/font/google`), plus `mhv-demo.css`. Homepage uses `MarketingShell`; legal pages use standalone dark void compositions (`LegalDocument`). Root `app/not-found.tsx` uses `MarketingNotFound` with `mhv-404.css` only (not the full landing stylesheet). The marketing header always links to `/login`; it does not switch to Dashboard when a session exists.
 - **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (MyHireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
 API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE.md)** (endpoint index, request/response shapes, auth, and rate limits).

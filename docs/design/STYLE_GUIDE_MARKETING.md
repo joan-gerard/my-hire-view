@@ -1,7 +1,7 @@
 # Marketing brand & UI style guide
 
 > Source of truth for the public marketing surface (`/`, and landings that should match it).  
-> Legal (`/terms`, `/privacy`, `/cookies`) and the generic 404 share a related **dark void** family (minimal chrome, deep fields, accent stamps) rather than the white homepage shell — see `LegalDocument` / `MarketingNotFound` and `.mhv-legal-*` / `.mhv-404` in `mhv-demo.css`.  
+> Legal (`/terms`, `/privacy`, `/cookies`) and the generic 404 share a related **dark void** family (minimal chrome, deep fields, accent stamps) rather than the white homepage shell — see `LegalDocument` / `MarketingNotFound` and `.mhv-legal-*` in `mhv-demo.css`, `.mhv-404-*` in `mhv-404.css`.  
 > Implementation today: `app/(home)/mhv-demo.css` + `components/marketing/`.  
 > Product chrome (admin, auth, `/view`) uses a **different** system — see [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md).
 
