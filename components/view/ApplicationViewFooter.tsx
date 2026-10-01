@@ -8,7 +8,6 @@ type ApplicationViewFooterProps = {
 /**
  * Compact footer for `/view/[publicId]/[slug]`. Kept short so branding
  * and legal links stay present without competing with the application.
- * (Marketing pages use the larger `ViewPageFooter` via `Footer`.)
  */
 export default function ApplicationViewFooter({
   variant = "light",
@@ -44,6 +43,9 @@ export default function ApplicationViewFooter({
           </Link>
           <Link href="/privacy" className={linkClass(isDark)}>
             Privacy
+          </Link>
+          <Link href="/cookies" className={linkClass(isDark)}>
+            Cookies
           </Link>
         </nav>
 

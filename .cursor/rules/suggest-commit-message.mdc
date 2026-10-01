@@ -1,0 +1,19 @@
+---
+description: After finishing work, suggest a one-line commit message from the current diff (no double quotes; do not commit)
+alwaysApply: true
+---
+
+# Suggest commit message after work
+
+After finishing a task that changed files (create, edit, or delete):
+
+1. Run `git status`, `git diff` (unstaged), and `git diff --cached` (staged) to see what changed.
+2. Suggest a single one-line commit message that reflects the purpose of those changes (why, not a file list).
+3. Do not create a commit unless the user explicitly asks.
+4. Do not use double quotation marks (`"`) anywhere in the suggested message. Prefer plain text or single quotes if quoting is needed.
+5. Skip the suggestion if there are no changes.
+
+Format the suggestion clearly, for example:
+
+Suggested commit message:
+update HowItWorks section layout for clearer step flow

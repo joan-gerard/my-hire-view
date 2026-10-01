@@ -1,0 +1,115 @@
+# Code Review – Refactoring & Best Practices
+
+Historical record of refactors already applied to the MyHireView codebase. Open follow-ups and recommendations are tracked only in **[Backlog.md](../product/Backlog.md)**.
+
+---
+
+## 1. Refactors Applied
+
+### 1.1 DRY: Supabase route client (auth API)
+
+**Before:** Login, signup, and logout API routes each duplicated the same Supabase server client setup (cookie get/set/remove and `CookieOptions` type).
+
+**After:** A shared module `lib/supabase/route-client.ts` was added:
+
+- `createSupabaseRouteClient({ request, response })` – single place for route-handler client creation
+- `CookieOptions` type exported for reuse
+
+**Files changed:**  
+`app/api/auth/login/route.ts`, `app/api/auth/signup/route.ts`, `app/api/auth/logout/route.ts` now use `createSupabaseRouteClient`. Duplicated cookie handling and type definitions were removed.
+
+---
+
+### 1.2 DRY: Shareable application URL
+
+**Before:** The shareable application URL (`baseUrl + '/view/' + slug`) was built in three places with slight variations (`NEXT_PUBLIC_SITE_URL`, `window.location.origin`, etc.).
+
+**After:** A small util in `lib/utils/url.ts`:
+
+- `getBaseUrl()` – safe for server and client
+- `getApplicationUrl(slug)` – full URL for the public application page
+
+**Files changed:**  
+`app/view/[slug]/page.tsx`, `components/admin/ApplicationCard.tsx`, `components/forms/ApplicationForm.tsx` now use these helpers.
+
+---
+
+### 1.3 Auth callback: Next.js 15 `cookies()` API
+
+**Before:** `app/auth/callback/route.ts` used `cookies()` without `await`. In Next.js 15+, `cookies()` from `next/headers` is async.
+
+**After:** `const cookieStore = await cookies();` so the callback works correctly with the current Next.js API.
+
+---
+
+### 1.4 ApplicationCard: Reuse UI and clipboard util
+
+**Before:** ApplicationCard used raw `<button>` elements with inline styles and its own `navigator.clipboard.writeText` logic.
+
+**After:**
+
+- Uses shared `Button` component with appropriate variants.
+- Uses `copyToClipboard()` from `lib/utils/clipboard.ts` (includes fallback for older environments).
+
+---
+
+### 1.5 Edit page: Fetch single application by ID
+
+**Before:** The edit page fetched the full list from `GET /api/applications` and then found the application by `id` in the client. Inefficient and unnecessary data transfer.
+
+**After:**
+
+- New endpoint: `GET /api/applications/by-id/[id]` (auth required, returns one application).
+- Edit page calls this endpoint instead of listing all applications.
+
+**Files added:** `app/api/applications/by-id/[id]/route.ts`  
+**Files changed:** `app/admin/edit/[id]/page.tsx` now fetches by id.
+
+---
+
+### 1.6 DRY: Login / signup pages + show-password (F2)
+
+**Before:** `LoginForm` and `SignUpForm` each owned a full-page layout, error/notice banners, stacked field chrome, and submit button markup. Password fields were plain `type="password"` inputs with no reveal control. Signup helper copy restated the full UTF-8 / special-character rules in the placeholder and under the form.
+
+**After:**
+
+- Shared shell, alerts, submit, and field styles under `components/auth/` (`AuthPageShell`, `AuthAlert`, `AuthSubmitButton`, `auth-form-styles`).
+- Shared `PasswordField` with a show/hide toggle on login and signup (including confirm password).
+- Shorter signup password hint linked to the password field via `*` + `aria-describedby`; full rules stay in validation / API errors.
+
+**Files added:**  
+`components/auth/AuthPageShell.tsx`, `AuthAlert.tsx`, `AuthSubmitButton.tsx`, `PasswordField.tsx`, `auth-form-styles.ts`  
+**Files changed:**  
+`components/auth/LoginForm.tsx`, `components/auth/SignUpForm.tsx`, `lib/validation/auth.ts` (`SIGNUP_PASSWORD_RULES_HINT`).
+
+---
+
+### 1.7 Upload routes: shared `handleApiError` (F5)
+
+**Before:** CV (`POST /api/upload`) and profile-picture (`POST /api/upload/profile-picture`) unexpected failures used ad-hoc `console.error` + generic JSON, with no structured ops context.
+
+**After:** Both routes use `handleApiError` so the client still sees a generic message while server logs include log-only `meta` (`userId`, file `size`, storage status when present). Expected 400/401/409/429 paths are unchanged.
+
+**Files changed:**  
+`app/api/upload/route.ts`, `app/api/upload/profile-picture/route.ts`
+
+---
+
+## 2. Open recommendations
+
+Open follow-ups from this review (API validation, middleware entry, DB/app types, upload UX, central API client, etc.) live in **[Backlog.md](../product/Backlog.md)**. Do not re-list them here.
+
+---
+
+## 3. Summary of applied refactors
+
+| Area             | Status                                                                 |
+| ---------------- | ---------------------------------------------------------------------- |
+| Auth API DRY     | Done – shared route client in `lib/supabase/route-client.ts`           |
+| Auth pages DRY   | Done – shared shell, alerts, submit, `PasswordField` show/hide (F2)    |
+| Shareable URL    | Done – `lib/utils/url.ts`                                              |
+| Auth callback    | Done – `await cookies()`                                               |
+| ApplicationCard  | Done – Button + clipboard util                                         |
+| Edit page fetch  | Done – GET by-id + edit page uses it                                   |
+| Upload/Slug auth | Done – both require auth                                               |
+| Upload errors    | Done – `handleApiError` + log-only meta on CV and profile-picture (F5) |

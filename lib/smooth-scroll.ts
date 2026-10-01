@@ -10,9 +10,19 @@ function easeInOutSine(t: number): number {
 export type SmoothScrollOptions = {
   /** Duration in ms. */
   duration?: number;
-  /** Vertical offset from the target (e.g. for fixed headers). Default 0. */
+  /** Vertical offset from the target (e.g. for fixed headers). */
   offset?: number;
 };
+
+/** Sticky marketing header height so section headings stay below it. */
+function stickyHeaderOffset(): number {
+  const shell = document.querySelector<HTMLElement>(".ot-header-shell");
+  return shell?.offsetHeight ?? 0;
+}
+
+function resolveOffset(options: SmoothScrollOptions): number {
+  return options.offset ?? stickyHeaderOffset();
+}
 
 /**
  * Smoothly scrolls the window to the given element over a configurable duration.
@@ -22,7 +32,8 @@ export function smoothScrollToElement(
   element: HTMLElement,
   options: SmoothScrollOptions = {},
 ): void {
-  const { duration = 1400, offset = 0 } = options;
+  const duration = options.duration ?? 1400;
+  const offset = resolveOffset(options);
 
   const startY = window.scrollY ?? window.pageYOffset;
   const targetY = element.getBoundingClientRect().top + startY - offset;
@@ -41,4 +52,41 @@ export function smoothScrollToElement(
   }
 
   requestAnimationFrame(step);
+}
+
+/**
+ * Scroll to an in-page hash target (`#how`, `#pricing`, …).
+ * Uses smooth animation unless the user prefers reduced motion.
+ * Updates the URL hash without a jump.
+ */
+export function scrollToHash(
+  hash: string,
+  options: SmoothScrollOptions = {},
+): boolean {
+  const id = hash.startsWith("#") ? hash.slice(1) : hash;
+  if (!id) return false;
+
+  const element = document.getElementById(id);
+  if (!element) return false;
+
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  const offset = resolveOffset(options);
+
+  if (reduceMotion) {
+    const top =
+      element.getBoundingClientRect().top +
+      (window.scrollY ?? window.pageYOffset) -
+      offset;
+    window.scrollTo(0, top);
+  } else {
+    smoothScrollToElement(element, { ...options, offset });
+  }
+
+  if (typeof history !== "undefined" && history.pushState) {
+    history.pushState(null, "", `#${id}`);
+  }
+
+  return true;
 }

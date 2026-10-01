@@ -1,6 +1,6 @@
 /**
- * Pricing tiers for /pricing (E3-014).
- * Source of truth: docs/PRICING_AND_MEMBERSHIP.md §3.
+ * Pricing tiers for the homepage `#pricing` section (E3-014).
+ * Source of truth: docs/product/PRICING_AND_MEMBERSHIP.md §3.
  * Monthly and annual billing. Display amounts are USD until Stripe adaptive
  * presentment (E2); avoid “USD” in customer-facing sentences.
  */
@@ -32,17 +32,17 @@ export interface PricingTier {
     monthly: PricingTierPrice;
     annual: PricingTierPrice;
   };
-  /** ISO currency code for structured price (display is USD on /pricing today). */
+  /** ISO currency code for structured price (display is USD on the homepage today). */
   currency: "USD";
   /** When true, visually emphasize as the recommended paid plan. */
   highlighted: boolean;
-  /** Primary CTA for this card (pre-launch → waitlist until E2 checkout). */
+  /** Primary CTA for this card (pre-launch → login until E2 checkout). */
   cta: { label: string; href: string };
   features: readonly PricingFeature[];
 }
 
-/** Waitlist CTA shared by all tiers until billing (E2) ships. */
-export const PRICING_WAITLIST_HREF = "/#early-access" as const;
+/** Shared tier CTA until billing (E2) ships. */
+export const PRICING_LOGIN_HREF = "/login" as const;
 
 const FREE_PRICE = {
   amountUsd: 0,
@@ -70,7 +70,7 @@ export function getAnnualNudge(tier: PricingTier): string | null {
 
 /**
  * Locked plan matrix: Free · Pro · Premium (monthly + annual).
- * See docs/PRICING_AND_MEMBERSHIP.md §3.
+ * See docs/product/PRICING_AND_MEMBERSHIP.md §3.
  */
 export const PRICING_TIERS: readonly PricingTier[] = [
   {
@@ -83,7 +83,7 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     },
     currency: "USD",
     highlighted: false,
-    cta: { label: "Join waitlist", href: PRICING_WAITLIST_HREF },
+    cta: { label: "Get started", href: PRICING_LOGIN_HREF },
     features: [
       { label: "Up to 3 applications" },
       {
@@ -125,7 +125,7 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     },
     currency: "USD",
     highlighted: true,
-    cta: { label: "Join waitlist", href: PRICING_WAITLIST_HREF },
+    cta: { label: "Get started", href: PRICING_LOGIN_HREF },
     features: [
       { label: "Everything in Free" },
       {
@@ -159,7 +159,7 @@ export const PRICING_TIERS: readonly PricingTier[] = [
     },
     currency: "USD",
     highlighted: false,
-    cta: { label: "Join waitlist", href: PRICING_WAITLIST_HREF },
+    cta: { label: "Get started", href: PRICING_LOGIN_HREF },
     features: [
       { label: "Everything in Pro" },
       {
@@ -187,9 +187,9 @@ export function getTierPrice(
 
 /** Note under the tier grid — checkout not live; prices are a working draft until E1. */
 export const PRICING_DRAFT_NOTE =
-  "Prices above are a working draft and may change before launch. Paid checkout ships with membership — join the waitlist for early access until then.";
+  "Prices above are a working draft and may change before launch. Paid checkout ships with membership — sign up or log in to get started until then.";
 
-/** FAQ for caps, lifecycle, and downgrades on /pricing. */
+/** FAQ for caps, lifecycle, and downgrades. */
 export const PRICING_FAQ = [
   {
     q: "What counts toward my application limit?",

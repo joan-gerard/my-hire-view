@@ -1,6 +1,6 @@
 # Profiles at signup (revisiting “create on first PUT”)
 
-**Actionable work** lives in [Backlog.md](../Backlog.md). This retrospective is design/context only — not a second checklist.
+**Actionable work** lives in [Backlog.md](../product/Backlog.md). This retrospective is design/context only — not a second checklist.
 
 This retrospective explains why MyHireView initially deferred creating a `profiles` row until the first profile save, what that cost us, and why we now create a minimal row at signup (and again idempotently on the auth callback).
 
@@ -103,4 +103,4 @@ After a successful password sign-in, the same bootstrap runs. This closes the **
 - `app/api/auth/login/route.ts`
 - `app/auth/callback/route.ts`
 - `components/forms/ProfilePictureModal.tsx` (uses picture-only PUT)
-- [PROFILE_PICTURE.md](../PROFILE_PICTURE.md), [API_REFERENCE.md](../API_REFERENCE.md) (signup side effects)
+- [PROFILE_PICTURE.md](../architecture/PROFILE_PICTURE.md), [API_REFERENCE.md](../architecture/API_REFERENCE.md) (signup side effects)

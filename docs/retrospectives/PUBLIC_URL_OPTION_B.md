@@ -1,6 +1,6 @@
 # Public URL design — Option B
 
-**Actionable work** lives in [Backlog.md](../Backlog.md). This retrospective is design/context only — not a second checklist.
+**Actionable work** lives in [Backlog.md](../product/Backlog.md). This retrospective is design/context only — not a second checklist.
 
 This document records why MyHireView adopted **Option B** for shareable application URLs, what problem it solves, alternatives we considered, and what we shipped.
 
@@ -163,7 +163,7 @@ This is **out of scope** for the initial Option B release; opaque ids are the on
 
 ## Related docs
 
-- [API_REFERENCE.md](API_REFERENCE.md) — endpoint paths and behaviour
-- [DATA_FLOW.md](DATA_FLOW.md) — create/edit/view flows and slug checks
-- [ARCHITECTURE.md](ARCHITECTURE.md) — routes and data model
-- [USER_GUIDE.md](USER_GUIDE.md) — what candidates see when sharing links
+- [API_REFERENCE.md](../architecture/API_REFERENCE.md) — endpoint paths and behaviour
+- [DATA_FLOW.md](../architecture/DATA_FLOW.md) — create/edit/view flows and slug checks
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — routes and data model
+- [USER_GUIDE.md](../engineering/USER_GUIDE.md) — what candidates see when sharing links

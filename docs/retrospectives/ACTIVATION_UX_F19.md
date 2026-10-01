@@ -2,7 +2,7 @@
 
 **Shipped design context** for before-launch PR group **F19** (`F19-047` legend, `F19-046` Public id / share URL copy, `F19-044` Getting started checklist) and the small follow-ons that kept the empty dashboard aligned with that story (clearer empty state; hide legend/search until the first application exists).
 
-This retrospective is not a second checklist — see [Backlog.md](../Backlog.md) PR group F19 (shipped). Activation framing: [GO_TO_MARKET.md](../GO_TO_MARKET.md) (aha = first shared link, not a feature tour).
+This retrospective is not a second checklist — see [Backlog.md](../product/Backlog.md) PR group F19 (shipped). Activation framing: [GO_TO_MARKET.md](../product/GO_TO_MARKET.md) (aha = first shared link, not a feature tour).
 
 ---
 
@@ -58,7 +58,7 @@ None of that blocks a power user. All of it costs **buy-in** for someone who sig
 
 **Buy-in effect:** A continuous “you’re making progress toward a shareable link” signal without forcing a tutorial or blocking the UI.
 
-Data flow: [DATA_FLOW_ONBOARDING_CHECKLIST.md](../DATA_FLOW_ONBOARDING_CHECKLIST.md).
+Data flow: [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FLOW_ONBOARDING_CHECKLIST.md).
 
 ### Follow-ons on the same activation thread
 
@@ -105,11 +105,11 @@ Data flow: [DATA_FLOW_ONBOARDING_CHECKLIST.md](../DATA_FLOW_ONBOARDING_CHECKLIST
 
 | Doc | Role |
 |-----|------|
-| [USER_GUIDE.md](../USER_GUIDE.md) | Candidate-facing Getting started, legend, Public id |
-| [GO_TO_MARKET.md](../GO_TO_MARKET.md) | Activation / aha = first shared link |
-| [DATA_FLOW_ONBOARDING_CHECKLIST.md](../DATA_FLOW_ONBOARDING_CHECKLIST.md) | Checklist load / prefs / notify |
+| [USER_GUIDE.md](../engineering/USER_GUIDE.md) | Candidate-facing Getting started, legend, Public id |
+| [GO_TO_MARKET.md](../product/GO_TO_MARKET.md) | Activation / aha = first shared link |
+| [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FLOW_ONBOARDING_CHECKLIST.md) | Checklist load / prefs / notify |
 | [MANUAL_TEST_ONBOARDING_CHECKLIST.md](../manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md) | Checklist manual checks |
 | [MANUAL_TEST_APPLICATION_STATUS_LEGEND.md](../manual-testing/MANUAL_TEST_APPLICATION_STATUS_LEGEND.md) | Legend manual checks |
 | [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md) | Why opaque `public_id` exists |
-| [Backlog.md](../Backlog.md) | `F19-044` / `046` / `047` shipped; `F31-105` tour later; `F17-017` brand skin |
-| [BEFORE_LAUNCH_PR_ORDER.md](../BEFORE_LAUNCH_PR_ORDER.md) | F19 in the create-UX chain after F15/F16 |
+| [Backlog.md](../product/Backlog.md) | `F19-044` / `046` / `047` shipped; `F31-105` tour later; `F17-017` brand skin |
+| [BEFORE_LAUNCH_PR_ORDER.md](../product/BEFORE_LAUNCH_PR_ORDER.md) | F19 in the create-UX chain after F15/F16 |

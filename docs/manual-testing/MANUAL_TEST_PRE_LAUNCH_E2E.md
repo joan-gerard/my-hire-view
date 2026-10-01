@@ -2,7 +2,7 @@
 
 Full candidate journey before public launch: marketing and waitlist, signup through dashboard, profile / CVs / pictures, create–edit–publish–archive–delete applications, search and pagination, Getting started checklist, public `/view` pages, and recruiter insights.
 
-Work ticket: [Backlog.md](../Backlog.md) `F32-115`. Product copy: [USER_GUIDE.md](../USER_GUIDE.md).
+Work ticket: [Backlog.md](../product/Backlog.md) `F32-115`. Product copy: [USER_GUIDE.md](../engineering/USER_GUIDE.md).
 
 **How to run:** work §§0–17 in order (happy path + in-section edges), then **§18** (remaining edges). Do not skip §18.
 
@@ -62,9 +62,9 @@ Create these as you go so later sections have the right mix. Reuse the same prim
 - [ ] `/view/not-a-real-id/not-a-real-slug` shows the **unavailable** empty state (not a generic 404): “This link doesn’t have an active application”, CTA to home, compact footer
 - [ ] `/view/only-one-segment` (legacy slug-only path) → unavailable empty state, not a crash / other user’s app
 - [ ] `/view/{publicId}/` (missing slug) and trailing slash variants do not 500
-- [ ] A nonsense path (e.g. `/this-page-does-not-exist`) shows the generic **404** with **Go Home**
+- [ ] A nonsense path (e.g. `/this-page-does-not-exist`) shows the generic **404** (deep void stage + missing-application frame, not the landing header/footer shell) with **Take me home**
 - [ ] `/how-it-works` and `/blog` are gone (404). How-it-works content lives on the homepage section only
-- [ ] `/terms` and `/privacy` — **404 until `F20-019` ships**; still confirm footer/view links point at those paths
+- [ ] `/terms`, `/privacy`, and `/cookies` load draft legal pages on dark themed stages (green / navy / plum) with minimal header — not the landing footer CTA shell
 - [ ] `/auth/callback` with **no** `code` → `/login` (not a 500)
 - [ ] `/auth/callback?next=https://evil.com` (and `//evil.com`) still lands on a **same-origin** path (default `/admin`), never the attacker URL
 
@@ -77,65 +77,47 @@ Do this signed out (incognito is fine).
 ### Header
 
 - [ ] Logo / wordmark present
-- [ ] Nav includes **Pricing**
-- [ ] Avatar menu → **Sign In** → `/login`
-- [ ] Mobile: hamburger opens menu (Pricing + Sign In); close / overlay works; header stays usable
-- [ ] On home, mobile header starts transparent over the hero and becomes solid after scrolling the cover section to the top
+- [ ] Nav includes **How to**, **Pricing**, and **FAQs** (paths `/#how`, `/#pricing`, `/#faq`); logo returns to `/` (smooth-scroll to top when already on home)
+- [ ] **Login** goes to `/login`
+- [ ] Mobile: menu opens those same links plus Login; closing it returns to the page
+- [ ] Header hides smoothly when scrolling down and reappears when scrolling up (stays visible while the mobile menu is open)
+- [ ] Nav / logo in-page links smooth-scroll to the target section (instant if reduced motion is preferred)
 
-### Hero
+### Hero and sections
 
-- [ ] Headline **Stand out. Get Seen.** and subtitle render
-- [ ] Background video or fallback image loads
-- [ ] **Get Early Access** scrolls to the waitlist (`#early-access`)
-- [ ] **See pricing** goes to `/pricing`
+- [ ] Hero copy and images render
+- [ ] **Get started** goes to `/login`
+- [ ] How-it-works steps show titles and videos (or a graceful empty media state)
+- [ ] **Pricing** (`#pricing`): **Free / Pro / Premium** cards; **Pro** is highlighted
+- [ ] Monthly / annual toggle: default **annual**; switching updates prices; annual savings nudge appears on monthly
+- [ ] Each tier **Get started** goes to `/login` (checkout is **not** live — `E2-013`)
+- [ ] FAQ items expand and collapse
+- [ ] Footer: **Terms of Service** → `/terms`; **Privacy Policy** → `/privacy`; **Cookies** → `/cookies`
 
-### Page sections
-
-- [ ] Problem, solution, how-it-works steps, FAQ (expand/collapse items), and final CTA render without layout collapse
-- [ ] FAQ contact card / waitlist CTA (if present) still reaches the form
-- [ ] Smooth-scroll / hash links do not leave a broken offset under the header
-- [ ] Images and marketing video do not flash broken icons
-
-### Footer (marketing)
-
-- [ ] MyHireView wordmark links home; slogan present
-- [ ] **Terms of Service** → `/terms`; **Privacy Policy** → `/privacy`
-- [ ] Copyright year is current
-- [ ] Twitter / LinkedIn icons open the intended profiles in a new tab (`rel=noopener`)
+There is no `/pricing` route and no email-capture form on this page.
 
 ---
 
-## 2. Marketing — pricing (`/pricing`)
+## 1b. Marketing — legal (`/terms`, `/privacy`, `/cookies`)
 
-- [ ] Same header as home, but **solid** (not transparent-over-hero) from the first paint
-- [ ] Intro copy + **Free / Pro / Premium** cards
-- [ ] **Pro** is visually highlighted
-- [ ] Monthly / annual toggle: default **annual**; switching updates prices; annual savings nudge appears on monthly
-- [ ] Caps / FAQ copy matches the working draft (checkout is **not** live — `E2-013`)
-- [ ] Waitlist / early-access CTA on this page works (same API as home)
-- [ ] Footer matches home
+- [ ] Each page uses a dark void stage + minimal top chrome (logo, legal nav, Sign in) — not the homepage sticky header / footer CTA
+- [ ] Themes differ: **Terms** deep green + lime; **Privacy** navy + sky; **Cookies** plum + pink
+- [ ] Body/meta text is clearly readable on the dark panel (high contrast); stamp and accents remain visible
+- [ ] Keyboard: **Skip to content** appears on Tab; focus rings visible on links; TOC jumps to sections
+- [ ] Draft stamp is visible; sections and TOC are readable on mobile
+- [ ] Current legal link is marked in the top nav; other legal links and **Back to home** work
+
+---
+
+## 2. Marketing — pricing (homepage `#pricing`)
+
+Covered in section 1. Do not look for a standalone `/pricing` page; that route should 404.
 
 ---
 
 ## 3. Waitlist
 
-Use a dedicated waitlist email (not Account A) so signup later is clean.
-
-- [ ] Required: email, first name, job-search status
-- [ ] Optional: primary goal, career stage
-- [ ] Job search, primary goal, and career stage are **three independent radio groups** (selecting a goal or stage does **not** clear job-search status)
-- [ ] Every job-search option submits (Actively searching, Casually looking, Career planning, Other)
-- [ ] Every primary-goal option submits, including **Network with recruiters** (also: Get more interviews, Track my applications, Stand out to recruiters, Other)
-- [ ] Every career-stage option submits (Entry-level, Junior, Mid-level, Senior, Other)
-- [ ] Success state / early-bird message after a valid submit; form does not stay in a loading spinner
-- [ ] Duplicate email → error (API **409**); UI shows a clear message
-- [ ] Same email with different **casing** (`You@x.com` vs `you@x.com`) is treated as a duplicate (or documented if not)
-- [ ] After success, submitting a **different** email still works (form can be used again, or reload)
-- [ ] Invalid email / empty first name / whitespace-only first name blocked (HTML and/or API **400**)
-- [ ] Email longer than **254** chars is rejected
-- [ ] Honeypot field is not visible; leaving it empty still succeeds
-- [ ] Submit button disables while loading; error path re-enables it
-- [ ] Double-click submit does not create two waitlist rows
+The homepage no longer includes the waitlist form. `POST /api/waitlist` still exists for a later surface. Do not expect `#early-access` on `/`.
 
 ---
 
@@ -178,7 +160,7 @@ From `/signup` (login page “create a new account”, or type the URL).
 - [ ] While signed in, visiting `/login` or `/signup` **redirects to `/admin`** (no login↔admin loop)
 - [ ] **Sign Out** in the admin header → `/login`; `/admin` now redirects to login
 - [ ] Sign in again
-- [ ] From `/` (signed in): avatar menu shows **Dashboard** and **Sign Out**; Dashboard → `/admin`; Sign Out from marketing header also clears the session
+- [ ] From `/` (signed in): header still shows **Login** (no avatar / Dashboard menu on the marketing header); go to `/admin` via URL or after login redirect. Sign Out is only in the admin header.
 - [ ] After sign-out, browser Back does not serve a usable authenticated dashboard (must hit login)
 - [ ] Two tabs signed in: Sign Out in tab 1; tab 2’s next `/admin` navigation or refresh sends you to login (no half-authenticated UI)
 
@@ -542,7 +524,7 @@ Use incognito / signed-out (and owner, where noted).
 - [ ] **View CV** / open-in-tab works
 - [ ] **Download CV** downloads; filename is original **or** `CV-{Slug}.pdf` per the toggle
 - [ ] Download failure (block the PDF URL once) does not crash the page
-- [ ] Compact footer: MyHireView, Terms, Privacy, © — present for owners and recruiters
+- [ ] Compact footer: MyHireView, Terms, Privacy, Cookies, © — present for owners and recruiters
 - [ ] Page is `noindex` / does not invite indexing (optional: view source / head)
 
 ### Variants
@@ -612,8 +594,8 @@ On a published app with 0 views:
 - [ ] Deep-link `/admin/new` and `/admin/profile` while signed in works
 - [ ] After login, landing on `/admin` (not a blank page)
 - [ ] Public view loading state (`app/view/.../loading`) appears on a slow load (optional)
-- [ ] `/?` and `/#early-access` (direct load) still render home and scroll to waitlist
-- [ ] Browser Back/Forward between `/` ↔ `/pricing` ↔ `/login` does not duplicate headers or leave a stuck mobile menu
+- [ ] `/` and `/#pricing` (direct load) still render the homepage; `#pricing` scrolls to the tier cards
+- [ ] Browser Back/Forward between `/` and `/login` does not duplicate headers or leave a stuck mobile menu
 - [ ] Confirm dialogs (leave create, delete primary, switch CV): **Escape** and backdrop/cancel are equivalent; they do not submit the parent form
 
 ---
@@ -661,9 +643,8 @@ These are easy to skip on the happy path. Do them once you have applications in 
 
 ### Marketing / pricing leftovers
 
-- [ ] Signed-in user can still submit the waitlist (or sees a sensible state — not a 500)
 - [ ] Pricing monthly ↔ annual toggle several times does not glitch prices or highlight the wrong tier
-- [ ] Home hero **Get Early Access** from a scrolled page still hits `#early-access`
+- [ ] Homepage **Get started** and tier **Get started** go to `/login`
 
 ### Keyboard / focus
 
@@ -680,11 +661,11 @@ These are easy to skip on the happy path. Do them once you have applications in 
 
 ## 19. Known not shipped — do **not** fail the pass for these
 
-Tracked in [Backlog.md](../Backlog.md):
+Tracked in [Backlog.md](../product/Backlog.md):
 
 | Item | Ticket |
 | ---- | ------ |
-| Terms / Privacy / Cookies pages | `F20-019` |
+| Terms / Privacy / Cookies pages | Draft UI shipped (`F20-019`); final counsel copy still open |
 | Delete account from profile | `F21-020` |
 | In-app forgot password | `L4-098` |
 | Stripe / plan gates | `E1-012`, `E2-013` |

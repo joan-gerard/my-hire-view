@@ -1,6 +1,6 @@
 # Security — what we protect and how
 
-**Actionable work** lives in [Backlog.md](../Backlog.md). This retrospective is a living record of safety concerns we addressed (or plan to address) for MyHireView — not a second checklist.
+**Actionable work** lives in [Backlog.md](../product/Backlog.md). This retrospective is a living record of safety concerns we addressed (or plan to address) for MyHireView — not a second checklist.
 
 MyHireView holds career-sensitive data: CVs, profile pictures, application details, and share links recruiters open. Security work focuses on **who can access what**, **stopping abuse**, and **not leaking hints** that help attackers.
 
@@ -22,7 +22,7 @@ MyHireView holds career-sensitive data: CVs, profile pictures, application detai
 
 | Concern | How we addressed it | Tickets / refs |
 | -------- | ------------------- | -------------- |
-| Session cookies must land on API responses so the proxy / session guard sees the user | Route handlers use `createSupabaseRouteClient` (+ cookie copy for signup PKCE) | Auth routes; [SUPABASE_AUTH_SETUP.md](../SUPABASE_AUTH_SETUP.md) |
+| Session cookies must land on API responses so the proxy / session guard sees the user | Route handlers use `createSupabaseRouteClient` (+ cookie copy for signup PKCE) | Auth routes; [SUPABASE_AUTH_SETUP.md](../architecture/SUPABASE_AUTH_SETUP.md) |
 | Post-login redirect could be abused as an open redirect | `safeNextPath` allows only safe same-origin relative paths | **A2-016** |
 | Admin UI without a session | Root `proxy.ts` refreshes session and redirects `/admin` → `/login`; APIs use `withAuth()` | **F26-060**; `lib/auth` + `lib/api/with-auth` |
 | Login / signup / logout flooding | Per-IP rate limits (login **15**/min, signup **5**/min, logout **20**/min) | Auth routes + **D3** durable limits |
@@ -75,7 +75,7 @@ MyHireView holds career-sensitive data: CVs, profile pictures, application detai
 
 ## Planned / open concerns
 
-Keep these visible so product and engineering share one security story. Status is owned in [Backlog.md](../Backlog.md).
+Keep these visible so product and engineering share one security story. Status is owned in [Backlog.md](../product/Backlog.md).
 
 | Concern | Planned approach | Tickets |
 | -------- | ---------------- | ------- |
@@ -85,7 +85,7 @@ Keep these visible so product and engineering share one security story. Status i
 | Signup CAPTCHA; logout hardening (CSRF); in-app forgot-password | After-launch auth polish | **L4-085**, **L4-086**, **L4-098** |
 | Auth `user_id` visible in avatar public URLs | Store under `public_id` (or similar) + migrate | **L5-087** |
 | Waitlist duplicate email **409** vs **200** (enumeration trade-off) | Product decision + uniform success response if chosen | **L8-094** |
-| Account deletion / legal pages (privacy & compliance adjacent) | User-driven delete; Terms / Privacy / Cookies | **F21-020**, **F20-019** |
+| Account deletion / legal pages (privacy & compliance adjacent) | User-driven delete; Terms / Privacy / Cookies | **F21-020**; legal draft UI shipped (`F20-019`) — final counsel copy still open |
 
 ---
 
@@ -99,7 +99,7 @@ Keep these visible so product and engineering share one security story. Status i
 - Signup: ≥ 8 Unicode code points, ≤ 72 UTF-8 bytes (length short-circuit before encode; no HTML `maxLength` byte illusion), ≥ 1 special char via `/[^\p{L}\p{N}\s]/u`; auth JSON capped at 8 KiB (streamed bytes, fatal UTF-8); duplicates → confirmation-style **200**
 - Login/signup: email format and max lengths; password max length; malformed JSON → **400**
 - Generic Auth failure messages (non-duplicate); unexpected Auth throws logged with a safe client **500**
-- API contract updated in [API_REFERENCE.md](../API_REFERENCE.md)
+- API contract updated in [API_REFERENCE.md](../architecture/API_REFERENCE.md)
 
 ---
 
@@ -112,7 +112,7 @@ Keep these visible so product and engineering share one security story. Status i
 - Zod schema in `lib/validation/waitlist.ts`: email (Zod email + max **254**), `first_name` trimmed max **100**, enum allowlists, strict keys
 - Honeypot field `website` on the landing form (controlled + cleared after submit; submit reads live DOM so event-less fills still trip it); filled → silent **200** with no insert, checked on the raw body before Zod so bots cannot probe validation
 - Soft **4 KiB** JSON body cap; career-stage form values aligned with API enums; shared `trimmedEmailSchema` / `requiredTrimmedName` from auth validation
-- API contract updated in [API_REFERENCE.md](../API_REFERENCE.md)
+- API contract updated in [API_REFERENCE.md](../architecture/API_REFERENCE.md)
 
 ---
 
@@ -121,16 +121,16 @@ Keep these visible so product and engineering share one security story. Status i
 When a security-related ticket ships (or a new concern is accepted into the backlog):
 
 1. Add or move a row under **Shipped** or **Planned** with the concern, approach, and ticket id.
-2. Keep [Backlog.md](../Backlog.md) as the only open checklist — strike or remove rows there when work ships.
+2. Keep [Backlog.md](../product/Backlog.md) as the only open checklist — strike or remove rows there when work ships.
 3. Prefer linking to focused retrospectives (e.g. [SSR_PUBLIC_VIEW.md](SSR_PUBLIC_VIEW.md)) for deep design notes; keep this file as the index of *what* and *why*.
 
 ---
 
 ## Related docs
 
-- [Backlog.md](../Backlog.md) — open / shipped ticket tracker
-- [API_REFERENCE.md](../API_REFERENCE.md) — route contracts, rate limits, auth errors
-- [SUPABASE_AUTH_SETUP.md](../SUPABASE_AUTH_SETUP.md) — Auth provider configuration
-- [CODE_REVIEW.md](../CODE_REVIEW.md) — historical review notes
+- [Backlog.md](../product/Backlog.md) — open / shipped ticket tracker
+- [API_REFERENCE.md](../architecture/API_REFERENCE.md) — route contracts, rate limits, auth errors
+- [SUPABASE_AUTH_SETUP.md](../architecture/SUPABASE_AUTH_SETUP.md) — Auth provider configuration
+- [CODE_REVIEW.md](../engineering/CODE_REVIEW.md) — historical review notes
 - [SSR_PUBLIC_VIEW.md](SSR_PUBLIC_VIEW.md) — public view SSR vs rate limits
 - [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md) — opaque share URLs

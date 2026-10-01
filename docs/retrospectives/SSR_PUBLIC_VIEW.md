@@ -1,6 +1,6 @@
 # SSR public view — in-process load
 
-**Actionable work** lives in [Backlog.md](../Backlog.md). This retrospective is design/context only — not a second checklist.
+**Actionable work** lives in [Backlog.md](../product/Backlog.md). This retrospective is design/context only — not a second checklist.
 
 This document records why the public share page (`/view/[publicId]/[slug]`) originally called its own HTTP API during server render, what broke in production, and what we changed in PR **D1** (`D1-007`, `D1-061`).
 
@@ -102,6 +102,6 @@ Keep self-`fetch` but build the URL from the incoming request.
 
 ## Related docs
 
-- [API_REFERENCE.md](../API_REFERENCE.md) — public GET contract
-- [ARCHITECTURE.md](../ARCHITECTURE.md) — public view sequence diagram
+- [API_REFERENCE.md](../architecture/API_REFERENCE.md) — public GET contract
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — public view sequence diagram
 - [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md) — share URL shape
