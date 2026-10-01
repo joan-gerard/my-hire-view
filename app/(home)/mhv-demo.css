@@ -757,7 +757,8 @@
 
 .ot-price-feature-text {
   position: relative;
-  display: inline-flex;
+  display: flex;
+  flex: 1;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 6px;
