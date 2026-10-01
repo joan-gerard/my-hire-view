@@ -1450,61 +1450,257 @@
   outline-color: var(--lime);
 }
 
-/* —— Legal documents —— */
-.ot-legal {
-  padding: 48px 0 100px;
-}
-
-.ot-legal-inner {
+/* —— Legal documents (404-family dark stage; themed per slug) —— */
+/*
+  Theme map (accents chosen for WCAG AA+ on each deep field):
+  - Terms   → deep green (#122020) + lime  — same as 404
+  - Privacy → deep navy (#12182a) + sky blue
+  - Cookies → deep plum (#1c1220) + pink
+  Body/meta use --body / --meta (lighter than brand --mist) so long prose
+  stays well above 4.5:1 on panel and deep-2 surfaces.
+*/
+.mhv-legal {
+  --ink: #0b0b0c;
+  --mist: #b7bcbc;
+  /* Prose on dark panels: brighter than brand mist for reading comfort. */
+  --body: #d4d8d8;
+  --meta: #b0b6b6;
+  --white: #fff;
+  --deep: #122020;
+  --deep-2: #1a2828;
+  --accent: #9efc65;
+  --panel: #0f1a1a;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: 40px;
-  max-width: 820px;
+  overflow-x: hidden;
+  background: var(--deep);
+  color: var(--white);
+  font-family: var(--font-stack-sans-headline), sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
-.ot-legal-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20px;
+.mhv-legal-terms {
+  --deep: #122020;
+  --deep-2: #1a2828;
+  --accent: #9efc65;
+  --panel: #0f1a1a;
 }
 
-.ot-legal-header h1 {
-  font-size: clamp(36px, 5vw, 56px);
+.mhv-legal-privacy {
+  --deep: #12182a;
+  --deep-2: #1a2238;
+  --accent: #8ec5ff;
+  --panel: #101628;
+}
+
+.mhv-legal-cookies {
+  --deep: #1c1220;
+  --deep-2: #2a1a28;
+  --accent: #ffbcfc;
+  --panel: #160e18;
+}
+
+.mhv-legal *,
+.mhv-legal *::before,
+.mhv-legal *::after {
+  box-sizing: border-box;
+}
+
+.mhv-legal a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mhv-legal h1,
+.mhv-legal h2,
+.mhv-legal p {
+  margin: 0;
+}
+
+.mhv-legal h1,
+.mhv-legal h2 {
+  font-family: var(--font-switzer), sans-serif;
   font-weight: 600;
-  line-height: 1.12;
   letter-spacing: -0.03em;
 }
 
-.ot-legal-summary {
-  max-width: 52ch;
-  color: var(--muted);
-  font-size: 18px;
+.mhv-legal-skip {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  transform: translateY(-160%);
+  transition: transform 0.15s ease;
+}
+
+.mhv-legal-skip:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--white);
+  outline-offset: 3px;
+}
+
+.mhv-legal-top {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 32px;
+  /* Solid deep (not translucent) so nav text contrast stays stable while scrolling. */
+  background: var(--deep);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mhv-legal-logo {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  justify-self: start;
+  font-family: var(--font-switzer), sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.mhv-legal-logo:hover {
+  color: var(--accent);
+}
+
+.mhv-legal-logo-dot {
+  width: 8px;
+  height: 8px;
+  margin-bottom: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.mhv-legal-top-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+}
+
+.mhv-legal-top-nav a {
+  font-size: 14px;
+  color: var(--body);
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+}
+
+.mhv-legal-top-nav a:hover {
+  color: var(--white);
+}
+
+.mhv-legal-top-nav a[aria-current="page"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.mhv-legal-top-link {
+  justify-self: end;
+  font-size: 14px;
+  color: var(--body);
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+}
+
+.mhv-legal-top-link:hover {
+  color: var(--white);
+  border-bottom-color: rgba(255, 255, 255, 0.45);
+}
+
+.mhv-legal-main {
+  flex: 1;
+  width: 100%;
+  padding: 36px 32px 48px;
+}
+
+.mhv-legal-article {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 36px 34px;
+  border-radius: 28px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+}
+
+.mhv-legal-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.mhv-legal-stamp {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  font-family: var(--font-switzer), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.mhv-legal-header h1 {
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.12;
+  color: var(--white);
+}
+
+.mhv-legal-summary {
+  max-width: 48ch;
+  color: var(--body);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.mhv-legal-updated {
+  color: var(--meta);
+  font-size: 14px;
   line-height: 1.4;
 }
 
-.ot-legal-updated {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.35;
-}
-
-.ot-legal-toc {
+.mhv-legal-toc {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 24px 26px;
-  border-radius: 24px;
-  background: var(--paper);
+  padding: 22px 24px;
+  border-radius: 20px;
+  background: var(--deep-2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.ot-legal-toc-label {
+.mhv-legal-toc-label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--accent);
 }
 
-.ot-legal-toc ul {
+.mhv-legal-toc ul {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1513,43 +1709,50 @@
   gap: 10px 18px;
 }
 
-.ot-legal-toc a {
-  color: var(--muted);
+.mhv-legal-toc a {
+  color: var(--body);
   font-size: 15px;
-  line-height: 1.35;
+  line-height: 1.4;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.28);
+  text-underline-offset: 3px;
 }
 
-.ot-legal-toc a:hover {
-  color: var(--ink);
+.mhv-legal-toc a:hover {
+  color: var(--white);
+  text-decoration-color: var(--accent);
 }
 
-.ot-legal-body {
+.mhv-legal-body {
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  gap: 32px;
 }
 
-.ot-legal-section {
+.mhv-legal-section {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  scroll-margin-top: 120px;
+  gap: 12px;
+  scroll-margin-top: 96px;
 }
 
-.ot-legal-section h2 {
-  font-size: 26px;
+.mhv-legal-section h2 {
+  font-size: 24px;
   font-weight: 500;
   letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--white);
 }
 
-.ot-legal-section p,
-.ot-legal-section li {
-  color: var(--muted);
+.mhv-legal-section p,
+.mhv-legal-section li {
+  color: var(--body);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
+  max-width: 65ch;
 }
 
-.ot-legal-section ul {
+.mhv-legal-section ul {
   margin: 0;
   padding-left: 1.25rem;
   display: flex;
@@ -1557,35 +1760,123 @@
   gap: 8px;
 }
 
-.ot-legal-aside {
+.mhv-legal-section li::marker {
+  color: var(--accent);
+}
+
+.mhv-legal-aside {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 28px;
-  border-radius: 26px;
-  background: var(--ink);
-  color: var(--white);
+  padding: 24px;
+  border-radius: 22px;
+  background: var(--deep-2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.ot-legal-aside > p {
+.mhv-legal-aside > p {
   font-size: 13px;
   font-weight: 600;
-  color: var(--mist);
+  color: var(--accent);
 }
 
-.ot-legal-aside-links {
+.mhv-legal-aside-links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-wrap: wrap;
   gap: 12px 20px;
 }
 
-.ot-legal-aside-links a {
+.mhv-legal-aside-links a {
   color: var(--white);
-  font-size: 16px;
+  font-size: 15px;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 3px;
 }
 
-.ot-legal-aside-links a:hover {
-  color: var(--lime);
+.mhv-legal-aside-links a:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+.mhv-legal-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 20px 32px 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--meta);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.mhv-legal-bottom a {
+  color: var(--body);
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.28);
+  text-underline-offset: 3px;
+}
+
+.mhv-legal-bottom a:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+.mhv-legal :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 820px) {
+  .mhv-legal-top {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "logo signin"
+      "nav nav";
+    padding: 18px 20px;
+    gap: 14px;
+  }
+
+  .mhv-legal-logo {
+    grid-area: logo;
+    font-size: 20px;
+  }
+
+  .mhv-legal-top-link {
+    grid-area: signin;
+  }
+
+  .mhv-legal-top-nav {
+    grid-area: nav;
+    justify-content: flex-start;
+  }
+
+  .mhv-legal-main {
+    padding: 24px 20px 36px;
+  }
+
+  .mhv-legal-article {
+    padding: 24px 20px;
+    border-radius: 22px;
+    box-shadow: none;
+  }
+
+  .mhv-legal-header h1 {
+    font-size: clamp(30px, 8vw, 40px);
+  }
+
+  .mhv-legal-section h2 {
+    font-size: 20px;
+  }
+
+  .mhv-legal-bottom {
+    padding: 18px 20px 24px;
+  }
 }
 
 /* —— Generic 404 (standalone; not landing sections / MarketingShell) —— */
@@ -2315,18 +2606,6 @@
 
   .ot-footer-legal {
     justify-content: center;
-  }
-
-  .ot-legal {
-    padding: 32px 0 72px;
-  }
-
-  .ot-legal-header h1 {
-    font-size: 34px;
-  }
-
-  .ot-legal-section h2 {
-    font-size: 22px;
   }
 }
 

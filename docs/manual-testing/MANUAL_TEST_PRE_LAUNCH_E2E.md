@@ -64,7 +64,7 @@ Create these as you go so later sections have the right mix. Reuse the same prim
 - [ ] `/view/{publicId}/` (missing slug) and trailing slash variants do not 500
 - [ ] A nonsense path (e.g. `/this-page-does-not-exist`) shows the generic **404** (deep void stage + missing-application frame, not the landing header/footer shell) with **Take me home**
 - [ ] `/how-it-works` and `/blog` are gone (404). How-it-works content lives on the homepage section only
-- [ ] `/terms`, `/privacy`, and `/cookies` load draft legal pages with marketing header/footer
+- [ ] `/terms`, `/privacy`, and `/cookies` load draft legal pages on dark themed stages (green / navy / plum) with minimal header — not the landing footer CTA shell
 - [ ] `/auth/callback` with **no** `code` → `/login` (not a 500)
 - [ ] `/auth/callback?next=https://evil.com` (and `//evil.com`) still lands on a **same-origin** path (default `/admin`), never the attacker URL
 
@@ -100,10 +100,12 @@ There is no `/pricing` route and no email-capture form on this page.
 
 ## 1b. Marketing — legal (`/terms`, `/privacy`, `/cookies`)
 
-- [ ] Each page uses marketing fonts/tokens (Switzer / Stack Sans, lime accents), sticky header, and dark footer CTA
-- [ ] Draft banner / “Legal · Draft” eyebrow is visible; sections are readable on mobile
-- [ ] Footer legal link for the current page is marked current; other legal links navigate correctly
-- [ ] Header **How to / Pricing / FAQs** navigate to homepage sections (`/#…`)
+- [ ] Each page uses a dark void stage + minimal top chrome (logo, legal nav, Sign in) — not the homepage sticky header / footer CTA
+- [ ] Themes differ: **Terms** deep green + lime; **Privacy** navy + sky; **Cookies** plum + pink
+- [ ] Body/meta text is clearly readable on the dark panel (high contrast); stamp and accents remain visible
+- [ ] Keyboard: **Skip to content** appears on Tab; focus rings visible on links; TOC jumps to sections
+- [ ] Draft stamp is visible; sections and TOC are readable on mobile
+- [ ] Current legal link is marked in the top nav; other legal links and **Back to home** work
 
 ---
 
