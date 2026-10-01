@@ -12,7 +12,7 @@ A high-level catch-up document covering the product, tech stack, architecture, b
 
 There are two distinct surfaces:
 
-- **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices as a **working draft**; E1 lock + E2 checkout deferred until near launch), Login / Get started CTAs to `/login`. Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.) Discovery, launch channels, and when to bring in specialists: [GO_TO_MARKET.md](../product/GO_TO_MARKET.md). Brand tokens and patterns: [STYLE_GUIDE_MARKETING.md](../design/STYLE_GUIDE_MARKETING.md). Living demo on an unrelated fake product: `/demo`.
+- **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices as a **working draft**; E1 lock + E2 checkout deferred until near launch), Login / Get started CTAs to `/login`, and draft legal pages (`/terms`, `/privacy`, `/cookies`). Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.) Discovery, launch channels, and when to bring in specialists: [GO_TO_MARKET.md](../product/GO_TO_MARKET.md). Brand tokens and patterns: [STYLE_GUIDE_MARKETING.md](../design/STYLE_GUIDE_MARKETING.md). Living demo on an unrelated fake product: `/demo`.
 - **Product** (`/admin`) — authenticated dashboard to create, manage, and track applications. Warm UI tokens: [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md).
 
 ---
@@ -41,7 +41,7 @@ Single Next.js app (no monorepo). All UI, API routes, and session logic live in 
 
 ```
 app/
-  (home)/            — marketing homepage (/) with its own header and in-page pricing
+  (home)/            — marketing homepage (/) + draft legal (/terms, /privacy, /cookies)
   demo/              — Sprig fake-product marketing demo (`/demo`, `/demo/care-log`)
   admin/             — protected dashboard (list, new, edit, profile)
   view/[slug]/       — public recruiter-facing application page

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { NAV } from "@/lib/marketing/constants";
 import { dailyLogoDotColor } from "@/lib/marketing/utils";
 import { scrollToHash } from "@/lib/smooth-scroll";
@@ -19,7 +21,16 @@ function isModifiedClick(event: MouseEvent<HTMLAnchorElement>): boolean {
   );
 }
 
+/** Resolve in-page hash from `#how` or `/#how` when already on `/`. */
+function homeHashFromHref(href: string | null): string | null {
+  if (!href) return null;
+  if (href.startsWith("#") && href.length > 1) return href;
+  if (href.startsWith("/#") && href.length > 2) return href.slice(1);
+  return null;
+}
+
 export function Header() {
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [dotColor, setDotColor] = useState<string | undefined>(undefined);
@@ -70,10 +81,30 @@ export function Header() {
     if (menuOpen) setHidden(false);
   }, [menuOpen]);
 
-  function handleHashClick(event: MouseEvent<HTMLAnchorElement>) {
+  function scrollHomeTop() {
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+    if (typeof history !== "undefined" && history.pushState) {
+      history.pushState(null, "", "/");
+    }
+  }
+
+  function handleLogoClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (pathname !== "/") return;
+    if (isModifiedClick(event)) return;
+    event.preventDefault();
+    setMenuOpen(false);
+    scrollHomeTop();
+  }
+
+  function handleHomeHashClick(event: MouseEvent<HTMLAnchorElement>) {
     const href = event.currentTarget.getAttribute("href");
-    if (!href?.startsWith("#")) return;
-    // Keep browser defaults for new-tab / modified clicks.
+    const hash = homeHashFromHref(href);
+    if (!hash) return;
+    // Only smooth-scroll when already on the homepage; otherwise let navigation happen.
+    if (pathname !== "/") return;
     if (isModifiedClick(event)) return;
 
     event.preventDefault();
@@ -81,11 +112,10 @@ export function Header() {
     setMenuOpen(false);
 
     const run = () => {
-      scrollToHash(href);
+      scrollToHash(hash);
     };
 
     if (closingDrawer) {
-      // Wait until the drawer unmounts so its height is not in getBoundingClientRect math.
       requestAnimationFrame(() => {
         requestAnimationFrame(run);
       });
@@ -101,20 +131,24 @@ export function Header() {
       {...(hidden ? { inert: true } : {})}
     >
       <header className="ot-header">
-        <a className="ot-logo" href="#top" onClick={handleHashClick}>
+        <Link className="ot-logo" href="/" onClick={handleLogoClick}>
           MyHireView
           <span
             className="ot-logo-dot"
             style={dotColor ? { backgroundColor: dotColor } : undefined}
             aria-hidden="true"
           />
-        </a>
+        </Link>
 
         <nav className="ot-nav" aria-label="Primary">
           {NAV.map((item) => (
-            <a key={item.label} href={item.href} onClick={handleHashClick}>
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={handleHomeHashClick}
+            >
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -136,9 +170,13 @@ export function Header() {
       {menuOpen ? (
         <div className="ot-drawer">
           {NAV.map((item) => (
-            <a key={item.label} href={item.href} onClick={handleHashClick}>
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={handleHomeHashClick}
+            >
               {item.label}
-            </a>
+            </Link>
           ))}
           <ArrowButton href="/login" label="Login" tone="dark" />
         </div>

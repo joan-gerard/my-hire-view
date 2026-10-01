@@ -1,7 +1,8 @@
+/** In-page sections on `/`. Absolute `/#…` paths so they work from legal pages too. */
 export const NAV = [
-  { label: "How to", href: "#how" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQs", href: "#faq" },
+  { label: "How to", href: "/#how" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "FAQs", href: "/#faq" },
 ] as const;
 
 export const BILLING_OPTIONS = [

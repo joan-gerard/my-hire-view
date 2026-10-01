@@ -168,8 +168,9 @@ flowchart LR
 
 | Route               | Purpose                                                                                                                                                                                                                                                                                                            | Auth |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
-| `/`                 | Marketing homepage (`app/(home)/`): own header (How to, Pricing, FAQs, Login; logo → `#top`), hero, story, principles, how-it-works, in-page `#pricing` (Free/Pro/Premium, monthly/annual), FAQ, footer. Tier copy is in `components/public/pricing/constants.ts` ([PRICING_AND_MEMBERSHIP.md](../product/PRICING_AND_MEMBERSHIP.md)); checkout still E2. Login and Get started go to `/login`. There is no separate `/pricing` route. | No   |
-| `/login`, `/signup` | Auth forms; submit to `/api/auth/*`                                                                                                                                                                                                                                                                                | No   |
+| `/`                 | Marketing homepage (`app/(home)/`): shared `MarketingShell` (How to, Pricing, FAQs, Login; logo → `/`), hero, story, principles, how-it-works, in-page `#pricing` (Free/Pro/Premium, monthly/annual), FAQ, footer. Tier copy is in `components/public/pricing/constants.ts` ([PRICING_AND_MEMBERSHIP.md](../product/PRICING_AND_MEMBERSHIP.md)); checkout still E2. Login and Get started go to `/login`. There is no separate `/pricing` route. | No   |
+| `/terms`, `/privacy`, `/cookies` | Draft legal documents (`LegalDocument` + `lib/marketing/legal-copy.ts`) using the same marketing chrome as `/`. `noindex` until final counsel copy. | No   |
+| `/login`, `/signup` | Auth forms; submit to `/api/auth/*`                                                                                                                                                                                                                                                                                                                                                | No   |
 | `/auth/callback`    | Supabase email confirmation / magic link; exchanges `code` for session                                                                                                                                                                                                                                             | No   |
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                                                                                                                                                                                                   | Yes  |
 | `/admin/new`        | Create application form (slug, company, role, CV upload, YouTube URL)                                                                                                                                                                                                                                               | Yes  |
@@ -180,7 +181,7 @@ flowchart LR
 Layouts:
 
 - **Root (`app/layout.tsx`):** Global layout, fonts, metadata.
-- **Home (`app/(home)/layout.tsx`):** Serves `/` only. Self-hosts Switzer (`next/font/local`) and Stack Sans Headline (`next/font/google`), plus `mhv-demo.css`. The page component is `MhvLanding` (`mhv-landing.tsx` composes `components/marketing/`; helpers in `lib/marketing/`; not a shared marketing header). The header always links to `/login`; it does not switch to Dashboard when a session exists.
+- **Home (`app/(home)/layout.tsx`):** Serves `/` plus draft legal routes (`/terms`, `/privacy`, `/cookies`). Self-hosts Switzer (`next/font/local`) and Stack Sans Headline (`next/font/google`), plus `mhv-demo.css`. Pages compose `MarketingShell` / `components/marketing/` (helpers in `lib/marketing/`). The header always links to `/login`; it does not switch to Dashboard when a session exists. Generic `app/not-found.tsx` uses the same fonts/CSS via a standalone `MarketingNotFound` composition (not the landing header/footer shell).
 - **Admin (`app/admin/layout.tsx`):** Calls `requireAuth()` (redirects to `/login` if not authenticated), then renders `AdminHeader` (MyHireView, Dashboard, New Application, Profile, user email, Sign out) and `children`.
 
 API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE.md)** (endpoint index, request/response shapes, auth, and rate limits).
@@ -349,7 +350,7 @@ View count and `last_viewed_at` are only updated when the viewer is not the appl
 my-hire-view/
 ├── app/
 │   ├── layout.tsx              # Root layout
-│   ├── (home)/                 # Marketing homepage at / (own header, #pricing)
+│   ├── (home)/                 # Marketing: `/`, `/terms`, `/privacy`, `/cookies`
 │   ├── login/, signup/         # Auth pages
 │   ├── auth/callback/          # Supabase OAuth/email callback
 │   ├── admin/                  # Dashboard, new, edit (layout uses requireAuth)

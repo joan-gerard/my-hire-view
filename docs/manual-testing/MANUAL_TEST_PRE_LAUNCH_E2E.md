@@ -62,9 +62,9 @@ Create these as you go so later sections have the right mix. Reuse the same prim
 - [ ] `/view/not-a-real-id/not-a-real-slug` shows the **unavailable** empty state (not a generic 404): “This link doesn’t have an active application”, CTA to home, compact footer
 - [ ] `/view/only-one-segment` (legacy slug-only path) → unavailable empty state, not a crash / other user’s app
 - [ ] `/view/{publicId}/` (missing slug) and trailing slash variants do not 500
-- [ ] A nonsense path (e.g. `/this-page-does-not-exist`) shows the generic **404** with **Go Home**
+- [ ] A nonsense path (e.g. `/this-page-does-not-exist`) shows the generic **404** (deep void stage + missing-application frame, not the landing header/footer shell) with **Take me home**
 - [ ] `/how-it-works` and `/blog` are gone (404). How-it-works content lives on the homepage section only
-- [ ] `/terms` and `/privacy` — **404 until `F20-019` ships**; still confirm footer/view links point at those paths
+- [ ] `/terms`, `/privacy`, and `/cookies` load draft legal pages with marketing header/footer
 - [ ] `/auth/callback` with **no** `code` → `/login` (not a 500)
 - [ ] `/auth/callback?next=https://evil.com` (and `//evil.com`) still lands on a **same-origin** path (default `/admin`), never the attacker URL
 
@@ -77,7 +77,7 @@ Do this signed out (incognito is fine).
 ### Header
 
 - [ ] Logo / wordmark present
-- [ ] Nav includes **How to**, **Pricing**, and **FAQs** (in-page anchors: `#how`, `#pricing`, `#faq`); logo returns to `#top`
+- [ ] Nav includes **How to**, **Pricing**, and **FAQs** (paths `/#how`, `/#pricing`, `/#faq`); logo returns to `/` (smooth-scroll to top when already on home)
 - [ ] **Login** goes to `/login`
 - [ ] Mobile: menu opens those same links plus Login; closing it returns to the page
 - [ ] Header hides smoothly when scrolling down and reappears when scrolling up (stays visible while the mobile menu is open)
@@ -95,6 +95,15 @@ Do this signed out (incognito is fine).
 - [ ] Footer: **Terms of Service** → `/terms`; **Privacy Policy** → `/privacy`; **Cookies** → `/cookies`
 
 There is no `/pricing` route and no email-capture form on this page.
+
+---
+
+## 1b. Marketing — legal (`/terms`, `/privacy`, `/cookies`)
+
+- [ ] Each page uses marketing fonts/tokens (Switzer / Stack Sans, lime accents), sticky header, and dark footer CTA
+- [ ] Draft banner / “Legal · Draft” eyebrow is visible; sections are readable on mobile
+- [ ] Footer legal link for the current page is marked current; other legal links navigate correctly
+- [ ] Header **How to / Pricing / FAQs** navigate to homepage sections (`/#…`)
 
 ---
 
@@ -654,7 +663,7 @@ Tracked in [Backlog.md](../product/Backlog.md):
 
 | Item | Ticket |
 | ---- | ------ |
-| Terms / Privacy / Cookies pages | `F20-019` |
+| Terms / Privacy / Cookies pages | Draft UI shipped (`F20-019`); final counsel copy still open |
 | Delete account from profile | `F21-020` |
 | In-app forgot password | `L4-098` |
 | Stripe / plan gates | `E1-012`, `E2-013` |

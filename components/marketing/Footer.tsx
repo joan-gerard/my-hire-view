@@ -2,7 +2,11 @@ import { LEGAL_LINKS } from "@/lib/marketing/constants";
 import Link from "next/link";
 import { ArrowButton } from "./ArrowButton";
 
-export function Footer() {
+export function Footer({
+  activeLegalHref,
+}: {
+  activeLegalHref?: (typeof LEGAL_LINKS)[number]["href"];
+} = {}) {
   return (
     <footer className="ot-footer">
       <div className="ot-footer-card">
@@ -13,12 +17,18 @@ export function Footer() {
           </div>
 
           <div className="ot-footer-bar">
-            <a className="ot-footer-brand" href="#top">
+            <Link className="ot-footer-brand" href="/">
               MyHireView
-            </a>
+            </Link>
             <nav className="ot-footer-legal" aria-label="Legal links">
               {LEGAL_LINKS.map((item) => (
-                <Link key={item.href} href={item.href}>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={
+                    activeLegalHref === item.href ? "page" : undefined
+                  }
+                >
                   {item.label}
                 </Link>
               ))}

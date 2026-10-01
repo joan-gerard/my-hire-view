@@ -1,6 +1,6 @@
 # Marketing brand & UI style guide
 
-> Source of truth for the public marketing surface (`/`, and any landing that should match it).  
+> Source of truth for the public marketing surface (`/`, `/terms`, `/privacy`, `/cookies`, and any landing that should match it).  
 > Implementation today: `app/(home)/mhv-demo.css` + `components/marketing/`.  
 > Product chrome (admin, auth, `/view`) uses a **different** system — see [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md).
 

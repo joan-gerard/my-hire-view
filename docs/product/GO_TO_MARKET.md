@@ -104,7 +104,7 @@ Goal: **a list of the right people** and **proof the product is worth sharing**,
 3. **Write a 3–5 email waitlist sequence** (welcome, problem, demo, launch-soon, launch). Do not wait until E2 is done to draft this.
 4. **Build proof assets:** one real public application (your own or a volunteer’s) + real screenshots (`F24-043`). Recruiters and candidates believe a live `/view` page more than SVG mockups.
 5. **Start showing up where they already are** — mostly LinkedIn and 1–2 job-search communities. Help first; mention the waitlist second. Aim for a weekly habit, not a campaign.
-6. **Finish trust basics before asking for money:** legal pages (`F20-019`), support entry (`F23-022`), branding on `/admin` and `/view` (`F17`).
+6. **Finish trust basics before asking for money:** legal pages (draft UI shipped — final counsel copy still open), support entry (`F23-022`), branding on `/admin` and `/view` (`F17`).
 7. **Decide the launch offer** (working idea in the landing brief: early waitlist gets **3 months of Pro**). Do not promise it in email until E1/E2 can honor it.
 
 **Done when:** you can say, in one sentence, who pays, why, and you have at least one public page you are proud to send.

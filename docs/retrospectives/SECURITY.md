@@ -85,7 +85,7 @@ Keep these visible so product and engineering share one security story. Status i
 | Signup CAPTCHA; logout hardening (CSRF); in-app forgot-password | After-launch auth polish | **L4-085**, **L4-086**, **L4-098** |
 | Auth `user_id` visible in avatar public URLs | Store under `public_id` (or similar) + migrate | **L5-087** |
 | Waitlist duplicate email **409** vs **200** (enumeration trade-off) | Product decision + uniform success response if chosen | **L8-094** |
-| Account deletion / legal pages (privacy & compliance adjacent) | User-driven delete; Terms / Privacy / Cookies | **F21-020**, **F20-019** |
+| Account deletion / legal pages (privacy & compliance adjacent) | User-driven delete; Terms / Privacy / Cookies | **F21-020**; legal draft UI shipped (`F20-019`) — final counsel copy still open |
 
 ---
 

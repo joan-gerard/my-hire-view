@@ -1,9 +1,8 @@
 import {
   Faq,
-  Footer,
-  Header,
   Hero,
   HowItWorks,
+  MarketingShell,
   Pricing,
   Principles,
   Story,
@@ -11,17 +10,13 @@ import {
 
 export function MhvLanding() {
   return (
-    <div className="mhv-landing" id="top">
-      <Header />
-      <main>
-        <Hero />
-        <Story />
-        <Principles />
-        <HowItWorks />
-        <Pricing />
-        <Faq />
-      </main>
-      <Footer />
-    </div>
+    <MarketingShell>
+      <Hero />
+      <Story />
+      <Principles />
+      <HowItWorks />
+      <Pricing />
+      <Faq />
+    </MarketingShell>
   );
 }
