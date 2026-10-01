@@ -140,7 +140,9 @@ Reuse the ViewPageFooter component but rename it Footer. Styling is aligned with
 
 ## Design Guidelines
 
-### Visual Style
+The original blue/dark brief below is **obsolete**. Live marketing brand tokens, type, components, and motion rules are in **[STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md)**. Product chrome (admin/auth/view) is separate: [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md). See `/demo` for a fake-product application of the marketing guide.
+
+### Visual Style (archived — original coming-soon brief)
 
 - Color Scheme: Professional blue (#2E75B6) as primary, dark background (#0f172a), white text (#ffffff), dark blue accent (#1e3a5f) for section contrast, surface (#1e293b) for cards/inputs
 - Typography: Clean, modern sans-serif (Inter, Poppins, or similar). Large, readable headlines.
