@@ -149,7 +149,7 @@ From `/signup` (login page “create a new account”, or type the URL).
 - [ ] While signed in, visiting `/login` or `/signup` **redirects to `/admin`** (no login↔admin loop)
 - [ ] **Sign Out** in the admin header → `/login`; `/admin` now redirects to login
 - [ ] Sign in again
-- [ ] From `/` (signed in): avatar menu shows **Dashboard** and **Sign Out**; Dashboard → `/admin`; Sign Out from marketing header also clears the session
+- [ ] From `/` (signed in): header still shows **Login** (no avatar / Dashboard menu on the marketing header); go to `/admin` via URL or after login redirect. Sign Out is only in the admin header.
 - [ ] After sign-out, browser Back does not serve a usable authenticated dashboard (must hit login)
 - [ ] Two tabs signed in: Sign Out in tab 1; tab 2’s next `/admin` navigation or refresh sends you to login (no half-authenticated UI)
 

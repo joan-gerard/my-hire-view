@@ -5,7 +5,7 @@ export {
   PRICING_DRAFT_NOTE,
   PRICING_FAQ,
   PRICING_TIERS,
-  PRICING_WAITLIST_HREF,
+  PRICING_LOGIN_HREF,
   type BillingInterval,
   type PricingFeature,
   type PricingTier,

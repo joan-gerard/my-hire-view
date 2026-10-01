@@ -52,7 +52,7 @@ Every channel should feed this loop. If an activity cannot be mapped here, it is
 ```
 Stranger hears about MyHireView
         → lands on / (pricing is the #pricing section, or a public /view demo)
-        → waitlist (now) or signup (at launch)
+        → login / signup
         → first application + shareable link   ← “aha”
         → recruiter opens the page (views / CV download)
         → hits a limit or wants tailored CVs
