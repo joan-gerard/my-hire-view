@@ -6,7 +6,7 @@
 
 Homepage marketing FAQ copy is **placeholder** and is intentionally **not** used here as input for what tiers should offer.
 
-**Related context:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [USER_GUIDE.md](USER_GUIDE.md) · launch billing items in [Backlog.md](Backlog.md) (Before launch → Must) · customer-facing tier copy in `components/public/pricing/constants.ts` · how tiers get discovered and sold: [GO_TO_MARKET.md](GO_TO_MARKET.md)
+**Related context:** [PROJECT_OVERVIEW.md](../architecture/PROJECT_OVERVIEW.md) · [USER_GUIDE.md](../engineering/USER_GUIDE.md) · launch billing items in [Backlog.md](Backlog.md) (Before launch → Must) · customer-facing tier copy in `components/public/pricing/constants.ts` · how tiers get discovered and sold: [GO_TO_MARKET.md](GO_TO_MARKET.md)
 
 | Section | What it covers |
 | ------- | -------------- |
@@ -41,7 +41,7 @@ There are two product surfaces:
 
 ### Building blocks (what “an application” includes)
 
-These are the core concepts the tier matrix refers to. Full product behaviour: [USER_GUIDE.md](USER_GUIDE.md), [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md), [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md).
+These are the core concepts the tier matrix refers to. Full product behaviour: [USER_GUIDE.md](../engineering/USER_GUIDE.md), [PROJECT_OVERVIEW.md](../architecture/PROJECT_OVERVIEW.md), [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md).
 
 | Building block | Meaning |
 | -------------- | ------- |
@@ -72,7 +72,7 @@ Unless a row in §3 says otherwise, candidates on **any** plan are expected to u
 
 | Principle | Source |
 | --------- | ------ |
-| Public launch should include **paid access**. | [Backlog.md](Backlog.md), [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
+| Public launch should include **paid access**. | [Backlog.md](Backlog.md), [PROJECT_OVERVIEW.md](../architecture/PROJECT_OVERVIEW.md) |
 | Free access, if any, is a **free tier and/or trial only** — not unlimited free use of the app. | Same |
 | Creating / using applications should be **gated** behind an active plan or trial. | Same |
 | Billing provider direction: **Stripe (or similar)** — checkout, webhooks, Supabase subscription state. | Same |
@@ -107,10 +107,10 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | Capability | Notes | Sources |
 | ---------- | ----- | ------- |
 | **Up to 3 applications** | Hard cap. Count rules in §3.6. | Working decision (this doc) |
-| **Primary CVs only** | Upload/use the primary library; no tailored-CV workflow. | Working decision (this doc); [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md) |
+| **Primary CVs only** | Upload/use the primary library; no tailored-CV workflow. | Working decision (this doc); [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md) |
 | **Video pitch** | YouTube URL on the application page. | Working decision (this doc) |
-| Private/opaque public id | Default `/view/{opaquePublicId}/{slug}` — no personal name in the public id segment. | [PUBLIC_URL_OPTION_B.md](retrospectives/PUBLIC_URL_OPTION_B.md) |
-| Basic analytics | View count, CV download count, created / last viewed (View Insights). | [USER_GUIDE.md](USER_GUIDE.md), [DATA_FLOW.md](DATA_FLOW.md) |
+| Private/opaque public id | Default `/view/{opaquePublicId}/{slug}` — no personal name in the public id segment. | [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md) |
+| Basic analytics | View count, CV download count, created / last viewed (View Insights). | [USER_GUIDE.md](../engineering/USER_GUIDE.md), [DATA_FLOW.md](../architecture/DATA_FLOW.md) |
 | Primary library | Up to **5**. | Working decision (this doc); today’s product max |
 
 ### 3.3 Pro — detail
@@ -129,7 +129,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | Capability | Notes | Sources |
 | ---------- | ----- | ------- |
 | Everything in Pro | Including primary + tailored CVs and per-view history. | Working decision (this doc) |
-| **Custom vanity public id** | LinkedIn-style branded public id (e.g. `/view/joan-gerard/...`). | [Backlog.md](Backlog.md) (After launch → Could), [PUBLIC_URL_OPTION_B.md](retrospectives/PUBLIC_URL_OPTION_B.md#future-custom-public-id-vanity-handle) |
+| **Custom vanity public id** | LinkedIn-style branded public id (e.g. `/view/joan-gerard/...`). | [Backlog.md](Backlog.md) (After launch → Could), [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md#future-custom-public-id-vanity-handle) |
 | **Unlimited applications** | Marketed as unlimited; internal fair-use soft ceiling **100** (protects R2 storage). Soft-ceiling UX copy TBD (§5). | Working decision (this doc) |
 | **Richer analytics** | Beyond Pro: view duration, geographic origin, referrer/traffic source, video-pitch engagement (played vs page-only), CSV export, side-by-side comparison across the candidate’s own applications. | Working decision (this doc) |
 | **Primary library up to 15** | Raise above Free/Pro’s 5. | Working decision (this doc); Free/Pro still use `PRIMARY_CV_MAX_PER_USER` = 5 and DB `primary_cv_library_max_for_user()` = 5 (F13-032); raise that function (and the early API check) when Premium gating ships (E2) |
@@ -140,8 +140,8 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 
 | Item | Placement | Notes | Sources |
 | ---- | --------- | ----- | ------- |
-| AI interview prep (Phases 1–2) | **Later paid add-on** — not baked into Free/Pro/Premium at launch | Different job-to-be-done; AI cost profile unknown until usage is known. | [product-ideas/ai-powered-interview-preparation.md](product-ideas/ai-powered-interview-preparation.md), [Backlog.md](Backlog.md) |
-| In-app video recording + teleprompter | **Not Free** — lean **Pro and/or Premium** when built | Today’s video pitch is a YouTube URL (no hosting cost). In-app recording means we host video. Exact tier when built is TBD (§5). | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) |
+| AI interview prep (Phases 1–2) | **Later paid add-on** — not baked into Free/Pro/Premium at launch | Different job-to-be-done; AI cost profile unknown until usage is known. | [product-ideas/ai-powered-interview-preparation.md](../product-ideas/ai-powered-interview-preparation.md), [Backlog.md](Backlog.md) |
+| In-app video recording + teleprompter | **Not Free** — lean **Pro and/or Premium** when built | Today’s video pitch is a YouTube URL (no hosting cost). In-app recording means we host video. Exact tier when built is TBD (§5). | [PROJECT_OVERVIEW.md](../architecture/PROJECT_OVERVIEW.md) |
 
 ### 3.6 Enforcement / lifecycle (working decisions)
 
@@ -167,13 +167,13 @@ These rules are product truth for when E2 gates ship; not implemented in API/UI 
 
 > Ship real tiers on `/pricing` aligned with billing — not a stub.
 
-— [Backlog.md](Backlog.md); same substance in [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
+— [Backlog.md](Backlog.md); same substance in [PROJECT_OVERVIEW.md](../architecture/PROJECT_OVERVIEW.md)
 
 ### Vanity public id as premium
 
 > A planned enhancement (potentially **premium**): Let users choose a custom **public id** … Natural fit for a paid tier (custom branding).
 
-— [PUBLIC_URL_OPTION_B.md](retrospectives/PUBLIC_URL_OPTION_B.md)
+— [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md)
 
 ---
 

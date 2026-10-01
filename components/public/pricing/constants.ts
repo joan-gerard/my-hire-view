@@ -1,6 +1,6 @@
 /**
  * Pricing tiers for the homepage `#pricing` section (E3-014).
- * Source of truth: docs/PRICING_AND_MEMBERSHIP.md §3.
+ * Source of truth: docs/product/PRICING_AND_MEMBERSHIP.md §3.
  * Monthly and annual billing. Display amounts are USD until Stripe adaptive
  * presentment (E2); avoid “USD” in customer-facing sentences.
  */
@@ -70,7 +70,7 @@ export function getAnnualNudge(tier: PricingTier): string | null {
 
 /**
  * Locked plan matrix: Free · Pro · Premium (monthly + annual).
- * See docs/PRICING_AND_MEMBERSHIP.md §3.
+ * See docs/product/PRICING_AND_MEMBERSHIP.md §3.
  */
 export const PRICING_TIERS: readonly PricingTier[] = [
   {

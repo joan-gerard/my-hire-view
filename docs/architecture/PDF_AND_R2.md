@@ -1,6 +1,6 @@
 # PDFs and Cloudflare R2
 
-**Actionable work** lives in [Backlog.md](Backlog.md). This doc is storage design/context only — not a second checklist.
+**Actionable work** lives in [Backlog.md](../product/Backlog.md). This doc is storage design/context only — not a second checklist.
 
 This document describes how the application handles CV PDFs and **Cloudflare R2** object storage (S3-compatible API).
 
@@ -10,7 +10,7 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
   - **Primary CVs** — up to 5 per user (Free/Pro default; DB-enforced via migration `028` / F13-032), managed from the profile or from **New** / **Edit application** (`primary_cvs` table, keys `cvs/{userId}/primary/…`).
   - **Tailored CVs** — one optional per-application upload (keys `cvs/{userId}/tailored/…` via idempotent upload).
 - **Where:** Cloudflare R2. Objects are uploaded with a **public URL** so the shareable application page can load the PDF.
-- **Policy:** Upload on save for tailored CVs. Application delete/replace removes **tailored** objects only; primary CVs are deleted only from the library (profile or in-form modal). See [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md).
+- **Policy:** Upload on save for tailored CVs. Application delete/replace removes **tailored** objects only; primary CVs are deleted only from the library (profile or in-form modal). See [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md).
 
 ## Flow
 

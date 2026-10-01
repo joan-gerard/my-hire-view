@@ -10,7 +10,7 @@ This document describes the architecture and design of **MyHireView**, an applic
 
 **High-level behavior:**
 
-- **Public:** Anyone with a link can view an application at `/view/[publicId]/[slug]` (e.g. `/view/k7x2m9ab/acme-software-engineer`). Views are tracked (once per session). See [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md).
+- **Public:** Anyone with a link can view an application at `/view/[publicId]/[slug]` (e.g. `/view/k7x2m9ab/acme-software-engineer`). Views are tracked (once per session). See [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md).
 - **Authenticated:** Users sign up / sign in, then create, edit, archive, and delete applications. They get shareable URLs and see view counts.
 
 ---
@@ -168,7 +168,7 @@ flowchart LR
 
 | Route               | Purpose                                                                                                                                                                                                                                                                                                            | Auth |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
-| `/`                 | Marketing homepage (`app/(home)/`): own header (How to, Pricing, FAQs, Login; logo → `#top`), hero, story, principles, how-it-works, in-page `#pricing` (Free/Pro/Premium, monthly/annual), FAQ, footer. Tier copy is in `components/public/pricing/constants.ts` ([PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md)); checkout still E2. Login and Get started go to `/login`. There is no separate `/pricing` route. | No   |
+| `/`                 | Marketing homepage (`app/(home)/`): own header (How to, Pricing, FAQs, Login; logo → `#top`), hero, story, principles, how-it-works, in-page `#pricing` (Free/Pro/Premium, monthly/annual), FAQ, footer. Tier copy is in `components/public/pricing/constants.ts` ([PRICING_AND_MEMBERSHIP.md](../product/PRICING_AND_MEMBERSHIP.md)); checkout still E2. Login and Get started go to `/login`. There is no separate `/pricing` route. | No   |
 | `/login`, `/signup` | Auth forms; submit to `/api/auth/*`                                                                                                                                                                                                                                                                                | No   |
 | `/auth/callback`    | Supabase email confirmation / magic link; exchanges `code` for session                                                                                                                                                                                                                                             | No   |
 | `/admin`            | Dashboard: list applications, search, create/edit/archive/delete                                                                                                                                                                                                                                                   | Yes  |
@@ -187,7 +187,7 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
 
 ### 5.2 Auth & Session
 
-- **Provider:** Supabase Auth (email/password). Config and email templates are described in `docs/SUPABASE_AUTH_SETUP.md`.
+- **Provider:** Supabase Auth (email/password). Config and email templates are described in `docs/architecture/SUPABASE_AUTH_SETUP.md`.
 - **Session:** Cookie-based. Supabase SSR helpers read/write cookies.
 - **Clients:**
   - **Server (Server Components, server-side logic):** `lib/supabase/server.ts` — `createClient()` using `cookies()` from `next/headers`.
@@ -201,7 +201,7 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
 
 - **Table: `applications`**
   - `id` (UUID, PK), `slug` (unique per user), `company`, `role`, `cv_url`, `cv_type` (`primary` \| `tailored`), `primary_cv_id` (nullable FK to `primary_cvs(id)` with `ON DELETE SET NULL`), `video_url`, `created_at`, `updated_at`, `view_count`, `download_count`, `last_viewed_at`, `user_id`, `status` (`active` \| `draft` \| `archived`), `archived_at` (set when archived; cleared on restore).
-  - **`primary_cvs`:** profile-owned CV library (max 5 Free/Pro via `PRIMARY_CV_MAX_PER_USER` + DB function `primary_cv_library_max_for_user`; concurrent inserts blocked by trigger `primary_cvs_library_cap` — F13-032 / migration `028`); see [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md).
+  - **`primary_cvs`:** profile-owned CV library (max 5 Free/Pro via `PRIMARY_CV_MAX_PER_USER` + DB function `primary_cv_library_max_for_user`; concurrent inserts blocked by trigger `primary_cvs_library_cap` — F13-032 / migration `028`); see [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md).
   - **Same-user ownership (B3-042):** trigger `applications_primary_cv_same_user` ensures `primary_cv_id` belongs to the same `user_id` as the application; trigger `primary_cvs_user_id_immutable` prevents reassigning library ownership (API also checks; DB is the backstop). Composite FK was avoided so `ON DELETE SET NULL` does not clear `user_id`. Migration `027` quarantines any pre-existing cross-user rows (draft + scrubbed `cv_url`) because public pages read denormalized `cv_url`, not the FK.
   - **CV download filename:** `cv_filename` (TEXT, nullable) stores the original uploaded file name; `use_original_cv_filename` (BOOLEAN, default true) controls whether the public download uses that name or the generated `CV-{Slug}.pdf`. Set on create/update from the application form.
   - **Candidate snapshot fields** (nullable): `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`. These are copied from the user’s **profile** when an application is created or updated, so the recruiter view always reads from the application row (no join to profile). Existing rows may have NULLs until the next edit or a backfill.
@@ -219,13 +219,13 @@ Types are mirrored in `lib/types/application.ts`, `lib/types/profile.ts`, and `l
 ### 5.4 File Storage (Cloudflare R2)
 
 - **Use case:** CV PDFs only.
-- **Flow (upload on save):** The form keeps the selected PDF in memory until the user saves. On submit, the client uploads to `/api/upload` → API validates type (PDF) and size (3MB max) → `PutObject` to R2 → returned public URL is stored in `applications.cv_url`. When editing, if the user replaces the CV, the new file is uploaded on save and the previous object is deleted. When an application is deleted, its CV object is also deleted. See **docs/PDF_AND_R2.md** for full details.
+- **Flow (upload on save):** The form keeps the selected PDF in memory until the user saves. On submit, the client uploads to `/api/upload` → API validates type (PDF) and size (3MB max) → `PutObject` to R2 → returned public URL is stored in `applications.cv_url`. When editing, if the user replaces the CV, the new file is uploaded on save and the previous object is deleted. When an application is deleted, its CV object is also deleted. See **docs/architecture/PDF_AND_R2.md** for full details.
 
 Video is not stored; only YouTube URLs are stored and embedded via `YouTubeEmbed` and `lib/utils/youtube.ts`.
 
 ### 5.5 Profile pictures (Supabase Storage)
 
-- **Use case:** One profile picture per user at `{user_id}/avatar.{ext}`, uploaded on profile Save. Applications store only `show_profile_picture`; the public view reads the live URL from `profiles` when that flag is true. See **docs/PROFILE_PICTURE.md**.
+- **Use case:** One profile picture per user at `{user_id}/avatar.{ext}`, uploaded on profile Save. Applications store only `show_profile_picture`; the public view reads the live URL from `profiles` when that flag is true. See **docs/architecture/PROFILE_PICTURE.md**.
 
 ---
 
@@ -320,9 +320,9 @@ sequenceDiagram
   VT->>VT: sessionStorage set tracked
 ```
 
-View count and `last_viewed_at` are only updated when the viewer is not the application owner; the applicant can open their own link without affecting the count or last-viewed time. Repeats within 24h are suppressed by an httpOnly dedupe cookie (client `sessionStorage` only avoids extra POSTs). The increment is performed by a SECURITY DEFINER function callable only by the service role (see **docs/VIEW_COUNT_FIX.md**).
+View count and `last_viewed_at` are only updated when the viewer is not the application owner; the applicant can open their own link without affecting the count or last-viewed time. Repeats within 24h are suppressed by an httpOnly dedupe cookie (client `sessionStorage` only avoids extra POSTs). The increment is performed by a SECURITY DEFINER function callable only by the service role (see **docs/retrospectives/VIEW_COUNT_FIX.md**).
 
-**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (client `sessionStorage` + same server httpOnly dedupe cookie). The download API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), mirroring the view-count behaviour; see **docs/VIEW_COUNT_FIX.md**. The downloaded file name is either the original upload name (when `use_original_cv_filename` is true and `cv_filename` is set) or the generated name `CV-{Slug}.pdf`.
+**CV download count:** When a visitor clicks "Download CV" on the public view page, `PDFViewer` calls `POST /api/applications/[slug]/download` (client `sessionStorage` + same server httpOnly dedupe cookie). The download API increments `download_count` via the `increment_application_download_count` SECURITY DEFINER RPC (service_role only), mirroring the view-count behaviour; see **docs/retrospectives/VIEW_COUNT_FIX.md**. The downloaded file name is either the original upload name (when `use_original_cv_filename` is true and `cv_filename` is set) or the generated name `CV-{Slug}.pdf`.
 
 ### 6.4 Profile and snapshot into applications
 
@@ -354,7 +354,7 @@ my-hire-view/
 │   ├── auth/callback/          # Supabase OAuth/email callback
 │   ├── admin/                  # Dashboard, new, edit (layout uses requireAuth)
 │   ├── view/[slug]/            # Public application route (page, loading, not-found)
-│   └── api/                    # All API routes (see docs/API_REFERENCE.md)
+│   └── api/                    # All API routes (see docs/architecture/API_REFERENCE.md)
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── auth/                   # SignOutButton
@@ -374,7 +374,7 @@ my-hire-view/
 │   └── utils/                  # url, slug, slug-generate, youtube, clipboard
 ├── supabase/migrations/        # ordered SQL (001–025); apply all in numeric order
 ├── proxy.ts                    # Next.js 16+ proxy entry (session + /admin guard)
-└── docs/                       # ARCHITECTURE, API_REFERENCE, CI_CD, CODE_REVIEW, SUPABASE_AUTH_SETUP
+└── docs/                       # architecture/, engineering/, product/, design/, retrospectives/, …
 ```
 
 ---
@@ -390,10 +390,10 @@ my-hire-view/
 | View count in DB                | Simple and accurate; one increment per browser path (httpOnly cookie + client `sessionStorage`), with per-IP and per-path rate limits.                                                                                                                                                                       |
 | Last viewed at in DB            | Set to current time whenever view_count is incremented (non-owner only); null if never viewed.                                                                                                                                                               |
 | Download count in DB            | Same pattern as view count; one increment per download (per session), owner downloads not counted.                                                                                                                                                           |
-| `status` + `archived_at` for archive | Soft hide via `status = archived`; `archived_at` resets when re-archiving (90-day retention clock). Hard purge deferred. See [CV_REUSE_AND_STORAGE.md](retrospectives/CV_REUSE_AND_STORAGE.md). |
+| `status` + `archived_at` for archive | Soft hide via `status = archived`; `archived_at` resets when re-archiving (90-day retention clock). Hard purge deferred. See [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md). |
 | Route client for auth APIs      | Login/signup/logout must write cookies on the response; route client is the pattern recommended by Supabase for Next.js.                                                                                                                                     |
 | Profile snapshot on application | Candidate name, location, portfolio URL, and LinkedIn URL are stored in `profiles` and copied into each application row on create/update. Recruiters read only from the application row, giving a stable snapshot and no auth dependency on the public view. |
 
 ---
 
-For setup and auth configuration, see [README.md](../README.md) and [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md). For the full API catalog, see [API_REFERENCE.md](API_REFERENCE.md). For CI/CD pipeline architecture, see [CI_CD.md](CI_CD.md). For code quality and refactors, see [CODE_REVIEW.md](CODE_REVIEW.md).
+For setup and auth configuration, see [README.md](../../README.md) and [SUPABASE_AUTH_SETUP.md](SUPABASE_AUTH_SETUP.md). For the full API catalog, see [API_REFERENCE.md](API_REFERENCE.md). For CI/CD pipeline architecture, see [CI_CD.md](../engineering/CI_CD.md). For code quality and refactors, see [CODE_REVIEW.md](../engineering/CODE_REVIEW.md).

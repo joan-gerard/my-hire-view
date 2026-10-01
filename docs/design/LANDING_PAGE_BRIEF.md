@@ -2,7 +2,7 @@
 
 This brief outlines the structure and copy for a pre-launch “Coming Soon” landing page designed to capture early interest and build an email list before the official MyHireView launch.
 
-Channels, launch phases, and specialist briefs (beyond this page’s structure): [GO_TO_MARKET.md](GO_TO_MARKET.md).
+Channels, launch phases, and specialist briefs (beyond this page’s structure): [GO_TO_MARKET.md](../product/GO_TO_MARKET.md).
 
 ## Page Structure
 
@@ -158,4 +158,4 @@ The section list above is the original coming-soon brief. It is **not** the live
 - **Page:** `app/(home)/` serves `/`. `layout.tsx` self-hosts Switzer and Stack Sans Headline via `next/font` (no CDN stylesheets) and loads `mhv-demo.css`. `page.tsx` renders `MhvLanding` (`mhv-landing.tsx` composes section modules from `components/marketing/`; copy helpers in `lib/marketing/`): header, hero, story, principles, how-it-works, in-page `#pricing`, FAQ, and footer. Login and Get started go to `/login`. There is no `MarketingHeader` and no `/pricing` route.
 - **Copy still shared:** FAQ items in `components/public/faq/constants.ts`, how-it-works steps in `components/public/how-it-works/constants.ts`, tier cards in `components/public/pricing/constants.ts`.
 - **API:** `POST /api/waitlist` still validates and stores signups in `waitlist_signups` (migration `018_waitlist_signups.sql`). Duplicate emails return 409. The homepage does not render that form.
-- **Videos:** How-it-works step videos are served from R2 (`marketing/*.mp4`); see [PDF_AND_R2.md](PDF_AND_R2.md). Hero stills for this page live under `public/demo/`.
+- **Videos:** How-it-works step videos are served from R2 (`marketing/*.mp4`); see [PDF_AND_R2.md](../architecture/PDF_AND_R2.md). Hero stills for this page live under `public/demo/`.

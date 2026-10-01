@@ -44,7 +44,7 @@ Personalized recruiter landing pages: create shareable pages with your CV (PDF) 
 1. Install dependencies: `pnpm install`
 2. Copy `.env.local.example` to `.env.local` and fill in Supabase, Cloudflare R2, and (for production-like durable rate limits) Upstash Redis values.
 3. Apply every SQL file in `supabase/migrations/` via the Supabase SQL Editor **in numeric order** (`001` … `028`). Do not stop at an early migration — later files include security fixes (e.g. `025_drop_applications_public_select.sql` removes the open anon SELECT on `applications`; `027` enforces same-user ownership for `primary_cv_id`; `028` atomically caps the primary CV library per user).
-4. **Configure Supabase Auth**: see [docs/SUPABASE_AUTH_SETUP.md](docs/SUPABASE_AUTH_SETUP.md) to enable the Email provider and optional email templates.
+4. **Configure Supabase Auth**: see [docs/architecture/SUPABASE_AUTH_SETUP.md](docs/architecture/SUPABASE_AUTH_SETUP.md) to enable the Email provider and optional email templates.
 5. Ensure Supabase **Redirect URLs** include `/auth/callback` for email links.
 
 ## Development
@@ -68,11 +68,11 @@ So **yes** — the current Supabase implementation and RLS policies allow for **
 ## Documentation
 
 - **[Build summary](docs/BUILD_SUMMARY.md)** — Chronological summary of what was built commit-by-commit; full detail is split by phase (scaffold, PRs 1–6) in `docs/build-summary/`.
-- **[Architecture & system design](docs/ARCHITECTURE.md)** — High-level architecture, tech stack, data model, key flows, and Mermaid diagrams.
-- **[CI/CD pipeline](docs/CI_CD.md)** — GitHub Actions workflows, quality gates, and pipeline roadmap.
-- **[API reference](docs/API_REFERENCE.md)** — Catalog of all `/api` routes: methods, auth, rate limits, request/response shapes.
-- **[Data flow](docs/DATA_FLOW.md)** — Mermaid diagrams for auth, profile, create/edit application, and public view.
-- **[User guide](docs/USER_GUIDE.md)** — What candidates and recruiters can do with the app.
-- **[Supabase Auth setup](docs/SUPABASE_AUTH_SETUP.md)** — Email provider and email templates.
-- **[Code review notes](docs/CODE_REVIEW.md)** — Refactors and best practices.
-- **[PDFs and Cloudflare R2](docs/PDF_AND_R2.md)** — How CV PDFs are uploaded, stored, and deleted.
+- **[Architecture & system design](docs/architecture/ARCHITECTURE.md)** — High-level architecture, tech stack, data model, key flows, and Mermaid diagrams.
+- **[CI/CD pipeline](docs/engineering/CI_CD.md)** — GitHub Actions workflows, quality gates, and pipeline roadmap.
+- **[API reference](docs/architecture/API_REFERENCE.md)** — Catalog of all `/api` routes: methods, auth, rate limits, request/response shapes.
+- **[Data flow](docs/architecture/DATA_FLOW.md)** — Mermaid diagrams for auth, profile, create/edit application, and public view.
+- **[User guide](docs/engineering/USER_GUIDE.md)** — What candidates and recruiters can do with the app.
+- **[Supabase Auth setup](docs/architecture/SUPABASE_AUTH_SETUP.md)** — Email provider and email templates.
+- **[Code review notes](docs/engineering/CODE_REVIEW.md)** — Refactors and best practices.
+- **[PDFs and Cloudflare R2](docs/architecture/PDF_AND_R2.md)** — How CV PDFs are uploaded, stored, and deleted.

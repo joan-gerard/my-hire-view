@@ -12,8 +12,8 @@ A high-level catch-up document covering the product, tech stack, architecture, b
 
 There are two distinct surfaces:
 
-- **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices as a **working draft**; E1 lock + E2 checkout deferred until near launch), Login / Get started CTAs to `/login`. Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.) Discovery, launch channels, and when to bring in specialists: [GO_TO_MARKET.md](GO_TO_MARKET.md). Brand tokens and patterns: [STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md). Living demo on an unrelated fake product: `/demo`.
-- **Product** (`/admin`) — authenticated dashboard to create, manage, and track applications. Warm UI tokens: [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md).
+- **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices as a **working draft**; E1 lock + E2 checkout deferred until near launch), Login / Get started CTAs to `/login`. Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.) Discovery, launch channels, and when to bring in specialists: [GO_TO_MARKET.md](../product/GO_TO_MARKET.md). Brand tokens and patterns: [STYLE_GUIDE_MARKETING.md](../design/STYLE_GUIDE_MARKETING.md). Living demo on an unrelated fake product: `/demo`.
+- **Product** (`/admin`) — authenticated dashboard to create, manage, and track applications. Warm UI tokens: [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md).
 
 ---
 
@@ -137,7 +137,7 @@ RLS policies protect all tables. The service-role Supabase client is used server
 - **RLS** on `applications` and `profiles` enforces data isolation at the database level (owners only; public share pages resolve server-side via the service-role client, not an open anon SELECT).
 - **Public read** of applications by slug is permitted (recruiter view requires no login).
 
-See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
+See `docs/architecture/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 ---
 
@@ -146,7 +146,7 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 - **Vitest** is configured as the test runner (`vitest.config.ts`).
 - `pnpm test` — interactive watch mode; `pnpm test:ci` — single run (used in CI).
 - Test files live in `__tests__/unit/` and a shared helper in `__tests__/helpers/`.
-- **CI:** GitHub Actions runs `pnpm test:ci` on every pull request and on pushes to `main` (A1-002). Local Husky **pre-push** runs the same command before `git push`. Pipeline architecture: [CI_CD.md](CI_CD.md).
+- **CI:** GitHub Actions runs `pnpm test:ci` on every pull request and on pushes to `main` (A1-002). Local Husky **pre-push** runs the same command before `git push`. Pipeline architecture: [CI_CD.md](../engineering/CI_CD.md).
 
 ### What is covered
 
@@ -179,9 +179,9 @@ See `docs/SUPABASE_AUTH_SETUP.md` for full setup details.
 
 ## 9. Planned work
 
-Open pre-launch and post-launch work (gaps, TODOs, improvements) lives in **[Backlog.md](Backlog.md)** — the canonical tracker. This overview does not maintain a parallel checklist.
+Open pre-launch and post-launch work (gaps, TODOs, improvements) lives in **[Backlog.md](../product/Backlog.md)** — the canonical tracker. This overview does not maintain a parallel checklist.
 
-How people discover the app and become paid users (channels, phases, specialist briefs) lives in **[GO_TO_MARKET.md](GO_TO_MARKET.md)** — strategy only, not a second ticket list.
+How people discover the app and become paid users (channels, phases, specialist briefs) lives in **[GO_TO_MARKET.md](../product/GO_TO_MARKET.md)** — strategy only, not a second ticket list.
 
 ---
 
@@ -190,11 +190,11 @@ How people discover the app and become paid users (channels, phases, specialist 
 - Well-structured internal docs in `docs/` (ARCHITECTURE, API_REFERENCE, CI_CD, DATA_FLOW, BUILD_SUMMARY, CODE_REVIEW, etc.).
 - Clear separation between marketing and product surfaces.
 - Security-conscious patterns: RLS, owner exclusion from analytics, URL validation, PDF type/size validation.
-- Two documented visual systems: marketing ([STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md), lime/pink/ink) and product ([STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md), warm neutrals + teal accents).
+- Two documented visual systems: marketing ([STYLE_GUIDE_MARKETING.md](../design/STYLE_GUIDE_MARKETING.md), lime/pink/ink) and product ([STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md), warm neutrals + teal accents).
 - Clean component breakdown across `public/`, `admin/`, `forms/`, `pdf/`, `video/`, `view/`, `ui/`.
 
 ---
 
 ## Summary
 
-The **core product loop** (create application → share link → recruiter views page with PDF + video) is **functionally complete and well-architected**. Launch blockers and remaining planned work are tracked in **[Backlog.md](Backlog.md)**.
+The **core product loop** (create application → share link → recruiter views page with PDF + video) is **functionally complete and well-architected**. Launch blockers and remaining planned work are tracked in **[Backlog.md](../product/Backlog.md)**.

@@ -1,6 +1,6 @@
 # Code Review – Refactoring & Best Practices
 
-Historical record of refactors already applied to the MyHireView codebase. Open follow-ups and recommendations are tracked only in **[Backlog.md](Backlog.md)**.
+Historical record of refactors already applied to the MyHireView codebase. Open follow-ups and recommendations are tracked only in **[Backlog.md](../product/Backlog.md)**.
 
 ---
 
@@ -97,7 +97,7 @@ Historical record of refactors already applied to the MyHireView codebase. Open 
 
 ## 2. Open recommendations
 
-Open follow-ups from this review (API validation, middleware entry, DB/app types, upload UX, central API client, etc.) live in **[Backlog.md](Backlog.md)**. Do not re-list them here.
+Open follow-ups from this review (API validation, middleware entry, DB/app types, upload UX, central API client, etc.) live in **[Backlog.md](../product/Backlog.md)**. Do not re-list them here.
 
 ---
 

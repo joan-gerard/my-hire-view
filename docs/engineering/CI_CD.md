@@ -2,7 +2,7 @@
 
 **Canonical doc** for continuous integration and delivery architecture. Update this file whenever workflows, runners, gates, or deploy steps change.
 
-**Related:** [TESTING.md](TESTING.md) (test suite) · [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [Backlog.md](Backlog.md) (`A1-002`)
+**Related:** [TESTING.md](TESTING.md) (test suite) · [PROJECT_OVERVIEW.md](../architecture/PROJECT_OVERVIEW.md) · [Backlog.md](../product/Backlog.md) (`A1-002`)
 
 > Last updated: August 5, 2026
 
@@ -129,7 +129,7 @@ When future jobs need secrets (e.g. integration tests, deploy tokens), document 
 
 ## 8. Roadmap / not yet in pipeline
 
-Record intended additions here so this doc stays the single architecture source (tickets still live in [Backlog.md](Backlog.md)):
+Record intended additions here so this doc stays the single architecture source (tickets still live in [Backlog.md](../product/Backlog.md)):
 
 | Idea | Notes |
 | ---- | ----- |

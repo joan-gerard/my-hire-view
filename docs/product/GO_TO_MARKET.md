@@ -4,7 +4,7 @@
 
 **Status:** Pre-launch. The product loop works; public paid access is not live yet (pricing lock **E1**, Stripe/gates **E2**). This plan is for a solo founder who may later collaborate with specialists.
 
-**Related:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) · [copy/copy.md](copy/copy.md) · [USER_GUIDE.md](USER_GUIDE.md)
+**Related:** [PROJECT_OVERVIEW.md](../architecture/PROJECT_OVERVIEW.md) · [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md) · [LANDING_PAGE_BRIEF.md](../design/LANDING_PAGE_BRIEF.md) · [copy/copy.md](../design/copy/copy.md) · [USER_GUIDE.md](../engineering/USER_GUIDE.md)
 
 | Section | What it covers |
 | ------- | -------------- |
@@ -73,7 +73,7 @@ Engineering that supports this loop (onboarding checklist, public-view polish, b
 
 ## 3. Positioning (working)
 
-Use this until customer interviews produce better words. Draft copy already exists in [LANDING_PAGE_BRIEF.md](LANDING_PAGE_BRIEF.md) and [copy/copy.md](copy/copy.md).
+Use this until customer interviews produce better words. Draft copy already exists in [LANDING_PAGE_BRIEF.md](../design/LANDING_PAGE_BRIEF.md) and [copy/copy.md](../design/copy/copy.md).
 
 **Category:** A shareable application page (CV + optional video + contact) for one job at a time — not a personal website, not an ATS, not a generic Linktree.
 
@@ -265,7 +265,7 @@ Below: **search terms**, **what you need from them**, and **what you must provid
 | --- | --- |
 | **Search for** | `SaaS conversion copywriter`, `positioning consultant`, `product marketing freelance B2C`, `landing page copywriter SaaS`, `messaging workshop founder` |
 | **Your need** | A sharp one-liner, homepage/pricing narrative, and waitlist/launch emails that match how job seekers talk |
-| **You provide** | Interview notes, waitlist FAQ, demo URL, competitor list (PDF / personal site / video-resume tools), draft copy in `docs/copy/` |
+| **You provide** | Interview notes, waitlist FAQ, demo URL, competitor list (PDF / personal site / video-resume tools), draft copy in `docs/design/copy/` |
 | **Done looks like** | New headline + subhead + pricing angle you can A/B; you can explain the product in 15 seconds |
 | **Engagement** | Fixed project (1–3 weeks), not a long retainer |
 

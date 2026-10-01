@@ -95,7 +95,7 @@ const PLANS = [
 ] as const;
 
 /**
- * Fake product landing that exercises docs/STYLE_GUIDE_MARKETING.md.
+ * Fake product landing that exercises docs/design/STYLE_GUIDE_MARKETING.md.
  * Sprig = apartment plant-care co-op (unrelated to MyHireView).
  */
 export function SprigLanding() {

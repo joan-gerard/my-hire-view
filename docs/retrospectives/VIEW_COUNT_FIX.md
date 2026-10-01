@@ -104,9 +104,9 @@ We chose the **SECURITY DEFINER** approach to keep the capability minimal and to
 
 ## 6. Related Docs
 
-- **Public view and view count flow:** [DATA_FLOW.md](DATA_FLOW.md) (§ 6).
-- **API catalog:** [API_REFERENCE.md](API_REFERENCE.md) (view / download endpoints).
-- **RLS and architecture context:** [ARCHITECTURE.md](ARCHITECTURE.md) (data layer, view count behaviour).
+- **Public view and view count flow:** [DATA_FLOW.md](../architecture/DATA_FLOW.md) (§ 6).
+- **API catalog:** [API_REFERENCE.md](../architecture/API_REFERENCE.md) (view / download endpoints).
+- **RLS and architecture context:** [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) (data layer, view count behaviour).
 - **Excluding the applicant from view count:** [BUILD_SUMMARY.md](BUILD_SUMMARY.md) (commit 33).
 
 After this fix, view count, last-viewed time, and download count update correctly when:

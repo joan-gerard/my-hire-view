@@ -180,7 +180,7 @@ export function SprigFooter() {
           </div>
           <div>
             <p className="sg-footer-label">Style guide</p>
-            <p>docs/STYLE_GUIDE_MARKETING.md</p>
+            <p>docs/design/STYLE_GUIDE_MARKETING.md</p>
             <Link href="/">Back to MyHireView</Link>
           </div>
         </div>

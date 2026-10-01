@@ -2,7 +2,7 @@
 
 Full candidate journey before public launch: marketing and waitlist, signup through dashboard, profile / CVs / pictures, create–edit–publish–archive–delete applications, search and pagination, Getting started checklist, public `/view` pages, and recruiter insights.
 
-Work ticket: [Backlog.md](../Backlog.md) `F32-115`. Product copy: [USER_GUIDE.md](../USER_GUIDE.md).
+Work ticket: [Backlog.md](../product/Backlog.md) `F32-115`. Product copy: [USER_GUIDE.md](../engineering/USER_GUIDE.md).
 
 **How to run:** work §§0–17 in order (happy path + in-section edges), then **§18** (remaining edges). Do not skip §18.
 
@@ -650,7 +650,7 @@ These are easy to skip on the happy path. Do them once you have applications in 
 
 ## 19. Known not shipped — do **not** fail the pass for these
 
-Tracked in [Backlog.md](../Backlog.md):
+Tracked in [Backlog.md](../product/Backlog.md):
 
 | Item | Ticket |
 | ---- | ------ |

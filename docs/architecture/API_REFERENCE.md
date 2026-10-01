@@ -2,7 +2,7 @@
 
 Standalone catalog of Next.js App Router API routes under `app/api/`. For architecture, data model, and request flows, see [ARCHITECTURE.md](ARCHITECTURE.md) and [DATA_FLOW.md](DATA_FLOW.md).
 
-Each endpoint lists **What works** (practices already in place). Open follow-ups live only in **[Backlog.md](Backlog.md)** — this doc is not a second checklist. Some endpoints also note **Accepted limitations** (intentional current behavior, not tasks).
+Each endpoint lists **What works** (practices already in place). Open follow-ups live only in **[Backlog.md](../product/Backlog.md)** — this doc is not a second checklist. Some endpoints also note **Accepted limitations** (intentional current behavior, not tasks).
 
 ---
 
@@ -50,9 +50,9 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 - **Rate limiting** — Per IP via `lib/rate-limit.ts` (optional `keyPrefix` keeps route-specific counters separate). With `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`, counters are shared across serverless instances (Upstash fixed window); otherwise an in-memory fallback applies per instance (local/dev, or when Upstash is not configured / unreachable). **Outage policy:** if Upstash is configured but `limit()` fails, the handler logs and falls back to in-memory for that request (fail-open for availability — counters are then per-instance until Redis recovers). Production should set the Upstash env vars so limits are shared. Exceeded limit → **429** with `Retry-After` and `{ error: "Too many requests. Please try again later." }`.
 - **Default write limit** — `DEFAULT_API_RATE_LIMIT`: **60 requests / minute / IP** (used by most write routes unless noted).
 
-Related deep-dives: [PDF_AND_R2.md](PDF_AND_R2.md) (CV upload), [PROFILE_PICTURE.md](PROFILE_PICTURE.md), [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
+Related deep-dives: [PDF_AND_R2.md](PDF_AND_R2.md) (CV upload), [PROFILE_PICTURE.md](PROFILE_PICTURE.md), [VIEW_COUNT_FIX.md](../retrospectives/VIEW_COUNT_FIX.md).
 
-Cross-cutting already in place on many routes: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` (optional log-only `meta`) on public application routes, by-id GET, and CV / profile-picture uploads; `withAuth` in `lib/api/with-auth.ts` so missing sessions stay **401** and are not mislabeled as unauthorized when later work fails. Open cross-cutting work (upload UX, etc.) is tracked in [Backlog.md](Backlog.md). Historical refactors: [CODE_REVIEW.md](CODE_REVIEW.md).
+Cross-cutting already in place on many routes: schema validation at the boundary (e.g. Zod); `handleApiError` in `lib/api/handle-api-error.ts` (optional log-only `meta`) on public application routes, by-id GET, and CV / profile-picture uploads; `withAuth` in `lib/api/with-auth.ts` so missing sessions stay **401** and are not mislabeled as unauthorized when later work fails. Open cross-cutting work (upload UX, etc.) is tracked in [Backlog.md](../product/Backlog.md). Historical refactors: [CODE_REVIEW.md](../engineering/CODE_REVIEW.md).
 
 ---
 
@@ -134,7 +134,7 @@ TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_
 - Projects only dashboard list fields (not `select("*")`).
 - `normalizeListSearchQuery` caps length and strips PostgREST/`ilike` metacharacters (`%`, `_`, `*` as a `%` alias, `"`, `:`, commas, parens, backslash) before building the `or` filter so quoted `q` cannot 500 and users cannot inject wildcards.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -192,7 +192,7 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 - Persists `show_profile_picture` when provided (public view uses live profile picture).
 - Maps `slugNamePosition` → `include_name_in_slug` instead of exposing the DB column name as the only contract.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -218,7 +218,7 @@ Hard-delete an application and its tailored CV object in R2 (when the URL belong
 - Only then deletes the applications row.
 - Archive (`PUT` `status: archived`) remains the reversible soft-hide; hard `DELETE` is intentional and irreversible. A possible later alternative (middle-ground delete + orphan tailored-CV cron) is noted in [PDF_AND_R2.md](PDF_AND_R2.md).
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -226,7 +226,7 @@ Hard-delete an application and its tailored CV object in R2 (when the URL belong
 
 `GET /api/applications/[publicId]/[slug]`
 
-Public fetch of one application by the owner’s opaque `public_id` and per-user `slug`. Adds `cv_exists` when `cv_url` is an R2 public URL (`HeadObject`). URLs outside our R2 public base omit `cv_exists` so the UI does not treat them as missing. See [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md).
+Public fetch of one application by the owner’s opaque `public_id` and per-user `slug`. Adds `cv_exists` when `cv_url` is an R2 public URL (`HeadObject`). URLs outside our R2 public base omit `cv_exists` so the UI does not treat them as missing. See [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md).
 
 - **Auth:** Not required
 - **Rate limit:** **120 requests / minute / IP**
@@ -244,7 +244,7 @@ Public fetch of one application by the owner’s opaque `public_id` and per-user
 - Invalid `publicId` or slug format is rejected in `resolvePublicApplication` before any DB query (same helper as view / download).
 - Resolution uses the service-role admin client (profile + application). Anon clients cannot enumerate `applications` via PostgREST; only owners SELECT their own rows under RLS.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -270,7 +270,7 @@ Owner-only fetch for the edit page and draft-preview CV retry. Same `cv_exists` 
 - Validates `id` as a UUID (**400** when malformed) before querying.
 - Auth failures stay **401**; unexpected errors are logged via `handleApiError` and return **500**.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -278,7 +278,7 @@ Owner-only fetch for the edit page and draft-preview CV retry. Same `cv_exists` 
 
 `POST /api/applications/[publicId]/[slug]/view`
 
-Record a page view. Owner views are acknowledged but **not** counted. Non-owner increments use the `increment_application_view_count(p_public_id, p_slug)` SECURITY DEFINER RPC via the service-role admin client (updates `view_count` and `last_viewed_at`). See [VIEW_COUNT_FIX.md](VIEW_COUNT_FIX.md).
+Record a page view. Owner views are acknowledged but **not** counted. Non-owner increments use the `increment_application_view_count(p_public_id, p_slug)` SECURITY DEFINER RPC via the service-role admin client (updates `view_count` and `last_viewed_at`). See [VIEW_COUNT_FIX.md](../retrospectives/VIEW_COUNT_FIX.md).
 
 - **Auth:** Not required (session used only to detect owner)
 - **Rate limit:** Default (60/min) per IP, plus **10/min per IP per application path**
@@ -383,7 +383,7 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 - Dedicated `withAuth` → **401**; unexpected failures after auth → **500** with server log (not mislabeled as unauthorized).
 - Syncs Auth `user_metadata` (`first_name`, `last_name`, `public_id`) when DB names change **or** Auth names/`public_id` are out of sync (same-name PUT can repair a prior failed `updateUser` — F12-031); sync failures become `warnings` while still returning **200** + `data`. Names written to Auth are truncated to **100** characters so metadata never holds an over-long seed (legacy over-long profiles values may still differ until the user edits them).
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -429,7 +429,7 @@ Upload a PDF to the primary CV library (max **5** per user today — Free/Pro de
 - Writes R2 object then inserts `primary_cvs` row; rolls back R2 on insert failure.
 - Returns usage fields (`applications_count: 0`, `used_by: []`) for consistent client shape.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -455,9 +455,9 @@ Remove a primary CV from the library and delete its R2 object. Applications that
 
 **Accepted limitations**
 
-- Fail-closed R2-first delete is intentional (avoids orphan PDFs). The inverse failure mode (DB delete fails after R2 succeeds) is tracked as middle-ground / orphan cleanup in [Backlog.md](Backlog.md) / [PDF_AND_R2.md](PDF_AND_R2.md).
+- Fail-closed R2-first delete is intentional (avoids orphan PDFs). The inverse failure mode (DB delete fails after R2 succeeds) is tracked as middle-ground / orphan cleanup in [Backlog.md](../product/Backlog.md) / [PDF_AND_R2.md](PDF_AND_R2.md).
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -485,7 +485,7 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 - Supports name-in-URL positions and `excludeId` for edit flows without inventing numeric suffixes.
 - Logs unexpected failures before returning **500**.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -511,7 +511,7 @@ Check format and uniqueness of a proposed slug **for the current user** (used wh
 - **200** + `{ ok: false, error }` is a deliberate UX contract for inline form feedback (invalid or taken slugs are not **4xx**).
 - Logs unexpected failures before returning **500**.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -541,7 +541,7 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 - Application attach/delete paths authorize object keys per user (`isOwnedTailoredCvUrl` on attach / allow-list `deleteApplicationCvIfTailored` on app delete). Tailored `cv_url` values must be unique across the caller’s applications (**409** if reused; canonical URL + partial unique index); re-uploading the same PDF for another app creates a new object key. Primary CVs are shared via `cv_type: "primary"` and are not subject to the one-URL-per-app rule.
 - **Client Save UX (F8):** `ApplicationForm` maps upload **400** / **401** / **409** / **429** / **5xx** (and network failures) via `messageForUploadFailure` / `messageForUploadNetworkError`; other non-5xx statuses fall back to **400**-style actionable copy (not “try again in a moment”); Save shows **Preparing…** while hashing the selected PDF, then **Uploading…** during `POST /api/upload`, then **Saving…**; file choose/remove stays disabled for the full Save lifecycle (validation + upload + final save); file identity for cache/idempotency is a **content SHA-256** signature; the same idempotency key is reused on network/**5xx** retry, and rotated on **409** or when the selected file content changes (`resolveCvUploadIdempotencyKey` — F8-063). Pending-file generation is advanced on every clear/replace path so in-flight digests cannot restore a stale selection; a failed digest after leaving primary restores `cvMode` + `selectedPrimaryId` with the prior CV fields.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -564,7 +564,7 @@ Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png
 - Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8\*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
 - **Client Save UX (F8 / F9-052):** `ProfileForm` and `ProfilePictureModal` share `uploadProfilePictureFile` for request + friendly error mapping (null JSON bodies are safe); Save shows **Uploading…** during `POST /api/upload/profile-picture`, then **Saving…**. PUT `warnings` (and any legacy upload `warning`) are shown to the user (modal stays open until dismissed when a warning is present). While upload/save is in flight, `ProfilePictureModal` ignores Escape and backdrop dismiss so the request can finish.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -591,7 +591,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - Distinguishes validation (**400**), auth failure (**401**), and missing session / unexpected (**500**).
 - Bootstraps a missing `profiles` row from Auth `user_metadata` after a successful sign-in (`bootstrapInitialProfile` → `createInitialProfile`). Failures are logged; login still succeeds.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -621,7 +621,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - Sets `emailRedirectTo` to `/auth/callback` on the current origin.
 - Seeds Auth `user_metadata` and inserts the initial profiles row (service role; idempotent).
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -641,7 +641,7 @@ Auth handlers use `createSupabaseRouteClient` so `Set-Cookie` is applied on the 
 - Uses the route client so `signOut` clears session cookies on the response.
 - Simple, idempotent-friendly success contract.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
@@ -670,7 +670,7 @@ Pre-launch landing-page signup. Inserts into `waitlist_signups` via the service-
 - Maps unique violations to **409**; generic message for other DB errors (logs server-side).
 - Insert-only via service role; response does not return row data.
 
-**Open work:** Tracked in [Backlog.md](Backlog.md) — do not re-list here.
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
 ---
 
