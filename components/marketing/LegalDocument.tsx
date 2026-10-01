@@ -44,7 +44,9 @@ export function LegalDocument({ doc }: { doc: LegalDocumentCopy }) {
             <h1 id="legal-title">{doc.title}</h1>
             <p className="mhv-legal-summary">{doc.summary}</p>
             <p className="mhv-legal-updated">
-              <time dateTime="2026-10">{doc.lastUpdatedLabel}</time>
+              <time dateTime={doc.lastUpdatedDateTime}>
+                {doc.lastUpdatedLabel}
+              </time>
             </p>
           </header>
 

@@ -11,6 +11,8 @@ export type LegalDocumentCopy = {
   eyebrow: string;
   summary: string;
   lastUpdatedLabel: string;
+  /** Machine-readable date for `<time dateTime>` (YYYY-MM or YYYY-MM-DD). */
+  lastUpdatedDateTime: string;
   sections: LegalSection[];
 };
 
@@ -24,6 +26,7 @@ export const TERMS_COPY: LegalDocumentCopy = {
   summary:
     "These draft terms outline how you may use MyHireView while we prepare the product for public launch.",
   lastUpdatedLabel: "Last updated: October 2026 (draft)",
+  lastUpdatedDateTime: "2026-10",
   sections: [
     {
       id: "draft",
@@ -116,6 +119,7 @@ export const PRIVACY_COPY: LegalDocumentCopy = {
   summary:
     "This draft explains what information MyHireView may collect and how we intend to use it. Final policy copy will follow legal review.",
   lastUpdatedLabel: "Last updated: October 2026 (draft)",
+  lastUpdatedDateTime: "2026-10",
   sections: [
     {
       id: "draft",
@@ -208,6 +212,7 @@ export const COOKIES_COPY: LegalDocumentCopy = {
   summary:
     "This draft describes how MyHireView expects to use cookies and similar technologies. Final wording will be confirmed before launch.",
   lastUpdatedLabel: "Last updated: October 2026 (draft)",
+  lastUpdatedDateTime: "2026-10",
   sections: [
     {
       id: "draft",
