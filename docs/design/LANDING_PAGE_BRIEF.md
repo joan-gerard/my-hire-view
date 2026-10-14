@@ -140,7 +140,7 @@ Reuse the ViewPageFooter component but rename it Footer. Styling is aligned with
 
 ## Design Guidelines
 
-The original blue/dark brief below is **obsolete**. Live marketing brand tokens, type, components, and motion rules are in **[STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md)**. Product chrome (admin/auth/view) is separate: [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md). See `/demo` for a fake-product application of the marketing guide.
+The original blue/dark brief below is **obsolete**. Live marketing brand tokens, type, components, and motion rules are in **[STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md)**. Product chrome (admin/auth/view) is separate today: [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md) — unifying with marketing is `F34-118`. See `/demo` for a fake-product application of the marketing guide.
 
 ### Visual Style (archived — original coming-soon brief)
 

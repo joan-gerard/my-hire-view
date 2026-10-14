@@ -2,7 +2,8 @@
 
 > Source of truth for authenticated and public product surfaces: `/admin`, `/login`, `/signup`, `/view`, and shared `components/ui/*`.  
 > Implementation today: `app/globals.css` + Tailwind utility classes using those CSS variables.  
-> Marketing homepage uses a **different** system — see [STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md).
+> Marketing homepage uses a **different** system today — see [STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md).  
+> **Planned:** `F34-118` will restyle product chrome to match the marketing brand and rewrite this guide accordingly. Until that ships, the warm tokens below remain the product source of truth.
 
 ---
 
@@ -13,7 +14,7 @@
 | Warm, not corporate | Off-white backgrounds; brown-black ink instead of cool grey SaaS |
 | Calm chrome | Soft surfaces, light rings, `rounded-xl` controls |
 | Status with meaning | Teal for positive / publish; warm amber for draft; red only for destructive |
-| Consistent with marketing only in *care*, not in *palette* | Same product voice; do **not** pull lime/pink marketing accents into admin unless deliberately bridging |
+| Consistent with marketing only in *care*, not in *palette* (until `F34`) | Same product voice; do **not** pull lime/pink marketing accents into admin yet — `F34-118` is the deliberate bridge |
 
 Voice: clear labels, sentence case, action-named buttons (“Publish”, “Save”, “Delete application”).
 
@@ -125,7 +126,7 @@ Pair `*-bg` + `*-fg` tokens; don’t invent one-off greens/oranges.
 | `/login`, `/signup` | Logo shell + warm panel; same input/button tokens as admin |
 | `/view` | Public application page — same brand tokens; keep chrome quiet so CV/video dominate |
 
-When backlog items say “align with homepage warm palette”, they mean **this** file’s tokens — not the marketing lime/pink system.
+When backlog items say “align with homepage warm palette” (e.g. shipped `F17`), they mean **this** file’s tokens — not the marketing lime/pink system. Marketing-match work is tracked as `F34-118`.
 
 ---
 
@@ -134,7 +135,7 @@ When backlog items say “align with homepage warm palette”, they mean **this*
 | Do | Don’t |
 | -- | ----- |
 | Use CSS variables from `globals.css` | Hard-code hex in components unless adding a new token |
-| Use teal for focus and positive product actions | Copy marketing `--lime` / `--pink` into admin forms |
+| Use teal for focus and positive product actions (until `F34`) | Copy marketing `--lime` / `--pink` into admin forms outside `F34-118` |
 | Keep radius and ring patterns consistent | Mix `rounded-full` pills with `rounded-xl` arbitrarily |
 | Name buttons by outcome | Generic “OK” / “Submit” when a specific verb exists |
 
