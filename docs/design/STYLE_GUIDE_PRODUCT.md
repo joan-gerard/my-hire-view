@@ -3,7 +3,7 @@
 > Source of truth for authenticated and public product surfaces: `/admin`, `/login`, `/signup`, `/view`, and shared `components/ui/*`.  
 > Implementation today: `app/globals.css` + Tailwind utility classes using those CSS variables.  
 > Marketing homepage uses a **different** system today — see [STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md).  
-> **Planned:** `F34-118` will restyle product chrome to match the marketing brand and rewrite this guide accordingly. Until that ships, the warm tokens below remain the product source of truth.
+> **Planned:** `F34-118` will restyle product chrome to match the marketing brand and rewrite this guide accordingly. Until that ships, the warm tokens below remain the product source of truth. Working plan: [F34_PRODUCT_MARKETING_BRANDING.md](F34_PRODUCT_MARKETING_BRANDING.md).
 
 ---
 
