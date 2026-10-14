@@ -2,7 +2,7 @@
 
 > **Temporary.** Implementation tracker for `F34-118` on branch `feat/f34-product-marketing-branding`.  
 > Canonical ticket status lives in [Backlog.md](../product/Backlog.md).  
-> **Delete or move to `docs/retrospectives/` when the PR ships.**
+> **Delete or move to `docs/retrospectives/` when the F34 implementation ships** (restyle complete / `F34-118` done) — not when an early docs-only PR merges.
 
 **Sources of truth while coding**
 
@@ -37,25 +37,31 @@ Optional visual check before merge: open `/` (and one legal page) and confirm no
 
 ### Shared-component rule
 
-If a module is used by marketing **or** changing it would change marketing:
+If a module is used by marketing **or** changing it would change a marketing-visible surface (including shared route-level UI):
 
-1. **Do not** restyle that module in place for product.
+1. **Do not** restyle that module in place for product unless the surface is explicitly in-scope (see Button / `app/error.tsx` below).
 2. **Create** a product-specific component (or wrap / variant that marketing does not import).
 3. Point **product / auth / admin / view** callers at the new module; leave marketing imports untouched.
 
-Examples of risk today:
+Grep beyond `components/marketing/*`: also check root route files (`app/error.tsx`, `app/not-found.tsx`, `app/layout.tsx`) and any other shared shells.
 
-| Module | Marketing / shared use | F34 approach |
-| ------ | ---------------------- | ------------ |
-| `components/ui/Logo.tsx` | Used by `MarketingHeader` (legacy `(marketing)` routes) and by auth / admin / view | If Logo needs a marketing-matching wordmark + accent dot for product, **fork** (e.g. product Logo) rather than changing the shared export marketing still imports |
-| `components/ui/Button` (and other `ui/*`) | Not used by `components/marketing/*` today — product/auth/admin/forms only | Safe to restyle **if** grep confirms no marketing import; if marketing starts using them, fork instead |
-| `app/globals.css` `:root` / `body` / `#logo` | Root layout loads globals for the whole app; marketing scopes its look under `.mhv-landing` | Remap product tokens carefully; **do not** change rules that marketing depends on (prefer product-scoped wrappers or product-only selectors over rewriting shared `#logo` / global type if that would affect marketing) |
+Examples of risk today (verify with grep before editing — do not rely on this table alone):
+
+| Module | Current consumers | F34 approach |
+| ------ | ----------------- | ------------ |
+| Marketing logo | Live `/` uses `components/marketing/Header.tsx` + `.ot-logo` / `.ot-logo-dot` in `mhv-demo.css` — **not** `components/ui/Logo.tsx` | Leave marketing Header / `.ot-logo` alone. Product wordmark lives in `components/ui/Logo.tsx` (auth, admin, view only) — restyle or extend **that** file in place; no fork required for marketing freeze |
+| `components/ui/Logo.tsx` | Product only today: `AuthPageShell`, `AdminHeader`, `ApplicationPageHeader` | Safe to restyle for F34 (Switzer + accent dot). Do not assume a `MarketingHeader` dependency — that path is gone |
+| `components/ui/Button` (and other `ui/*`) | Product forms/admin **and** root `app/error.tsx` (“Try again” / “Go home”) | Not imported by `components/marketing/*`, but **is** marketing-visible when the global error boundary renders over `/`. Either (a) treat `app/error.tsx` as **in-scope** shared chrome and accept the new Button look there, or (b) give product a Button variant / fork and keep error on controls that stay unchanged. Do not assume “no marketing import ⇒ no marketing-visible change” |
+| `app/globals.css` `:root` / `body` / `#logo` | Root layout loads globals for the whole app; marketing scopes its look under `.mhv-landing` | Remap product tokens carefully; **do not** change rules that marketing depends on (prefer product-scoped wrappers or product-only selectors over rewriting shared global type if that would affect `.mhv-landing`) |
 | `components/marketing/*` | Marketing only | Never restyle for F34 |
+| `app/not-found.tsx` | Uses `MarketingNotFound` | Frozen with marketing 404 family |
 
 ### Gate checklist (every phase + before merge)
 
 - [ ] Diff does not intentionally change `app/(home)/**`, `components/marketing/**`, or marketing CSS for look/feel
-- [ ] Any shared module that marketing imports was **forked**, not mutated, when product needed a different look
+- [ ] Shared modules checked against **full** import graph (product + route-level), not only `components/marketing/*`
+- [ ] Any module marketing still imports was **forked**, not mutated, when product needed a different look
+- [ ] Decision recorded for `app/error.tsx` + `Button` (in-scope restyle vs fork/variant)
 - [ ] Smoke `/` (and optionally `/terms`) — looks unchanged vs pre-F34
 
 If a change seems to require editing a frozen file to “fix” product, stop and fork or scope styles to product layouts instead.
@@ -152,14 +158,14 @@ Reuse `app/(home)/fonts.ts` (or extract a shared fonts module) — do not load C
 
 ## Phase 1 — Foundations
 
-**Touch:** `app/globals.css` (product-safe remaps only), fonts wiring for **product** layouts, `components/ui/*` used only by product — or **forks** when shared with marketing (`Logo` is the prime candidate).
+**Touch:** `app/globals.css` (product-safe remaps only), fonts wiring for **product** layouts, product `components/ui/*` (`Logo` is product-only today; `Button` also feeds `app/error.tsx`).
 
 ### Checklist
 
 - [ ] Remap product tokens in `globals.css` per Phase 0 without changing marketing look
 - [ ] Wire **product** layouts to marketing fonts (do not change `app/(home)/fonts.ts` unless unavoidable; prefer reuse/import)
-- [ ] Update or fork primitives (Button, Input, Textarea, Logo + accent dot, focus rings) — **fork Logo** if marketing still imports the shared one
-- [ ] Grep: no marketing imports broken or accidentally restyled
+- [ ] Update product primitives (Button, Input, Textarea, Logo + accent dot, focus rings) — restyle `Logo` in place; decide Button vs `app/error.tsx` per gate
+- [ ] Grep full import graph (including `app/error.tsx`); no frozen marketing paths edited for look/feel
 - [ ] Smoke: `/login`, `/signup`, `/admin` — and confirm `/` unchanged
 
 ---
@@ -222,16 +228,17 @@ Quiet chrome so CV / video stay primary; brand without looking like a marketing 
 - [ ] Update any stale “warm palette” mentions that F34 makes false
 - [ ] Manual pass: login → dashboard → create → preview → `/view`
 - [ ] Contrast spot-checks (lime / pink / focus on light and dark)
-- [ ] **Marketing gate:** `/` (+ one legal page) unchanged; no unintended diffs under frozen paths
-- [ ] Strike `F34-118` in Backlog + move Trello card to Done when merged
-- [ ] Delete or archive **this** file
+- [ ] **Marketing gate:** `/` (+ one legal page) unchanged; no unintended diffs under frozen paths; `app/error.tsx` / Button decision verified
+- [ ] Strike `F34-118` in Backlog + move Trello card to Done when the F34 implementation ships
+- [ ] Delete or archive **this** file (only then)
 
 ---
 
 ## What not to do
 
 - Change marketing pages, `components/marketing/*`, or marketing CSS to “make product match”
-- Mutate a shared component marketing still imports — **fork** instead
+- Mutate a shared module that marketing (or a marketing-visible route shell) still depends on without forking or an explicit in-scope decision
+- Assume “not imported under `components/marketing/*`” means safe — always check route-level consumers too
 - Import all of `mhv-demo.css` into product layouts
 - Copy landing-only motion into admin by default
 - Mix warm leftovers and new tokens page-by-page — finish Phase 1 first
