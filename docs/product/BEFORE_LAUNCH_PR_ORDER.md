@@ -11,12 +11,12 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 | Effort | Count | PRs               |
 | :----: | ----: | ----------------- |
 | **1**  |     4 | A3, F22, F24, F32 |
-| **2**  |     3 | E1, F20, F23      |
+| **2**  |     4 | E1, E4, F20, F23  |
 | **3**  |     3 | F28, F30, L6      |
 | **4**  |     4 | F17, F21, F29, I2 |
 | **5**  |     1 | E2                |
 
-**15 open** (F9, F10, F11, F12, F13, F15, F16, F18, F19, F25, F26 shipped). **Weighted average ≈ 2.67** — many 1–3 polish items; complexity concentrates in **E2**, then **F17 / F21 / F29 / I2**.
+**16 open** (F9, F10, F11, F12, F13, F15, F16, F18, F19, F25, F26 shipped). **Weighted average ≈ 2.63** — many 1–3 polish items; complexity concentrates in **E2**, then **F17 / F21 / F29 / I2**.
 
 ---
 
@@ -68,29 +68,30 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering). **F3
 
 ### Phase 5 — Near launch only (Must + ops)
 
-**E1 → E2 → A3**
+**E4 (anytime) → E1 → E2 → A3**
 
-- Product lock (**E1**) before Stripe/gates (**E2**)
+- **E4** swaps annual → quarterly on the working draft + `#pricing` UI (can ship early; not a lock)
+- Product lock (**E1**) before Stripe/gates (**E2**) — lock **monthly + quarterly** (no annual)
 - **A3** (confirm email in prod) is ops with no code — last config before public launch
 - Doing **E2** earlier wastes work if tiers/prices still change
 
 ---
 
-## 3. Suggested sequence (all 15 open)
+## 3. Suggested sequence (all 16 open)
 
 ```
 F17
   → F20 → F23 → F21
-  → F22 / F24 (whenever)
+  → F22 / F24 / E4 (whenever; E4 before E1)
   → L6 → I2 → F28 → F32 → F29 → F30
   → E1 → E2 → A3
 ```
 
 **Why this beats “easiest first”:**
 
-1. **Dependencies** — F15→F16→F19, E1→E2, L6/I2→F30 are real; ignore them and you thrash.
+1. **Dependencies** — F15→F16→F19, E4→E1→E2, L6/I2→F30 are real; ignore them and you thrash.
 2. **Risk before paint** — API/storage races before branding.
 3. **Reviews stay useful** — F28/F29/F30 after the bulk of pre-launch code, not before.
-4. **Monetization last** — backlog already defers E1/E2 until launch is imminent.
+4. **Monetization last** — backlog already defers E1/E2 until launch is imminent; E4 only updates the draft.
 
 If capacity is short: start **F17**.
