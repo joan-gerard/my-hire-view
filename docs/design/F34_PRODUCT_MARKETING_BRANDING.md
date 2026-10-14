@@ -51,7 +51,7 @@ Examples of risk today (verify with grep before editing — do not rely on this 
 | ------ | ----------------- | ------------ |
 | Marketing logo | Live `/` uses `components/marketing/Header.tsx` + `.ot-logo` / `.ot-logo-dot` in `mhv-demo.css` — **not** `components/ui/Logo.tsx` | Leave marketing Header / `.ot-logo` alone. Product wordmark lives in `components/ui/Logo.tsx` (auth, admin, view only) — restyle or extend **that** file in place; no fork required for marketing freeze |
 | `components/ui/Logo.tsx` | Product only today: `AuthPageShell`, `AdminHeader`, `ApplicationPageHeader` | Safe to restyle for F34 (Switzer + accent dot). Do not assume a `MarketingHeader` dependency — that path is gone |
-| `components/ui/Button` (and other `ui/*`) | Product forms/admin **and** root `app/error.tsx` (“Try again” / “Go home”) | Not imported by `components/marketing/*`, but **is** marketing-visible when the global error boundary renders over `/`. Either (a) treat `app/error.tsx` as **in-scope** shared chrome and accept the new Button look there, or (b) give product a Button variant / fork and keep error on controls that stay unchanged. Do not assume “no marketing import ⇒ no marketing-visible change” |
+| `components/ui/Button` (and other `ui/*`) | Product forms/admin **and** root `app/error.tsx` (“Try again” / “Go home”) | Not imported by `components/marketing/*`, but **is** marketing-visible when the global error boundary renders over `/`. **Locked (Phase 0):** treat `app/error.tsx` as **in-scope** shared chrome — restyle the single `Button`; no fork. Do not assume “no marketing import ⇒ no marketing-visible change” when grepping |
 | `app/globals.css` `:root` / `body` / `#logo` | Root layout loads globals for the whole app; marketing scopes its look under `.mhv-landing` | Remap product tokens carefully; **do not** change rules that marketing depends on (prefer product-scoped wrappers or product-only selectors over rewriting shared global type if that would affect `.mhv-landing`) |
 | `components/marketing/*` | Marketing only | Never restyle for F34 |
 | `app/not-found.tsx` | Uses `MarketingNotFound` | Frozen with marketing 404 family |
@@ -61,7 +61,7 @@ Examples of risk today (verify with grep before editing — do not rely on this 
 - [ ] Diff does not intentionally change `app/(home)/**`, `components/marketing/**`, or marketing CSS for look/feel
 - [ ] Shared modules checked against **full** import graph (product + route-level), not only `components/marketing/*`
 - [ ] Any module marketing still imports was **forked**, not mutated, when product needed a different look
-- [ ] Decision recorded for `app/error.tsx` + `Button` (in-scope restyle vs fork/variant)
+- [x] Decision recorded for `app/error.tsx` + `Button` — **in-scope restyle** (no fork)
 - [ ] Smoke `/` (and optionally `/terms`) — looks unchanged vs pre-F34
 
 If a change seems to require editing a frozen file to “fix” product, stop and fork or scope styles to product layouts instead.
@@ -83,7 +83,7 @@ If a change seems to require editing a frozen file to “fix” product, stop an
 
 | Phase | Name | Status |
 | ----- | ---- | ------ |
-| 0 | Token / type mapping | Not started |
+| 0 | Token / type mapping | **Done** |
 | 1 | Foundations (`globals.css`, fonts, shared UI) | Not started |
 | 2 | Auth shell | Not started |
 | 3 | Admin chrome + dashboard | Not started |
@@ -97,12 +97,12 @@ Mark a phase **Done** when its checklist below is complete and you’ve smoke-te
 
 ## Phase 0 — Decide the mapping
 
-Lock this table before painting screens. Adjust cells as you decide; leave “Notes” when tradeoffs matter.
+**Locked 2026-10-14.** Implement these values in Phase 1; do not reintroduce teal.
 
 ### Color / surface
 
-| Product token (today) | Today hex | Proposed marketing target | Role | Notes |
-| --------------------- | --------- | ------------------------- | ---- | ----- |
+| Product token (today) | Today hex | Locked target | Role | Notes |
+| --------------------- | --------- | ------------- | ---- | ----- |
 | `--background` | `#f6f0e9` | `#ffffff` (`--white`) | Page background | |
 | `--secondary-background` | `#fcf6ef` | `#f0f0f0` (`--paper`) | Alternate bands | |
 | `--surface` | `#f8f4ef` | `#f0f0f0` (`--paper`) | Inputs, cards | |
@@ -111,48 +111,78 @@ Lock this table before painting screens. Adjust cells as you decide; leave “No
 | `--brand-primary-text` | `#ffffff` | `#ffffff` | Text on primary | |
 | `--brand-secondary` | `#f0e7dd` | `#f0f0f0` (`--paper`) | Secondary chrome | |
 | `--brand-secondary-text` | `#2b1809` | `#0b0b0c` (`--ink`) | Text on secondary | |
-| `--brand-accent-1` | `#0d9488` | TBD — see accent note | Focus / positive accent | Don’t use lime focus on light surfaces |
-| `--brand-accent-2` | `#0f766e` | TBD | Accent hover | |
-| `--dark-section-bg` | `#1a1510` | `#0b0b0c` / `#122020` | Dark bands | |
-| `--dark-section-text` | `#faf8f6` | white / `--mist` | Text on dark | |
+| `--brand-text` (legacy) | `#2b1809` | `#0b0b0c` | Alias of foreground / ink | |
+| `--brand-surface` (legacy) | `#f6f0e9` | `#ffffff` | Alias of page background | |
+| `--brand-accent` (legacy) | `#f0e7dd` | `#f0f0f0` | Soft chrome alias | |
+| `--brand-accent-1` | `#0d9488` | `#0b0b0c` (`--ink`) | Light focus rings + former teal solid fills | See accent lock below — **not** lime on light |
+| `--brand-accent-2` | `#0f766e` | `#6a6e6e` (`--muted`) | Link / hover emphasis | Replaces teal link color |
+| `--dark-section-bg` | `#1a1510` | `#0b0b0c` | Dark bands | |
+| `--dark-section-text` | `#faf8f6` | `#ffffff` | Text on dark | Body on dark may use `--mist` in components later |
 | `--header-mobile-menu-bg` | `#e2ddd6` | `#f0f0f0` | Mobile menu sheet | |
 
-**Accent note:** Teal is both focus and “Publish / success” today. Lime is the marketing loud accent but fails WCAG as a focus ring on white. Propose:
+**New product `:root` tokens** (mirror marketing; add in Phase 1):
 
-- Light surfaces: `outline: 2px solid var(--ink)` (marketing rule)
-- Dark surfaces: lime focus
-- Success / Publish: either keep a teal-like success pair, or redefine success chips so they don’t collide with primary CTA lime — **decide here before Phase 1**
+| Token | Hex | Role |
+| ----- | --- | ---- |
+| `--ink` | `#0b0b0c` | Primary text / dark CTAs (alias-friendly name) |
+| `--muted` | `#6a6e6e` | Secondary copy / accent-2 |
+| `--mist` | `#b7bcbc` | Tertiary text on dark |
+| `--lime` | `#9efc65` | Loud accent, logo dot, dark-surface focus only |
+| `--pink` | `#ffbcfc` | Fill accent — not body text on light |
+| `--pink-text` | `#c026a8` | Pink text on white/paper (WCAG AA) |
+| `--paper` | `#f0f0f0` | Soft surface |
+| `--white` | `#ffffff` | Page background alias |
 
-| Status token | Today | Proposed | Notes |
-| ------------ | ----- | -------- | ----- |
-| `--status-success-*` | teal pair | TBD | Must stay distinct from primary CTA |
-| `--status-draft-*` | warm amber | TBD — muted / paper + ink? | |
-| `--status-warning-*` | warm amber | TBD | |
-| `--status-danger-*` | red pair | Keep red family (tune if needed) | |
+### Accent / focus (locked)
 
-### Typography
+Today `--brand-accent-1` is both **focus ring** and occasional **solid fill** (empty-state icon wells, view unavailable CTA). Lime fails WCAG as a focus ring on white (~1.1–1.3:1).
 
-| Role | Product today | Marketing target |
-| ---- | ------------- | ---------------- |
-| Body / UI | FunnelSans | Stack Sans Headline |
-| Headings | FunnelSans (FaunaOne available) | Switzer |
-| Logo wordmark | Varela Round | Switzer + optional lime/pink dot |
+| Context | Locked rule |
+| ------- | ----------- |
+| Light focus | Ink — keep using `--brand-accent-1` → `#0b0b0c` so existing `focus:ring-[var(--brand-accent-1)]` works without a mass class rewrite |
+| Dark focus | `--lime` outline when touching dark chrome in later phases |
+| Loud accent (logo dot, rare badges) | `--lime` / `--pink` — **not** `--brand-accent-1` |
+| Former teal solid fills | Become **ink** (or intentional lime fill + ink text only where loud). Do **not** reintroduce teal |
 
-Reuse `app/(home)/fonts.ts` (or extract a shared fonts module) — do not load CDN stylesheets.
+Primary actions such as Publish as a primary button use `--brand-primary` (ink). Success **chips** / menu emphasis use the status pair below — distinct from primary CTAs.
 
-### Geometry
+### Status chips (locked)
 
-| Pattern | Product today | Direction |
-| ------- | ------------- | --------- |
-| Buttons | `rounded-xl` | More pill-like where it fits (`border-radius: 100px` for primary CTAs; keep usable density on dense forms) |
-| Cards | soft warm surfaces | `--paper`, large radii (~20–30px) where appropriate; soft shadow only for floating menus |
+| Status token | Today | Locked | Notes |
+| ------------ | ----- | ------ | ----- |
+| `--status-success-bg` / `--status-success-fg` | teal pair | `#e8fad9` / `#0b0b0c` | Soft lime wash + ink text; distinct from primary ink CTAs |
+| `--status-draft-bg` / `--status-draft-fg` | warm amber | `#f0f0f0` / `#6a6e6e` | Paper + muted |
+| `--status-warning-bg` / `--status-warning-fg` | warm amber | `#fff0fe` / `#c026a8` | Soft pink + `--pink-text` |
+| `--status-danger-bg` / `--status-danger-fg` / `--status-danger-solid` | red pair | Keep `#fde8e4` / `#b42318` / `#b42318` | Unchanged family |
+
+### Typography (locked)
+
+| Role | Product today | Locked target |
+| ---- | ------------- | ------------- |
+| Body / UI | FunnelSans | Stack Sans Headline (`--font-stack-sans-headline`) |
+| Headings | FunnelSans (FaunaOne available) | Switzer (`--font-switzer`) |
+| Logo wordmark | Varela Round | Switzer + lime or pink accent dot (marketing daily-dot pattern OK) |
+
+Reuse fonts via import from `app/(home)/fonts.ts` (or extract a shared fonts module) — do not load CDN stylesheets; do not edit marketing CSS for product fonts.
+
+### Geometry (locked)
+
+| Pattern | Product today | Locked direction |
+| ------- | ------------- | ---------------- |
+| Primary CTAs | `rounded-xl` | Pill `border-radius: 100px` |
+| Dense form controls | `rounded-xl` | May stay `rounded-xl` for density |
+| Cards | soft warm surfaces | `--paper`, radii ~20–30px; soft shadow only for floating menus |
 | Logo | text wordmark | Wordmark + small colored circular dot |
+
+### Gate: `Button` + `app/error.tsx` (locked)
+
+**In-scope restyle** — one shared `Button`; global `app/error.tsx` adopts the new brand. No fork.
 
 ### Checklist
 
-- [ ] Color table locked (including accent / success decision)
-- [ ] Type + geometry direction locked
-- [ ] Compared `/`, `/demo/care-log`, `/login`, `/admin` side by side
+- [x] Color table locked (including accent / success decision)
+- [x] Type + geometry direction locked
+- [ ] Compared `/`, `/demo/care-log`, `/login`, `/admin` side by side — do a quick visual pass at Phase 1 kickoff (mapping itself does not require code)
 
 ---
 
@@ -160,11 +190,13 @@ Reuse `app/(home)/fonts.ts` (or extract a shared fonts module) — do not load C
 
 **Touch:** `app/globals.css` (product-safe remaps only), fonts wiring for **product** layouts, product `components/ui/*` (`Logo` is product-only today; `Button` also feeds `app/error.tsx`).
 
+**Must add** the new marketing-parity tokens to product `:root` (`--ink`, `--muted`, `--mist`, `--lime`, `--pink`, `--pink-text`, `--paper`, `--white`) alongside remapping existing `--brand-*` / status vars per Phase 0.
+
 ### Checklist
 
-- [ ] Remap product tokens in `globals.css` per Phase 0 without changing marketing look
+- [ ] Remap product tokens in `globals.css` per Phase 0 without changing marketing look (include new tokens above)
 - [ ] Wire **product** layouts to marketing fonts (do not change `app/(home)/fonts.ts` unless unavoidable; prefer reuse/import)
-- [ ] Update product primitives (Button, Input, Textarea, Logo + accent dot, focus rings) — restyle `Logo` in place; decide Button vs `app/error.tsx` per gate
+- [ ] Update product primitives (Button, Input, Textarea, Logo + accent dot, focus rings) — restyle `Logo` in place; `Button` + `app/error.tsx` in-scope (no fork)
 - [ ] Grep full import graph (including `app/error.tsx`); no frozen marketing paths edited for look/feel
 - [ ] Smoke: `/login`, `/signup`, `/admin` — and confirm `/` unchanged
 
@@ -260,4 +292,4 @@ Prefer **one PR** with phased commits matching Phases 1→6. If the diff balloon
 
 | Date | What landed | Next |
 | ---- | ----------- | ---- |
-| | | Phase 0 — lock mapping table |
+| 2026-10-14 | Phase 0 locked — surfaces, accent/focus, status chips, type, geometry, Button/error in-scope | Phase 1 — foundations (`globals.css`, fonts, shared UI) |
