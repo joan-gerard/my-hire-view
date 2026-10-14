@@ -125,7 +125,7 @@ Implement the following workflow:
 6. Handle upload errors gracefully
 
 Provide clear instructions on:
-- How to set up Cloudflare R2 (`docs/PDF_AND_R2.md`)
+- How to set up Cloudflare R2 (`docs/architecture/PDF_AND_R2.md`)
 - Required environment variables
 - Token generation steps
 

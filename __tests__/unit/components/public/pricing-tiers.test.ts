@@ -6,7 +6,7 @@ import {
   PRICING_DRAFT_NOTE,
   PRICING_FAQ,
   PRICING_TIERS,
-  PRICING_WAITLIST_HREF,
+  PRICING_LOGIN_HREF,
 } from "@/components/public/pricing/constants";
 
 describe("pricing tier data (E3-014)", () => {
@@ -79,10 +79,11 @@ describe("pricing tier data (E3-014)", () => {
     expect(getAnnualNudge(premium)).toMatch(/\$4\.92/);
   });
 
-  it("routes all tier CTAs to the waitlist until billing ships", () => {
-    expect(PRICING_WAITLIST_HREF).toBe("/#early-access");
+  it("routes all tier CTAs to login until billing ships", () => {
+    expect(PRICING_LOGIN_HREF).toBe("/login");
     for (const tier of PRICING_TIERS) {
-      expect(tier.cta.href).toBe(PRICING_WAITLIST_HREF);
+      expect(tier.cta.label).toBe("Get started");
+      expect(tier.cta.href).toBe(PRICING_LOGIN_HREF);
     }
   });
 
@@ -146,9 +147,10 @@ describe("pricing tier data (E3-014)", () => {
 
   it("notes that checkout ships with membership", () => {
     expect(PRICING_DRAFT_NOTE.toLowerCase()).toMatch(/checkout|membership/);
-    expect(PRICING_DRAFT_NOTE.toLowerCase()).toMatch(/waitlist/);
+    expect(PRICING_DRAFT_NOTE.toLowerCase()).toMatch(/sign up|log in|login/);
     expect(PRICING_DRAFT_NOTE.toLowerCase()).toMatch(/draft|may change/);
     expect(PRICING_DRAFT_NOTE).not.toMatch(/USD/i);
+    expect(PRICING_DRAFT_NOTE.toLowerCase()).not.toMatch(/waitlist/);
   });
 
   it("exposes FAQ copy for caps and downgrades", () => {

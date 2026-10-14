@@ -1,0 +1,162 @@
+# Testing
+
+> Last updated: September 17, 2026
+
+---
+
+## Setup
+
+**Framework:** [Vitest](https://vitest.dev/) — fast, native TypeScript, no Babel overhead.
+
+**Configuration:** `vitest.config.ts` at the project root. The `@/` path alias is resolved natively via `resolve.alias` using `fileURLToPath` (portable on Windows and paths with spaces).
+
+**Scripts:**
+
+| Command | Use |
+|---------|-----|
+| `pnpm test` | Interactive watch mode (development) |
+| `pnpm test:ci` | Single run — no watch, exits with code 1 on failure (used in CI and pre-merge checks) |
+
+## CI
+
+`pnpm test:ci` is the command GitHub Actions runs, and the same command runs locally via the Husky **pre-push** hook (`.husky/pre-push`). Pipeline architecture lives in **[CI_CD.md](CI_CD.md)** — update that doc when the workflow or hooks change.
+
+---
+
+## Structure
+
+```
+__tests__/
+  helpers/
+    supabase-mock.ts     — reusable Supabase fluent-chain mock factory
+  unit/
+    proxy-entry.test.ts  — Next.js 16+ root `proxy.ts` convention (F26-060)
+    components/
+      public/
+        pricing-tiers.test.ts
+    lib/
+      utils/
+        slug-generate.test.ts
+        slug.test.ts
+        profile-picture-storage.test.ts
+        cv-storage.test.ts
+        upload-idempotency.test.ts
+        upload-form-messages.test.ts
+        upload-profile-picture-client.test.ts
+        pdf.test.ts
+        image.test.ts
+        public-id.test.ts
+        resolve-public-application.test.ts
+        load-public-application-response.test.ts
+        url.test.ts
+        primary-cv-form-sync.test.ts
+        create-application-draft.test.ts
+        load-owner-draft-preview.test.ts
+        load-view-page-application.test.ts
+        leave-confirm.test.ts
+      marketing-assets.test.ts
+      auth/
+        safe-next-path.test.ts
+      types/
+        primary-cv.test.ts
+        application-status-summary.test.ts
+        to-public-application.test.ts
+      api/
+        handle-api-error.test.ts
+      validation/
+        waitlist.test.ts
+        primary-cv.test.ts
+        auth.test.ts
+      rate-limit.test.ts
+      profile-validation.test.ts
+      ensure-profile.test.ts
+    api/
+      profile.test.ts
+      primary-cvs.test.ts
+      profile-picture-upload.test.ts
+      cv-upload.test.ts
+      slug.test.ts
+      applications-create.test.ts
+      applications-edit.test.ts
+      applications-list.test.ts
+      applications-public-view.test.ts
+      signup.test.ts
+      login.test.ts
+      waitlist.test.ts
+```
+
+Pre-launch end-to-end manual QA (`F32-115`): [manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md](../manual-testing/MANUAL_TEST_PRE_LAUNCH_E2E.md).
+
+Feature-specific deep dives:
+
+- Primary/tailored CVs and application status: [manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md](../manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md)
+- Create-application draft + CV source race (F15): [manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md)
+- Draft → preview → publish (F16): [manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](../manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md)
+- Signup profiles + picture from New/Edit: [manual-testing/MANUAL_TEST_PROFILE_CREATE_ON_PUT.md](../manual-testing/MANUAL_TEST_PROFILE_CREATE_ON_PUT.md)
+- Getting started checklist (F19-044): [manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md](../manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md)
+- Application card status legend (F19-047): [manual-testing/MANUAL_TEST_APPLICATION_STATUS_LEGEND.md](../manual-testing/MANUAL_TEST_APPLICATION_STATUS_LEGEND.md)
+
+---
+
+## Test files
+
+| File | What it covers |
+|------|---------------|
+| `__tests__/unit/proxy-entry.test.ts` | **Next.js proxy entry (F26-060)** — root `proxy.ts` present with named `proxy` export; no deprecated root/`src` `middleware.ts`; helper import from `lib/supabase/middleware` |
+| `__tests__/unit/components/public/pricing-tiers.test.ts` | **Pricing tiers (E3-014)** — Free/Pro/Premium ids & names, Pro highlighted, working-draft monthly/annual USD (Pro $9/$39, Premium $14/$59; final lock with E1), annual savings nudge for monthly view, video pitch, firm caps, FAQ, Get started CTAs to `/login` |
+| `__tests__/unit/lib/utils/slug-generate.test.ts` | **Pure slug utilities** — `validateSlugFormat` (empty input, too long, invalid chars, valid slugs), `generateSlug` (normalisation, special-char stripping, space collapsing), `buildSlug` (position `start`/`end`, partial and missing names, name-preserving clamp), `isCustomSlug` (edit-load custom vs derived) |
+| `__tests__/unit/lib/utils/slug.test.ts` | **Server-side slug helpers** — `checkSlugUniqueness` (unique, taken, DB error), `validateSlugForApplication` (format short-circuits DB call, available, taken), `reserveBaseSlug` (name positions, collision throws `SlugCollisionError`), `SlugCollisionError` (shape and default message) |
+| `__tests__/unit/lib/utils/profile-picture-storage.test.ts` | **Profile picture Storage URLs** — path parse, canonical `avatar.*`, ownership (canonical + legacy under user folder), reject lookalike paths on foreign origins (C2-008) |
+| `__tests__/unit/lib/marketing-assets.test.ts` | **Marketing R2 URLs** — `marketingAssetUrl` uses `NEXT_PUBLIC_MARKETING_ASSETS_BASE_URL`, else root-relative `/filename` |
+| `__tests__/unit/lib/utils/cv-storage.test.ts` | **CV R2 ownership & delete** — `getCvObjectKeyFromPublicUrl` / `toCanonicalCvPublicUrl`, `isOwnedTailoredCvUrl`, `isOwnedPrimaryCvObjectKey`, allow-list `deleteApplicationCvIfTailored`, fail closed when `R2_PUBLIC_BASE_URL` unset, `deleteCvIfOurs`, `checkCvObjectExists` (`true` / object NotFound→`false` / NoSuchBucket+infra→`undefined`) |
+| `__tests__/unit/lib/utils/upload-idempotency.test.ts` | **Tailored upload idempotency** — SHA-256 digest match; size/type/digest mismatch; legacy objects without digest rejected |
+| `__tests__/unit/lib/utils/upload-form-messages.test.ts` | **Upload Save UX helpers (F8)** — friendly **400**/**401**/**409**/**429**/**5xx**/network copy; other non-5xx → **400**-style fallback; fixed **429** text; CV content-digest signatures; idempotency key reuse vs rotate |
+| `__tests__/unit/lib/utils/upload-profile-picture-client.test.ts` | **Shared profile-picture upload client (F8)** — network / **429** mapping; success URL + optional warning; JSON `null` body does not throw |
+| `__tests__/unit/lib/utils/pdf.test.ts` | **PDF magic bytes** — `%PDF` detection |
+| `__tests__/unit/lib/utils/image.test.ts` | **Image magic bytes** — JPEG / PNG / WebP detection + light header checks |
+| `__tests__/unit/api/profile-picture-upload.test.ts` | **Profile picture upload** — auth **401** vs unexpected **500**, MIME + magic-byte rejects, Storage/`handleApiError` logging with log-only `meta` (no leak to client); does **not** folder-purge on upload (F9-037) |
+| `__tests__/unit/api/cv-upload.test.ts` | **Tailored CV upload** — auth **401** before R2 probe (F7-035); R2 not configured after auth; PDF magic before HeadObject; digest match → idempotent **200** / digest mismatch → **409** (F7-036); HeadObject/PutObject **500** via `handleApiError` with log-only `meta`; happy-path stores `sha256` metadata (F5-056) |
+| `__tests__/unit/lib/utils/public-id.test.ts` | **Public id generation** |
+| `__tests__/unit/lib/utils/resolve-public-application.test.ts` | **Public path resolution** — invalid `publicId` / slug format short-circuits before DB; valid pair resolves via service-role client; missing rows → null; query errors throw |
+| `__tests__/unit/lib/utils/load-public-application-response.test.ts` | **Public share DTO loader** — null when unresolved, active DTO + `cv_exists`, unavailable stub for draft/archived, propagates errors (D1-007) |
+| `__tests__/unit/lib/utils/load-owner-draft-preview.test.ts` | **Owner draft preview builder (F16-050)** — `buildOwnerDraftPreview`: owner+draft → public DTO; no-`cv_url` skips HeadObject / omits `cv_exists`; non-owner / active / archived → null |
+| `__tests__/unit/lib/utils/load-view-page-application.test.ts` | **View page loader (F16-050)** — single resolve for live / owner-draft / unavailable; session only checked for non-live rows |
+| `__tests__/unit/lib/utils/url.test.ts` | **Site URL helpers** — localhost fallback in dev (unset, invalid, non-http(s)), trim trailing slash via origin, production fail-fast without `NEXT_PUBLIC_SITE_URL`, reject loopback hosts (127.0.0.0/8, aliases, IPv4-mapped IPv6) and non-http(s) schemes, share link builder (D1-061) |
+| `__tests__/unit/lib/utils/primary-cv-form-sync.test.ts` | **Form vs library modal load races (F18 / F15-049)** — ignore stale ApplicationForm GET after modal update; auto-select first primary on create only; skip default/auto-select when the user already chose a CV source |
+| `__tests__/unit/lib/utils/create-application-draft.test.ts` | **Create-application local draft (F15-045)** — storage key scope, parse/version/expiry, blank detection, save/load/clear and corrupt JSON cleanup |
+| `__tests__/unit/lib/utils/leave-confirm.test.ts` | **Leave-confirm helpers (F15-045)** — same-origin link intercept; leave-relevant snapshot ignores auto slug / automatic CV defaults |
+| `__tests__/unit/lib/auth/safe-next-path.test.ts` | **Auth callback redirect sanitizer** — allows same-origin relative paths; rejects `//…`, backslash tricks (`/\evil.com`), and ASCII control characters (CR/LF/tab) |
+| `__tests__/unit/lib/types/primary-cv.test.ts` | **Primary CV types** — `PRIMARY_CV_MAX_PER_USER` / `PRIMARY_CV_DELETE_PREVIEW_LIMIT`, library-cap helpers (F13-032), delete confirm copy, post-delete still-referenced warning (F18-053), warning kept when list refresh fails |
+| `__tests__/unit/lib/types/application-status-summary.test.ts` | **Profile applications summary (F18-054)** — `formatApplicationStatusBreakdown` includes drafts; omits zero counts |
+| `__tests__/unit/lib/types/to-public-application.test.ts` | **Public share DTO mappers (F10-030 / F16-050)** — `toPublicApplication` requires active status; `toOwnerPreviewApplication` for draft/active owner preview; `toPublicApplicationResponse` unavailable stub for draft/archived |
+| `__tests__/unit/lib/ensure-profile.test.ts` | **Auth metadata names** — `namesFromUserMetadata` trim / missing |
+| `__tests__/unit/lib/ensure-public-id.test.ts` | **Public id ensure/resolve** — no Auth fallback when profile row is invalid; repair/create; `23505` retry; reject foreign preferred ids |
+| `__tests__/unit/lib/create-initial-profile.test.ts` | **Profile create at signup** — idempotent skip; `23505` re-select by `user_id` vs `public_id` retry; invalid `public_id` regenerate + Auth sync; shared conditional concurrent repair |
+| `__tests__/unit/lib/bootstrap-initial-profile.test.ts` | **Profile bootstrap + public_id validation** — metadata → create; reject invalid `public_id`; missing names |
+| `__tests__/unit/api/login.test.ts` | **Login** — credentials, rate limit, profiles bootstrap after session (C1-009) |
+| `__tests__/unit/api/signup.test.ts` | **Signup** — F1-040/F1-041 validation, generic Auth errors, duplicate **200** |
+| `__tests__/unit/api/waitlist.test.ts` | **Waitlist** — valid insert, email/name **400**, honeypot silent **200**, duplicate **409**, body size **413**, rate limit **429** (F3-039 / F3-064) |
+| `__tests__/unit/lib/validation/waitlist.test.ts` | **Waitlist Zod schema** — email/name caps, enums, honeypot trigger helper |
+| `__tests__/unit/lib/validation/primary-cv.test.ts` | **Primary CV Zod schemas (F6-024)** — optional label trim/null/max length; delete `id` required UUID |
+| `__tests__/unit/api/primary-cvs.test.ts` | **Primary CV library writes (F6-024 / F13-032)** — POST label **400** before DB/R2; trimmed label on insert; early at-cap **400**; DB cap trigger → friendly **400** + R2 rollback; DELETE missing/invalid UUID **400**; happy-path delete |
+| `__tests__/unit/lib/rate-limit.test.ts` | **Rate limiter** — `getClientIdentifier`, in-memory `rateLimit` (windows, isolation, sweep), async `checkRateLimit` / `checkPerSlugRateLimit` (incl. D2 keyPrefix + D3 invalid-path key skip), Upstash path (mocked) + Redis error fallback, `rateLimit429`, CV upload slots (max 2), profile-picture PUT slots (max 1) |
+| `__tests__/unit/lib/api/handle-api-error.test.ts` | **API error helper** — `handleApiError` logs with context, default 500 message, custom message/status, optional log-only `meta` never returned to client |
+| `__tests__/unit/lib/api/same-origin.test.ts` | **Analytics same-origin gate** — matching `Origin` / `Referer` / `Sec-Fetch-Site`, site URL allowlist, rejects foreign or missing signals |
+| `__tests__/unit/lib/api/analytics-dedupe.test.ts` | **View/download dedupe cookies** — cookie names, present/absent checks, httpOnly + maxAge + secure-in-production |
+| `__tests__/unit/lib/profile-validation.test.ts` | **Profile PUT body schema** — empty object ok, http(s) URLs, blank URL → null, unrecognized keys, max lengths for names/location/URLs, reject non-http(s) |
+| `__tests__/unit/api/profile.test.ts` | **Flow #3 — Profile read and update** — GET cases; PUT validation, owned picture URL (incl. foreign-origin lookalike → **400**), Auth name sync / same-name repair when metadata is stale (F12-031), delete previous + folder purge only when URL changed and re-read still current (F9), skip purge on non-picture save / stale concurrent loser / failed re-read, **429** when picture slot busy, cleanup throw → **200** + warning (not **500**), clear picture, rate limit, 401 |
+| `__tests__/unit/api/slug.test.ts` | **Flow #4 — Live slug feedback** — `POST /api/slug`: derived slug available → 200, name-in-URL variants, missing company/role → 400, `SlugCollisionError` → 409, unexpected error → 500, rate limit → 429, owned `excludeId` forwarded (edit / Reset to suggested — F27-101), unowned `excludeId` → 404. `POST /api/slug/validate`: valid + available → `{ok:true}`, invalid format → `{ok:false}`, taken → `{ok:false}`, `excludeId` forwarded to helper, non-string `excludeId` ignored, 401, 429 |
+| `__tests__/unit/api/applications-create.test.ts` | **Flow #4 — Create application** — `POST /api/applications`: 201, profile fallback for candidate fields, `show_profile_picture` preference (no stored picture URL), primary/tailored `cv_type` validation, DB insert failure → 400, 429, 401 |
+| `__tests__/unit/api/applications-list.test.ts` | **Dashboard list** — `GET /api/applications`: default limit 20 + `meta.total`, custom `limit`/`offset`, max limit cap, `q` search filter (strips quotes/reserved chars including `*` as an `ilike` `%` alias, keeps apostrophes, skips empty-after-strip), `cv_exists` true for unknown/non-R2 and false when missing, 401, 429, 500 |
+| `__tests__/unit/api/applications-edit.test.ts` | **Flow #5 — Edit application** — `PUT /api/applications`: 200 on success, 404 when application not found, 404 when owned by another user, old tailored CV deleted from R2 when `cv_url` changes, no deletion when `cv_url` unchanged, DB update failure → 400, 429, 401, 500 after auth. `GET /api/applications/by-id/[id]`: 200 + `cv_exists: true/false`, omits `cv_exists` for non-R2 URLs, 404 when not found or DB errors, 401, 500 after auth |
+| `__tests__/unit/api/applications-public-view.test.ts` | **Flow #6 — Public view and view count** — `GET /api/applications/[slug]`: 200 via shared loader, unavailable stub, 404, 429, 500. `POST /api/applications/[slug]/view`: RPC + dedupe cookie for external viewer → 200, RPC skipped for owner (self-view guard) but cookie set, cookie short-circuit skips resolve/RPC, 403 when not same-origin, 404 when slug not found, 500 when RPC fails, 429 per-IP and per-slug |
+
+---
+
+## Design decisions
+
+**No real network or database calls.** In API route tests, external dependencies (Supabase client, `withAuth`, rate limit) are mocked with `vi.mock()`. Mock functions are declared via `vi.hoisted()` so they are available before `vi.mock` factories execute (Vitest hoists `vi.mock` calls to the top of the file at compile time). The rate limiter itself is covered separately by `__tests__/unit/lib/rate-limit.test.ts`, which exercises the real in-memory implementation and a mocked Upstash path (not live Redis).
+
+**Shared Supabase mock helper (`__tests__/helpers/supabase-mock.ts`).** Provides `makeChain`, `ok`, and `dbError` factories that build a fluent Supabase query-chain mock, and `makeSupabaseClient` which accepts an ordered list of chains so each sequential `from()` call in a route handler returns the next configured response.
+
+**Full suite runs in under 600 ms.** With mocks in place no I/O occurs; all tests complete in one fast Node.js process.

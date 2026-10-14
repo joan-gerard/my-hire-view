@@ -1,5 +1,5 @@
 -- Rename master CV library → primary CVs; cv_kind → cv_type (primary | tailored).
--- See docs/PDF_AND_R2.md
+-- See docs/architecture/PDF_AND_R2.md
 
 -- 1) Table + index
 ALTER TABLE master_cvs RENAME TO primary_cvs;

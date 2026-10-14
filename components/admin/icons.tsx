@@ -392,7 +392,7 @@ export function VideoIcon({ className }: IconProps) {
   );
 }
 
-/** Bar chart (3 vertical bars). Used for Smart Analytics in SolutionSection. */
+/** Bar chart (3 vertical bars). */
 export function BarChartIcon({ className }: IconProps) {
   return (
     <svg

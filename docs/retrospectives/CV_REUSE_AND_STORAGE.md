@@ -1,6 +1,6 @@
 # CV reuse and storage design
 
-**Actionable work** lives in [Backlog.md](../Backlog.md). This retrospective is design/context only — not a second checklist.
+**Actionable work** lives in [Backlog.md](../product/Backlog.md). This retrospective is design/context only — not a second checklist.
 
 This document records why MyHireView moved from **one uploaded PDF per application** to a **primary CV library + optional tailored CV**, what problem that solves, alternatives we considered, and what we ship now versus later (archive retention).
 
@@ -164,9 +164,9 @@ One **CV** fieldset (`CvSourceField`): on edit, a **Current** summary (filename,
 
 ## Related docs
 
-- [PDF_AND_R2.md](../PDF_AND_R2.md) — upload/delete mechanics
-- [PROFILE_PICTURE.md](../PROFILE_PICTURE.md) — analogous profile-owned asset pattern
-- [API_REFERENCE.md](../API_REFERENCE.md) — endpoints
-- [Backlog.md](../Backlog.md) — after-launch retention tickets
-- [DATA_FLOW.md](../DATA_FLOW.md) — create/edit flows
+- [PDF_AND_R2.md](../architecture/PDF_AND_R2.md) — upload/delete mechanics
+- [PROFILE_PICTURE.md](../architecture/PROFILE_PICTURE.md) — analogous profile-owned asset pattern
+- [API_REFERENCE.md](../architecture/API_REFERENCE.md) — endpoints
+- [Backlog.md](../product/Backlog.md) — after-launch retention tickets
+- [DATA_FLOW.md](../architecture/DATA_FLOW.md) — create/edit flows
 - [manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md](../manual-testing/MANUAL_TEST_PRIMARY_CV_AND_STATUS.md) — manual QA checklist

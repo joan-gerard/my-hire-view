@@ -208,7 +208,7 @@ Do **not** expect yet:
 - Retention emails
 - Feature flag for purge
 
-Those are tracked in [Backlog.md](../Backlog.md) (After launch).
+Those are tracked in [Backlog.md](../product/Backlog.md) (After launch).
 
 ---
 

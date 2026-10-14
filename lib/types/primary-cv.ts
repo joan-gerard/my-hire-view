@@ -1,7 +1,7 @@
 /**
  * Profile-owned primary CV (library entry). Free/Pro max 5 per user
  * (`PRIMARY_CV_MAX_PER_USER`); DB enforces via `primary_cv_library_max_for_user`
- * + trigger `primary_cvs_library_cap` (F13-032). See docs/PDF_AND_R2.md.
+ * + trigger `primary_cvs_library_cap` (F13-032). See docs/architecture/PDF_AND_R2.md.
  */
 import type { ApplicationStatus } from "@/lib/types/application";
 

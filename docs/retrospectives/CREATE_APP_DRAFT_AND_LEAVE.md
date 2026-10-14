@@ -1,10 +1,10 @@
 # Create-application local draft and intentional leave
 
-**Shipped design context** for create-form local draft + leave confirm (`F15-045`, `F15-049`). This retrospective is not a second checklist — see [Backlog.md](../Backlog.md) PR groups F15/F16 (shipped).
+**Shipped design context** for create-form local draft + leave confirm (`F15-045`, `F15-049`). This retrospective is not a second checklist — see [Backlog.md](../product/Backlog.md) PR groups F15/F16 (shipped).
 
 How we landed on **keep a browser draft for accidents**, but **discard it when the user deliberately leaves** `/admin/new` (Back or in-app navigation), after confirming.
 
-Manual checks: [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md). User-facing copy: [USER_GUIDE.md](../USER_GUIDE.md).
+Manual checks: [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md). User-facing copy: [USER_GUIDE.md](../engineering/USER_GUIDE.md).
 
 ---
 
@@ -95,7 +95,7 @@ Those are implementation hardening around the UX decision above, not a change to
 
 | Doc | Role |
 |-----|------|
-| [USER_GUIDE.md](../USER_GUIDE.md) | What candidates see |
+| [USER_GUIDE.md](../engineering/USER_GUIDE.md) | What candidates see |
 | [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) | Manual verification |
 | [CV_REUSE_AND_STORAGE.md](CV_REUSE_AND_STORAGE.md) | Server `status = draft` / archive (different from this browser draft); **F16-050** draft → preview → publish (shipped) |
-| [Backlog.md](../Backlog.md) | `F15-045`, `F15-049`, `F16-050` (shipped) |
+| [Backlog.md](../product/Backlog.md) | `F15-045`, `F15-049`, `F16-050` (shipped) |

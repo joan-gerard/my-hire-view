@@ -1,13 +1,11 @@
 /**
- * How It Works section: modular pieces.
- * Use HowItWorksSection for the full section; other exports for tests or composition.
+ * How-it-works copy used by the homepage.
+ * Step videos are R2 keys via `marketingAssetUrl` in `constants.ts`.
  */
 
-export { HowItWorksSection } from "./HowItWorksSection";
-export { StepLabel } from "./StepLabel";
-export { StepCard } from "./StepCard";
-export { useHowItWorksObservers } from "./useHowItWorksObservers";
 export {
+  AUTOPLAY_DELAY_MS,
+  AUTOPLAY_VIEW_THRESHOLD,
   HOW_IT_WORKS_STEPS,
   type HowItWorksStep,
 } from "./constants";

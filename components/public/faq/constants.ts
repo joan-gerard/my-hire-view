@@ -14,10 +14,6 @@ export const FAQ_IMAGE = "/customer-service-250x250.webp";
 
 export const FAQ_ITEMS: readonly FAQItemData[] = [
   {
-    q: "When will MyHireView launch?",
-    a: "We're launching in Q2 2026. Early signups will be notified first and receive exclusive launch benefits.",
-  },
-  {
     q: "Will MyHireView be free?",
     a: "Yes! We'll have a free tier that lets you create applications with core features. Premium plans with advanced analytics and unlimited applications will also be available.",
   },

@@ -1,5 +1,5 @@
 -- Master CV library (max 5 per user, enforced in API) + per-application CV kind.
--- See docs/CV_REUSE_AND_STORAGE.md
+-- See docs/retrospectives/CV_REUSE_AND_STORAGE.md
 
 CREATE TABLE IF NOT EXISTS master_cvs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

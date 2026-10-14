@@ -1,5 +1,5 @@
 -- Replace is_active boolean with status enum + archived_at for retention clock.
--- See docs/CV_REUSE_AND_STORAGE.md
+-- See docs/retrospectives/CV_REUSE_AND_STORAGE.md
 
 ALTER TABLE applications
   ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active'

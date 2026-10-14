@@ -1,0 +1,68 @@
+Here's a product I want to build
+====================================
+
+What it is
+----------
+
+The app is a tool for job seekers that turns each job application into a
+dedicated, shareable landing page — CV (PDF), video pitch, and contact
+info — that recruiters open with no login.
+
+The idea behind the product: Job applications deserve more than a PDF. One link that
+shows the candidate's voice.
+
+It is not a personal website, an ATS, or a Linktree. It is one page per
+company/role.
+
+Who it's for
+------------
+
+Candidate:
+- What they do: Builds pages, shares links, tracks engagement
+- Pay?: Yes (Free / Pro / Premium planned)
+
+Recruiter:
+- What they do: Opens the link and views CV + video
+- Pay? : No — distribution surface
+
+Core loop
+---------
+
+1. Candidate signs up and sets up a profile (name, location, LinkedIn, portfolio, photo).
+2. Uploads primary CVs to a reusable library (and optionally a tailored CV per
+   application on paid tiers).
+3. Creates an application for a company + role: CV, required YouTube pitch, which
+   profile fields to show.
+4. Saves as draft → previews → publishes.
+5. Copies a link like /view/{publicId}/{slug} and sends it.
+6. Recruiter opens it and sees CV + watches video + views contact.
+7. Candidate checks views / CV downloads / last viewed on the dashboard.
+
+
+Building blocks
+---------------
+
+- Application — one company/role page (status: active / draft / archived); DELETE removes the row (not a status)
+- Profile — defaults reused when creating applications
+- Primary CV library — reusable résumé PDFs
+- Tailored CV — one-off PDF for a single application (paid)
+- Public link — opaque account publicId + role slug; Premium can unlock vanity ids
+- Video pitch — Candidates record a 60-90 second video pitch
+- Basic analytics — views and downloads (owner self-views excluded)
+
+
+Two surfaces
+------------
+
+- Marketing (/) — explain the product and pricing; Login / Get started CTAs go to /login
+- Product (/admin + public /view/…) — create/manage applications; recruiters view
+  shared pages
+
+
+Problem it solves
+-----------------
+
+Today vs With the product:
+- Same PDF to every portal > One page per role, optional tailored CV
+- No idea if anyone looked > View / download insight
+- Personality stuck in cover letters > Video pitch recruiters can watch without logging in
