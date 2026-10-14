@@ -30,10 +30,10 @@
   box-sizing: border-box;
 }
 
+/* No height:auto — that would beat single-class crop rules (.sg-hero-img, etc.). */
 .sg-landing img {
   display: block;
   max-width: 100%;
-  height: auto;
 }
 
 .sg-landing h1,
@@ -157,6 +157,37 @@
   color: var(--ink);
 }
 
+.sg-menu-btn {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--paper);
+  padding: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.sg-menu-btn span {
+  display: block;
+  width: 16px;
+  height: 1.5px;
+  background: var(--ink);
+}
+
+.sg-menu-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.sg-drawer {
+  display: none;
+}
+
 /* —— Arrow CTA —— */
 .sg-arrow-btn {
   position: relative;
@@ -195,7 +226,7 @@
 }
 
 .sg-arrow-btn:focus-visible {
-  outline: 2px solid var(--lime);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -1034,8 +1065,12 @@
 }
 
 .sg-filters button:focus-visible {
-  outline: 2px solid var(--lime);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
+}
+
+.sg-filters button.is-active:focus-visible {
+  outline-color: var(--lime);
 }
 
 .sg-log-layout {
@@ -1213,6 +1248,44 @@
     display: none;
   }
 
+  .sg-header .sg-arrow-btn,
+  .sg-guide-link {
+    display: none;
+  }
+
+  .sg-menu-btn {
+    display: flex;
+  }
+
+  .sg-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 8px;
+    padding-bottom: 24px;
+  }
+
+  .sg-drawer > a {
+    padding: 12px 0;
+    font-size: 22px;
+    font-family: var(--font-switzer), sans-serif;
+    color: var(--ink);
+  }
+
+  .sg-drawer > a[aria-current="page"] {
+    color: var(--pink-text);
+  }
+
+  .sg-drawer > a.sg-arrow-btn {
+    display: inline-flex;
+    align-self: flex-start;
+    width: max-content;
+    margin-top: 12px;
+    padding: 0 46px 0 20px;
+    font-family: var(--font-stack-sans-headline), sans-serif;
+    font-size: 16px;
+  }
+
   .sg-team-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1245,10 +1318,6 @@
 
   .sg-log-aside {
     position: static;
-  }
-
-  .sg-header .sg-arrow-btn {
-    display: none;
   }
 }
 

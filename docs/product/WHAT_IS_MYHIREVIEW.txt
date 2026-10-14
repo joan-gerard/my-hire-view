@@ -42,7 +42,7 @@ Core loop
 Building blocks
 ---------------
 
-- Application — one company/role page (active / draft / archived / deleted)
+- Application — one company/role page (status: active / draft / archived); DELETE removes the row (not a status)
 - Profile — defaults reused when creating applications
 - Primary CV library — reusable résumé PDFs
 - Tailored CV — one-off PDF for a single application (paid)

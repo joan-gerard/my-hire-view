@@ -295,7 +295,7 @@ Avoid “growth hackers” who only sell paid ads or TikTok without looking at y
 | **Done looks like** | A content calendar and briefs you or a writer can execute |
 | **Engagement** | Strategy sprint first; writers on a per-article rate after |
 
-The landing FAQ currently claims video pitches get “3x more engagement.” Do not put that in SEO or ads until you can measure it.
+The landing FAQ (and Story stat) currently claims video pitches get “3x more engagement.” Do not put that in SEO or ads until you can measure it — tracked as backlog `F33-117`.
 
 ### 7.4 Email / lifecycle
 

@@ -14,6 +14,14 @@ export type SmoothScrollOptions = {
   offset?: number;
 };
 
+export type ScrollToHashOptions = SmoothScrollOptions & {
+  /**
+   * When true (default), sync the URL with `history.pushState`.
+   * Set false for `popstate` handling so Back/Forward do not push again.
+   */
+  updateHistory?: boolean;
+};
+
 /** Sticky marketing header height so section headings stay below it. */
 function stickyHeaderOffset(): number {
   const shell = document.querySelector<HTMLElement>(".ot-header-shell");
@@ -57,11 +65,11 @@ export function smoothScrollToElement(
 /**
  * Scroll to an in-page hash target (`#how`, `#pricing`, …).
  * Uses smooth animation unless the user prefers reduced motion.
- * Updates the URL hash without a jump.
+ * Updates the URL hash without a jump (unless `updateHistory` is false).
  */
 export function scrollToHash(
   hash: string,
-  options: SmoothScrollOptions = {},
+  options: ScrollToHashOptions = {},
 ): boolean {
   const id = hash.startsWith("#") ? hash.slice(1) : hash;
   if (!id) return false;
@@ -73,6 +81,7 @@ export function scrollToHash(
     "(prefers-reduced-motion: reduce)",
   ).matches;
   const offset = resolveOffset(options);
+  const updateHistory = options.updateHistory ?? true;
 
   if (reduceMotion) {
     const top =
@@ -84,9 +93,40 @@ export function scrollToHash(
     smoothScrollToElement(element, { ...options, offset });
   }
 
-  if (typeof history !== "undefined" && history.pushState) {
+  if (
+    updateHistory &&
+    typeof history !== "undefined" &&
+    history.pushState &&
+    window.location.hash !== `#${id}`
+  ) {
     history.pushState(null, "", `#${id}`);
   }
 
   return true;
+}
+
+function scrollDocumentTop(): void {
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+}
+
+/**
+ * `scrollToHash` uses `pushState`, and the app sets `history.scrollRestoration =
+ * "manual"`, so Back/Forward change the URL without scrolling. Bind this once
+ * on marketing surfaces that use hash section nav.
+ */
+export function bindHashScrollPopstate(): () => void {
+  function onPopState(): void {
+    const { hash } = window.location;
+    if (hash.length > 1) {
+      scrollToHash(hash, { updateHistory: false });
+      return;
+    }
+    scrollDocumentTop();
+  }
+
+  window.addEventListener("popstate", onPopState);
+  return () => window.removeEventListener("popstate", onPopState);
 }

@@ -10,18 +10,23 @@ export function Hero() {
           Stand out & Get seen
           <i />
         </p>
-        <h1 id="hero-title" className="ot-hero-title">
-          <span>We</span>
-          <span>built</span>
-          <span className="ot-word-lime">MyHireView</span>
-          <span>because</span>
-          <span>good</span>
-          <span className="ot-word-pink">applications</span>
-          <span>kept</span>
-          <span>vanishing</span>
-          <span>in</span>
-          <span>the</span>
-          <span>void.</span>
+        <h1
+          id="hero-title"
+          aria-label="We built MyHireView because good applications kept vanishing in the void."
+        >
+          <span className="ot-hero-title" aria-hidden="true">
+            <span>We</span>
+            <span>built</span>
+            <span className="ot-word-lime">MyHireView</span>
+            <span>because</span>
+            <span>good</span>
+            <span className="ot-word-pink">applications</span>
+            <span>kept</span>
+            <span>vanishing</span>
+            <span>in</span>
+            <span>the</span>
+            <span>void.</span>
+          </span>
         </h1>
       </div>
       <div className="ot-marquee" aria-hidden="true">

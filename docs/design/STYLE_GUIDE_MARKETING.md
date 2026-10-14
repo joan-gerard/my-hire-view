@@ -31,7 +31,7 @@ Define these on a page root scope (e.g. `.mhv-landing` or `.sg-landing`):
 | `--ink` | `#0b0b0c` | Primary text, dark CTAs, featured cards |
 | `--muted` | `#6a6e6e` | Body / secondary copy |
 | `--mist` | `#b7bcbc` | Tertiary text on dark surfaces |
-| `--lime` | `#9efc65` | Primary accent — highlighted words, lime CTAs, badges, focus rings |
+| `--lime` | `#9efc65` | Primary accent — highlighted words, lime CTAs, badges, focus rings **on dark surfaces only** |
 | `--pink` | `#ffbcfc` | Fill accent (stat tiles, billing “save” when selected) — **not** for body text |
 | `--pink-text` | `#c026a8` | Pink **text** on white/paper (WCAG AA). Never use bright `--pink` as text on light backgrounds |
 | `--paper` | `#f0f0f0` | Soft surface, inactive nav pill, card default |
@@ -44,7 +44,7 @@ Define these on a page root scope (e.g. `.mhv-landing` or `.sg-landing`):
 - **Page default:** white background, `--ink` text.
 - **Accent sparingly:** lime and pink highlight *one* idea (a word in a headline, a badge, a primary CTA) — not whole sections washed in color.
 - **Dark sections** (footer, featured pricing, deep stats): `--ink` or `--deep` fill; body text `--mist` or white; lime for the loudest control.
-- **Focus:** `outline: 2px solid var(--lime); outline-offset: 2px` on interactive controls.
+- **Focus:** On light surfaces (white / `--paper`), use `outline: 2px solid var(--ink); outline-offset: 2px` (or `3px`). On dark surfaces (`--ink`, `--deep`, footer, featured cards), reserve `outline-color: var(--lime)`. Never use a lime focus ring on white or paper — contrast is only ~1.1–1.3:1.
 
 ---
 
@@ -136,7 +136,7 @@ Avoid: fade-up on every section, glow, multi-layer shadows, emoji as decoration.
 
 - Body text contrast: ink / muted on white or paper; mist only on dark fills.
 - Pink as text → always `--pink-text` on light surfaces.
-- Keyboard: visible lime focus rings; menus open on `:focus-within`.
+- Keyboard: visible focus rings — ink on light surfaces, lime on dark; menus open on `:focus-within`.
 - Decorative images: empty `alt` + `aria-hidden` on marquees when appropriate.
 - Honor `prefers-reduced-motion`.
 

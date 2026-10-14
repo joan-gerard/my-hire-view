@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 
 export function RollLabel({ text }: { text: string }) {
   return (
@@ -78,7 +84,7 @@ export function Eyebrow({ children }: { children: ReactNode }) {
   );
 }
 
-function useHideHeaderOnScroll() {
+function useHideHeaderOnScroll(menuOpenRef: RefObject<boolean>) {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -89,8 +95,9 @@ function useHideHeaderOnScroll() {
     let lastY = window.scrollY;
 
     const onScroll = () => {
-      if (media.matches) {
+      if (menuOpenRef.current || media.matches) {
         el.classList.remove("is-hidden");
+        lastY = window.scrollY;
         return;
       }
       const y = window.scrollY;
@@ -104,7 +111,7 @@ function useHideHeaderOnScroll() {
 
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [menuOpenRef]);
 
   return ref;
 }
@@ -118,12 +125,26 @@ const NAV = [
 ] as const;
 
 export function SprigHeader({ current }: { current?: "home" | "care-log" }) {
-  const headerRef = useHideHeaderOnScroll();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuOpenRef = useRef(menuOpen);
+  menuOpenRef.current = menuOpen;
+  const headerRef = useHideHeaderOnScroll(menuOpenRef);
+  const joinHref = current === "care-log" ? "/demo#join" : "#join";
+
+  useEffect(() => {
+    if (menuOpen) {
+      headerRef.current?.classList.remove("is-hidden");
+    }
+  }, [menuOpen, headerRef]);
+
+  function closeMenu() {
+    setMenuOpen(false);
+  }
 
   return (
     <header className="sg-header-shell" ref={headerRef}>
       <div className="sg-wrap sg-header">
-        <Link className="sg-logo" href="/demo">
+        <Link className="sg-logo" href="/demo" onClick={closeMenu}>
           Sprig
           <span className="sg-logo-dot" aria-hidden="true" />
         </Link>
@@ -146,13 +167,41 @@ export function SprigHeader({ current }: { current?: "home" | "care-log" }) {
           <Link className="sg-guide-link" href="/">
             MyHireView
           </Link>
-          <ArrowButton
-            href={current === "care-log" ? "/demo#join" : "#join"}
-            label="Join"
-            tone="dark"
-          />
+          <ArrowButton href={joinHref} label="Join" tone="dark" />
+          <button
+            type="button"
+            className="sg-menu-btn"
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span />
+            <span />
+          </button>
         </div>
       </div>
+      {menuOpen ? (
+        <div className="sg-drawer sg-wrap">
+          {NAV.map((item) => {
+            const isCurrent =
+              item.href === "/demo/care-log" && current === "care-log";
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isCurrent ? "page" : undefined}
+                onClick={closeMenu}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+          <Link href="/" onClick={closeMenu}>
+            MyHireView
+          </Link>
+          <ArrowButton href={joinHref} label="Join" tone="dark" />
+        </div>
+      ) : null}
     </header>
   );
 }

@@ -5,7 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV } from "@/lib/marketing/constants";
 import { dailyLogoDotColor } from "@/lib/marketing/utils";
-import { scrollToHash } from "@/lib/smooth-scroll";
+import {
+  bindHashScrollPopstate,
+  scrollToHash,
+} from "@/lib/smooth-scroll";
 import { ArrowButton } from "./ArrowButton";
 
 const SCROLL_DELTA = 6;
@@ -80,6 +83,8 @@ export function Header() {
   useEffect(() => {
     if (menuOpen) setHidden(false);
   }, [menuOpen]);
+
+  useEffect(() => bindHashScrollPopstate(), []);
 
   function scrollHomeTop() {
     const reduceMotion = window.matchMedia(

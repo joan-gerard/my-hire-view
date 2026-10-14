@@ -89,7 +89,7 @@ Do this signed out (incognito is fine).
 - [ ] **Get started** goes to `/login`
 - [ ] How-it-works steps show titles and videos (or a graceful empty media state)
 - [ ] **Pricing** (`#pricing`): **Free / Pro / Premium** cards; **Pro** is highlighted
-- [ ] Monthly / annual toggle: default **annual**; switching updates prices; annual savings nudge appears on monthly
+- [ ] Monthly / quarterly toggle (after `E4-116`; no annual): default **quarterly**; switching updates prices; quarterly savings nudge appears on monthly
 - [ ] Each tier **Get started** goes to `/login` (checkout is **not** live — `E2-013`)
 - [ ] FAQ items expand and collapse
 - [ ] Footer: **Terms of Service** → `/terms`; **Privacy Policy** → `/privacy`; **Cookies** → `/cookies`
@@ -643,7 +643,7 @@ These are easy to skip on the happy path. Do them once you have applications in 
 
 ### Marketing / pricing leftovers
 
-- [ ] Pricing monthly ↔ annual toggle several times does not glitch prices or highlight the wrong tier
+- [ ] Pricing monthly ↔ quarterly toggle several times does not glitch prices or highlight the wrong tier
 - [ ] Homepage **Get started** and tier **Get started** go to `/login`
 
 ### Keyboard / focus

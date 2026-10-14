@@ -576,7 +576,7 @@
 }
 
 .ot-billing-option:focus-visible {
-  outline: 2px solid var(--lime);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -718,8 +718,12 @@
 }
 
 .ot-price-nudge:focus-visible {
-  outline: 2px solid var(--lime);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
+}
+
+.ot-price-card.is-featured .ot-price-nudge:focus-visible {
+  outline-color: var(--lime);
 }
 
 .ot-price-features {
@@ -905,7 +909,7 @@
 }
 
 .mhv-landing .ot-faq-question:focus-visible {
-  outline: 2px solid var(--lime);
+  outline: 2px solid var(--ink);
   outline-offset: -2px;
 }
 

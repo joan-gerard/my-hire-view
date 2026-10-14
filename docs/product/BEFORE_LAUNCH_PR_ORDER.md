@@ -10,13 +10,13 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 
 | Effort | Count | PRs               |
 | :----: | ----: | ----------------- |
-| **1**  |     4 | A3, F22, F24, F32 |
-| **2**  |     4 | E1, E4, F20, F23  |
+| **1**  |     5 | A3, F22, F24, F32, F33 |
+| **2**  |     3 | E1, E4, F23       |
 | **3**  |     3 | F28, F30, L6      |
 | **4**  |     4 | F17, F21, F29, I2 |
 | **5**  |     1 | E2                |
 
-**16 open** (F9, F10, F11, F12, F13, F15, F16, F18, F19, F25, F26 shipped). **Weighted average ≈ 2.63** — many 1–3 polish items; complexity concentrates in **E2**, then **F17 / F21 / F29 / I2**.
+**16 open** (F9, F10, F11, F12, F13, F15, F16, F18, F19, F20, F25, F26 shipped). **Weighted average ≈ 2.56** — many 1–3 polish items; complexity concentrates in **E2**, then **F17 / F21 / F29 / I2**. Counsel-reviewed legal copy remains as ticket `F20-020` (not a separate open PR group).
 
 ---
 
@@ -28,7 +28,7 @@ Order by **dependencies first, then risk/correctness, then UX polish, then near-
 
 **F26 shipped** _(also F10, F11, F12, F18, F25)_
 
-Optional anytime docs/assets: **F22**, **F24** (don’t block engineering). **F32** (end-to-end manual QA) is a near-launch pass, not an anytime docs chore — see Phase 4 / sequence.
+Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block engineering). **F32** (end-to-end manual QA) is a near-launch pass, not an anytime docs chore — see Phase 4 / sequence.
 
 ### Phase 1 — Upload / profile integrity
 
@@ -48,9 +48,9 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering). **F3
 
 ### Phase 3 — Trust / compliance Shoulds
 
-**F20 → F23 → F21**
+**F23 → F21** _(F20 PR group shipped)_
 
-- **F20** legal pages: UI shipped (`F20-019`); counsel-reviewed copy is `F20-020`
+- **F20** legal draft UI shipped (`F20-019`); remaining counsel copy is ticket **`F20-020`** (anytime docs; not an open PR in the rollup)
 - **F23** support entry: cheap once legal/marketing surfaces exist
 - **F21** delete account after upload/profile integrity (**F9/F13**) so deletion isn’t fighting known storage bugs
 
@@ -81,8 +81,8 @@ Optional anytime docs/assets: **F22**, **F24** (don’t block engineering). **F3
 
 ```
 F17
-  → F20 → F23 → F21
-  → F22 / F24 / E4 (whenever; E4 before E1)
+  → F23 → F21
+  → F22 / F24 / F33 / E4 (whenever; E4 before E1)
   → L6 → I2 → F28 → F32 → F29 → F30
   → E1 → E2 → A3
 ```

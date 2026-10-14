@@ -7,7 +7,7 @@ alwaysApply: true
 
 After finishing a task that changed files (create, edit, or delete):
 
-1. Run `git status`, `git diff` (unstaged), and `git diff --cached` (staged) to see what changed.
+1. Run `git status`, `git diff` (unstaged), and `git diff --cached` (staged) to see what changed. `git diff` does not include untracked files — if `git status` lists any, inspect their contents (read the files) before composing the message so new work is not omitted.
 2. Suggest a single one-line commit message that reflects the purpose of those changes (why, not a file list).
 3. Do not create a commit unless the user explicitly asks.
 4. Do not use double quotation marks (`"`) anywhere in the suggested message. Prefer plain text or single quotes if quoting is needed.
