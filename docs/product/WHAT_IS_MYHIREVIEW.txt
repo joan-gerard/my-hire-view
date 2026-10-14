@@ -54,7 +54,7 @@ Building blocks
 Two surfaces
 ------------
 
-- Marketing (/) — explain the product, pricing, waitlist / signup
+- Marketing (/) — explain the product and pricing; Login / Get started CTAs go to /login
 - Product (/admin + public /view/…) — create/manage applications; recruiters view
   shared pages
 
