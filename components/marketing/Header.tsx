@@ -39,7 +39,10 @@ export function Header() {
   const [dotColor, setDotColor] = useState<string | undefined>(undefined);
   const lastScrollY = useRef(0);
   const menuOpenRef = useRef(menuOpen);
-  menuOpenRef.current = menuOpen;
+
+  useEffect(() => {
+    menuOpenRef.current = menuOpen;
+  }, [menuOpen]);
 
   useEffect(() => {
     setDotColor(dailyLogoDotColor());

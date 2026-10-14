@@ -230,6 +230,14 @@
   outline-offset: 2px;
 }
 
+/* Offset outline paints on the surface behind the button, so ink disappears on ink/deep fills. */
+.sg-strip .sg-arrow-btn:focus-visible,
+.sg-price-card.is-featured .sg-arrow-btn:focus-visible,
+.sg-log-aside-card .sg-arrow-btn:focus-visible,
+.sg-deep .sg-arrow-btn:focus-visible {
+  outline-color: var(--lime);
+}
+
 .sg-arrow-btn-icon {
   position: absolute;
   right: 6px;

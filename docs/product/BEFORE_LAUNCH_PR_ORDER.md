@@ -16,7 +16,7 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 | **4**  |     4 | F17, F21, F29, I2 |
 | **5**  |     1 | E2                |
 
-**16 open** (F9, F10, F11, F12, F13, F15, F16, F18, F19, F20, F25, F26 shipped). **Weighted average ≈ 2.56** — many 1–3 polish items; complexity concentrates in **E2**, then **F17 / F21 / F29 / I2**. Counsel-reviewed legal copy remains as ticket `F20-020` (not a separate open PR group).
+**16 open** (F9, F10, F11, F12, F13, F15, F16, F18, F19, F20, F25, F26 shipped). **Weighted average ≈ 2.56** — many 1–3 polish items; complexity concentrates in **E2**, then **F17 / F21 / F29 / I2**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group).
 
 ---
 
@@ -50,7 +50,7 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 
 **F23 → F21** _(F20 PR group shipped)_
 
-- **F20** legal draft UI shipped (`F20-019`); remaining counsel copy is ticket **`F20-020`** (anytime docs; not an open PR in the rollup)
+- **F20** legal draft UI shipped (`F20-019`); remaining counsel copy is ticket **`F20-020`** (launch-gated; not an open PR in the rollup)
 - **F23** support entry: cheap once legal/marketing surfaces exist
 - **F21** delete account after upload/profile integrity (**F9/F13**) so deletion isn’t fighting known storage bugs
 
@@ -73,6 +73,7 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 - **E4** swaps annual → quarterly on the working draft + `#pricing` UI (can ship early; not a lock)
 - Product lock (**E1**) before Stripe/gates (**E2**) — lock **monthly + quarterly** (no annual)
 - **A3** (confirm email in prod) is ops with no code — last config before public launch
+- **`F20-020`** is launch-gated and stays outside the 16-PR count: counsel-reviewed Terms, Privacy, and Cookies are required before public launch, but they are not an open PR group
 - Doing **E2** earlier wastes work if tiers/prices still change
 
 ---

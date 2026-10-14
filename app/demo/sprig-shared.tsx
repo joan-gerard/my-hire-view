@@ -127,11 +127,11 @@ const NAV = [
 export function SprigHeader({ current }: { current?: "home" | "care-log" }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuOpenRef = useRef(menuOpen);
-  menuOpenRef.current = menuOpen;
   const headerRef = useHideHeaderOnScroll(menuOpenRef);
   const joinHref = current === "care-log" ? "/demo#join" : "#join";
 
   useEffect(() => {
+    menuOpenRef.current = menuOpen;
     if (menuOpen) {
       headerRef.current?.classList.remove("is-hidden");
     }
