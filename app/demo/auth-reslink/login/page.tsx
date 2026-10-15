@@ -1,14 +1,6 @@
-import type { Metadata } from "next";
-import "../auth-reslink.css";
-import LoginDemo from "./LoginDemo";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Auth login demo (Reslink × MHV)",
-  description:
-    "Style-only login demo: Reslink centered-card layout with MyHireView brand tokens.",
-  robots: { index: false, follow: false },
-};
-
+/** Former style demo — production `/login` now uses this layout. */
 export default function DemoAuthLoginPage() {
-  return <LoginDemo />;
+  redirect("/login");
 }

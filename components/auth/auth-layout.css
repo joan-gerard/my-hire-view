@@ -1,9 +1,9 @@
 /**
- * Reslink-layout auth demos using MyHireView marketing tokens.
- * Demo-only — not wired to real auth. Scoped under `.mhv-auth-demo`.
+ * Production auth layout (Reslink-inspired card / split shell).
+ * Scoped under `.mhv-auth`. Uses product tokens; do not import on marketing.
  */
 
-.mhv-auth-demo {
+.mhv-auth {
   --ink: #0b0b0c;
   --muted: #6a6e6e;
   --mist: #b7bcbc;
@@ -20,77 +20,47 @@
   line-height: 1.35;
 }
 
-.mhv-auth-demo *,
-.mhv-auth-demo *::before,
-.mhv-auth-demo *::after {
+.mhv-auth *,
+.mhv-auth *::before,
+.mhv-auth *::after {
   box-sizing: border-box;
 }
 
-.mhv-auth-demo h1,
-.mhv-auth-demo h2,
-.mhv-auth-demo p {
+.mhv-auth h1,
+.mhv-auth h2,
+.mhv-auth p {
   margin: 0;
 }
 
-.mhv-auth-demo h1,
-.mhv-auth-demo h2 {
+.mhv-auth h1,
+.mhv-auth h2 {
   font-family: var(--font-switzer), system-ui, sans-serif;
   font-weight: 600;
   letter-spacing: -0.03em;
 }
 
-.mhv-auth-demo a {
+.mhv-auth a {
   color: inherit;
   text-decoration: none;
 }
 
-.mhv-auth-demo-banner {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem 1.25rem;
-  padding: 0.65rem 1rem;
-  background: var(--ink);
-  color: var(--mist);
-  font-size: 0.8125rem;
-}
-
-.mhv-auth-demo-banner strong {
-  color: var(--lime);
-  font-weight: 600;
-}
-
-.mhv-auth-demo-banner a {
-  color: var(--white);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.mhv-auth-demo-banner a:hover {
-  color: var(--lime);
-}
-
 /* —— Login: centered card on soft atmosphere —— */
-.mhv-auth-demo--login {
+.mhv-auth--login {
   background:
     radial-gradient(ellipse 50% 40% at 15% 0%, color-mix(in srgb, var(--pink) 35%, white), transparent 70%),
     radial-gradient(ellipse 45% 35% at 90% 5%, color-mix(in srgb, var(--lime) 28%, white), transparent 65%),
     var(--white);
 }
 
-.mhv-auth-demo-login-stage {
+.mhv-auth-login-stage {
   display: flex;
-  min-height: calc(100dvh - 44px);
+  min-height: 100dvh;
   align-items: center;
   justify-content: center;
   padding: 2rem 1.25rem 3rem;
 }
 
-.mhv-auth-demo-card {
+.mhv-auth-card {
   width: min(440px, 100%);
   border-radius: 28px;
   background: var(--white);
@@ -100,71 +70,58 @@
 }
 
 @media (min-width: 480px) {
-  .mhv-auth-demo-card {
+  .mhv-auth-card {
     padding: 2.5rem 2.25rem 2rem;
   }
 }
 
-.mhv-auth-demo-logo {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 3px;
-  font-family: var(--font-switzer), system-ui, sans-serif;
-  font-size: 1.25rem;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: var(--ink);
-}
-
-.mhv-auth-demo-logo-dot {
-  width: 7px;
-  height: 7px;
-  margin-bottom: 3px;
-  border-radius: 999px;
-  background: var(--lime);
-  flex-shrink: 0;
-}
-
-.mhv-auth-demo-card .mhv-auth-demo-logo {
+.mhv-auth-card-logo {
   display: flex;
-  justify-content: center;
-  width: 100%;
   margin-bottom: 1.5rem;
 }
 
-.mhv-auth-demo-card h1 {
+.mhv-auth-card .mhv-auth-card-logo {
+  justify-content: center;
+  width: 100%;
+}
+
+.mhv-auth-card h1 {
   text-align: center;
   font-size: clamp(1.5rem, 4vw, 1.75rem);
   margin-bottom: 0.5rem;
 }
 
-.mhv-auth-demo-lead {
+.mhv-auth-lead {
   text-align: center;
   color: var(--muted);
   font-size: 0.9375rem;
   margin-bottom: 1.75rem;
 }
 
-.mhv-auth-demo-lead a {
+/* Login card: air under the alternate-account line before fields */
+.mhv-auth-card > .mhv-auth-lead {
+  margin-bottom: 2rem;
+}
+
+.mhv-auth-lead a {
   color: var(--ink);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.mhv-auth-demo-lead a:hover {
+.mhv-auth-lead a:hover {
   color: var(--pink-text);
 }
 
-.mhv-auth-demo-field {
+.mhv-auth-field {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   margin-bottom: 1rem;
 }
 
-.mhv-auth-demo-label {
+.mhv-auth-label {
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -172,7 +129,7 @@
   color: var(--muted);
 }
 
-.mhv-auth-demo-input {
+.mhv-auth-input {
   width: 100%;
   min-height: 48px;
   border: 0;
@@ -185,23 +142,28 @@
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
-.mhv-auth-demo-input::placeholder {
+.mhv-auth-input::placeholder {
   color: var(--mist);
 }
 
-.mhv-auth-demo-input:focus {
+.mhv-auth-input:focus {
   box-shadow: inset 0 0 0 2px var(--ink);
 }
 
-.mhv-auth-demo-password-wrap {
+.mhv-auth-input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.mhv-auth-password-wrap {
   position: relative;
 }
 
-.mhv-auth-demo-password-wrap .mhv-auth-demo-input {
+.mhv-auth-password-wrap .mhv-auth-input {
   padding-right: 2.75rem;
 }
 
-.mhv-auth-demo-eye {
+.mhv-auth-eye {
   position: absolute;
   top: 0;
   right: 0;
@@ -215,25 +177,25 @@
   cursor: pointer;
 }
 
-.mhv-auth-demo-eye:hover,
-.mhv-auth-demo-eye:focus-visible {
+.mhv-auth-eye:hover,
+.mhv-auth-eye:focus-visible {
   color: var(--ink);
 }
 
-.mhv-auth-demo-eye:focus-visible {
+.mhv-auth-eye:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: -2px;
   border-radius: 0 14px 14px 0;
 }
 
-.mhv-auth-demo-submit {
+.mhv-auth-submit {
   display: inline-flex;
   width: 100%;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   min-height: 50px;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
   border: 0;
   border-radius: 999px;
   background: var(--ink);
@@ -243,16 +205,21 @@
   cursor: pointer;
 }
 
-.mhv-auth-demo-submit:hover {
+.mhv-auth-submit:hover:not(:disabled) {
   opacity: 0.92;
 }
 
-.mhv-auth-demo-submit:focus-visible {
+.mhv-auth-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mhv-auth-submit:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
 
-.mhv-auth-demo-submit-arrow {
+.mhv-auth-submit-arrow {
   display: inline-flex;
   width: 1.5rem;
   height: 1.5rem;
@@ -265,33 +232,34 @@
   line-height: 1;
 }
 
-.mhv-auth-demo-legal {
-  margin-top: 1.25rem;
+/* Beat `.mhv-auth p { margin: 0 }` so Sign in → terms spacing actually applies */
+.mhv-auth p.mhv-auth-legal {
+  margin-top: 1.75rem;
   text-align: center;
   font-size: 0.75rem;
   color: var(--muted);
 }
 
-.mhv-auth-demo-legal a {
+.mhv-auth p.mhv-auth-legal a {
   color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 /* —— Signup: Reslink card-split shell —— */
-.mhv-auth-demo--signup {
+.mhv-auth--signup {
   background: var(--paper);
 }
 
-.mhv-auth-demo-signup-stage {
+.mhv-auth-signup-stage {
   display: flex;
-  min-height: calc(100dvh - 44px);
+  min-height: 100dvh;
   align-items: center;
   justify-content: center;
   padding: 1.5rem 1rem 2.5rem;
 }
 
-.mhv-auth-demo-shell {
+.mhv-auth-shell {
   display: grid;
   width: min(1040px, 100%);
   min-height: min(640px, calc(100dvh - 6rem));
@@ -303,72 +271,74 @@
 }
 
 @media (min-width: 900px) {
-  .mhv-auth-demo-shell {
+  .mhv-auth-shell {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-.mhv-auth-demo-shell-form {
+.mhv-auth-shell-form {
   display: flex;
   flex-direction: column;
   padding: 1.75rem 1.5rem 1.5rem;
+  overflow-y: auto;
 }
 
 @media (min-width: 900px) {
-  .mhv-auth-demo-shell-form {
+  .mhv-auth-shell-form {
     padding: 2.25rem 2.25rem 1.75rem;
   }
 }
 
-.mhv-auth-demo-shell-form .mhv-auth-demo-logo {
+.mhv-auth-shell-form .mhv-auth-card-logo {
+  justify-content: flex-start;
   margin-bottom: 1.75rem;
 }
 
-.mhv-auth-demo-shell-form h1 {
+.mhv-auth-shell-form h1 {
   font-size: clamp(1.5rem, 3vw, 1.85rem);
   margin-bottom: 0.4rem;
 }
 
-.mhv-auth-demo-shell-form > .mhv-auth-demo-lead {
+.mhv-auth-shell-form > .mhv-auth-lead {
   text-align: left;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
 }
 
-.mhv-auth-demo-name-row {
+.mhv-auth-name-row {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0;
 }
 
 @media (min-width: 480px) {
-  .mhv-auth-demo-name-row {
+  .mhv-auth-name-row {
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
   }
 }
 
-.mhv-auth-demo-hint {
-  margin: -0.25rem 0 0.75rem;
+.mhv-auth-hint {
+  margin: 0 0 1rem;
   font-size: 0.75rem;
   color: var(--muted);
 }
 
-.mhv-auth-demo-shell-foot {
+.mhv-auth-shell-foot {
   margin-top: auto;
-  padding-top: 0.75rem;
+  padding-top: 1.5rem;
   text-align: center;
   font-size: 0.875rem;
   color: var(--muted);
 }
 
-.mhv-auth-demo-shell-foot a {
+.mhv-auth-shell-foot a {
   color: var(--ink);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.mhv-auth-demo-shell-promo {
+.mhv-auth-shell-promo {
   position: relative;
   display: none;
   flex-direction: column;
@@ -381,12 +351,12 @@
 }
 
 @media (min-width: 900px) {
-  .mhv-auth-demo-shell-promo {
+  .mhv-auth-shell-promo {
     display: flex;
   }
 }
 
-.mhv-auth-demo-shell-promo::before {
+.mhv-auth-shell-promo::before {
   content: "";
   position: absolute;
   top: -20%;
@@ -399,7 +369,7 @@
   pointer-events: none;
 }
 
-.mhv-auth-demo-shell-promo::after {
+.mhv-auth-shell-promo::after {
   content: "";
   position: absolute;
   bottom: -10%;
@@ -412,12 +382,12 @@
   pointer-events: none;
 }
 
-.mhv-auth-demo-promo-inner {
+.mhv-auth-promo-inner {
   position: relative;
   z-index: 1;
 }
 
-.mhv-auth-demo-promo-badge {
+.mhv-auth-promo-badge {
   display: inline-flex;
   margin-bottom: 1rem;
   border-radius: 999px;
@@ -430,21 +400,21 @@
   text-transform: uppercase;
 }
 
-.mhv-auth-demo-shell-promo h2 {
+.mhv-auth-shell-promo h2 {
   font-size: clamp(1.65rem, 2.5vw, 2rem);
   color: var(--white);
   margin-bottom: 0.65rem;
   max-width: 16ch;
 }
 
-.mhv-auth-demo-shell-promo .mhv-auth-demo-promo-lead {
+.mhv-auth-shell-promo .mhv-auth-promo-lead {
   color: var(--mist);
   font-size: 1rem;
   margin-bottom: 1.75rem;
   max-width: 28ch;
 }
 
-.mhv-auth-demo-preview {
+.mhv-auth-preview {
   border-radius: 20px;
   background: var(--white);
   color: var(--ink);
@@ -452,7 +422,7 @@
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
-.mhv-auth-demo-preview-media {
+.mhv-auth-preview-media {
   position: relative;
   aspect-ratio: 16 / 10;
   background:
@@ -463,7 +433,7 @@
   padding-bottom: 0.5rem;
 }
 
-.mhv-auth-demo-preview-avatar {
+.mhv-auth-preview-avatar {
   width: 72px;
   height: 72px;
   border-radius: 999px;
@@ -480,7 +450,7 @@
   z-index: 1;
 }
 
-.mhv-auth-demo-preview-playing {
+.mhv-auth-preview-playing {
   position: absolute;
   top: 0.75rem;
   left: 0.75rem;
@@ -495,7 +465,7 @@
   font-weight: 600;
 }
 
-.mhv-auth-demo-preview-playing::before {
+.mhv-auth-preview-playing::before {
   content: "";
   width: 6px;
   height: 6px;
@@ -503,11 +473,11 @@
   background: var(--lime);
 }
 
-.mhv-auth-demo-preview-body {
+.mhv-auth-preview-body {
   padding: 1.75rem 1.15rem 1.15rem;
 }
 
-.mhv-auth-demo-preview-body strong {
+.mhv-auth-preview-body strong {
   display: block;
   font-family: var(--font-switzer), system-ui, sans-serif;
   font-size: 1.05rem;
@@ -515,13 +485,13 @@
   letter-spacing: -0.02em;
 }
 
-.mhv-auth-demo-preview-meta {
+.mhv-auth-preview-meta {
   margin-top: 0.2rem;
   font-size: 0.8125rem;
   color: var(--muted);
 }
 
-.mhv-auth-demo-preview-stat {
+.mhv-auth-preview-stat {
   margin-top: 0.9rem;
   padding-top: 0.85rem;
   border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
@@ -532,7 +502,7 @@
   gap: 0.4rem;
 }
 
-.mhv-auth-demo-preview-stat::before {
+.mhv-auth-preview-stat::before {
   content: "";
   width: 7px;
   height: 7px;
@@ -542,7 +512,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mhv-auth-demo-submit {
+  .mhv-auth-submit {
     transition: none;
   }
+}
+
+
+.mhv-auth-form > [role="alert"],
+.mhv-auth-form > [role="status"] {
+  margin-bottom: 1rem;
 }

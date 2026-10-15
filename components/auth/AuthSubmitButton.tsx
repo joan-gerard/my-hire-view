@@ -14,6 +14,11 @@ export default function AuthSubmitButton({
   return (
     <button type="submit" disabled={loading} className={AUTH_SUBMIT_CLASS}>
       {loading ? loadingLabel : idleLabel}
+      {!loading ? (
+        <span className="mhv-auth-submit-arrow" aria-hidden>
+          →
+        </span>
+      ) : null}
     </button>
   );
 }
