@@ -30,7 +30,7 @@ export default function AuthPageShell({
 }: AuthPageShellProps) {
   return (
     <div className="min-h-dvh bg-[var(--background)] lg:grid lg:h-dvh lg:grid-cols-2 lg:overflow-hidden">
-      <div className="auth-form-column relative flex min-h-dvh flex-col px-5 py-8 sm:px-8 lg:h-dvh lg:items-center lg:justify-center lg:overflow-y-auto lg:px-12 lg:py-16 xl:px-16">
+      <div className="auth-form-column relative flex min-h-dvh flex-col px-5 py-8 sm:px-8 lg:h-dvh lg:overflow-y-auto lg:px-12 lg:py-16 xl:px-16">
         {/* Desktop: logo pinned; form stack centers like the brand column */}
         <div className="mb-8 lg:absolute lg:top-8 lg:left-12 lg:mb-0 xl:left-16">
           <LogoBlack />

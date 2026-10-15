@@ -12,7 +12,7 @@ export default function AuthBrandPanel({
 }) {
   return (
     <aside
-      className="auth-brand-panel relative hidden h-dvh overflow-hidden bg-[var(--ink)] lg:flex lg:items-center lg:justify-center lg:px-12 lg:py-16 xl:px-16"
+      className="auth-brand-panel relative hidden h-dvh overflow-x-hidden overflow-y-auto bg-[var(--ink)] lg:flex lg:px-12 lg:py-16 xl:px-16"
       aria-hidden
     >
       {/* Soft overlapping circles — ProIntro atmosphere in MHV ink/pink/lime */}

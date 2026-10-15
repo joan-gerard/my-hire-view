@@ -40,6 +40,16 @@
   animation: auth-panel-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Safe center: when the stack is taller than the scrollport, fall back to start
+   so the heading/top of the form stays reachable (plain justify-center clips). */
+@media (min-width: 1024px) {
+  .auth-form-column,
+  .auth-brand-panel {
+    align-items: safe center;
+    justify-content: safe center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-brand-content,
   .auth-hire-preview,
