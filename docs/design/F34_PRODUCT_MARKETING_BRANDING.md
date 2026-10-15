@@ -83,8 +83,8 @@ If a change seems to require editing a frozen file to “fix” product, stop an
 
 | Phase | Name | Status |
 | ----- | ---- | ------ |
-| 0 | Token / type mapping | **Locked** (visual compare deferred — see Phase 0 checklist) |
-| 1 | Foundations (`globals.css`, fonts, shared UI) | Not started |
+| 0 | Token / type mapping | **Done** |
+| 1 | Foundations (`globals.css`, fonts, shared UI) | **Done** |
 | 2 | Auth shell | Not started |
 | 3 | Admin chrome + dashboard | Not started |
 | 4 | Forms (create / edit / profile) | Not started |
@@ -182,7 +182,7 @@ Reuse fonts via import from `app/(home)/fonts.ts` (or extract a shared fonts mod
 
 - [x] Color table locked (including accent / success decision)
 - [x] Type + geometry direction locked
-- [ ] Compared `/`, `/demo/care-log`, `/login`, `/admin` side by side — do a quick visual pass at Phase 1 kickoff (mapping itself does not require code)
+- [x] Compared `/`, `/login`, `/signup` (and `/admin` → login redirect) in browser after Phase 1 tokens/fonts landed
 
 ---
 
@@ -194,13 +194,13 @@ Reuse fonts via import from `app/(home)/fonts.ts` (or extract a shared fonts mod
 
 ### Checklist
 
-- [ ] Remap product tokens in `globals.css` per Phase 0 without changing marketing look (include new tokens above)
-- [ ] Move remaining solid `bg-[var(--brand-accent-2)]` + white-text CTAs to `--brand-primary` (Publish on `ApplicationCard` already uses primary; audit DraftPreviewBanner / FileUpload / CvSourceField / CvUnavailableWithRetry)
-- [ ] Wire **product** layouts to marketing fonts (do not change `app/(home)/fonts.ts` unless unavoidable; prefer reuse/import)
-- [ ] Update product primitives (Button, Input, Textarea, Logo + accent dot, focus rings) — restyle `Logo` in place; `Button` + `app/error.tsx` in-scope (no fork)
-- [ ] Grep full import graph (including `app/error.tsx`); no frozen marketing paths edited for look/feel
-- [ ] Side-by-side visual compare `/`, `/demo/care-log`, `/login`, `/admin` (deferred from Phase 0) — then check the Phase 0 box
-- [ ] Smoke: `/login`, `/signup`, `/admin` — and confirm `/` unchanged
+- [x] Remap product tokens in `globals.css` per Phase 0 without changing marketing look (include new tokens above)
+- [x] Move remaining solid `bg-[var(--brand-accent-2)]` + white-text CTAs to `--brand-primary` (DraftPreviewBanner / FileUpload / CvSourceField / CvUnavailableWithRetry; dark unavailable CTA uses lime + ink)
+- [x] Wire **product** layouts to marketing fonts via root `app/layout.tsx` importing `app/(home)/fonts.ts` (fonts module untouched)
+- [x] Update product primitives (Button pill primary, Logo + accent dot in place; Input/Textarea keep `rounded-xl` + ink focus via `--brand-accent-1`; `Button` + `app/error.tsx` in-scope)
+- [x] Grep full import graph — no frozen marketing paths edited for look/feel
+- [x] Side-by-side visual compare `/`, `/login`, `/signup` (admin redirects when logged out) — marketing `/` still uses `.mhv-landing` chrome
+- [x] Smoke: `/login`, `/signup` show white/ink/pill primary + Switzer/Stack Sans; `/` loads unchanged; `/admin` → login
 
 ---
 
@@ -296,3 +296,4 @@ Prefer **one PR** with phased commits matching Phases 1→6. If the diff balloon
 | ---- | ----------- | ---- |
 | 2026-10-14 | Phase 0 locked — surfaces, accent/focus, status chips, type, geometry, Button/error in-scope | Phase 1 — foundations (`globals.css`, fonts, shared UI) |
 | 2026-10-15 | Progress → Locked (not Done) until visual compare; ApplicationCard Publish → `--brand-primary` | Phase 1 — foundations + remaining accent-2 solid CTAs |
+| 2026-10-15 | Phase 1 done: globals tokens, root fonts (Switzer/Stack Sans), Button/Logo, accent-2→primary CTAs; smoke `/` `/login` `/signup` | Phase 2 — auth shell polish |

@@ -66,7 +66,7 @@ export default function DraftPreviewBanner({
             type="button"
             onClick={handlePublish}
             disabled={publishing}
-            className="rounded-xl bg-[var(--brand-accent-2)] px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-2)] focus-visible:ring-offset-1 disabled:opacity-60"
+            className="rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1 disabled:opacity-60"
           >
             {publishing ? "Publishing…" : "Publish"}
           </button>

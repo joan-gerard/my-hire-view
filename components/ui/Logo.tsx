@@ -1,31 +1,47 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { dailyLogoDotColor } from "@/lib/marketing/utils";
 
 /**
- * Wordmark used on the marketing navbar (and product/auth surfaces).
- * Font comes from `#logo` in `app/globals.css` (Varela Round).
+ * Product / auth / view wordmark (Switzer via `#logo` in globals.css) + accent dot.
+ * Live marketing `/` uses its own `.ot-logo` in components/marketing/Header.tsx — do not change that.
  */
-export function LogoWhite() {
+function LogoMark({
+  className,
+  textClassName,
+}: {
+  className?: string;
+  textClassName: string;
+}) {
+  const [dotColor, setDotColor] = useState("#9efc65");
+
+  useEffect(() => {
+    setDotColor(dailyLogoDotColor());
+  }, []);
+
   return (
     <Link
       href="/"
       id="logo"
-      className="flex items-center gap-2 text-xl font-medium text-white"
+      className={`inline-flex items-end gap-[3px] text-xl font-medium leading-none tracking-[-0.02em] ${textClassName} ${className ?? ""}`}
       aria-label="MyHireView home"
     >
-      MyHireView
+      <span>MyHireView</span>
+      <span
+        className="mb-[3px] h-[7px] w-[7px] shrink-0 rounded-full"
+        style={{ backgroundColor: dotColor }}
+        aria-hidden
+      />
     </Link>
   );
 }
 
+export function LogoWhite() {
+  return <LogoMark textClassName="text-white" />;
+}
+
 export function LogoBlack() {
-  return (
-    <Link
-      href="/"
-      id="logo"
-      className="flex items-center gap-2 text-xl font-medium text-black"
-      aria-label="MyHireView home"
-    >
-      MyHireView
-    </Link>
-  );
+  return <LogoMark textClassName="text-[var(--ink)]" />;
 }

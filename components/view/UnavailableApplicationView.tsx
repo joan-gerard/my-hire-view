@@ -92,7 +92,7 @@ export default function UnavailableApplicationView() {
             >
               <Link
                 href="/"
-                className="inline-flex w-full items-center justify-center rounded-lg bg-(--brand-accent-1) px-6 py-3 text-base font-semibold text-white shadow-md transition hover:bg-(--brand-accent-2) focus:outline-none focus:ring-2 focus:ring-(--brand-accent-1) focus:ring-offset-2 focus:ring-offset-black whitespace-nowrap"
+                className="inline-flex w-full items-center justify-center rounded-full bg-[var(--lime)] px-6 py-3 text-base font-semibold text-[var(--ink)] shadow-md transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--lime)] focus:ring-offset-2 focus:ring-offset-black whitespace-nowrap"
               >
                 See how candidates stand out
               </Link>
