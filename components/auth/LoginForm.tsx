@@ -44,9 +44,12 @@ export default function LoginForm() {
 
   return (
     <AuthPageShell
-      title="Sign in to your account"
+      title="Welcome back"
+      description="Sign in to manage your hire views."
       alternateHref="/signup"
       alternateLabel="create a new account"
+      brandHeadline="A page recruiters can open in one tap"
+      brandSupporting="Publish a focused hire view for each role — story, proof, and contact in one link."
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         {error && <AuthErrorAlert message={error} />}

@@ -1,0 +1,51 @@
+/* Product auth shell only — imported from AuthPageShell. Do not load on marketing. */
+
+@keyframes auth-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes auth-orb-drift {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(12px, -10px);
+  }
+}
+
+.auth-brand-content {
+  animation: auth-panel-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.auth-hire-preview {
+  animation: auth-panel-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+.auth-brand-orb--a {
+  animation: auth-orb-drift 14s ease-in-out infinite alternate;
+}
+
+.auth-brand-orb--b {
+  animation: auth-orb-drift 18s ease-in-out infinite alternate-reverse;
+}
+
+.auth-form-column {
+  animation: auth-panel-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-brand-content,
+  .auth-hire-preview,
+  .auth-brand-orb--a,
+  .auth-brand-orb--b,
+  .auth-form-column {
+    animation: none;
+  }
+}

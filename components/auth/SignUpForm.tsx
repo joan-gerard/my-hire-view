@@ -82,8 +82,11 @@ export default function SignUpForm() {
   return (
     <AuthPageShell
       title="Create your account"
+      description="Free to start. Publish your page and share a link."
       alternateHref="/login"
       alternateLabel="sign in to your existing account"
+      brandHeadline="A page recruiters can open in one tap"
+      brandSupporting="Publish a focused hire view for each role — story, proof, and contact in one link."
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         {error && <AuthErrorAlert message={error} />}
@@ -165,7 +168,7 @@ export default function SignUpForm() {
         </div>
         <p
           id="signup-password-hint"
-          className="text-xs text-[var(--foreground)]/70"
+          className="text-xs text-[var(--muted)]"
         >
           * {SIGNUP_PASSWORD_RULES_HINT}.
         </p>

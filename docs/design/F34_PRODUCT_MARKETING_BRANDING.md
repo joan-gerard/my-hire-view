@@ -85,7 +85,7 @@ If a change seems to require editing a frozen file to “fix” product, stop an
 | ----- | ---- | ------ |
 | 0 | Token / type mapping | **Done** |
 | 1 | Foundations (`globals.css`, fonts, shared UI) | **Done** |
-| 2 | Auth shell | Not started |
+| 2 | Auth shell | **Done** |
 | 3 | Admin chrome + dashboard | Not started |
 | 4 | Forms (create / edit / profile) | Not started |
 | 5 | Public `/view` | Not started |
@@ -210,9 +210,10 @@ Reuse fonts via import from `app/(home)/fonts.ts` (or extract a shared fonts mod
 
 ### Checklist
 
-- [ ] Auth shell / panel matches marketing (not warm cream card)
-- [ ] Password fields, alerts, focus states
-- [ ] Keyboard / focus pass on `/login` and `/signup`
+- [x] Auth shell / panel matches marketing (paper `rounded-[28px]` panel on white; not warm cream card)
+- [x] Password fields, alerts, focus states (white inputs, pill submit, muted→ink alternate link, ink focus rings)
+- [x] Keyboard / focus pass on `/login` and `/signup` (logical tab order: logo → alternate → fields → show-password → submit)
+- [x] ProIntro-style split: form column + ink brand panel with hire-view preview mock (lime/pink punctuation; mobile ink cue)
 
 ---
 
@@ -297,3 +298,5 @@ Prefer **one PR** with phased commits matching Phases 1→6. If the diff balloon
 | 2026-10-14 | Phase 0 locked — surfaces, accent/focus, status chips, type, geometry, Button/error in-scope | Phase 1 — foundations (`globals.css`, fonts, shared UI) |
 | 2026-10-15 | Progress → Locked (not Done) until visual compare; ApplicationCard Publish → `--brand-primary` | Phase 1 — foundations + remaining accent-2 solid CTAs |
 | 2026-10-15 | Phase 1 done: globals tokens, root fonts (Switzer/Stack Sans), Button/Logo, accent-2→primary CTAs; smoke `/` `/login` `/signup` | Phase 2 — auth shell polish |
+| 2026-10-15 | Phase 2 done: auth paper panel, white inputs, pill submit, alerts + focus pass | Phase 3 — admin chrome + dashboard |
+| 2026-10-15 | Auth split polish: ProIntro-style form + ink brand panel + hire-view mock | Phase 3 — admin chrome + dashboard |
