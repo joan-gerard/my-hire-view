@@ -32,13 +32,9 @@ interface ApplicationCardProps {
 const SECONDARY_ACTION_CLASS =
   'inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--foreground)]/12 bg-[var(--brand-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-secondary-text)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1';
 
-/** Primary card CTA (View / Preview). */
+/** Primary card CTA (View / Preview / Publish) — ink fill; do not use --brand-accent-2 (muted link token after F34). */
 const PRIMARY_ACTION_CLASS =
   'inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1';
-
-/** Positive action (Publish) — darker teal for WCAG AA contrast with white text. */
-const ACCENT_ACTION_CLASS =
-  'inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--brand-accent-2)] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-2)] focus-visible:ring-offset-1';
 
 const DISABLED_ACTION_CLASS =
   'inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--foreground)]/10 bg-[var(--surface)] px-3 py-1.5 text-sm font-medium text-[var(--foreground)]/45';
@@ -90,7 +86,7 @@ export default function ApplicationCard({
             <button
               type="button"
               onClick={() => onPublish(application.id)}
-              className={ACCENT_ACTION_CLASS}
+              className={PRIMARY_ACTION_CLASS}
               title="Make this application live so recruiters can open the share link"
             >
               <CheckIcon className="h-4 w-4" />

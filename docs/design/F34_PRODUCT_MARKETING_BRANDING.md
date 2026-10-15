@@ -83,7 +83,7 @@ If a change seems to require editing a frozen file to “fix” product, stop an
 
 | Phase | Name | Status |
 | ----- | ---- | ------ |
-| 0 | Token / type mapping | **Done** |
+| 0 | Token / type mapping | **Locked** (visual compare deferred — see Phase 0 checklist) |
 | 1 | Foundations (`globals.css`, fonts, shared UI) | Not started |
 | 2 | Auth shell | Not started |
 | 3 | Admin chrome + dashboard | Not started |
@@ -91,7 +91,7 @@ If a change seems to require editing a frozen file to “fix” product, stop an
 | 5 | Public `/view` | Not started |
 | 6 | Docs + QA | Not started |
 
-Mark a phase **Done** when its checklist below is complete and you’ve smoke-tested the listed routes.
+**Status meanings:** **Locked** = decisions recorded; checklist may still have deferred items. **Done** = that phase’s checklist is fully complete (including smoke / deferred compares). Do not mark **Done** while unchecked items remain.
 
 ---
 
@@ -144,7 +144,7 @@ Today `--brand-accent-1` is both **focus ring** and occasional **solid fill** (e
 | Loud accent (logo dot, rare badges) | `--lime` / `--pink` — **not** `--brand-accent-1` |
 | Former teal solid fills | Become **ink** (or intentional lime fill + ink text only where loud). Do **not** reintroduce teal |
 
-Primary actions such as Publish as a primary button use `--brand-primary` (ink). Success **chips** / menu emphasis use the status pair below — distinct from primary CTAs.
+Primary actions such as Publish as a primary button use `--brand-primary` (ink) + `--brand-primary-text` — **not** `--brand-accent-2` (that token becomes muted link/hover emphasis). Solid teal CTAs that still use `bg-[var(--brand-accent-2)]` + white text must move to `--brand-primary` before or with the Phase 1 remap (card Publish fixed in `ApplicationCard`; also audit `DraftPreviewBanner`, `FileUpload`, `CvSourceField`, `CvUnavailableWithRetry`). Success **chips** / menu emphasis use the status pair below — distinct from primary CTAs.
 
 ### Status chips (locked)
 
@@ -195,9 +195,11 @@ Reuse fonts via import from `app/(home)/fonts.ts` (or extract a shared fonts mod
 ### Checklist
 
 - [ ] Remap product tokens in `globals.css` per Phase 0 without changing marketing look (include new tokens above)
+- [ ] Move remaining solid `bg-[var(--brand-accent-2)]` + white-text CTAs to `--brand-primary` (Publish on `ApplicationCard` already uses primary; audit DraftPreviewBanner / FileUpload / CvSourceField / CvUnavailableWithRetry)
 - [ ] Wire **product** layouts to marketing fonts (do not change `app/(home)/fonts.ts` unless unavoidable; prefer reuse/import)
 - [ ] Update product primitives (Button, Input, Textarea, Logo + accent dot, focus rings) — restyle `Logo` in place; `Button` + `app/error.tsx` in-scope (no fork)
 - [ ] Grep full import graph (including `app/error.tsx`); no frozen marketing paths edited for look/feel
+- [ ] Side-by-side visual compare `/`, `/demo/care-log`, `/login`, `/admin` (deferred from Phase 0) — then check the Phase 0 box
 - [ ] Smoke: `/login`, `/signup`, `/admin` — and confirm `/` unchanged
 
 ---
@@ -293,3 +295,4 @@ Prefer **one PR** with phased commits matching Phases 1→6. If the diff balloon
 | Date | What landed | Next |
 | ---- | ----------- | ---- |
 | 2026-10-14 | Phase 0 locked — surfaces, accent/focus, status chips, type, geometry, Button/error in-scope | Phase 1 — foundations (`globals.css`, fonts, shared UI) |
+| 2026-10-15 | Progress → Locked (not Done) until visual compare; ApplicationCard Publish → `--brand-primary` | Phase 1 — foundations + remaining accent-2 solid CTAs |
