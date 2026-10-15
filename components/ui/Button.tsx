@@ -26,7 +26,7 @@ export default function Button({
     secondary:
       'rounded-xl bg-[var(--brand-secondary)] text-[var(--brand-secondary-text)] hover:opacity-90 focus-visible:outline-[var(--brand-primary)]',
     danger:
-      'rounded-full bg-[var(--status-danger-solid)] text-white hover:opacity-90 focus-visible:outline-[var(--status-danger-solid)]',
+      'rounded-xl bg-[var(--status-danger-solid)] text-white hover:opacity-90 focus-visible:outline-[var(--status-danger-solid)]',
   };
 
   return (
