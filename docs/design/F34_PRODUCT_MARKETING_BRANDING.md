@@ -213,7 +213,7 @@ Reuse fonts via import from `app/(home)/fonts.ts` (or extract a shared fonts mod
 - [x] Auth chrome uses Reslink-inspired layouts with MHV tokens (login: centered white card on soft pink/lime atmosphere; signup: white/ink split shell + hire-view promo)
 - [x] Password fields, alerts, focus states (paper inputs, pill submit with arrow well, visible labels, ink focus)
 - [x] Keyboard / focus pass on `/login` and `/signup` (logo → alternate → fields; each password input is immediately followed by its show/hide toggle, then submit)
-- [x] Former `/demo/auth-reslink/*` demos redirect to production auth (layout promoted into `components/auth`)
+- [x] Reslink-style layout lives in production `components/auth` (demo `/demo/auth-reslink/*` removed)
 
 ---
 
@@ -303,3 +303,4 @@ Prefer **one PR** with phased commits matching Phases 1→6. If the diff balloon
 | 2026-10-15 | Added style-only Reslink×MHV auth demos at `/demo/auth-reslink/login` + `/signup` | Compare demos vs production auth; then Phase 3 |
 | 2026-10-15 | Phase 2 review fixes: tab-order docs, input focus-visible outline, brand/form safe scroll/center | Phase 3 — admin chrome + dashboard |
 | 2026-10-15 | Promoted Reslink-style demo auth to production `/login` + `/signup`; demos redirect | Phase 3 — admin chrome + dashboard |
+| 2026-10-15 | Removed `/demo/auth-reslink/*` after layout promotion to production | Phase 3 — admin chrome + dashboard |
