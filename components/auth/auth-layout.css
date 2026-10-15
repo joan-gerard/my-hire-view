@@ -91,7 +91,8 @@
   margin-bottom: 0.5rem;
 }
 
-.mhv-auth-lead {
+/* Qualify with `p` so margins beat `.mhv-auth p { margin: 0 }` */
+.mhv-auth p.mhv-auth-lead {
   text-align: center;
   color: var(--muted);
   font-size: 0.9375rem;
@@ -99,18 +100,18 @@
 }
 
 /* Login card: air under the alternate-account line before fields */
-.mhv-auth-card > .mhv-auth-lead {
+.mhv-auth-card > p.mhv-auth-lead {
   margin-bottom: 2rem;
 }
 
-.mhv-auth-lead a {
+.mhv-auth p.mhv-auth-lead a {
   color: var(--ink);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.mhv-auth-lead a:hover {
+.mhv-auth p.mhv-auth-lead a:hover {
   color: var(--pink-text);
 }
 
@@ -299,7 +300,7 @@
   margin-bottom: 0.4rem;
 }
 
-.mhv-auth-shell-form > .mhv-auth-lead {
+.mhv-auth-shell-form > p.mhv-auth-lead {
   text-align: left;
   margin-bottom: 1.75rem;
 }
@@ -317,13 +318,13 @@
   }
 }
 
-.mhv-auth-hint {
+.mhv-auth p.mhv-auth-hint {
   margin: 0 0 1rem;
   font-size: 0.75rem;
   color: var(--muted);
 }
 
-.mhv-auth-shell-foot {
+.mhv-auth p.mhv-auth-shell-foot {
   margin-top: auto;
   padding-top: 1.5rem;
   text-align: center;
@@ -331,7 +332,7 @@
   color: var(--muted);
 }
 
-.mhv-auth-shell-foot a {
+.mhv-auth p.mhv-auth-shell-foot a {
   color: var(--ink);
   font-weight: 600;
   text-decoration: underline;
@@ -407,7 +408,7 @@
   max-width: 16ch;
 }
 
-.mhv-auth-shell-promo .mhv-auth-promo-lead {
+.mhv-auth-shell-promo p.mhv-auth-promo-lead {
   color: var(--mist);
   font-size: 1rem;
   margin-bottom: 1.75rem;
@@ -485,13 +486,13 @@
   letter-spacing: -0.02em;
 }
 
-.mhv-auth-preview-meta {
+.mhv-auth p.mhv-auth-preview-meta {
   margin-top: 0.2rem;
   font-size: 0.8125rem;
   color: var(--muted);
 }
 
-.mhv-auth-preview-stat {
+.mhv-auth p.mhv-auth-preview-stat {
   margin-top: 0.9rem;
   padding-top: 0.85rem;
   border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
@@ -502,7 +503,7 @@
   gap: 0.4rem;
 }
 
-.mhv-auth-preview-stat::before {
+.mhv-auth p.mhv-auth-preview-stat::before {
   content: "";
   width: 7px;
   height: 7px;
