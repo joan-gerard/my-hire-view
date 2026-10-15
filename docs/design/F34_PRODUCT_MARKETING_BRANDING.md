@@ -300,3 +300,4 @@ Prefer **one PR** with phased commits matching Phases 1→6. If the diff balloon
 | 2026-10-15 | Phase 1 done: globals tokens, root fonts (Switzer/Stack Sans), Button/Logo, accent-2→primary CTAs; smoke `/` `/login` `/signup` | Phase 2 — auth shell polish |
 | 2026-10-15 | Phase 2 done: auth paper panel, white inputs, pill submit, alerts + focus pass | Phase 3 — admin chrome + dashboard |
 | 2026-10-15 | Auth split polish: ProIntro-style form + ink brand panel + hire-view mock | Phase 3 — admin chrome + dashboard |
+| 2026-10-15 | Added style-only Reslink×MHV auth demos at `/demo/auth-reslink/login` + `/signup` | Compare demos vs production auth; then Phase 3 |
