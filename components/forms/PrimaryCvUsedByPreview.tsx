@@ -26,19 +26,19 @@ export default function PrimaryCvUsedByPreview({
   const listClass =
     tone === "warning"
       ? "max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--status-warning-fg)]/30 bg-[var(--status-warning-bg)] px-3 py-2"
-      : "max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--foreground)]/10 bg-[var(--background)] px-3 py-2";
+      : "max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] px-3 py-2";
   const metaClass =
     tone === "warning"
       ? "shrink-0 text-xs capitalize text-[var(--status-warning-fg)]"
-      : "shrink-0 text-xs capitalize text-[var(--foreground)]/60";
+      : "shrink-0 text-xs capitalize text-[var(--muted)]";
   const linkClass =
     tone === "warning"
       ? "min-w-0 truncate text-sm font-medium text-[var(--status-warning-fg)] underline-offset-2 hover:underline"
-      : "min-w-0 truncate text-sm font-medium text-[var(--brand-primary)] hover:underline";
+      : "min-w-0 truncate text-sm font-medium text-[var(--ink)] hover:underline";
   const moreClass =
     tone === "warning"
       ? "pt-1 text-xs text-[var(--status-warning-fg)]"
-      : "pt-1 text-xs text-[var(--foreground)]/60";
+      : "pt-1 text-xs text-[var(--muted)]";
 
   return (
     <div className="space-y-1.5">
@@ -46,7 +46,7 @@ export default function PrimaryCvUsedByPreview({
         className={
           tone === "warning"
             ? "text-xs font-medium text-[var(--status-warning-fg)]"
-            : "text-xs font-medium text-[var(--foreground)]/70"
+            : "text-xs font-medium text-[var(--muted)]"
         }
       >
         Applications using this CV

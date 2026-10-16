@@ -22,9 +22,9 @@ export default function Button({
 
   const variantStyles = {
     primary:
-      'rounded-full bg-[var(--brand-primary)] text-[var(--brand-primary-text)] hover:opacity-95 focus-visible:outline-[var(--brand-primary)]',
+      'rounded-full bg-[var(--ink)] text-[var(--white)] hover:opacity-95 focus-visible:outline-[var(--ink)]',
     secondary:
-      'rounded-xl bg-[var(--brand-secondary)] text-[var(--brand-secondary-text)] hover:opacity-90 focus-visible:outline-[var(--brand-primary)]',
+      'rounded-xl border border-[var(--ink)]/12 bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--white)] focus-visible:outline-[var(--ink)]',
     danger:
       'rounded-xl bg-[var(--status-danger-solid)] text-white hover:opacity-90 focus-visible:outline-[var(--status-danger-solid)]',
   };

@@ -172,7 +172,7 @@ export default function ProfilePictureModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,26rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,26rem)] -translate-x-1/2 -translate-y-1/2 rounded-[24px] border border-[var(--ink)]/10 bg-[var(--paper)] p-0 text-[var(--ink)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       onClose={onClose}
       onCancel={(e) => {
@@ -189,15 +189,18 @@ export default function ProfilePictureModal({
       }}
     >
       <div className="space-y-4 p-5">
-        <h2 id={titleId} className="text-lg font-semibold">
+        <h2
+          id={titleId}
+          className="font-heading text-lg font-semibold tracking-[-0.02em]"
+        >
           Profile picture
         </h2>
-        <p className="text-sm text-[var(--foreground)]/80">
+        <p className="text-sm text-[var(--muted)]">
           One picture per account. Changes are saved when you click Save
           picture — then you can show it on this application.
         </p>
         {submitPhase === "uploading" && (
-          <p className="text-sm text-[var(--foreground)]/80" role="status">
+          <p className="text-sm text-[var(--muted)]" role="status">
             Uploading…
           </p>
         )}
@@ -213,7 +216,7 @@ export default function ProfilePictureModal({
 
         <div className="flex flex-wrap items-center gap-4">
           {displayUrl ? (
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--foreground)]/10 ring-2 ring-[var(--foreground)]/10">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--ink)]/10 ring-2 ring-[var(--ink)]/10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={displayUrl}
@@ -224,7 +227,7 @@ export default function ProfilePictureModal({
               />
             </div>
           ) : (
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[var(--foreground)]/10 text-xs text-[var(--foreground)]/50">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[var(--ink)]/10 text-xs text-[var(--muted)]">
               No photo
             </div>
           )}

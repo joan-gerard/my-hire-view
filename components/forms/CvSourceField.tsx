@@ -95,20 +95,20 @@ export default function CvSourceField({
   const generatedName = slug ? getCvDownloadFilename(slug) : "CV-Slug.pdf";
 
   return (
-    <fieldset className="space-y-5 rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
-      <legend className="px-1 text-base font-semibold text-[var(--foreground)]">
+    <fieldset className="space-y-5 rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4">
+      <legend className="px-1 text-base font-semibold text-[var(--ink)]">
         CV
       </legend>
 
       {/* Current (edit) */}
       {isEdit && (
         <div className="space-y-2">
-          <p className="text-sm font-medium text-[var(--foreground)]">Current</p>
+          <p className="text-sm font-medium text-[var(--ink)]">Current</p>
           {currentUrl.trim() || currentFilename ? (
-            <div className="rounded-md border border-[var(--foreground)]/10 bg-[var(--secondary-background)] px-3 py-2.5">
+            <div className="rounded-md border border-[var(--ink)]/10 bg-[var(--paper)] px-3 py-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 {currentType && (
-                  <span className="shrink-0 rounded border border-[var(--foreground)]/15 px-1.5 py-0.5 text-xs text-[var(--foreground)]/70">
+                  <span className="shrink-0 rounded border border-[var(--ink)]/15 px-1.5 py-0.5 text-xs text-[var(--muted)]">
                     {currentType === "primary" ? "Primary library" : "Tailored"}
                   </span>
                 )}
@@ -117,12 +117,12 @@ export default function CvSourceField({
                     href={currentUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="min-w-0 truncate text-sm font-medium text-[var(--brand-primary)] hover:underline"
+                    className="min-w-0 truncate text-sm font-medium text-[var(--ink)] hover:underline"
                   >
                     {currentFilename?.trim() || "CV.pdf"}
                   </a>
                 ) : (
-                  <span className="min-w-0 truncate text-sm font-medium text-[var(--foreground)]">
+                  <span className="min-w-0 truncate text-sm font-medium text-[var(--ink)]">
                     {currentFilename?.trim() || "CV.pdf"}
                   </span>
                 )}
@@ -141,7 +141,7 @@ export default function CvSourceField({
                     <button
                       type="button"
                       onClick={() => void onRetryCvCheck()}
-                      className="mt-2 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-medium text-[var(--brand-primary-text)] hover:opacity-90"
+                      className="mt-2 rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--white)] hover:opacity-90"
                     >
                       Check again
                     </button>
@@ -150,7 +150,7 @@ export default function CvSourceField({
               )}
             </div>
           ) : (
-            <p className="text-sm text-[var(--foreground)]/70">
+            <p className="text-sm text-[var(--muted)]">
               No CV on this application yet.
             </p>
           )}
@@ -160,7 +160,7 @@ export default function CvSourceField({
       {/* Change CV */}
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-medium text-[var(--foreground)]">
+          <p className="text-sm font-medium text-[var(--ink)]">
             {isEdit ? "Change CV" : "Choose a CV"}
           </p>
           {canManageLibrary && (
@@ -174,7 +174,7 @@ export default function CvSourceField({
           )}
         </div>
         {!isEdit && (
-          <p className="text-sm text-[var(--foreground)]/70">
+          <p className="text-sm text-[var(--muted)]">
             Prefer a primary CV from your library so you can reuse it across
             applications.
           </p>
@@ -185,7 +185,7 @@ export default function CvSourceField({
               loading so a mid-load choice cannot be overwritten. Edit keeps the
               saved cv_type, so locking there only blocks switching. */}
           {lockCvSourceWhileLoading && (
-            <p className="text-xs text-[var(--foreground)]/60" role="status">
+            <p className="text-xs text-[var(--muted)]" role="status">
               Loading your CV library…
             </p>
           )}
@@ -199,13 +199,13 @@ export default function CvSourceField({
             <input
               type="radio"
               name="cvSource"
-              className="mt-1 h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+              className="mt-1 h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
               checked={mode === "primary"}
               disabled={lockCvSourceWhileLoading || !hasPrimaryCvs}
               onChange={() => onSwitchToPrimary()}
             />
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium text-[var(--foreground)]">
+              <span className="block text-sm font-medium text-[var(--ink)]">
                 {isEdit && currentType === "tailored"
                   ? "Replace with a primary CV"
                   : isEdit && currentType === "primary"
@@ -213,7 +213,7 @@ export default function CvSourceField({
                     : "Use a primary CV"}
               </span>
               {!hasPrimaryCvs && !primaryCvsLoading && (
-                <span className="mt-0.5 block text-xs text-[var(--foreground)]/60">
+                <span className="mt-0.5 block text-xs text-[var(--muted)]">
                   No primary CVs yet.
                   {canManageLibrary ? (
                     <>
@@ -221,7 +221,7 @@ export default function CvSourceField({
                       <button
                         type="button"
                         onClick={() => setLibraryModalOpen(true)}
-                        className="font-medium text-[var(--brand-primary)] hover:opacity-80"
+                        className="font-medium text-[var(--ink)] hover:opacity-80"
                       >
                         Upload one to your library
                       </button>
@@ -235,16 +235,16 @@ export default function CvSourceField({
           {mode === "primary" && (
             <div className="ml-6 space-y-2">
               {primaryCvsLoading ? (
-                <p className="text-sm text-[var(--foreground)]/60">
+                <p className="text-sm text-[var(--muted)]">
                   Loading primary CVs…
                 </p>
               ) : hasPrimaryCvs ? (
                 <>
-                  <label className="block text-sm text-[var(--foreground)]/80">
+                  <label className="block text-sm text-[var(--muted)]">
                     Choose from your library
                   </label>
                   <select
-                    className="w-full rounded-md border border-[var(--foreground)]/20 bg-[var(--secondary-background)] px-3 py-2 text-sm"
+                    className="w-full rounded-xl border-0 bg-[var(--white)] px-3 py-2 text-sm text-[var(--ink)] shadow-sm ring-1 ring-inset ring-[var(--ink)]/15 focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
                     value={selectedPrimaryId ?? ""}
                     onChange={(e) => onSelectPrimary(e.target.value)}
                   >
@@ -258,13 +258,13 @@ export default function CvSourceField({
                     ))}
                   </select>
                   {selectedPrimary && (
-                    <p className="text-xs text-[var(--foreground)]/60">
+                    <p className="text-xs text-[var(--muted)]">
                       {selectedPrimary.filename}{" "}
                       <a
                         href={selectedPrimary.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-[var(--brand-primary)]"
+                        className="font-medium text-[var(--ink)]"
                       >
                         View
                       </a>
@@ -293,16 +293,16 @@ export default function CvSourceField({
             <input
               type="radio"
               name="cvSource"
-              className="mt-1 h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+              className="mt-1 h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
               checked={mode === "tailored"}
               disabled={lockCvSourceWhileLoading}
               onChange={() => onSwitchToTailored()}
             />
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium text-[var(--foreground)]">
+              <span className="block text-sm font-medium text-[var(--ink)]">
                 Upload a different CV
               </span>
-              <span className="mt-0.5 block text-xs text-[var(--foreground)]/60">
+              <span className="mt-0.5 block text-xs text-[var(--muted)]">
                 Tailored files are removed from storage when you delete this
                 application or switch back to a primary CV.
               </span>
@@ -325,18 +325,18 @@ export default function CvSourceField({
         </div>
 
         {error && (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-[var(--status-danger-fg)]" role="alert">
             {error}
           </p>
         )}
       </div>
 
       {/* Download name */}
-      <div className="space-y-3 border-t border-[var(--foreground)]/10 pt-4">
-        <p className="text-sm font-medium text-[var(--foreground)]">
+      <div className="space-y-3 border-t border-[var(--ink)]/10 pt-4">
+        <p className="text-sm font-medium text-[var(--ink)]">
           Download name for recruiters
         </p>
-        <p className="text-sm text-[var(--foreground)]/70">
+        <p className="text-sm text-[var(--muted)]">
           Filename recruiters see when they download your CV.
         </p>
         <div className="flex flex-wrap gap-x-6 gap-y-3">
@@ -346,13 +346,13 @@ export default function CvSourceField({
               name="useOriginalCvFilename"
               checked={useOriginalCvFilename !== false}
               onChange={() => onUseOriginalCvFilenameChange(true)}
-              className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+              className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
             />
-            <span className="text-sm font-medium text-[var(--foreground)]">
+            <span className="text-sm font-medium text-[var(--ink)]">
               Original file name
             </span>
             {pendingOrCurrentName && (
-              <span className="text-xs text-[var(--foreground)]/60">
+              <span className="text-xs text-[var(--muted)]">
                 ({pendingOrCurrentName})
               </span>
             )}
@@ -363,17 +363,17 @@ export default function CvSourceField({
               name="useOriginalCvFilename"
               checked={useOriginalCvFilename === false}
               onChange={() => onUseOriginalCvFilenameChange(false)}
-              className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+              className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
             />
-            <span className="text-sm font-medium text-[var(--foreground)]">
+            <span className="text-sm font-medium text-[var(--ink)]">
               Generated name
             </span>
-            <span className="text-xs text-[var(--foreground)]/60">
+            <span className="text-xs text-[var(--muted)]">
               ({generatedName})
             </span>
           </label>
         </div>
-        <p className="text-xs text-[var(--foreground)]/60">
+        <p className="text-xs text-[var(--muted)]">
           Downloadable file name:{" "}
           {useOriginalCvFilename !== false && pendingOrCurrentName
             ? pendingOrCurrentName

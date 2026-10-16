@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ApplicationForm, { type ApplicationFormInitialData } from '@/components/forms/ApplicationForm';
+import {
+  ADMIN_PANEL_CLASS,
+  ADMIN_TIP_CLASS,
+} from '@/components/admin/admin-chrome';
 import type { ApplicationFormData, Application } from '@/lib/types/application';
 import type { Profile } from '@/lib/types/profile';
 import { publicIdFromUserMetadata } from '@/lib/auth/ensure-public-id';
@@ -169,9 +173,10 @@ export default function EditApplicationPage() {
 
   if (fetching) {
     return (
-      <div className="space-y-4">
-        <div className="h-8 w-64 animate-pulse rounded bg-[var(--foreground)]/10"></div>
-        <div className="h-96 animate-pulse rounded-lg bg-[var(--foreground)]/10"></div>
+      <div className="space-y-4" role="status" aria-busy="true" aria-live="polite">
+        <span className="sr-only">Loading application</span>
+        <div className="h-8 w-64 animate-pulse rounded-xl bg-[var(--ink)]/10"></div>
+        <div className="h-96 animate-pulse rounded-[24px] bg-[var(--paper)]"></div>
       </div>
     );
   }
@@ -203,17 +208,17 @@ export default function EditApplicationPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+      <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)]">
         Edit Application
       </h1>
-      <p className="rounded-xl border border-[var(--foreground)]/10 bg-[var(--brand-secondary)]/50 px-4 py-3 text-sm text-[var(--foreground)]">
+      <p className={ADMIN_TIP_CLASS}>
         The candidate details below (name, location, links) are from when this
         application was saved, not from your current profile. Updating your
         profile does not change those fields here. Your profile picture is
         live: if this application shows it, recruiters see the current picture
         from your profile.
       </p>
-      <div className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+      <div className={`${ADMIN_PANEL_CLASS} p-6`}>
         <ApplicationForm
           initialData={initialData}
           onSubmit={handleSubmit}

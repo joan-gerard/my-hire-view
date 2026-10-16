@@ -87,7 +87,7 @@ If a change seems to require editing a frozen file to “fix” product, stop an
 | 1 | Foundations (`globals.css`, fonts, shared UI) | **Done** |
 | 2 | Auth shell | **Done** |
 | 3 | Admin chrome + dashboard | **Done** |
-| 4 | Forms (create / edit / profile) | Not started |
+| 4 | Forms (create / edit / profile) | **Done** |
 | 5 | Public `/view` | Not started |
 | 6 | Docs + QA | Not started |
 
@@ -239,9 +239,11 @@ Highest interaction density — watch contrast on inputs, tips, validation.
 
 ### Checklist
 
-- [ ] Create / edit application forms
-- [ ] Profile form + picture / CV library chrome
-- [ ] Validation / tip / dialog contrast OK
+- [x] Create / edit application forms
+- [x] Profile form + picture / CV library chrome
+- [x] Validation / tip / dialog contrast OK
+
+**Done (2026-10-16):** White inputs on paper panels; page shells + tips via `admin-chrome`; Button secondary bordered paper; ConfirmDialog + picture/CV modals on paper/ink; form field chrome remapped to ink/muted/white. Public `/view` stays Phase 5.
 
 ---
 
@@ -307,3 +309,4 @@ Prefer **one PR** with phased commits matching Phases 1→6. If the diff balloon
 | 2026-10-15 | Promoted Reslink-style demo auth to production `/login` + `/signup`; demos redirect | Phase 3 — admin chrome + dashboard |
 | 2026-10-15 | Removed `/demo/auth-reslink/*` after layout promotion to production | Phase 3 — admin chrome + dashboard |
 | 2026-10-16 | Phase 3 done: admin-chrome tokens, header, empty/search/cards/pagination, checklist + legend | Phase 4 — forms (create / edit / profile) |
+| 2026-10-16 | Phase 4 done: form shells, white inputs, tips/dialogs, profile + CV library chrome | Phase 5 — public `/view` |

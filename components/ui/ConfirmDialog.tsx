@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import {
+  ADMIN_PRIMARY_CLASS,
+  ADMIN_SECONDARY_CLASS,
+} from "@/components/admin/admin-chrome";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -73,7 +77,7 @@ export default function ConfirmDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,28rem)] max-h-[min(90vh,36rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,28rem)] max-h-[min(90vh,36rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[24px] border border-[var(--ink)]/10 bg-[var(--paper)] p-0 text-[var(--ink)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       aria-describedby={messageId}
       onClick={(e) => {
@@ -83,10 +87,13 @@ export default function ConfirmDialog({
       }}
     >
       <div className="space-y-4 p-5">
-        <h2 id={titleId} className="text-lg font-semibold">
+        <h2
+          id={titleId}
+          className="font-heading text-lg font-semibold tracking-[-0.02em]"
+        >
           {title}
         </h2>
-        <p id={messageId} className="text-sm text-[var(--foreground)]/80">
+        <p id={messageId} className="text-sm text-[var(--muted)]">
           {message}
         </p>
         {children}
@@ -95,7 +102,7 @@ export default function ConfirmDialog({
             <button
               type="button"
               onClick={requestDismiss}
-              className="rounded-xl border border-[var(--foreground)]/15 bg-[var(--brand-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-secondary-text)] hover:opacity-90"
+              className={ADMIN_SECONDARY_CLASS}
             >
               {cancelLabel}
             </button>
@@ -106,7 +113,7 @@ export default function ConfirmDialog({
               confirmedRef.current = true;
               onConfirm();
             }}
-            className="rounded-xl bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95"
+            className={ADMIN_PRIMARY_CLASS}
           >
             {confirmLabel}
           </button>

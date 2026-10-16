@@ -2,6 +2,7 @@
 
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
+import { ADMIN_PANEL_CLASS } from "@/components/admin/admin-chrome";
 import PrimaryCvUsedByPreview from "@/components/forms/PrimaryCvUsedByPreview";
 import type { PrimaryCv, PrimaryCvApplicationPreview } from "@/lib/types/primary-cv";
 import {
@@ -226,10 +227,10 @@ export default function PrimaryCvLibrarySection({
     <>
       {!embedded && (
         <>
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">
+          <h2 className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
             Primary CVs
           </h2>
-          <p className="mt-1 text-sm text-[var(--foreground)]/60">
+          <p className="mt-1 text-sm text-[var(--muted)]">
             Upload up to {PRIMARY_CV_MAX_PER_USER} résumé PDFs to reuse on new
             applications. Deleting a primary CV removes it from storage;
             applications that still pointed at it will show a missing-CV warning
@@ -249,28 +250,28 @@ export default function PrimaryCvLibrarySection({
 
       {loading ? (
         <p
-          className={`${embedded && !error ? "mt-0" : "mt-4"} text-sm text-[var(--foreground)]/60`}
+          className={`${embedded && !error ? "mt-0" : "mt-4"} text-sm text-[var(--muted)]`}
         >
           Loading…
         </p>
       ) : (
         <ul className={`${embedded && !error ? "mt-0" : "mt-4"} space-y-2`}>
           {items.length === 0 && (
-            <li className="text-sm text-[var(--foreground)]/70">
+            <li className="text-sm text-[var(--muted)]">
               No primary CVs yet. Upload one to reuse it on applications.
             </li>
           )}
           {items.map((cv) => (
             <li
               key={cv.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--foreground)]/10 bg-[var(--background)] px-3 py-2"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--ink)]/10 bg-[var(--white)] px-3 py-2"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-[var(--foreground)]">
+                <p className="truncate text-sm font-medium text-[var(--ink)]">
                   {cv.label?.trim() || cv.filename}
                 </p>
                 {cv.label?.trim() && (
-                  <p className="truncate text-xs text-[var(--foreground)]/60">
+                  <p className="truncate text-xs text-[var(--muted)]">
                     {cv.filename}
                   </p>
                 )}
@@ -280,7 +281,7 @@ export default function PrimaryCvLibrarySection({
                   href={cv.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-medium text-[var(--brand-primary)] hover:opacity-80"
+                  className="text-sm font-medium text-[var(--ink)] hover:opacity-80"
                 >
                   View
                 </a>
@@ -367,7 +368,7 @@ export default function PrimaryCvLibrarySection({
           {uploading ? "Uploading…" : "Upload primary CV"}
         </Button>
         {atLimit && (
-          <p className="mt-2 text-xs text-[var(--foreground)]/60">
+          <p className="mt-2 text-xs text-[var(--muted)]">
             Limit of {PRIMARY_CV_MAX_PER_USER} reached. Delete one to upload
             another.
           </p>
@@ -400,7 +401,7 @@ export default function PrimaryCvLibrarySection({
   }
 
   return (
-    <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+    <section className={`${ADMIN_PANEL_CLASS} p-6`}>
       {body}
     </section>
   );

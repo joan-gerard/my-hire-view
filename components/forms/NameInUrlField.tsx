@@ -12,11 +12,11 @@ export default function NameInUrlField({
   onChange,
 }: NameInUrlFieldProps) {
   return (
-    <fieldset className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
-      <legend className="px-1 text-base font-semibold text-[var(--foreground)]">
+    <fieldset className="rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4">
+      <legend className="px-1 text-base font-semibold text-[var(--ink)]">
         Name in URL
       </legend>
-      <p className="mt-0.5 mb-3 text-sm text-[var(--foreground)]/80">
+      <p className="mt-0.5 mb-3 text-sm text-[var(--muted)]">
         Choose where your name appears in the shareable link (if at all).
       </p>
       <div className="flex flex-wrap gap-x-6 gap-y-3">
@@ -26,9 +26,9 @@ export default function NameInUrlField({
             name="slugNamePosition"
             checked={value === null}
             onChange={() => onChange(null)}
-            className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+            className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
           />
-          <span className="text-base font-medium text-[var(--foreground)]">None</span>
+          <span className="text-base font-medium text-[var(--ink)]">None</span>
         </label>
         <label className="inline-flex cursor-pointer items-center gap-2.5">
           <input
@@ -36,10 +36,10 @@ export default function NameInUrlField({
             name="slugNamePosition"
             checked={value === "start"}
             onChange={() => onChange("start")}
-            className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+            className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
           />
-          <span className="text-base font-medium text-[var(--foreground)]">At start</span>
-          <span className="text-sm text-[var(--foreground)]/60">
+          <span className="text-base font-medium text-[var(--ink)]">At start</span>
+          <span className="text-sm text-[var(--muted)]">
             (e.g. john-doe-company-role)
           </span>
         </label>
@@ -49,10 +49,10 @@ export default function NameInUrlField({
             name="slugNamePosition"
             checked={value === "end"}
             onChange={() => onChange("end")}
-            className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+            className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
           />
-          <span className="text-base font-medium text-[var(--foreground)]">At end</span>
-          <span className="text-sm text-[var(--foreground)]/60">
+          <span className="text-base font-medium text-[var(--ink)]">At end</span>
+          <span className="text-sm text-[var(--muted)]">
             (e.g. company-role-john-doe)
           </span>
         </label>

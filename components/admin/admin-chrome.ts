@@ -15,6 +15,14 @@ export const ADMIN_SECONDARY_CLASS =
 export const ADMIN_DISABLED_CLASS =
   'inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--ink)]/10 bg-[var(--paper)] px-3 py-1.5 text-sm font-medium text-[var(--muted)]';
 
-/** Soft panel used for cards, empty states, checklist. */
+/** Soft panel used for cards, empty states, checklist, form shells. */
 export const ADMIN_PANEL_CLASS =
   'rounded-[24px] border border-[var(--ink)]/10 bg-[var(--paper)]';
+
+/** Inline tip / nudge banner on form pages. */
+export const ADMIN_TIP_CLASS =
+  'rounded-xl border border-[var(--ink)]/10 bg-[var(--paper)] px-4 py-3 text-sm text-[var(--ink)]';
+
+/** Nested fieldset / section inside a paper panel (white on paper). */
+export const ADMIN_FIELDSET_CLASS =
+  'rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4';

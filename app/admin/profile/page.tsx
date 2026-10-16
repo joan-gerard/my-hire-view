@@ -1,6 +1,10 @@
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import { resolvePublicIdFromLoadedProfile } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/server";
+import {
+  ADMIN_PANEL_CLASS,
+  ADMIN_TIP_CLASS,
+} from "@/components/admin/admin-chrome";
 import PublicIdAccountField from "@/components/admin/PublicIdAccountField";
 import PrimaryCvLibrarySection from "@/components/forms/PrimaryCvLibrarySection";
 import ProfileForm from "@/components/forms/ProfileForm";
@@ -81,27 +85,29 @@ export default async function AdminProfilePage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">Profile</h1>
+      <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)]">
+        Profile
+      </h1>
 
-      <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-[var(--foreground)]">
+      <section className={`${ADMIN_PANEL_CLASS} p-6`}>
+        <h2 className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
           Account
         </h2>
         <dl className="mt-4 space-y-3">
           <div>
-            <dt className="text-sm font-medium text-[var(--foreground)]/60">
+            <dt className="text-sm font-medium text-[var(--muted)]">
               Email
             </dt>
-            <dd className="mt-1 text-sm text-[var(--foreground)]">
+            <dd className="mt-1 text-sm text-[var(--ink)]">
               {user.email ?? "—"}
             </dd>
           </div>
           {user.created_at && (
             <div>
-              <dt className="text-sm font-medium text-[var(--foreground)]/60">
+              <dt className="text-sm font-medium text-[var(--muted)]">
                 Member since
               </dt>
-              <dd className="mt-1 text-sm text-[var(--foreground)]">
+              <dd className="mt-1 text-sm text-[var(--ink)]">
                 {new Date(user.created_at).toLocaleDateString(undefined, {
                   dateStyle: "long",
                 })}
@@ -112,16 +118,16 @@ export default async function AdminProfilePage() {
         </dl>
       </section>
 
-      <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-[var(--foreground)]">
+      <section className={`${ADMIN_PANEL_CLASS} p-6`}>
+        <h2 className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
           Profile details
         </h2>
-        <p className="mt-1 text-sm text-[var(--foreground)]/60">
+        <p className="mt-1 text-sm text-[var(--muted)]">
           This info is used when you create or update applications so recruiters
           see your name and links.
         </p>
         {!profile && (
-          <p className="mt-2 rounded-md bg-[var(--brand-secondary)]/40 px-3 py-2 text-sm text-[var(--foreground)]">
+          <p className={`mt-2 ${ADMIN_TIP_CLASS}`}>
             Your name is prefilled from signup. Save your profile to finish
             creating your profile record (location, links, and picture).
           </p>
@@ -136,12 +142,12 @@ export default async function AdminProfilePage() {
 
       <PrimaryCvLibrarySection />
 
-      <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-[var(--foreground)]">
+      <section className={`${ADMIN_PANEL_CLASS} p-6`}>
+        <h2 className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
           Applications
         </h2>
-        <p className="mt-2 text-sm text-[var(--foreground)]/80">
-          You have <strong>{applicationCount}</strong> application
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          You have <strong className="font-medium text-[var(--ink)]">{applicationCount}</strong> application
           {applicationCount !== 1 ? "s" : ""} in total
           {applicationCount > 0 && statusBreakdown && (
             <> ({statusBreakdown})</>
@@ -150,7 +156,7 @@ export default async function AdminProfilePage() {
         </p>
         <Link
           href="/admin"
-          className="mt-4 inline-block text-sm font-medium text-[var(--brand-primary)] hover:opacity-80"
+          className="mt-4 inline-block text-sm font-medium text-[var(--ink)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
         >
           View dashboard →
         </Link>

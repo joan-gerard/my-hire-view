@@ -276,29 +276,29 @@ export default function ProfileForm({
         maxLength={PROFILE_URL_MAX_LENGTH}
       />
 
-      <fieldset className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
-        <legend className="px-1 text-base font-semibold text-[var(--foreground)]">
+      <fieldset className="rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4">
+        <legend className="px-1 text-base font-semibold text-[var(--ink)]">
           Profile picture
         </legend>
-        <p className="mt-0.5 mb-3 text-sm text-[var(--foreground)]/80">
+        <p className="mt-0.5 mb-3 text-sm text-[var(--muted)]">
           One picture per account. The file is uploaded when you save. You can
           choose whether to show it on each application when creating or
           editing.
         </p>
         {submitPhase === "uploading" && (
-          <p className="mb-3 text-sm text-[var(--foreground)]/80" role="status">
+          <p className="mb-3 text-sm text-[var(--muted)]" role="status">
             Uploading…
           </p>
         )}
         {hadProfilePictureOnLoad && (
-          <p className="mb-3 text-sm text-[var(--foreground)]/80">
+          <p className="mb-3 text-sm text-[var(--muted)]">
             When you change your profile picture and save, applications that
             show your picture will use the new image automatically.
           </p>
         )}
         {hasProfilePicture ? (
           <div className="flex flex-wrap items-center gap-4">
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--foreground)]/10 ring-2 ring-[var(--foreground)]/10">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--ink)]/10 ring-2 ring-[var(--ink)]/10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={displayPictureUrl!}
@@ -375,7 +375,7 @@ export default function ProfileForm({
           <span
             id="save-profile-disabled-reason"
             role="tooltip"
-            className="pointer-events-none absolute bottom-full left-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--foreground)] px-2.5 py-1.5 text-xs text-[var(--background)] shadow-lg group-hover:block group-focus-within:block"
+            className="pointer-events-none absolute bottom-full left-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-xs text-[var(--white)] shadow-lg group-hover:block group-focus-within:block"
           >
             {disabledReason}
           </span>

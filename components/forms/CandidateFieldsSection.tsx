@@ -64,16 +64,16 @@ export default function CandidateFieldsSection({
   const includedCount = FIELDS.filter(({ key }) => include[key]).length;
 
   return (
-    <section className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
+    <section className="rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-[var(--foreground)]">
+          <h3 className="text-sm font-semibold text-[var(--ink)]">
             Info shown to recruiters{' '}
-            <span className="font-normal text-[var(--foreground)]/60">
+            <span className="font-normal text-[var(--muted)]">
               ({includedCount}/{TOTAL_FIELDS})
             </span>
           </h3>
-          <p className="mt-1 text-xs text-[var(--foreground)]/60">
+          <p className="mt-1 text-xs text-[var(--muted)]">
             Toggle off any field you do not want to share. Edits here apply only to this
             application.
           </p>
@@ -81,7 +81,7 @@ export default function CandidateFieldsSection({
         <button
           type="button"
           onClick={toggleExpanded}
-          className="inline-flex shrink-0 cursor-pointer rounded p-1 text-[var(--foreground)]/70 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]"
+          className="inline-flex shrink-0 cursor-pointer rounded p-1 text-[var(--muted)] hover:bg-[var(--ink)]/5 hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
           aria-expanded={expanded}
           aria-label={expanded ? 'Hide recruiter info fields' : 'Show recruiter info fields'}
           title={expanded ? 'Hide fields' : 'Show fields'}

@@ -38,7 +38,7 @@ export default function PrimaryCvLibraryModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,32rem)] max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,32rem)] max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[24px] border border-[var(--ink)]/10 bg-[var(--paper)] p-0 text-[var(--ink)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => {
@@ -47,10 +47,13 @@ export default function PrimaryCvLibraryModal({
     >
       <div className="space-y-4 p-5">
         <div>
-          <h2 id={titleId} className="text-lg font-semibold">
+          <h2
+            id={titleId}
+            className="font-heading text-lg font-semibold tracking-[-0.02em]"
+          >
             Primary CV library
           </h2>
-          <p className="mt-1 text-sm text-[var(--foreground)]/80">
+          <p className="mt-1 text-sm text-[var(--muted)]">
             Upload up to {PRIMARY_CV_MAX_PER_USER} résumé PDFs to reuse across
             applications. Changes are saved to your library immediately.
           </p>
@@ -63,7 +66,7 @@ export default function PrimaryCvLibraryModal({
           />
         )}
 
-        <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--foreground)]/10 pt-4">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--ink)]/10 pt-4">
           <Button type="button" variant="secondary" onClick={onClose}>
             Done
           </Button>
