@@ -75,7 +75,7 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 - **E4** swaps annual → quarterly on the working draft + `#pricing` UI (can ship early; not a lock)
 - Product lock (**E1**) before Stripe/gates (**E2**) — lock **monthly + quarterly** (no annual)
 - **A3** (confirm email in prod) is ops with no code — last config before public launch
-- **`F20-020`** is launch-gated and stays outside the 16-PR count: counsel-reviewed Terms, Privacy, and Cookies are required before public launch, but they are not an open PR group
+- **`F20-020`** is launch-gated and stays outside the 17-PR count: counsel-reviewed Terms, Privacy, and Cookies are required before public launch, but they are not an open PR group
 - Doing **E2** earlier wastes work if tiers/prices still change
 
 ---
