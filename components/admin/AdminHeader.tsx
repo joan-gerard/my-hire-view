@@ -33,12 +33,12 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
 
   return (
     <nav
-      className="sticky top-0 z-30 border-b border-[var(--foreground)]/10 bg-[var(--secondary-background)]/95 shadow-sm backdrop-blur-sm"
+      className="sticky top-0 z-30 border-b border-[var(--ink)]/10 bg-[var(--white)]/95 backdrop-blur-sm"
       aria-label="Admin"
     >
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="relative flex h-16 items-center">
-          <div className="flex flex-1 items-center gap-6">
+        <div className="relative flex h-[72px] items-center">
+          <div className="flex flex-1 items-center gap-2">
             {ADMIN_NAV_LINKS.map(({ href, label }) => {
               const isActive =
                 href === "/admin"
@@ -48,10 +48,10 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
                 <Link
                   key={href}
                   href={href}
-                  className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
+                  className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${
                     isActive
-                      ? "border-[var(--brand-primary)] text-[var(--foreground)]"
-                      : "border-transparent text-[var(--foreground)]/80 hover:border-[var(--foreground)]/20 hover:text-[var(--foreground)]"
+                      ? "bg-[var(--paper)] text-[var(--ink)]"
+                      : "text-[var(--muted)] hover:text-[var(--ink)]"
                   }`}
                 >
                   {label}
@@ -63,7 +63,7 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
             <LogoBlack />
           </div>
           <div className="flex flex-1 items-center justify-end gap-3">
-            <span className="text-sm text-[var(--foreground)]/80">
+            <span className="hidden text-sm text-[var(--muted)] sm:inline">
               {user.email}
             </span>
             <SecondaryButton label="Sign Out" onClick={handleSignOut} />

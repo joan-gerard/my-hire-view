@@ -223,11 +223,13 @@ Reuse fonts via import from `app/(home)/fonts.ts` (or extract a shared fonts mod
 
 ### Checklist
 
-- [ ] Header + logo
-- [ ] Empty state, search, cards
-- [ ] Onboarding checklist + legend
-- [ ] Status icons readable on new surfaces
-- [ ] Prefer token/class updates over one-off hex
+- [x] Header + logo
+- [x] Empty state, search, cards
+- [x] Onboarding checklist + legend
+- [x] Status icons readable on new surfaces
+- [x] Prefer token/class updates over one-off hex
+
+**Done (2026-10-16):** Shared `admin-chrome.ts` (ink pill primary, paper secondary/panel); AdminHeader nav pills + paper Sign Out; dashboard empty/search/cards/pagination/skeleton; onboarding checklist + status legend on paper/ink with lime progress accents. Forms stay Phase 4.
 
 ---
 
@@ -304,3 +306,4 @@ Prefer **one PR** with phased commits matching Phases 1→6. If the diff balloon
 | 2026-10-15 | Phase 2 review fixes: tab-order docs, input focus-visible outline, brand/form safe scroll/center | Phase 3 — admin chrome + dashboard |
 | 2026-10-15 | Promoted Reslink-style demo auth to production `/login` + `/signup`; demos redirect | Phase 3 — admin chrome + dashboard |
 | 2026-10-15 | Removed `/demo/auth-reslink/*` after layout promotion to production | Phase 3 — admin chrome + dashboard |
+| 2026-10-16 | Phase 3 done: admin-chrome tokens, header, empty/search/cards/pagination, checklist + legend | Phase 4 — forms (create / edit / profile) |

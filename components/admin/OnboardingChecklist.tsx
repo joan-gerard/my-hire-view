@@ -278,17 +278,17 @@ export default function OnboardingChecklist({
       <section
         id={panelId}
         hidden={!prefs.expanded}
-        className="pointer-events-auto max-h-[min(70vh,32rem)] w-[min(100vw-2rem,22rem)] overflow-y-auto rounded-2xl border border-[var(--foreground)]/12 bg-[var(--secondary-background)] p-4 shadow-lg"
+        className="pointer-events-auto max-h-[min(70vh,32rem)] w-[min(100vw-2rem,22rem)] overflow-y-auto rounded-[24px] border border-[var(--ink)]/10 bg-[var(--paper)] p-4 shadow-lg"
         aria-labelledby="onboarding-checklist-heading"
       >
         <div className="min-w-0">
           <h2
             id="onboarding-checklist-heading"
-            className="text-base font-semibold text-[var(--foreground)]"
+            className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]"
           >
             Getting started
           </h2>
-          <p className="mt-0.5 text-sm text-[var(--foreground)]/60">
+          <p className="mt-0.5 text-sm text-[var(--muted)]">
             {allDone ? 'All set' : `${completed} of ${total} complete`}
           </p>
         </div>
@@ -296,9 +296,9 @@ export default function OnboardingChecklist({
           {steps.map((step) => (
             <li key={step.id}>
               {step.done ? (
-                <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--foreground)]/55">
+                <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--muted)]">
                   <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--status-success-bg)] text-[var(--status-success-fg)]"
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--lime)] text-[var(--ink)]"
                     aria-hidden
                   >
                     <CheckIcon className="h-3.5 w-3.5" />
@@ -309,9 +309,9 @@ export default function OnboardingChecklist({
                   <span className="sr-only">Completed</span>
                 </div>
               ) : step.skipped ? (
-                <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--foreground)]/45">
+                <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--muted)]">
                   <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--foreground)]/25"
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--ink)]/25"
                     aria-hidden
                   />
                   <p className="min-w-0 flex-1 text-sm font-medium line-through">
@@ -323,20 +323,20 @@ export default function OnboardingChecklist({
                 <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
                   <Link
                     href={step.href}
-                    className="flex min-w-0 flex-1 items-center gap-3 text-[var(--foreground)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1"
+                    className="flex min-w-0 flex-1 items-center gap-3 text-[var(--ink)] hover:opacity-90 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
                   >
                     <span
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--foreground)]/25"
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--ink)]/25"
                       aria-hidden
                     />
-                    <p className="min-w-0 text-sm font-medium text-[var(--brand-primary)]">
+                    <p className="min-w-0 text-sm font-medium text-[var(--ink)]">
                       {step.label}
                     </p>
                   </Link>
                   <button
                     type="button"
                     onClick={() => skipStep(step.id)}
-                    className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+                    className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-[var(--muted)] hover:bg-[var(--white)] hover:text-[var(--ink)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
                   >
                     Skip
                   </button>
@@ -345,12 +345,12 @@ export default function OnboardingChecklist({
             </li>
           ))}
         </ol>
-        <div className="mt-3 flex justify-end border-t border-[var(--foreground)]/10 pt-3">
+        <div className="mt-3 flex justify-end border-t border-[var(--ink)]/10 pt-3">
           {allDone ? (
             <button
               type="button"
               onClick={dismiss}
-              className="rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+              className="rounded-md px-2 py-1 text-xs font-medium text-[var(--muted)] hover:bg-[var(--white)] hover:text-[var(--ink)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
             >
               Dismiss
             </button>
@@ -358,7 +358,7 @@ export default function OnboardingChecklist({
             <button
               type="button"
               onClick={skipAll}
-              className="rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+              className="rounded-md px-2 py-1 text-xs font-medium text-[var(--muted)] hover:bg-[var(--white)] hover:text-[var(--ink)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
             >
               Skip all
             </button>
@@ -373,8 +373,8 @@ export default function OnboardingChecklist({
         onClick={() => setExpandedAndPersist(!prefs.expanded)}
         className={
           prefs.expanded
-            ? 'pointer-events-auto inline-flex items-center gap-1 rounded-md border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/70 shadow-lg hover:bg-[var(--foreground)]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]'
-            : 'pointer-events-auto inline-flex items-center gap-2 rounded-full border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] shadow-lg hover:bg-[var(--foreground)]/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2'
+            ? 'pointer-events-auto inline-flex items-center gap-1 rounded-xl border border-[var(--ink)]/12 bg-[var(--paper)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] shadow-lg hover:bg-[var(--white)] hover:text-[var(--ink)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]'
+            : 'pointer-events-auto inline-flex items-center gap-2 rounded-full border border-[var(--ink)]/12 bg-[var(--paper)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] shadow-lg hover:bg-[var(--white)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]'
         }
         aria-expanded={prefs.expanded}
         aria-controls={panelId}
@@ -387,10 +387,10 @@ export default function OnboardingChecklist({
         ) : (
           <>
             Getting started
-            <span className="rounded-full bg-[var(--brand-primary)]/15 px-2 py-0.5 text-xs font-medium text-[var(--brand-primary)]">
+            <span className="rounded-full bg-[var(--lime)] px-2 py-0.5 text-xs font-medium text-[var(--ink)]">
               {allDone ? 'Done' : `${completed}/${total}`}
             </span>
-            <ChevronUpIcon className="h-4 w-4 text-[var(--foreground)]/60" />
+            <ChevronUpIcon className="h-4 w-4 text-[var(--muted)]" />
           </>
         )}
       </button>

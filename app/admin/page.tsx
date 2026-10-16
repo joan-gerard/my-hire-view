@@ -11,6 +11,10 @@ import AdminDashboardError from '@/components/admin/AdminDashboardError';
 import AdminDashboardEmpty from '@/components/admin/AdminDashboardEmpty';
 import { useApplications } from '@/hooks/useApplications';
 import { QuestionIcon } from '@/components/admin/icons';
+import {
+  ADMIN_PRIMARY_CLASS,
+  ADMIN_SECONDARY_CLASS,
+} from '@/components/admin/admin-chrome';
 
 export default function AdminDashboard() {
   const [legendOpen, setLegendOpen] = useState(false);
@@ -56,14 +60,14 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+          <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)]">
             Applications
           </h1>
           {showListChrome ? (
             <button
               type="button"
               onClick={() => setLegendOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--foreground)]/12 bg-[var(--brand-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-secondary-text)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1"
+              className={ADMIN_SECONDARY_CLASS}
               aria-haspopup="dialog"
             >
               <QuestionIcon className="h-4 w-4" />
@@ -71,10 +75,7 @@ export default function AdminDashboard() {
             </button>
           ) : null}
         </div>
-        <Link
-          href="/admin/new"
-          className="rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-        >
+        <Link href="/admin/new" className={ADMIN_PRIMARY_CLASS}>
           Create New Application
         </Link>
       </div>

@@ -78,8 +78,8 @@ export function ApplicationStatusIconBadge({
         description={display.description}
         decorative={decorative}
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)]/10">
-          <ArchiveIcon className="h-5 w-5 text-[var(--foreground)]/55" />
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--ink)]/10">
+          <ArchiveIcon className="h-5 w-5 text-[var(--muted)]" />
         </span>
       </StatusBadgeShell>
     );

@@ -1,5 +1,7 @@
 'use client';
 
+import { ADMIN_SECONDARY_CLASS } from '@/components/admin/admin-chrome';
+
 interface ApplicationsPaginationProps {
   page: number;
   totalPages: number;
@@ -35,7 +37,7 @@ export default function ApplicationsPagination({
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-[var(--foreground)]/60">
+      <p className="text-sm text-[var(--muted)]">
         Showing {from}–{to} of {total}
       </p>
       <div className="flex items-center gap-2">
@@ -43,18 +45,18 @@ export default function ApplicationsPagination({
           type="button"
           onClick={onPrev}
           disabled={!hasPrevPage || isFetching}
-          className="rounded-xl border border-[var(--foreground)]/12 bg-[var(--brand-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-secondary-text)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          className={ADMIN_SECONDARY_CLASS}
         >
           Previous
         </button>
-        <span className="min-w-20 text-center text-sm text-[var(--foreground)]/70">
+        <span className="min-w-20 text-center text-sm text-[var(--muted)]">
           Page {page} of {totalPages}
         </span>
         <button
           type="button"
           onClick={onNext}
           disabled={!hasNextPage || isFetching}
-          className="rounded-xl border border-[var(--foreground)]/12 bg-[var(--brand-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-secondary-text)] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          className={ADMIN_SECONDARY_CLASS}
         >
           Next
         </button>

@@ -10,10 +10,11 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
     <div className="relative">
       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
         <svg
-          className="h-5 w-5 text-[var(--foreground)]/50"
+          className="h-5 w-5 text-[var(--muted)]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden
         >
           <path
             strokeLinecap="round"
@@ -24,10 +25,11 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
         </svg>
       </div>
       <input
-        type="text"
+        type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="block w-full rounded-xl border-0 bg-[var(--surface)] py-2 pl-10 pr-3 text-[var(--foreground)] ring-1 ring-inset ring-[var(--foreground)]/15 placeholder:text-[var(--foreground)]/45 focus:ring-2 focus:ring-inset focus:ring-[var(--brand-accent-1)] sm:text-sm sm:leading-6"
+        aria-label="Search applications"
+        className="block w-full rounded-xl border-0 bg-[var(--paper)] py-2.5 pl-10 pr-3 text-[var(--ink)] ring-1 ring-inset ring-[var(--ink)]/10 placeholder:text-[var(--muted)] focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] sm:text-sm sm:leading-6"
         placeholder="Search by company, role, or slug..."
       />
     </div>

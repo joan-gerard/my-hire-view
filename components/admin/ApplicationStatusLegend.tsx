@@ -10,7 +10,7 @@ import {
   ApplicationStatusIconBadge,
   MissingCvBadge,
 } from '@/components/admin/ApplicationStatusIcon';
-import Button from '@/components/ui/Button';
+import { ADMIN_SECONDARY_CLASS } from '@/components/admin/admin-chrome';
 
 export type ApplicationStatusLegendProps = {
   open: boolean;
@@ -81,7 +81,7 @@ export default function ApplicationStatusLegend({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,32rem)] max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[var(--foreground)]/15 bg-[var(--secondary-background)] p-0 text-[var(--foreground)] shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,32rem)] max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[24px] border border-[var(--ink)]/10 bg-[var(--paper)] p-0 text-[var(--ink)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       onClick={(e) => {
         if (e.target === dialogRef.current) {
@@ -95,11 +95,11 @@ export default function ApplicationStatusLegend({
             ref={titleRef}
             id={titleId}
             tabIndex={-1}
-            className="text-lg font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]"
+            className="font-heading text-lg font-semibold tracking-[-0.02em] outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
           >
             Status icons & draft actions
           </h2>
-          <p className="mt-1 text-sm text-[var(--foreground)]/80">
+          <p className="mt-1 text-sm text-[var(--muted)]">
             What the icons on each application card mean, and how draft actions
             differ from a live share link.
           </p>
@@ -108,7 +108,7 @@ export default function ApplicationStatusLegend({
         <section aria-labelledby={statusHeadingId}>
           <h3
             id={statusHeadingId}
-            className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--foreground)]/55"
+            className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]"
           >
             Status icons
           </h3>
@@ -121,10 +121,10 @@ export default function ApplicationStatusLegend({
                   decorative
                 />
                 <div className="min-w-0 pt-1">
-                  <p className="font-medium text-[var(--foreground)]">
+                  <p className="font-medium text-[var(--ink)]">
                     {item.label}
                   </p>
-                  <p className="mt-0.5 text-[var(--foreground)]/70">
+                  <p className="mt-0.5 text-[var(--muted)]">
                     {item.description}
                   </p>
                 </div>
@@ -135,10 +135,10 @@ export default function ApplicationStatusLegend({
                 <MissingCvBadge />
               </div>
               <div className="min-w-0 pt-1">
-                <p className="font-medium text-[var(--foreground)]">
+                <p className="font-medium text-[var(--ink)]">
                   {CV_MISSING_LEGEND.label}
                 </p>
-                <p className="mt-0.5 text-[var(--foreground)]/70">
+                <p className="mt-0.5 text-[var(--muted)]">
                   {CV_MISSING_LEGEND.description}
                 </p>
               </div>
@@ -149,17 +149,17 @@ export default function ApplicationStatusLegend({
         <section aria-labelledby={draftHeadingId}>
           <h3
             id={draftHeadingId}
-            className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--foreground)]/55"
+            className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]"
           >
             Draft card actions
           </h3>
           <ul className="space-y-2.5 text-sm">
             {DRAFT_ACTION_LEGEND_ITEMS.map((item) => (
               <li key={item.label}>
-                <p className="font-medium text-[var(--foreground)]">
+                <p className="font-medium text-[var(--ink)]">
                   {item.label}
                 </p>
-                <p className="mt-0.5 text-[var(--foreground)]/70">
+                <p className="mt-0.5 text-[var(--muted)]">
                   {item.description}
                 </p>
               </li>
@@ -167,10 +167,14 @@ export default function ApplicationStatusLegend({
           </ul>
         </section>
 
-        <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--foreground)]/10 pt-4">
-          <Button type="button" variant="secondary" onClick={requestDismiss}>
+        <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--ink)]/10 pt-4">
+          <button
+            type="button"
+            onClick={requestDismiss}
+            className={ADMIN_SECONDARY_CLASS}
+          >
             Close
-          </Button>
+          </button>
         </div>
       </div>
     </dialog>
