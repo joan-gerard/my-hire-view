@@ -13,7 +13,7 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 - [ ] With at least one application, `/admin` header shows a **What do these icons mean?** button (next to Applications)
 - [ ] Clicking it opens a modal titled **Status icons & draft actions**
-- [ ] Modal lists: Draft, Active (not viewed yet), Active (viewed), Archived, and CV missing — with matching icons/badge
+- [ ] Modal lists: Draft, Active (not viewed yet), Active (viewed), Archived, and CV missing — with matching color dots / CV missing badge
 - [ ] Same modal explains draft actions: **Publish**, **Preview**, **Publish to share**
 - [ ] Close via **Close** button, Escape, or backdrop click; focus returns to the page
 - [ ] On open, focus moves into the modal on the heading (not the Close button). Mouse open should not show a selection-style ring; a `focus-visible` outline remains available for keyboard focus indication
@@ -21,11 +21,11 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 ## Cards stay consistent
 
-- [ ] Draft card: amber clock; **Publish**; **Publish to share**; **Preview** (not View Application)
-- [ ] Active, never viewed: green clock
-- [ ] Active, viewed at least once: green check
-- [ ] Archived: grey archive icon; link unavailable until restore
-- [ ] Hover/focus titles on the left status icon match the legend labels
+- [ ] Draft card: amber/gold status dot; **Publish**; **Publish to share**; **Preview** (not View Application)
+- [ ] Active, never viewed: bright sky/cyan status dot
+- [ ] Active, viewed at least once: lime status dot (same family as Create / checklist Done)
+- [ ] Archived: soft grey status dot; link unavailable until restore
+- [ ] Hover/focus titles on the left status dot match the legend labels
 
 ## Smoke
 

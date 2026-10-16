@@ -91,6 +91,12 @@
   --status-danger-fg: #b42318;
   --status-danger-solid: #b42318;
 
+  /* Dashboard status dots — same brightness family as --lime (#9efc65) */
+  --status-dot-draft: #fcdc65;
+  --status-dot-active: #6ed4fc;
+  --status-dot-viewed: #9efc65;
+  --status-dot-archived: #c5c9c9;
+
   /* Legacy font family names (local @font-face). Product UI uses next/font vars on <body>. */
   --font-faunaone: "FaunaOne", serif;
   --font-funnelsans: "FunnelSans", system-ui, sans-serif;

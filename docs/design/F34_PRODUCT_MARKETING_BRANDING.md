@@ -155,6 +155,15 @@ Primary actions such as Publish as a primary button use `--brand-primary` (ink) 
 | `--status-warning-bg` / `--status-warning-fg`                         | warm amber | `#fff0fe` / `#c026a8`                  | Soft pink + `--pink-text`                                 |
 | `--status-danger-bg` / `--status-danger-fg` / `--status-danger-solid` | red pair   | Keep `#fde8e4` / `#b42318` / `#b42318` | Unchanged family                                          |
 
+Dashboard card status markers use bright dots (same luminance family as `--lime`), not glyph icons:
+
+| Token | Hex | Meaning |
+| ----- | --- | ------- |
+| `--status-dot-draft` | `#fcdc65` | Draft |
+| `--status-dot-active` | `#6ed4fc` | Active, not viewed yet |
+| `--status-dot-viewed` | `#9efc65` | Active, viewed (`--lime`) |
+| `--status-dot-archived` | `#c5c9c9` | Archived |
+
 ### Typography (locked)
 
 | Role          | Product today                   | Locked target                                                      |

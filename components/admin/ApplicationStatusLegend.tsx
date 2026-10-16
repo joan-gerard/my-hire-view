@@ -10,7 +10,10 @@ import {
   ApplicationStatusIconBadge,
   MissingCvBadge,
 } from '@/components/admin/ApplicationStatusIcon';
-import { ADMIN_SECONDARY_CLASS } from '@/components/admin/admin-chrome';
+import {
+  ADMIN_PANEL_CLASS,
+  ADMIN_SECONDARY_CLASS,
+} from '@/components/admin/admin-chrome';
 
 export type ApplicationStatusLegendProps = {
   open: boolean;
@@ -35,7 +38,16 @@ export default function ApplicationStatusLegend({
   const draftHeadingId = useId();
 
   const requestDismiss = () => {
-    dialogRef.current?.close();
+    const dialog = dialogRef.current;
+    if (!dialog) {
+      onClose();
+      return;
+    }
+    if (dialog.open) {
+      dialog.close();
+    } else {
+      onClose();
+    }
   };
 
   useEffect(() => {
@@ -81,7 +93,7 @@ export default function ApplicationStatusLegend({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,32rem)] max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[28px] border border-[var(--ink)]/8 bg-[var(--white)] p-0 text-[var(--ink)] shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,32rem)] max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 border-0 bg-transparent p-0 shadow-none backdrop:bg-black/40 open:flex open:flex-col"
       aria-labelledby={titleId}
       onClick={(e) => {
         if (e.target === dialogRef.current) {
@@ -89,8 +101,11 @@ export default function ApplicationStatusLegend({
         }
       }}
     >
-      <div className="space-y-5 p-5">
-        <div>
+      {/* Inner panel keeps chrome; dialog stays transparent so light-dismiss / display rules work. */}
+      <div
+        className={`flex max-h-[min(90vh,40rem)] w-full flex-col overflow-hidden text-[var(--ink)] shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)] ${ADMIN_PANEL_CLASS}`}
+      >
+        <header className="shrink-0 border-b border-[var(--ink)]/8 px-5 pb-4 pt-5 sm:px-6">
           <h2
             ref={titleRef}
             id={titleId}
@@ -99,75 +114,83 @@ export default function ApplicationStatusLegend({
           >
             Status icons & draft actions
           </h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">
+          <p className="mt-1.5 text-sm leading-snug text-[var(--muted)]">
             What the icons on each application card mean, and how draft actions
             differ from a live share link.
           </p>
-        </div>
+        </header>
 
-        <section aria-labelledby={statusHeadingId}>
-          <h3
-            id={statusHeadingId}
-            className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]"
-          >
-            Status icons
-          </h3>
-          <ul className="space-y-3 text-sm">
-            {APPLICATION_STATUS_LEGEND_ITEMS.map((item) => (
-              <li key={item.key} className="flex items-start gap-3">
-                <ApplicationStatusIconBadge
-                  visual={item.key}
-                  label={item.label}
-                  decorative
-                />
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6">
+          <section aria-labelledby={statusHeadingId}>
+            <h3
+              id={statusHeadingId}
+              className="px-1 font-heading text-sm font-semibold tracking-[-0.01em] text-[var(--ink)]"
+            >
+              Status icons
+            </h3>
+            <ul className="mt-3 divide-y divide-[var(--ink)]/8">
+              {APPLICATION_STATUS_LEGEND_ITEMS.map((item) => (
+                <li
+                  key={item.key}
+                  className="flex items-start gap-3 px-1 py-3 first:pt-1 last:pb-1"
+                >
+                  <ApplicationStatusIconBadge
+                    visual={item.key}
+                    label={item.label}
+                    decorative
+                  />
+                  <div className="min-w-0 pt-1">
+                    <p className="text-sm font-medium leading-snug text-[var(--ink)]">
+                      {item.label}
+                    </p>
+                    <p className="mt-0.5 text-sm leading-snug text-[var(--muted)]">
+                      {item.description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+              <li className="flex items-start gap-3 px-1 py-3 last:pb-1">
+                <div className="flex h-9 shrink-0 items-center" aria-hidden>
+                  <MissingCvBadge />
+                </div>
                 <div className="min-w-0 pt-1">
-                  <p className="font-medium text-[var(--ink)]">
-                    {item.label}
+                  <p className="text-sm font-medium leading-snug text-[var(--ink)]">
+                    {CV_MISSING_LEGEND.label}
                   </p>
-                  <p className="mt-0.5 text-[var(--muted)]">
-                    {item.description}
+                  <p className="mt-0.5 text-sm leading-snug text-[var(--muted)]">
+                    {CV_MISSING_LEGEND.description}
                   </p>
                 </div>
               </li>
-            ))}
-            <li className="flex items-start gap-3">
-              <div className="flex h-9 shrink-0 items-center" aria-hidden>
-                <MissingCvBadge />
-              </div>
-              <div className="min-w-0 pt-1">
-                <p className="font-medium text-[var(--ink)]">
-                  {CV_MISSING_LEGEND.label}
-                </p>
-                <p className="mt-0.5 text-[var(--muted)]">
-                  {CV_MISSING_LEGEND.description}
-                </p>
-              </div>
-            </li>
-          </ul>
-        </section>
+            </ul>
+          </section>
 
-        <section aria-labelledby={draftHeadingId}>
-          <h3
-            id={draftHeadingId}
-            className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]"
-          >
-            Draft card actions
-          </h3>
-          <ul className="space-y-2.5 text-sm">
-            {DRAFT_ACTION_LEGEND_ITEMS.map((item) => (
-              <li key={item.label}>
-                <p className="font-medium text-[var(--ink)]">
-                  {item.label}
-                </p>
-                <p className="mt-0.5 text-[var(--muted)]">
-                  {item.description}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
+          <section aria-labelledby={draftHeadingId}>
+            <h3
+              id={draftHeadingId}
+              className="px-1 font-heading text-sm font-semibold tracking-[-0.01em] text-[var(--ink)]"
+            >
+              Draft card actions
+            </h3>
+            <ul className="mt-3 divide-y divide-[var(--ink)]/8">
+              {DRAFT_ACTION_LEGEND_ITEMS.map((item) => (
+                <li
+                  key={item.label}
+                  className="flex items-start gap-3 px-1 py-3 first:pt-1 last:pb-1"
+                >
+                  <span className="mt-0.5 inline-flex h-9 shrink-0 items-center rounded-full border border-[var(--ink)]/12 bg-[var(--white)] px-2.5 text-xs font-semibold text-[var(--ink)]">
+                    {item.label}
+                  </span>
+                  <p className="min-w-0 pt-2 text-sm leading-snug text-[var(--muted)]">
+                    {item.description}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
 
-        <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--ink)]/10 pt-4">
+        <footer className="relative z-10 flex shrink-0 justify-end border-t border-[var(--ink)]/8 bg-[var(--white)] px-5 py-3 sm:px-6">
           <button
             type="button"
             onClick={requestDismiss}
@@ -175,7 +198,7 @@ export default function ApplicationStatusLegend({
           >
             Close
           </button>
-        </div>
+        </footer>
       </div>
     </dialog>
   );

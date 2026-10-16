@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import type { ApplicationStatus } from '@/lib/types/application';
 import {
   CV_MISSING_LEGEND,
@@ -6,11 +5,6 @@ import {
   getApplicationStatusDisplayByKey,
   type ApplicationStatusVisualKey,
 } from '@/lib/utils/application-status-display';
-import {
-  ArchiveIcon,
-  CheckIcon,
-  ClockIcon,
-} from '@/components/admin/icons';
 
 type ApplicationStatusIconProps = {
   status: ApplicationStatus;
@@ -28,41 +22,14 @@ type ApplicationStatusIconBadgeProps = {
   decorative?: boolean;
 };
 
-function StatusBadgeShell({
-  label,
-  description,
-  decorative,
-  children,
-}: {
-  label: string;
-  description: string;
-  decorative?: boolean;
-  children: ReactNode;
-}) {
-  if (decorative) {
-    return (
-      <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-        aria-hidden
-      >
-        {children}
-      </div>
-    );
-  }
+const STATUS_DOT_CLASS: Record<ApplicationStatusVisualKey, string> = {
+  draft: 'bg-[var(--status-dot-draft)]',
+  active_unviewed: 'bg-[var(--status-dot-active)]',
+  active_viewed: 'bg-[var(--status-dot-viewed)]',
+  archived: 'bg-[var(--status-dot-archived)]',
+};
 
-  return (
-    <div
-      role="img"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-      title={`${label}: ${description}`}
-      aria-label={label}
-    >
-      {children}
-    </div>
-  );
-}
-
-/** Renders the circular status badge used on cards and in the legend. */
+/** Renders the circular status color used on cards and in the legend. */
 export function ApplicationStatusIconBadge({
   visual,
   label,
@@ -70,49 +37,33 @@ export function ApplicationStatusIconBadge({
 }: ApplicationStatusIconBadgeProps) {
   const display = getApplicationStatusDisplayByKey(visual);
   const displayLabel = label ?? display.label;
+  const dot = (
+    <span
+      className={`h-3.5 w-3.5 rounded-full ${STATUS_DOT_CLASS[visual]}`}
+      aria-hidden
+    />
+  );
 
-  if (visual === 'archived') {
+  if (decorative) {
     return (
-      <StatusBadgeShell
-        label={displayLabel}
-        description={display.description}
-        decorative={decorative}
+      <div
+        className="flex h-9 w-9 shrink-0 items-center justify-center"
+        aria-hidden
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--ink)]/10">
-          <ArchiveIcon className="h-5 w-5 text-[var(--muted)]" />
-        </span>
-      </StatusBadgeShell>
-    );
-  }
-
-  if (visual === 'draft') {
-    return (
-      <StatusBadgeShell
-        label={displayLabel}
-        description={display.description}
-        decorative={decorative}
-      >
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--status-draft-bg)]">
-          <ClockIcon className="h-5 w-5 text-[var(--status-draft-fg)]" />
-        </span>
-      </StatusBadgeShell>
+        {dot}
+      </div>
     );
   }
 
   return (
-    <StatusBadgeShell
-      label={displayLabel}
-      description={display.description}
-      decorative={decorative}
+    <div
+      role="img"
+      className="flex h-9 w-9 shrink-0 items-center justify-center"
+      title={`${displayLabel}: ${display.description}`}
+      aria-label={displayLabel}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--status-success-bg)]">
-        {visual === 'active_viewed' ? (
-          <CheckIcon className="h-5 w-5 text-[var(--status-success-fg)]" />
-        ) : (
-          <ClockIcon className="h-5 w-5 text-[var(--status-success-fg)]" />
-        )}
-      </span>
-    </StatusBadgeShell>
+      {dot}
+    </div>
   );
 }
 
