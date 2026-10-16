@@ -220,19 +220,6 @@
   outline-offset: 3px;
 }
 
-.mhv-auth-submit-arrow {
-  display: inline-flex;
-  width: 1.5rem;
-  height: 1.5rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: var(--white);
-  color: var(--ink);
-  font-size: 0.75rem;
-  line-height: 1;
-}
-
 /* Beat `.mhv-auth p { margin: 0 }` so Sign in → terms spacing actually applies */
 .mhv-auth p.mhv-auth-legal {
   margin-top: 1.75rem;
