@@ -1,14 +1,14 @@
 -- Seed sample applications for local / staging dashboard testing.
 -- Run in the Supabase SQL Editor (service role / postgres), not via the app API.
 --
--- Before running, replace:
---   1) user_id       — must exist in auth.users
---   2) cv_url        — real primary library object under your R2_PUBLIC_BASE_URL
---   3) primary_cv_id — primary_cvs.id owned by that user whose url matches cv_url
+-- Before running, replace in the cfg subquery below:
+--   1) user_id — must exist in auth.users
+--   2) cv_url  — real primary library object under your R2_PUBLIC_BASE_URL
+-- A matching primary_cvs row (same user_id + url) must already exist; primary_cv_id
+-- is resolved from that row. If none matches, the INSERT selects zero rows.
 --
 -- Idempotent: re-run upserts on (user_id, slug). Deterministic company-role slugs.
 -- include_name_in_slug is NULL (company-role slugs only — no name in URL).
--- cv_type = primary requires a real primary_cv_id or the INSERT selects zero rows.
 --
 -- Schema notes (vs older seeds):
 --   - is_active → status ('active' | 'draft' | 'archived') + archived_at
