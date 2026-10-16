@@ -32,13 +32,15 @@ function homeHashFromHref(href: string | null): string | null {
   return null;
 }
 
-export function Header() {
+export function Header({ signedIn = false }: { signedIn?: boolean }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [dotColor, setDotColor] = useState<string | undefined>(undefined);
   const lastScrollY = useRef(0);
   const menuOpenRef = useRef(menuOpen);
+  const ctaHref = signedIn ? "/admin" : "/login";
+  const ctaLabel = signedIn ? "Dashboard" : "Login";
 
   useEffect(() => {
     menuOpenRef.current = menuOpen;
@@ -161,7 +163,7 @@ export function Header() {
         </nav>
 
         <div className="ot-header-end">
-          <ArrowButton href="/login" label="Login" tone="dark" />
+          <ArrowButton href={ctaHref} label={ctaLabel} tone="dark" />
           <button
             type="button"
             className="ot-menu-btn"
@@ -186,7 +188,7 @@ export function Header() {
               {item.label}
             </Link>
           ))}
-          <ArrowButton href="/login" label="Login" tone="dark" />
+          <ArrowButton href={ctaHref} label={ctaLabel} tone="dark" />
         </div>
       ) : null}
     </div>

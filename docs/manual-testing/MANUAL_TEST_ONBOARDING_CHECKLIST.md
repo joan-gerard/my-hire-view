@@ -13,12 +13,13 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FL
 ## Floating availability
 
 - [ ] Checklist appears as a floating panel (bottom-right) on `/admin`, `/admin/profile`, `/admin/new`, and `/admin/edit/[id]`
-- [ ] Progress shows (e.g. `N of 6 complete`) plus a lime progress bar when any step is incomplete
-- [ ] Collapsed control shows **Getting started**, count badge, **Next: …** hint, and progress bar; **Hide checklist** collapses the open panel — open/closed choice survives refresh and navigation
-- [ ] Expanded panel highlights **Up next** with a **Continue** CTA; remaining open steps sit under **Coming up**; done/skipped steps are behind **Done & skipped**
+- [ ] Collapsed control shows **Getting started**, a lime count badge (`N/6` or **Done**), and a chevron; tap/click expands the panel
+- [ ] Expanded panel shows heading **Getting started**, progress text (`N of 6 complete` or all-set copy), a lime progress bar, and an ordered list of all six steps
+- [ ] Expanded control label switches to **Minimize**; open/closed choice survives refresh and navigation
 
 ## Steps
 
+- [ ] Ordered list includes: Create your profile → Add location or a link → Add a profile photo → Upload a primary CV → Create your first application draft → Publish & share
 - [ ] **Create your profile** — complete when first + last name are saved on Profile; link goes to `/admin/profile`
 - [ ] **Add location or a link** — complete when **at least one** of location, LinkedIn, or portfolio is set
 - [ ] **Add a profile photo** — complete after uploading a picture; still incomplete if names exist but no photo
@@ -48,4 +49,5 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FL
 
 - [ ] First paint does not flash an expanded panel when the checklist was previously minimized or dismissed (prefs hydrate before display)
 - [ ] Dismissed users do not trigger checklist `/api` refetches on later profile/CV/application saves
-- [ ] Keyboard: Tab to the disclosure control, Enter/Space toggles expand/collapse; focus stays on the control; `aria-controls` targets the panel (panel may be `hidden` when collapsed)
+- [ ] Keyboard: Tab to the disclosure control, Enter/Space toggles expand/collapse; focus stays on the control; `aria-controls` targets the panel (panel stays mounted and is inert/`aria-hidden` when collapsed)
+- [ ] With OS “reduce motion” enabled, the progress bar width does not animate

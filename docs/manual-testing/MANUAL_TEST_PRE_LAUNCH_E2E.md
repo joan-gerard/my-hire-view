@@ -78,8 +78,8 @@ Do this signed out (incognito is fine).
 
 - [ ] Logo / wordmark present
 - [ ] Nav includes **How to**, **Pricing**, and **FAQs** (paths `/#how`, `/#pricing`, `/#faq`); logo returns to `/` (smooth-scroll to top when already on home)
-- [ ] **Login** goes to `/login`
-- [ ] Mobile: menu opens those same links plus Login; closing it returns to the page
+- [ ] **Login** goes to `/login` (signed out); when signed in, header shows **Dashboard** → `/admin`
+- [ ] Mobile: menu opens those same links plus Login (or Dashboard when signed in); closing it returns to the page
 - [ ] Header hides smoothly when scrolling down and reappears when scrolling up (stays visible while the mobile menu is open)
 - [ ] Nav / logo in-page links smooth-scroll to the target section (instant if reduced motion is preferred)
 
@@ -160,7 +160,7 @@ From `/signup` (login page “create a new account”, or type the URL).
 - [ ] While signed in, visiting `/login` or `/signup` **redirects to `/admin`** (no login↔admin loop)
 - [ ] **Sign Out** in the admin header → `/login`; `/admin` now redirects to login
 - [ ] Sign in again
-- [ ] From `/` (signed in): header still shows **Login** (no avatar / Dashboard menu on the marketing header); go to `/admin` via URL or after login redirect. Sign Out is only in the admin header.
+- [ ] From `/` (signed in): header shows **Dashboard** (links to `/admin`); no avatar / Sign Out on the marketing header — Sign Out is only in the admin header.
 - [ ] After sign-out, browser Back does not serve a usable authenticated dashboard (must hit login)
 - [ ] Two tabs signed in: Sign Out in tab 1; tab 2’s next `/admin` navigation or refresh sends you to login (no half-authenticated UI)
 

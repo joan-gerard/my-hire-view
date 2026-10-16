@@ -284,143 +284,146 @@ export default function OnboardingChecklist({
   const progressPct = total === 0 ? 0 : Math.round((completed / total) * 100);
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex w-[min(100vw-2rem,22rem)] flex-col items-stretch gap-3 sm:bottom-6 sm:right-6">
-      <AnimatePresence initial={false}>
-        {prefs.expanded ? (
-          <motion.div
-            key="onboarding-panel"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={motionTransition}
-            className="overflow-hidden"
-          >
-            <section
-              id={panelId}
-              className={`pointer-events-auto flex max-h-[min(70vh,36rem)] flex-col overflow-hidden ${ADMIN_PANEL_CLASS} shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)]`}
-              aria-labelledby="onboarding-checklist-heading"
-            >
-              {/* Outer px-3 + inner px-2.5 matches list row inset so title/bar line up with icons. */}
-              <header className="shrink-0 space-y-3 border-b border-[var(--ink)]/8 px-3 pb-4 pt-5">
-                <div className="flex items-start justify-between gap-3 px-2.5">
-                  <div className="min-w-0">
-                    <h2
-                      id="onboarding-checklist-heading"
-                      className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]"
+    <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex w-[min(100vw-2rem,22rem)] flex-col items-stretch sm:bottom-6 sm:right-6">
+      {/* Stay mounted so aria-controls always resolves; animate height instead of unmounting. */}
+      <motion.div
+        initial={false}
+        animate={
+          prefs.expanded
+            ? { height: "auto", opacity: 1 }
+            : { height: 0, opacity: 0 }
+        }
+        transition={motionTransition}
+        className={`overflow-hidden ${prefs.expanded ? "mb-3" : ""}`}
+        inert={prefs.expanded ? undefined : true}
+        aria-hidden={!prefs.expanded}
+      >
+        <section
+          id={panelId}
+          className={`pointer-events-auto flex max-h-[min(70vh,36rem)] flex-col overflow-hidden ${ADMIN_PANEL_CLASS} shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)]`}
+          aria-labelledby="onboarding-checklist-heading"
+        >
+          {/* Outer px-3 + inner px-2.5 matches list row inset so title/bar line up with icons. */}
+          <header className="shrink-0 space-y-3 border-b border-[var(--ink)]/8 px-3 pb-4 pt-5">
+            <div className="flex items-start justify-between gap-3 px-2.5">
+              <div className="min-w-0">
+                <h2
+                  id="onboarding-checklist-heading"
+                  className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]"
+                >
+                  Getting started
+                </h2>
+                <p className="mt-1 text-sm leading-snug text-[var(--muted)]">
+                  {allDone
+                    ? "You are all set — dismiss when you are ready."
+                    : `${completed} of ${total} complete`}
+                </p>
+              </div>
+              <span
+                className="shrink-0 rounded-full bg-[var(--lime)] px-2.5 py-1 text-xs font-semibold tabular-nums text-[var(--ink)]"
+                aria-hidden
+              >
+                {allDone ? "Done" : `${completed}/${total}`}
+              </span>
+            </div>
+            <div className="px-2.5">
+              <div
+                className="h-1.5 overflow-hidden rounded-full bg-[var(--ink)]/[0.08]"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={total}
+                aria-valuenow={completed}
+                aria-label={`${completed} of ${total} steps complete`}
+              >
+                <div
+                  className={`h-full rounded-full bg-[var(--lime)]${
+                    reduceMotion
+                      ? ""
+                      : " transition-[width] duration-300 ease-out"
+                  }`}
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+            </div>
+          </header>
+
+          <ol className="min-h-0 flex-1 space-y-0 overflow-y-auto px-3 py-2">
+            {steps.map((step) => (
+              <li key={step.id}>
+                {step.done ? (
+                  <div className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 text-[var(--muted)]">
+                    <span
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--lime)] text-[var(--ink)]"
+                      aria-hidden
                     >
-                      Getting started
-                    </h2>
-                    <p className="mt-1 text-sm leading-snug text-[var(--muted)]">
-                      {allDone
-                        ? "You are all set — dismiss when you are ready."
-                        : `${completed} of ${total} complete`}
+                      <CheckIcon className="h-3.5 w-3.5" />
+                    </span>
+                    <p className="min-w-0 flex-1 text-sm font-medium leading-snug line-through">
+                      {step.label}
                     </p>
+                    <span className="sr-only">Completed</span>
                   </div>
-                  <span
-                    className="shrink-0 rounded-full bg-[var(--lime)] px-2.5 py-1 text-xs font-semibold tabular-nums text-[var(--ink)]"
-                    aria-hidden
-                  >
-                    {allDone ? "Done" : `${completed}/${total}`}
-                  </span>
-                </div>
-                <div className="px-2.5">
-                  <div
-                    className="h-1.5 overflow-hidden rounded-full bg-[var(--ink)]/[0.08]"
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={total}
-                    aria-valuenow={completed}
-                    aria-label={`${completed} of ${total} steps complete`}
-                  >
-                    <div
-                      className="h-full rounded-full bg-[var(--lime)] transition-[width] duration-300 ease-out"
-                      style={{ width: `${progressPct}%` }}
+                ) : step.skipped ? (
+                  <div className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 text-[var(--muted)]">
+                    <span
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--ink)]/20"
+                      aria-hidden
                     />
+                    <p className="min-w-0 flex-1 text-sm font-medium leading-snug line-through">
+                      {step.label}
+                    </p>
+                    <span className="shrink-0 text-xs font-medium">Skipped</span>
                   </div>
-                </div>
-              </header>
-
-              <ol className="min-h-0 flex-1 space-y-0 overflow-y-auto px-3 py-2">
-                {steps.map((step) => (
-                  <li key={step.id}>
-                    {step.done ? (
-                      <div className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 text-[var(--muted)]">
-                        <span
-                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--lime)] text-[var(--ink)]"
-                          aria-hidden
-                        >
-                          <CheckIcon className="h-3.5 w-3.5" />
-                        </span>
-                        <p className="min-w-0 flex-1 text-sm font-medium leading-snug line-through">
-                          {step.label}
-                        </p>
-                        <span className="sr-only">Completed</span>
-                      </div>
-                    ) : step.skipped ? (
-                      <div className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 text-[var(--muted)]">
-                        <span
-                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--ink)]/20"
-                          aria-hidden
-                        />
-                        <p className="min-w-0 flex-1 text-sm font-medium leading-snug line-through">
-                          {step.label}
-                        </p>
-                        <span className="shrink-0 text-xs font-medium">
-                          Skipped
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 rounded-xl hover:bg-[var(--ink)]/[0.03]">
-                        <Link
-                          href={step.href}
-                          className={`flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2.5 py-1.5 text-[var(--ink)] ${FOCUS_RING}`}
-                        >
-                          <span
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--ink)]/20 bg-[var(--white)]"
-                            aria-hidden
-                          />
-                          <p className="min-w-0 text-sm font-medium leading-snug text-[var(--ink)]">
-                            {step.label}
-                          </p>
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => skipStep(step.id)}
-                          className={`${GHOST_ACTION_CLASS} mr-1`}
-                        >
-                          Skip
-                        </button>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ol>
-
-              <footer className="flex shrink-0 justify-end border-t border-[var(--ink)]/8 px-4 py-3">
-                {allDone ? (
-                  <button
-                    type="button"
-                    onClick={dismiss}
-                    className={GHOST_ACTION_CLASS}
-                  >
-                    Dismiss
-                  </button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={skipAll}
-                    className={GHOST_ACTION_CLASS}
-                  >
-                    Skip all
-                  </button>
+                  <div className="flex items-center gap-1 rounded-xl hover:bg-[var(--ink)]/[0.03]">
+                    <Link
+                      href={step.href}
+                      className={`flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2.5 py-1.5 text-[var(--ink)] ${FOCUS_RING}`}
+                    >
+                      <span
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--ink)]/20 bg-[var(--white)]"
+                        aria-hidden
+                      />
+                      <p className="min-w-0 text-sm font-medium leading-snug text-[var(--ink)]">
+                        {step.label}
+                      </p>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => skipStep(step.id)}
+                      className={`${GHOST_ACTION_CLASS} mr-1`}
+                    >
+                      Skip
+                    </button>
+                  </div>
                 )}
-              </footer>
-            </section>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+              </li>
+            ))}
+          </ol>
 
-      {/* Stable disclosure control — stays mounted so focus and aria-controls remain valid. */}
+          <footer className="flex shrink-0 justify-end border-t border-[var(--ink)]/8 px-4 py-3">
+            {allDone ? (
+              <button
+                type="button"
+                onClick={dismiss}
+                className={GHOST_ACTION_CLASS}
+              >
+                Dismiss
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={skipAll}
+                className={GHOST_ACTION_CLASS}
+              >
+                Skip all
+              </button>
+            )}
+          </footer>
+        </section>
+      </motion.div>
+
+      {/* Stable disclosure control — panel stays mounted so aria-controls remains valid. */}
       <div className="flex justify-end">
         <motion.button
           id={toggleId}

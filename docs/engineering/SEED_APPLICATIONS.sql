@@ -2,9 +2,13 @@
 -- Run in the Supabase SQL Editor (service role / postgres), not via the app API.
 --
 -- Before running, replace:
---   1) user_id          — must exist in auth.users
---   2) cv_url           — real object under your current R2_PUBLIC_BASE_URL
---   3) primary_cv_id    — optional; set to a primary_cvs.id owned by that user
+--   1) user_id       — must exist in auth.users
+--   2) cv_url        — real primary library object under your R2_PUBLIC_BASE_URL
+--   3) primary_cv_id — primary_cvs.id owned by that user whose url matches cv_url
+--
+-- Idempotent: re-run upserts on (user_id, slug). Deterministic company-role slugs.
+-- include_name_in_slug is NULL (company-role slugs only — no name in URL).
+-- cv_type = primary requires a real primary_cv_id or the INSERT selects zero rows.
 --
 -- Schema notes (vs older seeds):
 --   - is_active → status ('active' | 'draft' | 'archived') + archived_at
@@ -48,12 +52,12 @@ SELECT
   lower(regexp_replace(company || '-' || role, '[^a-zA-Z0-9]+', '-', 'g')),
   company,
   role,
-  'https://pub-87b38b8cc8f5460dbc5e6d79e952bd83.r2.dev/cvs/17305170-d4a6-4313-b73f-e56cdd1590c2/primary/399f52e5-427f-4239-8c3e-efc77d6abd0d.pdf', -- TODO: replace
+  params.cv_url,
   'https://youtu.be/1cImNJ3bNH4',
   NOW() - (ord || ' days')::interval,
   NOW() - (ord || ' days')::interval,
   (ord - 1) * 2,
-  '17305170-d4a6-4313-b73f-e56cdd1590c2', -- TODO: confirm user still exists
+  params.user_id,
   CASE WHEN ord % 2 = 1 THEN 'active' ELSE 'archived' END,
   CASE WHEN ord % 2 = 0 THEN NOW() - (ord || ' days')::interval ELSE NULL END,
   NULL,
@@ -61,14 +65,14 @@ SELECT
   NULL,
   NULL,
   NULL,
-  'start',
+  NULL, -- company-role slug only (matches generated slug; edit form stays consistent)
   ord - 1,
   CASE WHEN ord % 3 = 0 THEN NOW() - (ord || ' hours')::interval ELSE NULL END,
   'Joan_Gerard_Full_Stack_DevOps_CV.pdf',
   true,
   false,
-  'primary', -- required when all rows share one cv_url
-  NULL -- TODO: optional primary_cvs.id for this user
+  'primary',
+  params.primary_cv_id
 FROM (
   VALUES
     (1,  'Spotify',           'Backend Engineer'),
@@ -101,4 +105,39 @@ FROM (
     (28, 'Datadog',           'Observability Engineer'),
     (29, 'HashiCorp',         'Terraform Engineer'),
     (30, 'Cloudflare',        'Network Engineer')
-) AS seed(ord, company, role);
+) AS seed(ord, company, role)
+CROSS JOIN LATERAL (
+  -- TODO: replace user_id / cv_url; primary_cv_id is resolved from primary_cvs.
+  SELECT
+    '17305170-d4a6-4313-b73f-e56cdd1590c2'::uuid AS user_id,
+    'https://pub-87b38b8cc8f5460dbc5e6d79e952bd83.r2.dev/cvs/17305170-d4a6-4313-b73f-e56cdd1590c2/primary/399f52e5-427f-4239-8c3e-efc77d6abd0d.pdf'::text AS cv_url
+) AS cfg
+INNER JOIN LATERAL (
+  SELECT p.id AS primary_cv_id, cfg.user_id, cfg.cv_url
+  FROM primary_cvs p
+  WHERE p.user_id = cfg.user_id
+    AND p.url = cfg.cv_url
+  LIMIT 1
+) AS params ON true
+ON CONFLICT (user_id, slug) DO UPDATE SET
+  company = EXCLUDED.company,
+  role = EXCLUDED.role,
+  cv_url = EXCLUDED.cv_url,
+  video_url = EXCLUDED.video_url,
+  updated_at = EXCLUDED.updated_at,
+  view_count = EXCLUDED.view_count,
+  status = EXCLUDED.status,
+  archived_at = EXCLUDED.archived_at,
+  first_name = EXCLUDED.first_name,
+  last_name = EXCLUDED.last_name,
+  location = EXCLUDED.location,
+  portfolio_url = EXCLUDED.portfolio_url,
+  linkedin_url = EXCLUDED.linkedin_url,
+  include_name_in_slug = EXCLUDED.include_name_in_slug,
+  download_count = EXCLUDED.download_count,
+  last_viewed_at = EXCLUDED.last_viewed_at,
+  cv_filename = EXCLUDED.cv_filename,
+  use_original_cv_filename = EXCLUDED.use_original_cv_filename,
+  show_profile_picture = EXCLUDED.show_profile_picture,
+  cv_type = EXCLUDED.cv_type,
+  primary_cv_id = EXCLUDED.primary_cv_id;

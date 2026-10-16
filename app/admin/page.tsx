@@ -104,7 +104,8 @@ export default function AdminDashboard() {
             ) : null}
           </div>
 
-          {applications.length === 0 ? (
+          {applications.length === 0 &&
+          (hasSearchFilter || !isFetching) ? (
             <div className="mt-6">
               <AdminDashboardEmpty
                 hasSearchQuery={hasSearchFilter}
@@ -112,7 +113,7 @@ export default function AdminDashboard() {
                 embedded
               />
             </div>
-          ) : (
+          ) : applications.length > 0 ? (
             <>
               <div
                 className={`mt-4 transition-opacity ${isFetching ? 'opacity-60' : ''}`}
@@ -143,7 +144,7 @@ export default function AdminDashboard() {
                 />
               </div>
             </>
-          )}
+          ) : null}
         </section>
       )}
     </div>
