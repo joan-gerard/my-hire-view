@@ -25,7 +25,7 @@ function LogoMark({
     <Link
       href="/"
       id="logo"
-      className={`inline-flex items-end gap-[3px] text-xl font-medium leading-none tracking-[-0.02em] ${textClassName} ${className ?? ""}`}
+      className={`inline-flex items-end gap-[3px] rounded-sm text-xl font-medium leading-none tracking-[-0.02em] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${textClassName} ${className ?? ""}`}
       aria-label="MyHireView home"
     >
       <span>MyHireView</span>
@@ -39,9 +39,19 @@ function LogoMark({
 }
 
 export function LogoWhite() {
-  return <LogoMark textClassName="text-white" />;
+  return (
+    <LogoMark
+      textClassName="text-white"
+      className="focus-visible:outline-white/80"
+    />
+  );
 }
 
 export function LogoBlack() {
-  return <LogoMark textClassName="text-[var(--ink)]" />;
+  return (
+    <LogoMark
+      textClassName="text-[var(--ink)]"
+      className="focus-visible:outline-[var(--ink)]"
+    />
+  );
 }
