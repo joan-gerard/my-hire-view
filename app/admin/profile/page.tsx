@@ -6,6 +6,7 @@ import {
   ADMIN_TIP_CLASS,
 } from "@/components/admin/admin-chrome";
 import PublicIdAccountField from "@/components/admin/PublicIdAccountField";
+import StatusIndicatorPreference from "@/components/admin/StatusIndicatorPreference";
 import PrimaryCvLibrarySection from "@/components/forms/PrimaryCvLibrarySection";
 import ProfileForm from "@/components/forms/ProfileForm";
 import { formatApplicationStatusBreakdown } from "@/lib/types/application";
@@ -141,6 +142,10 @@ export default async function AdminProfilePage() {
       </section>
 
       <PrimaryCvLibrarySection />
+
+      <section className={`${ADMIN_PANEL_CLASS} p-6`}>
+        <StatusIndicatorPreference publicId={publicId} />
+      </section>
 
       <section className={`${ADMIN_PANEL_CLASS} p-6`}>
         <h2 className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">

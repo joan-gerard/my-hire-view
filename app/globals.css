@@ -91,11 +91,20 @@
   --status-danger-fg: #b42318;
   --status-danger-solid: #b42318;
 
-  /* Dashboard status dots — same brightness family as --lime (#9efc65) */
+  /* Colorful status dots (default dashboard preference) */
   --status-dot-draft: #fcdc65;
   --status-dot-active: #6ed4fc;
   --status-dot-viewed: #9efc65;
   --status-dot-archived: #c5c9c9;
+
+  /*
+   * High-contrast status washes (profile preference). Meaning + contrast come
+   * from the ink glyph on the wash (WCAG 1.4.11), not the wash alone.
+   */
+  --status-wash-draft: #fff1b8;
+  --status-wash-active: #d3f2ff;
+  --status-wash-viewed: #e8fad9;
+  --status-wash-archived: #eceeee;
 
   /* Legacy font family names (local @font-face). Product UI uses next/font vars on <body>. */
   --font-faunaone: "FaunaOne", serif;

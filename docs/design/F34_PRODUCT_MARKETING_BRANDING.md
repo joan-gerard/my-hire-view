@@ -155,14 +155,21 @@ Primary actions such as Publish as a primary button use `--brand-primary` (ink) 
 | `--status-warning-bg` / `--status-warning-fg`                         | warm amber | `#fff0fe` / `#c026a8`                  | Soft pink + `--pink-text`                                 |
 | `--status-danger-bg` / `--status-danger-fg` / `--status-danger-solid` | red pair   | Keep `#fde8e4` / `#b42318` / `#b42318` | Unchanged family                                          |
 
-Dashboard card status markers use bright dots (same luminance family as `--lime`), not glyph icons:
+Dashboard status markers have two account-scoped browser preferences (Profile → **Status indicators**):
 
-| Token | Hex | Meaning |
-| ----- | --- | ------- |
-| `--status-dot-draft` | `#fcdc65` | Draft |
-| `--status-dot-active` | `#6ed4fc` | Active, not viewed yet |
-| `--status-dot-viewed` | `#9efc65` | Active, viewed (`--lime`) |
-| `--status-dot-archived` | `#c5c9c9` | Archived |
+1. **Colorful dots** (default) — bright gold / sky / lime / grey fills  
+2. **High contrast icons** — soft wash + ink glyph (clock / check / archive) for WCAG 1.4.11  
+
+| Token | Hex | Role |
+| ----- | --- | ---- |
+| `--status-dot-draft` | `#fcdc65` | Colorful draft |
+| `--status-dot-active` | `#6ed4fc` | Colorful active (not viewed) |
+| `--status-dot-viewed` | `#9efc65` | Colorful active (viewed) |
+| `--status-dot-archived` | `#c5c9c9` | Colorful archived |
+| `--status-wash-draft` | `#fff1b8` | High-contrast draft wash |
+| `--status-wash-active` | `#d3f2ff` | High-contrast active wash |
+| `--status-wash-viewed` | `#e8fad9` | High-contrast viewed wash |
+| `--status-wash-archived` | `#eceeee` | High-contrast archived wash |
 
 ### Typography (locked)
 

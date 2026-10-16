@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef } from 'react';
+import Link from 'next/link';
 import {
   APPLICATION_STATUS_LEGEND_ITEMS,
   CV_MISSING_LEGEND,
@@ -116,7 +117,16 @@ export default function ApplicationStatusLegend({
           </h2>
           <p className="mt-1.5 text-sm leading-snug text-[var(--muted)]">
             What the icons on each application card mean, and how draft actions
-            differ from a live share link.
+            differ from a live share link. Change the indicator style (colorful
+            dots or high-contrast icons) in{' '}
+            <Link
+              href="/admin/profile"
+              onClick={requestDismiss}
+              className="font-medium text-[var(--ink)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+            >
+              Profile
+            </Link>
+            .
           </p>
         </header>
 
