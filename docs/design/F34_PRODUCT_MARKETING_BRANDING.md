@@ -86,7 +86,7 @@ If a change seems to require editing a frozen file to “fix” product, stop an
 | 0 | Token / type mapping | **Done** |
 | 1 | Foundations (`globals.css`, fonts, shared UI) | **Done** |
 | 2 | Auth shell | **Done** |
-| 3 | Admin chrome + dashboard | Not started |
+| 3 | Admin chrome + dashboard | **Done** |
 | 4 | Forms (create / edit / profile) | Not started |
 | 5 | Public `/view` | Not started |
 | 6 | Docs + QA | Not started |

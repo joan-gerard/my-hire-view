@@ -4,7 +4,13 @@
  */
 export default function AdminDashboardSkeleton() {
   return (
-    <div className="space-y-6" aria-busy="true" aria-live="polite">
+    <div
+      className="space-y-6"
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <span className="sr-only">Loading applications</span>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="h-9 w-48 animate-pulse rounded-xl bg-[var(--ink)]/10" />
         <div className="h-10 w-48 animate-pulse rounded-full bg-[var(--ink)]/10" />
