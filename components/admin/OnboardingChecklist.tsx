@@ -26,6 +26,7 @@ import {
   type OnboardingChecklistPrefs,
 } from "@/lib/utils/onboarding-checklist-storage";
 import { subscribeOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
+import { requestAccountSettingsTab } from "@/lib/admin/account-settings-tabs";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -378,6 +379,11 @@ export default function OnboardingChecklist({
                   <div className="flex items-center gap-1 rounded-xl hover:bg-[var(--ink)]/[0.03]">
                     <Link
                       href={step.href}
+                      onClick={() => {
+                        if (step.id === "primary_cv") {
+                          requestAccountSettingsTab("cvs");
+                        }
+                      }}
                       className={`flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2.5 py-1.5 text-[var(--ink)] ${FOCUS_RING}`}
                     >
                       <span

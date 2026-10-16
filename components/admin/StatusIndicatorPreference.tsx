@@ -45,7 +45,8 @@ type StatusIndicatorPreferenceProps = {
 };
 
 /**
- * Profile control for dashboard status marker style (browser-local preference).
+ * Account settings → Preferences control for dashboard status marker style
+ * (browser-local preference).
  */
 export default function StatusIndicatorPreference({
   publicId = null,
@@ -101,7 +102,7 @@ export default function StatusIndicatorPreference({
 
   return (
     <fieldset className="space-y-4" disabled={!ready || !accountKey}>
-      <legend className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
+      <legend className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]">
         Status indicators
       </legend>
       <p className="text-sm text-[var(--muted)]">

@@ -13,8 +13,8 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 - [ ] With at least one application, `/admin` header shows a **What do these icons mean?** button (next to Applications)
 - [ ] Clicking it opens a modal titled **Status icons & draft actions**
-- [ ] Intro copy mentions changing indicator style on **Profile** (link closes the modal and goes to `/admin/profile`)
-- [ ] Modal lists: Draft, Active (not viewed yet), Active (viewed), Archived, and CV missing — with markers matching the current Profile preference / CV missing badge
+- [ ] Intro copy mentions changing indicator style under **Account settings → Preferences** (link closes the modal, goes to `/admin/profile`, and opens the Preferences tab)
+- [ ] Modal lists: Draft, Active (not viewed yet), Active (viewed), Archived, and CV missing — with markers matching the current Preferences tab style / CV missing badge
 - [ ] Same modal explains draft actions: **Publish**, **Preview**, **Publish to share**
 - [ ] Close via **Close** button, Escape, or backdrop click; focus returns to the page
 - [ ] On open, focus moves into the modal on the heading (not the Close button). Mouse open should not show a selection-style ring; a `focus-visible` outline remains available for keyboard focus indication
@@ -22,17 +22,17 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 ## Cards stay consistent
 
-### Colorful dots (Profile default)
+### Colorful dots (Preferences default)
 
 - [ ] Draft card: bright gold dot; **Publish**; **Publish to share**; **Preview** (not View Application)
 - [ ] Active, never viewed: bright sky dot
 - [ ] Active, viewed at least once: bright lime dot
 - [ ] Archived: soft grey dot; link unavailable until restore
 
-### High contrast icons (Profile → Status indicators)
+### High contrast icons (Account settings → Preferences)
 
 - [ ] Draft: soft gold wash + pencil; Active unviewed: sky wash + clock; Viewed: lime wash + check; Archived: mist wash + archive
-- [ ] Preference survives refresh; dashboard and legend update after changing it on Profile
+- [ ] Preference survives refresh; dashboard and legend update after changing it on Preferences
 - [ ] Changing the preference in another tab updates this tab without reload
 - [ ] A second account in the same browser keeps its own style (does not overwrite the first)
 
@@ -45,4 +45,4 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 - [ ] Search with no matches still shows the legend button and search bar (Clear search works)
 - [ ] Clearing a no-match search does **not** briefly flash the first-run empty state or hide the search bar before the full list returns
 - [ ] Search / pagination still work after opening and closing the modal
-- [ ] `/admin/profile` shows **Status indicators** with live previews for both styles
+- [ ] `/admin/profile` → **Preferences** tab shows **Status indicators** with live previews for both styles

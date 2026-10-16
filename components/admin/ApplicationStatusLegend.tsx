@@ -15,6 +15,7 @@ import {
   ADMIN_PANEL_CLASS,
   ADMIN_SECONDARY_CLASS,
 } from '@/components/admin/admin-chrome';
+import { requestAccountSettingsTab } from '@/lib/admin/account-settings-tabs';
 
 export type ApplicationStatusLegendProps = {
   open: boolean;
@@ -118,13 +119,16 @@ export default function ApplicationStatusLegend({
           <p className="mt-1.5 text-sm leading-snug text-[var(--muted)]">
             What the icons on each application card mean, and how draft actions
             differ from a live share link. Change the indicator style (colorful
-            dots or high-contrast icons) in{' '}
+            dots or high-contrast icons) under{' '}
             <Link
               href="/admin/profile"
-              onClick={requestDismiss}
+              onClick={() => {
+                requestAccountSettingsTab("preferences");
+                requestDismiss();
+              }}
               className="font-medium text-[var(--ink)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
             >
-              Profile
+              Account settings → Preferences
             </Link>
             .
           </p>

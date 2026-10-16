@@ -206,15 +206,24 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 
 ---
 
-## 8. Profile (`/admin/profile`)
+## 8. Account settings (`/admin/profile`)
 
-### Account
+Header nav still says **Profile**. Page title is **Account settings** with tabs: Profile · CVs · Preferences · Billing and plan · Password. URL stays `/admin/profile` (tabs are client state). Application counts are not on this page (dashboard / `L7-080`).
+
+### Tabs chrome
+
+- [ ] Title reads **Account settings** (not only “Profile”)
+- [ ] Five tabs are keyboard-navigable (arrow keys move selection; URL stays `/admin/profile`)
+- [ ] Default tab is **Profile**
+- [ ] **CVs** / **Preferences** / **Billing and plan** / **Password** switch content without a route change
+
+### Account (Profile tab)
 
 - [ ] Email matches signup
 - [ ] **Member since** is a sensible date
 - [ ] **Public id** is an opaque id (not your name); help text + example `/view/{publicId}/…` path
 
-### Profile details
+### Profile details (Profile tab)
 
 - [ ] First and last name prefilled from signup
 - [ ] Save disabled until something changes; disabled reason if names are empty (“First name and last name are required”) or “No changes to save”
@@ -229,7 +238,7 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 - [ ] Completing **only LinkedIn** (no location, no portfolio) still satisfies the checklist “location or a link” step; same for portfolio-only or location-only
 - [ ] Success / saving labels: **Uploading…** then **Saving…** when a picture is included
 
-### Profile picture (on Profile)
+### Profile picture (Profile tab)
 
 - [ ] Choose JPEG → preview → Save → thumbnail persists after refresh
 - [ ] Replace with PNG (and WebP if you have one) → new image shows (cache-bust, not a stale JPEG)
@@ -240,7 +249,7 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 - [ ] Choosing a new file then **Remove** before Save does not upload
 - [ ] Rapid double-Save does not leave two avatars / a broken URL
 
-### Primary CV library (on Profile)
+### Primary CV library (CVs tab)
 
 - [ ] While **Loading…**, **Upload primary CV** is disabled
 - [ ] Empty library copy when none exist
@@ -256,11 +265,22 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 - [ ] After deleting one, a new upload is allowed again (still max 5)
 - [ ] Two apps sharing one primary: delete that primary → **both** cards show CV missing; other primaries unchanged
 
-### Applications summary
+### Preferences tab
 
-- [ ] Total count; breakdown **active / draft / archived** adds up to the total
-- [ ] Counts update after you create, publish, archive, and delete (refresh profile)
-- [ ] **View dashboard →** returns to `/admin`
+- [ ] **Status indicators** offers colorful dots vs high-contrast icons with live previews
+- [ ] Choice persists across refresh and updates dashboard / legend
+
+### Billing and plan tab
+
+- [ ] **Current plan** shows Free + usage (applications / primary CVs vs draft Free caps)
+- [ ] Plan cards for Free / Pro / Premium with monthly ↔ annual toggle
+- [ ] Paid **Upgrade** controls are disabled (“coming soon”); Free shows Current plan
+- [ ] Draft pricing note is visible
+
+### Password tab
+
+- [ ] Current / new / confirm fields render
+- [ ] **Update password** is disabled; tip explains not available yet
 
 ---
 

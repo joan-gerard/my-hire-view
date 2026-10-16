@@ -55,32 +55,46 @@ export default function AdminPageSkeleton({
   if (variant === 'profile') {
     return (
       <div
-        className={`${ADMIN_MAIN_MIN_CLASS} space-y-8`}
+        className={`${ADMIN_MAIN_MIN_CLASS} space-y-6`}
         role="status"
         aria-busy="true"
         aria-live="polite"
       >
-        <span className="sr-only">Loading profile</span>
-        <div className="h-9 w-36 animate-pulse rounded-xl bg-[var(--ink)]/[0.08]" />
-        <section className={`${ADMIN_PANEL_CLASS} space-y-4 p-6`}>
-          <div className="h-6 w-28 animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
-          <div className="h-4 w-56 animate-pulse rounded bg-[var(--ink)]/[0.05]" />
-          <div className="h-4 w-40 animate-pulse rounded bg-[var(--ink)]/[0.05]" />
-          <div className="h-4 w-64 animate-pulse rounded bg-[var(--ink)]/[0.05]" />
-        </section>
-        <section className={`${ADMIN_PANEL_CLASS} space-y-4 p-6`}>
-          <div className="h-6 w-36 animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
+        <span className="sr-only">Loading account settings</span>
+        <div className="space-y-2">
+          <div className="h-10 w-56 animate-pulse rounded-xl bg-[var(--ink)]/[0.08]" />
           <div className="h-4 w-72 max-w-full animate-pulse rounded bg-[var(--ink)]/[0.05]" />
-          <div className="mt-2 h-72 animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
+        </div>
+        <div className="flex gap-2 border-b border-[var(--ink)]/10 pb-px">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-9 w-20 animate-pulse rounded-lg bg-[var(--ink)]/[0.05] sm:w-24"
+            />
+          ))}
+        </div>
+        <section className={`${ADMIN_PANEL_CLASS} overflow-hidden`}>
+          <div className="flex items-center gap-4 border-b border-[var(--ink)]/8 bg-[var(--ink)]/[0.02] px-5 py-5 sm:px-6">
+            <div className="h-16 w-16 shrink-0 animate-pulse rounded-full bg-[var(--ink)]/[0.08]" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="h-7 w-48 animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
+              <div className="h-4 w-56 animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+            </div>
+          </div>
+          <div className="space-y-3 px-5 py-5 sm:px-6">
+            <div className="h-4 w-24 animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+            <div className="h-4 w-64 max-w-full animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+            <div className="h-4 w-40 animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+          </div>
         </section>
-        <section className={`${ADMIN_PANEL_CLASS} space-y-4 p-6`}>
-          <div className="h-6 w-32 animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
-          <div className="h-4 w-80 max-w-full animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+        <section className={`${ADMIN_PANEL_CLASS} space-y-4 p-5 sm:p-6`}>
+          <div className="h-5 w-36 animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
+          <div className="h-4 w-72 max-w-full animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+          <div className="h-72 animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
+        </section>
+        <section className={`${ADMIN_PANEL_CLASS} space-y-4 p-5 sm:p-6`}>
+          <div className="h-5 w-32 animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
           <div className="h-40 animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
-        </section>
-        <section className={`${ADMIN_PANEL_CLASS} space-y-3 p-6`}>
-          <div className="h-6 w-36 animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
-          <div className="h-4 w-64 max-w-full animate-pulse rounded bg-[var(--ink)]/[0.05]" />
         </section>
       </div>
     );

@@ -227,7 +227,7 @@ export default function PrimaryCvLibrarySection({
     <>
       {!embedded && (
         <>
-          <h2 className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
+          <h2 className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]">
             Primary CVs
           </h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
@@ -255,16 +255,18 @@ export default function PrimaryCvLibrarySection({
           Loading…
         </p>
       ) : (
-        <ul className={`${embedded && !error ? "mt-0" : "mt-4"} space-y-2`}>
+        <ul
+          className={`${embedded && !error ? "mt-0" : "mt-4"} divide-y divide-[var(--ink)]/8 ${embedded ? "" : "rounded-xl border border-[var(--ink)]/10"}`}
+        >
           {items.length === 0 && (
-            <li className="text-sm text-[var(--muted)]">
+            <li className="px-3 py-3 text-sm text-[var(--muted)]">
               No primary CVs yet. Upload one to reuse it on applications.
             </li>
           )}
           {items.map((cv) => (
             <li
               key={cv.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--ink)]/10 bg-[var(--white)] px-3 py-2"
+              className="flex flex-wrap items-center justify-between gap-2 px-3 py-3"
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-[var(--ink)]">
@@ -401,7 +403,7 @@ export default function PrimaryCvLibrarySection({
   }
 
   return (
-    <section className={`${ADMIN_PANEL_CLASS} p-6`}>
+    <section className={`${ADMIN_PANEL_CLASS} p-5 sm:p-6`}>
       {body}
     </section>
   );
