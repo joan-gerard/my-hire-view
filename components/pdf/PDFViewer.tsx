@@ -49,7 +49,7 @@ export default function PDFViewer({
     return (
       <div
         role="alert"
-        className="rounded-2xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-6 py-8 text-center"
+        className="rounded-[24px] border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-6 py-8 text-center"
       >
         <p className="font-semibold text-[var(--status-warning-fg)]">
           {isMissingOrUnavailable ? "CV is not available" : "Failed to load CV"}
@@ -62,7 +62,7 @@ export default function PDFViewer({
         {!isMissingOrUnavailable && (
           <button
             onClick={() => window.open(url, "_blank")}
-            className="mt-4 rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95"
+            className="mt-4 cursor-pointer rounded-full bg-[var(--ink)] px-4 py-2 text-sm font-medium text-[var(--white)] hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
           >
             Try opening in new tab
           </button>
@@ -78,10 +78,10 @@ export default function PDFViewer({
 
   return (
     <div className="space-y-4 p-2">
-      <div className="flex max-h-[calc(100vh-200px)] justify-center overflow-y-auto rounded-lg bg-[var(--background)] p-4">
+      <div className="flex max-h-[calc(100vh-200px)] justify-center overflow-y-auto rounded-xl bg-[var(--white)] p-4">
         {loading && (
           <div className="flex items-center justify-center p-8">
-            <div className="text-[var(--foreground)]/80">Loading PDF...</div>
+            <div className="text-[var(--muted)]">Loading PDF...</div>
           </div>
         )}
         <Document
@@ -90,7 +90,7 @@ export default function PDFViewer({
           onLoadError={onDocumentLoadError}
           loading={
             <div className="flex items-center justify-center p-8">
-              <div className="text-[var(--foreground)]/80">Loading PDF...</div>
+              <div className="text-[var(--muted)]">Loading PDF...</div>
             </div>
           }
           className="max-w-full"

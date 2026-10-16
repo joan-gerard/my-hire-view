@@ -88,7 +88,7 @@ If a change seems to require editing a frozen file to “fix” product, stop an
 | 2 | Auth shell | **Done** |
 | 3 | Admin chrome + dashboard | **Done** |
 | 4 | Forms (create / edit / profile) | **Done** |
-| 5 | Public `/view` | Not started |
+| 5 | Public `/view` | **Done** |
 | 6 | Docs + QA | Not started |
 
 **Status meanings:** **Locked** = decisions recorded; checklist may still have deferred items. **Done** = that phase’s checklist is fully complete (including smoke / deferred compares). Do not mark **Done** while unchecked items remain.
@@ -253,9 +253,11 @@ Quiet chrome so CV / video stay primary; brand without looking like a marketing 
 
 ### Checklist
 
-- [ ] Header / footer / buttons match brand
-- [ ] Draft preview banner / unavailable states
-- [ ] Owner vs recruiter smoke
+- [x] Header / footer / buttons match brand
+- [x] Draft preview banner / unavailable states
+- [x] Owner vs recruiter smoke
+
+**Done (2026-10-16):** Paper panels + ink pill CTAs on header/CV chrome; draft banner pink-text warning + ink Publish; unavailable empty state LogoWhite + lime CTA (already); footer muted/ink; PDF loading/retry ink. Marketing `/` untouched. Docs/style-guide rewrite stays Phase 6.
 
 ---
 
@@ -310,3 +312,4 @@ Prefer **one PR** with phased commits matching Phases 1→6. If the diff balloon
 | 2026-10-15 | Removed `/demo/auth-reslink/*` after layout promotion to production | Phase 3 — admin chrome + dashboard |
 | 2026-10-16 | Phase 3 done: admin-chrome tokens, header, empty/search/cards/pagination, checklist + legend | Phase 4 — forms (create / edit / profile) |
 | 2026-10-16 | Phase 4 done: form shells, white inputs, tips/dialogs, profile + CV library chrome | Phase 5 — public `/view` |
+| 2026-10-16 | Phase 5 done: quiet `/view` header/footer/CTAs, draft banner, unavailable + PDF chrome | Phase 6 — docs + QA |

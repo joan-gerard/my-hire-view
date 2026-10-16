@@ -1,5 +1,6 @@
 "use client";
 
+import { LogoWhite } from "@/components/ui/Logo";
 import {
   headerEntrance,
   staggerContainer,
@@ -14,9 +15,9 @@ const BACKGROUND_IMAGE = "/hero-image.webp";
 
 /**
  * Single recruiter-facing empty state for archived, draft, deleted, or
- * otherwise missing public application links. Matches homepage branding:
- * wordmark top bar, full-bleed atmosphere, light display type, teal CTA,
- * compact dark footer.
+ * otherwise missing public application links. Quiet brand chrome on dark:
+ * wordmark top bar, full-bleed atmosphere, light display type, lime+ink CTA,
+ * compact dark footer — not a marketing landing clone.
  */
 export default function UnavailableApplicationView() {
   return (
@@ -27,13 +28,7 @@ export default function UnavailableApplicationView() {
         animate={headerEntrance.animate}
         transition={headerEntrance.transition}
       >
-        <Link
-          href="/"
-          className="text-xl font-medium text-white transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
-          aria-label="MyHireView home"
-        >
-          MyHireView
-        </Link>
+        <LogoWhite />
       </motion.header>
 
       <section
