@@ -12,7 +12,8 @@ import AdminDashboardEmpty from '@/components/admin/AdminDashboardEmpty';
 import { useApplications } from '@/hooks/useApplications';
 import { QuestionIcon } from '@/components/admin/icons';
 import {
-  ADMIN_PRIMARY_CLASS,
+  ADMIN_ACCENT_PRIMARY_CLASS,
+  ADMIN_PANEL_CLASS,
   ADMIN_SECONDARY_CLASS,
 } from '@/components/admin/admin-chrome';
 
@@ -58,76 +59,92 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)]">
-            Applications
-          </h1>
-          {showListChrome ? (
-            <button
-              type="button"
-              onClick={() => setLegendOpen(true)}
-              className={ADMIN_SECONDARY_CLASS}
-              aria-haspopup="dialog"
-            >
-              <QuestionIcon className="h-4 w-4" />
-              What do these icons mean?
-            </button>
-          ) : null}
-        </div>
-        <Link href="/admin/new" className={ADMIN_PRIMARY_CLASS}>
-          Create New Application
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)] sm:text-4xl">
+          Applications
+        </h1>
+        <Link href="/admin/new" className={ADMIN_ACCENT_PRIMARY_CLASS}>
+          + Create New Application
         </Link>
       </div>
-
-      {showListChrome ? (
-        <div className="max-w-md">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        </div>
-      ) : null}
 
       <ApplicationStatusLegend
         open={showListChrome && legendOpen}
         onClose={() => setLegendOpen(false)}
       />
 
-      {applications.length === 0 ? (
-        // Avoid flashing the first-run empty CTA while an unfiltered refetch settles.
-        hasSearchFilter || !isFetching ? (
-          <AdminDashboardEmpty
-            hasSearchQuery={hasSearchFilter}
-            onClearSearch={() => setSearchQuery('')}
-          />
-        ) : null
+      {applications.length === 0 && !showListChrome ? (
+        <AdminDashboardEmpty
+          hasSearchQuery={false}
+          onClearSearch={() => setSearchQuery('')}
+        />
       ) : (
-        <>
-          <div
-            className={`flex flex-col gap-4 transition-opacity ${isFetching ? 'opacity-60' : ''}`}
-          >
-            {applications.map((application) => (
-              <ApplicationCard
-                key={application.id}
-                application={application}
-                onDelete={handleDelete}
-                onArchive={handleArchive}
-                onRestore={handleRestore}
-                onPublish={handlePublish}
-              />
-            ))}
+        <section className={`${ADMIN_PANEL_CLASS} p-5 sm:p-6`}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h2 className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]">
+                Your applications
+              </h2>
+              {showListChrome ? (
+                <button
+                  type="button"
+                  onClick={() => setLegendOpen(true)}
+                  className={ADMIN_SECONDARY_CLASS}
+                  aria-haspopup="dialog"
+                >
+                  <QuestionIcon className="h-4 w-4" />
+                  What do these icons mean?
+                </button>
+              ) : null}
+            </div>
+            {showListChrome ? (
+              <div className="w-full sm:max-w-xs sm:shrink-0">
+                <SearchBar value={searchQuery} onChange={setSearchQuery} />
+              </div>
+            ) : null}
           </div>
-          <ApplicationsPagination
-            page={page}
-            totalPages={totalPages}
-            total={total}
-            offset={offset}
-            limit={limit}
-            hasPrevPage={hasPrevPage}
-            hasNextPage={hasNextPage}
-            isFetching={isFetching}
-            onPrev={goToPrevPage}
-            onNext={goToNextPage}
-          />
-        </>
+
+          {applications.length === 0 ? (
+            <div className="mt-6">
+              <AdminDashboardEmpty
+                hasSearchQuery={hasSearchFilter}
+                onClearSearch={() => setSearchQuery('')}
+                embedded
+              />
+            </div>
+          ) : (
+            <>
+              <div
+                className={`mt-4 transition-opacity ${isFetching ? 'opacity-60' : ''}`}
+              >
+                {applications.map((application) => (
+                  <ApplicationCard
+                    key={application.id}
+                    application={application}
+                    onDelete={handleDelete}
+                    onArchive={handleArchive}
+                    onRestore={handleRestore}
+                    onPublish={handlePublish}
+                  />
+                ))}
+              </div>
+              <div className="mt-4 border-t border-[var(--ink)]/8 pt-4">
+                <ApplicationsPagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={total}
+                  offset={offset}
+                  limit={limit}
+                  hasPrevPage={hasPrevPage}
+                  hasNextPage={hasNextPage}
+                  isFetching={isFetching}
+                  onPrev={goToPrevPage}
+                  onNext={goToNextPage}
+                />
+              </div>
+            </>
+          )}
+        </section>
       )}
     </div>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ApplicationForm, { type ApplicationFormInitialData } from '@/components/forms/ApplicationForm';
+import AdminPageSkeleton from '@/components/admin/AdminPageSkeleton';
 import {
   ADMIN_PANEL_CLASS,
   ADMIN_TIP_CLASS,
@@ -172,13 +173,7 @@ export default function EditApplicationPage() {
   };
 
   if (fetching) {
-    return (
-      <div className="space-y-4" role="status" aria-busy="true" aria-live="polite">
-        <span className="sr-only">Loading application</span>
-        <div className="h-8 w-64 animate-pulse rounded-xl bg-[var(--ink)]/10"></div>
-        <div className="h-96 animate-pulse rounded-[24px] bg-[var(--paper)]"></div>
-      </div>
-    );
+    return <AdminPageSkeleton variant="form" showTip />;
   }
 
   if (!application) {

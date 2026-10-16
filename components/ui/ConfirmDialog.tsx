@@ -77,7 +77,7 @@ export default function ConfirmDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,28rem)] max-h-[min(90vh,36rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[24px] border border-[var(--ink)]/10 bg-[var(--paper)] p-0 text-[var(--ink)] shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,28rem)] max-h-[min(90vh,36rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[28px] border border-[var(--ink)]/8 bg-[var(--white)] p-0 text-[var(--ink)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       aria-describedby={messageId}
       onClick={(e) => {

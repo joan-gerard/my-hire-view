@@ -21,7 +21,7 @@ import {
 } from '@/components/admin/icons';
 import {
   ADMIN_DISABLED_CLASS,
-  ADMIN_PANEL_CLASS,
+  ADMIN_LIST_ROW_CLASS,
   ADMIN_PRIMARY_CLASS,
   ADMIN_SECONDARY_CLASS,
 } from '@/components/admin/admin-chrome';
@@ -61,8 +61,8 @@ export default function ApplicationCard({
   };
 
   return (
-    <div className={`relative overflow-visible ${ADMIN_PANEL_CLASS}`}>
-      <div className="p-4 sm:p-5">
+    <div className={`relative overflow-visible ${ADMIN_LIST_ROW_CLASS}`}>
+      <div className="py-4 sm:py-5">
         <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
           <ApplicationStatusIcon
             status={application.status}

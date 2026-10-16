@@ -106,6 +106,11 @@
   --font-heading: var(--font-switzer), system-ui, sans-serif;
 }
 
+/* Reserve scrollbar space so short loading shells do not shift layout. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

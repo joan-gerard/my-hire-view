@@ -24,7 +24,7 @@ export default function Button({
     primary:
       'rounded-full bg-[var(--ink)] text-[var(--white)] hover:opacity-95 focus-visible:outline-[var(--ink)]',
     secondary:
-      'rounded-xl border border-[var(--ink)]/12 bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--white)] focus-visible:outline-[var(--ink)]',
+      'rounded-xl border border-[var(--ink)]/12 bg-[var(--white)] text-[var(--ink)] hover:bg-[var(--ink)]/[0.04] focus-visible:outline-[var(--ink)]',
     danger:
       'rounded-xl bg-[var(--status-danger-solid)] text-white hover:opacity-90 focus-visible:outline-[var(--status-danger-solid)]',
   };

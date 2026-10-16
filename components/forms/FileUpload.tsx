@@ -139,7 +139,7 @@ export default function FileUpload({
             onChange={handleFileChange}
             aria-label={chooseLabel}
             disabled={selectionLocked}
-            className="block w-full cursor-pointer text-sm text-[var(--muted)] file:mr-4 file:cursor-pointer file:rounded-xl file:border file:border-[var(--ink)]/12 file:bg-[var(--paper)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--ink)] hover:file:bg-[var(--white)] disabled:opacity-50"
+            className="block w-full cursor-pointer text-sm text-[var(--muted)] file:mr-4 file:cursor-pointer file:rounded-xl file:border file:border-[var(--ink)]/12 file:bg-[var(--white)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--ink)] hover:file:bg-[var(--ink)]/[0.04] disabled:opacity-50"
           />
           {showPending && (
             <button
@@ -183,7 +183,7 @@ export default function FileUpload({
           <dialog
             ref={dialogRef}
             onCancel={closePreview}
-            className="w-[90vw] max-w-4xl rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-0 shadow-xl backdrop:bg-black/50"
+            className="w-[90vw] max-w-4xl rounded-[28px] border border-[var(--ink)]/8 bg-[var(--white)] p-0 shadow-xl backdrop:bg-black/50"
           >
             <div className="flex items-center justify-between border-b border-[var(--ink)]/10 px-4 py-2">
               <span className="text-sm font-medium text-[var(--ink)]">

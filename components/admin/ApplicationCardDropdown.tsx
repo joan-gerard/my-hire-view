@@ -70,7 +70,7 @@ export default function ApplicationCardDropdown({
         >
           <Link
             href={`/admin/edit/${applicationId}`}
-            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--ink)] hover:bg-[var(--paper)]"
+            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--ink)] hover:bg-[var(--ink)]/[0.04]"
             role="menuitem"
             onClick={() => setDropdownOpen(false)}
           >

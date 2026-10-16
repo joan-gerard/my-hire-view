@@ -13,8 +13,9 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FL
 ## Floating availability
 
 - [ ] Checklist appears as a floating panel (bottom-right) on `/admin`, `/admin/profile`, `/admin/new`, and `/admin/edit/[id]`
-- [ ] Progress shows (e.g. `N of 6 complete`) when any step is incomplete
-- [ ] **Minimize** collapses to a compact **Getting started N/6** control; expand restores the panel — open/closed choice survives refresh and navigation
+- [ ] Progress shows (e.g. `N of 6 complete`) plus a lime progress bar when any step is incomplete
+- [ ] Collapsed control shows **Getting started**, count badge, **Next: …** hint, and progress bar; **Hide checklist** collapses the open panel — open/closed choice survives refresh and navigation
+- [ ] Expanded panel highlights **Up next** with a **Continue** CTA; remaining open steps sit under **Coming up**; done/skipped steps are behind **Done & skipped**
 
 ## Steps
 

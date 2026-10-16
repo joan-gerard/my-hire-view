@@ -1,6 +1,7 @@
 "use client";
 
 import ApplicationForm from "@/components/forms/ApplicationForm";
+import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
 import {
   ADMIN_PANEL_CLASS,
   ADMIN_TIP_CLASS,
@@ -248,6 +249,10 @@ export default function NewApplicationPage() {
     linkedin_url: profile?.linkedin_url ?? "",
   };
 
+  if (profileLoading) {
+    return <AdminPageSkeleton variant="form" />;
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)]">
@@ -271,46 +276,39 @@ export default function NewApplicationPage() {
         </p>
       )}
       <div className={`${ADMIN_PANEL_CLASS} p-6`}>
-        {profileLoading ? (
-          <div className="space-y-4">
-            <div className="h-24 animate-pulse rounded-xl bg-[var(--white)]" />
-            <div className="h-96 animate-pulse rounded-xl bg-[var(--white)]" />
-          </div>
-        ) : (
-          <ApplicationForm
-            initialData={initialData}
-            onSubmit={handleSubmit}
-            loading={loading}
-            submitLabel="Save & Preview"
-            profilePictureUrl={profile?.profile_picture_url ?? null}
-            profilePictureVersion={profile?.updated_at ?? null}
-            onProfilePictureSaved={({ url, updated_at }) =>
-              setProfile((prev) => {
-                if (prev) {
-                  return {
-                    ...prev,
-                    profile_picture_url: url,
-                    updated_at: updated_at ?? prev.updated_at,
-                  };
-                }
+        <ApplicationForm
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          loading={loading}
+          submitLabel="Save & Preview"
+          profilePictureUrl={profile?.profile_picture_url ?? null}
+          profilePictureVersion={profile?.updated_at ?? null}
+          onProfilePictureSaved={({ url, updated_at }) =>
+            setProfile((prev) => {
+              if (prev) {
                 return {
-                  user_id: "",
-                  public_id: publicId ?? undefined,
-                  first_name: metaNames?.first_name ?? null,
-                  last_name: metaNames?.last_name ?? null,
-                  location: null,
-                  portfolio_url: null,
-                  linkedin_url: null,
-                  updated_at: updated_at ?? new Date().toISOString(),
+                  ...prev,
                   profile_picture_url: url,
+                  updated_at: updated_at ?? prev.updated_at,
                 };
-              })
-            }
-            publicId={publicId ?? undefined}
-            resolveSlugOnCreate
-            persistDraftKey={draftStorageKey ?? undefined}
-          />
-        )}
+              }
+              return {
+                user_id: "",
+                public_id: publicId ?? undefined,
+                first_name: metaNames?.first_name ?? null,
+                last_name: metaNames?.last_name ?? null,
+                location: null,
+                portfolio_url: null,
+                linkedin_url: null,
+                updated_at: updated_at ?? new Date().toISOString(),
+                profile_picture_url: url,
+              };
+            })
+          }
+          publicId={publicId ?? undefined}
+          resolveSlugOnCreate
+          persistDraftKey={draftStorageKey ?? undefined}
+        />
       </div>
     </div>
   );

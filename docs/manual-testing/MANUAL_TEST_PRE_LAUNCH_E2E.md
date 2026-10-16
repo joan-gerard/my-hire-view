@@ -41,17 +41,17 @@ Work ticket: [Backlog.md](../product/Backlog.md) `F32-115`. Product copy: [USER_
 
 Create these as you go so later sections have the right mix. Reuse the same primary CV unless a step says otherwise. Short company/role names are fine.
 
-| # | Company / role (example) | Status by the end | Notes |
-| - | ------------------------ | ----------------- | ----- |
-| 1 | Acme / Software Engineer | **active**, viewed | Full: all candidate fields on, picture shown, primary CV, YouTube, Name in URL **At start** |
-| 2 | Globex / Product Manager | **active**, never viewed | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required** |
-| 3 | Initech / Designer | **draft** | Tailored CV; Name in URL **None**; custom slug |
-| 4 | Umbrella / Data Analyst | **archived** | Publish first, then archive; Name in URL **At end** |
-| 5 | Soylent / QA Engineer | **active** | Same **primary CV** as #1 (reuse) |
-| 6 | MissingCvCo / Intern | **active**, **CV missing** | Point at a primary, then delete that primary from the library |
-| 7 | Café Müller / Senior Engineer | **active** | Accents / unicode in company; slug must strip special chars (`cafe-muller-…`) |
-| 8 | (very long company + role, ~200 chars each) | **draft** | Hits **128-char slug clamp**; with Name in URL **At start**, the **name segment is kept** and company/role is truncated first |
-| 9+ | PageFill-01 … | whatever | Extra rows so the dashboard has **more than 20** applications (page size is 20) |
+| #   | Company / role (example)                    | Status by the end          | Notes                                                                                                                         |
+| --- | ------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Acme / Software Engineer                    | **active**, viewed         | Full: all candidate fields on, picture shown, primary CV, YouTube, Name in URL **At start**                                   |
+| 2   | Globex / Product Manager                    | **active**, never viewed   | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required**                                      |
+| 3   | Initech / Designer                          | **draft**                  | Tailored CV; Name in URL **None**; custom slug                                                                                |
+| 4   | Umbrella / Data Analyst                     | **archived**               | Publish first, then archive; Name in URL **At end**                                                                           |
+| 5   | Soylent / QA Engineer                       | **active**                 | Same **primary CV** as #1 (reuse)                                                                                             |
+| 6   | MissingCvCo / Intern                        | **active**, **CV missing** | Point at a primary, then delete that primary from the library                                                                 |
+| 7   | Café Müller / Senior Engineer               | **active**                 | Accents / unicode in company; slug must strip special chars (`cafe-muller-…`)                                                 |
+| 8   | (very long company + role, ~200 chars each) | **draft**                  | Hits **128-char slug clamp**; with Name in URL **At start**, the **name segment is kept** and company/role is truncated first |
+| 9+  | PageFill-01 …                               | whatever                   | Extra rows so the dashboard has **more than 20** applications (page size is 20)                                               |
 
 ---
 
@@ -663,18 +663,18 @@ These are easy to skip on the happy path. Do them once you have applications in 
 
 Tracked in [Backlog.md](../product/Backlog.md):
 
-| Item | Ticket |
-| ---- | ------ |
-| Terms / Privacy / Cookies pages | Draft UI shipped (`F20-019`); final counsel copy still open |
-| Delete account from profile | `F21-020` |
-| In-app forgot password | `L4-098` |
-| Stripe / plan gates | `E1-012`, `E2-013` |
-| `/admin` + `/view` + auth visual rebrand (warm palette) | ~~`F17-017`~~, ~~`F17-018`~~ (shipped) |
-| Product UI aligned with marketing brand | `F34-118` |
-| 90-day archive purge, retention tooltip, emails | After launch G* |
-| In-app video recording / teleprompter | `H1-065`, `H2-066` |
-| Dashboard stats above search | `L7-080` |
-| Product tour | `F31-105` |
+| Item                                                    | Ticket                                                      |
+| ------------------------------------------------------- | ----------------------------------------------------------- |
+| Terms / Privacy / Cookies pages                         | Draft UI shipped (`F20-019`); final counsel copy still open |
+| Delete account from profile                             | `F21-020`                                                   |
+| In-app forgot password                                  | `L4-098`                                                    |
+| Stripe / plan gates                                     | `E1-012`, `E2-013`                                          |
+| `/admin` + `/view` + auth visual rebrand (warm palette) | ~~`F17-017`~~, ~~`F17-018`~~ (shipped)                      |
+| Product UI aligned with marketing brand                 | `F34-118`                                                   |
+| 90-day archive purge, retention tooltip, emails         | After launch G\*                                            |
+| In-app video recording / teleprompter                   | `H1-065`, `H2-066`                                          |
+| Dashboard stats above search                            | `L7-080`                                                    |
+| Product tour                                            | `F31-105`                                                   |
 
 If any of these have shipped by the time you run this pass, add a short note in the ticket and test them.
 

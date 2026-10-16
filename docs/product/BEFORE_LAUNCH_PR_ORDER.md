@@ -46,7 +46,7 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 - **F19** (onboarding + Public id copy + card legend / draft action clarity) shipped while create flows were fresh — design context: [ACTIVATION_UX_F19.md](../retrospectives/ACTIVATION_UX_F19.md)
 - **F17** branded `/admin`, `/view`, auth to the warm product palette (PR #56)
 - **F34** restyles those surfaces to match the **marketing** brand system after the marketing rebrand lands (update [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md) in the same PR)
-- **F35** rethinks the long create/edit `ApplicationForm` into a stepped modal / multi-step workflow (after F34 chrome; before F32 QA)
+- **F35** rethinks the long create/edit `ApplicationForm` into a stepped flow — modal/wizard **or** one-page collapsible sections (after F34 chrome; before F32 QA)
 
 ### Phase 3 — Trust / compliance Shoulds
 

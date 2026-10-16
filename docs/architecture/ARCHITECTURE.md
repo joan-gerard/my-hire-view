@@ -357,7 +357,7 @@ my-hire-view/
 │   ├── view/[slug]/            # Public application route (page, loading, not-found)
 │   └── api/                    # All API routes (see docs/architecture/API_REFERENCE.md)
 ├── components/
-│   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
+│   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminPageSkeleton / AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── auth/                   # SignOutButton
 │   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, NameInUrlField, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
