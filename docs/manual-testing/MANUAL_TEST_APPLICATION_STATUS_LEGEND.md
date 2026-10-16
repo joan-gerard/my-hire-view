@@ -31,8 +31,10 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 ### High contrast icons (Profile → Status indicators)
 
-- [ ] Draft: soft gold wash + clock; Active unviewed: sky wash + clock; Viewed: lime wash + check; Archived: mist wash + archive
+- [ ] Draft: soft gold wash + pencil; Active unviewed: sky wash + clock; Viewed: lime wash + check; Archived: mist wash + archive
 - [ ] Preference survives refresh; dashboard and legend update after changing it on Profile
+- [ ] Changing the preference in another tab updates this tab without reload
+- [ ] A second account in the same browser keeps its own style (does not overwrite the first)
 
 - [ ] Hover/focus titles on the left status badge match the legend labels
 

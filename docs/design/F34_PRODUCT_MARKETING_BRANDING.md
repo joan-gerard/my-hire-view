@@ -155,10 +155,10 @@ Primary actions such as Publish as a primary button use `--brand-primary` (ink) 
 | `--status-warning-bg` / `--status-warning-fg`                         | warm amber | `#fff0fe` / `#c026a8`                  | Soft pink + `--pink-text`                                 |
 | `--status-danger-bg` / `--status-danger-fg` / `--status-danger-solid` | red pair   | Keep `#fde8e4` / `#b42318` / `#b42318` | Unchanged family                                          |
 
-Dashboard status markers have two account-scoped browser preferences (Profile → **Status indicators**):
+Dashboard status markers offer two styles via one account-scoped browser preference (Profile → **Status indicators**):
 
 1. **Colorful dots** (default) — bright gold / sky / lime / grey fills  
-2. **High contrast icons** — soft wash + ink glyph (clock / check / archive) for WCAG 1.4.11  
+2. **High contrast icons** — soft wash + distinct ink glyphs (pencil / clock / check / archive) for WCAG 1.4.11 + non-color cues
 
 | Token | Hex | Role |
 | ----- | --- | ---- |

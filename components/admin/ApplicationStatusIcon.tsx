@@ -13,6 +13,7 @@ import {
   ArchiveIcon,
   CheckIcon,
   ClockIcon,
+  PencilIcon,
 } from "@/components/admin/icons";
 import { useStatusIndicatorStyle } from "@/hooks/useStatusIndicatorStyle";
 
@@ -57,6 +58,10 @@ function StatusGlyph({ visual }: { visual: ApplicationStatusVisualKey }) {
   }
   if (visual === "active_viewed") {
     return <CheckIcon className={iconClass} />;
+  }
+  if (visual === "draft") {
+    // Distinct from active_unviewed clock so high-contrast mode is not color-only.
+    return <PencilIcon className={iconClass} />;
   }
   return <ClockIcon className={iconClass} />;
 }

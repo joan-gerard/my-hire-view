@@ -5,6 +5,7 @@ import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
 import {
   DEFAULT_STATUS_INDICATOR_STYLE,
+  normalizeProfilePublicIdForPrefs,
   readStatusIndicatorStyle,
   resolveStatusIndicatorAccountKey,
   writeStatusIndicatorStyle,
@@ -34,7 +35,7 @@ const OPTIONS: {
     value: "high_contrast",
     title: "High contrast icons",
     description:
-      "Soft tinted badges with ink icons. Easier to tell apart; meets stronger contrast guidance.",
+      "Soft tinted badges with distinct ink icons. Easier to tell apart; meets stronger contrast guidance.",
   },
 ];
 
@@ -58,6 +59,10 @@ export default function StatusIndicatorPreference({
 
   useEffect(() => {
     let cancelled = false;
+    setAccountKey(null);
+    setReady(false);
+    setStyle(DEFAULT_STATUS_INDICATOR_STYLE);
+
     async function hydrate() {
       const supabase = createClient();
       const {
@@ -68,7 +73,7 @@ export default function StatusIndicatorPreference({
         return;
       }
       const key = resolveStatusIndicatorAccountKey({
-        profilePublicId: publicId,
+        profilePublicId: normalizeProfilePublicIdForPrefs(publicId),
         metadataPublicId: publicIdFromUserMetadata(user),
         authUserId: user.id,
       });
