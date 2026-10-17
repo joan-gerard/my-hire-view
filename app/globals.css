@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* FaunaOne – headings (local font from public/fonts/) */
+/* Legacy local faces — kept for any leftover references; product UI uses Switzer / Stack Sans via next/font */
 @font-face {
   font-family: "FaunaOne";
   src: url("/fonts/FaunaOne-Regular.ttf") format("truetype");
@@ -9,7 +9,6 @@
   font-display: swap;
 }
 
-/* FunnelSans – body text and buttons */
 @font-face {
   font-family: "FunnelSans";
   src: url("/fonts/FunnelSans-Regular.ttf") format("truetype");
@@ -39,7 +38,6 @@
   font-display: swap;
 }
 
-/* Varela Round – logos */
 @font-face {
   font-family: "Varela Round";
   src: url("/fonts/VarelaRound-Regular.ttf") format("truetype");
@@ -49,73 +47,89 @@
 }
 
 :root {
-  /* Light backgrounds – warm off-whites (less corporate than cool greys) */
-  --background: #f6f0e9;
-  --secondary-background: #fcf6ef;
-  /* Card/surface: forms, feature cards – warm neutral instead of #f4f2f1 */
-  --surface: #f8f4ef;
+  /* F34 — product tokens aligned with marketing system (see docs/design/F34_PRODUCT_MARKETING_BRANDING.md) */
+  --ink: #0b0b0c;
+  --muted: #6a6e6e;
+  --mist: #b7bcbc;
+  --lime: #9efc65;
+  --pink: #ffbcfc;
+  --pink-text: #c026a8;
+  --paper: #f0f0f0;
+  --white: #ffffff;
 
-  /* Primary text and buttons */
-  --foreground: #2b1809;
-  --brand-primary: #2b1809;
+  --background: #ffffff;
+  --secondary-background: #f0f0f0;
+  --surface: #f0f0f0;
+
+  --foreground: #0b0b0c;
+  --brand-primary: #0b0b0c;
   --brand-primary-text: #ffffff;
-  --brand-secondary: #f0e7dd;
-  --brand-secondary-text: #2b1809;
+  --brand-secondary: #f0f0f0;
+  --brand-secondary-text: #0b0b0c;
 
-  /* Legacy variables for compatibility */
-  --brand-text: #2b1809;
-  --brand-surface: #f6f0e9;
-  --brand-accent: #f0e7dd;
+  --brand-text: #0b0b0c;
+  --brand-surface: #ffffff;
+  --brand-accent: #f0f0f0;
 
-  /* Accent (muted teal) – homepage CTAs; also positive product actions (Publish, success) */
-  --brand-accent-1: #0d9488;
-  --brand-accent-2: #0f766e;
+  /* Light focus rings + former teal solid fills → ink (not lime on light) */
+  --brand-accent-1: #0b0b0c;
+  /* Link / hover emphasis → muted */
+  --brand-accent-2: #6a6e6e;
 
-  /* Dark sections (Problem, FAQ, Footer) – warm dark instead of pure #000 */
-  --dark-section-bg: #1a1510;
-  --dark-section-text: #faf8f6;
+  --dark-section-bg: #0b0b0c;
+  --dark-section-text: #ffffff;
 
-  /* Header: mobile nav menu – warm grey to match palette */
-  --header-mobile-menu-bg: #e2ddd6;
+  --header-mobile-menu-bg: #f0f0f0;
 
-  /* Product status / feedback (warm brand + teal accent — avoid generic SaaS greens) */
-  --status-success-bg: #d8f3ef;
-  --status-success-fg: #0f766e;
-  --status-draft-bg: #f3e4d4;
-  --status-draft-fg: #8a5a2b;
-  --status-warning-bg: #f8edd9;
-  --status-warning-fg: #7a4e1e;
+  --status-success-bg: #e8fad9;
+  --status-success-fg: #0b0b0c;
+  --status-draft-bg: #f0f0f0;
+  --status-draft-fg: #6a6e6e;
+  --status-warning-bg: #fff0fe;
+  --status-warning-fg: #c026a8;
   --status-danger-bg: #fde8e4;
   --status-danger-fg: #b42318;
-  /* Solid fill for danger buttons — keep separate from fg so text can be tuned independently */
   --status-danger-solid: #b42318;
 
-  /* Typography */
+  /* Colorful status dots (default dashboard preference) */
+  --status-dot-draft: #fcdc65;
+  --status-dot-active: #6ed4fc;
+  --status-dot-viewed: #9efc65;
+  --status-dot-archived: #c5c9c9;
+
+  /*
+   * High-contrast status washes (profile preference). Meaning + contrast come
+   * from distinct ink glyphs on the wash (WCAG 1.4.11 / 1.4.1), not color alone.
+   */
+  --status-wash-draft: #fff1b8;
+  --status-wash-active: #d3f2ff;
+  --status-wash-viewed: #e8fad9;
+  --status-wash-archived: #eceeee;
+
+  /* Legacy font family names (local @font-face). Product UI uses next/font vars on <body>. */
   --font-faunaone: "FaunaOne", serif;
   --font-funnelsans: "FunnelSans", system-ui, sans-serif;
   --font-varelaround: "Varela Round", system-ui, sans-serif;
 }
 
-/* Main background: #f6f0e9 (also used for cards background when section background uses Seconday background)
-Primary text: #2b1809
-
-Seconday background: #fcf6ef
-
-Primary button: #2b1809 background with white text
-Secondary button: #f0e7dd background with Primary text */
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-funnelsans);
+  /* next/font CSS variables are attached on <body> in app/layout.tsx — do not nest them on :root */
+  --font-sans: var(--font-stack-sans-headline), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-faunaone);
+  --font-heading: var(--font-switzer), system-ui, sans-serif;
+}
+
+/* Reserve scrollbar space so short loading shells do not shift layout. */
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-funnelsans);
+  font-family: var(--font-stack-sans-headline), system-ui, sans-serif;
 }
 
 h1,
@@ -124,10 +138,10 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-funnelsans);
+  font-family: var(--font-switzer), system-ui, sans-serif;
 }
 
 #logo,
 #marketing-nav-link {
-  font-family: var(--font-varelaround);
+  font-family: var(--font-switzer), system-ui, sans-serif;
 }

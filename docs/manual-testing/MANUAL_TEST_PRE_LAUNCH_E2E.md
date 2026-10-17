@@ -41,17 +41,17 @@ Work ticket: [Backlog.md](../product/Backlog.md) `F32-115`. Product copy: [USER_
 
 Create these as you go so later sections have the right mix. Reuse the same primary CV unless a step says otherwise. Short company/role names are fine.
 
-| # | Company / role (example) | Status by the end | Notes |
-| - | ------------------------ | ----------------- | ----- |
-| 1 | Acme / Software Engineer | **active**, viewed | Full: all candidate fields on, picture shown, primary CV, YouTube, Name in URL **At start** |
-| 2 | Globex / Product Manager | **active**, never viewed | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required** |
-| 3 | Initech / Designer | **draft** | Tailored CV; Name in URL **None**; custom slug |
-| 4 | Umbrella / Data Analyst | **archived** | Publish first, then archive; Name in URL **At end** |
-| 5 | Soylent / QA Engineer | **active** | Same **primary CV** as #1 (reuse) |
-| 6 | MissingCvCo / Intern | **active**, **CV missing** | Point at a primary, then delete that primary from the library |
-| 7 | Café Müller / Senior Engineer | **active** | Accents / unicode in company; slug must strip special chars (`cafe-muller-…`) |
-| 8 | (very long company + role, ~200 chars each) | **draft** | Hits **128-char slug clamp**; with Name in URL **At start**, the **name segment is kept** and company/role is truncated first |
-| 9+ | PageFill-01 … | whatever | Extra rows so the dashboard has **more than 20** applications (page size is 20) |
+| #   | Company / role (example)                    | Status by the end          | Notes                                                                                                                         |
+| --- | ------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Acme / Software Engineer                    | **active**, viewed         | Full: all candidate fields on, picture shown, primary CV, YouTube, Name in URL **At start**                                   |
+| 2   | Globex / Product Manager                    | **active**, never viewed   | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required**                                      |
+| 3   | Initech / Designer                          | **draft**                  | Tailored CV; Name in URL **None**; custom slug                                                                                |
+| 4   | Umbrella / Data Analyst                     | **archived**               | Publish first, then archive; Name in URL **At end**                                                                           |
+| 5   | Soylent / QA Engineer                       | **active**                 | Same **primary CV** as #1 (reuse)                                                                                             |
+| 6   | MissingCvCo / Intern                        | **active**, **CV missing** | Point at a primary, then delete that primary from the library                                                                 |
+| 7   | Café Müller / Senior Engineer               | **active**                 | Accents / unicode in company; slug must strip special chars (`cafe-muller-…`)                                                 |
+| 8   | (very long company + role, ~200 chars each) | **draft**                  | Hits **128-char slug clamp**; with Name in URL **At start**, the **name segment is kept** and company/role is truncated first |
+| 9+  | PageFill-01 …                               | whatever                   | Extra rows so the dashboard has **more than 20** applications (page size is 20)                                               |
 
 ---
 
@@ -78,8 +78,8 @@ Do this signed out (incognito is fine).
 
 - [ ] Logo / wordmark present
 - [ ] Nav includes **How to**, **Pricing**, and **FAQs** (paths `/#how`, `/#pricing`, `/#faq`); logo returns to `/` (smooth-scroll to top when already on home)
-- [ ] **Login** goes to `/login`
-- [ ] Mobile: menu opens those same links plus Login; closing it returns to the page
+- [ ] **Login** goes to `/login` (signed out); when signed in, header shows **Dashboard** → `/admin`
+- [ ] Mobile: menu opens those same links plus Login (or Dashboard when signed in); closing it returns to the page
 - [ ] Header hides smoothly when scrolling down and reappears when scrolling up (stays visible while the mobile menu is open)
 - [ ] Nav / logo in-page links smooth-scroll to the target section (instant if reduced motion is preferred)
 
@@ -160,7 +160,7 @@ From `/signup` (login page “create a new account”, or type the URL).
 - [ ] While signed in, visiting `/login` or `/signup` **redirects to `/admin`** (no login↔admin loop)
 - [ ] **Sign Out** in the admin header → `/login`; `/admin` now redirects to login
 - [ ] Sign in again
-- [ ] From `/` (signed in): header still shows **Login** (no avatar / Dashboard menu on the marketing header); go to `/admin` via URL or after login redirect. Sign Out is only in the admin header.
+- [ ] From `/` (signed in): header shows **Dashboard** (links to `/admin`); no avatar / Sign Out on the marketing header — Sign Out is only in the admin header.
 - [ ] After sign-out, browser Back does not serve a usable authenticated dashboard (must hit login)
 - [ ] Two tabs signed in: Sign Out in tab 1; tab 2’s next `/admin` navigation or refresh sends you to login (no half-authenticated UI)
 
@@ -206,15 +206,24 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 
 ---
 
-## 8. Profile (`/admin/profile`)
+## 8. Account settings (`/admin/profile`)
 
-### Account
+Header nav still says **Profile**. Page title is **Account settings** with tabs: Profile · CVs · Preferences · Billing and plan · Password. URL stays `/admin/profile` (tabs are client state). The old active/draft/archived applications summary is removed (planned for the dashboard via `L7-080`); **Billing and plan** still shows total application and primary-CV usage vs draft Free caps.
+
+### Tabs chrome
+
+- [ ] Title reads **Account settings** (not only “Profile”)
+- [ ] Five tabs are keyboard-navigable (arrow keys move selection; URL stays `/admin/profile`)
+- [ ] Default tab is **Profile**
+- [ ] **CVs** / **Preferences** / **Billing and plan** / **Password** switch content without a route change
+
+### Account (Profile tab)
 
 - [ ] Email matches signup
 - [ ] **Member since** is a sensible date
 - [ ] **Public id** is an opaque id (not your name); help text + example `/view/{publicId}/…` path
 
-### Profile details
+### Profile details (Profile tab)
 
 - [ ] First and last name prefilled from signup
 - [ ] Save disabled until something changes; disabled reason if names are empty (“First name and last name are required”) or “No changes to save”
@@ -229,7 +238,7 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 - [ ] Completing **only LinkedIn** (no location, no portfolio) still satisfies the checklist “location or a link” step; same for portfolio-only or location-only
 - [ ] Success / saving labels: **Uploading…** then **Saving…** when a picture is included
 
-### Profile picture (on Profile)
+### Profile picture (Profile tab)
 
 - [ ] Choose JPEG → preview → Save → thumbnail persists after refresh
 - [ ] Replace with PNG (and WebP if you have one) → new image shows (cache-bust, not a stale JPEG)
@@ -240,7 +249,7 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 - [ ] Choosing a new file then **Remove** before Save does not upload
 - [ ] Rapid double-Save does not leave two avatars / a broken URL
 
-### Primary CV library (on Profile)
+### Primary CV library (CVs tab)
 
 - [ ] While **Loading…**, **Upload primary CV** is disabled
 - [ ] Empty library copy when none exist
@@ -256,11 +265,22 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 - [ ] After deleting one, a new upload is allowed again (still max 5)
 - [ ] Two apps sharing one primary: delete that primary → **both** cards show CV missing; other primaries unchanged
 
-### Applications summary
+### Preferences tab
 
-- [ ] Total count; breakdown **active / draft / archived** adds up to the total
-- [ ] Counts update after you create, publish, archive, and delete (refresh profile)
-- [ ] **View dashboard →** returns to `/admin`
+- [ ] **Status indicators** offers colorful dots vs high-contrast icons with live previews
+- [ ] Choice persists across refresh and updates dashboard / legend
+
+### Billing and plan tab
+
+- [ ] **Current plan** shows Free + usage (applications / primary CVs vs draft Free caps)
+- [ ] Plan cards for Free / Pro / Premium with monthly ↔ annual toggle
+- [ ] Paid **Upgrade** controls are disabled (“coming soon”); Free shows Current plan
+- [ ] Draft pricing note is visible
+
+### Password tab
+
+- [ ] Current / new / confirm fields render
+- [ ] **Update password** is disabled; tip explains not available yet
 
 ---
 
@@ -663,17 +683,18 @@ These are easy to skip on the happy path. Do them once you have applications in 
 
 Tracked in [Backlog.md](../product/Backlog.md):
 
-| Item | Ticket |
-| ---- | ------ |
-| Terms / Privacy / Cookies pages | Draft UI shipped (`F20-019`); final counsel copy still open |
-| Delete account from profile | `F21-020` |
-| In-app forgot password | `L4-098` |
-| Stripe / plan gates | `E1-012`, `E2-013` |
-| `/admin` + `/view` + auth visual rebrand | `F17-017`, `F17-018` |
-| 90-day archive purge, retention tooltip, emails | After launch G* |
-| In-app video recording / teleprompter | `H1-065`, `H2-066` |
-| Dashboard stats above search | `L7-080` |
-| Product tour | `F31-105` |
+| Item                                                    | Ticket                                                      |
+| ------------------------------------------------------- | ----------------------------------------------------------- |
+| Terms / Privacy / Cookies pages                         | Draft UI shipped (`F20-019`); final counsel copy still open |
+| Delete account from profile                             | `F21-020`                                                   |
+| In-app forgot password                                  | `L4-098`                                                    |
+| Stripe / plan gates                                     | `E1-012`, `E2-013`                                          |
+| `/admin` + `/view` + auth visual rebrand (warm palette) | ~~`F17-017`~~, ~~`F17-018`~~ (shipped)                      |
+| Product UI aligned with marketing brand                 | `F34-118`                                                   |
+| 90-day archive purge, retention tooltip, emails         | After launch G\*                                            |
+| In-app video recording / teleprompter                   | `H1-065`, `H2-066`                                          |
+| Dashboard stats above search                            | `L7-080`                                                    |
+| Product tour                                            | `F31-105`                                                   |
 
 If any of these have shipped by the time you run this pass, add a short note in the ticket and test them.
 

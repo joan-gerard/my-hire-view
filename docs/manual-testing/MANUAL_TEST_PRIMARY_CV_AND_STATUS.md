@@ -30,7 +30,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 **Negative / smoke**
 
 - [ ] `is_active` column is **gone** from `applications` (migration applied)
-- [ ] Profile page application counts still make sense (active, draft, and archived add up to the total)
+- [ ] Account settings no longer shows an Applications summary tab (counts belong on the dashboard / `L7-080`)
 
 ---
 
@@ -38,7 +38,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 **On profile**
 
-- [ ] Open `/admin/profile`
+- [ ] Open `/admin/profile` → **CVs** tab
 - [ ] See **Primary CVs** section
 - [ ] While the section still shows **Loading…**, **Upload primary CV** is disabled
 - [ ] With empty library: message that none exist yet

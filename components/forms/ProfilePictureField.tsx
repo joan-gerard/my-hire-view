@@ -35,11 +35,11 @@ export default function ProfilePictureField({
 
   return (
     <>
-      <fieldset className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
-        <legend className="px-1 text-base font-semibold text-[var(--foreground)]">
+      <fieldset className="rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4">
+        <legend className="px-1 text-base font-semibold text-[var(--ink)]">
           Profile picture
         </legend>
-        <p className="mt-0.5 mb-3 text-sm text-[var(--foreground)]/80">
+        <p className="mt-0.5 mb-3 text-sm text-[var(--muted)]">
           {hasProfilePicture
             ? "Show your profile picture on this application?"
             : "Add a profile picture to show it on applications."}
@@ -47,7 +47,7 @@ export default function ProfilePictureField({
 
         {hasProfilePicture && thumbnailUrl && (
           <div className="mb-3 flex items-center gap-3">
-            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[var(--foreground)]/10 ring-1 ring-[var(--foreground)]/10">
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[var(--ink)]/10 ring-1 ring-[var(--ink)]/10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={thumbnailUrl}
@@ -89,9 +89,9 @@ export default function ProfilePictureField({
               checked={hasProfilePicture && showProfilePicture === true}
               disabled={!hasProfilePicture}
               onChange={() => onShowProfilePictureChange(true)}
-              className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)] disabled:opacity-60"
+              className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)] disabled:opacity-60"
             />
-            <span className="text-base font-medium text-[var(--foreground)]">
+            <span className="text-base font-medium text-[var(--ink)]">
               Yes
             </span>
           </label>
@@ -102,9 +102,9 @@ export default function ProfilePictureField({
               checked={!hasProfilePicture || showProfilePicture === false}
               disabled={!hasProfilePicture}
               onChange={() => onShowProfilePictureChange(false)}
-              className="h-4 w-4 border-[var(--foreground)]/30 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)] disabled:opacity-60"
+              className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)] disabled:opacity-60"
             />
-            <span className="text-base font-medium text-[var(--foreground)]">
+            <span className="text-base font-medium text-[var(--ink)]">
               No
             </span>
           </label>

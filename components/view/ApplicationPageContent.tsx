@@ -1,5 +1,6 @@
 "use client";
 
+import { ADMIN_PANEL_CLASS } from "@/components/admin/admin-chrome";
 import PDFViewer from "@/components/pdf/PDFViewer";
 import CvUnavailableWithRetry from "@/components/public/CvUnavailableWithRetry";
 import VideoModal from "@/components/view/VideoModal";
@@ -34,7 +35,7 @@ export default function ApplicationPageContent({
     <div className="pb-12">
       {trackViews ? <ViewTracker publicId={publicId} slug={slug} /> : null}
       <div className="space-y-12">
-        <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] shadow-sm">
+        <section className={`${ADMIN_PANEL_CLASS} overflow-hidden`}>
           {application.cv_exists === false ? (
             <CvUnavailableWithRetry onRetry={refetchApplication} />
           ) : (

@@ -17,15 +17,15 @@ export default function PublicIdAccountField({
 }: PublicIdAccountFieldProps) {
   return (
     <div>
-      <dt className="text-sm font-medium text-[var(--foreground)]/60">
+      <dt className="text-sm font-medium text-[var(--muted)]">
         {PUBLIC_ID_LABEL}
       </dt>
       <dd className="mt-1 space-y-1.5">
         {publicId ? (
           <>
-            <p className="font-mono text-sm text-[var(--foreground)]">{publicId}</p>
-            <p className="text-xs text-[var(--foreground)]/60">{PUBLIC_ID_HELP}</p>
-            <p className="text-xs text-[var(--foreground)]/55">
+            <p className="font-mono text-sm text-[var(--ink)]">{publicId}</p>
+            <p className="text-xs text-[var(--muted)]">{PUBLIC_ID_HELP}</p>
+            <p className="text-xs text-[var(--muted)]">
               Example path:{" "}
               <span className="font-mono">
                 {formatPublicPathExample(publicId)}
@@ -33,7 +33,7 @@ export default function PublicIdAccountField({
             </p>
           </>
         ) : (
-          <p className="text-sm text-[var(--foreground)]/70">{PUBLIC_ID_MISSING}</p>
+          <p className="text-sm text-[var(--muted)]">{PUBLIC_ID_MISSING}</p>
         )}
       </dd>
     </div>

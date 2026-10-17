@@ -91,7 +91,7 @@ export default function ViewPageContent({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-[var(--white)]">
       {draftPreviewApplicationId ? (
         <DraftPreviewBanner applicationId={draftPreviewApplicationId} />
       ) : null}

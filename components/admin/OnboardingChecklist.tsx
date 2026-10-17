@@ -1,15 +1,14 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-} from '@/components/admin/icons';
-import { publicIdFromUserMetadata } from '@/lib/auth/ensure-public-id';
-import type { Profile } from '@/lib/types/profile';
-import { createClient } from '@/lib/supabase/client';
+} from "@/components/admin/icons";
+import { ADMIN_PANEL_CLASS } from "@/components/admin/admin-chrome";
+import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
+import { createClient } from "@/lib/supabase/client";
+import type { Profile } from "@/lib/types/profile";
 import {
   ONBOARDING_STEP_IDS,
   buildOnboardingSteps,
@@ -18,15 +17,26 @@ import {
   onboardingProgress,
   type OnboardingChecklistInput,
   type OnboardingStepId,
-} from '@/lib/utils/onboarding-checklist';
+} from "@/lib/utils/onboarding-checklist";
 import {
   DEFAULT_ONBOARDING_CHECKLIST_PREFS,
   readOnboardingChecklistPrefs,
   resolveOnboardingAccountKey,
   writeOnboardingChecklistStorage,
   type OnboardingChecklistPrefs,
-} from '@/lib/utils/onboarding-checklist-storage';
-import { subscribeOnboardingChecklistChanged } from '@/lib/utils/onboarding-checklist-sync';
+} from "@/lib/utils/onboarding-checklist-storage";
+import { subscribeOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
+import { requestAccountSettingsTab } from "@/lib/admin/account-settings-tabs";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import Link from "next/link";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+
+const FOCUS_RING =
+  "focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
+
+const GHOST_ACTION_CLASS = `shrink-0 cursor-pointer rounded-full px-2.5 py-1.5 text-xs font-medium text-[var(--muted)] hover:bg-[var(--ink)]/[0.06] hover:text-[var(--ink)] ${FOCUS_RING}`;
+
+const TOGGLE_BUTTON_CLASS = `pointer-events-auto inline-flex cursor-pointer items-center gap-2.5 rounded-full border border-[var(--ink)]/12 bg-[var(--white)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] shadow-[0_8px_24px_-12px_rgba(11,11,12,0.35)] transition-shadow hover:shadow-[0_10px_28px_-12px_rgba(11,11,12,0.4)] ${FOCUS_RING}`;
 
 type OnboardingSnapshot = OnboardingChecklistInput;
 
@@ -62,6 +72,10 @@ export default function OnboardingChecklist({
   const [prefsHydrated, setPrefsHydrated] = useState(false);
   const loadGenerationRef = useRef(0);
   const dismissedRef = useRef(false);
+  const reduceMotion = useReducedMotion();
+  const motionTransition = reduceMotion
+    ? { duration: 0 }
+    : { duration: 0.28, ease: [0.4, 0, 0.2, 1] as const };
 
   const persistPrefs = useCallback(
     (next: OnboardingChecklistPrefs) => {
@@ -117,11 +131,11 @@ export default function OnboardingChecklist({
     try {
       setLoadError(false);
       const [profileRes, cvsRes, appsRes, activeRes] = await Promise.all([
-        fetch('/api/profile', { credentials: 'include' }),
-        fetch('/api/profile/primary-cvs', { credentials: 'include' }),
-        fetch('/api/applications?limit=1', { credentials: 'include' }),
-        fetch('/api/applications?limit=1&status=active', {
-          credentials: 'include',
+        fetch("/api/profile", { credentials: "include" }),
+        fetch("/api/profile/primary-cvs", { credentials: "include" }),
+        fetch("/api/applications?limit=1", { credentials: "include" }),
+        fetch("/api/applications?limit=1&status=active", {
+          credentials: "include",
         }),
       ]);
 
@@ -190,9 +204,9 @@ export default function OnboardingChecklist({
         profilePictureUrl: profile?.profile_picture_url ?? null,
         primaryCvCount: Array.isArray(cvsJson.data) ? cvsJson.data.length : 0,
         applicationTotal:
-          typeof appsJson.meta?.total === 'number' ? appsJson.meta.total : 0,
+          typeof appsJson.meta?.total === "number" ? appsJson.meta.total : 0,
         activeApplicationCount:
-          typeof activeJson.meta?.total === 'number'
+          typeof activeJson.meta?.total === "number"
             ? activeJson.meta.total
             : 0,
       });
@@ -242,7 +256,7 @@ export default function OnboardingChecklist({
               current.completed,
               liveCompletedStepIds(snapshot),
             );
-            if (mergedCompleted.join(',') === current.completed.join(',')) {
+            if (mergedCompleted.join(",") === current.completed.join(",")) {
               return current;
             }
             return { ...current, completed: mergedCompleted };
@@ -266,134 +280,199 @@ export default function OnboardingChecklist({
     return null;
   }
 
-  const steps = buildOnboardingSteps(
-    snapshot,
-    prefs.skipped,
-    prefs.completed,
-  );
+  const steps = buildOnboardingSteps(snapshot, prefs.skipped, prefs.completed);
   const { completed, total, allDone } = onboardingProgress(steps);
+  const progressPct = total === 0 ? 0 : Math.round((completed / total) * 100);
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex max-w-[min(100vw-2rem,22rem)] flex-col items-end gap-2 sm:bottom-6 sm:right-6">
-      <section
-        id={panelId}
-        hidden={!prefs.expanded}
-        className="pointer-events-auto max-h-[min(70vh,32rem)] w-[min(100vw-2rem,22rem)] overflow-y-auto rounded-2xl border border-[var(--foreground)]/12 bg-[var(--secondary-background)] p-4 shadow-lg"
-        aria-labelledby="onboarding-checklist-heading"
+    <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex w-[min(100vw-2rem,22rem)] flex-col items-stretch sm:bottom-6 sm:right-6">
+      {/* Stay mounted so aria-controls always resolves; animate height instead of unmounting. */}
+      <motion.div
+        initial={false}
+        animate={
+          prefs.expanded
+            ? { height: "auto", opacity: 1 }
+            : { height: 0, opacity: 0 }
+        }
+        transition={motionTransition}
+        className={`overflow-hidden ${prefs.expanded ? "mb-3" : ""}`}
+        inert={prefs.expanded ? undefined : true}
+        aria-hidden={!prefs.expanded}
       >
-        <div className="min-w-0">
-          <h2
-            id="onboarding-checklist-heading"
-            className="text-base font-semibold text-[var(--foreground)]"
-          >
-            Getting started
-          </h2>
-          <p className="mt-0.5 text-sm text-[var(--foreground)]/60">
-            {allDone ? 'All set' : `${completed} of ${total} complete`}
-          </p>
-        </div>
-        <ol className="mt-3 space-y-0.5">
-          {steps.map((step) => (
-            <li key={step.id}>
-              {step.done ? (
-                <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--foreground)]/55">
-                  <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--status-success-bg)] text-[var(--status-success-fg)]"
-                    aria-hidden
-                  >
-                    <CheckIcon className="h-3.5 w-3.5" />
-                  </span>
-                  <p className="min-w-0 flex-1 text-sm font-medium line-through">
-                    {step.label}
-                  </p>
-                  <span className="sr-only">Completed</span>
-                </div>
-              ) : step.skipped ? (
-                <div className="flex items-center gap-3 rounded-md px-2 py-1.5 text-[var(--foreground)]/45">
-                  <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--foreground)]/25"
-                    aria-hidden
-                  />
-                  <p className="min-w-0 flex-1 text-sm font-medium line-through">
-                    {step.label}
-                  </p>
-                  <span className="shrink-0 text-xs">Skipped</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
-                  <Link
-                    href={step.href}
-                    className="flex min-w-0 flex-1 items-center gap-3 text-[var(--foreground)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1"
-                  >
+        <section
+          id={panelId}
+          className={`pointer-events-auto flex max-h-[min(70vh,36rem)] flex-col overflow-hidden ${ADMIN_PANEL_CLASS} shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)]`}
+          aria-labelledby="onboarding-checklist-heading"
+        >
+          {/* Outer px-3 + inner px-2.5 matches list row inset so title/bar line up with icons. */}
+          <header className="shrink-0 space-y-3 border-b border-[var(--ink)]/8 px-3 pb-4 pt-5">
+            <div className="flex items-start justify-between gap-3 px-2.5">
+              <div className="min-w-0">
+                <h2
+                  id="onboarding-checklist-heading"
+                  className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]"
+                >
+                  Getting started
+                </h2>
+                <p className="mt-1 text-sm leading-snug text-[var(--muted)]">
+                  {allDone
+                    ? "You are all set — dismiss when you are ready."
+                    : `${completed} of ${total} complete`}
+                </p>
+              </div>
+              <span
+                className="shrink-0 rounded-full bg-[var(--lime)] px-2.5 py-1 text-xs font-semibold tabular-nums text-[var(--ink)]"
+                aria-hidden
+              >
+                {allDone ? "Done" : `${completed}/${total}`}
+              </span>
+            </div>
+            <div className="px-2.5">
+              <div
+                className="h-1.5 overflow-hidden rounded-full bg-[var(--ink)]/[0.08]"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={total}
+                aria-valuenow={completed}
+                aria-label={`${completed} of ${total} steps complete`}
+              >
+                <div
+                  className={`h-full rounded-full bg-[var(--lime)]${
+                    reduceMotion
+                      ? ""
+                      : " transition-[width] duration-300 ease-out"
+                  }`}
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+            </div>
+          </header>
+
+          <ol className="min-h-0 flex-1 space-y-0 overflow-y-auto px-3 py-2">
+            {steps.map((step) => (
+              <li key={step.id}>
+                {step.done ? (
+                  <div className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 text-[var(--muted)]">
                     <span
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--foreground)]/25"
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--lime)] text-[var(--ink)]"
                       aria-hidden
-                    />
-                    <p className="min-w-0 text-sm font-medium text-[var(--brand-primary)]">
+                    >
+                      <CheckIcon className="h-3.5 w-3.5" />
+                    </span>
+                    <p className="min-w-0 flex-1 text-sm font-medium leading-snug line-through">
                       {step.label}
                     </p>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => skipStep(step.id)}
-                    className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-                  >
-                    Skip
-                  </button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ol>
-        <div className="mt-3 flex justify-end border-t border-[var(--foreground)]/10 pt-3">
-          {allDone ? (
-            <button
-              type="button"
-              onClick={dismiss}
-              className="rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-            >
-              Dismiss
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={skipAll}
-              className="rounded-md px-2 py-1 text-xs font-medium text-[var(--foreground)]/55 hover:bg-[var(--foreground)]/5 hover:text-[var(--foreground)]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-            >
-              Skip all
-            </button>
-          )}
-        </div>
-      </section>
+                    <span className="sr-only">Completed</span>
+                  </div>
+                ) : step.skipped ? (
+                  <div className="flex items-center gap-3 rounded-xl px-2.5 py-1.5 text-[var(--muted)]">
+                    <span
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--ink)]/20"
+                      aria-hidden
+                    />
+                    <p className="min-w-0 flex-1 text-sm font-medium leading-snug line-through">
+                      {step.label}
+                    </p>
+                    <span className="shrink-0 text-xs font-medium">Skipped</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 rounded-xl hover:bg-[var(--ink)]/[0.03]">
+                    <Link
+                      href={step.href}
+                      onClick={() => {
+                        if (step.id === "primary_cv") {
+                          requestAccountSettingsTab("cvs");
+                        }
+                      }}
+                      className={`flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2.5 py-1.5 text-[var(--ink)] ${FOCUS_RING}`}
+                    >
+                      <span
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--ink)]/20 bg-[var(--white)]"
+                        aria-hidden
+                      />
+                      <p className="min-w-0 text-sm font-medium leading-snug text-[var(--ink)]">
+                        {step.label}
+                      </p>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => skipStep(step.id)}
+                      className={`${GHOST_ACTION_CLASS} mr-1`}
+                    >
+                      Skip
+                    </button>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ol>
 
-      {/* Stable disclosure control — stays mounted so focus and aria-controls remain valid. */}
-      <button
-        id={toggleId}
-        type="button"
-        onClick={() => setExpandedAndPersist(!prefs.expanded)}
-        className={
-          prefs.expanded
-            ? 'pointer-events-auto inline-flex items-center gap-1 rounded-md border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/70 shadow-lg hover:bg-[var(--foreground)]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]'
-            : 'pointer-events-auto inline-flex items-center gap-2 rounded-full border border-[var(--foreground)]/15 bg-[var(--secondary-background)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] shadow-lg hover:bg-[var(--foreground)]/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2'
-        }
-        aria-expanded={prefs.expanded}
-        aria-controls={panelId}
-      >
-        {prefs.expanded ? (
-          <>
-            Minimize
-            <ChevronDownIcon className="h-3.5 w-3.5" />
-          </>
-        ) : (
-          <>
-            Getting started
-            <span className="rounded-full bg-[var(--brand-primary)]/15 px-2 py-0.5 text-xs font-medium text-[var(--brand-primary)]">
-              {allDone ? 'Done' : `${completed}/${total}`}
-            </span>
-            <ChevronUpIcon className="h-4 w-4 text-[var(--foreground)]/60" />
-          </>
-        )}
-      </button>
+          <footer className="flex shrink-0 justify-end border-t border-[var(--ink)]/8 px-4 py-3">
+            {allDone ? (
+              <button
+                type="button"
+                onClick={dismiss}
+                className={GHOST_ACTION_CLASS}
+              >
+                Dismiss
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={skipAll}
+                className={GHOST_ACTION_CLASS}
+              >
+                Skip all
+              </button>
+            )}
+          </footer>
+        </section>
+      </motion.div>
+
+      {/* Stable disclosure control — panel stays mounted so aria-controls remains valid. */}
+      <div className="flex justify-end">
+        <motion.button
+          id={toggleId}
+          type="button"
+          layout
+          transition={{ layout: motionTransition }}
+          onClick={() => setExpandedAndPersist(!prefs.expanded)}
+          className={TOGGLE_BUTTON_CLASS}
+          aria-expanded={prefs.expanded}
+          aria-controls={panelId}
+        >
+          <AnimatePresence mode="popLayout" initial={false}>
+            {prefs.expanded ? (
+              <motion.span
+                key="minimize"
+                className="inline-flex items-center gap-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={motionTransition}
+              >
+                Minimize
+                <ChevronDownIcon className="h-4 w-4 text-[var(--muted)]" />
+              </motion.span>
+            ) : (
+              <motion.span
+                key="getting-started"
+                className="inline-flex items-center gap-2.5"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={motionTransition}
+              >
+                Getting started
+                <span className="rounded-full bg-[var(--lime)] px-2 py-0.5 text-xs font-semibold tabular-nums text-[var(--ink)]">
+                  {allDone ? "Done" : `${completed}/${total}`}
+                </span>
+                <ChevronUpIcon className="h-4 w-4 text-[var(--muted)]" />
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.button>
+      </div>
     </div>
   );
 }

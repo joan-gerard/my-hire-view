@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  ADMIN_PRIMARY_CLASS,
+  ADMIN_SECONDARY_CLASS,
+} from "@/components/admin/admin-chrome";
 import { publishApplication } from "@/lib/api/applications";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,7 +15,7 @@ interface DraftPreviewBannerProps {
 
 /**
  * Sticky owner banner on the public share URL when viewing a draft (F16-050).
- * Warm brand warning chrome (F17-017) — not generic amber SaaS.
+ * Pink-text warning chrome on light paper (F34) — not generic amber SaaS.
  */
 export default function DraftPreviewBanner({
   applicationId,
@@ -38,7 +42,7 @@ export default function DraftPreviewBanner({
   return (
     <div
       role="status"
-      className="sticky top-0 z-50 border-b border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-4 py-3 text-[var(--status-warning-fg)] shadow-sm"
+      className="sticky top-0 z-50 border-b border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-4 py-3 text-[var(--status-warning-fg)]"
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="min-w-0 text-sm font-medium">
@@ -52,13 +56,13 @@ export default function DraftPreviewBanner({
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Link
             href="/admin"
-            className="rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--status-warning-fg)] hover:bg-[var(--surface)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1"
+            className={`${ADMIN_SECONDARY_CLASS} border-[var(--status-warning-fg)]/25 text-[var(--status-warning-fg)]`}
           >
             Dashboard
           </Link>
           <Link
             href={`/admin/edit/${applicationId}`}
-            className="rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--secondary-background)] px-3 py-1.5 text-sm font-medium text-[var(--status-warning-fg)] hover:bg-[var(--surface)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1"
+            className={`${ADMIN_SECONDARY_CLASS} border-[var(--status-warning-fg)]/25 text-[var(--status-warning-fg)]`}
           >
             Edit
           </Link>
@@ -66,7 +70,7 @@ export default function DraftPreviewBanner({
             type="button"
             onClick={handlePublish}
             disabled={publishing}
-            className="rounded-xl bg-[var(--brand-accent-2)] px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-2)] focus-visible:ring-offset-1 disabled:opacity-60"
+            className={ADMIN_PRIMARY_CLASS}
           >
             {publishing ? "Publishing…" : "Publish"}
           </button>

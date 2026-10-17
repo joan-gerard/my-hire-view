@@ -1,13 +1,13 @@
 import { AnchorHTMLAttributes, ReactNode } from "react";
 
 const BASE_CLASSES =
-  "inline-flex items-center rounded-xl text-base font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+  "inline-flex cursor-pointer items-center text-base font-semibold focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2";
 
 const VARIANT_CLASSES = {
   portfolio:
-    "bg-[var(--brand-primary)] px-5 py-2.5 text-[var(--brand-primary-text)] hover:opacity-90 focus-visible:ring-[var(--brand-primary)]",
+    "rounded-full bg-[var(--ink)] px-5 py-2.5 text-[var(--white)] hover:opacity-90 focus-visible:outline-[var(--ink)]",
   linkedin:
-    "bg-[#0A66C2] px-3 py-2.5 text-white hover:bg-[#004182] focus-visible:ring-[#0A66C2]",
+    "rounded-xl bg-[#0A66C2] px-3 py-2.5 text-white hover:bg-[#004182] focus-visible:outline-[#0A66C2]",
 } as const;
 
 export type ExternalLinkButtonVariant = keyof typeof VARIANT_CLASSES;

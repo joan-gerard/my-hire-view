@@ -1,6 +1,11 @@
 "use client";
 
 import ApplicationForm from "@/components/forms/ApplicationForm";
+import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
+import {
+  ADMIN_PANEL_CLASS,
+  ADMIN_TIP_CLASS,
+} from "@/components/admin/admin-chrome";
 import { ArrowRightIcon } from "@/components/admin/icons";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
@@ -244,13 +249,17 @@ export default function NewApplicationPage() {
     linkedin_url: profile?.linkedin_url ?? "",
   };
 
+  if (profileLoading) {
+    return <AdminPageSkeleton variant="form" />;
+  }
+
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+      <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)]">
         Create New Application
       </h1>
       {showProfileNudge && (
-        <p className="flex items-start gap-2 rounded-xl border border-[var(--foreground)]/10 bg-[var(--brand-secondary)]/50 px-4 py-3 text-sm text-[var(--foreground)]">
+        <p className={`flex items-start gap-2 ${ADMIN_TIP_CLASS}`}>
           <span className="min-w-0 flex-1">
             {hasSavedProfile
               ? "Add location, links, or a picture on your profile for richer prefills — or use Add picture below."
@@ -258,7 +267,7 @@ export default function NewApplicationPage() {
           </span>
           <Link
             href="/admin/profile"
-            className="mt-0.5 inline-flex shrink-0 rounded-lg p-0.5 text-[var(--brand-accent-2)] hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-accent-1)]"
+            className="mt-0.5 inline-flex shrink-0 cursor-pointer rounded-lg p-0.5 text-[var(--muted)] hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
             aria-label="Go to profile"
             title="Go to profile"
           >
@@ -266,47 +275,40 @@ export default function NewApplicationPage() {
           </Link>
         </p>
       )}
-      <div className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
-        {profileLoading ? (
-          <div className="space-y-4">
-            <div className="h-24 animate-pulse rounded-xl bg-[var(--background)]" />
-            <div className="h-96 animate-pulse rounded-xl bg-[var(--background)]" />
-          </div>
-        ) : (
-          <ApplicationForm
-            initialData={initialData}
-            onSubmit={handleSubmit}
-            loading={loading}
-            submitLabel="Save & Preview"
-            profilePictureUrl={profile?.profile_picture_url ?? null}
-            profilePictureVersion={profile?.updated_at ?? null}
-            onProfilePictureSaved={({ url, updated_at }) =>
-              setProfile((prev) => {
-                if (prev) {
-                  return {
-                    ...prev,
-                    profile_picture_url: url,
-                    updated_at: updated_at ?? prev.updated_at,
-                  };
-                }
+      <div className={`${ADMIN_PANEL_CLASS} p-6`}>
+        <ApplicationForm
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          loading={loading}
+          submitLabel="Save & Preview"
+          profilePictureUrl={profile?.profile_picture_url ?? null}
+          profilePictureVersion={profile?.updated_at ?? null}
+          onProfilePictureSaved={({ url, updated_at }) =>
+            setProfile((prev) => {
+              if (prev) {
                 return {
-                  user_id: "",
-                  public_id: publicId ?? undefined,
-                  first_name: metaNames?.first_name ?? null,
-                  last_name: metaNames?.last_name ?? null,
-                  location: null,
-                  portfolio_url: null,
-                  linkedin_url: null,
-                  updated_at: updated_at ?? new Date().toISOString(),
+                  ...prev,
                   profile_picture_url: url,
+                  updated_at: updated_at ?? prev.updated_at,
                 };
-              })
-            }
-            publicId={publicId ?? undefined}
-            resolveSlugOnCreate
-            persistDraftKey={draftStorageKey ?? undefined}
-          />
-        )}
+              }
+              return {
+                user_id: "",
+                public_id: publicId ?? undefined,
+                first_name: metaNames?.first_name ?? null,
+                last_name: metaNames?.last_name ?? null,
+                location: null,
+                portfolio_url: null,
+                linkedin_url: null,
+                updated_at: updated_at ?? new Date().toISOString(),
+                profile_picture_url: url,
+              };
+            })
+          }
+          publicId={publicId ?? undefined}
+          resolveSlugOnCreate
+          persistDraftKey={draftStorageKey ?? undefined}
+        />
       </div>
     </div>
   );

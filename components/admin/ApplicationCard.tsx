@@ -19,6 +19,12 @@ import {
   CopyIcon,
   ExternalLinkIcon,
 } from '@/components/admin/icons';
+import {
+  ADMIN_DISABLED_CLASS,
+  ADMIN_LIST_ROW_CLASS,
+  ADMIN_PRIMARY_CLASS,
+  ADMIN_SECONDARY_CLASS,
+} from '@/components/admin/admin-chrome';
 
 interface ApplicationCardProps {
   application: ApplicationListItem;
@@ -27,21 +33,6 @@ interface ApplicationCardProps {
   onRestore?: (id: string) => void;
   onPublish?: (id: string) => void;
 }
-
-/** Shared chrome for secondary card actions (Copy Link, Insights). */
-const SECONDARY_ACTION_CLASS =
-  'inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--foreground)]/12 bg-[var(--brand-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-secondary-text)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1';
-
-/** Primary card CTA (View / Preview). */
-const PRIMARY_ACTION_CLASS =
-  'inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--brand-primary)] px-3 py-1.5 text-sm font-medium text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1';
-
-/** Positive action (Publish) — darker teal for WCAG AA contrast with white text. */
-const ACCENT_ACTION_CLASS =
-  'inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--brand-accent-2)] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-2)] focus-visible:ring-offset-1';
-
-const DISABLED_ACTION_CLASS =
-  'inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--foreground)]/10 bg-[var(--surface)] px-3 py-1.5 text-sm font-medium text-[var(--foreground)]/45';
 
 export default function ApplicationCard({
   application,
@@ -70,15 +61,15 @@ export default function ApplicationCard({
   };
 
   return (
-    <div className="relative overflow-visible rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] shadow-sm">
-      <div className="p-4 sm:p-5">
+    <div className={`relative overflow-visible ${ADMIN_LIST_ROW_CLASS}`}>
+      <div className="py-4 sm:py-5">
         <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
           <ApplicationStatusIcon
             status={application.status}
             viewCount={application.view_count}
           />
 
-          <span className="min-w-0 text-sm font-medium text-[var(--foreground)] sm:text-base">
+          <span className="min-w-0 text-sm font-medium text-[var(--ink)] sm:text-base">
             {application.company} - {application.role}
           </span>
 
@@ -90,7 +81,7 @@ export default function ApplicationCard({
             <button
               type="button"
               onClick={() => onPublish(application.id)}
-              className={ACCENT_ACTION_CLASS}
+              className={ADMIN_PRIMARY_CLASS}
               title="Make this application live so recruiters can open the share link"
             >
               <CheckIcon className="h-4 w-4" />
@@ -102,14 +93,14 @@ export default function ApplicationCard({
             <button
               type="button"
               onClick={handleCopyLink}
-              className={SECONDARY_ACTION_CLASS}
+              className={ADMIN_SECONDARY_CLASS}
             >
               <CopyIcon className="h-4 w-4" />
               {copied ? 'Copied!' : 'Copy Link'}
             </button>
           ) : (
             <span
-              className={DISABLED_ACTION_CLASS}
+              className={ADMIN_DISABLED_CLASS}
               title={
                 isDraft
                   ? 'Publish this application before sharing the link'
@@ -126,7 +117,7 @@ export default function ApplicationCard({
           <button
             type="button"
             onClick={() => setInsightsExpanded(!insightsExpanded)}
-            className={SECONDARY_ACTION_CLASS}
+            className={ADMIN_SECONDARY_CLASS}
           >
             <ChartIcon className="h-4 w-4" />
             View Insights
@@ -142,7 +133,7 @@ export default function ApplicationCard({
               href={`/view/${application.public_id}/${application.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className={PRIMARY_ACTION_CLASS}
+              className={ADMIN_PRIMARY_CLASS}
               title={
                 isDraft
                   ? 'Preview the public page (recruiters cannot see it until you publish)'
@@ -154,7 +145,7 @@ export default function ApplicationCard({
             </Link>
           ) : (
             <span
-              className={DISABLED_ACTION_CLASS}
+              className={ADMIN_DISABLED_CLASS}
               title="Complete your profile to preview the public page"
             >
               <ExternalLinkIcon className="h-4 w-4" />

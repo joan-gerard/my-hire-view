@@ -1,0 +1,512 @@
+/**
+ * Production auth layout (Reslink-inspired card / split shell).
+ * Scoped under `.mhv-auth`. Uses product tokens; do not import on marketing.
+ */
+
+.mhv-auth {
+  --ink: #0b0b0c;
+  --muted: #6a6e6e;
+  --mist: #b7bcbc;
+  --lime: #9efc65;
+  --pink: #ffbcfc;
+  --pink-text: #c026a8;
+  --paper: #f0f0f0;
+  --card: #171718;
+  --white: #fff;
+  min-height: 100dvh;
+  color: var(--ink);
+  font-family: var(--font-stack-sans-headline), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.mhv-auth *,
+.mhv-auth *::before,
+.mhv-auth *::after {
+  box-sizing: border-box;
+}
+
+.mhv-auth h1,
+.mhv-auth h2,
+.mhv-auth p {
+  margin: 0;
+}
+
+.mhv-auth h1,
+.mhv-auth h2 {
+  font-family: var(--font-switzer), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.mhv-auth a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* —— Login: centered card on soft atmosphere —— */
+.mhv-auth--login {
+  background:
+    radial-gradient(ellipse 50% 40% at 15% 0%, color-mix(in srgb, var(--pink) 35%, white), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 90% 5%, color-mix(in srgb, var(--lime) 28%, white), transparent 65%),
+    var(--white);
+}
+
+.mhv-auth-login-stage {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.mhv-auth-card {
+  width: min(440px, 100%);
+  border-radius: 28px;
+  background: var(--white);
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: 0 24px 60px rgba(11, 11, 12, 0.08);
+  padding: 2rem 1.75rem 1.75rem;
+}
+
+@media (min-width: 480px) {
+  .mhv-auth-card {
+    padding: 2.5rem 2.25rem 2rem;
+  }
+}
+
+.mhv-auth-card-logo {
+  display: flex;
+  margin-bottom: 1.5rem;
+}
+
+.mhv-auth-card .mhv-auth-card-logo {
+  justify-content: center;
+  width: 100%;
+}
+
+.mhv-auth-card h1 {
+  text-align: center;
+  font-size: clamp(1.5rem, 4vw, 1.75rem);
+  margin-bottom: 0.5rem;
+}
+
+/* Qualify with `p` so margins beat `.mhv-auth p { margin: 0 }` */
+.mhv-auth p.mhv-auth-lead {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  margin-bottom: 1.75rem;
+}
+
+/* Login card: air under the alternate-account line before fields */
+.mhv-auth-card > p.mhv-auth-lead {
+  margin-bottom: 2rem;
+}
+
+.mhv-auth p.mhv-auth-lead a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mhv-auth p.mhv-auth-lead a:hover {
+  color: var(--pink-text);
+}
+
+.mhv-auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.mhv-auth-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mhv-auth-input {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--paper);
+  padding: 0.75rem 1rem;
+  color: var(--ink);
+  font: inherit;
+  outline: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.mhv-auth-input::placeholder {
+  color: var(--mist);
+}
+
+.mhv-auth-input:focus {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.mhv-auth-input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.mhv-auth-password-wrap {
+  position: relative;
+}
+
+.mhv-auth-password-wrap .mhv-auth-input {
+  padding-right: 2.75rem;
+}
+
+.mhv-auth-eye {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 0.85rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.mhv-auth-eye:hover,
+.mhv-auth-eye:focus-visible {
+  color: var(--ink);
+}
+
+.mhv-auth-eye:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+  border-radius: 0 14px 14px 0;
+}
+
+.mhv-auth-submit {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 50px;
+  margin-top: 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--white);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mhv-auth-submit:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.mhv-auth-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mhv-auth-submit:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* Beat `.mhv-auth p { margin: 0 }` so Sign in → terms spacing actually applies */
+.mhv-auth p.mhv-auth-legal {
+  margin-top: 1.75rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.mhv-auth p.mhv-auth-legal a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* —— Signup: Reslink card-split shell —— */
+.mhv-auth--signup {
+  background: var(--paper);
+}
+
+.mhv-auth-signup-stage {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem 2.5rem;
+}
+
+.mhv-auth-shell {
+  display: grid;
+  width: min(1040px, 100%);
+  min-height: min(640px, calc(100dvh - 6rem));
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--white);
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: 0 28px 70px rgba(11, 11, 12, 0.1);
+}
+
+@media (min-width: 900px) {
+  .mhv-auth-shell {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.mhv-auth-shell-form {
+  display: flex;
+  flex-direction: column;
+  padding: 1.75rem 1.5rem 1.5rem;
+  overflow-y: auto;
+}
+
+@media (min-width: 900px) {
+  .mhv-auth-shell-form {
+    padding: 2.25rem 2.25rem 1.75rem;
+  }
+}
+
+.mhv-auth-shell-form .mhv-auth-card-logo {
+  justify-content: flex-start;
+  margin-bottom: 1.75rem;
+}
+
+.mhv-auth-shell-form h1 {
+  font-size: clamp(1.5rem, 3vw, 1.85rem);
+  margin-bottom: 0.4rem;
+}
+
+.mhv-auth-shell-form > p.mhv-auth-lead {
+  text-align: left;
+  margin-bottom: 1.75rem;
+}
+
+.mhv-auth-name-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (min-width: 480px) {
+  .mhv-auth-name-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+}
+
+.mhv-auth p.mhv-auth-hint {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.mhv-auth p.mhv-auth-shell-foot {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.mhv-auth p.mhv-auth-shell-foot a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mhv-auth-shell-promo {
+  position: relative;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2.5rem 2.25rem;
+  background: var(--ink);
+  color: var(--white);
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .mhv-auth-shell-promo {
+    display: flex;
+  }
+}
+
+.mhv-auth-shell-promo::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  right: -15%;
+  width: 280px;
+  height: 280px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pink) 22%, transparent);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.mhv-auth-shell-promo::after {
+  content: "";
+  position: absolute;
+  bottom: -10%;
+  left: -20%;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lime) 16%, transparent);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.mhv-auth-promo-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.mhv-auth-promo-badge {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  border-radius: 999px;
+  background: var(--lime);
+  color: var(--ink);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mhv-auth-shell-promo h2 {
+  font-size: clamp(1.65rem, 2.5vw, 2rem);
+  color: var(--white);
+  margin-bottom: 0.65rem;
+  max-width: 16ch;
+}
+
+.mhv-auth-shell-promo p.mhv-auth-promo-lead {
+  color: var(--mist);
+  font-size: 1rem;
+  margin-bottom: 1.75rem;
+  max-width: 28ch;
+}
+
+.mhv-auth-preview {
+  border-radius: 20px;
+  background: var(--white);
+  color: var(--ink);
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+.mhv-auth-preview-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--pink) 55%, white), color-mix(in srgb, var(--lime) 40%, white));
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 0.5rem;
+}
+
+.mhv-auth-preview-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-switzer), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  box-shadow: 0 8px 24px rgba(11, 11, 12, 0.15);
+  margin-bottom: -1.25rem;
+  position: relative;
+  z-index: 1;
+}
+
+.mhv-auth-preview-playing {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  background: rgba(11, 11, 12, 0.55);
+  color: var(--white);
+  padding: 0.25rem 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.mhv-auth-preview-playing::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--lime);
+}
+
+.mhv-auth-preview-body {
+  padding: 1.75rem 1.15rem 1.15rem;
+}
+
+.mhv-auth-preview-body strong {
+  display: block;
+  font-family: var(--font-switzer), system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.mhv-auth p.mhv-auth-preview-meta {
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.mhv-auth p.mhv-auth-preview-stat {
+  margin-top: 0.9rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mhv-auth p.mhv-auth-preview-stat::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--lime);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mhv-auth-submit {
+    transition: none;
+  }
+}
+
+
+.mhv-auth-form > [role="alert"],
+.mhv-auth-form > [role="status"] {
+  margin-bottom: 1rem;
+}
