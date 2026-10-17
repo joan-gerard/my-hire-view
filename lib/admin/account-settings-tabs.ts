@@ -20,6 +20,14 @@ export const DEFAULT_ACCOUNT_SETTINGS_TAB: AccountSettingsTabId = "profile";
 export const ACCOUNT_SETTINGS_TAB_HANDOFF_KEY =
   "myhireview:account-settings-tab" as const;
 
+/** Same-document signal when Account settings is already mounted. */
+export const ACCOUNT_SETTINGS_TAB_EVENT =
+  "myhireview:account-settings-tab" as const;
+
+export type AccountSettingsTabEventDetail = {
+  tab: AccountSettingsTabId;
+};
+
 export function isAccountSettingsTabId(
   value: string | null | undefined,
 ): value is AccountSettingsTabId {
@@ -45,12 +53,33 @@ function getSessionStorage(): Storage | null {
   }
 }
 
-/** Request that `/admin/profile` open a given tab after the next navigation. */
+/**
+ * Open a tab on Account settings.
+ * - Cross-route: sessionStorage handoff consumed on mount
+ * - Same page (`/admin/profile` already open): CustomEvent for live listeners
+ */
 export function requestAccountSettingsTab(tab: AccountSettingsTabId): void {
   try {
     getSessionStorage()?.setItem(ACCOUNT_SETTINGS_TAB_HANDOFF_KEY, tab);
   } catch {
-    // Ignore quota / private-mode failures — user lands on Profile tab.
+    // Ignore quota / private-mode failures — event may still deliver same-page.
+  }
+  try {
+    const target = globalThis as typeof globalThis & {
+      dispatchEvent?: (event: Event) => boolean;
+      CustomEvent?: typeof CustomEvent;
+    };
+    if (typeof target.dispatchEvent !== "function" || !target.CustomEvent) {
+      return;
+    }
+    target.dispatchEvent(
+      new target.CustomEvent<AccountSettingsTabEventDetail>(
+        ACCOUNT_SETTINGS_TAB_EVENT,
+        { detail: { tab } },
+      ),
+    );
+  } catch {
+    // Ignore environments without DOM events.
   }
 }
 

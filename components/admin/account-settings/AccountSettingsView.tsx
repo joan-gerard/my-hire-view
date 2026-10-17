@@ -5,13 +5,16 @@ import {
   ADMIN_PANEL_CLASS,
   ADMIN_TIP_CLASS,
 } from "@/components/admin/admin-chrome";
-import AccountBillingPanel from "@/components/admin/account-settings/AccountBillingPanel";
 import AccountPasswordPanel from "@/components/admin/account-settings/AccountPasswordPanel";
 import AccountSettings from "@/components/admin/account-settings/AccountSettings";
+import {
+  AccountBillingPanelConnected,
+  AccountCvsPanel,
+  AccountSettingsUsageProvider,
+} from "@/components/admin/account-settings/AccountSettingsUsage";
 import { AvatarIcon } from "@/components/admin/icons";
 import PublicIdAccountField from "@/components/admin/PublicIdAccountField";
 import StatusIndicatorPreference from "@/components/admin/StatusIndicatorPreference";
-import PrimaryCvLibrarySection from "@/components/forms/PrimaryCvLibrarySection";
 import ProfileForm from "@/components/forms/ProfileForm";
 import type { Profile } from "@/lib/types/profile";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
@@ -170,8 +173,6 @@ export default async function AccountSettingsView() {
     </>
   );
 
-  const cvsPanel = <PrimaryCvLibrarySection />;
-
   const preferencesPanel = (
     <section className={`${ADMIN_PANEL_CLASS} p-5 sm:p-6`}>
       <StatusIndicatorPreference publicId={publicId} />
@@ -179,19 +180,19 @@ export default async function AccountSettingsView() {
   );
 
   return (
-    <AccountSettings
-      panels={{
-        profile: profilePanel,
-        cvs: cvsPanel,
-        preferences: preferencesPanel,
-        billing: (
-          <AccountBillingPanel
-            applicationCount={applicationCount}
-            primaryCvCount={primaryCvCount}
-          />
-        ),
-        password: <AccountPasswordPanel />,
-      }}
-    />
+    <AccountSettingsUsageProvider
+      applicationCount={applicationCount}
+      initialPrimaryCvCount={primaryCvCount}
+    >
+      <AccountSettings
+        panels={{
+          profile: profilePanel,
+          cvs: <AccountCvsPanel />,
+          preferences: preferencesPanel,
+          billing: <AccountBillingPanelConnected />,
+          password: <AccountPasswordPanel />,
+        }}
+      />
+    </AccountSettingsUsageProvider>
   );
 }

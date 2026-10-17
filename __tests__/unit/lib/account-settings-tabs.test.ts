@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ACCOUNT_SETTINGS_TABS,
+  ACCOUNT_SETTINGS_TAB_EVENT,
   ACCOUNT_SETTINGS_TAB_HANDOFF_KEY,
   consumeAccountSettingsTabHandoff,
   DEFAULT_ACCOUNT_SETTINGS_TAB,
@@ -56,5 +57,35 @@ describe("account-settings-tabs", () => {
     expect(consumeAccountSettingsTabHandoff()).toBe("preferences");
     expect(store.has(ACCOUNT_SETTINGS_TAB_HANDOFF_KEY)).toBe(false);
     expect(consumeAccountSettingsTabHandoff()).toBeNull();
+  });
+
+  it("also dispatches a same-document event for live listeners", () => {
+    const listener = vi.fn();
+    const dispatchEvent = vi.fn((event: Event) => {
+      listener(event);
+      return true;
+    });
+    vi.stubGlobal("dispatchEvent", dispatchEvent);
+    vi.stubGlobal(
+      "CustomEvent",
+      class MockCustomEvent<T> {
+        type: string;
+        detail: T;
+        constructor(type: string, init?: { detail: T }) {
+          this.type = type;
+          this.detail = init!.detail;
+        }
+      },
+    );
+
+    requestAccountSettingsTab("cvs");
+
+    expect(dispatchEvent).toHaveBeenCalledTimes(1);
+    const event = dispatchEvent.mock.calls[0]?.[0] as {
+      type: string;
+      detail: { tab: string };
+    };
+    expect(event.type).toBe(ACCOUNT_SETTINGS_TAB_EVENT);
+    expect(event.detail).toEqual({ tab: "cvs" });
   });
 });

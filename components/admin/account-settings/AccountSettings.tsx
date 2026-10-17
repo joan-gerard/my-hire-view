@@ -2,8 +2,10 @@
 
 import {
   ACCOUNT_SETTINGS_TABS,
+  ACCOUNT_SETTINGS_TAB_EVENT,
   consumeAccountSettingsTabHandoff,
   DEFAULT_ACCOUNT_SETTINGS_TAB,
+  type AccountSettingsTabEventDetail,
   type AccountSettingsTabId,
 } from "@/lib/admin/account-settings-tabs";
 import {
@@ -21,6 +23,7 @@ type AccountSettingsProps = {
 
 /**
  * Tabbed Account settings shell. URL stays `/admin/profile`; tabs are local state.
+ * Panels stay mounted (hidden when inactive) so form draft state is preserved.
  */
 export default function AccountSettings({ panels }: AccountSettingsProps) {
   const [activeTab, setActiveTab] = useState<AccountSettingsTabId>(
@@ -34,6 +37,21 @@ export default function AccountSettings({ panels }: AccountSettingsProps) {
   useEffect(() => {
     const pending = consumeAccountSettingsTabHandoff();
     if (pending) setActiveTab(pending);
+
+    const onTabRequest = (event: Event) => {
+      const detail = (event as CustomEvent<AccountSettingsTabEventDetail>)
+        .detail;
+      if (detail?.tab) {
+        // Clear any leftover handoff so a later remount does not re-apply it.
+        consumeAccountSettingsTabHandoff();
+        setActiveTab(detail.tab);
+      }
+    };
+
+    window.addEventListener(ACCOUNT_SETTINGS_TAB_EVENT, onTabRequest);
+    return () => {
+      window.removeEventListener(ACCOUNT_SETTINGS_TAB_EVENT, onTabRequest);
+    };
   }, []);
 
   const selectTab = (tab: AccountSettingsTabId) => {
@@ -134,9 +152,9 @@ export default function AccountSettings({ panels }: AccountSettingsProps) {
             id={`${tablistId}-panel-${tab.id}`}
             aria-labelledby={`${tablistId}-${tab.id}`}
             hidden={!selected}
-            className={selected ? "space-y-6" : undefined}
+            className="space-y-6"
           >
-            {selected ? panels[tab.id] : null}
+            {panels[tab.id]}
           </div>
         );
       })}

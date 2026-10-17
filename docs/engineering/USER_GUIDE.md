@@ -23,7 +23,7 @@ From the header, open **Profile** (`/admin/profile`). The page title is **Accoun
 - **Billing and plan** — current Free plan, usage vs draft caps, and Free / Pro / Premium comparison. Paid checkout is not live yet; upgrade actions stay disabled until membership ships.
 - **Password** — change-password form preview (submit disabled until auth wiring). Forgot-password will land here later.
 
-Application totals (active / draft / archived) belong on the **Dashboard**, not Account settings (see backlog `L7-080`).
+Active / draft / archived application totals are no longer on Account settings. A dashboard stats summary is planned (`L7-080`) and is not shipped yet — until then, use the application list itself. **Billing and plan** still shows total application count (and primary-CV count) against draft Free caps.
 
 ### Dashboard
 

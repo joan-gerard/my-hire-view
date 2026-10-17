@@ -74,8 +74,8 @@ export default function AdminPageSkeleton({
           ))}
         </div>
         <section className={`${ADMIN_PANEL_CLASS} overflow-hidden`}>
-          <div className="flex items-center gap-4 border-b border-[var(--ink)]/8 bg-[var(--ink)]/[0.02] px-5 py-5 sm:px-6">
-            <div className="h-16 w-16 shrink-0 animate-pulse rounded-full bg-[var(--ink)]/[0.08]" />
+          <div className="flex flex-col gap-4 border-b border-[var(--ink)]/8 bg-[var(--ink)]/[0.02] px-5 py-5 sm:flex-row sm:items-center sm:gap-5 sm:px-6 sm:py-6">
+            <div className="h-16 w-16 shrink-0 animate-pulse rounded-full bg-[var(--ink)]/[0.08] sm:h-[4.5rem] sm:w-[4.5rem]" />
             <div className="min-w-0 flex-1 space-y-2">
               <div className="h-7 w-48 animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
               <div className="h-4 w-56 animate-pulse rounded bg-[var(--ink)]/[0.05]" />
@@ -91,10 +91,6 @@ export default function AdminPageSkeleton({
           <div className="h-5 w-36 animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
           <div className="h-4 w-72 max-w-full animate-pulse rounded bg-[var(--ink)]/[0.05]" />
           <div className="h-72 animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
-        </section>
-        <section className={`${ADMIN_PANEL_CLASS} space-y-4 p-5 sm:p-6`}>
-          <div className="h-5 w-32 animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
-          <div className="h-40 animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
         </section>
       </div>
     );

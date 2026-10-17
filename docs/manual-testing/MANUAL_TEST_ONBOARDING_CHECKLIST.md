@@ -23,7 +23,7 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FL
 - [ ] **Create your profile** — complete when first + last name are saved on Profile; link goes to `/admin/profile`
 - [ ] **Add location or a link** — complete when **at least one** of location, LinkedIn, or portfolio is set
 - [ ] **Add a profile photo** — complete after uploading a picture; still incomplete if names exist but no photo
-- [ ] **Upload a primary CV** — complete after adding ≥1 primary CV on Profile
+- [ ] **Upload a primary CV** — complete after adding ≥1 primary CV on Account settings → **CVs** (link opens that tab even when already on `/admin/profile`)
 - [ ] **Create your first application draft** — complete after Save & Preview (draft counts)
 - [ ] **Publish & share** — complete only after an application is **active** (Publish); drafts alone are not enough
 

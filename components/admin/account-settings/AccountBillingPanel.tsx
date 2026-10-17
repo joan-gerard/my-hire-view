@@ -13,11 +13,16 @@ import {
   PRICING_TIERS,
   type BillingInterval,
 } from "@/components/public/pricing/constants";
-import { useId, useState } from "react";
+import { useId, useRef, useState, type KeyboardEvent } from "react";
 
 /** Working Free-tier caps from PRICING_AND_MEMBERSHIP (until E2 enforces). */
 const FREE_APP_CAP = 3;
 const FREE_PRIMARY_CV_CAP = 5;
+
+const BILLING_INTERVAL_OPTIONS = [
+  { id: "monthly", label: "Monthly" },
+  { id: "annual", label: `Annual · ${ANNUAL_SAVINGS_LABEL}` },
+] as const;
 
 type AccountBillingPanelProps = {
   applicationCount: number;
@@ -34,11 +39,56 @@ export default function AccountBillingPanel({
 }: AccountBillingPanelProps) {
   const intervalGroupId = useId();
   const [interval, setInterval] = useState<BillingInterval>("annual");
+  const monthlyRadioRef = useRef<HTMLButtonElement>(null);
+  const annualRadioRef = useRef<HTMLButtonElement>(null);
 
   const appUsageLabel = `${applicationCount} / ${FREE_APP_CAP}`;
   const cvUsageLabel = `${primaryCvCount} / ${FREE_PRIMARY_CV_CAP}`;
   const appOver = applicationCount > FREE_APP_CAP;
   const cvOver = primaryCvCount > FREE_PRIMARY_CV_CAP;
+
+  const focusInterval = (next: BillingInterval) => {
+    (next === "annual" ? annualRadioRef : monthlyRadioRef).current?.focus();
+  };
+
+  const selectInterval = (next: BillingInterval) => {
+    setInterval(next);
+    focusInterval(next);
+  };
+
+  const handleIntervalKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentId: BillingInterval,
+  ) => {
+    const index = BILLING_INTERVAL_OPTIONS.findIndex((o) => o.id === currentId);
+    if (index < 0) return;
+
+    let nextIndex: number | null = null;
+    switch (event.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        nextIndex = (index + 1) % BILLING_INTERVAL_OPTIONS.length;
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        nextIndex =
+          (index - 1 + BILLING_INTERVAL_OPTIONS.length) %
+          BILLING_INTERVAL_OPTIONS.length;
+        break;
+      case "Home":
+        nextIndex = 0;
+        break;
+      case "End":
+        nextIndex = BILLING_INTERVAL_OPTIONS.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    const next = BILLING_INTERVAL_OPTIONS[nextIndex];
+    if (next) selectInterval(next.id);
+  };
 
   return (
     <div className="space-y-6">
@@ -138,12 +188,7 @@ export default function AccountBillingPanel({
             <span id={intervalGroupId} className="sr-only">
               Billing interval
             </span>
-            {(
-              [
-                { id: "monthly", label: "Monthly" },
-                { id: "annual", label: `Annual · ${ANNUAL_SAVINGS_LABEL}` },
-              ] as const
-            ).map((option) => {
+            {BILLING_INTERVAL_OPTIONS.map((option) => {
               const selected = interval === option.id;
               return (
                 <button
@@ -151,7 +196,14 @@ export default function AccountBillingPanel({
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  onClick={() => setInterval(option.id)}
+                  tabIndex={selected ? 0 : -1}
+                  ref={
+                    option.id === "annual" ? annualRadioRef : monthlyRadioRef
+                  }
+                  onClick={() => selectInterval(option.id)}
+                  onKeyDown={(event) =>
+                    handleIntervalKeyDown(event, option.id)
+                  }
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${
                     selected
                       ? "bg-[var(--ink)] text-[var(--white)]"

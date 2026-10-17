@@ -208,7 +208,7 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 
 ## 8. Account settings (`/admin/profile`)
 
-Header nav still says **Profile**. Page title is **Account settings** with tabs: Profile · CVs · Preferences · Billing and plan · Password. URL stays `/admin/profile` (tabs are client state). Application counts are not on this page (dashboard / `L7-080`).
+Header nav still says **Profile**. Page title is **Account settings** with tabs: Profile · CVs · Preferences · Billing and plan · Password. URL stays `/admin/profile` (tabs are client state). The old active/draft/archived applications summary is removed (planned for the dashboard via `L7-080`); **Billing and plan** still shows total application and primary-CV usage vs draft Free caps.
 
 ### Tabs chrome
 
