@@ -5,6 +5,7 @@ import {
   ACCOUNT_SETTINGS_TAB_EVENT,
   consumeAccountSettingsTabHandoff,
   DEFAULT_ACCOUNT_SETTINGS_TAB,
+  isAccountSettingsTabId,
   type AccountSettingsTabEventDetail,
   type AccountSettingsTabId,
 } from "@/lib/admin/account-settings-tabs";
@@ -41,11 +42,10 @@ export default function AccountSettings({ panels }: AccountSettingsProps) {
     const onTabRequest = (event: Event) => {
       const detail = (event as CustomEvent<AccountSettingsTabEventDetail>)
         .detail;
-      if (detail?.tab) {
-        // Clear any leftover handoff so a later remount does not re-apply it.
-        consumeAccountSettingsTabHandoff();
-        setActiveTab(detail.tab);
-      }
+      if (!isAccountSettingsTabId(detail?.tab)) return;
+      // Clear any leftover handoff so a later remount does not re-apply it.
+      consumeAccountSettingsTabHandoff();
+      setActiveTab(detail.tab);
     };
 
     window.addEventListener(ACCOUNT_SETTINGS_TAB_EVENT, onTabRequest);

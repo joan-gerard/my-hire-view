@@ -59,32 +59,21 @@ describe("account-settings-tabs", () => {
     expect(consumeAccountSettingsTabHandoff()).toBeNull();
   });
 
-  it("also dispatches a same-document event for live listeners", () => {
+  it("dispatches a same-document event that reaches registered listeners", () => {
+    const target = new EventTarget();
     const listener = vi.fn();
-    const dispatchEvent = vi.fn((event: Event) => {
-      listener(event);
-      return true;
-    });
-    vi.stubGlobal("dispatchEvent", dispatchEvent);
-    vi.stubGlobal(
-      "CustomEvent",
-      class MockCustomEvent<T> {
-        type: string;
-        detail: T;
-        constructor(type: string, init?: { detail: T }) {
-          this.type = type;
-          this.detail = init!.detail;
-        }
-      },
+    target.addEventListener(ACCOUNT_SETTINGS_TAB_EVENT, listener);
+
+    // Route globalThis.dispatchEvent through a real EventTarget so delivery
+    // depends on addEventListener + dispatchEvent (not a hand-wired callback).
+    vi.stubGlobal("dispatchEvent", (event: Event) =>
+      target.dispatchEvent(event),
     );
 
     requestAccountSettingsTab("cvs");
 
-    expect(dispatchEvent).toHaveBeenCalledTimes(1);
-    const event = dispatchEvent.mock.calls[0]?.[0] as {
-      type: string;
-      detail: { tab: string };
-    };
+    expect(listener).toHaveBeenCalledTimes(1);
+    const event = listener.mock.calls[0]?.[0] as CustomEvent<{ tab: string }>;
     expect(event.type).toBe(ACCOUNT_SETTINGS_TAB_EVENT);
     expect(event.detail).toEqual({ tab: "cvs" });
   });
