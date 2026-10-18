@@ -17,6 +17,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import { FiTool } from "react-icons/fi";
 
 type AccountSettingsProps = {
   panels: Record<AccountSettingsTabId, ReactNode>;
@@ -131,13 +132,20 @@ export default function AccountSettings({ panels }: AccountSettingsProps) {
               }}
               onClick={() => selectTab(tab.id)}
               onKeyDown={(event) => handleTabKeyDown(event, tab.id)}
-              className={`shrink-0 cursor-pointer border-b-2 px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${
+              className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${
                 selected
                   ? "border-[var(--ink)] text-[var(--ink)]"
                   : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"
               }`}
             >
               {tab.label}
+              {"preview" in tab && tab.preview ? (
+                <FiTool
+                  className="size-3.5 shrink-0 opacity-70"
+                  aria-label="Preview only — not available yet"
+                  title="Preview only — not available yet"
+                />
+              ) : null}
             </button>
           );
         })}

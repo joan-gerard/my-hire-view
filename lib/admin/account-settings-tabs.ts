@@ -7,8 +7,10 @@ export const ACCOUNT_SETTINGS_TABS = [
   { id: "profile", label: "Profile" },
   { id: "cvs", label: "CVs" },
   { id: "preferences", label: "Preferences" },
-  { id: "billing", label: "Billing and plan" },
-  { id: "password", label: "Password" },
+  /** Shell only until Stripe / membership (E2). */
+  { id: "billing", label: "Billing and plan", preview: true },
+  /** Shell only until change-password wiring (L4-098 / F36-120). */
+  { id: "password", label: "Password", preview: true },
 ] as const;
 
 export type AccountSettingsTabId =

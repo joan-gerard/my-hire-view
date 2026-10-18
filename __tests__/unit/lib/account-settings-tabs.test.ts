@@ -42,6 +42,19 @@ describe("account-settings-tabs", () => {
     ]);
   });
 
+  it("marks billing and password as preview-only shells", () => {
+    const byId = Object.fromEntries(
+      ACCOUNT_SETTINGS_TABS.map((t) => [t.id, t]),
+    );
+    expect("preview" in byId.billing && byId.billing.preview).toBe(true);
+    expect("preview" in byId.password && byId.password.preview).toBe(true);
+    expect("preview" in byId.profile && byId.profile.preview).toBeFalsy();
+    expect("preview" in byId.cvs && byId.cvs.preview).toBeFalsy();
+    expect(
+      "preview" in byId.preferences && byId.preferences.preview,
+    ).toBeFalsy();
+  });
+
   it("parses known tabs and falls back to profile", () => {
     expect(parseAccountSettingsTab("billing")).toBe("billing");
     expect(parseAccountSettingsTab("preferences")).toBe("preferences");

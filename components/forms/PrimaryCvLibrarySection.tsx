@@ -22,6 +22,11 @@ export type PrimaryCvLibrarySectionProps = {
    * Delete always confirms (inline here so we do not nest native dialogs).
    */
   embedded?: boolean;
+  /**
+   * True while an upload or delete request is in flight (not initial load).
+   * Manage library uses this to block Escape / backdrop / Done until finished.
+   */
+  onMutationBusyChange?: (busy: boolean) => void;
 };
 
 type PendingDelete = {
@@ -36,10 +41,13 @@ type PendingDelete = {
 export default function PrimaryCvLibrarySection({
   onLibraryChange,
   embedded = false,
+  onMutationBusyChange,
 }: PrimaryCvLibrarySectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const onLibraryChangeRef = useRef(onLibraryChange);
   onLibraryChangeRef.current = onLibraryChange;
+  const onMutationBusyChangeRef = useRef(onMutationBusyChange);
+  onMutationBusyChangeRef.current = onMutationBusyChange;
   /** Serializes upload vs delete so a later `load()` cannot wipe the other op's UI. */
   const opLockRef = useRef<"idle" | "upload" | "delete">("idle");
   /** Bumped on every `load()` so a slower in-flight GET cannot apply stale items. */
@@ -109,8 +117,13 @@ export default function PrimaryCvLibrarySection({
       // Invalidate in-flight GETs so an unmounted Manage-library instance cannot
       // call onLibraryChange after a newer modal upload (close/reopen race).
       loadGenerationRef.current += 1;
+      onMutationBusyChangeRef.current?.(false);
     };
   }, [load]);
+
+  useEffect(() => {
+    onMutationBusyChangeRef.current?.(uploading || deleting);
+  }, [uploading, deleting]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

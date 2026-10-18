@@ -216,6 +216,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Five tabs are keyboard-navigable (arrow keys move selection; URL stays `/admin/profile`)
 - [ ] Default tab is **Profile**
 - [ ] **CVs** / **Preferences** / **Billing and plan** / **Password** switch content without a route change
+- [ ] **Billing and plan** and **Password** tabs show a tool icon (preview only — not wired yet); Profile / CVs / Preferences do not
 
 ### Account (Profile tab)
 

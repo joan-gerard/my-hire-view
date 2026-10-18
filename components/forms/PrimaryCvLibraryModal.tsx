@@ -4,7 +4,7 @@ import Button from "@/components/ui/Button";
 import PrimaryCvLibrarySection from "@/components/forms/PrimaryCvLibrarySection";
 import type { PrimaryCv } from "@/lib/types/primary-cv";
 import { PRIMARY_CV_MAX_PER_USER } from "@/lib/types/primary-cv";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export interface PrimaryCvLibraryModalProps {
   open: boolean;
@@ -24,6 +24,13 @@ export default function PrimaryCvLibraryModal({
 }: PrimaryCvLibraryModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const [mutationBusy, setMutationBusy] = useState(false);
+  const mutationBusyRef = useRef(false);
+  mutationBusyRef.current = mutationBusy;
+
+  useEffect(() => {
+    if (!open) setMutationBusy(false);
+  }, [open]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -35,14 +42,26 @@ export default function PrimaryCvLibraryModal({
     }
   }, [open]);
 
+  const requestClose = () => {
+    if (mutationBusyRef.current) return;
+    onClose();
+  };
+
   return (
     <dialog
       ref={dialogRef}
       className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,32rem)] max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[28px] border border-[var(--ink)]/8 bg-[var(--white)] p-0 text-[var(--ink)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
-      onClose={onClose}
+      aria-busy={mutationBusy || undefined}
+      onCancel={(e) => {
+        if (mutationBusyRef.current) {
+          e.preventDefault();
+          return;
+        }
+      }}
+      onClose={requestClose}
       onClick={(e) => {
-        if (e.target === dialogRef.current) onClose();
+        if (e.target === dialogRef.current) requestClose();
       }}
     >
       <div className="space-y-4 p-5">
@@ -63,11 +82,17 @@ export default function PrimaryCvLibraryModal({
           <PrimaryCvLibrarySection
             embedded
             onLibraryChange={onLibraryChange}
+            onMutationBusyChange={setMutationBusy}
           />
         )}
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--ink)]/10 pt-4">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={mutationBusy}
+            onClick={requestClose}
+          >
             Done
           </Button>
         </div>

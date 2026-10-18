@@ -98,7 +98,11 @@ export default function ConfirmDialog({
       onCancel={(e) => {
         if (confirmingRef.current) {
           e.preventDefault();
+          return;
         }
+        // Escape closes natively; clear the confirm flag so the `close` listener
+        // still emits onCancel (e.g. after a failed confirm left confirmedRef true).
+        confirmedRef.current = false;
       }}
       onClick={(e) => {
         if (e.target === dialogRef.current) {

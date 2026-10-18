@@ -20,8 +20,8 @@ From the header, open **Profile** (`/admin/profile`). The page title is **Accoun
 - **Profile** — identity header with **profile picture** (preview + Change/Remove; uploaded on Save), **account email**, **member since**, and **Public id** (the private account segment in every share link — not your name). Edit **profile details** used as defaults when you create applications (first name, last name, location, portfolio URL, LinkedIn URL). Changing your name also updates the name stored on your account. Location and URLs can be left blank. These values are not changed when you edit an application. You can also add or change your profile picture from **New** / **Edit application**.
 - **CVs** — manage your **Primary CV library** (up to 5 résumé PDFs). The same library is available from **New** / **Edit** via **Manage library**.
 - **Preferences** — choose how dashboard **status indicators** look (colorful dots or high-contrast icons). Saved in this browser for your account.
-- **Billing and plan** — current Free plan, usage vs draft caps, and Free / Pro / Premium comparison. Paid checkout is not live yet; upgrade actions stay disabled until membership ships.
-- **Password** — change-password form preview (submit disabled until auth wiring). Forgot-password will land here later.
+- **Billing and plan** — current Free plan, usage vs draft caps, and Free / Pro / Premium comparison. Marked with a tool icon as a **preview** (paid checkout is not live; upgrade actions stay disabled until membership ships).
+- **Password** — change-password form preview (tool icon; submit disabled until auth wiring). Forgot-password will land here later.
 
 Active / draft / archived application totals are no longer on Account settings. A dashboard stats summary is planned (`L7-080`) and is not shipped yet — until then, use the application list itself. **Billing and plan** still shows total application count (and primary-CV count) against draft Free caps.
 

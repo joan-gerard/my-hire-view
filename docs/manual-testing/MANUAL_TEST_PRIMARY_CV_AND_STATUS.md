@@ -56,7 +56,8 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] Attach a primary to 1+ applications, then Delete → confirm shows the **exact count** and a preview list (company — role, status; links to edit)
 - [ ] If more than 10 apps use it, preview shows the first 10 plus “and N more”
 - [ ] Cancel → CV still in list and in R2
-- [ ] Confirm (**Delete** when unused, **I Understand — Delete** when referenced) → button shows spinner + **Deleting…** (danger style); Cancel / Escape / backdrop blocked until done → removed from list; R2 object gone (optional check)
+- [ ] Confirm (**Delete** when unused, **I Understand — Delete** when referenced) → button shows spinner + **Deleting…** (danger style); Cancel / Escape / backdrop blocked until done (profile `ConfirmDialog`, and Manage library outer modal Done / Escape / backdrop) → removed from list; R2 object gone (optional check)
+- [ ] If delete fails (e.g. offline): confirm stays open; **Escape** or Cancel clears it (does not leave a stuck invisible dialog)
 - [ ] If applications still referenced it: amber warning **stays visible** after the list refreshes (“still referenced” / “CV missing until updated”)
 - [ ] If the post-delete list refresh fails, the still-referenced warning is still shown (with a refresh note)
 - [ ] While an upload is in progress, Delete is disabled (and the reverse) so a later list refresh cannot wipe that warning
@@ -69,8 +70,8 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] Upload a PDF in the modal → list updates; create form switches to **primary** and selects the new file
 - [ ] That selection **stays** even if the new-application page was still loading the library in the background (does not flip to tailored or drop the new CV from the dropdown)
 - [ ] Close modal while Loading…, reopen and upload → selection still sticks (a late response from the closed modal must not wipe the new CV)
-- [ ] Close modal during an in-progress upload/delete → reopening and selecting a CV is not overwritten by the closed instance’s follow-up refresh
-- [ ] Close modal (**Done**) → dropdown includes the new primary
+- [ ] While upload or delete is in progress: **Done**, Escape, and backdrop do **not** close the Manage library modal (wait until finished)
+- [ ] Close modal (**Done**) when idle → dropdown includes the new primary
 - [ ] Delete a selected primary in the modal → always confirms (inline); unused uses **Delete**, referenced shows count then **I Understand — Delete**; confirm shows spinner + **Deleting…** until done → selection moves to another primary (or switches to tailored if none left)
 - [ ] Library on `/admin/profile` matches what you changed from New/Edit
 
