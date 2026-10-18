@@ -1204,7 +1204,7 @@ export default function ApplicationForm({
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <label
             htmlFor="application-slug"
-            className="block text-sm font-medium text-foreground"
+            className="block text-sm font-medium text-[var(--ink)]"
           >
             Slug *
           </label>
@@ -1212,7 +1212,7 @@ export default function ApplicationForm({
             type="button"
             onClick={handleResetSlugToSuggested}
             disabled={!hasCompany || !hasRole || formBusy}
-            className="text-sm font-medium text-(--brand-primary) hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+            className="cursor-pointer text-sm font-medium text-[var(--ink)] hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
           >
             Reset to suggested
           </button>
@@ -1231,7 +1231,7 @@ export default function ApplicationForm({
       </div>
       {slugLiveStatus.kind === "checking" && (
         <p
-          className="flex items-center gap-1.5 text-xs text-(--foreground)/60"
+          className="flex items-center gap-1.5 text-xs text-[var(--muted)]"
           role="status"
         >
           <FiRefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden />
@@ -1255,7 +1255,7 @@ export default function ApplicationForm({
         slugLiveStatus.kind === "unavailable") &&
         !errors.slug && (
           <p
-            className="flex items-start gap-1.5 text-xs text-red-600 dark:text-red-400"
+            className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
             role="alert"
           >
             <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />

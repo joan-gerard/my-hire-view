@@ -4,8 +4,15 @@ import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ADMIN_SHELL_CLASS } from "@/components/admin/admin-chrome";
 import { LogoBlack } from "../ui/Logo";
-import SecondaryButton from "../ui/SecondaryButton";
+
+const ADMIN_NAV_PILL_CLASS =
+  "inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
+const ADMIN_NAV_PILL_INACTIVE_CLASS =
+  "bg-[var(--ink)]/[0.06] text-[var(--muted)] hover:bg-[var(--ink)]/[0.1] hover:text-[var(--ink)]";
+const ADMIN_NAV_PILL_ACTIVE_CLASS =
+  "bg-[var(--ink)] text-[var(--white)]";
 
 interface AdminHeaderProps {
   user: User;
@@ -18,8 +25,9 @@ const ADMIN_NAV_LINKS = [
 ] as const;
 
 /**
- * Navigation header for the admin area (/admin). Left: Dashboard, New Application,
- * Profile. Center: logo. Right: user email and sign out.
+ * Navigation header for the admin area (/admin).
+ * Narrow: logo + Sign Out on the first row; nav pills scroll on the next.
+ * md+: left nav, centered logo, email + Sign Out (single link set — no duplicate DOM).
  */
 export default function AdminHeader({ user }: AdminHeaderProps) {
   const pathname = usePathname();
@@ -33,12 +41,15 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
 
   return (
     <nav
-      className="sticky top-0 z-30 border-b border-[var(--foreground)]/10 bg-[var(--secondary-background)]/95 shadow-sm backdrop-blur-sm"
+      className="sticky top-0 z-30 border-b border-[var(--ink)]/10 bg-[var(--white)]/95 backdrop-blur-sm"
       aria-label="Admin"
     >
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="relative flex h-16 items-center">
-          <div className="flex flex-1 items-center gap-6">
+      <div className={ADMIN_SHELL_CLASS}>
+        <div className="relative flex flex-wrap items-center gap-x-3 gap-y-2 py-3 md:h-[72px] md:flex-nowrap md:py-0">
+          <div className="order-1 md:absolute md:left-1/2 md:top-1/2 md:order-none md:-translate-x-1/2 md:-translate-y-1/2">
+            <LogoBlack />
+          </div>
+          <div className="order-3 flex w-full gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] md:order-1 md:w-auto md:flex-1 md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
             {ADMIN_NAV_LINKS.map(({ href, label }) => {
               const isActive =
                 href === "/admin"
@@ -48,10 +59,10 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
                 <Link
                   key={href}
                   href={href}
-                  className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
+                  className={`${ADMIN_NAV_PILL_CLASS} ${
                     isActive
-                      ? "border-[var(--brand-primary)] text-[var(--foreground)]"
-                      : "border-transparent text-[var(--foreground)]/80 hover:border-[var(--foreground)]/20 hover:text-[var(--foreground)]"
+                      ? ADMIN_NAV_PILL_ACTIVE_CLASS
+                      : ADMIN_NAV_PILL_INACTIVE_CLASS
                   }`}
                 >
                   {label}
@@ -59,14 +70,17 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
               );
             })}
           </div>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <LogoBlack />
-          </div>
-          <div className="flex flex-1 items-center justify-end gap-3">
-            <span className="text-sm text-[var(--foreground)]/80">
+          <div className="order-2 ml-auto flex items-center gap-3 md:order-3 md:ml-0 md:flex-1 md:justify-end">
+            <span className="hidden text-sm text-[var(--muted)] lg:inline">
               {user.email}
             </span>
-            <SecondaryButton label="Sign Out" onClick={handleSignOut} />
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className={`cursor-pointer ${ADMIN_NAV_PILL_CLASS} ${ADMIN_NAV_PILL_INACTIVE_CLASS}`}
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </div>

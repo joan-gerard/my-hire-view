@@ -1,8 +1,9 @@
 # Product UI style guide
 
 > Source of truth for authenticated and public product surfaces: `/admin`, `/login`, `/signup`, `/view`, and shared `components/ui/*`.  
-> Implementation today: `app/globals.css` + Tailwind utility classes using those CSS variables.  
-> Marketing homepage uses a **different** system — see [STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md).
+> Implementation: `app/globals.css` + Tailwind utilities on those CSS variables; admin density helpers in `components/admin/admin-chrome.ts`.  
+> Product chrome shares the **marketing brand system** (ink / paper / lime / pink, Switzer + Stack Sans) — see [STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md). Marketing layouts stay separate (`.mhv-landing` / `mhv-demo.css`); do not import marketing CSS into product.  
+> Implementation history: [F34_PRODUCT_MARKETING_BRANDING.md](F34_PRODUCT_MARKETING_BRANDING.md) (`F34-118` shipped).
 
 ---
 
@@ -10,10 +11,10 @@
 
 | Trait | How it shows up |
 | ----- | ---------------- |
-| Warm, not corporate | Off-white backgrounds; brown-black ink instead of cool grey SaaS |
-| Calm chrome | Soft surfaces, light rings, `rounded-xl` controls |
-| Status with meaning | Teal for positive / publish; warm amber for draft; red only for destructive |
-| Consistent with marketing only in *care*, not in *palette* | Same product voice; do **not** pull lime/pink marketing accents into admin unless deliberately bridging |
+| Ink on paper | Near-black text/CTAs on white or soft paper; calm, task-dense chrome |
+| Loud accents sparingly | Lime and pink for logo dots, status energy, dark-surface focus, rare fills — not default body text on light |
+| Clear status language | Soft success / draft / warning / danger chips; dashboard dots or high-contrast glyphs |
+| Same brand system as marketing, different density | Product stays compact and form-led; marketing stays spacious |
 
 Voice: clear labels, sentence case, action-named buttons (“Publish”, “Save”, “Delete application”).
 
@@ -23,59 +24,83 @@ Voice: clear labels, sentence case, action-named buttons (“Publish”, “Save
 
 Defined on `:root` in `app/globals.css`:
 
-### Surfaces & text
+### Core brand (prefer these names in new code)
 
 | Token | Hex | Role |
 | ----- | --- | ---- |
-| `--background` | `#f6f0e9` | Page background |
-| `--secondary-background` | `#fcf6ef` | Alternate section / panel |
-| `--surface` | `#f8f4ef` | Inputs, cards, elevated fields |
-| `--foreground` | `#2b1809` | Primary text |
+| `--ink` | `#0b0b0c` | Primary text, dark CTAs, light-surface focus |
+| `--muted` | `#6a6e6e` | Secondary copy, link/hover emphasis |
+| `--mist` | `#b7bcbc` | Tertiary text on dark |
+| `--lime` | `#9efc65` | Loud accent, logo dot, **dark-surface focus only** |
+| `--pink` | `#ffbcfc` | Fill accent — not body text on light |
+| `--pink-text` | `#c026a8` | Pink text on white/paper (WCAG AA) |
+| `--paper` | `#f0f0f0` | Soft surface / page wash / quiet chips |
+| `--white` | `#ffffff` | Page background, white panels |
 
-### Brand actions
+### Surfaces & legacy aliases
 
 | Token | Hex | Role |
 | ----- | --- | ---- |
-| `--brand-primary` | `#2b1809` | Primary buttons |
+| `--background` | `#ffffff` | Page background (`--white`) |
+| `--secondary-background` | `#f0f0f0` | Alternate bands (`--paper`) |
+| `--surface` | `#f0f0f0` | Soft fields / nested wells (`--paper`) |
+| `--foreground` | `#0b0b0c` | Primary text (`--ink`) |
+| `--brand-primary` | `#0b0b0c` | Primary CTA fill |
 | `--brand-primary-text` | `#ffffff` | Text on primary |
-| `--brand-secondary` | `#f0e7dd` | Secondary buttons / soft chrome |
-| `--brand-secondary-text` | `#2b1809` | Text on secondary |
-| `--brand-accent-1` | `#0d9488` | Focus rings, accent CTAs, positive emphasis |
-| `--brand-accent-2` | `#0f766e` | Accent hover / stronger teal fill |
+| `--brand-secondary` | `#f0f0f0` | Soft secondary chrome |
+| `--brand-secondary-text` | `#0b0b0c` | Text on secondary |
+| `--brand-accent-1` | `#0b0b0c` | Light focus rings (ink — **not** lime on light) |
+| `--brand-accent-2` | `#6a6e6e` | Muted link / hover emphasis |
 
-Legacy aliases (prefer the names above in new code): `--brand-text`, `--brand-surface`, `--brand-accent`.
+Also: `--brand-text`, `--brand-surface`, `--brand-accent` (legacy aliases of ink / white / paper). Prefer `--ink` / `--paper` / `--white` in new work.
 
-### Dark product sections (rare)
+### Dark product sections
 
 | Token | Hex | Role |
 | ----- | --- | ---- |
-| `--dark-section-bg` | `#1a1510` | Dark bands if needed |
-| `--dark-section-text` | `#faf8f6` | Text on dark bands |
-| `--header-mobile-menu-bg` | `#e2ddd6` | Mobile menu sheet |
+| `--dark-section-bg` | `#0b0b0c` | Dark bands |
+| `--dark-section-text` | `#ffffff` | Text on dark |
+| `--header-mobile-menu-bg` | `#f0f0f0` | Mobile menu sheet |
+
+On dark chrome, focus may use `--lime`. Body secondary on dark may use `--mist`.
 
 ### Status / feedback
 
 | Token | Hex | Role |
 | ----- | --- | ---- |
-| `--status-success-bg` / `--status-success-fg` | `#d8f3ef` / `#0f766e` | Success chips |
-| `--status-draft-bg` / `--status-draft-fg` | `#f3e4d4` / `#8a5a2b` | Draft |
-| `--status-warning-bg` / `--status-warning-fg` | `#f8edd9` / `#7a4e1e` | Warning |
-| `--status-danger-bg` / `--status-danger-fg` | `#fde8e4` / `#b42318` | Error text / soft danger |
+| `--status-success-bg` / `--status-success-fg` | `#e8fad9` / `#0b0b0c` | Soft lime wash + ink |
+| `--status-draft-bg` / `--status-draft-fg` | `#f0f0f0` / `#6a6e6e` | Paper + muted |
+| `--status-warning-bg` / `--status-warning-fg` | `#fff0fe` / `#c026a8` | Soft pink + pink-text |
+| `--status-danger-bg` / `--status-danger-fg` | `#fde8e4` / `#b42318` | Error / soft danger |
 | `--status-danger-solid` | `#b42318` | Danger button fill |
 
-Avoid generic bright “SaaS green” outside the teal success tokens above.
+### Dashboard status markers
+
+Account preference (Account settings → **Preferences**): colorful dots (default) or high-contrast wash + ink glyphs.
+
+| Token | Hex | Role |
+| ----- | --- | ---- |
+| `--status-dot-draft` | `#fcdc65` | Colorful draft |
+| `--status-dot-active` | `#6ed4fc` | Colorful active (not viewed) |
+| `--status-dot-viewed` | `#9efc65` | Colorful active (viewed) |
+| `--status-dot-archived` | `#c5c9c9` | Colorful archived |
+| `--status-wash-*` | (see `globals.css`) | High-contrast washes under glyphs |
+
+Do **not** reintroduce teal as a brand accent. Red stays for destructive only.
 
 ---
 
 ## 3. Typography
 
+Wired via root `app/layout.tsx` importing `app/(home)/fonts.ts` (do not edit marketing CSS for product fonts).
+
 | Role | Family | CSS variable | Where |
 | ---- | ------ | ------------ | ----- |
-| Body / UI / headings in product | FunnelSans | `--font-funnelsans` | `body`, most `h*` |
-| Optional display (legacy / marketing-adjacent) | FaunaOne | `--font-faunaone` | Available; product currently uses FunnelSans for headings |
-| Logo wordmark in product chrome | Varela Round | `--font-varelaround` | `#logo`, `#marketing-nav-link` |
+| Body / UI | Stack Sans Headline | `--font-stack-sans-headline` | `body`, Tailwind `--font-sans` |
+| Headings | Switzer | `--font-switzer` | `h1`–`h6`, `font-heading` |
+| Logo wordmark | Switzer | `--font-switzer` | `#logo`, product `Logo` |
 
-Base: FunnelSans on `body` with `--foreground` on `--background`.
+Local FunnelSans / FaunaOne / Varela Round `@font-face` rules remain for leftovers — **do not** use them for new product UI.
 
 ---
 
@@ -83,10 +108,15 @@ Base: FunnelSans on `body` with `--foreground` on `--background`.
 
 | Pattern | Guidance |
 | ------- | -------- |
-| Corner radius | Controls and cards: `rounded-xl` (~12px). Prefer this over full pills in product UI |
-| Focus | `focus-visible` rings using `--brand-accent-1` or outline with `--brand-primary` |
-| Inputs | `bg-[var(--surface)]`, inset ring `ring-[var(--foreground)]/15`, focus ring teal |
-| Spacing | Comfortable padding (`px-3.5 py-2.5` on fields); avoid cramped admin tables |
+| Page wash | Admin: soft `--paper` page; content in white bordered panels (`ADMIN_PANEL_CLASS`) |
+| Primary CTAs | Pill (`rounded-full` / ~100px) — ink fill + white text |
+| Dense controls | Inputs, secondary/danger buttons, fieldsets: `rounded-xl` |
+| Panels / dialogs | In-flow panels (`ADMIN_PANEL_CLASS`): `rounded-2xl` (16px). Floating dialogs/modals: larger radius (`rounded-[28px]` ≈ 28px). Soft shadow (`shadow-lg` / similar) for **floating** surfaces: menus, confirm/status dialogs, library/picture modals — not for in-flow page panels |
+| Focus | Light surfaces: ink outline / `--brand-accent-1`. Dark surfaces: lime when appropriate |
+| Inputs | Prefer **white** fields on paper panels; ink focus ring — not lime on light |
+| Logo | Wordmark + small lime (or pink) circular accent dot |
+
+Shared admin class strings: `components/admin/admin-chrome.ts` (`ADMIN_PRIMARY_CLASS`, `ADMIN_SECONDARY_CLASS`, `ADMIN_PANEL_CLASS`, …).
 
 ---
 
@@ -94,26 +124,28 @@ Base: FunnelSans on `body` with `--foreground` on `--background`.
 
 ### Buttons (`components/ui/Button.tsx`)
 
-- **Primary:** `--brand-primary` fill, white text.  
-- **Secondary:** `--brand-secondary` fill, primary text.  
-- **Danger:** `--status-danger-solid` fill, white text.  
-- Shared: `rounded-xl`, `text-sm font-semibold`, disabled opacity 50%, loading replaces label.
+- **Primary:** ink pill, white text.  
+- **Secondary:** white + ink border, `rounded-xl`.  
+- **Danger:** `--status-danger-solid`, `rounded-xl` (not a pill).  
+- Loading: spinner + `loadingLabel`, light pulse, `aria-busy`.
 
-Accent / publish-style actions in admin may use `--brand-accent-2` solid fills (see dashboard card actions) — treat as “positive primary”, not a fourth random color.
+Loud accent CTAs (e.g. Create application) may use lime fill + ink text (`ADMIN_ACCENT_PRIMARY_CLASS`) — reserve for one primary create action, not every button.
 
 ### Links styled as buttons
 
-`PrimaryLinkButton` / `ExternalLinkButton` should follow the same primary/secondary tokens.
+- `PrimaryLinkButton` — ink pill (same family as primary `Button`).
+- `ExternalLinkButton` — `portfolio` variant is ink pill; **`linkedin` variant intentionally uses LinkedIn blue** (`#0A66C2` / hover `#004182`) so the control stays recognizable — do not restyle it to ink.
 
 ### Forms
 
-- Labels: `text-sm font-medium` in `--foreground`.  
-- Errors: `--status-danger-fg` helper text; ring tint on the field.  
-- Auth pages reuse `AUTH_INPUT_CLASS` / `AUTH_SUBMIT_CLASS` in `components/auth/auth-form-styles.ts` for consistency with the warm shell.
+- Labels: `text-sm font-medium` in `--ink`.  
+- Helper / muted: `--muted`.  
+- Errors: `--status-danger-fg`; ring tint on the field.  
+- Auth: `components/auth/auth-form-styles.ts` + Reslink-inspired shells (white card / split ink panel).
 
-### Status chips
+### Status chips & dialogs
 
-Pair `*-bg` + `*-fg` tokens; don’t invent one-off greens/oranges.
+Pair `*-bg` + `*-fg` tokens. Confirm / library modals use paper/white + ink; destructive confirm may use danger button + warning wash for copy.
 
 ---
 
@@ -121,11 +153,12 @@ Pair `*-bg` + `*-fg` tokens; don’t invent one-off greens/oranges.
 
 | Surface | Expectation |
 | ------- | ----------- |
-| `/admin` | Warm background, surface cards, teal focus, status chips for draft/published |
-| `/login`, `/signup` | Logo shell + warm panel; same input/button tokens as admin |
-| `/view` | Public application page — same brand tokens; keep chrome quiet so CV/video dominate |
+| `/admin` | Paper page wash, white panels, ink nav + pills, lime Create CTA, status dots/glyphs |
+| `/login`, `/signup` | White/ink auth shells, Switzer headings, pill submit; soft pink/lime atmosphere OK on auth only |
+| `/view` | Quiet paper/ink chrome so CV / video stay primary; draft banner uses pink-text warning + ink Publish |
+| Marketing `/`, legal | **Frozen for product work** — `.mhv-landing` / marketing components; see marketing guide |
 
-When backlog items say “align with homepage warm palette”, they mean **this** file’s tokens — not the marketing lime/pink system.
+Product and marketing share tokens and fonts; they do **not** share layout CSS. Never pull `mhv-demo.css` into admin.
 
 ---
 
@@ -133,18 +166,21 @@ When backlog items say “align with homepage warm palette”, they mean **this*
 
 | Do | Don’t |
 | -- | ----- |
-| Use CSS variables from `globals.css` | Hard-code hex in components unless adding a new token |
-| Use teal for focus and positive product actions | Copy marketing `--lime` / `--pink` into admin forms |
-| Keep radius and ring patterns consistent | Mix `rounded-full` pills with `rounded-xl` arbitrarily |
+| Use CSS variables from `globals.css` (`--ink`, `--paper`, `--lime`, …) | Hard-code marketing hex in many components |
+| Use lime/pink for accents, logo dots, status energy, dark focus | Use lime as a focus ring on white/paper (~fails contrast) |
+| Use `--pink-text` for pink **copy** on light | Use bright `--pink` as body text on light |
+| Keep primary CTAs ink pills; dense fields `rounded-xl` | Make every control a pill, or mix radii without reason |
 | Name buttons by outcome | Generic “OK” / “Submit” when a specific verb exists |
+| Fork or scope if a change would restyle marketing | Edit `components/marketing/*` or `mhv-demo.css` to “fix” product |
 
 ---
 
 ## 8. Checklist for a new product screen
 
-1. Page sits on `--background` (or deliberate `--secondary-background` band).  
-2. Text uses `--foreground` / muted opacity of foreground — not raw gray utilities that fight the warm palette.  
-3. Primary / secondary / danger actions use `Button` or the same token classes.  
-4. Inputs match surface + ring + teal focus.  
-5. Status uses the status token pairs.  
-6. No dependency on `mhv-demo.css` or Switzer/Stack Sans unless the screen is intentionally marketing.
+1. Page sits on `--background` / `--white`, or deliberate `--paper` wash with white panels.  
+2. Text uses `--ink` / `--muted` — not warm-brown or teal leftovers.  
+3. Primary / secondary / danger actions use `Button` or `admin-chrome` classes.  
+4. Inputs are white (or paper) with **ink** focus on light surfaces.  
+5. Status uses the status token pairs (or dashboard dot/wash tokens).  
+6. Lime/pink appear as intentional accents — not a full-page wash on dense forms.  
+7. No dependency on `mhv-demo.css` unless the screen is intentionally marketing.

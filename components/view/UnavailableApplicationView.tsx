@@ -1,5 +1,6 @@
 "use client";
 
+import { LogoWhite } from "@/components/ui/Logo";
 import {
   headerEntrance,
   staggerContainer,
@@ -14,9 +15,9 @@ const BACKGROUND_IMAGE = "/hero-image.webp";
 
 /**
  * Single recruiter-facing empty state for archived, draft, deleted, or
- * otherwise missing public application links. Matches homepage branding:
- * wordmark top bar, full-bleed atmosphere, light display type, teal CTA,
- * compact dark footer.
+ * otherwise missing public application links. Quiet brand chrome on dark:
+ * wordmark top bar, full-bleed atmosphere, light display type, lime+ink CTA,
+ * compact dark footer — not a marketing landing clone.
  */
 export default function UnavailableApplicationView() {
   return (
@@ -27,13 +28,7 @@ export default function UnavailableApplicationView() {
         animate={headerEntrance.animate}
         transition={headerEntrance.transition}
       >
-        <Link
-          href="/"
-          className="text-xl font-medium text-white transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
-          aria-label="MyHireView home"
-        >
-          MyHireView
-        </Link>
+        <LogoWhite />
       </motion.header>
 
       <section
@@ -92,7 +87,7 @@ export default function UnavailableApplicationView() {
             >
               <Link
                 href="/"
-                className="inline-flex w-full items-center justify-center rounded-lg bg-(--brand-accent-1) px-6 py-3 text-base font-semibold text-white shadow-md transition hover:bg-(--brand-accent-2) focus:outline-none focus:ring-2 focus:ring-(--brand-accent-1) focus:ring-offset-2 focus:ring-offset-black whitespace-nowrap"
+                className="inline-flex w-full items-center justify-center rounded-full bg-[var(--lime)] px-6 py-3 text-base font-semibold text-[var(--ink)] shadow-md transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--lime)] focus:ring-offset-2 focus:ring-offset-black whitespace-nowrap"
               >
                 See how candidates stand out
               </Link>

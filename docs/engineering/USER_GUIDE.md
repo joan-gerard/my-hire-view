@@ -13,23 +13,17 @@ This guide describes what you can do with MyHireView as a **candidate** (job see
 - **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your first name, last name, email, password, and confirm password. Confirm your email if your Supabase project requires it. Your name is stored on your account and a profile record is created with that name (you can add location, links, and a picture later).
 - **Sign in:** Use **Sign in** and enter your email and password. After signing in, you are taken to your **Dashboard** (`/admin`).
 - **Getting started checklist:** Across `/admin` routes, a floating **Getting started** panel guides new accounts until you: create your profile (name), add location or a link (LinkedIn or portfolio), add a profile photo, upload a primary CV, create your first application, and **publish** so you can share the link. Steps tick off as you complete them (no refresh needed) and stay checked in this browser for your account (Public id, or user id before a profile exists) even if you later remove the data that completed them. You can **Skip** individual steps or **Skip all**, and minimize it to a compact control (prefs are remembered per account in this browser). When everything is done or skipped, **Skip all** becomes **Dismiss** — use that to hide the panel. Recreating an account starts the checklist fresh.
-### Profile
+### Account settings (Profile)
 
-From the header, open **Profile** (`/admin/profile`). You can:
+From the header, open **Profile** (`/admin/profile`). The page title is **Account settings** with tabs:
 
-- See your **account email**, **member since** date, and **Public id** (the private account segment in every share link — not your name). Helper text and an example `/view/{publicId}/…` path explain how it is used.
-- Edit **profile details** used as defaults when you create applications:
-  - First name (required)
-  - Last name (required)
-  - Location
-  - Portfolio URL
-  - LinkedIn URL
-  - Profile picture  
+- **Profile** — identity header with **profile picture** (preview + Change/Remove; uploaded on Save), **account email**, **member since**, and **Public id** (the private account segment in every share link — not your name). Edit **profile details** used as defaults when you create applications (first name, last name, location, portfolio URL, LinkedIn URL). Changing your name also updates the name stored on your account. Location and URLs can be left blank. These values are not changed when you edit an application. You can also add or change your profile picture from **New** / **Edit application**.
+- **CVs** — manage your **Primary CV library** (up to 5 résumé PDFs). The same library is available from **New** / **Edit** via **Manage library**.
+- **Preferences** — choose how dashboard **status indicators** look (colorful dots or high-contrast icons). Saved in this browser for your account.
+- **Billing and plan** — current Free plan, usage vs draft caps, and Free / Pro / Premium comparison. Marked with a tool icon as a **preview** (paid checkout is not live; upgrade actions stay disabled until membership ships).
+- **Password** — change-password form preview (tool icon; submit disabled until auth wiring). Forgot-password will land here later.
 
-Changing your name also updates the name stored on your account. Location and URLs can be left blank. These values are not changed when you edit an application. You can also add or change your profile picture from **New** / **Edit application** without leaving those pages.
-
-- Manage your **Primary CV library** (up to 5 résumé PDFs to reuse on applications). You can manage the same library from **New** / **Edit application** via **Manage library**.
-- See how many **applications** you have in total, broken down by **active**, **draft**, and **archived**. A link takes you back to the dashboard.
+Active / draft / archived application totals are no longer on Account settings. A dashboard stats summary is planned (`L7-080`) and is not shipped yet — until then, use the application list itself. **Billing and plan** still shows total application count (and primary-CV count) against draft Free caps.
 
 ### Dashboard
 

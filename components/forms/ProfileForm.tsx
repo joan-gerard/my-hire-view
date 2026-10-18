@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  ADMIN_PANEL_CLASS,
+  ADMIN_TIP_CLASS,
+} from "@/components/admin/admin-chrome";
+import { AvatarIcon } from "@/components/admin/icons";
+import PublicIdAccountField from "@/components/admin/PublicIdAccountField";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import type { Profile } from "@/lib/types/profile";
@@ -16,6 +22,12 @@ import { useEffect, useRef, useState } from "react";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+export type ProfileFormAccountChrome = {
+  email: string | null;
+  memberSince: string | null;
+  publicId: string | null;
+};
+
 interface ProfileFormProps {
   initialData: Profile | null;
   /**
@@ -23,15 +35,25 @@ interface ProfileFormProps {
    * When false (rare: signup insert failed), Save stays enabled so PUT can create the row.
    */
   hasExistingProfile: boolean;
+  /**
+   * Account settings chrome: identity header (picture + Change/Remove),
+   * email / public id, and profile details fields.
+   */
+  accountChrome: ProfileFormAccountChrome;
 }
 
 function normalizeText(value: string | null | undefined): string {
   return (value ?? "").trim();
 }
 
+/**
+ * Account settings → Profile tab form. Picture preview and Change/Remove live
+ * only in the identity header (uploaded on Save).
+ */
 export default function ProfileForm({
   initialData,
   hasExistingProfile,
+  accountChrome,
 }: ProfileFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -211,104 +233,42 @@ export default function ProfileForm({
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <p
-          className="rounded-xl border border-[var(--status-danger-fg)]/20 bg-[var(--status-danger-bg)] p-3 text-sm text-[var(--status-danger-fg)]"
-          role="alert"
-        >
-          {error}
-        </p>
-      )}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Input
-          label="First name"
-          type="text"
-          value={formData.first_name}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, first_name: e.target.value }))
-          }
-          placeholder="Your first name"
-          required
-          maxLength={PROFILE_NAME_MAX_LENGTH}
-        />
-        <Input
-          label="Last name"
-          type="text"
-          value={formData.last_name}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, last_name: e.target.value }))
-          }
-          placeholder="Your last name"
-          required
-          maxLength={PROFILE_NAME_MAX_LENGTH}
-        />
-      </div>
-      <Input
-        label="Location"
-        type="text"
-        value={formData.location}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, location: e.target.value }))
-        }
-        placeholder="e.g. London, UK"
-        maxLength={PROFILE_LOCATION_MAX_LENGTH}
-      />
-      <Input
-        label="Portfolio URL"
-        type="url"
-        value={formData.portfolio_url}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, portfolio_url: e.target.value }))
-        }
-        placeholder="https://..."
-        maxLength={PROFILE_URL_MAX_LENGTH}
-      />
-      <Input
-        label="LinkedIn URL"
-        type="url"
-        value={formData.linkedin_url}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, linkedin_url: e.target.value }))
-        }
-        placeholder="https://linkedin.com/in/..."
-        maxLength={PROFILE_URL_MAX_LENGTH}
-      />
+  const displayName =
+    [firstName, lastName].filter(Boolean).join(" ") || "Your profile";
+  const initials =
+    `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() ||
+    (accountChrome.email?.charAt(0).toUpperCase() ?? "?");
 
-      <fieldset className="rounded-lg border border-[var(--foreground)]/10 bg-[var(--background)] p-4">
-        <legend className="px-1 text-base font-semibold text-[var(--foreground)]">
-          Profile picture
-        </legend>
-        <p className="mt-0.5 mb-3 text-sm text-[var(--foreground)]/80">
-          One picture per account. The file is uploaded when you save. You can
-          choose whether to show it on each application when creating or
-          editing.
-        </p>
-        {submitPhase === "uploading" && (
-          <p className="mb-3 text-sm text-[var(--foreground)]/80" role="status">
-            Uploading…
-          </p>
-        )}
-        {hadProfilePictureOnLoad && (
-          <p className="mb-3 text-sm text-[var(--foreground)]/80">
-            When you change your profile picture and save, applications that
-            show your picture will use the new image automatically.
-          </p>
-        )}
-        {hasProfilePicture ? (
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--foreground)]/10 ring-2 ring-[var(--foreground)]/10">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={displayPictureUrl!}
-                alt=""
-                className="h-full w-full object-cover"
-                width={80}
-                height={80}
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
+  return (
+    <form onSubmit={handleSubmit}>
+      <section
+        className={`${ADMIN_PANEL_CLASS} overflow-hidden`}
+        aria-labelledby="profile-identity-heading"
+      >
+        <div className="border-b border-[var(--ink)]/8 bg-[var(--ink)]/[0.02] px-5 py-5 sm:px-6 sm:py-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+            <div className="flex shrink-0 flex-col items-start gap-3">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[var(--lime)] text-[var(--ink)] sm:h-[5.5rem] sm:w-[5.5rem]">
+                {hasProfilePicture ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- local preview or Storage URL; cache-busted when saved
+                  <img
+                    src={displayPictureUrl!}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    width={88}
+                    height={88}
+                  />
+                ) : firstName || lastName || accountChrome.email ? (
+                  <span
+                    className="font-heading text-2xl font-semibold tracking-[-0.02em]"
+                    aria-hidden
+                  >
+                    {initials}
+                  </span>
+                ) : (
+                  <AvatarIcon className="h-9 w-9" />
+                )}
+              </div>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -316,71 +276,215 @@ export default function ProfileForm({
                 className="hidden"
                 onChange={handleFileChange}
               />
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={loading}
-                onClick={() => fileInputRef.current?.click()}
+              {hasProfilePicture ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={loading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Change
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={loading}
+                    onClick={handleRemovePicture}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={loading}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Choose picture
+                </Button>
+              )}
+            </div>
+            <div className="min-w-0 flex-1 space-y-2">
+              <h2
+                id="profile-identity-heading"
+                className="font-heading text-xl font-semibold tracking-[-0.02em] text-[var(--ink)] sm:text-2xl"
               >
-                Change
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={loading}
-                onClick={handleRemovePicture}
-              >
-                Remove
-              </Button>
+                {displayName}
+              </h2>
+              <p className="truncate text-sm text-[var(--muted)]">
+                {accountChrome.email ?? "—"}
+              </p>
+              {accountChrome.memberSince ? (
+                <p className="inline-flex rounded-full bg-[var(--white)] px-2.5 py-1 text-xs font-medium text-[var(--muted)] ring-1 ring-[var(--ink)]/10">
+                  Member since {accountChrome.memberSince}
+                </p>
+              ) : null}
+              <div className="space-y-1.5 pt-1">
+                <p className="text-sm text-[var(--muted)]">
+                  One picture per account. The file is uploaded when you save.
+                  You can choose whether to show it on each application when
+                  creating or editing.
+                </p>
+                {submitPhase === "uploading" && (
+                  <p className="text-sm text-[var(--muted)]" role="status">
+                    Uploading…
+                  </p>
+                )}
+                {hadProfilePictureOnLoad && (
+                  <p className="text-sm text-[var(--muted)]">
+                    When you change your profile picture and save, applications
+                    that show your picture will use the new image automatically.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-        ) : (
-          <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={ALLOWED_IMAGE_TYPES.join(",")}
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={loading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Choose picture
-            </Button>
-          </div>
-        )}
-      </fieldset>
+        </div>
 
-      <div
-        className="group relative inline-flex"
-        title={disabledReason ?? undefined}
-      >
-        <Button
-          type="submit"
-          variant="primary"
-          loading={loading}
-          loadingLabel={saveLoadingLabel}
-          disabled={!canSave}
-          aria-describedby={
-            disabledReason ? "save-profile-disabled-reason" : undefined
-          }
-        >
-          Save profile
-        </Button>
-        {disabledReason && (
-          <span
-            id="save-profile-disabled-reason"
-            role="tooltip"
-            className="pointer-events-none absolute bottom-full left-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--foreground)] px-2.5 py-1.5 text-xs text-[var(--background)] shadow-lg group-hover:block group-focus-within:block"
+        <div className="space-y-6 px-5 py-5 sm:px-6 sm:py-6">
+          {error ? (
+            <p
+              className="rounded-xl border border-[var(--status-danger-fg)]/20 bg-[var(--status-danger-bg)] p-3 text-sm text-[var(--status-danger-fg)]"
+              role="alert"
+            >
+              {error}
+            </p>
+          ) : null}
+
+          <div>
+            <h3 className="font-heading text-sm font-semibold tracking-[-0.01em] text-[var(--ink)]">
+              Account
+            </h3>
+            <dl className="mt-3 divide-y divide-[var(--ink)]/8">
+              <div className="flex flex-col gap-0.5 py-3 first:pt-0 sm:flex-row sm:gap-6">
+                <dt className="shrink-0 text-sm font-medium text-[var(--muted)] sm:w-36">
+                  Email
+                </dt>
+                <dd className="min-w-0 text-sm text-[var(--ink)]">
+                  {accountChrome.email ?? "—"}
+                </dd>
+              </div>
+              <PublicIdAccountField publicId={accountChrome.publicId} />
+            </dl>
+          </div>
+
+          <div className="border-t border-[var(--ink)]/8 pt-5">
+            <h3 className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]">
+              Profile details
+            </h3>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              This info is used when you create or update applications so
+              recruiters see your name and links.
+            </p>
+            {!hasExistingProfile && (
+              <p className={`mt-3 ${ADMIN_TIP_CLASS}`}>
+                Your name is prefilled from signup. Save your profile to finish
+                creating your profile record (location, links, and picture).
+              </p>
+            )}
+            <div className="mt-5 space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Input
+                  label="First name"
+                  type="text"
+                  value={formData.first_name}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      first_name: e.target.value,
+                    }))
+                  }
+                  placeholder="Your first name"
+                  required
+                  maxLength={PROFILE_NAME_MAX_LENGTH}
+                />
+                <Input
+                  label="Last name"
+                  type="text"
+                  value={formData.last_name}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      last_name: e.target.value,
+                    }))
+                  }
+                  placeholder="Your last name"
+                  required
+                  maxLength={PROFILE_NAME_MAX_LENGTH}
+                />
+              </div>
+              <Input
+                label="Location"
+                type="text"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    location: e.target.value,
+                  }))
+                }
+                placeholder="e.g. London, UK"
+                maxLength={PROFILE_LOCATION_MAX_LENGTH}
+              />
+              <Input
+                label="Portfolio URL"
+                type="url"
+                value={formData.portfolio_url}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    portfolio_url: e.target.value,
+                  }))
+                }
+                placeholder="https://..."
+                maxLength={PROFILE_URL_MAX_LENGTH}
+              />
+              <Input
+                label="LinkedIn URL"
+                type="url"
+                value={formData.linkedin_url}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    linkedin_url: e.target.value,
+                  }))
+                }
+                placeholder="https://linkedin.com/in/..."
+                maxLength={PROFILE_URL_MAX_LENGTH}
+              />
+            </div>
+          </div>
+
+          <div
+            className="group relative inline-flex"
+            title={disabledReason ?? undefined}
           >
-            {disabledReason}
-          </span>
-        )}
-      </div>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={loading}
+              loadingLabel={saveLoadingLabel}
+              disabled={!canSave}
+              aria-describedby={
+                disabledReason ? "save-profile-disabled-reason" : undefined
+              }
+            >
+              Save profile
+            </Button>
+            {disabledReason && (
+              <span
+                id="save-profile-disabled-reason"
+                role="tooltip"
+                className="pointer-events-none absolute bottom-full left-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-xs text-[var(--white)] shadow-lg group-hover:block group-focus-within:block"
+              >
+                {disabledReason}
+              </span>
+            )}
+          </div>
+        </div>
+      </section>
     </form>
   );
 }

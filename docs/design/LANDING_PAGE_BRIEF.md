@@ -140,7 +140,7 @@ Reuse the ViewPageFooter component but rename it Footer. Styling is aligned with
 
 ## Design Guidelines
 
-The original blue/dark brief below is **obsolete**. Live marketing brand tokens, type, components, and motion rules are in **[STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md)**. Product chrome (admin/auth/view) is separate: [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md). See `/demo` for a fake-product application of the marketing guide.
+The original blue/dark brief below is **obsolete**. Live marketing brand tokens, type, components, and motion rules are in **[STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md)**. Product chrome (admin/auth/view) uses the same brand system at product density: [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md) (~~`F34-118`~~ shipped). See `/demo` for a fake-product application of the marketing guide.
 
 ### Visual Style (archived — original coming-soon brief)
 
@@ -155,7 +155,7 @@ The original blue/dark brief below is **obsolete**. Live marketing brand tokens,
 
 The section list above is the original coming-soon brief. It is **not** the live page.
 
-- **Page:** `app/(home)/` serves `/`. `layout.tsx` self-hosts Switzer and Stack Sans Headline via `next/font` (no CDN stylesheets) and loads `mhv-demo.css`. `page.tsx` renders `MhvLanding` (`mhv-landing.tsx` composes section modules from `components/marketing/`; copy helpers in `lib/marketing/`): header, hero, story, principles, how-it-works, in-page `#pricing`, FAQ, and footer. Login and Get started go to `/login`. There is no `MarketingHeader` and no `/pricing` route.
+- **Page:** `app/(home)/` serves `/`. `layout.tsx` self-hosts Switzer and Stack Sans Headline via `next/font` (no CDN stylesheets) and loads `mhv-demo.css`. `page.tsx` renders `MhvLanding` (`mhv-landing.tsx` composes section modules from `components/marketing/`; copy helpers in `lib/marketing/`): header, hero, story, principles, how-it-works, in-page `#pricing`, FAQ, and footer. Signed-out Login and Get started go to `/login`; when signed in, the header CTA is Dashboard → `/admin`. There is no `MarketingHeader` and no `/pricing` route.
 - **Copy still shared:** FAQ items in `components/public/faq/constants.ts`, how-it-works steps in `components/public/how-it-works/constants.ts`, tier cards in `components/public/pricing/constants.ts`.
 - **API:** `POST /api/waitlist` still validates and stores signups in `waitlist_signups` (migration `018_waitlist_signups.sql`). Duplicate emails return 409. The homepage does not render that form.
 - **Videos:** How-it-works step videos are served from R2 (`marketing/*.mp4`); see [PDF_AND_R2.md](../architecture/PDF_AND_R2.md). Hero stills for this page live under `public/demo/`.

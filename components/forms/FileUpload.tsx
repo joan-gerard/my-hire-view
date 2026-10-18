@@ -126,7 +126,7 @@ export default function FileUpload({
   return (
     <div>
       {!hideLabel && (
-        <label className="block text-sm font-medium text-[var(--foreground)]">
+        <label className="block text-sm font-medium text-[var(--ink)]">
           {chooseLabel}
         </label>
       )}
@@ -139,14 +139,14 @@ export default function FileUpload({
             onChange={handleFileChange}
             aria-label={chooseLabel}
             disabled={selectionLocked}
-            className="block w-full text-sm text-[var(--foreground)]/60 file:mr-4 file:rounded-xl file:border-0 file:bg-[var(--brand-secondary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--foreground)] hover:file:opacity-90 disabled:opacity-50"
+            className="block w-full cursor-pointer text-sm text-[var(--muted)] file:mr-4 file:cursor-pointer file:rounded-xl file:border file:border-[var(--ink)]/12 file:bg-[var(--white)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--ink)] hover:file:bg-[var(--ink)]/[0.04] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:file:bg-[var(--white)] disabled:file:cursor-not-allowed"
           />
           {showPending && (
             <button
               type="button"
               onClick={handleClearPending}
               disabled={selectionLocked}
-              className="text-sm text-[var(--foreground)]/80 hover:text-[var(--foreground)] underline disabled:opacity-50"
+              className="text-sm text-[var(--muted)] hover:text-[var(--ink)] underline disabled:opacity-50"
             >
               Remove selection
             </button>
@@ -154,11 +154,11 @@ export default function FileUpload({
         </div>
 
         {showPending && pendingFile && (
-          <div className="rounded border border-[var(--foreground)]/10 bg-[var(--background)] p-3">
-            <p className="text-sm font-medium text-[var(--foreground)]">
+          <div className="rounded border border-[var(--ink)]/10 bg-[var(--white)] p-3">
+            <p className="text-sm font-medium text-[var(--ink)]">
               Selected: {pendingFile.name}
             </p>
-            <p className="text-xs text-[var(--foreground)]/60 mt-0.5">
+            <p className="text-xs text-[var(--muted)] mt-0.5">
               {uploading
                 ? "Uploading…"
                 : preparing
@@ -171,7 +171,7 @@ export default function FileUpload({
               <button
                 type="button"
                 onClick={openPreview}
-                className="mt-2 text-sm text-[var(--brand-primary)] hover:opacity-80 hover:underline"
+                className="mt-2 text-sm text-[var(--ink)] hover:opacity-80 hover:underline"
               >
                 Preview PDF
               </button>
@@ -183,16 +183,16 @@ export default function FileUpload({
           <dialog
             ref={dialogRef}
             onCancel={closePreview}
-            className="w-[90vw] max-w-4xl rounded-lg border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-0 shadow-xl backdrop:bg-black/50"
+            className="w-[90vw] max-w-4xl rounded-[28px] border border-[var(--ink)]/8 bg-[var(--white)] p-0 shadow-xl backdrop:bg-black/50"
           >
-            <div className="flex items-center justify-between border-b border-[var(--foreground)]/10 px-4 py-2">
-              <span className="text-sm font-medium text-[var(--foreground)]">
+            <div className="flex items-center justify-between border-b border-[var(--ink)]/10 px-4 py-2">
+              <span className="text-sm font-medium text-[var(--ink)]">
                 CV preview
               </span>
               <button
                 type="button"
                 onClick={closePreview}
-                className="rounded px-2 py-1 text-sm text-[var(--foreground)]/80 hover:bg-[var(--background)] hover:text-[var(--foreground)]"
+                className="rounded px-2 py-1 text-sm text-[var(--muted)] hover:bg-[var(--white)] hover:text-[var(--ink)]"
                 aria-label="Close preview"
               >
                 Close
@@ -202,20 +202,20 @@ export default function FileUpload({
               <iframe
                 src={previewUrl!}
                 title="CV preview"
-                className="h-[70vh] w-full rounded border border-[var(--foreground)]/10"
+                className="h-[70vh] w-full rounded border border-[var(--ink)]/10"
               />
             </div>
           </dialog>
         )}
 
         {showSaved && cvUrlExists && (
-          <p className="text-sm text-[var(--foreground)]/80">
+          <p className="text-sm text-[var(--muted)]">
             CV uploaded:{' '}
             <a
               href={value}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[var(--brand-primary)] hover:underline"
+              className="text-[var(--ink)] hover:underline"
             >
               View
             </a>
@@ -244,7 +244,7 @@ export default function FileUpload({
                     setCheckingCv(false);
                   }}
                   disabled={checkingCv}
-                  className="mt-2 rounded-xl bg-[var(--brand-accent-2)] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+                  className="mt-2 rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--white)] hover:opacity-90 disabled:opacity-50"
                 >
                   {checkingCv ? 'Checking…' : 'Check again'}
                 </button>
@@ -253,9 +253,11 @@ export default function FileUpload({
           </div>
         )}
       </div>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="mt-1 text-sm text-[var(--status-danger-fg)]">{error}</p>
+      )}
       {!error && selectionError && (
-        <p className="mt-1 text-sm text-red-600" role="alert">
+        <p className="mt-1 text-sm text-[var(--status-danger-fg)]" role="alert">
           {selectionError}
         </p>
       )}

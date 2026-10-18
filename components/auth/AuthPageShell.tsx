@@ -1,46 +1,77 @@
+import AuthSignupPromo from '@/components/auth/AuthSignupPromo';
+import '@/components/auth/auth-layout.css';
 import { LogoBlack } from '@/components/ui/Logo';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 type AuthPageShellProps = {
+  variant: 'login' | 'signup';
   title: string;
+  /** Signup supporting line under the title. Unused on login. */
+  description?: string;
   alternateHref: string;
   alternateLabel: string;
+  /** Prefix before the alternate link (e.g. "No account yet?"). */
+  alternatePrompt: string;
   children: ReactNode;
+  footer?: ReactNode;
 };
 
 /**
- * Shared centered layout for login / signup: logo, title, link to the other
- * auth page, and a warm surface panel matching homepage branding (F17-018).
+ * Production auth chrome — Reslink-inspired layouts with MyHireView tokens.
+ * Login: centered card on soft atmosphere. Signup: white/ink split shell.
  */
 export default function AuthPageShell({
+  variant,
   title,
+  description,
   alternateHref,
   alternateLabel,
+  alternatePrompt,
   children,
+  footer,
 }: AuthPageShellProps) {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div className="flex flex-col items-center gap-6">
-          <LogoBlack />
-          <div className="text-center">
-            <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl">
-              {title}
-            </h1>
-            <p className="mt-2 text-sm text-[var(--foreground)]/70">
-              Or{' '}
-              <Link
-                href={alternateHref}
-                className="font-medium text-[var(--brand-accent-2)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-accent-1)]"
-              >
-                {alternateLabel}
-              </Link>
+  if (variant === 'login') {
+    return (
+      <div className="mhv-auth mhv-auth--login">
+        <div className="mhv-auth-login-stage">
+          <div className="mhv-auth-card">
+            <div className="mhv-auth-card-logo">
+              <LogoBlack />
+            </div>
+            <h1>{title}</h1>
+            <p className="mhv-auth-lead">
+              {alternatePrompt}{' '}
+              <Link href={alternateHref}>{alternateLabel}</Link>
             </p>
+            {children}
+            {footer}
           </div>
         </div>
-        <div className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm sm:p-8">
-          {children}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mhv-auth mhv-auth--signup">
+      <div className="mhv-auth-signup-stage">
+        <div className="mhv-auth-shell">
+          <div className="mhv-auth-shell-form">
+            <div className="mhv-auth-card-logo">
+              <LogoBlack />
+            </div>
+            <h1>{title}</h1>
+            {description ? (
+              <p className="mhv-auth-lead">{description}</p>
+            ) : null}
+            {children}
+            <p className="mhv-auth-shell-foot">
+              {alternatePrompt}{' '}
+              <Link href={alternateHref}>{alternateLabel}</Link>
+            </p>
+            {footer}
+          </div>
+          <AuthSignupPromo />
         </div>
       </div>
     </div>

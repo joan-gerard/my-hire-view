@@ -67,7 +67,7 @@ Stranger hears about MyHireView
 1. **Direct** — candidate finds the marketing site (search, LinkedIn, community, partner, email).
 2. **Indirect** — recruiter (or another candidate) sees a public application page and asks “what is this?” That only works if public pages look polished and obviously “made with MyHireView” without looking spammy.
 
-Engineering that supports this loop (onboarding checklist, public-view polish, billing gates) is already tracked in the backlog (`F17`, `F19`, `E1`, `E2`, `J3`). Optional post-launch product tour: `F31`. This doc is about the **non-engineering** work that fills the top of the funnel.
+Engineering that supports this loop (onboarding checklist, public-view polish, billing gates) is already tracked in the backlog (`F34`, `F19`, `E1`, `E2`, `J3`). Optional post-launch product tour: `F31`. This doc is about the **non-engineering** work that fills the top of the funnel.
 
 ---
 
@@ -104,7 +104,7 @@ Goal: **a list of the right people** and **proof the product is worth sharing**,
 3. **Write a 3–5 email waitlist sequence** (welcome, problem, demo, launch-soon, launch). Do not wait until E2 is done to draft this.
 4. **Build proof assets:** one real public application (your own or a volunteer’s) + real screenshots (`F24-043`). Recruiters and candidates believe a live `/view` page more than SVG mockups.
 5. **Start showing up where they already are** — mostly LinkedIn and 1–2 job-search communities. Help first; mention the waitlist second. Aim for a weekly habit, not a campaign.
-6. **Finish trust basics before asking for money:** legal pages (draft UI shipped — final counsel copy still open), support entry (`F23-022`), branding on `/admin` and `/view` (`F17`).
+6. **Finish trust basics before asking for money:** legal pages (draft UI shipped — final counsel copy still open), support entry (`F23-022`). Product UI matching marketing brand (~~`F34-118`~~) shipped.
 7. **Decide the launch offer** (working idea in the landing brief: early waitlist gets **3 months of Pro**). Do not promise it in email until E1/E2 can honor it.
 
 **Done when:** you can say, in one sentence, who pays, why, and you have at least one public page you are proud to send.
@@ -399,5 +399,5 @@ The **career coach** themselves is also a collaborator: they are a **domain part
 1. After **~15 interviews**, update §1 (who pays) and §3 (positioning) with their words.
 2. After **launch week**, record which channels produced signups vs. paid users in a short note at the bottom or in a retrospective — do not turn this file into a changelog of every post.
 3. When **E1/E2** ship, replace “waitlist” language in emails/assets with signup + checkout; keep the loop in §2.
-4. Engineering tasks stay in [Backlog.md](Backlog.md) (`E1`, `E2`, `F17`, `F19`, `F20`, `F23`, `F24`, `J3`). If GTM uncovers a *product* gap (e.g. referral codes, “made with” footer), add a backlog ticket — do not grow a second checklist here.
+4. Engineering tasks stay in [Backlog.md](Backlog.md) (`E1`, `E2`, `F34`, `F19`, `F20`, `F23`, `F24`, `J3`). If GTM uncovers a *product* gap (e.g. referral codes, “made with” footer), add a backlog ticket — do not grow a second checklist here.
 5. Pricing and caps remain in [PRICING_AND_MEMBERSHIP.md](PRICING_AND_MEMBERSHIP.md); this doc only describes how to **sell** those tiers.

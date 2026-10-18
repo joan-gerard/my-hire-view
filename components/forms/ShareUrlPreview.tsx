@@ -29,24 +29,24 @@ export default function ShareUrlPreview({
       : null;
 
   return (
-    <div className="space-y-1.5 rounded-md border border-[var(--foreground)]/10 bg-[var(--background)]/60 px-3 py-2.5">
-      <p className="text-xs font-medium text-[var(--foreground)]">
+    <div className="space-y-1.5 rounded-md border border-[var(--ink)]/10 bg-[var(--white)]/60 px-3 py-2.5">
+      <p className="text-xs font-medium text-[var(--ink)]">
         {SHARE_URL_PREVIEW_LABEL}
       </p>
-      <p className="break-all font-mono text-xs text-[var(--foreground)]/90">
+      <p className="break-all font-mono text-xs text-[var(--ink)]">
         {shareableUrl ??
           (hasPublicId
             ? `/view/${publicId}/${SHARE_URL_PREVIEW_PLACEHOLDER}`
             : `/view/${SHARE_URL_PREVIEW_PLACEHOLDER}/${trimmedSlug || SHARE_URL_PREVIEW_PLACEHOLDER}`)}
       </p>
-      <p className="text-xs text-[var(--foreground)]/60">{SHARE_URL_PREVIEW_HELP}</p>
-      <p className="text-xs text-[var(--foreground)]/60">
-        <span className="font-medium text-[var(--foreground)]/75">
+      <p className="text-xs text-[var(--muted)]">{SHARE_URL_PREVIEW_HELP}</p>
+      <p className="text-xs text-[var(--muted)]">
+        <span className="font-medium text-[var(--muted)]">
           {PUBLIC_ID_LABEL}:
         </span>{" "}
         {hasPublicId ? (
           <>
-            <span className="font-mono text-[var(--foreground)]/80">{publicId}</span>
+            <span className="font-mono text-[var(--muted)]">{publicId}</span>
             . {PUBLIC_ID_HELP}
           </>
         ) : (

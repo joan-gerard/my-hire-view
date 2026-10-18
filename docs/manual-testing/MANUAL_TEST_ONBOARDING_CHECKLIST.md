@@ -13,15 +13,17 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FL
 ## Floating availability
 
 - [ ] Checklist appears as a floating panel (bottom-right) on `/admin`, `/admin/profile`, `/admin/new`, and `/admin/edit/[id]`
-- [ ] Progress shows (e.g. `N of 6 complete`) when any step is incomplete
-- [ ] **Minimize** collapses to a compact **Getting started N/6** control; expand restores the panel — open/closed choice survives refresh and navigation
+- [ ] Collapsed control shows **Getting started**, a lime count badge (`N/6` or **Done**), and a chevron; tap/click expands the panel
+- [ ] Expanded panel shows heading **Getting started**, progress text (`N of 6 complete` or all-set copy), a lime progress bar, and an ordered list of all six steps
+- [ ] Expanded control label switches to **Minimize**; open/closed choice survives refresh and navigation
 
 ## Steps
 
+- [ ] Ordered list includes: Create your profile → Add location or a link → Add a profile photo → Upload a primary CV → Create your first application draft → Publish & share
 - [ ] **Create your profile** — complete when first + last name are saved on Profile; link goes to `/admin/profile`
 - [ ] **Add location or a link** — complete when **at least one** of location, LinkedIn, or portfolio is set
 - [ ] **Add a profile photo** — complete after uploading a picture; still incomplete if names exist but no photo
-- [ ] **Upload a primary CV** — complete after adding ≥1 primary CV on Profile
+- [ ] **Upload a primary CV** — complete after adding ≥1 primary CV on Account settings → **CVs** (link opens that tab even when already on `/admin/profile`)
 - [ ] **Create your first application draft** — complete after Save & Preview (draft counts)
 - [ ] **Publish & share** — complete only after an application is **active** (Publish); drafts alone are not enough
 
@@ -47,4 +49,5 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FL
 
 - [ ] First paint does not flash an expanded panel when the checklist was previously minimized or dismissed (prefs hydrate before display)
 - [ ] Dismissed users do not trigger checklist `/api` refetches on later profile/CV/application saves
-- [ ] Keyboard: Tab to the disclosure control, Enter/Space toggles expand/collapse; focus stays on the control; `aria-controls` targets the panel (panel may be `hidden` when collapsed)
+- [ ] Keyboard: Tab to the disclosure control, Enter/Space toggles expand/collapse; focus stays on the control; `aria-controls` targets the panel (panel stays mounted and is inert/`aria-hidden` when collapsed)
+- [ ] With OS “reduce motion” enabled, the progress bar width does not animate

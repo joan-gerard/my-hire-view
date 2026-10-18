@@ -10,7 +10,7 @@ export default function PrimaryLinkButton({
   return (
     <Link
       href={href}
-      className="rounded-xl bg-(--brand-primary) px-4 py-2 text-base font-medium text-(--brand-primary-text) hover:opacity-95"
+      className="rounded-full bg-(--brand-primary) px-4 py-2 text-base font-medium text-(--brand-primary-text) hover:opacity-95"
     >
       {label}
     </Link>

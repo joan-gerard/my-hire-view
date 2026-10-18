@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  ADMIN_PANEL_CLASS,
+  ADMIN_PRIMARY_CLASS,
+  ADMIN_SECONDARY_CLASS,
+} from "@/components/admin/admin-chrome";
 import ExternalLinkButton from "@/components/ui/ExternalLinkButton";
 import { LogoBlack } from "@/components/ui/Logo";
 import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
@@ -56,7 +61,7 @@ export default function ApplicationPageHeader({
   role,
   firstName,
   lastName,
-  location,
+  location: _location,
   portfolioUrl,
   linkedinUrl,
   profileImageUrl,
@@ -71,8 +76,6 @@ export default function ApplicationPageHeader({
   const hasProfileImage =
     profileImageUrl != null && String(profileImageUrl).trim() !== "";
   const displayName = [firstName, lastName].filter(nonEmpty).join(" ").trim();
-  const hasName = displayName.length > 0;
-  const hasLocation = nonEmpty(location);
   const hasPortfolio = nonEmpty(portfolioUrl);
   const hasLinkedIn = nonEmpty(linkedinUrl);
   const hasLinks = hasPortfolio || hasLinkedIn;
@@ -117,11 +120,13 @@ export default function ApplicationPageHeader({
 
       <div className="mx-auto max-w-6xl">
         {/* Primary: name + Portfolio/LinkedIn + profile picture */}
-        <div className="flex flex-col-reverse gap-6 rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-4 shadow-sm sm:flex-row sm:items-stretch sm:justify-between sm:gap-8 sm:p-6 lg:p-8">
+        <div
+          className={`flex flex-col-reverse gap-6 ${ADMIN_PANEL_CLASS} p-4 sm:flex-row sm:items-stretch sm:justify-between sm:gap-8 sm:p-6 lg:p-8`}
+        >
           {hasProfileImage && (
             <div className="flex shrink-0 items-center justify-start sm:justify-end">
               <div
-                className="h-28 w-28 overflow-hidden rounded-full bg-[var(--background)] ring-2 ring-[var(--foreground)]/10 sm:h-36 sm:w-36"
+                className="h-28 w-28 overflow-hidden rounded-full bg-[var(--white)] ring-2 ring-[var(--ink)]/10 sm:h-36 sm:w-36"
                 aria-hidden
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -138,7 +143,7 @@ export default function ApplicationPageHeader({
           )}
 
           <div className="flex w-full flex-col justify-between gap-6 py-2">
-            <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)] sm:text-5xl">
+            <h1 className="font-heading text-xl font-semibold tracking-[-0.03em] text-[var(--ink)] sm:text-5xl">
               {displayName}
             </h1>
             {hasLinks && (
@@ -168,7 +173,7 @@ export default function ApplicationPageHeader({
               <button
                 type="button"
                 onClick={onWatchVideo}
-                className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--brand-primary-text)] transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+                className={`${ADMIN_PRIMARY_CLASS} px-4 py-2.5`}
                 aria-label="Watch video pitch"
               >
                 <svg
@@ -187,31 +192,33 @@ export default function ApplicationPageHeader({
 
         {/* Job (company + role) and optional candidate info */}
         <div
-          className="mt-3 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-4 shadow-sm sm:p-6 lg:p-8"
+          className={`mt-3 flex flex-wrap items-center justify-between gap-4 ${ADMIN_PANEL_CLASS} p-4 sm:p-6 lg:p-8`}
           aria-label="Job and candidate details"
         >
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xl text-[var(--foreground)]/80 sm:gap-y-1 sm:text-2xl">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xl text-[var(--ink)]/80 sm:gap-y-1 sm:text-2xl">
             <span className="inline-flex items-center gap-2">
-              <BuildingIcon className="h-5 w-5 shrink-0 text-[var(--foreground)]/60 sm:h-6 sm:w-6" />
+              <BuildingIcon className="h-5 w-5 shrink-0 text-[var(--muted)] sm:h-6 sm:w-6" />
               <span className="truncate">{company}</span>
             </span>
             <span className="inline-flex items-center gap-2">
-              <BriefcaseIcon className="h-5 w-5 shrink-0 text-[var(--foreground)]/60 sm:h-6 sm:w-6" />
+              <BriefcaseIcon className="h-5 w-5 shrink-0 text-[var(--muted)] sm:h-6 sm:w-6" />
               <span className="truncate">{role}</span>
             </span>
           </div>
           {hasCv && (
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={handleViewFile}
-                className="rounded-xl bg-[var(--brand-secondary)] px-4 py-2 text-sm font-semibold text-[var(--brand-secondary-text)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1"
+                className={`${ADMIN_SECONDARY_CLASS} px-4 py-2 font-semibold`}
               >
                 View CV
               </button>
               <button
+                type="button"
                 onClick={handleDownload}
                 disabled={downloading}
-                className="rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1 disabled:opacity-50"
+                className={`${ADMIN_PRIMARY_CLASS} px-4 py-2`}
               >
                 {downloading ? "Downloading…" : "Download CV"}
               </button>

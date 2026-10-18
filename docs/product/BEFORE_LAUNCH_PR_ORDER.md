@@ -11,12 +11,12 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 | Effort | Count | PRs               |
 | :----: | ----: | ----------------- |
 | **1**  |     5 | A3, F22, F24, F32, F33 |
-| **2**  |     3 | E1, E4, F23       |
-| **3**  |     3 | F28, F30, L6      |
-| **4**  |     4 | F17, F21, F29, I2 |
+| **2**  |     4 | E1, E4, F23, F39  |
+| **3**  |     4 | F28, F30, F38, L6 |
+| **4**  |     4 | F21, F29, F35, I2 |
 | **5**  |     1 | E2                |
 
-**16 open** (F9, F10, F11, F12, F13, F15, F16, F18, F19, F20, F25, F26 shipped). **Weighted average ≈ 2.56** — many 1–3 polish items; complexity concentrates in **E2**, then **F17 / F21 / F29 / I2**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group).
+**18 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped). **Weighted average ≈ 2.56** — many 1–3 polish items; complexity concentrates in **E2**, then **F35 / F21 / F29 / I2**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group).
 
 ---
 
@@ -38,13 +38,16 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 - Same mental model (uploads, R2, profile invariants)
 - Better shipped **before** big UX/branding so UI isn’t rebuilt on shaky edges
 
-### Phase 2 — Create-application UX chain
+### Phase 2 — Create-application UX chain + branding
 
-**F15 shipped** → **F16 shipped** → **F19 shipped**, then **F17**
+**F15 shipped** → **F16 shipped** → **F19 shipped** → **F17 shipped** → **F34 shipped**, then **F35** / **F38**
 
 - Strict dependency: draft persistence / CV-mode race before preview/draft-publish
 - **F19** (onboarding + Public id copy + card legend / draft action clarity) shipped while create flows were fresh — design context: [ACTIVATION_UX_F19.md](../retrospectives/ACTIVATION_UX_F19.md)
-- **F17** branding after those flows stabilize (avoid restyling half-finished UI twice; includes dashboard card visual skin)
+- **F17** branded `/admin`, `/view`, auth to the warm product palette (PR #56)
+- **F34** restyled those surfaces to the **marketing** brand system and rewrote [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md) (working plan: [F34_PRODUCT_MARKETING_BRANDING.md](../design/F34_PRODUCT_MARKETING_BRANDING.md))
+- **F35** rethinks the long create/edit `ApplicationForm` into a stepped flow — modal/wizard **or** one-page collapsible sections (after F34 chrome; before F32 QA)
+- **F38** polishes public `/view` to the same F34 quality bar as admin/Account settings (F34 only lightly touched `/view`)
 
 ### Phase 3 — Trust / compliance Shoulds
 
@@ -56,13 +59,14 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 
 ### Phase 4 — Refactor prerequisites, then audits
 
-**L6 → I2 → F28 → F32 → F29 → F30**
+**L6 → I2 → F28 → F39 → F32 → F29 → F30**
 
 | Order                  | Why                                                                                   |
 | ---------------------- | ------------------------------------------------------------------------------------- |
 | **L6** then **I2**     | Central client + single DB types; both are **F30** prereqs                            |
 | **F28** a11y           | Can run anytime; finish before launch; file follow-up tickets                         |
-| **F32** manual QA      | End-to-end candidate journey; after remaining user-facing work (`F17`+); file bugs    |
+| **F39** mobile/responsive | Phone / tablet / desktop pass after major UI (`F35`, `F38`); file fix tickets       |
+| **F32** manual QA      | End-to-end candidate journey; after remaining user-facing work (`F35`, `F38`, `F39`+); file bugs |
 | **F29** security       | Prefer **after** major hardening (**F9/F13/F10/F12**, etc.) so the review isn’t stale |
 | **F30** refactor audit | Last among audits — only after **L6 + I2** (`F25` shipped)                            |
 
@@ -73,26 +77,26 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 - **E4** swaps annual → quarterly on the working draft + `#pricing` UI (can ship early; not a lock)
 - Product lock (**E1**) before Stripe/gates (**E2**) — lock **monthly + quarterly** (no annual)
 - **A3** (confirm email in prod) is ops with no code — last config before public launch
-- **`F20-020`** is launch-gated and stays outside the 16-PR count: counsel-reviewed Terms, Privacy, and Cookies are required before public launch, but they are not an open PR group
+- **`F20-020`** is launch-gated and stays outside the 18-PR count: counsel-reviewed Terms, Privacy, and Cookies are required before public launch, but they are not an open PR group
 - Doing **E2** earlier wastes work if tiers/prices still change
 
 ---
 
-## 3. Suggested sequence (all 16 open)
+## 3. Suggested sequence (all 18 open)
 
 ```
-F17
+F35 / F38
   → F23 → F21
   → F22 / F24 / F33 / E4 (whenever; E4 before E1)
-  → L6 → I2 → F28 → F32 → F29 → F30
+  → L6 → I2 → F28 → F39 → F32 → F29 → F30
   → E1 → E2 → A3
 ```
 
 **Why this beats “easiest first”:**
 
-1. **Dependencies** — F15→F16→F19, E4→E1→E2, L6/I2→F30 are real; ignore them and you thrash.
+1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, E4→E1→E2, L6/I2→F30 are real; ignore them and you thrash.
 2. **Risk before paint** — API/storage races before branding.
-3. **Reviews stay useful** — F28/F29/F30 after the bulk of pre-launch code, not before.
+3. **Reviews stay useful** — F28/F39/F29/F30 after the bulk of pre-launch code, not before.
 4. **Monetization last** — backlog already defers E1/E2 until launch is imminent; E4 only updates the draft.
 
-If capacity is short: start **F17**.
+If capacity is short: finish **F35** (create/edit steps) and **F38** (`/view` polish) before **F39** / **F32** QA.

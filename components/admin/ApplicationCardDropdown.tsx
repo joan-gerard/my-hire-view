@@ -56,7 +56,7 @@ export default function ApplicationCardDropdown({
       <button
         type="button"
         onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--foreground)]/60 hover:bg-[var(--brand-secondary)] hover:text-[var(--foreground)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1"
+        className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--white)] hover:text-[var(--ink)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
         aria-label="Open menu"
         aria-expanded={dropdownOpen}
         aria-haspopup="true"
@@ -65,12 +65,12 @@ export default function ApplicationCardDropdown({
       </button>
       {dropdownOpen && (
         <div
-          className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] py-1 shadow-lg"
+          className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] py-1 shadow-lg"
           role="menu"
         >
           <Link
             href={`/admin/edit/${applicationId}`}
-            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[var(--background)]"
+            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--ink)] hover:bg-[var(--ink)]/[0.04]"
             role="menuitem"
             onClick={() => setDropdownOpen(false)}
           >

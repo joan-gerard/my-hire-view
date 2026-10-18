@@ -1,20 +1,27 @@
-import type { ReactNode } from 'react';
-import type { ApplicationStatus } from '@/lib/types/application';
+"use client";
+
+import type { ReactNode } from "react";
+import type { ApplicationStatus } from "@/lib/types/application";
 import {
   CV_MISSING_LEGEND,
   getApplicationStatusDisplay,
   getApplicationStatusDisplayByKey,
   type ApplicationStatusVisualKey,
-} from '@/lib/utils/application-status-display';
+} from "@/lib/utils/application-status-display";
+import type { StatusIndicatorStyle } from "@/lib/utils/status-indicator-preference";
 import {
   ArchiveIcon,
   CheckIcon,
   ClockIcon,
-} from '@/components/admin/icons';
+  PencilIcon,
+} from "@/components/admin/icons";
+import { useStatusIndicatorStyle } from "@/hooks/useStatusIndicatorStyle";
 
 type ApplicationStatusIconProps = {
   status: ApplicationStatus;
   viewCount: number;
+  /** Override preference (e.g. profile preview). */
+  style?: StatusIndicatorStyle;
 };
 
 type ApplicationStatusIconBadgeProps = {
@@ -26,7 +33,38 @@ type ApplicationStatusIconBadgeProps = {
    * Use on the legend; leave false on cards where the badge is the status name.
    */
   decorative?: boolean;
+  /** Override preference (e.g. profile preview). */
+  style?: StatusIndicatorStyle;
 };
+
+const STATUS_DOT_CLASS: Record<ApplicationStatusVisualKey, string> = {
+  draft: "bg-[var(--status-dot-draft)]",
+  active_unviewed: "bg-[var(--status-dot-active)]",
+  active_viewed: "bg-[var(--status-dot-viewed)]",
+  archived: "bg-[var(--status-dot-archived)]",
+};
+
+const STATUS_WASH_CLASS: Record<ApplicationStatusVisualKey, string> = {
+  draft: "bg-[var(--status-wash-draft)]",
+  active_unviewed: "bg-[var(--status-wash-active)]",
+  active_viewed: "bg-[var(--status-wash-viewed)]",
+  archived: "bg-[var(--status-wash-archived)]",
+};
+
+function StatusGlyph({ visual }: { visual: ApplicationStatusVisualKey }) {
+  const iconClass = "h-5 w-5 text-[var(--ink)]";
+  if (visual === "archived") {
+    return <ArchiveIcon className={iconClass} />;
+  }
+  if (visual === "active_viewed") {
+    return <CheckIcon className={iconClass} />;
+  }
+  if (visual === "draft") {
+    // Distinct from active_unviewed clock so high-contrast mode is not color-only.
+    return <PencilIcon className={iconClass} />;
+  }
+  return <ClockIcon className={iconClass} />;
+}
 
 function StatusBadgeShell({
   label,
@@ -42,7 +80,7 @@ function StatusBadgeShell({
   if (decorative) {
     return (
       <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+        className="flex h-9 w-9 shrink-0 items-center justify-center"
         aria-hidden
       >
         {children}
@@ -53,7 +91,7 @@ function StatusBadgeShell({
   return (
     <div
       role="img"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+      className="flex h-9 w-9 shrink-0 items-center justify-center"
       title={`${label}: ${description}`}
       aria-label={label}
     >
@@ -62,42 +100,40 @@ function StatusBadgeShell({
   );
 }
 
-/** Renders the circular status badge used on cards and in the legend. */
+function ColorfulDot({ visual }: { visual: ApplicationStatusVisualKey }) {
+  return (
+    <span
+      className={`h-3.5 w-3.5 rounded-full ${STATUS_DOT_CLASS[visual]}`}
+      aria-hidden
+    />
+  );
+}
+
+function HighContrastBadge({ visual }: { visual: ApplicationStatusVisualKey }) {
+  return (
+    <span
+      className={`flex h-9 w-9 items-center justify-center rounded-full ${STATUS_WASH_CLASS[visual]}`}
+    >
+      <StatusGlyph visual={visual} />
+    </span>
+  );
+}
+
+/**
+ * Status badge for cards and the legend.
+ * - colorful (default): bright accent dots
+ * - high_contrast: soft wash + ink glyph (WCAG 1.4.11)
+ */
 export function ApplicationStatusIconBadge({
   visual,
   label,
   decorative = false,
+  style: styleProp,
 }: ApplicationStatusIconBadgeProps) {
+  const preferredStyle = useStatusIndicatorStyle();
+  const style = styleProp ?? preferredStyle;
   const display = getApplicationStatusDisplayByKey(visual);
   const displayLabel = label ?? display.label;
-
-  if (visual === 'archived') {
-    return (
-      <StatusBadgeShell
-        label={displayLabel}
-        description={display.description}
-        decorative={decorative}
-      >
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)]/10">
-          <ArchiveIcon className="h-5 w-5 text-[var(--foreground)]/55" />
-        </span>
-      </StatusBadgeShell>
-    );
-  }
-
-  if (visual === 'draft') {
-    return (
-      <StatusBadgeShell
-        label={displayLabel}
-        description={display.description}
-        decorative={decorative}
-      >
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--status-draft-bg)]">
-          <ClockIcon className="h-5 w-5 text-[var(--status-draft-fg)]" />
-        </span>
-      </StatusBadgeShell>
-    );
-  }
 
   return (
     <StatusBadgeShell
@@ -105,13 +141,11 @@ export function ApplicationStatusIconBadge({
       description={display.description}
       decorative={decorative}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--status-success-bg)]">
-        {visual === 'active_viewed' ? (
-          <CheckIcon className="h-5 w-5 text-[var(--status-success-fg)]" />
-        ) : (
-          <ClockIcon className="h-5 w-5 text-[var(--status-success-fg)]" />
-        )}
-      </span>
+      {style === "high_contrast" ? (
+        <HighContrastBadge visual={visual} />
+      ) : (
+        <ColorfulDot visual={visual} />
+      )}
     </StatusBadgeShell>
   );
 }
@@ -120,10 +154,15 @@ export function ApplicationStatusIconBadge({
 export function ApplicationStatusIcon({
   status,
   viewCount,
+  style,
 }: ApplicationStatusIconProps) {
   const display = getApplicationStatusDisplay(status, viewCount);
   return (
-    <ApplicationStatusIconBadge visual={display.key} label={display.label} />
+    <ApplicationStatusIconBadge
+      visual={display.key}
+      label={display.label}
+      style={style}
+    />
   );
 }
 

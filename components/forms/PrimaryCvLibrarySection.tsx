@@ -2,10 +2,12 @@
 
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
+import { ADMIN_PANEL_CLASS } from "@/components/admin/admin-chrome";
 import PrimaryCvUsedByPreview from "@/components/forms/PrimaryCvUsedByPreview";
 import type { PrimaryCv, PrimaryCvApplicationPreview } from "@/lib/types/primary-cv";
 import {
   PRIMARY_CV_MAX_PER_USER,
+  primaryCvDeleteConfirmLabel,
   primaryCvDeleteConfirmMessage,
   primaryCvPostDeleteStatusMessage,
 } from "@/lib/types/primary-cv";
@@ -17,9 +19,14 @@ export type PrimaryCvLibrarySectionProps = {
   onLibraryChange?: (items: PrimaryCv[]) => void;
   /**
    * Omit the outer card chrome (for embedding in a modal).
-   * Also uses an inline delete confirm so we do not nest native dialogs.
+   * Delete always confirms (inline here so we do not nest native dialogs).
    */
   embedded?: boolean;
+  /**
+   * True while an upload or delete request is in flight (not initial load).
+   * Manage library uses this to block Escape / backdrop / Done until finished.
+   */
+  onMutationBusyChange?: (busy: boolean) => void;
 };
 
 type PendingDelete = {
@@ -34,10 +41,13 @@ type PendingDelete = {
 export default function PrimaryCvLibrarySection({
   onLibraryChange,
   embedded = false,
+  onMutationBusyChange,
 }: PrimaryCvLibrarySectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const onLibraryChangeRef = useRef(onLibraryChange);
   onLibraryChangeRef.current = onLibraryChange;
+  const onMutationBusyChangeRef = useRef(onMutationBusyChange);
+  onMutationBusyChangeRef.current = onMutationBusyChange;
   /** Serializes upload vs delete so a later `load()` cannot wipe the other op's UI. */
   const opLockRef = useRef<"idle" | "upload" | "delete">("idle");
   /** Bumped on every `load()` so a slower in-flight GET cannot apply stale items. */
@@ -107,8 +117,13 @@ export default function PrimaryCvLibrarySection({
       // Invalidate in-flight GETs so an unmounted Manage-library instance cannot
       // call onLibraryChange after a newer modal upload (close/reopen race).
       loadGenerationRef.current += 1;
+      onMutationBusyChangeRef.current?.(false);
     };
   }, [load]);
+
+  useEffect(() => {
+    onMutationBusyChangeRef.current?.(uploading || deleting);
+  }, [uploading, deleting]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -154,8 +169,8 @@ export default function PrimaryCvLibrarySection({
     }
   };
 
-  const performDelete = async (cv: PrimaryCv) => {
-    if (opLockRef.current !== "idle") return;
+  const performDelete = async (cv: PrimaryCv): Promise<boolean> => {
+    if (opLockRef.current !== "idle") return false;
     opLockRef.current = "delete";
     setError(null);
     setDeleting(true);
@@ -165,17 +180,17 @@ export default function PrimaryCvLibrarySection({
         credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
-      if (!mountedRef.current) return;
+      if (!mountedRef.current) return false;
       if (!res.ok) {
         setError(json.error ?? "Failed to delete primary CV");
-        return;
+        return false;
       }
       const affected = Number(json.applications_affected ?? 0);
       // `load()` clears `error` at start; restore still-referenced warning after
       // refresh (including when refresh fails so the user still sees the risk).
       const refreshed = await load();
       notifyOnboardingChecklistChanged();
-      if (!mountedRef.current) return;
+      if (!mountedRef.current) return false;
       const status = primaryCvPostDeleteStatusMessage({
         applicationsAffected: affected,
         refreshed,
@@ -183,10 +198,12 @@ export default function PrimaryCvLibrarySection({
       if (status) {
         setError(status);
       }
+      return true;
     } catch {
       if (mountedRef.current) {
         setError("Failed to delete primary CV");
       }
+      return false;
     } finally {
       opLockRef.current = "idle";
       if (mountedRef.current) {
@@ -198,10 +215,6 @@ export default function PrimaryCvLibrarySection({
   const requestDelete = (cv: PrimaryCv) => {
     if (loading || opLockRef.current !== "idle") return;
     const applicationsCount = Math.max(0, cv.applications_count ?? 0);
-    if (applicationsCount === 0) {
-      void performDelete(cv);
-      return;
-    }
     setPendingDelete({
       cv,
       applicationsCount,
@@ -210,10 +223,12 @@ export default function PrimaryCvLibrarySection({
   };
 
   const confirmDelete = async () => {
-    if (!pendingDelete) return;
+    if (!pendingDelete || deleting) return;
     const { cv } = pendingDelete;
-    setPendingDelete(null);
-    await performDelete(cv);
+    const ok = await performDelete(cv);
+    if (ok && mountedRef.current) {
+      setPendingDelete(null);
+    }
   };
 
   const atLimit = items.length >= PRIMARY_CV_MAX_PER_USER;
@@ -221,15 +236,18 @@ export default function PrimaryCvLibrarySection({
   const deleteMessage = pendingDelete
     ? primaryCvDeleteConfirmMessage(pendingDelete.applicationsCount)
     : "";
+  const deleteConfirmLabel = pendingDelete
+    ? primaryCvDeleteConfirmLabel(pendingDelete.applicationsCount)
+    : "Delete";
 
   const body = (
     <>
       {!embedded && (
         <>
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">
+          <h2 className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]">
             Primary CVs
           </h2>
-          <p className="mt-1 text-sm text-[var(--foreground)]/60">
+          <p className="mt-1 text-sm text-[var(--muted)]">
             Upload up to {PRIMARY_CV_MAX_PER_USER} résumé PDFs to reuse on new
             applications. Deleting a primary CV removes it from storage;
             applications that still pointed at it will show a missing-CV warning
@@ -249,28 +267,30 @@ export default function PrimaryCvLibrarySection({
 
       {loading ? (
         <p
-          className={`${embedded && !error ? "mt-0" : "mt-4"} text-sm text-[var(--foreground)]/60`}
+          className={`${embedded && !error ? "mt-0" : "mt-4"} text-sm text-[var(--muted)]`}
         >
           Loading…
         </p>
       ) : (
-        <ul className={`${embedded && !error ? "mt-0" : "mt-4"} space-y-2`}>
+        <ul
+          className={`${embedded && !error ? "mt-0" : "mt-4"} divide-y divide-[var(--ink)]/8 ${embedded ? "" : "rounded-xl border border-[var(--ink)]/10"}`}
+        >
           {items.length === 0 && (
-            <li className="text-sm text-[var(--foreground)]/70">
+            <li className="px-3 py-3 text-sm text-[var(--muted)]">
               No primary CVs yet. Upload one to reuse it on applications.
             </li>
           )}
           {items.map((cv) => (
             <li
               key={cv.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--foreground)]/10 bg-[var(--background)] px-3 py-2"
+              className="flex flex-wrap items-center justify-between gap-2 px-3 py-3"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-[var(--foreground)]">
+                <p className="truncate text-sm font-medium text-[var(--ink)]">
                   {cv.label?.trim() || cv.filename}
                 </p>
                 {cv.label?.trim() && (
-                  <p className="truncate text-xs text-[var(--foreground)]/60">
+                  <p className="truncate text-xs text-[var(--muted)]">
                     {cv.filename}
                   </p>
                 )}
@@ -280,7 +300,7 @@ export default function PrimaryCvLibrarySection({
                   href={cv.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-medium text-[var(--brand-primary)] hover:opacity-80"
+                  className="text-sm font-medium text-[var(--ink)] hover:opacity-80"
                 >
                   View
                 </a>
@@ -317,11 +337,13 @@ export default function PrimaryCvLibrarySection({
           >
             {deleteMessage}
           </p>
-          <PrimaryCvUsedByPreview
-            applications={pendingDelete.usedBy}
-            totalCount={pendingDelete.applicationsCount}
-            tone="warning"
-          />
+          {pendingDelete.applicationsCount > 0 ? (
+            <PrimaryCvUsedByPreview
+              applications={pendingDelete.usedBy}
+              totalCount={pendingDelete.applicationsCount}
+              tone="warning"
+            />
+          ) : null}
           <div className="flex flex-wrap justify-end gap-2">
             <Button
               type="button"
@@ -333,11 +355,12 @@ export default function PrimaryCvLibrarySection({
             </Button>
             <Button
               type="button"
-              variant="primary"
+              variant="danger"
               loading={deleting}
+              loadingLabel="Deleting…"
               onClick={() => void confirmDelete()}
             >
-              I Understand — Delete
+              {deleteConfirmLabel}
             </Button>
           </div>
         </div>
@@ -367,7 +390,7 @@ export default function PrimaryCvLibrarySection({
           {uploading ? "Uploading…" : "Upload primary CV"}
         </Button>
         {atLimit && (
-          <p className="mt-2 text-xs text-[var(--foreground)]/60">
+          <p className="mt-2 text-xs text-[var(--muted)]">
             Limit of {PRIMARY_CV_MAX_PER_USER} reached. Delete one to upload
             another.
           </p>
@@ -379,17 +402,22 @@ export default function PrimaryCvLibrarySection({
           open={pendingDelete !== null}
           title="Delete primary CV?"
           message={deleteMessage}
-          confirmLabel="I Understand — Delete"
+          confirmLabel={deleteConfirmLabel}
           cancelLabel="Cancel"
+          confirming={deleting}
+          confirmLoadingLabel="Deleting…"
+          confirmVariant="danger"
           onConfirm={() => void confirmDelete()}
-          onCancel={() => setPendingDelete(null)}
+          onCancel={() => {
+            if (!deleting) setPendingDelete(null);
+          }}
         >
-          {pendingDelete && (
+          {pendingDelete && pendingDelete.applicationsCount > 0 ? (
             <PrimaryCvUsedByPreview
               applications={pendingDelete.usedBy}
               totalCount={pendingDelete.applicationsCount}
             />
-          )}
+          ) : null}
         </ConfirmDialog>
       )}
     </>
@@ -400,7 +428,7 @@ export default function PrimaryCvLibrarySection({
   }
 
   return (
-    <section className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] p-6 shadow-sm">
+    <section className={`${ADMIN_PANEL_CLASS} p-5 sm:p-6`}>
       {body}
     </section>
   );

@@ -13,7 +13,7 @@ A high-level catch-up document covering the product, tech stack, architecture, b
 There are two distinct surfaces:
 
 - **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices as a **working draft**; E1 lock + E2 checkout deferred until near launch), Login / Get started CTAs to `/login`, and draft legal pages (`/terms`, `/privacy`, `/cookies`). Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.) Discovery, launch channels, and when to bring in specialists: [GO_TO_MARKET.md](../product/GO_TO_MARKET.md). Brand tokens and patterns: [STYLE_GUIDE_MARKETING.md](../design/STYLE_GUIDE_MARKETING.md). Living demo on an unrelated fake product: `/demo`.
-- **Product** (`/admin`) — authenticated dashboard to create, manage, and track applications. Warm UI tokens: [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md).
+- **Product** (`/admin`) — authenticated dashboard to create, manage, and track applications. UI tokens: [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md) (ink/paper/lime/pink; aligned with marketing via ~~`F34-118`~~).
 
 ---
 
@@ -23,7 +23,7 @@ There are two distinct surfaces:
 | ----------------- | --------------------------------------------------- |
 | Framework         | Next.js 16 (App Router)                             |
 | UI                | React 19, Tailwind CSS 4, Framer Motion             |
-| Fonts / Icons     | Geist (`next/font/google`); homepage Switzer (`next/font/local`) + Stack Sans Headline (`next/font/google`); FaunaOne, FunnelSans; `react-icons` |
+| Fonts / Icons     | Product + marketing: Switzer (`next/font/local`) + Stack Sans Headline (`next/font/google`) via root `app/layout.tsx` / `globals.css`. Geist Sans/Mono still loaded on `<body>` (CSS vars) but not selected for product body/headings. Legacy local faces (FaunaOne, FunnelSans, Varela Round) unused by new product UI. Icons: `react-icons` |
 | Auth + DB         | Supabase (email/password, PostgreSQL, RLS, Storage) |
 | CV storage        | Cloudflare R2                                       |
 | Video             | YouTube embed (URL only, no upload)                 |
@@ -190,7 +190,7 @@ How people discover the app and become paid users (channels, phases, specialist 
 - Well-structured internal docs in `docs/` (ARCHITECTURE, API_REFERENCE, CI_CD, DATA_FLOW, BUILD_SUMMARY, CODE_REVIEW, etc.).
 - Clear separation between marketing and product surfaces.
 - Security-conscious patterns: RLS, owner exclusion from analytics, URL validation, PDF type/size validation.
-- Two documented visual systems: marketing ([STYLE_GUIDE_MARKETING.md](../design/STYLE_GUIDE_MARKETING.md), lime/pink/ink) and product ([STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md), warm neutrals + teal accents).
+- Marketing and product share the same brand system (ink / paper / lime / pink, Switzer + Stack Sans) with different density and CSS entry points: [STYLE_GUIDE_MARKETING.md](../design/STYLE_GUIDE_MARKETING.md) (`.mhv-landing`) vs [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md) (`globals.css` / admin chrome). Alignment shipped as ~~`F34-118`~~.
 - Clean component breakdown across `public/`, `admin/`, `forms/`, `pdf/`, `video/`, `view/`, `ui/`.
 
 ---

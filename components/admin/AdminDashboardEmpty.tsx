@@ -1,10 +1,19 @@
 import Link from 'next/link';
 import { DocumentIcon } from '@/components/admin/icons';
+import {
+  ADMIN_ACCENT_PRIMARY_CLASS,
+  ADMIN_PANEL_CLASS,
+  ADMIN_SECONDARY_CLASS,
+} from '@/components/admin/admin-chrome';
 
 interface AdminDashboardEmptyProps {
   hasSearchQuery: boolean;
   /** Clears the dashboard search when the empty state is from a filter miss. */
   onClearSearch?: () => void;
+  /**
+   * When true, omit the outer panel chrome (already inside the list shell).
+   */
+  embedded?: boolean;
 }
 
 /**
@@ -13,17 +22,19 @@ interface AdminDashboardEmptyProps {
 export default function AdminDashboardEmpty({
   hasSearchQuery,
   onClearSearch,
+  embedded = false,
 }: AdminDashboardEmptyProps) {
+  const shell = embedded
+    ? 'px-2 py-10 text-center sm:px-4'
+    : `${ADMIN_PANEL_CLASS} px-6 py-14 text-center sm:px-10`;
+
   if (hasSearchQuery) {
     return (
-      <div
-        className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] px-6 py-14 text-center sm:px-10"
-        role="status"
-      >
-        <h2 className="text-lg font-semibold text-[var(--foreground)]">
+      <div className={shell} role="status">
+        <h2 className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
           No applications match that search
         </h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-[var(--foreground)]/65">
+        <p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted)]">
           Try another company or role name, or clear the search to see everything
           again.
         </p>
@@ -31,7 +42,7 @@ export default function AdminDashboardEmpty({
           <button
             type="button"
             onClick={onClearSearch}
-            className="mt-6 rounded-xl border border-[var(--foreground)]/15 bg-[var(--brand-secondary)] px-4 py-2 text-sm font-semibold text-[var(--brand-secondary-text)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent-1)] focus-visible:ring-offset-1"
+            className={`${ADMIN_SECONDARY_CLASS} mt-6`}
           >
             Clear search
           </button>
@@ -41,28 +52,22 @@ export default function AdminDashboardEmpty({
   }
 
   return (
-    <div
-      className="rounded-2xl border border-[var(--foreground)]/10 bg-[var(--secondary-background)] px-6 py-14 text-center sm:px-10"
-      role="status"
-    >
+    <div className={shell} role="status">
       <div
-        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-accent-1)]/15 text-[var(--brand-accent-2)]"
+        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--lime)] text-[var(--ink)]"
         aria-hidden
       >
         <DocumentIcon className="h-6 w-6" />
       </div>
-      <h2 className="mt-5 text-lg font-semibold text-[var(--foreground)]">
+      <h2 className="mt-5 font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
         Create your first application
       </h2>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--foreground)]/65">
+      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--muted)]">
         Put your CV and video pitch on one page, publish it, and share a single
         link with recruiters. Your applications will show up here.
       </p>
-      <Link
-        href="/admin/new"
-        className="mt-6 inline-flex items-center justify-center rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary-text)] hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-      >
-        New application
+      <Link href="/admin/new" className={`${ADMIN_ACCENT_PRIMARY_CLASS} mt-6`}>
+        + New application
       </Link>
     </div>
   );

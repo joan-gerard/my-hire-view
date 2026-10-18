@@ -1,11 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import AuthPageShell from '@/components/auth/AuthPageShell';
 import { AuthErrorAlert } from '@/components/auth/AuthAlert';
 import AuthSubmitButton from '@/components/auth/AuthSubmitButton';
 import PasswordField from '@/components/auth/PasswordField';
-import { AUTH_INPUT_CLASS } from '@/components/auth/auth-form-styles';
+import {
+  AUTH_FIELD_CLASS,
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+} from '@/components/auth/auth-form-styles';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -19,7 +24,6 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      // Sign in via API route so the server sets session cookies on the response.
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,33 +48,42 @@ export default function LoginForm() {
 
   return (
     <AuthPageShell
-      title="Sign in to your account"
+      variant="login"
+      title="Welcome back"
       alternateHref="/signup"
-      alternateLabel="create a new account"
+      alternateLabel="Create one"
+      alternatePrompt="No account yet?"
+      footer={
+        <p className="mhv-auth-legal">
+          Signing in means you accept the <Link href="/terms">Terms</Link> and{' '}
+          <Link href="/privacy">Privacy Policy</Link>.
+        </p>
+      }
     >
-      <form className="space-y-5" onSubmit={handleSubmit}>
+      <form className="mhv-auth-form" onSubmit={handleSubmit}>
         {error && <AuthErrorAlert message={error} />}
-        <div className="space-y-3">
-          <div>
-            <label htmlFor="email-address" className="sr-only">
-              Email address
-            </label>
-            <input
-              id="email-address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className={AUTH_INPUT_CLASS}
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+        <div className={AUTH_FIELD_CLASS}>
+          <label className={AUTH_LABEL_CLASS} htmlFor="email-address">
+            Email
+          </label>
+          <input
+            id="email-address"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            className={AUTH_INPUT_CLASS}
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className={AUTH_FIELD_CLASS}>
           <PasswordField
             id="password"
             name="password"
             label="Password"
+            labelVisible
             autoComplete="current-password"
             required
             placeholder="Password"
@@ -78,14 +91,11 @@ export default function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-
-        <div>
-          <AuthSubmitButton
-            loading={loading}
-            idleLabel="Sign in"
-            loadingLabel="Signing in..."
-          />
-        </div>
+        <AuthSubmitButton
+          loading={loading}
+          idleLabel="Sign in"
+          loadingLabel="Signing in..."
+        />
       </form>
     </AuthPageShell>
   );

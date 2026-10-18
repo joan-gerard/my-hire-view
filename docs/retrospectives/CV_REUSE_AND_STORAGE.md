@@ -69,7 +69,7 @@ Prefill `cv_url` from the user’s most recent application.
 | **Switch tailored → primary** | Confirm modal (“I Understand”) → delete the tailored R2 object. |
 | **Switch primary → tailored** | Upload tailored; do **not** delete the primary library entry. |
 | **Delete application** | Tailored → delete R2 object. Primary → leave object (still owned by profile). |
-| **Delete primary from profile / New / Edit** | If unused, delete immediately. If applications still reference it, confirm with the **count** of those apps; after delete they show **missing CV** on the dashboard. |
+| **Delete primary from profile / New / Edit** | Always confirm before delete. If unused, a simple “are you sure” prompt. If applications still reference it, confirm with the **count** of those apps; after delete they show **missing CV** on the dashboard. |
 
 **Chosen** — balances storage, UX, and clear ownership (profile owns primaries; applications own tailored uploads).
 
@@ -149,8 +149,7 @@ On application delete or CV replace:
 ### Primary delete from profile
 
 1. Count applications referencing that primary (`primary_cv_id`).
-2. If count > 0 → confirm dialog, then delete R2 + remove from library; apps keep the URL but dashboard/`cv_exists` show missing.
-3. If count = 0 → delete immediately.
+2. Always confirm (unused: “are you sure”; referenced: count + used-by preview), then delete R2 + remove from library; apps keep the URL but dashboard/`cv_exists` show missing.
 
 ### List API
 

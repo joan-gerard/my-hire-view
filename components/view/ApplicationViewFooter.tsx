@@ -19,7 +19,7 @@ export default function ApplicationViewFooter({
       className={
         isDark
           ? "mt-auto border-t border-white/10 bg-black text-white"
-          : "mt-10 border-t border-black/8 bg-background text-foreground"
+          : "mt-10 border-t border-[var(--ink)]/10 bg-[var(--white)] text-[var(--ink)]"
       }
     >
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-4 text-center sm:flex-row sm:gap-4 sm:text-left md:px-6">
@@ -28,7 +28,7 @@ export default function ApplicationViewFooter({
           className={
             isDark
               ? "text-sm font-medium text-white/80 transition-colors hover:text-white focus:outline-none focus-visible:underline"
-              : "text-sm font-medium text-(--foreground)/70 transition-colors hover:text-foreground focus:outline-none focus-visible:underline"
+              : "text-sm font-medium text-[var(--muted)] transition-colors hover:text-[var(--ink)] focus:outline-none focus-visible:underline"
           }
         >
           MyHireView
@@ -51,9 +51,7 @@ export default function ApplicationViewFooter({
 
         <p
           className={
-            isDark
-              ? "text-xs text-white/50"
-              : "text-xs text-(--foreground)/45"
+            isDark ? "text-xs text-white/50" : "text-xs text-[var(--muted)]"
           }
         >
           © 2026 MyHireView
@@ -66,5 +64,5 @@ export default function ApplicationViewFooter({
 function linkClass(isDark: boolean): string {
   return isDark
     ? "text-xs text-white/55 transition-colors hover:text-white focus:outline-none focus-visible:underline"
-    : "text-xs text-(--foreground)/50 transition-colors hover:text-(--foreground)/80 focus:outline-none focus-visible:underline";
+    : "text-xs text-[var(--muted)] transition-colors hover:text-[var(--ink)] focus:outline-none focus-visible:underline";
 }

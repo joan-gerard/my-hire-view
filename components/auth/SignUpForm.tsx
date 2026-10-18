@@ -5,7 +5,11 @@ import AuthPageShell from '@/components/auth/AuthPageShell';
 import { AuthErrorAlert, AuthNoticeAlert } from '@/components/auth/AuthAlert';
 import AuthSubmitButton from '@/components/auth/AuthSubmitButton';
 import PasswordField from '@/components/auth/PasswordField';
-import { AUTH_INPUT_CLASS } from '@/components/auth/auth-form-styles';
+import {
+  AUTH_FIELD_CLASS,
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+} from '@/components/auth/auth-form-styles';
 import {
   getSignupPasswordError,
   SIGNUP_PASSWORD_MIN_LENGTH,
@@ -81,80 +85,91 @@ export default function SignUpForm() {
 
   return (
     <AuthPageShell
+      variant="signup"
       title="Create your account"
+      description="Start free. Build a hire view you can share with one URL."
       alternateHref="/login"
-      alternateLabel="sign in to your existing account"
+      alternateLabel="Log in"
+      alternatePrompt="Already have an account?"
     >
-      <form className="space-y-5" onSubmit={handleSubmit}>
+      <form className="mhv-auth-form" onSubmit={handleSubmit}>
         {error && <AuthErrorAlert message={error} />}
         {notice && <AuthNoticeAlert message={notice} />}
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label htmlFor="first-name" className="sr-only">
-                First name
-              </label>
-              <input
-                id="first-name"
-                name="first_name"
-                type="text"
-                autoComplete="given-name"
-                required
-                className={AUTH_INPUT_CLASS}
-                placeholder="First name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="last-name" className="sr-only">
-                Last name
-              </label>
-              <input
-                id="last-name"
-                name="last_name"
-                type="text"
-                autoComplete="family-name"
-                required
-                className={AUTH_INPUT_CLASS}
-                placeholder="Last name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="email-address" className="sr-only">
-              Email address
+
+        <div className="mhv-auth-name-row">
+          <div className={AUTH_FIELD_CLASS}>
+            <label className={AUTH_LABEL_CLASS} htmlFor="first-name">
+              First name
             </label>
             <input
-              id="email-address"
-              name="email"
-              type="email"
-              autoComplete="email"
+              id="first-name"
+              name="first_name"
+              type="text"
+              autoComplete="given-name"
               required
               className={AUTH_INPUT_CLASS}
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Jordan"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
             />
           </div>
+          <div className={AUTH_FIELD_CLASS}>
+            <label className={AUTH_LABEL_CLASS} htmlFor="last-name">
+              Last name
+            </label>
+            <input
+              id="last-name"
+              name="last_name"
+              type="text"
+              autoComplete="family-name"
+              required
+              className={AUTH_INPUT_CLASS}
+              placeholder="Lee"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className={AUTH_FIELD_CLASS}>
+          <label className={AUTH_LABEL_CLASS} htmlFor="email-address">
+            Email
+          </label>
+          <input
+            id="email-address"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            className={AUTH_INPUT_CLASS}
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+
+        <div className={AUTH_FIELD_CLASS}>
           <PasswordField
             id="password"
             name="password"
             label="Password"
+            labelVisible
             autoComplete="new-password"
             required
             minLength={SIGNUP_PASSWORD_MIN_LENGTH}
-            placeholder="Password *"
+            placeholder="At least 8 characters"
             aria-describedby="signup-password-hint"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+        </div>
+
+        <div className={AUTH_FIELD_CLASS}>
           <PasswordField
             id="confirm-password"
             name="confirmPassword"
             label="Confirm password"
+            labelVisible
             autoComplete="new-password"
             required
             minLength={SIGNUP_PASSWORD_MIN_LENGTH}
@@ -163,20 +178,16 @@ export default function SignUpForm() {
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
-        <p
-          id="signup-password-hint"
-          className="text-xs text-[var(--foreground)]/70"
-        >
-          * {SIGNUP_PASSWORD_RULES_HINT}.
+
+        <p id="signup-password-hint" className="mhv-auth-hint">
+          {SIGNUP_PASSWORD_RULES_HINT}.
         </p>
 
-        <div>
-          <AuthSubmitButton
-            loading={loading}
-            idleLabel="Sign up"
-            loadingLabel="Creating account..."
-          />
-        </div>
+        <AuthSubmitButton
+          loading={loading}
+          idleLabel="Sign up"
+          loadingLabel="Creating account..."
+        />
       </form>
     </AuthPageShell>
   );

@@ -1,14 +1,18 @@
 'use client';
 
 import { useId, useState, type InputHTMLAttributes } from 'react';
-import { AUTH_INPUT_CLASS } from '@/components/auth/auth-form-styles';
+import {
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+} from '@/components/auth/auth-form-styles';
 
 type PasswordFieldProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
   'type' | 'className'
 > & {
   label: string;
-  /** Extra classes for stacked group rounding (e.g. rounded-b-md). */
+  /** When true, show a visible uppercase label (auth layout). */
+  labelVisible?: boolean;
   className?: string;
 };
 
@@ -57,11 +61,11 @@ function EyeIcon({ open }: { open: boolean }) {
 
 /**
  * Password input with a show / hide toggle (F2-059).
- * Uses the shared auth field chrome so login and signup stay aligned (F2-057).
  */
 export default function PasswordField({
   id,
   label,
+  labelVisible = false,
   className = '',
   ...props
 }: PasswordFieldProps) {
@@ -70,25 +74,32 @@ export default function PasswordField({
   const inputId = id ?? generatedId;
 
   return (
-    <div className="relative">
-      <label htmlFor={inputId} className="sr-only">
+    <>
+      <label
+        htmlFor={inputId}
+        className={labelVisible ? AUTH_LABEL_CLASS : 'sr-only'}
+      >
         {label}
       </label>
-      <input
-        id={inputId}
-        type={visible ? 'text' : 'password'}
-        className={`${AUTH_INPUT_CLASS} pr-10 ${className}`}
-        {...props}
-      />
-      <button
-        type="button"
-        onClick={() => setVisible((v) => !v)}
-        className="absolute inset-y-0 right-0 z-20 flex items-center px-3 text-[var(--foreground)]/60 hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--brand-primary)]"
-        aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
-        aria-pressed={visible}
-      >
-        <EyeIcon open={visible} />
-      </button>
-    </div>
+      <div className="mhv-auth-password-wrap">
+        <input
+          id={inputId}
+          type={visible ? 'text' : 'password'}
+          className={`${AUTH_INPUT_CLASS} ${className}`}
+          {...props}
+        />
+        <button
+          type="button"
+          className="mhv-auth-eye"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={
+            visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`
+          }
+          aria-pressed={visible}
+        >
+          <EyeIcon open={visible} />
+        </button>
+      </div>
+    </>
   );
 }
