@@ -23,7 +23,7 @@ There are two distinct surfaces:
 | ----------------- | --------------------------------------------------- |
 | Framework         | Next.js 16 (App Router)                             |
 | UI                | React 19, Tailwind CSS 4, Framer Motion             |
-| Fonts / Icons     | Geist (`next/font/google`); homepage Switzer (`next/font/local`) + Stack Sans Headline (`next/font/google`); FaunaOne, FunnelSans; `react-icons` |
+| Fonts / Icons     | Product + marketing: Switzer (`next/font/local`) + Stack Sans Headline (`next/font/google`) via root `app/layout.tsx` / `globals.css`. Geist Sans/Mono still loaded on `<body>` (CSS vars) but not selected for product body/headings. Legacy local faces (FaunaOne, FunnelSans, Varela Round) unused by new product UI. Icons: `react-icons` |
 | Auth + DB         | Supabase (email/password, PostgreSQL, RLS, Storage) |
 | CV storage        | Cloudflare R2                                       |
 | Video             | YouTube embed (URL only, no upload)                 |
