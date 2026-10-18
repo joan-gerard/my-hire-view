@@ -33,9 +33,8 @@ This document describes how the application handles CV PDFs and **Cloudflare R2*
 
 ### Delete primary CV (library)
 
-1. If **no** applications reference it (`applications_count = 0`), delete immediately (no confirm).
-2. If **N ≥ 1** applications reference it, confirm with a message that includes **N** plus a preview list of those applications (company — role, status; links to edit), then delete.
-3. Delete library row + R2 object. Affected applications keep the old URL and show **CV missing** on the dashboard until edited.
+1. Always confirm before delete (profile and create/edit application library). Unused: simple “are you sure” with **Delete**. Referenced (`N ≥ 1`): message includes **N** plus a preview list of those applications (company — role, status; links to edit), confirm with **I Understand — Delete**.
+2. Delete library row + R2 object. Affected applications keep the old URL and show **CV missing** on the dashboard until edited.
 
 ## API and code
 

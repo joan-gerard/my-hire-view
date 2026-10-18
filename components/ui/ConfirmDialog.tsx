@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
-import {
-  ADMIN_PRIMARY_CLASS,
-  ADMIN_SECONDARY_CLASS,
-} from "@/components/admin/admin-chrome";
+import Button from "@/components/ui/Button";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -17,6 +14,15 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   /** When true, only show the confirm button (no cancel). */
   confirmOnly?: boolean;
+  /**
+   * While true, confirm shows a spinner + loading label, cancel is disabled,
+   * and Escape / backdrop dismiss are blocked.
+   */
+  confirming?: boolean;
+  /** Label while `confirming` is true. Defaults to "Working…". */
+  confirmLoadingLabel?: string;
+  /** Confirm button look. Use `danger` for irreversible deletes. */
+  confirmVariant?: "primary" | "danger";
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -27,6 +33,7 @@ interface ConfirmDialogProps {
  * Dismissal (Cancel, backdrop, Escape) always goes through `dialog.close()`;
  * `onCancel` is emitted only from the `close` listener so each cancel runs once
  * (F25-058). Confirm sets a flag so the same listener does not call `onCancel`.
+ * While `confirming`, dismiss paths are blocked so in-flight work can finish.
  */
 export default function ConfirmDialog({
   open,
@@ -36,16 +43,23 @@ export default function ConfirmDialog({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   confirmOnly = false,
+  confirming = false,
+  confirmLoadingLabel = "Working…",
+  confirmVariant = "primary",
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const confirmedRef = useRef(false);
   const cancelEmittedRef = useRef(false);
+  const confirmingRef = useRef(confirming);
   const titleId = useId();
   const messageId = useId();
 
+  confirmingRef.current = confirming;
+
   const requestDismiss = () => {
+    if (confirmingRef.current) return;
     confirmedRef.current = false;
     dialogRef.current?.close();
   };
@@ -80,6 +94,12 @@ export default function ConfirmDialog({
       className="fixed left-1/2 top-1/2 z-50 w-[min(100vw-2rem,28rem)] max-h-[min(90vh,36rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[28px] border border-[var(--ink)]/8 bg-[var(--white)] p-0 text-[var(--ink)] shadow-lg backdrop:bg-black/40"
       aria-labelledby={titleId}
       aria-describedby={messageId}
+      aria-busy={confirming || undefined}
+      onCancel={(e) => {
+        if (confirmingRef.current) {
+          e.preventDefault();
+        }
+      }}
       onClick={(e) => {
         if (e.target === dialogRef.current) {
           requestDismiss();
@@ -99,24 +119,28 @@ export default function ConfirmDialog({
         {children}
         <div className="flex flex-wrap justify-end gap-2">
           {!confirmOnly && (
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              disabled={confirming}
               onClick={requestDismiss}
-              className={ADMIN_SECONDARY_CLASS}
             >
               {cancelLabel}
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
+            variant={confirmVariant}
+            loading={confirming}
+            loadingLabel={confirmLoadingLabel}
             onClick={() => {
+              if (confirmingRef.current) return;
               confirmedRef.current = true;
               onConfirm();
             }}
-            className={ADMIN_PRIMARY_CLASS}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </dialog>

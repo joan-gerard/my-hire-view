@@ -9,6 +9,7 @@ import {
   PRIMARY_CV_MAX_PER_USER,
   isPrimaryCvLibraryCapError,
   primaryCvApplicationPreviewLabel,
+  primaryCvDeleteConfirmLabel,
   primaryCvDeleteConfirmMessage,
   primaryCvDeletedStillReferencedMessage,
   primaryCvLibraryCapMaxFromDbError,
@@ -60,6 +61,13 @@ describe("primary CV library cap helpers (F13-032)", () => {
 });
 
 describe("primaryCvDeleteConfirmMessage", () => {
+  it("asks for confirmation when no applications use the CV", () => {
+    const message = primaryCvDeleteConfirmMessage(0);
+    expect(message).toContain("Delete this primary CV from your library?");
+    expect(message).toContain("This cannot be undone.");
+    expect(message).not.toContain("CV missing");
+  });
+
   it("uses singular wording for one application", () => {
     const message = primaryCvDeleteConfirmMessage(1);
     expect(message.startsWith("1 application currently uses")).toBe(true);
@@ -78,6 +86,17 @@ describe("primaryCvDeleteConfirmMessage", () => {
     expect(primaryCvDeleteConfirmMessage(2.9).startsWith("2 applications")).toBe(
       true,
     );
+  });
+});
+
+describe("primaryCvDeleteConfirmLabel", () => {
+  it("uses plain Delete when unused", () => {
+    expect(primaryCvDeleteConfirmLabel(0)).toBe("Delete");
+  });
+
+  it("uses stronger wording when applications still reference the CV", () => {
+    expect(primaryCvDeleteConfirmLabel(1)).toBe("I Understand — Delete");
+    expect(primaryCvDeleteConfirmLabel(4)).toBe("I Understand — Delete");
   });
 });
 

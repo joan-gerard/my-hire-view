@@ -258,9 +258,9 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] PDF whose filename has **spaces** or unicode still Views/downloads
 - [ ] Reject non-PDF, files **> 3 MB**, and a renamed fake `.pdf` (not real `%PDF` bytes)
 - [ ] Upload until **5** succeed; sixth is blocked (disabled and/or limit error)
-- [ ] Delete an **unused** primary → gone immediately (no confirm)
+- [ ] Delete an **unused** primary → confirm asks if you are sure; **Cancel** keeps it; **Delete** removes it
 - [ ] Attach a primary to 1+ applications, then Delete → confirm with **exact count** and company — role preview (and “and N more” if > 10); **Cancel** keeps it
-- [ ] Confirm delete → CV gone; amber **still referenced / CV missing** warning if apps used it
+- [ ] Confirm delete (**I Understand — Delete** when referenced) → CV gone; amber **still referenced / CV missing** warning if apps used it
 - [ ] Warning **survives** the list refresh; if the refresh fails, the warning is still shown
 - [ ] While an upload is in progress, Delete is disabled (and the reverse)
 - [ ] After deleting one, a new upload is allowed again (still max 5)

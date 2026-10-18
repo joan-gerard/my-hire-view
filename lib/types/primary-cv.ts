@@ -78,13 +78,25 @@ export function primaryCvLibraryCapMaxFromDbError(
 /** Max application rows shown in the delete-confirm preview list. */
 export const PRIMARY_CV_DELETE_PREVIEW_LIMIT = 10;
 
-/** Confirm copy when deleting a primary CV that is still attached to applications. */
+/**
+ * Confirm copy when deleting a primary CV.
+ * Always warns that delete cannot be undone; adds application impact when still attached.
+ */
 export function primaryCvDeleteConfirmMessage(applicationsCount: number): string {
   const n = Math.max(0, Math.floor(applicationsCount));
+  if (n === 0) {
+    return "Delete this primary CV from your library? This cannot be undone.";
+  }
   if (n === 1) {
     return "1 application currently uses this CV. Deleting it removes the file from storage. That application will show “CV missing” on the dashboard until you pick another CV. This cannot be undone.";
   }
   return `${n} applications currently use this CV. Deleting it removes the file from storage. Those applications will show “CV missing” on the dashboard until you pick another CV. This cannot be undone.`;
+}
+
+/** Confirm button label — stronger wording when apps still reference the CV. */
+export function primaryCvDeleteConfirmLabel(applicationsCount: number): string {
+  const n = Math.max(0, Math.floor(applicationsCount));
+  return n > 0 ? "I Understand — Delete" : "Delete";
 }
 
 /**

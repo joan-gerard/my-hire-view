@@ -52,11 +52,11 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 **Delete primary (profile or Manage library modal)**
 
-- [ ] Delete a primary **not** used by any application → removed immediately (no confirm modal)
+- [ ] Delete a primary **not** used by any application → confirm asks if you are sure (no app preview); Cancel keeps it; **Delete** removes it
 - [ ] Attach a primary to 1+ applications, then Delete → confirm shows the **exact count** and a preview list (company — role, status; links to edit)
 - [ ] If more than 10 apps use it, preview shows the first 10 plus “and N more”
 - [ ] Cancel → CV still in list and in R2
-- [ ] Confirm (**I Understand — Delete**) → removed from list; R2 object gone (optional check)
+- [ ] Confirm (**Delete** when unused, **I Understand — Delete** when referenced) → button shows spinner + **Deleting…** (danger style); Cancel / Escape / backdrop blocked until done → removed from list; R2 object gone (optional check)
 - [ ] If applications still referenced it: amber warning **stays visible** after the list refreshes (“still referenced” / “CV missing until updated”)
 - [ ] If the post-delete list refresh fails, the still-referenced warning is still shown (with a refresh note)
 - [ ] While an upload is in progress, Delete is disabled (and the reverse) so a later list refresh cannot wipe that warning
@@ -71,7 +71,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 - [ ] Close modal while Loading…, reopen and upload → selection still sticks (a late response from the closed modal must not wipe the new CV)
 - [ ] Close modal during an in-progress upload/delete → reopening and selecting a CV is not overwritten by the closed instance’s follow-up refresh
 - [ ] Close modal (**Done**) → dropdown includes the new primary
-- [ ] Delete a selected primary in the modal → if unused, gone immediately; if used, inline confirm with count → selection moves to another primary (or switches to tailored if none left)
+- [ ] Delete a selected primary in the modal → always confirms (inline); unused uses **Delete**, referenced shows count then **I Understand — Delete**; confirm shows spinner + **Deleting…** until done → selection moves to another primary (or switches to tailored if none left)
 - [ ] Library on `/admin/profile` matches what you changed from New/Edit
 
 ---
