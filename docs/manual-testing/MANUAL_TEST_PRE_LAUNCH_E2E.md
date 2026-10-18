@@ -238,11 +238,12 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Completing **only LinkedIn** (no location, no portfolio) still satisfies the checklist “location or a link” step; same for portfolio-only or location-only
 - [ ] Success / saving labels: **Uploading…** then **Saving…** when a picture is included
 
-### Profile picture (Profile tab)
+### Profile picture (Profile tab — identity header only)
 
+- [ ] Avatar preview, Change/Remove (or Choose), and help copy live in the identity header — not a second picture block lower on the page
 - [ ] Choose JPEG → preview → Save → thumbnail persists after refresh
 - [ ] Replace with PNG (and WebP if you have one) → new image shows (cache-bust, not a stale JPEG)
-- [ ] **Remove** picture → Save → no avatar on profile; applications that **show** the picture no longer display an avatar on `/view`
+- [ ] **Remove** picture → Save → initials/placeholder in the header; applications that **show** the picture no longer display an avatar on `/view`
 - [ ] Reject GIF, SVG, BMP, non-image, and files **> 5 MB**
 - [ ] A `.jpg` that is **not** a real image (wrong magic bytes) is rejected
 - [ ] Cancel / don’t save a pending file → original picture unchanged
