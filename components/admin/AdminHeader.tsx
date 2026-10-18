@@ -8,7 +8,7 @@ import { ADMIN_SHELL_CLASS } from "@/components/admin/admin-chrome";
 import { LogoBlack } from "../ui/Logo";
 
 const ADMIN_NAV_PILL_CLASS =
-  "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
+  "inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
 const ADMIN_NAV_PILL_INACTIVE_CLASS =
   "bg-[var(--ink)]/[0.06] text-[var(--muted)] hover:bg-[var(--ink)]/[0.1] hover:text-[var(--ink)]";
 const ADMIN_NAV_PILL_ACTIVE_CLASS =
@@ -25,8 +25,9 @@ const ADMIN_NAV_LINKS = [
 ] as const;
 
 /**
- * Navigation header for the admin area (/admin). Left: Dashboard, New Application,
- * Profile. Center: logo. Right: user email and sign out.
+ * Navigation header for the admin area (/admin).
+ * Narrow: logo + Sign Out on the first row; nav pills scroll on the next.
+ * md+: left nav, centered logo, email + Sign Out (single link set — no duplicate DOM).
  */
 export default function AdminHeader({ user }: AdminHeaderProps) {
   const pathname = usePathname();
@@ -44,8 +45,11 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
       aria-label="Admin"
     >
       <div className={ADMIN_SHELL_CLASS}>
-        <div className="relative flex h-[72px] items-center">
-          <div className="flex flex-1 items-center gap-2">
+        <div className="relative flex flex-wrap items-center gap-x-3 gap-y-2 py-3 md:h-[72px] md:flex-nowrap md:py-0">
+          <div className="order-1 md:absolute md:left-1/2 md:top-1/2 md:order-none md:-translate-x-1/2 md:-translate-y-1/2">
+            <LogoBlack />
+          </div>
+          <div className="order-3 flex w-full gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] md:order-1 md:w-auto md:flex-1 md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
             {ADMIN_NAV_LINKS.map(({ href, label }) => {
               const isActive =
                 href === "/admin"
@@ -66,11 +70,8 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
               );
             })}
           </div>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <LogoBlack />
-          </div>
-          <div className="flex flex-1 items-center justify-end gap-3">
-            <span className="hidden text-sm text-[var(--muted)] sm:inline">
+          <div className="order-2 ml-auto flex items-center gap-3 md:order-3 md:ml-0 md:flex-1 md:justify-end">
+            <span className="hidden text-sm text-[var(--muted)] lg:inline">
               {user.email}
             </span>
             <button

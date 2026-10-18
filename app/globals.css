@@ -121,8 +121,12 @@
   --font-heading: var(--font-switzer), system-ui, sans-serif;
 }
 
-/* Reserve scrollbar space so short loading shells do not shift layout. */
-html {
+/*
+ * Reserve scrollbar space on product shells so short admin loading states do
+ * not shift layout. Scoped with :has so marketing (`.mhv-landing`) keeps the
+ * natural gutter and F34’s marketing freeze stays intact.
+ */
+html:has([data-product-shell]) {
   scrollbar-gutter: stable;
 }
 

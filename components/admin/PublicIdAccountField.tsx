@@ -11,16 +11,17 @@ type PublicIdAccountFieldProps = {
 
 /**
  * Read-only Public id + help for the profile Account section (F19-046).
+ * Root is a `dl` row group (`div` > `dt`/`dd`) so callers must not wrap it again.
  */
 export default function PublicIdAccountField({
   publicId,
 }: PublicIdAccountFieldProps) {
   return (
-    <div>
-      <dt className="text-sm font-medium text-[var(--muted)]">
+    <div className="flex flex-col gap-0.5 py-3 last:pb-0 sm:flex-row sm:gap-6">
+      <dt className="shrink-0 text-sm font-medium text-[var(--muted)] sm:w-36">
         {PUBLIC_ID_LABEL}
       </dt>
-      <dd className="mt-1 space-y-1.5">
+      <dd className="min-w-0 space-y-1.5 text-sm text-[var(--ink)]">
         {publicId ? (
           <>
             <p className="font-mono text-sm text-[var(--ink)]">{publicId}</p>

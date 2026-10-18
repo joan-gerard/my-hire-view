@@ -13,10 +13,10 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 | **1**  |     5 | A3, F22, F24, F32, F33 |
 | **2**  |     3 | E1, E4, F23       |
 | **3**  |     3 | F28, F30, L6      |
-| **4**  |     5 | F21, F29, F34, F35, I2 |
+| **4**  |     4 | F21, F29, F35, I2 |
 | **5**  |     1 | E2                |
 
-**17 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26 shipped). **Weighted average ≈ 2.65** — many 1–3 polish items; complexity concentrates in **E2**, then **F34 / F35 / F21 / F29 / I2**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group).
+**16 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped). **Weighted average ≈ 2.56** — many 1–3 polish items; complexity concentrates in **E2**, then **F35 / F21 / F29 / I2**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group).
 
 ---
 
@@ -64,7 +64,7 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 | ---------------------- | ------------------------------------------------------------------------------------- |
 | **L6** then **I2**     | Central client + single DB types; both are **F30** prereqs                            |
 | **F28** a11y           | Can run anytime; finish before launch; file follow-up tickets                         |
-| **F32** manual QA      | End-to-end candidate journey; after remaining user-facing work (`F34`, `F35`+); file bugs |
+| **F32** manual QA      | End-to-end candidate journey; after remaining user-facing work (`F35`+); file bugs |
 | **F29** security       | Prefer **after** major hardening (**F9/F13/F10/F12**, etc.) so the review isn’t stale |
 | **F30** refactor audit | Last among audits — only after **L6 + I2** (`F25` shipped)                            |
 
@@ -75,15 +75,15 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 - **E4** swaps annual → quarterly on the working draft + `#pricing` UI (can ship early; not a lock)
 - Product lock (**E1**) before Stripe/gates (**E2**) — lock **monthly + quarterly** (no annual)
 - **A3** (confirm email in prod) is ops with no code — last config before public launch
-- **`F20-020`** is launch-gated and stays outside the 17-PR count: counsel-reviewed Terms, Privacy, and Cookies are required before public launch, but they are not an open PR group
+- **`F20-020`** is launch-gated and stays outside the 16-PR count: counsel-reviewed Terms, Privacy, and Cookies are required before public launch, but they are not an open PR group
 - Doing **E2** earlier wastes work if tiers/prices still change
 
 ---
 
-## 3. Suggested sequence (all 17 open)
+## 3. Suggested sequence (all 16 open)
 
 ```
-F34 → F35
+F35
   → F23 → F21
   → F22 / F24 / F33 / E4 (whenever; E4 before E1)
   → L6 → I2 → F28 → F32 → F29 → F30
@@ -97,4 +97,4 @@ F34 → F35
 3. **Reviews stay useful** — F28/F29/F30 after the bulk of pre-launch code, not before.
 4. **Monetization last** — backlog already defers E1/E2 until launch is imminent; E4 only updates the draft.
 
-If capacity is short: finish **F34**, then **F35** (create/edit steps), before **F32** manual QA.
+If capacity is short: finish **F35** (create/edit steps) before **F32** manual QA.

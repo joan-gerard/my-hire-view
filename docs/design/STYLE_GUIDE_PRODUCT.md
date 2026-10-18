@@ -111,7 +111,7 @@ Local FunnelSans / FaunaOne / Varela Round `@font-face` rules remain for leftove
 | Page wash | Admin: soft `--paper` page; content in white bordered panels (`ADMIN_PANEL_CLASS`) |
 | Primary CTAs | Pill (`rounded-full` / ~100px) — ink fill + white text |
 | Dense controls | Inputs, secondary/danger buttons, fieldsets: `rounded-xl` |
-| Panels / dialogs | ~20–28px radius (`rounded-2xl` / `rounded-[28px]`). Soft shadow (`shadow-lg` / similar) for **floating** surfaces: menus, confirm/status dialogs, library/picture modals — not for in-flow page panels |
+| Panels / dialogs | In-flow panels (`ADMIN_PANEL_CLASS`): `rounded-2xl` (16px). Floating dialogs/modals: larger radius (`rounded-[28px]` ≈ 28px). Soft shadow (`shadow-lg` / similar) for **floating** surfaces: menus, confirm/status dialogs, library/picture modals — not for in-flow page panels |
 | Focus | Light surfaces: ink outline / `--brand-accent-1`. Dark surfaces: lime when appropriate |
 | Inputs | Prefer **white** fields on paper panels; ink focus ring — not lime on light |
 | Logo | Wordmark + small lime (or pink) circular accent dot |

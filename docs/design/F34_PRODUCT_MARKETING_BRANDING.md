@@ -14,7 +14,7 @@
 
 ## Goal
 
-Restyle `/admin`, `/view`, `/login`, and `/signup` to match the **marketing brand system** (ink / paper / lime / pink, Switzer + Stack Sans), not the warm F17 palette. Visual skin only. Update `STYLE_GUIDE_PRODUCT.md` in the same PR.
+Restyle `/admin`, `/view`, `/login`, and `/signup` to match the **marketing brand system** (ink / paper / lime / pink, Switzer + Stack Sans), not the warm F17 palette. Primarily a visual restyle; this PR also lands related product UX (Account settings tab shell, status-indicator preference, primary-CV delete safeguards, marketing header signed-in Dashboard CTA). Update `STYLE_GUIDE_PRODUCT.md` in the same PR.
 
 **Out of scope:** the live marketing surface stays byte-stable in look and behavior. F34 must not restyle `/`, legal pages, or marketing-owned CSS/components.
 
@@ -286,7 +286,8 @@ Quiet chrome so CV / video stay primary; brand without looking like a marketing 
 - [ ] Manual pass: login → dashboard → create → preview → `/view`
 - [ ] Contrast spot-checks (lime / pink / focus on light and dark)
 - [x] **Marketing gate:** `/` palette/UI look unchanged (confirmed); `app/error.tsx` / Button decision verified
-- [x] Strike `F34-118` in Backlog; move Trello card to Done when the F34 PR merges
+- [x] Strike `F34-118` in Backlog
+- [ ] Move Trello card to Done when the F34 PR merges
 - [x] **Keep this working plan** (do not delete) — optional retrospective move later
 
 ---

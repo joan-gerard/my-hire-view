@@ -15,7 +15,7 @@ export default async function AdminLayout({
 
   return (
     <StatusIndicatorStyleProvider>
-      <div className="min-h-screen bg-[var(--paper)]">
+      <div className="min-h-screen bg-[var(--paper)]" data-product-shell>
         <AdminHeader user={user} />
         <main className={`${ADMIN_SHELL_CLASS} py-8`}>
           {children}

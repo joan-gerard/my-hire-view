@@ -139,7 +139,7 @@ export default function FileUpload({
             onChange={handleFileChange}
             aria-label={chooseLabel}
             disabled={selectionLocked}
-            className="block w-full cursor-pointer text-sm text-[var(--muted)] file:mr-4 file:cursor-pointer file:rounded-xl file:border file:border-[var(--ink)]/12 file:bg-[var(--white)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--ink)] hover:file:bg-[var(--ink)]/[0.04] disabled:opacity-50"
+            className="block w-full cursor-pointer text-sm text-[var(--muted)] file:mr-4 file:cursor-pointer file:rounded-xl file:border file:border-[var(--ink)]/12 file:bg-[var(--white)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--ink)] hover:file:bg-[var(--ink)]/[0.04] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:file:bg-[var(--white)] disabled:file:cursor-not-allowed"
           />
           {showPending && (
             <button

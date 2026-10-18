@@ -31,7 +31,7 @@ export default function Button({
 
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${loading ? 'animate-pulse' : ''} ${className}`}
+      className={`${baseStyles} ${variantStyles[variant]} ${loading ? 'motion-safe:animate-pulse' : ''} ${className}`}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...props}
@@ -39,7 +39,7 @@ export default function Button({
       {loading ? (
         <>
           <span
-            className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
+            className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin"
             aria-hidden
           />
           {loadingLabel}

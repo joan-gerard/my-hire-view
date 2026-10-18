@@ -379,8 +379,17 @@ export default function OnboardingChecklist({
                   <div className="flex items-center gap-1 rounded-xl hover:bg-[var(--ink)]/[0.03]">
                     <Link
                       href={step.href}
-                      onClick={() => {
-                        if (step.id === "primary_cv") {
+                      onClick={(event) => {
+                        // Modifier / non-primary clicks open a new tab — do not
+                        // hand off Account settings tab state for this window.
+                        if (
+                          step.id === "primary_cv" &&
+                          event.button === 0 &&
+                          !event.metaKey &&
+                          !event.ctrlKey &&
+                          !event.shiftKey &&
+                          !event.altKey
+                        ) {
                           requestAccountSettingsTab("cvs");
                         }
                       }}

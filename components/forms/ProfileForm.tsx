@@ -258,7 +258,7 @@ export default function ProfileForm({
                     width={88}
                     height={88}
                   />
-                ) : firstName || lastName ? (
+                ) : firstName || lastName || accountChrome.email ? (
                   <span
                     className="font-heading text-2xl font-semibold tracking-[-0.02em]"
                     aria-hidden
@@ -366,9 +366,7 @@ export default function ProfileForm({
                   {accountChrome.email ?? "—"}
                 </dd>
               </div>
-              <div className="py-3 last:pb-0">
-                <PublicIdAccountField publicId={accountChrome.publicId} />
-              </div>
+              <PublicIdAccountField publicId={accountChrome.publicId} />
             </dl>
           </div>
 
