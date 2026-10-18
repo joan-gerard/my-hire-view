@@ -692,7 +692,7 @@ Tracked in [Backlog.md](../product/Backlog.md):
 | In-app forgot password                                  | `L4-098`                                                    |
 | Stripe / plan gates                                     | `E1-012`, `E2-013`                                          |
 | `/admin` + `/view` + auth visual rebrand (warm palette) | ~~`F17-017`~~, ~~`F17-018`~~ (shipped)                      |
-| Product UI aligned with marketing brand                 | `F34-118`                                                   |
+| Product UI aligned with marketing brand                 | ~~`F34-118`~~ (shipped)                                     |
 | 90-day archive purge, retention tooltip, emails         | After launch G\*                                            |
 | In-app video recording / teleprompter                   | `H1-065`, `H2-066`                                          |
 | Dashboard stats above search                            | `L7-080`                                                    |

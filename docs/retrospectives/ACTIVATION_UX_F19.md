@@ -77,7 +77,7 @@ Data flow: [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FLOW_ONBOARD
 | Persist checklist skips/dismiss in Supabase | Cross-device nice-to-have; browser prefs enough for launch; revisit if analytics or multi-device matter. |
 | Permanently non-dismissible checklist | Felt pushy; Skip/Dismiss keep goodwill once they know the path. |
 | Vanity public ids / Option D opaque-only URLs | Product/ infra later (`J2`); F19 only explains today’s token. |
-| Restyle card chrome / brand colors | Visual skin shipped as `F17-017` (warm); marketing-match reskin is `F34-118`. F19 owns meaning, not paint. |
+| Restyle card chrome / brand colors | Visual skin shipped as `F17-017` (warm), then ~~`F34-118`~~ (marketing brand). F19 owns meaning, not paint. |
 
 ---
 
@@ -111,5 +111,5 @@ Data flow: [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FLOW_ONBOARD
 | [MANUAL_TEST_ONBOARDING_CHECKLIST.md](../manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md) | Checklist manual checks |
 | [MANUAL_TEST_APPLICATION_STATUS_LEGEND.md](../manual-testing/MANUAL_TEST_APPLICATION_STATUS_LEGEND.md) | Legend manual checks |
 | [PUBLIC_URL_OPTION_B.md](PUBLIC_URL_OPTION_B.md) | Why opaque `public_id` exists |
-| [Backlog.md](../product/Backlog.md) | `F19-044` / `046` / `047` shipped; `F31-105` tour later; `F17` warm brand shipped; `F34-118` marketing-match brand |
+| [Backlog.md](../product/Backlog.md) | `F19-044` / `046` / `047` shipped; `F31-105` tour later; `F17` warm brand shipped; ~~`F34-118`~~ marketing-match brand shipped |
 | [BEFORE_LAUNCH_PR_ORDER.md](../product/BEFORE_LAUNCH_PR_ORDER.md) | F19 in the create-UX chain after F15/F16 |

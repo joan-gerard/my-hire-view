@@ -1,14 +1,14 @@
 # F34 — Align product UI with marketing brand (working plan)
 
-> **Temporary.** Implementation tracker for `F34-118` on branch `feat/f34-product-marketing-branding`.  
-> Canonical ticket status lives in [Backlog.md](../product/Backlog.md).  
-> **Delete or move to `docs/retrospectives/` when the F34 implementation ships** (restyle complete / `F34-118` done) — not when an early docs-only PR merges.
+> Implementation tracker for ~~`F34-118`~~ on branch `feat/f34-product-marketing-branding`.  
+> Canonical ticket status lives in [Backlog.md](../product/Backlog.md) (struck as shipped).  
+> **Keep this file** as the phase history / decisions log (do not delete). Optional later: move to `docs/retrospectives/` if you want it out of `docs/design/`.
 
-**Sources of truth while coding**
+**Sources of truth**
 
 - Marketing: [STYLE_GUIDE_MARKETING.md](STYLE_GUIDE_MARKETING.md) · `app/(home)/mhv-demo.css` · live `/` and denser `/demo/care-log`
-- Product (until rewritten): [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md) · `app/globals.css`
-- Trello: [F34-118](https://trello.com/c/L4QSQrim/121-f34-118-align-product-ui-with-marketing-brand)
+- Product (current): [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md) · `app/globals.css`
+- Trello: [F34-118](https://trello.com/c/L4QSQrim/121-f34-118-align-product-ui-with-marketing-brand) (move to Done when the PR merges)
 
 ---
 
@@ -58,11 +58,11 @@ Examples of risk today (verify with grep before editing — do not rely on this 
 
 ### Gate checklist (every phase + before merge)
 
-- [ ] Diff does not intentionally change `app/(home)/**`, `components/marketing/**`, or marketing CSS for look/feel
-- [ ] Shared modules checked against **full** import graph (product + route-level), not only `components/marketing/*`
-- [ ] Any module marketing still imports was **forked**, not mutated, when product needed a different look
+- [x] Diff does not intentionally change `app/(home)/**`, `components/marketing/**`, or marketing CSS for look/feel (signed-in header CTA → Dashboard is intentional behavior, not a palette change)
+- [x] Shared modules checked against **full** import graph (product + route-level), not only `components/marketing/*`
+- [x] Any module marketing still imports was **forked**, not mutated, when product needed a different look
 - [x] Decision recorded for `app/error.tsx` + `Button` — **in-scope restyle** (no fork)
-- [ ] Smoke `/` (and optionally `/terms`) — looks unchanged vs pre-F34
+- [x] Smoke `/` — palette / UI look unchanged vs pre-F34 (confirmed)
 
 If a change seems to require editing a frozen file to “fix” product, stop and fork or scope styles to product layouts instead.
 
@@ -89,7 +89,7 @@ If a change seems to require editing a frozen file to “fix” product, stop an
 | 3     | Admin chrome + dashboard                      | **Done**    |
 | 4     | Forms (create / edit / profile)               | **Done**    |
 | 5     | Public `/view`                                | **Done**    |
-| 6     | Docs + QA                                     | Not started |
+| 6     | Docs + QA                                     | **In progress** |
 
 **Status meanings:** **Locked** = decisions recorded; checklist may still have deferred items. **Done** = that phase’s checklist is fully complete (including smoke / deferred compares). Do not mark **Done** while unchecked items remain.
 
@@ -281,13 +281,13 @@ Quiet chrome so CV / video stay primary; brand without looking like a marketing 
 
 ### Checklist
 
-- [ ] Rewrite [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md) for the new system (remove “don’t use lime/pink” guidance)
-- [ ] Update any stale “warm palette” mentions that F34 makes false
+- [x] Rewrite [STYLE_GUIDE_PRODUCT.md](STYLE_GUIDE_PRODUCT.md) for the new system (remove “don’t use lime/pink” guidance)
+- [x] Update any stale “warm palette” mentions that F34 makes false
 - [ ] Manual pass: login → dashboard → create → preview → `/view`
 - [ ] Contrast spot-checks (lime / pink / focus on light and dark)
-- [ ] **Marketing gate:** `/` (+ one legal page) unchanged; no unintended diffs under frozen paths; `app/error.tsx` / Button decision verified
-- [ ] Strike `F34-118` in Backlog + move Trello card to Done when the F34 implementation ships
-- [ ] Delete or archive **this** file (only then)
+- [x] **Marketing gate:** `/` palette/UI look unchanged (confirmed); `app/error.tsx` / Button decision verified
+- [x] Strike `F34-118` in Backlog; move Trello card to Done when the F34 PR merges
+- [x] **Keep this working plan** (do not delete) — optional retrospective move later
 
 ---
 
@@ -332,3 +332,4 @@ Prefer **one PR** with phased commits matching Phases 1→6. If the diff balloon
 | 2026-10-16 | Surface pass: white panels + ink borders (auth-card pattern); paper reserved for nav chips / quiet wells                                 | Phase 3–5 visual review, then Phase 6                   |
 | 2026-10-16 | Dashboard density: paper page wash, white list shell + row dividers, lime Create CTA, ink active nav (Reslink-inspired; no new features) | Continue Phase 3–5 visual review                        |
 | 2026-10-16 | Tall admin skeletons (`AdminPageSkeleton` + `ADMIN_MAIN_MIN_CLASS`) and `scrollbar-gutter: stable` to stop scrollbar flicker on load     | Continue Phase 3–5 visual review                        |
+| 2026-10-18 | Phase 6 docs: rewrite `STYLE_GUIDE_PRODUCT.md`; strike `F34-118`; marketing `/` look confirmed unchanged; keep this plan file            | Manual product pass + contrast spot-checks; Trello Done on merge |

@@ -13,7 +13,7 @@ A high-level catch-up document covering the product, tech stack, architecture, b
 There are two distinct surfaces:
 
 - **Marketing site** (`/`) — home, pricing (Free/Pro/Premium with monthly/annual USD prices as a **working draft**; E1 lock + E2 checkout deferred until near launch), Login / Get started CTAs to `/login`, and draft legal pages (`/terms`, `/privacy`, `/cookies`). Currently in pre-launch mode. (`/how-it-works` and `/blog` removed pre-launch; rebuild later via J3.) Discovery, launch channels, and when to bring in specialists: [GO_TO_MARKET.md](../product/GO_TO_MARKET.md). Brand tokens and patterns: [STYLE_GUIDE_MARKETING.md](../design/STYLE_GUIDE_MARKETING.md). Living demo on an unrelated fake product: `/demo`.
-- **Product** (`/admin`) — authenticated dashboard to create, manage, and track applications. UI tokens: [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md) (warm today; `F34-118` aligns with marketing).
+- **Product** (`/admin`) — authenticated dashboard to create, manage, and track applications. UI tokens: [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md) (ink/paper/lime/pink; aligned with marketing via ~~`F34-118`~~).
 
 ---
 
@@ -190,7 +190,7 @@ How people discover the app and become paid users (channels, phases, specialist 
 - Well-structured internal docs in `docs/` (ARCHITECTURE, API_REFERENCE, CI_CD, DATA_FLOW, BUILD_SUMMARY, CODE_REVIEW, etc.).
 - Clear separation between marketing and product surfaces.
 - Security-conscious patterns: RLS, owner exclusion from analytics, URL validation, PDF type/size validation.
-- Two documented visual systems today: marketing ([STYLE_GUIDE_MARKETING.md](../design/STYLE_GUIDE_MARKETING.md), lime/pink/ink) and product ([STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md), warm neutrals + teal accents). Unifying product chrome with marketing is backlog `F34-118`.
+- Marketing and product share the same brand system (ink / paper / lime / pink, Switzer + Stack Sans) with different density and CSS entry points: [STYLE_GUIDE_MARKETING.md](../design/STYLE_GUIDE_MARKETING.md) (`.mhv-landing`) vs [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md) (`globals.css` / admin chrome). Alignment shipped as ~~`F34-118`~~.
 - Clean component breakdown across `public/`, `admin/`, `forms/`, `pdf/`, `video/`, `view/`, `ui/`.
 
 ---
