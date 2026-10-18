@@ -350,7 +350,7 @@ First observability step when Vercel Runtime Logs are no longer enough. Upload-s
 
 Full effort rollup and phased order for open before-launch PRs: [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md).
 
-1. Continue the phased sequence in [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md) — next user-facing: **F35** (stepped create/edit) and/or **F38** (`/view` polish); ~~**F34**~~ shipped  
+1. Continue the phased sequence in [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md) — next user-facing: **F35** (stepped create/edit) and/or **F38** (`/view` polish); ~~**F34**~~ shipped
 2. **Anytime (pricing draft):** **E4** — `feat/e4-quarterly-billing` (`E4-116`) replace annual with quarterly before E1 locks  
 3. **Before F30:** `I2`, `L6` (targeted code-quality / refactor; `F5`, `F25` shipped)  
 4. **Near launch:** **F39** mobile/responsiveness review → **F32** end-to-end manual QA + **F29** security review + **F30** refactoring audit, then **E1 → E2** + `A3-015`
