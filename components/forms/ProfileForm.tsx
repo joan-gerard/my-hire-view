@@ -178,6 +178,8 @@ export default function ProfileForm({
   const handleDiscardNewPicture = () => {
     setPendingFile(null);
     setUploadedPendingUrl(null);
+    setError(null);
+    setWarning(null);
   };
 
   const handleRemovePicture = () => {

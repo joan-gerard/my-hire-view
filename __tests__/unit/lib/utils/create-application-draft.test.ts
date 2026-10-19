@@ -82,6 +82,15 @@ describe("parseCreateApplicationDraft", () => {
     expect(parseCreateApplicationDraft(draft)?.cvModeUserChosen).toBe(true);
   });
 
+  it("defaults omitted showProfilePictureUserChosen to false on v2 payloads", () => {
+    const draft = { ...sampleDraft({ showProfilePictureUserChosen: true }) };
+    delete (draft as { showProfilePictureUserChosen?: boolean })
+      .showProfilePictureUserChosen;
+    expect(
+      parseCreateApplicationDraft(draft)?.showProfilePictureUserChosen,
+    ).toBe(false);
+  });
+
   it("migrates v1 tailored drafts as user-chosen and primary as automatic", () => {
     const v1Tailored = {
       ...sampleDraft({
