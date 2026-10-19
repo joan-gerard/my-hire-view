@@ -96,7 +96,12 @@ export default function ApplicationFormWizardLayout({
             <Button
               type="button"
               variant="primary"
-              disabled={!canContinue}
+              aria-disabled={!canContinue ? true : undefined}
+              className={
+                !canContinue
+                  ? "cursor-not-allowed opacity-50 hover:opacity-50"
+                  : undefined
+              }
               onClick={() => {
                 if (!canContinue) return;
                 onStepChange(APPLICATION_FORM_STEPS[index + 1].id);

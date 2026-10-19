@@ -45,6 +45,7 @@ export default function ApplicationFormSectionsLayout({
         const ready = stepReady(step.id);
         const isLast = index === APPLICATION_FORM_STEPS.length - 1;
         const canContinue = !continueBlockedReason;
+        const panelId = `application-form-section-panel-${step.id}`;
 
         return (
           <section
@@ -56,6 +57,7 @@ export default function ApplicationFormSectionsLayout({
                 type="button"
                 onClick={() => onOpenStepChange(step.id)}
                 aria-expanded={open}
+                aria-controls={panelId}
                 className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
               >
                 <span
@@ -96,48 +98,65 @@ export default function ApplicationFormSectionsLayout({
               </button>
             </h2>
 
-            {open ? (
-              <div className="space-y-6 border-t border-[var(--ink)]/8 px-4 py-4">
-                <p className="text-sm text-[var(--muted)]">{step.description}</p>
-                <div className="space-y-6">{stepContents[step.id]}</div>
+            <div
+              id={panelId}
+              hidden={!open}
+              className={
+                open
+                  ? "space-y-6 border-t border-[var(--ink)]/8 px-4 py-4"
+                  : undefined
+              }
+            >
+              {open ? (
+                <>
+                  <p className="text-sm text-[var(--muted)]">
+                    {step.description}
+                  </p>
+                  <div className="space-y-6">{stepContents[step.id]}</div>
 
-                {!isLast ? (
-                  <div className="flex justify-end border-t border-[var(--ink)]/8 pt-4">
-                    <div className="group relative inline-flex">
-                      <Button
-                        type="button"
-                        variant="primary"
-                        disabled={!canContinue}
-                        onClick={() => {
-                          if (!canContinue) return;
-                          onConfirmStep(step.id);
-                        }}
-                        aria-describedby={
-                          !canContinue && continueBlockedReason
-                            ? `sections-continue-${step.id}`
-                            : undefined
-                        }
-                      >
-                        Continue to next step
-                      </Button>
-                      {!canContinue && continueBlockedReason ? (
-                        <span
-                          id={`sections-continue-${step.id}`}
-                          role="tooltip"
-                          className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-xs text-[var(--white)] shadow-lg group-hover:block group-focus-within:block"
+                  {!isLast ? (
+                    <div className="flex justify-end border-t border-[var(--ink)]/8 pt-4">
+                      <div className="group relative inline-flex">
+                        <Button
+                          type="button"
+                          variant="primary"
+                          aria-disabled={!canContinue ? true : undefined}
+                          className={
+                            !canContinue
+                              ? "cursor-not-allowed opacity-50 hover:opacity-50"
+                              : undefined
+                          }
+                          onClick={() => {
+                            if (!canContinue) return;
+                            onConfirmStep(step.id);
+                          }}
+                          aria-describedby={
+                            !canContinue && continueBlockedReason
+                              ? `sections-continue-${step.id}`
+                              : undefined
+                          }
                         >
-                          {continueBlockedReason}
-                        </span>
-                      ) : null}
+                          Continue to next step
+                        </Button>
+                        {!canContinue && continueBlockedReason ? (
+                          <span
+                            id={`sections-continue-${step.id}`}
+                            role="tooltip"
+                            className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-xs text-[var(--white)] shadow-lg group-hover:block group-focus-within:block"
+                          >
+                            {continueBlockedReason}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="border-t border-[var(--ink)]/8 pt-4">
-                    {actions}
-                  </div>
-                )}
-              </div>
-            ) : null}
+                  ) : (
+                    <div className="border-t border-[var(--ink)]/8 pt-4">
+                      {actions}
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </div>
           </section>
         );
       })}

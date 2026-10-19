@@ -1656,6 +1656,7 @@ export default function ApplicationForm({
         <ApplicationFormStyleSwitch
           style={formStyle}
           onChange={(next) => {
+            if (next === formStyle) return;
             setFormStyle(next);
             setCurrentStepId("role");
             setCompletedStepIds(new Set());

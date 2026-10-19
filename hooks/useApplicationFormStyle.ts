@@ -1,8 +1,10 @@
 "use client";
 
 import {
+  APPLICATION_FORM_STYLE_CHANGED_EVENT,
   getEnvApplicationFormStyleDefault,
   isApplicationFormStyleSwitchEnabled,
+  notifyApplicationFormStyleChanged,
   readApplicationFormStyleSearchParam,
   readStoredApplicationFormStyle,
   replaceApplicationFormStyleSearchParam,
@@ -10,18 +12,33 @@ import {
   writeStoredApplicationFormStyle,
   type ApplicationFormStyle,
 } from "@/lib/utils/application-form-style";
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
-function subscribeToUrl(onStoreChange: () => void): () => void {
+function subscribeToStyleSources(onStoreChange: () => void): () => void {
+  window.addEventListener(APPLICATION_FORM_STYLE_CHANGED_EVENT, onStoreChange);
+  // Real browser Back/Forward may change `?formStyle=` without our event.
   window.addEventListener("popstate", onStoreChange);
-  return () => window.removeEventListener("popstate", onStoreChange);
+  // Cross-tab localStorage updates.
+  window.addEventListener("storage", onStoreChange);
+  return () => {
+    window.removeEventListener(
+      APPLICATION_FORM_STYLE_CHANGED_EVENT,
+      onStoreChange,
+    );
+    window.removeEventListener("popstate", onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
 }
 
 function getSearchParamSnapshot(): string | null {
   return readApplicationFormStyleSearchParam();
 }
 
-function getSearchParamServerSnapshot(): string | null {
+function getStoredSnapshot(): ApplicationFormStyle | null {
+  return readStoredApplicationFormStyle();
+}
+
+function getServerSnapshot(): null {
   return null;
 }
 
@@ -35,16 +52,16 @@ export function useApplicationFormStyle(): {
   switchEnabled: boolean;
 } {
   const searchParam = useSyncExternalStore(
-    subscribeToUrl,
+    subscribeToStyleSources,
     getSearchParamSnapshot,
-    getSearchParamServerSnapshot,
+    getServerSnapshot,
   );
 
-  const [stored, setStored] = useState<ApplicationFormStyle | null>(null);
-
-  useEffect(() => {
-    setStored(readStoredApplicationFormStyle());
-  }, []);
+  const stored = useSyncExternalStore(
+    subscribeToStyleSources,
+    getStoredSnapshot,
+    getServerSnapshot,
+  );
 
   const style = resolveApplicationFormStyle({
     searchParam,
@@ -54,10 +71,8 @@ export function useApplicationFormStyle(): {
 
   const setStyle = useCallback((next: ApplicationFormStyle) => {
     writeStoredApplicationFormStyle(next);
-    setStored(next);
     replaceApplicationFormStyleSearchParam(next);
-    // Notify useSyncExternalStore subscribers (replaceState does not fire popstate).
-    window.dispatchEvent(new Event("popstate"));
+    notifyApplicationFormStyleChanged();
   }, []);
 
   return {

@@ -44,8 +44,8 @@ The switch is an **evaluation tool**, not a candidate-facing product setting. It
 4. Hard default: **`sections`**
 
 Helpers: `lib/utils/application-form-style.ts`  
-Hook: `hooks/useApplicationFormStyle.ts`  
-In-form control: `components/forms/ApplicationFormStyleSwitch.tsx`  
+Hook: `hooks/useApplicationFormStyle.ts` (reads URL + localStorage via `useSyncExternalStore`; notifies via `mhv:application-form-style-changed` — **not** a synthetic `popstate`, so create draft leave-confirm stays quiet)  
+In-form control: `components/forms/ApplicationFormStyleSwitch.tsx` (native radio group)
 
 Show/hide the switch:
 
@@ -81,7 +81,9 @@ Per-step Continue uses the same readiness rules as Save (company/role, CV + vide
 3. Use the **Form layout (F35 test)** control, **or**  
    - `/admin/new?formStyle=wizard`  
    - `/admin/new?formStyle=sections`  
-4. Walk the full journey: draft leave, CV primary/tailored, slug reset, Save & Preview.  
+4. Walk the full journey for the route you opened:  
+   - **Create** (`/admin/new`): draft leave, CV primary/tailored, slug reset, then **Save & Preview**.  
+   - **Edit** (`/admin/edit/[id]`): CV primary/tailored, slug reset, then **Save Application** (edit does not use Save & Preview).  
 5. Flip the switch and repeat — note friction, clarity, and mobile feel.  
 6. Record the decision here (or in the PR) when one layout wins; then remove the switch and the losing shell.
 

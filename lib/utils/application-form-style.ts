@@ -15,8 +15,21 @@ export const APPLICATION_FORM_STYLE_QUERY_PARAM = "formStyle";
 export const APPLICATION_FORM_STYLE_STORAGE_KEY =
   "mhv:application-form-style";
 
+/**
+ * Dispatched after local write / URL replace so subscribers refresh without a
+ * synthetic `popstate` (which `useLeaveConfirm` treats as browser Back).
+ */
+export const APPLICATION_FORM_STYLE_CHANGED_EVENT =
+  "mhv:application-form-style-changed";
+
 /** Default when nothing else is set. */
 export const APPLICATION_FORM_STYLE_DEFAULT: ApplicationFormStyle = "sections";
+
+/** Notify layout-style subscribers after storage or URL updates. */
+export function notifyApplicationFormStyleChanged(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(APPLICATION_FORM_STYLE_CHANGED_EVENT));
+}
 
 export function isApplicationFormStyle(
   value: unknown,
