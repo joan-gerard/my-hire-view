@@ -1,52 +1,21 @@
 # Development journal
 
-Running log of product thinking, implementation decisions, feedback, and completed work. Unlike topic retrospectives (one file per subject), this is a **diary**: append newest entries at the top.
-
-Related deep-dives stay in their own retrospectives when a topic grows large enough (e.g. [APPLICATION_FORM_STEPS_F35.md](APPLICATION_FORM_STEPS_F35.md), [CREATE_APP_DRAFT_AND_LEAVE.md](CREATE_APP_DRAFT_AND_LEAVE.md)).
+A running diary of how the product and codebase are evolving — decisions, doubts, feedback, and what we actually shipped. Newest entries go at the top. When a thread gets big enough to deserve its own home, spin it into a topic retrospective (for example [APPLICATION_FORM_STEPS_F35.md](APPLICATION_FORM_STEPS_F35.md) or [CREATE_APP_DRAFT_AND_LEAVE.md](CREATE_APP_DRAFT_AND_LEAVE.md)); this file stays the narrative spine.
 
 ---
 
-## 2026-10-19 — F35 dual layouts, open questions, incomplete drafts deferred
+## 19 October 2026
 
-### Context
+Picked up the before-launch sequence after F34. The plan says the next user-facing work is F35 (rethink create/edit) and F38 (polish the public `/view` page), so both Trello cards went to In Progress and we focused the day on F35.
 
-Continued before-launch work from [BEFORE_LAUNCH_PR_ORDER.md](../product/BEFORE_LAUNCH_PR_ORDER.md). After F34 branding, next user-facing pair is **F35** (stepped create/edit) and **F38** (`/view` polish). Trello cards for F35/F38 moved to In Progress.
+The create/edit form has been a long scroll for a while — company, role, candidate fields, picture, CV, video, slug, actions, tips. F35’s ask was to stop guessing which pattern is better and try two for real: a wizard (one job per screen) and a one-page accordion of sections. We kept a single shared step map and the same form “brain,” then built two shells around it so draft leave, CV library, and slug preview would not diverge. To flip between them while testing we added a small flag-like switch — query param, then localStorage, then env — rather than two long-lived branches or a Preferences setting candidates would see. Default is sections. The steps themselves are Role → About you → CV & video → Share URL → Review & save. The working notes and checklist live in [APPLICATION_FORM_STEPS_F35.md](APPLICATION_FORM_STEPS_F35.md) on the F35 branch until that PR lands.
 
-### F35 — what we built today
+Once the shells were up, the day became a lot of “what will hurt in manual QA?” We tightened the switch into a real radio group, stopped re-clicking the active option from resetting the form, fixed focus rings, wired accordion `aria-controls`, and made blocked Continue buttons focusable so the reason is not trapped behind `disabled`. A nasty one: notifying the layout store with a fake `popstate` made the create leave-confirm think you hit Back — so style changes now use their own event. Enter in the YouTube field could submit from an intermediate step if everything happened to be valid, so save is limited to Review; when save-time errors fire for fields that are not mounted, we jump to the step that owns them (and we fixed the ordering so earlier steps win). Sections can now collapse entirely, not only swap which one is open.
 
-- **Wish:** Stop using one long create/edit form; evaluate two patterns before locking UX.
-- **Patterns:** (A) wizard — one step per screen; (B) sections — accordion on one page.
-- **Approach:** Shared step map + field brain; two layout shells; **test switch** (`?formStyle=` → localStorage → env → default `sections`) instead of two git branches or a permanent Preferences control.
-- **Step map:** Role → About you → CV & video → Share URL → Review & save.
-- **Fixes while hardening for manual QA:** radio semantics on the switch; skip no-op layout re-clicks; focus rings; accordion `aria-controls`; `aria-disabled` Continue so blocked reasons are reachable; dedicated style-change event (not synthetic `popstate`, which tripped leave-confirm); Enter must not save until Review; submit errors navigate to the owning step; error-step order prefers earlier steps; sections may collapse **all** panels.
-- **Working doc:** [APPLICATION_FORM_STEPS_F35.md](APPLICATION_FORM_STEPS_F35.md) (lives on `feat/f35-application-form-steps` until that PR lands) — includes manual-test checklist and open questions.
+Along the way we talked through product forks we are *not* shipping yet. A Profile preference for wizard vs sections feels like a last resort — only if people ask after launch. Using wizard on create and sections on edit is a more interesting hybrid, because it maps to different jobs; viewport-based splitting (mobile wizard / desktop sections) is useful as a test lens but a shaky default, especially if stacked with other hybrids. Those stances are recorded in the F35 retrospective so we do not re-litigate them cold.
 
-### Product open questions (logged, not shipped)
+Late in the day: should users save a server draft even when required fields are empty, while still blocking go-live until everything is complete? That is the right product instinct — localStorage drafts are not dashboard applications, and Publish today is basically a status flip with no completeness check — but it is the wrong change to land inside F35. Layout A/B and Save/publish rules are different risks. We parked the plan as F40 ([INCOMPLETE_DRAFT_SAVES.md](../product/INCOMPLETE_DRAFT_SAVES.md)) for a separate PR after the layout pick. A related leave-dialog idea (“save draft and leave”) is mostly a wording trap: the browser draft already autosaves; the missing option would be leave-but-keep versus discard, and that stays out of F40 for now.
 
-| Question | Working stance |
-| -------- | -------------- |
-| Profile preference for wizard vs sections? | Last resort, only if real users ask after launch |
-| Wizard on create, sections on edit? | Stronger than a preference; third decision option after testing |
-| Different layout by viewport (mobile/desktop)? | Good test lens; weak default — prefer one responsive shell; avoid stacking hybrids |
+Competitive comparison notes (live edit vs Reslink, PDF badge gap) came up separately; they should not hitch a ride on the F35 layout commits.
 
-### Incomplete server drafts (plan parked — separate PR)
-
-**Ask:** Allow saving a draft even when required fields are empty; apps must not go live without all required fields.
-
-**Decision today:** Do **not** implement on the F35 branch. Layout evaluation and Save/publish rules are different risks; mixing them thrashs review and manual testing.
-
-**Parked as:** before-launch ticket **`F40-124`** / PR group **F40** — plan: [INCOMPLETE_DRAFT_SAVES.md](../product/INCOMPLETE_DRAFT_SAVES.md).
-
-**Rules to implement later:** draft create/update may be incomplete; Publish / `status → active` server-gated on completeness; active edits stay strict.
-
-**Related idea not in F40:** leave-confirm third option (“keep draft and leave”) — localStorage already autosaves; that would be “leave but keep” vs discard, not a new Save. Out of scope for F40.
-
-### Also noted
-
-Competitive comparison doc edits (editable live apps vs Reslink; PDF badge gap) were discussed separately from F35 and should stay out of the F35 layout commit when possible.
-
-### Next
-
-1. Finish F35 manual testing → pick layout (or hybrid) → remove test switch.  
-2. F38 `/view` polish when ready.  
-3. Revisit **F40** incomplete draft saves in its own PR after F35 Save UX is settled.
+Tomorrow’s path is clear enough: finish F35 manual testing, choose a layout (or a deliberate hybrid), remove the test switch; then F38 when ready; then revisit F40 once Save meaning is stable.
