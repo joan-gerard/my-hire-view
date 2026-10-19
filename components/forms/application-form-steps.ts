@@ -34,38 +34,30 @@ const FIELD_TO_STEP: Partial<
   slugNamePosition: "share",
 };
 
-/** Prefer earlier steps when several fields fail at once. */
-const ERROR_FIELD_PRIORITY: (keyof ApplicationFormData)[] = [
-  "company",
-  "role",
-  "cv_url",
-  "video_url",
-  "slug",
-  "first_name",
-  "last_name",
-  "location",
-  "portfolio_url",
-  "linkedin_url",
-];
-
 /**
- * Step that owns the first present form error, or null when there are none.
+ * Step that owns the earliest present form error (by step order), or null
+ * when there are none. Unknown fields fall back to `review`.
  */
 export function applicationFormStepForErrors(
   errors: Partial<Record<keyof ApplicationFormData, string>>,
 ): ApplicationFormStepId | null {
-  for (const field of ERROR_FIELD_PRIORITY) {
-    if (errors[field]) {
-      return FIELD_TO_STEP[field] ?? "review";
-    }
-  }
+  let earliest: ApplicationFormStepId | null = null;
+  let earliestIndex = Number.POSITIVE_INFINITY;
+
   for (const [field, message] of Object.entries(errors)) {
     if (!message) continue;
-    const step = FIELD_TO_STEP[field as keyof ApplicationFormData];
-    if (step) return step;
+    const step =
+      FIELD_TO_STEP[field as keyof ApplicationFormData] ?? "review";
+    const index = APPLICATION_FORM_STEP_IDS.indexOf(step);
+    if (index >= 0 && index < earliestIndex) {
+      earliest = step;
+      earliestIndex = index;
+    }
   }
-  return null;
+
+  return earliest;
 }
+
 export type ApplicationFormStepDef = {
   id: ApplicationFormStepId;
   /** Full section / wizard title */

@@ -28,5 +28,12 @@ describe("applicationFormStepForErrors", () => {
         video_url: "required",
       }),
     ).toBe("materials");
+    // Candidate is before materials — must win over cv_url.
+    expect(
+      applicationFormStepForErrors({
+        first_name: "required",
+        cv_url: "missing",
+      }),
+    ).toBe("candidate");
   });
 });
