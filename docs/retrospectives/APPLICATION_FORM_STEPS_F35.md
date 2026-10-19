@@ -70,7 +70,7 @@ Defined in `components/forms/application-form-steps.ts`. Both layouts render the
 - `ApplicationFormWizardLayout` — step progress, gated Continue, Save on review  
 - `ApplicationFormSectionsLayout` — accordion sections, “Continue to next step”, Save on review  
 
-Per-step Continue uses the same readiness rules as Save (company/role, CV + video, slug available, etc.) so users cannot skip past missing required inputs.
+Per-step **Continue** uses the same readiness rules as Save (company/role, CV + video, slug available, etc.), so users cannot advance via Continue with missing required inputs. In the **sections** shell, accordion headers stay clickable — users can still jump to any step; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
 
 ---
 

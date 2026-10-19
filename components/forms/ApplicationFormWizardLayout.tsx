@@ -5,7 +5,7 @@ import {
   type ApplicationFormStepId,
 } from "@/components/forms/application-form-steps";
 import Button from "@/components/ui/Button";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 export type ApplicationFormStepContentMap = Record<
   ApplicationFormStepId,
@@ -34,6 +34,16 @@ export default function ApplicationFormWizardLayout({
   const isFirst = index <= 0;
   const isLast = index >= APPLICATION_FORM_STEPS.length - 1;
   const canContinue = !continueBlockedReason;
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const skipInitialFocusRef = useRef(true);
+
+  useEffect(() => {
+    if (skipInitialFocusRef.current) {
+      skipInitialFocusRef.current = false;
+      return;
+    }
+    headingRef.current?.focus();
+  }, [currentStepId]);
 
   return (
     <div className="space-y-6">
@@ -69,7 +79,11 @@ export default function ApplicationFormWizardLayout({
           })}
         </ol>
         <div>
-          <h2 className="font-heading text-xl font-semibold tracking-[-0.02em] text-[var(--ink)]">
+          <h2
+            ref={headingRef}
+            tabIndex={-1}
+            className="font-heading text-xl font-semibold tracking-[-0.02em] text-[var(--ink)] outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+          >
             {step.title}
           </h2>
           <p className="mt-1 text-sm text-[var(--muted)]">{step.description}</p>

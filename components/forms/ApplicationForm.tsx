@@ -44,6 +44,7 @@ import ApplicationFormStyleSwitch from "./ApplicationFormStyleSwitch";
 import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
 import {
   APPLICATION_FORM_STEPS,
+  applicationFormStepForErrors,
   type ApplicationFormStepId,
 } from "./application-form-steps";
 import type { CandidateFieldKey } from "./CandidateFieldsSection";
@@ -928,8 +929,20 @@ export default function ApplicationForm({
     runManualSlugValidate,
   ]);
 
+  /** Surface field errors on the step that still mounts those inputs. */
+  const revealFormErrors = (
+    nextErrors: Partial<Record<keyof ApplicationFormData, string>>,
+  ) => {
+    setErrors(nextErrors);
+    const step = applicationFormStepForErrors(nextErrors);
+    if (step) setCurrentStepId(step);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Implicit Enter submit from intermediate steps must not save (no submit
+    // button until Review). Wizard + sections both rely on this gate.
+    if (currentStepId !== "review") return;
     if (formBusy || isSubmittingRef.current || !canSubmit) return;
     isSubmittingRef.current = true;
     setErrors({});
@@ -958,7 +971,7 @@ export default function ApplicationForm({
         newErrors.video_url = "YouTube URL is required";
 
       if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
+        revealFormErrors(newErrors);
         return;
       }
 
@@ -968,7 +981,7 @@ export default function ApplicationForm({
         const formatCheck = validateSlugFormat(slugTrimmed);
         if (!formatCheck.ok) {
           newErrors.slug = formatCheck.error;
-          setErrors(newErrors);
+          revealFormErrors(newErrors);
           return;
         }
 
@@ -990,7 +1003,7 @@ export default function ApplicationForm({
           const msg =
             "Could not verify slug. Check your connection and retry.";
           newErrors.slug = msg;
-          setErrors(newErrors);
+          revealFormErrors(newErrors);
           return;
         }
         const slugValidateJson: { ok?: boolean; error?: string } =
@@ -998,7 +1011,7 @@ export default function ApplicationForm({
         if (slugValidateRes.status === 401) {
           const msg = "Your session expired. Sign in again and retry.";
           newErrors.slug = msg;
-          setErrors(newErrors);
+          revealFormErrors(newErrors);
           setSlugLiveStatus({ kind: "unavailable", message: msg });
           return;
         }
@@ -1007,7 +1020,7 @@ export default function ApplicationForm({
             slugValidateJson.error ||
             "This slug is not available. Change it before saving.";
           newErrors.slug = slugErr;
-          setErrors(newErrors);
+          revealFormErrors(newErrors);
           setSlugLiveStatus({ kind: "unavailable", message: slugErr });
           return;
         }
@@ -1020,7 +1033,7 @@ export default function ApplicationForm({
       if (cvMode === "primary") {
         const primary = primaryCvs.find((m) => m.id === selectedPrimaryId);
         if (!primary) {
-          setErrors({ cv_url: "Select a primary CV" });
+          revealFormErrors({ cv_url: "Select a primary CV" });
           return;
         }
         cvUrl = primary.url;
@@ -1054,7 +1067,7 @@ export default function ApplicationForm({
             });
           } catch {
             // Keep the same idempotency key for retry (F8-063).
-            setErrors({
+            revealFormErrors({
               cv_url: messageForUploadNetworkError("cv"),
             });
             return;
@@ -1072,7 +1085,7 @@ export default function ApplicationForm({
               );
               uploadedPendingFileRef.current = null;
             }
-            setErrors({
+            revealFormErrors({
               cv_url: messageForUploadFailure(
                 "cv",
                 response.status,
@@ -1085,7 +1098,7 @@ export default function ApplicationForm({
             url?: string;
           };
           if (typeof body.url !== "string" || !body.url) {
-            setErrors({
+            revealFormErrors({
               cv_url: messageForUploadFailure("cv", 500, null),
             });
             return;

@@ -5,7 +5,7 @@ import {
   type ApplicationFormStepId,
 } from "@/components/forms/application-form-steps";
 import Button from "@/components/ui/Button";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 
 export type ApplicationFormStepContentMap = Record<
@@ -17,12 +17,12 @@ interface ApplicationFormSectionsLayoutProps {
   stepContents: ApplicationFormStepContentMap;
   openStepId: ApplicationFormStepId;
   onOpenStepChange: (id: ApplicationFormStepId) => void;
-  /** Steps the user has confirmed via Continue (or jumped back from). */
+  /** Steps the user has confirmed via Continue. */
   completedStepIds: ReadonlySet<ApplicationFormStepId>;
   onConfirmStep: (id: ApplicationFormStepId) => void;
   /** When set for the open step, Continue is blocked. */
   continueBlockedReason?: string | null;
-  /** Whether a step has the minimum required inputs (shown as a check). */
+  /** Whether a step has the minimum required inputs. */
   stepReady: (id: ApplicationFormStepId) => boolean;
   actions: ReactNode;
 }
@@ -37,12 +37,26 @@ export default function ApplicationFormSectionsLayout({
   stepReady,
   actions,
 }: ApplicationFormSectionsLayoutProps) {
+  const headerRefs = useRef(
+    new Map<ApplicationFormStepId, HTMLButtonElement>(),
+  );
+  const skipInitialFocusRef = useRef(true);
+
+  useEffect(() => {
+    if (skipInitialFocusRef.current) {
+      skipInitialFocusRef.current = false;
+      return;
+    }
+    headerRefs.current.get(openStepId)?.focus();
+  }, [openStepId]);
+
   return (
     <div className="space-y-3">
       {APPLICATION_FORM_STEPS.map((step, index) => {
         const open = step.id === openStepId;
-        const completed = completedStepIds.has(step.id);
         const ready = stepReady(step.id);
+        /** Confirmed and still valid — drop the check if the user invalidates fields. */
+        const showComplete = completedStepIds.has(step.id) && ready;
         const isLast = index === APPLICATION_FORM_STEPS.length - 1;
         const canContinue = !continueBlockedReason;
         const panelId = `application-form-section-panel-${step.id}`;
@@ -55,6 +69,10 @@ export default function ApplicationFormSectionsLayout({
             <h2 className="m-0">
               <button
                 type="button"
+                ref={(el) => {
+                  if (el) headerRefs.current.set(step.id, el);
+                  else headerRefs.current.delete(step.id);
+                }}
                 onClick={() => onOpenStepChange(step.id)}
                 aria-expanded={open}
                 aria-controls={panelId}
@@ -62,13 +80,13 @@ export default function ApplicationFormSectionsLayout({
               >
                 <span
                   className={
-                    completed || ready
+                    showComplete
                       ? "flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-xs font-semibold text-[var(--white)]"
                       : "flex size-7 shrink-0 items-center justify-center rounded-full border border-[var(--ink)]/15 text-xs font-semibold text-[var(--muted)]"
                   }
                   aria-hidden
                 >
-                  {completed || ready ? (
+                  {showComplete ? (
                     <FiCheck className="size-3.5" strokeWidth={2.5} />
                   ) : (
                     index + 1
