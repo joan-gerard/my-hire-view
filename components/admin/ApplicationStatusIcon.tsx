@@ -201,12 +201,29 @@ export function MissingCvBadge() {
  * Inline chip when show-picture is on but the account has no photo.
  * Cool blue wash (distinct from CV missing pink). Links to Profile to add one.
  */
+const MISSING_PROFILE_PICTURE_BADGE_CLASS =
+  "inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--status-dot-active)]/50 bg-[var(--status-wash-active)] px-2 py-0.5 text-xs font-medium text-[var(--ink)]";
+
+/** Non-interactive marker for the status legend (description sits beside it). */
+export function MissingProfilePictureLegendMarker() {
+  return (
+    <span className={MISSING_PROFILE_PICTURE_BADGE_CLASS} aria-hidden>
+      {WARNING_ICON}
+      {PROFILE_PICTURE_MISSING_LEGEND.label}
+    </span>
+  );
+}
+
+/**
+ * Inline chip when show-picture is on but the account has no photo.
+ * Cool blue wash (distinct from CV missing pink). Links to Profile to add one.
+ */
 export function MissingProfilePictureBadge() {
   return (
     <Link
       href="/admin/profile"
-      className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--status-dot-active)]/50 bg-[var(--status-wash-active)] px-2 py-0.5 text-xs font-medium text-[var(--ink)] hover:bg-[var(--status-dot-active)]/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-      title={`${PROFILE_PICTURE_MISSING_LEGEND.description} Open Profile to add a picture.`}
+      className={`${MISSING_PROFILE_PICTURE_BADGE_CLASS} hover:bg-[var(--status-dot-active)]/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]`}
+      title={PROFILE_PICTURE_MISSING_LEGEND.description}
       aria-label="Profile picture missing. Open Profile to add a picture."
     >
       {WARNING_ICON}

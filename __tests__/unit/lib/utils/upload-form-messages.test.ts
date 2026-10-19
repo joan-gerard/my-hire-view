@@ -68,6 +68,11 @@ describe("messageForProfileSaveWarning", () => {
     ).toMatch(/account name/i);
     expect(
       messageForProfileSaveWarning(
+        "Saved profile but failed to sync name to account metadata",
+      ),
+    ).not.toMatch(/picture was saved/i);
+    expect(
+      messageForProfileSaveWarning(
         "Saved profile but failed to delete the previous profile picture from storage",
       ),
     ).toMatch(/previous picture/i);

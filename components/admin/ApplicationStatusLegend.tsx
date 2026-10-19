@@ -11,7 +11,7 @@ import {
 import {
   ApplicationStatusIconBadge,
   MissingCvBadge,
-  MissingProfilePictureBadge,
+  MissingProfilePictureLegendMarker,
 } from '@/components/admin/ApplicationStatusIcon';
 import {
   ADMIN_PANEL_CLASS,
@@ -179,8 +179,8 @@ export default function ApplicationStatusLegend({
                 </div>
               </li>
               <li className="flex items-start gap-3 px-1 py-3 last:pb-1">
-                <div className="flex h-9 shrink-0 items-center" aria-hidden>
-                  <MissingProfilePictureBadge />
+                <div className="flex h-9 shrink-0 items-center">
+                  <MissingProfilePictureLegendMarker />
                 </div>
                 <div className="min-w-0 pt-1">
                   <p className="text-sm font-medium leading-snug text-[var(--ink)]">

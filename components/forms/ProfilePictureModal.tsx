@@ -446,7 +446,7 @@ export default function ProfilePictureModal({
               loading={loading}
               loadingLabel={primaryLoadingLabel}
               disabled={!canSave}
-              className="w-full min-[400px]:w-auto"
+              className="min-h-11 w-full min-[400px]:w-auto"
               onClick={() => void handleSave()}
             >
               {primaryLabel}
@@ -456,7 +456,7 @@ export default function ProfilePictureModal({
               variant="secondary"
               shape="rounded"
               disabled={loading}
-              className="w-full min-[400px]:w-auto"
+              className="min-h-11 w-full min-[400px]:w-auto"
               onClick={requestClose}
             >
               {dismissLabel}

@@ -14,7 +14,7 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 - [ ] With at least one application, `/admin` header shows a **What do these icons mean?** button (next to Applications)
 - [ ] Clicking it opens a modal titled **Status icons & draft actions**
 - [ ] Intro copy mentions changing indicator style under **Account settings → Preferences** (link closes the modal, goes to `/admin/profile`, and opens the Preferences tab)
-- [ ] Modal lists: Draft, Active (not viewed yet), Active (viewed), Archived, and CV missing — with markers matching the current Preferences tab style / CV missing badge
+- [ ] Modal lists: Draft, Active (not viewed yet), Active (viewed), Archived, **CV missing**, and **Picture missing** — with markers matching the current Preferences tab style / card badges (Picture missing is cool blue, distinct from pink CV missing)
 - [ ] Same modal explains draft actions: **Publish**, **Preview**, **Publish to share**
 - [ ] Close via **Close** button, Escape, or backdrop click; focus returns to the page
 - [ ] On open, focus moves into the modal on the heading (not the Close button). Mouse open should not show a selection-style ring; a `focus-visible` outline remains available for keyboard focus indication

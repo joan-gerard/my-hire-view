@@ -176,6 +176,9 @@ export default function ApplicationForm({
   const cvModeUserChosenRef = useRef(
     Boolean(restoredDraft?.cvModeUserChosen),
   );
+  const showProfilePictureUserChosenRef = useRef(
+    Boolean(restoredDraft?.showProfilePictureUserChosen),
+  );
   /** After a successful create, ignore further draft writes (F15-045). */
   const skipDraftSaveRef = useRef(false);
   /** Disarm leave confirm after discard or successful save. */
@@ -531,6 +534,7 @@ export default function ApplicationForm({
         slugNamePosition,
         slugManuallyEdited,
         showProfilePicture,
+        showProfilePictureUserChosen: showProfilePictureUserChosenRef.current,
         cvMode,
         cvModeUserChosen: cvModeUserChosenRef.current,
         selectedPrimaryId,
@@ -573,6 +577,7 @@ export default function ApplicationForm({
     slugNamePosition,
     slugManuallyEdited,
     showProfilePicture,
+    showProfilePictureUserChosen: showProfilePictureUserChosenRef.current,
     cvMode,
     cvModeUserChosen: cvModeUserChosenRef.current,
     selectedPrimaryId,
@@ -1303,7 +1308,10 @@ export default function ApplicationForm({
         lastName={formData.last_name}
         onProfilePictureSaved={onProfilePictureSaved}
         showProfilePicture={showProfilePicture}
-        onShowProfilePictureChange={setShowProfilePicture}
+        onShowProfilePictureChange={(next) => {
+          showProfilePictureUserChosenRef.current = true;
+          setShowProfilePicture(next);
+        }}
       />
     </>
   );

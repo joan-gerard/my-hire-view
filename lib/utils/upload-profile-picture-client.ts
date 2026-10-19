@@ -12,7 +12,10 @@ export type ProfilePictureUploadResult =
   | { ok: true; url: string; warning?: string }
   | { ok: false; error: string };
 
-/** Stalled upload/PUT ceiling before the user is unblocked with a retry message. */
+/**
+ * Total elapsed ceiling for upload/PUT (includes response body read).
+ * Not an inactivity / stall-only timer — slow large uploads can still hit this.
+ */
 export const PROFILE_PICTURE_REQUEST_TIMEOUT_MS = 30_000;
 
 function asUploadJson(value: unknown): {
@@ -39,7 +42,8 @@ function isAbortError(error: unknown): boolean {
 
 /**
  * POST /api/upload/profile-picture and map failures to friendly Save copy.
- * Aborts after {@link PROFILE_PICTURE_REQUEST_TIMEOUT_MS} if the server is silent.
+ * Aborts after {@link PROFILE_PICTURE_REQUEST_TIMEOUT_MS} total elapsed time
+ * (fetch + JSON body), not only while waiting for response headers.
  */
 export async function uploadProfilePictureFile(
   file: File,
@@ -52,13 +56,42 @@ export async function uploadProfilePictureFile(
     controller.abort();
   }, PROFILE_PICTURE_REQUEST_TIMEOUT_MS);
 
-  let uploadRes: Response;
   try {
-    uploadRes = await fetch("/api/upload/profile-picture", {
+    const uploadRes = await fetch("/api/upload/profile-picture", {
       method: "POST",
       body: fd,
       signal: controller.signal,
     });
+
+    const uploadJson = asUploadJson(
+      await uploadRes.json().catch(() => ({})),
+    );
+
+    if (!uploadRes.ok) {
+      return {
+        ok: false,
+        error: messageForUploadFailure(
+          "profile-picture",
+          uploadRes.status,
+          uploadJson.error,
+        ),
+      };
+    }
+
+    const url = typeof uploadJson.url === "string" ? uploadJson.url : null;
+    if (!url) {
+      return {
+        ok: false,
+        error: messageForUploadFailure("profile-picture", 500, null),
+      };
+    }
+
+    const warning =
+      typeof uploadJson.warning === "string" && uploadJson.warning.trim()
+        ? uploadJson.warning.trim()
+        : undefined;
+
+    return warning ? { ok: true, url, warning } : { ok: true, url };
   } catch (error) {
     if (isAbortError(error) || controller.signal.aborted) {
       return {
@@ -70,40 +103,10 @@ export async function uploadProfilePictureFile(
   } finally {
     clearTimeout(timeoutId);
   }
-
-  const uploadJson = asUploadJson(
-    await uploadRes.json().catch(() => ({})),
-  );
-
-  if (!uploadRes.ok) {
-    return {
-      ok: false,
-      error: messageForUploadFailure(
-        "profile-picture",
-        uploadRes.status,
-        uploadJson.error,
-      ),
-    };
-  }
-
-  const url = typeof uploadJson.url === "string" ? uploadJson.url : null;
-  if (!url) {
-    return {
-      ok: false,
-      error: messageForUploadFailure("profile-picture", 500, null),
-    };
-  }
-
-  const warning =
-    typeof uploadJson.warning === "string" && uploadJson.warning.trim()
-      ? uploadJson.warning.trim()
-      : undefined;
-
-  return warning ? { ok: true, url, warning } : { ok: true, url };
 }
 
 /**
- * PUT helper with the same timeout ceiling as upload (profile picture save).
+ * PUT helper with the same total-elapsed ceiling as upload (profile picture save).
  */
 export async function putProfilePictureUrl(
   profilePictureUrl: string | null,

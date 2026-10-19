@@ -58,6 +58,7 @@ describe("leaveRelevantDraftSnapshot", () => {
     slugNamePosition: null as "start" | "end" | null,
     slugManuallyEdited: false,
     showProfilePicture: true,
+    showProfilePictureUserChosen: false,
     cvMode: "primary" as ApplicationCvType,
     cvModeUserChosen: false,
     selectedPrimaryId: "cv-1",

@@ -63,6 +63,7 @@ export function leaveRelevantDraftSnapshot(
     slugManuallyEdited: draft.slugManuallyEdited,
     slug: draft.slugManuallyEdited ? draft.slug : null,
     showProfilePicture: draft.showProfilePicture,
+    showProfilePictureUserChosen: draft.showProfilePictureUserChosen,
     use_original_cv_filename: draft.use_original_cv_filename,
     cvModeUserChosen: draft.cvModeUserChosen,
     cvMode: draft.cvModeUserChosen ? draft.cvMode : null,

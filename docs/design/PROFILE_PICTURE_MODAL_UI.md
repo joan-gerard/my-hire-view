@@ -34,7 +34,7 @@ Tokens from `app/globals.css` (F34).
 | Loading | **Uploading…** → **Saving…**, or **Removing…** |
 | Dismiss | **Cancel** / **Close** (when notice or error and not dirty) |
 | Discard confirm | Discard picture changes? / Your picture changes aren’t saved yet. Discard them? / **Discard** · **Keep editing** |
-| Live region examples | `New picture selected: {filename}. Not saved yet.` · `New picture discarded…` · `Picture marked for removal…` · `Removal cancelled.` · `Uploading…` / `Saving…` / `Removing…` |
+| Live region examples | `New picture selected: {filename}. Not saved yet.` · `New picture discarded…` · `Picture marked for removal…` · `Uploading…` / `Saving…` / `Removing…` |
 | Errors | Please choose a JPEG, PNG or WebP image. · Image must be 5 MB or smaller. · That took too long… · Couldn’t save… · upload/API errors |
 | Warnings | Mapped via `mapProfileSaveWarnings` (plain sentences + generic fallback) — never raw API strings |
 
@@ -53,7 +53,7 @@ Tokens from `app/globals.css` (F34).
 ### Dismiss
 
 - Dirty → discard confirm; Escape blocked while loading; Escape on confirm closes confirm only.
-- Valid new file / **Discard new** / **Remove** / **Undo** clear notice/error as appropriate.
+- Valid new file / **Discard new** / **Remove** clear notice/error as appropriate.
 - Invalid file sets error only (pending unchanged).
 
 ### Vertical order
@@ -66,8 +66,9 @@ Tokens from `app/globals.css` (F34).
 
 ### Responsive (`min-[400px]`)
 
-- Narrow: column media; footer column with Save/Remove and save on top, Cancel/Close below.
-- Wide: row media; footer row `justify-end`, primary then dismiss (primary left of dismiss in the end group).
+- Media stays stacked (avatar + edge controls) at all widths.
+- Narrow: footer column with Save/Remove on top, Cancel/Close below.
+- Wide (`min-[400px]`): footer row `justify-end`, primary then dismiss (primary left of dismiss in the end group).
 
 ---
 

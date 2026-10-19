@@ -64,16 +64,17 @@ export function messageForUploadNetworkError(kind: UploadFormKind): string {
 }
 
 const PROFILE_SAVE_WARNING_FALLBACK =
-  "Your picture was saved, but something else needs attention. Check your profile or try again.";
+  "Your profile was saved, but something else needs attention. Check your profile or try again.";
 
 /**
  * Map raw `PUT /api/profile` / upload warning strings to plain user-facing copy.
+ * Name-sync / fallback copy stays picture-neutral (Profile also saves without a picture change).
  */
 export function messageForProfileSaveWarning(raw: string): string {
   const text = raw.trim();
   if (!text) return PROFILE_SAVE_WARNING_FALLBACK;
   if (/failed to sync name/i.test(text)) {
-    return "Your picture was saved, but we couldn’t update your account name. Open Profile and save again if your name looks wrong.";
+    return "Your profile was saved, but we couldn’t update your account name. Save again if your name looks wrong.";
   }
   if (/could not verify the current picture/i.test(text)) {
     return "Your picture was saved, but we couldn’t finish storage cleanup. Your picture should still work.";

@@ -43,6 +43,12 @@ export type CreateApplicationDraft = {
   slugNamePosition: "start" | "end" | null;
   slugManuallyEdited: boolean;
   showProfilePicture: boolean;
+  /**
+   * True when the user explicitly set show/hide picture (vs the default that
+   * follows whether a live photo exists). Keeps a create draft when No is the
+   * only change.
+   */
+  showProfilePictureUserChosen: boolean;
   cvMode: ApplicationCvType;
   /** True only when the user (or an explicit prior choice) picked the CV source. */
   cvModeUserChosen: boolean;
@@ -211,6 +217,12 @@ export function parseCreateApplicationDraft(
     cvModeUserChosen = obj.cvMode === "tailored";
   }
 
+  // Older drafts omit the flag; treat as not explicitly chosen.
+  const showProfilePictureUserChosen =
+    typeof obj.showProfilePictureUserChosen === "boolean"
+      ? obj.showProfilePictureUserChosen
+      : false;
+
   return {
     v: CREATE_APPLICATION_DRAFT_VERSION,
     savedAt: obj.savedAt,
@@ -227,6 +239,7 @@ export function parseCreateApplicationDraft(
     slugNamePosition: obj.slugNamePosition,
     slugManuallyEdited: obj.slugManuallyEdited,
     showProfilePicture: obj.showProfilePicture,
+    showProfilePictureUserChosen,
     cvMode: obj.cvMode,
     cvModeUserChosen,
     selectedPrimaryId: obj.selectedPrimaryId,
@@ -247,10 +260,9 @@ export function isCreateApplicationDraftBlank(
     !draft.role.trim() &&
     !draft.video_url.trim() &&
     !draft.cvModeUserChosen &&
+    !draft.showProfilePictureUserChosen &&
     !draft.slugManuallyEdited &&
     draft.slugNamePosition == null &&
-    // Show-picture default follows whether a live photo exists; either Yes or
-    // No alone is not "progress" that should keep a create draft.
     draft.use_original_cv_filename === true;
 
   const noPersonalProgress =
@@ -317,6 +329,7 @@ export function saveCreateApplicationDraft(
       slugNamePosition: draft.slugNamePosition,
       slugManuallyEdited: draft.slugManuallyEdited,
       showProfilePicture: draft.showProfilePicture,
+      showProfilePictureUserChosen: draft.showProfilePictureUserChosen,
       cvMode: draft.cvMode,
       cvModeUserChosen: draft.cvModeUserChosen,
       selectedPrimaryId: draft.selectedPrimaryId,

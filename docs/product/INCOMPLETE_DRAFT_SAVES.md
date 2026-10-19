@@ -12,7 +12,7 @@ Parked implementation plan. Revisit after F35 layout decision so Save/publish be
 
 Today, create cannot persist a real application until company, role, slug, CV, and video all pass client + API checks ([`lib/validation/application.ts`](../../lib/validation/application.ts) `applicationCreateSchema`; [`ApplicationForm`](../../components/forms/ApplicationForm.tsx) `canSubmit`). LocalStorage draft (F15) is not a dashboard application. Meanwhile **Publish** is only `PUT { id, status: "active" }` ([`publishApplication`](../../lib/api/applications.ts)) with **no** completeness check — so relaxing create without hardening publish would be unsafe.
 
-DB columns `company`, `role`, `slug`, `cv_url`, `video_url` are `NOT NULL` ([`001_initial_schema.sql`](../../supabase/migrations/001_initial_schema.sql)). Empty string `''` satisfies NOT NULL; prefer that for missing draft fields rather than a nullable migration.
+DB columns `company`, `role`, `slug`, `cv_url`, `video_url` are `NOT NULL` ([`001_initial_schema.sql`](../../supabase/migrations/001_initial_schema.sql)). Empty string `''` works for missing company/role/slug/video, but **`cv_url = ''` collides** with partial unique index `applications_user_id_tailored_cv_url_key` on `(user_id, cv_url) WHERE cv_type = 'tailored'` ([`026_applications_tailored_cv_url_unique.sql`](../../supabase/migrations/026_applications_tailored_cv_url_unique.sql)) — `cv_type` defaults to `'tailored'`, so a user’s second CV-less draft would fail insert. For missing draft CVs prefer **`cv_url` NULL** (index allows NULL) via a nullable `cv_url` migration, **or** exclude empty URLs from that index. Do not store `''` for missing tailored `cv_url`.
 
 ---
 
@@ -59,7 +59,7 @@ Add `getApplicationPublishBlockers(app)` (e.g. in [`lib/validation/application.t
 
 ### 2. API validation
 
-- **POST create:** If `status` is `draft` (default) or omitted → relax zod so company/role/cv_url/video_url may be empty; if slug missing/blank, server generates a unique placeholder (e.g. `draft-{shortid}`). Skip tailored-CV ownership / in-use checks when `cv_url` is empty. If caller sends `status: "active"`, keep **strict** create schema.
+- **POST create:** If `status` is `draft` (default) or omitted → relax zod so company/role/cv_url/video_url may be empty; if slug missing/blank, server generates a unique placeholder (e.g. `draft-{shortid}`). Persist missing CV as **`cv_url: null`** (after nullable migration) or ensure empty URLs are excluded from the tailored unique index — not `''`. Skip tailored-CV ownership / in-use checks when `cv_url` is null/empty. If caller sends `status: "active"`, keep **strict** create schema.
 - **PUT update:** When resulting status would be `active`, after merge with existing row run completeness helper; 400 listing what’s missing. When staying as `draft`, allow empties. Publishing-only body `{ id, status: "active" }` must load the row and run the same gate (fixes the current hole).
 
 ### 3. Client form
@@ -78,7 +78,7 @@ Add `getApplicationPublishBlockers(app)` (e.g. in [`lib/validation/application.t
 
 - Leave-confirm third option (“keep local draft and leave”)
 - Profile preference for form layout
-- Making DB columns nullable
+- Making company/role/slug/video_url nullable (missing draft **`cv_url` NULL** is in scope if chosen over an index change)
 - Auto-publish or changing public `/view` stub behavior for drafts
 
 ---

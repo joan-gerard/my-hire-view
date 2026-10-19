@@ -95,7 +95,7 @@ F35 / F38
 
 **Why this beats “easiest first”:**
 
-1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, F35→F40 (Save UX), E4→E1→E2, L6/I2→F30 are real; ignore them and you thrash.
+1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, E4→E1→E2, L6/I2→F30 are real; ignore them and you thrash. Prefer F40 after F35 layout pick when possible (soft ordering, not a hard gate — see sequence above).
 2. **Risk before paint** — API/storage races before branding.
 3. **Reviews stay useful** — F28/F39/F29/F30 after the bulk of pre-launch code, not before.
 4. **Monetization last** — backlog already defers E1/E2 until launch is imminent; E4 only updates the draft.

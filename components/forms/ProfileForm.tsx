@@ -74,6 +74,13 @@ export default function ProfileForm({
   });
   /** File chosen locally; uploaded only on Save. */
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  /**
+   * URL from a successful upload kept across Save retries so a failed PUT
+   * does not orphan another UUID object on each attempt.
+   */
+  const [uploadedPendingUrl, setUploadedPendingUrl] = useState<string | null>(
+    null,
+  );
   const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
   /** True when user cleared the picture (will send null on Save). */
   const [pictureRemoved, setPictureRemoved] = useState(false);
@@ -164,11 +171,18 @@ export default function ProfileForm({
     setError(null);
     setWarning(null);
     setPictureRemoved(false);
+    setUploadedPendingUrl(null);
     setPendingFile(file);
+  };
+
+  const handleDiscardNewPicture = () => {
+    setPendingFile(null);
+    setUploadedPendingUrl(null);
   };
 
   const handleRemovePicture = () => {
     setPendingFile(null);
+    setUploadedPendingUrl(null);
     setPictureRemoved(true);
   };
 
@@ -177,21 +191,27 @@ export default function ProfileForm({
     if (!canSave) return;
     setError(null);
     setWarning(null);
-    setSubmitPhase(pendingFile ? "uploading" : "saving");
+    const needsUpload = Boolean(pendingFile) && !uploadedPendingUrl;
+    setSubmitPhase(needsUpload ? "uploading" : "saving");
     try {
       let profilePictureUrl: string | null | undefined = undefined;
       let uploadWarning: string | undefined;
       if (pictureRemoved && !pendingFile) {
         profilePictureUrl = null;
       } else if (pendingFile) {
-        const upload = await uploadProfilePictureFile(pendingFile);
-        if (!upload.ok) {
-          setError(upload.error);
-          return;
+        if (uploadedPendingUrl) {
+          profilePictureUrl = uploadedPendingUrl;
+        } else {
+          const upload = await uploadProfilePictureFile(pendingFile);
+          if (!upload.ok) {
+            setError(upload.error);
+            return;
+          }
+          profilePictureUrl = upload.url;
+          setUploadedPendingUrl(upload.url);
+          uploadWarning = upload.warning;
+          setSubmitPhase("saving");
         }
-        profilePictureUrl = upload.url;
-        uploadWarning = upload.warning;
-        setSubmitPhase("saving");
       }
 
       const body: Record<string, string | null> = {
@@ -233,6 +253,7 @@ export default function ProfileForm({
         );
       }
       setPendingFile(null);
+      setUploadedPendingUrl(null);
       setPictureRemoved(false);
       notifyOnboardingChecklistChanged();
       router.refresh();
@@ -274,9 +295,15 @@ export default function ProfileForm({
                   }
                   onChooseOrChange={() => fileInputRef.current?.click()}
                   onRemove={
-                    hasProfilePicture ? handleRemovePicture : undefined
+                    pendingFile
+                      ? handleDiscardNewPicture
+                      : hasProfilePicture
+                        ? handleRemovePicture
+                        : undefined
                   }
-                  removeLabel="Remove picture"
+                  removeLabel={
+                    pendingFile ? "Discard new picture" : "Remove picture"
+                  }
                 >
                   <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-full bg-[var(--lime)] text-[var(--ink)] sm:h-40 sm:w-40">
                     {hasProfilePicture ? (
@@ -498,6 +525,7 @@ export default function ProfileForm({
               loading={loading}
               loadingLabel={saveLoadingLabel}
               disabled={!canSave}
+              className="min-h-11"
               aria-describedby={
                 disabledReason ? "save-profile-disabled-reason" : undefined
               }

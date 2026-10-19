@@ -3,6 +3,7 @@ import { uploadProfilePictureFile } from "@/lib/utils/upload-profile-picture-cli
 
 describe("uploadProfilePictureFile", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -99,6 +100,5 @@ describe("uploadProfilePictureFile", () => {
     if (!result.ok) {
       expect(result.error).toMatch(/took too long/i);
     }
-    vi.useRealTimers();
   });
 });

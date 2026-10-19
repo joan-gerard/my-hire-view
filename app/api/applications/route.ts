@@ -1,7 +1,7 @@
 import { withAuth } from "@/lib/api/with-auth";
 import {
   ensureProfilePublicId,
-  resolvePublicIdReadOnly,
+  resolvePublicIdFromLoadedProfile,
 } from "@/lib/auth/ensure-public-id";
 import {
   checkRateLimit,
@@ -113,27 +113,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const publicId = await resolvePublicIdReadOnly(supabase, user);
     const rows = data ?? [];
-    const existence = await Promise.all(
-      rows.map((row) => checkCvObjectExists(row.cv_url)),
-    );
+    const [{ data: profile, error: profileError }, existence] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("public_id, profile_picture_url")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        Promise.all(rows.map((row) => checkCvObjectExists(row.cv_url))),
+      ]);
 
-    const anyShowPicture = rows.some(
-      (row) => row.show_profile_picture === true,
-    );
-    let hasLiveProfilePicture = false;
-    if (anyShowPicture) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("profile_picture_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      hasLiveProfilePicture = Boolean(
-        typeof profile?.profile_picture_url === "string" &&
-          profile.profile_picture_url.trim(),
+    if (profileError) {
+      console.error("GET /api/applications profile:", profileError);
+      return NextResponse.json(
+        { error: profileError.message },
+        { status: 500 },
       );
     }
+
+    const publicId = resolvePublicIdFromLoadedProfile(profile, user);
+    const hasLiveProfilePicture = Boolean(
+      typeof profile?.profile_picture_url === "string" &&
+        profile.profile_picture_url.trim(),
+    );
 
     const items = rows.map((row, i) => {
       const { show_profile_picture, ...listFields } = row;

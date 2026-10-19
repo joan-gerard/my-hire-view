@@ -39,6 +39,7 @@ function sampleDraft(
     slugNamePosition: null,
     slugManuallyEdited: false,
     showProfilePicture: true,
+    showProfilePictureUserChosen: false,
     cvMode: "primary",
     cvModeUserChosen: false,
     selectedPrimaryId: "cv-1",
@@ -151,6 +152,7 @@ describe("isCreateApplicationDraftBlank", () => {
         slugNamePosition: null,
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
@@ -159,7 +161,7 @@ describe("isCreateApplicationDraftBlank", () => {
     ).toBe(true);
   });
 
-  it("treats empty create form as blank when showProfilePicture is false", () => {
+  it("treats empty create form as blank when showProfilePicture is false without an explicit choice", () => {
     expect(
       isCreateApplicationDraftBlank({
         company: "",
@@ -181,12 +183,44 @@ describe("isCreateApplicationDraftBlank", () => {
         slugNamePosition: null,
         slugManuallyEdited: false,
         showProfilePicture: false,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
         use_original_cv_filename: true,
       }),
     ).toBe(true);
+  });
+
+  it("keeps a draft when showProfilePicture No was explicitly chosen", () => {
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "",
+        last_name: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: false,
+          last_name: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugNamePosition: null,
+        slugManuallyEdited: false,
+        showProfilePicture: false,
+        showProfilePictureUserChosen: true,
+        cvMode: "primary",
+        cvModeUserChosen: false,
+        selectedPrimaryId: null,
+        use_original_cv_filename: true,
+      }),
+    ).toBe(false);
   });
 
   it("treats auto slug and automatic primary selection as blank", () => {
@@ -211,6 +245,7 @@ describe("isCreateApplicationDraftBlank", () => {
         slugNamePosition: null,
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: "cv-auto",
@@ -241,6 +276,7 @@ describe("isCreateApplicationDraftBlank", () => {
         slugNamePosition: null,
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
@@ -269,6 +305,7 @@ describe("isCreateApplicationDraftBlank", () => {
         slugNamePosition: null,
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "tailored",
         cvModeUserChosen: true,
         selectedPrimaryId: null,
@@ -298,6 +335,7 @@ describe("isCreateApplicationDraftBlank", () => {
         slugNamePosition: null,
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "tailored",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
@@ -328,6 +366,7 @@ describe("isCreateApplicationDraftBlank", () => {
         slugNamePosition: null,
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
@@ -371,6 +410,7 @@ describe("load/save/clearCreateApplicationDraft", () => {
         slugNamePosition: null,
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
