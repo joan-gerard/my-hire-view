@@ -35,9 +35,17 @@ import {
   hasLeaveRelevantDraftChanges,
   leaveRelevantDraftSnapshot,
 } from "@/lib/utils/leave-confirm";
+import { useApplicationFormStyle } from "@/hooks/useApplicationFormStyle";
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
+import ApplicationFormSectionsLayout from "./ApplicationFormSectionsLayout";
+import ApplicationFormStyleSwitch from "./ApplicationFormStyleSwitch";
+import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
+import {
+  APPLICATION_FORM_STEPS,
+  type ApplicationFormStepId,
+} from "./application-form-steps";
 import type { CandidateFieldKey } from "./CandidateFieldsSection";
 import CandidateFieldsSection from "./CandidateFieldsSection";
 import CvSourceField from "./CvSourceField";
@@ -133,6 +141,16 @@ export default function ApplicationForm({
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
+  const {
+    style: formStyle,
+    setStyle: setFormStyle,
+    switchEnabled: formStyleSwitchEnabled,
+  } = useApplicationFormStyle();
+  const [currentStepId, setCurrentStepId] =
+    useState<ApplicationFormStepId>("role");
+  const [completedStepIds, setCompletedStepIds] = useState<
+    Set<ApplicationFormStepId>
+  >(() => new Set());
 
   /** Load once per mount; ignore later key changes while the form is open. */
   const restoredDraftRef = useRef<CreateApplicationDraft | null | undefined>(
@@ -1157,15 +1175,108 @@ export default function ApplicationForm({
     setInclude((prev) => ({ ...prev, [field]: included }));
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+  const stepReady = (id: ApplicationFormStepId): boolean => {
+    switch (id) {
+      case "role":
+        return hasCompany && hasRole;
+      case "candidate":
+        return true;
+      case "materials":
+        return hasCv && hasVideo;
+      case "share":
+        return slugReady;
+      case "review":
+        return requiredReady;
+      default:
+        return false;
+    }
+  };
+
+  const continueBlockedReasonFor = (
+    id: ApplicationFormStepId,
+  ): string | null => {
+    if (formBusy) return "Please wait until the current action finishes.";
+    switch (id) {
+      case "role":
+        if (!hasCompany) return "Company name is required.";
+        if (!hasRole) return "Role is required.";
+        return null;
+      case "candidate":
+        return null;
+      case "materials":
+        if (!hasCv) {
+          return cvMode === "primary"
+            ? "Select a primary CV, or upload a tailored CV."
+            : "Upload a CV file for this application.";
+        }
+        if (!hasVideo) return "YouTube URL is required.";
+        return null;
+      case "share":
+        if (slugLiveStatus.kind === "checking") {
+          return "Please wait until the slug has finished updating.";
+        }
+        if (slugLiveStatus.kind === "invalid") {
+          return slugLiveStatus.message || "Fix the slug before continuing.";
+        }
+        if (slugLiveStatus.kind === "unavailable") {
+          return (
+            slugLiveStatus.message ||
+            "This slug is not available. Change it before continuing."
+          );
+        }
+        if (!hasSlug) return "Slug is required.";
+        if (!slugReady) return "Wait until the slug is available.";
+        return null;
+      case "review":
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const markStepCompleteAndAdvance = (id: ApplicationFormStepId) => {
+    const index = APPLICATION_FORM_STEPS.findIndex((s) => s.id === id);
+    if (index < 0) return;
+    setCompletedStepIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    const nextStep = APPLICATION_FORM_STEPS[index + 1];
+    if (nextStep) setCurrentStepId(nextStep.id);
+  };
+
+  const roleStep = (
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <Input
+        label="Company Name *"
+        value={formData.company}
+        onChange={(e) =>
+          setFormData((prev) => ({ ...prev, company: e.target.value }))
+        }
+        error={errors.company}
+        required
+      />
+      <Input
+        label="Role/Position *"
+        value={formData.role}
+        onChange={(e) =>
+          setFormData((prev) => ({ ...prev, role: e.target.value }))
+        }
+        error={errors.role}
+        required
+      />
+    </div>
+  );
+
+  const candidateStep = (
+    <>
       <CandidateFieldsSection
         values={candidateValues}
         include={include}
         onValueChange={handleCandidateValueChange}
         onIncludeChange={handleCandidateIncludeChange}
       />
-
       <ProfilePictureField
         profilePictureUrl={profilePictureUrl}
         profilePictureVersion={profilePictureVersion}
@@ -1173,97 +1284,11 @@ export default function ApplicationForm({
         showProfilePicture={showProfilePicture}
         onShowProfilePictureChange={setShowProfilePicture}
       />
+    </>
+  );
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <Input
-          label="Company Name *"
-          value={formData.company}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, company: e.target.value }))
-          }
-          error={errors.company}
-          required
-        />
-        <Input
-          label="Role/Position *"
-          value={formData.role}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, role: e.target.value }))
-          }
-          error={errors.role}
-          required
-        />
-      </div>
-
-      <NameInUrlField
-        value={slugNamePosition}
-        onChange={handleSlugNamePositionChange}
-      />
-
-      <div>
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-          <label
-            htmlFor="application-slug"
-            className="block text-sm font-medium text-[var(--ink)]"
-          >
-            Slug *
-          </label>
-          <button
-            type="button"
-            onClick={handleResetSlugToSuggested}
-            disabled={!hasCompany || !hasRole || formBusy}
-            className="cursor-pointer text-sm font-medium text-[var(--ink)] hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
-          >
-            Reset to suggested
-          </button>
-        </div>
-        <Input
-          id="application-slug"
-          value={formData.slug}
-          onChange={(e) => {
-            setFormData((prev) => ({ ...prev, slug: e.target.value }));
-            setSlugManuallyEdited(true);
-          }}
-          error={errors.slug}
-          placeholder="auto-generated-slug"
-          required
-        />
-      </div>
-      {slugLiveStatus.kind === "checking" && (
-        <p
-          className="flex items-center gap-1.5 text-xs text-[var(--muted)]"
-          role="status"
-        >
-          <FiRefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden />
-          Checking slug…
-        </p>
-      )}
-      {slugLiveStatus.kind === "available" && !errors.slug && (
-        <p
-          className="flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"
-          role="status"
-        >
-          <FiCheck
-            className="mt-0.5 size-3.5 shrink-0"
-            strokeWidth={2.5}
-            aria-hidden
-          />
-          <span>This slug is available.</span>
-        </p>
-      )}
-      {(slugLiveStatus.kind === "invalid" ||
-        slugLiveStatus.kind === "unavailable") &&
-        !errors.slug && (
-          <p
-            className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
-            role="alert"
-          >
-            <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-            <span>{slugLiveStatus.message}</span>
-          </p>
-        )}
-      <ShareUrlPreview publicId={publicId} slug={formData.slug} />
-
+  const materialsStep = (
+    <>
       <CvSourceField
         isEdit={isEdit}
         currentFilename={initialData?.cv_filename ?? null}
@@ -1324,9 +1349,7 @@ export default function ApplicationForm({
         }}
         onSwitchToPrimary={() => {
           const leavingSavedTailored =
-            cvMode === "tailored" &&
-            hadTailoredCvOnLoad &&
-            !cvPendingFile;
+            cvMode === "tailored" && hadTailoredCvOnLoad && !cvPendingFile;
           if (leavingSavedTailored) {
             setSwitchToPrimaryConfirmOpen(true);
             return;
@@ -1480,32 +1503,188 @@ export default function ApplicationForm({
         preparing={cvPendingDigesting}
         disabled={submitPhase !== "idle"}
       />
-
       <YouTubeUrlInput
         value={formData.video_url}
         onChange={(url) => setFormData((prev) => ({ ...prev, video_url: url }))}
         error={errors.video_url}
       />
+    </>
+  );
 
-      <ApplicationFormActions
-        loading={formBusy}
-        loadingLabel={saveLoadingLabel}
-        submitLabel={submitLabel}
-        canSubmit={canSubmit}
-        disabledReason={disabledReason}
+  const shareStep = (
+    <>
+      <NameInUrlField
+        value={slugNamePosition}
+        onChange={handleSlugNamePositionChange}
       />
+      <div>
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <label
+            htmlFor="application-slug"
+            className="block text-sm font-medium text-[var(--ink)]"
+          >
+            Slug *
+          </label>
+          <button
+            type="button"
+            onClick={handleResetSlugToSuggested}
+            disabled={!hasCompany || !hasRole || formBusy}
+            className="cursor-pointer text-sm font-medium text-[var(--ink)] hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+          >
+            Reset to suggested
+          </button>
+        </div>
+        <Input
+          id="application-slug"
+          value={formData.slug}
+          onChange={(e) => {
+            setFormData((prev) => ({ ...prev, slug: e.target.value }));
+            setSlugManuallyEdited(true);
+          }}
+          error={errors.slug}
+          placeholder="auto-generated-slug"
+          required
+        />
+      </div>
+      {slugLiveStatus.kind === "checking" && (
+        <p
+          className="flex items-center gap-1.5 text-xs text-[var(--muted)]"
+          role="status"
+        >
+          <FiRefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden />
+          Checking slug…
+        </p>
+      )}
+      {slugLiveStatus.kind === "available" && !errors.slug && (
+        <p
+          className="flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"
+          role="status"
+        >
+          <FiCheck
+            className="mt-0.5 size-3.5 shrink-0"
+            strokeWidth={2.5}
+            aria-hidden
+          />
+          <span>This slug is available.</span>
+        </p>
+      )}
+      {(slugLiveStatus.kind === "invalid" ||
+        slugLiveStatus.kind === "unavailable") &&
+        !errors.slug && (
+          <p
+            className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
+            role="alert"
+          >
+            <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            <span>{slugLiveStatus.message}</span>
+          </p>
+        )}
+      <ShareUrlPreview publicId={publicId} slug={formData.slug} />
+    </>
+  );
 
-      {persistDraftKey ? (
-        <ConfirmDialog
-          open={leaveConfirmOpen}
-          title="Leave this page?"
-          message="Leaving this page will discard this draft. Are you sure?"
-          confirmLabel="Yes, I'm sure"
-          cancelLabel="No, stay on this page"
-          onConfirm={onConfirmLeave}
-          onCancel={onCancelLeave}
+  const reviewStep = (
+    <dl className="space-y-3 rounded-xl border border-[var(--ink)]/10 bg-[var(--paper)]/60 px-4 py-3 text-sm">
+      <div className="flex flex-wrap justify-between gap-2">
+        <dt className="text-[var(--muted)]">Company / role</dt>
+        <dd className="font-medium text-[var(--ink)]">
+          {formData.company.trim() || "—"} · {formData.role.trim() || "—"}
+        </dd>
+      </div>
+      <div className="flex flex-wrap justify-between gap-2">
+        <dt className="text-[var(--muted)]">CV</dt>
+        <dd className="font-medium text-[var(--ink)]">
+          {hasCv
+            ? cvMode === "primary"
+              ? "Primary CV selected"
+              : cvPendingFile?.name ||
+                formData.cv_filename ||
+                "Tailored CV ready"
+            : "Missing"}
+        </dd>
+      </div>
+      <div className="flex flex-wrap justify-between gap-2">
+        <dt className="text-[var(--muted)]">Video</dt>
+        <dd className="font-medium text-[var(--ink)]">
+          {hasVideo ? "YouTube URL set" : "Missing"}
+        </dd>
+      </div>
+      <div className="flex flex-wrap justify-between gap-2">
+        <dt className="text-[var(--muted)]">Share slug</dt>
+        <dd className="max-w-[min(100%,20rem)] truncate font-medium text-[var(--ink)]">
+          {formData.slug.trim() || "—"}
+          {slugReady ? " (available)" : ""}
+        </dd>
+      </div>
+    </dl>
+  );
+
+  const stepContents = {
+    role: roleStep,
+    candidate: candidateStep,
+    materials: materialsStep,
+    share: shareStep,
+    review: reviewStep,
+  };
+
+  const formActions = (
+    <ApplicationFormActions
+      loading={formBusy}
+      loadingLabel={saveLoadingLabel}
+      submitLabel={submitLabel}
+      canSubmit={canSubmit}
+      disabledReason={disabledReason}
+    />
+  );
+
+  const leaveDialog =
+    persistDraftKey ? (
+      <ConfirmDialog
+        open={leaveConfirmOpen}
+        title="Leave this page?"
+        message="Leaving this page will discard this draft. Are you sure?"
+        confirmLabel="Yes, I'm sure"
+        cancelLabel="No, stay on this page"
+        onConfirm={onConfirmLeave}
+        onCancel={onCancelLeave}
+      />
+    ) : null;
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {formStyleSwitchEnabled ? (
+        <ApplicationFormStyleSwitch
+          style={formStyle}
+          onChange={(next) => {
+            setFormStyle(next);
+            setCurrentStepId("role");
+            setCompletedStepIds(new Set());
+          }}
         />
       ) : null}
+
+      {formStyle === "wizard" ? (
+        <ApplicationFormWizardLayout
+          stepContents={stepContents}
+          currentStepId={currentStepId}
+          onStepChange={setCurrentStepId}
+          continueBlockedReason={continueBlockedReasonFor(currentStepId)}
+          actions={formActions}
+        />
+      ) : (
+        <ApplicationFormSectionsLayout
+          stepContents={stepContents}
+          openStepId={currentStepId}
+          onOpenStepChange={setCurrentStepId}
+          completedStepIds={completedStepIds}
+          onConfirmStep={markStepCompleteAndAdvance}
+          continueBlockedReason={continueBlockedReasonFor(currentStepId)}
+          stepReady={stepReady}
+          actions={formActions}
+        />
+      )}
+
+      {leaveDialog}
     </form>
   );
 }
