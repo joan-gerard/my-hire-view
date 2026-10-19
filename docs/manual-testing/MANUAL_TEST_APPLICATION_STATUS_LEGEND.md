@@ -7,7 +7,7 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 ## Prerequisites
 
 - [ ] Logged in
-- [ ] Ideally one of each: **draft**, **active (0 views)**, **active (viewed)**, **archived** (and a **CV missing** card if you can reproduce it)
+- [ ] Ideally one of each: **draft**, **active (0 views)**, **active (viewed)**, **archived** (and a **CV missing** / **Picture missing** card if you can reproduce them)
 
 ## Legend modal
 

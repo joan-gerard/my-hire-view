@@ -261,11 +261,16 @@ export type ApplicationListItem = Pick<
    * confirms missing.
    */
   cv_exists: boolean;
+  /**
+   * True when this application is set to show the profile picture but the
+   * account has no live `profiles.profile_picture_url` (dashboard badge).
+   */
+  profile_picture_missing: boolean;
 };
 
 /** Supabase `.select()` projection for `ApplicationListItem` (before attaching public_id / cv_exists). */
 export const APPLICATION_LIST_SELECT =
-  "id, slug, company, role, status, archived_at, view_count, download_count, created_at, last_viewed_at, cv_url" as const;
+  "id, slug, company, role, status, archived_at, view_count, download_count, created_at, last_viewed_at, cv_url, show_profile_picture" as const;
 
 /** Default page size for `GET /api/applications`. */
 export const APPLICATION_LIST_DEFAULT_LIMIT = 20;

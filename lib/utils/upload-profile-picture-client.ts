@@ -12,6 +12,9 @@ export type ProfilePictureUploadResult =
   | { ok: true; url: string; warning?: string }
   | { ok: false; error: string };
 
+/** Stalled upload/PUT ceiling before the user is unblocked with a retry message. */
+export const PROFILE_PICTURE_REQUEST_TIMEOUT_MS = 30_000;
+
 function asUploadJson(value: unknown): {
   error?: string;
   url?: string;
@@ -27,8 +30,16 @@ function asUploadJson(value: unknown): {
   return {};
 }
 
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === "AbortError") ||
+    (error instanceof Error && error.name === "AbortError")
+  );
+}
+
 /**
  * POST /api/upload/profile-picture and map failures to friendly Save copy.
+ * Aborts after {@link PROFILE_PICTURE_REQUEST_TIMEOUT_MS} if the server is silent.
  */
 export async function uploadProfilePictureFile(
   file: File,
@@ -36,14 +47,28 @@ export async function uploadProfilePictureFile(
   const fd = new FormData();
   fd.append("file", file);
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, PROFILE_PICTURE_REQUEST_TIMEOUT_MS);
+
   let uploadRes: Response;
   try {
     uploadRes = await fetch("/api/upload/profile-picture", {
       method: "POST",
       body: fd,
+      signal: controller.signal,
     });
-  } catch {
+  } catch (error) {
+    if (isAbortError(error) || controller.signal.aborted) {
+      return {
+        ok: false,
+        error: "That took too long. Check your connection and try again.",
+      };
+    }
     return { ok: false, error: messageForUploadNetworkError("profile-picture") };
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   const uploadJson = asUploadJson(
@@ -75,4 +100,62 @@ export async function uploadProfilePictureFile(
       : undefined;
 
   return warning ? { ok: true, url, warning } : { ok: true, url };
+}
+
+/**
+ * PUT helper with the same timeout ceiling as upload (profile picture save).
+ */
+export async function putProfilePictureUrl(
+  profilePictureUrl: string | null,
+): Promise<
+  | { ok: true; data: unknown; warnings: string[] }
+  | { ok: false; error: string }
+> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, PROFILE_PICTURE_REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch("/api/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile_picture_url: profilePictureUrl }),
+      signal: controller.signal,
+    });
+    const json = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      data?: unknown;
+      warnings?: unknown;
+    };
+    if (!response.ok) {
+      return {
+        ok: false,
+        error:
+          typeof json.error === "string" && json.error.trim()
+            ? json.error
+            : "Couldn’t save your picture. Check your connection and try again.",
+      };
+    }
+    const warnings = Array.isArray(json.warnings)
+      ? json.warnings.filter(
+          (w): w is string => typeof w === "string" && Boolean(w.trim()),
+        )
+      : [];
+    return { ok: true, data: json.data, warnings };
+  } catch (error) {
+    if (isAbortError(error) || controller.signal.aborted) {
+      return {
+        ok: false,
+        error: "That took too long. Check your connection and try again.",
+      };
+    }
+    return {
+      ok: false,
+      error:
+        "Couldn’t save your picture. Check your connection and try again.",
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }

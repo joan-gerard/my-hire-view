@@ -102,6 +102,8 @@
    * from distinct ink glyphs on the wash (WCAG 1.4.11 / 1.4.1), not color alone.
    */
   --status-wash-draft: #fff1b8;
+  /* Soft amber notice (warnings that are not the draft status). Same hex today. */
+  --status-wash-notice: #fff1b8;
   --status-wash-active: #d3f2ff;
   --status-wash-viewed: #e8fad9;
   --status-wash-archived: #eceeee;

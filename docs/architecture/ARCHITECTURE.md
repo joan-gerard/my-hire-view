@@ -226,7 +226,7 @@ Video is not stored; only YouTube URLs are stored and embedded via `YouTubeEmbed
 
 ### 5.5 Profile pictures (Supabase Storage)
 
-- **Use case:** One profile picture per user at `{user_id}/avatar.{ext}`, uploaded on profile Save. Applications store only `show_profile_picture`; the public view reads the live URL from `profiles` when that flag is true. See **docs/architecture/PROFILE_PICTURE.md**.
+- **Use case:** One live profile picture per user (unique Storage object per upload; committed on profile Save). Applications store only `show_profile_picture`; the public view reads the live URL from `profiles` when that flag is true. See **docs/architecture/PROFILE_PICTURE.md**.
 
 ---
 

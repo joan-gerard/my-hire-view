@@ -249,7 +249,8 @@ export function isCreateApplicationDraftBlank(
     !draft.cvModeUserChosen &&
     !draft.slugManuallyEdited &&
     draft.slugNamePosition == null &&
-    draft.showProfilePicture === true &&
+    // Show-picture default follows whether a live photo exists; either Yes or
+    // No alone is not "progress" that should keep a create draft.
     draft.use_original_cv_filename === true;
 
   const noPersonalProgress =

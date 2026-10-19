@@ -57,6 +57,12 @@ export const CV_MISSING_LEGEND = {
     'The CV file is missing from storage. Edit this application and select or upload an available CV.',
 } as const;
 
+export const PROFILE_PICTURE_MISSING_LEGEND = {
+  label: 'Picture missing',
+  description:
+    'This application is set to show your profile picture, but you do not have one. Open Profile (or edit the application) to add a picture.',
+} as const;
+
 export type DraftActionLegendItem = {
   label: string;
   description: string;

@@ -17,7 +17,7 @@ This guide describes what you can do with MyHireView as a **candidate** (job see
 
 From the header, open **Profile** (`/admin/profile`). The page title is **Account settings** with tabs:
 
-- **Profile** — identity header with **profile picture** (preview + Change/Remove; uploaded on Save), **account email**, **member since**, and **Public id** (the private account segment in every share link — not your name). Edit **profile details** used as defaults when you create applications (first name, last name, location, portfolio URL, LinkedIn URL). Changing your name also updates the name stored on your account. Location and URLs can be left blank. These values are not changed when you edit an application. You can also add or change your profile picture from **New** / **Edit application**.
+- **Profile** — identity header with **profile picture** (preview + Change picture / Remove picture; uploaded on Save), **account email**, **member since**, and **Public id** (the private account segment in every share link — not your name). Edit **profile details** used as defaults when you create applications (first name, last name, location, portfolio URL, LinkedIn URL). Changing your name also updates the name stored on your account. Location and URLs can be left blank. These values are not changed when you edit an application. You can also add or change your profile picture from **New** / **Edit application**.
 - **CVs** — manage your **Primary CV library** (up to 5 résumé PDFs). The same library is available from **New** / **Edit** via **Manage library**.
 - **Preferences** — choose how dashboard **status indicators** look (colorful dots or high-contrast icons). Saved in this browser for your account.
 - **Billing and plan** — current Free plan, usage vs draft caps, and Free / Pro / Premium comparison. Marked with a tool icon as a **preview** (paid checkout is not live; upgrade actions stay disabled until membership ships).
@@ -31,7 +31,7 @@ At **Dashboard** (`/admin`) you can:
 
 - See all your applications in horizontal cards showing: status icon, company, role, and action buttons. If you have none yet, the dashboard explains the next step and links to **New application** (legend and search stay hidden until you have at least one application); a search with no matches offers **Clear search**.
 - Use the floating **Getting started** checklist (while incomplete) on any admin page for create profile, add location or a link, photo, primary CV, first application, and publish/share. You can skip steps or skip all.
-- Once you have applications, open **What do these icons mean?** (header button) for a modal legend of status icons (**draft**, **active not viewed**, **active viewed**, **archived**, and **CV missing**) and a short explanation of draft actions (**Publish**, **Preview**, **Publish to share** vs **Copy Link**).
+- Once you have applications, open **What do these icons mean?** (header button) for a modal legend of status icons (**draft**, **active not viewed**, **active viewed**, **archived**, **CV missing**, and **Picture missing**) and a short explanation of draft actions (**Publish**, **Preview**, **Publish to share** vs **Copy Link**).
 - **Search** by company or role (shown once you have applications).
 - **Create** a new application (New Application).
 - **Copy Link** to copy the shareable link to send to recruiters (after the application is published).
@@ -46,7 +46,7 @@ At **Dashboard** (`/admin`) you can:
 3. **Info shown to recruiters** (at the top):
    - Your profile details are shown as a preview. You can **toggle each field on or off** (off means recruiters will not see it).
    - You can **edit** any value here; changes apply only to this application, not to your profile.
-   - **Profile picture:** choose whether to show it on this application. Use **Add / Change picture** to update your account avatar without leaving the page.
+   - **Profile picture:** choose whether to show it on this application. Use **Add profile picture** / **Manage picture** to update or remove your account avatar without leaving the page.
    - You can collapse or expand the whole list with the arrow control in the top-right of that section; that preference is remembered for next time.
 4. Fill in the **application form**:
    - **Company name** and **Role/Position** (required).

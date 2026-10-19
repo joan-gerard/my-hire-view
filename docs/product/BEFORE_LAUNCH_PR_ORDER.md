@@ -12,11 +12,11 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 | :----: | ----: | ----------------- |
 | **1**  |     5 | A3, F22, F24, F32, F33 |
 | **2**  |     4 | E1, E4, F23, F39  |
-| **3**  |     4 | F28, F30, F38, L6 |
+| **3**  |     5 | F28, F30, F38, F40, L6 |
 | **4**  |     4 | F21, F29, F35, I2 |
 | **5**  |     1 | E2                |
 
-**18 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped). **Weighted average ≈ 2.56** — many 1–3 polish items; complexity concentrates in **E2**, then **F35 / F21 / F29 / I2**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group).
+**19 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped). **Weighted average ≈ 2.58** — many 1–3 polish items; complexity concentrates in **E2**, then **F35 / F21 / F29 / I2**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group). **F40** (incomplete draft saves) is planned after F35 — see [INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md).
 
 ---
 
@@ -82,10 +82,11 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 
 ---
 
-## 3. Suggested sequence (all 18 open)
+## 3. Suggested sequence (all 19 open)
 
 ```
 F35 / F38
+  → F40 (after F35 layout pick when possible)
   → F23 → F21
   → F22 / F24 / F33 / E4 (whenever; E4 before E1)
   → L6 → I2 → F28 → F39 → F32 → F29 → F30
@@ -94,9 +95,9 @@ F35 / F38
 
 **Why this beats “easiest first”:**
 
-1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, E4→E1→E2, L6/I2→F30 are real; ignore them and you thrash.
+1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, F35→F40 (Save UX), E4→E1→E2, L6/I2→F30 are real; ignore them and you thrash.
 2. **Risk before paint** — API/storage races before branding.
 3. **Reviews stay useful** — F28/F39/F29/F30 after the bulk of pre-launch code, not before.
 4. **Monetization last** — backlog already defers E1/E2 until launch is imminent; E4 only updates the draft.
 
-If capacity is short: finish **F35** (create/edit steps) and **F38** (`/view` polish) before **F39** / **F32** QA.
+If capacity is short: finish **F35** (create/edit steps) and **F38** (`/view` polish) before **F39** / **F32** QA. Do not mix **F40** incomplete draft saves into the F35 dual-layout test.

@@ -159,6 +159,36 @@ describe("isCreateApplicationDraftBlank", () => {
     ).toBe(true);
   });
 
+  it("treats empty create form as blank when showProfilePicture is false", () => {
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "",
+        last_name: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: false,
+          last_name: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugNamePosition: null,
+        slugManuallyEdited: false,
+        showProfilePicture: false,
+        cvMode: "primary",
+        cvModeUserChosen: false,
+        selectedPrimaryId: null,
+        use_original_cv_filename: true,
+      }),
+    ).toBe(true);
+  });
+
   it("treats auto slug and automatic primary selection as blank", () => {
     expect(
       isCreateApplicationDraftBlank({

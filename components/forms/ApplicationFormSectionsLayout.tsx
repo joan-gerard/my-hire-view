@@ -15,8 +15,9 @@ export type ApplicationFormStepContentMap = Record<
 
 interface ApplicationFormSectionsLayoutProps {
   stepContents: ApplicationFormStepContentMap;
-  openStepId: ApplicationFormStepId;
-  onOpenStepChange: (id: ApplicationFormStepId) => void;
+  /** Open section, or `null` when all sections are collapsed. */
+  openStepId: ApplicationFormStepId | null;
+  onOpenStepChange: (id: ApplicationFormStepId | null) => void;
   /** Steps the user has confirmed via Continue. */
   completedStepIds: ReadonlySet<ApplicationFormStepId>;
   onConfirmStep: (id: ApplicationFormStepId) => void;
@@ -47,6 +48,7 @@ export default function ApplicationFormSectionsLayout({
       skipInitialFocusRef.current = false;
       return;
     }
+    if (openStepId == null) return;
     headerRefs.current.get(openStepId)?.focus();
   }, [openStepId]);
 
@@ -73,7 +75,7 @@ export default function ApplicationFormSectionsLayout({
                   if (el) headerRefs.current.set(step.id, el);
                   else headerRefs.current.delete(step.id);
                 }}
-                onClick={() => onOpenStepChange(step.id)}
+                onClick={() => onOpenStepChange(open ? null : step.id)}
                 aria-expanded={open}
                 aria-controls={panelId}
                 className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"

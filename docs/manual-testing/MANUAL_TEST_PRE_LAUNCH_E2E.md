@@ -241,7 +241,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Profile picture (Profile tab — identity header only)
 
-- [ ] Avatar preview, Change/Remove (or Choose), and help copy live in the identity header — not a second picture block lower on the page
+- [ ] Avatar preview, Change picture / Remove picture (or Choose picture), and help copy live in the identity header — not a second picture block lower on the page
 - [ ] Choose JPEG → preview → Save → thumbnail persists after refresh
 - [ ] Replace with PNG (and WebP if you have one) → new image shows (cache-bust, not a stale JPEG)
 - [ ] **Remove** picture → Save → initials/placeholder in the header; applications that **show** the picture no longer display an avatar on `/view`
@@ -303,7 +303,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Toggle **on** a field but leave it blank → stored/shown as empty (no placeholder junk)
 - [ ] Edit a value here (e.g. location) → **does not** change Profile
 - [ ] Collapse / expand the section; preference remembered on the next visit (`localStorage`)
-- [ ] **Profile picture:** Yes/No disabled until a picture exists; **Add / Change picture** modal uploads JPEG/PNG/WebP, preview, Save, Cancel, type/size errors
+- [ ] **Profile picture:** Yes/No disabled until a picture exists; **Add profile picture** / **Manage picture** modal uploads JPEG/PNG/WebP, preview, Save, Cancel, type/size errors
 - [ ] After adding a picture from this page, Yes/No enables; **Yes** shows the avatar on `/view` after publish
 - [ ] **No** (or remove picture) → no avatar on `/view` even if the account still has a picture
 - [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
@@ -401,7 +401,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 ### Status legend
 
 - [ ] Button opens modal **Status icons & draft actions**
-- [ ] Lists Draft, Active (not viewed yet), Active (viewed), Archived, CV missing — icons match cards
+- [ ] Lists Draft, Active (not viewed yet), Active (viewed), Archived, CV missing, Picture missing — icons match cards
 - [ ] Explains **Publish**, **Preview**, **Publish to share**
 - [ ] Close via Close, Escape, or backdrop; focus returns; heading focused on open
 - [ ] Body scroll locked while open

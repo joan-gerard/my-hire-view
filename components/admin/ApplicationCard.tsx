@@ -10,6 +10,7 @@ import ApplicationCardInsights from '@/components/admin/ApplicationCardInsights'
 import {
   ApplicationStatusIcon,
   MissingCvBadge,
+  MissingProfilePictureBadge,
 } from '@/components/admin/ApplicationStatusIcon';
 import {
   ChartIcon,
@@ -74,6 +75,9 @@ export default function ApplicationCard({
           </span>
 
           {application.cv_exists === false && <MissingCvBadge />}
+          {application.profile_picture_missing === true && (
+            <MissingProfilePictureBadge />
+          )}
 
           <div className="hidden flex-1 sm:block" aria-hidden="true" />
 

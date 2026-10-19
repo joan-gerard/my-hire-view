@@ -6,6 +6,7 @@ import {
 } from "@/components/admin/admin-chrome";
 import { AvatarIcon } from "@/components/admin/icons";
 import PublicIdAccountField from "@/components/admin/PublicIdAccountField";
+import ProfilePictureIconActions from "@/components/forms/ProfilePictureIconActions";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import type { Profile } from "@/lib/types/profile";
@@ -16,9 +17,11 @@ import {
 } from "@/lib/types/profile";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
+import { mapProfileSaveWarnings } from "@/lib/utils/upload-form-messages";
 import { uploadProfilePictureFile } from "@/lib/utils/upload-profile-picture-client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { FiAlertTriangle } from "react-icons/fi";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -36,7 +39,7 @@ interface ProfileFormProps {
    */
   hasExistingProfile: boolean;
   /**
-   * Account settings chrome: identity header (picture + Change/Remove),
+   * Account settings chrome: identity header (picture + camera / remove icon actions),
    * email / public id, and profile details fields.
    */
   accountChrome: ProfileFormAccountChrome;
@@ -47,7 +50,7 @@ function normalizeText(value: string | null | undefined): string {
 }
 
 /**
- * Account settings → Profile tab form. Picture preview and Change/Remove live
+ * Account settings → Profile tab form. Picture preview and camera / remove icon actions live
  * only in the identity header (uploaded on Save).
  */
 export default function ProfileForm({
@@ -61,6 +64,7 @@ export default function ProfileForm({
     "idle",
   );
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     first_name: initialData?.first_name ?? "",
     last_name: initialData?.last_name ?? "",
@@ -148,14 +152,17 @@ export default function ProfileForm({
     e.target.value = "";
     if (!file) return;
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setWarning(null);
       setError("Please choose a JPEG, PNG or WebP image.");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setError("Image must be smaller than 5MB.");
+      setWarning(null);
+      setError("Image must be 5 MB or smaller.");
       return;
     }
     setError(null);
+    setWarning(null);
     setPictureRemoved(false);
     setPendingFile(file);
   };
@@ -169,9 +176,11 @@ export default function ProfileForm({
     e.preventDefault();
     if (!canSave) return;
     setError(null);
+    setWarning(null);
     setSubmitPhase(pendingFile ? "uploading" : "saving");
     try {
       let profilePictureUrl: string | null | undefined = undefined;
+      let uploadWarning: string | undefined;
       if (pictureRemoved && !pendingFile) {
         profilePictureUrl = null;
       } else if (pendingFile) {
@@ -181,9 +190,7 @@ export default function ProfileForm({
           return;
         }
         profilePictureUrl = upload.url;
-        if (upload.warning) {
-          setError(upload.warning);
-        }
+        uploadWarning = upload.warning;
         setSubmitPhase("saving");
       }
 
@@ -208,11 +215,14 @@ export default function ProfileForm({
         setError(json.error ?? "Failed to save profile");
         return;
       }
-      if (Array.isArray(json.warnings) && json.warnings.length > 0) {
-        const warningText = json.warnings.join(" ");
-        setError((prev) =>
-          prev ? `${prev} ${warningText}` : warningText,
-        );
+      const putWarnings = Array.isArray(json.warnings)
+        ? (json.warnings as unknown[]).filter(
+            (w): w is string => typeof w === "string" && Boolean(w.trim()),
+          )
+        : [];
+      const notice = mapProfileSaveWarnings([uploadWarning, ...putWarnings]);
+      if (notice) {
+        setWarning(notice);
       }
       if (profilePictureUrl !== undefined) {
         setSavedUrlOverride(profilePictureUrl);
@@ -248,63 +258,69 @@ export default function ProfileForm({
         <div className="border-b border-[var(--ink)]/8 bg-[var(--ink)]/[0.02] px-5 py-5 sm:px-6 sm:py-6">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
             <div className="flex shrink-0 flex-col items-start gap-3">
-              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[var(--lime)] text-[var(--ink)] sm:h-[5.5rem] sm:w-[5.5rem]">
-                {hasProfilePicture ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- local preview or Storage URL; cache-busted when saved
-                  <img
-                    src={displayPictureUrl!}
-                    alt=""
-                    className="h-full w-full object-cover"
-                    width={88}
-                    height={88}
-                  />
-                ) : firstName || lastName || accountChrome.email ? (
-                  <span
-                    className="font-heading text-2xl font-semibold tracking-[-0.02em]"
-                    aria-hidden
-                  >
-                    {initials}
-                  </span>
-                ) : (
-                  <AvatarIcon className="h-9 w-9" />
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={ALLOWED_IMAGE_TYPES.join(",")}
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              {hasProfilePicture ? (
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={loading}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    Change
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={loading}
-                    onClick={handleRemovePicture}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="secondary"
+              <div className="flex flex-col items-start gap-1.5">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ALLOWED_IMAGE_TYPES.join(",")}
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <ProfilePictureIconActions
+                  size="sm"
                   disabled={loading}
-                  onClick={() => fileInputRef.current?.click()}
+                  chooseLabel={
+                    hasProfilePicture ? "Change picture" : "Choose picture"
+                  }
+                  onChooseOrChange={() => fileInputRef.current?.click()}
+                  onRemove={
+                    hasProfilePicture ? handleRemovePicture : undefined
+                  }
+                  removeLabel="Remove picture"
                 >
-                  Choose picture
-                </Button>
-              )}
+                  <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-full bg-[var(--lime)] text-[var(--ink)] sm:h-40 sm:w-40">
+                    {hasProfilePicture ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- local preview or Storage URL; cache-busted when saved
+                      <img
+                        src={displayPictureUrl!}
+                        alt={
+                          pendingFile
+                            ? "New profile picture preview"
+                            : "Your profile picture"
+                        }
+                        className="h-full w-full object-cover"
+                        width={160}
+                        height={160}
+                      />
+                    ) : firstName || lastName || accountChrome.email ? (
+                      <span
+                        className="font-heading text-4xl font-semibold tracking-[-0.02em] sm:text-5xl"
+                        aria-hidden
+                      >
+                        {initials}
+                      </span>
+                    ) : (
+                      <AvatarIcon className="h-14 w-14 sm:h-16 sm:w-16" />
+                    )}
+                  </div>
+                </ProfilePictureIconActions>
+                {pendingFile ? (
+                  <p
+                    className="text-xs font-semibold text-[var(--ink)]"
+                    role="status"
+                  >
+                    Not saved yet
+                  </p>
+                ) : null}
+                {pictureRemoved ? (
+                  <p className="max-w-[9rem] text-xs font-semibold text-[var(--ink)]">
+                    Will be removed when you save
+                  </p>
+                ) : null}
+              </div>
+              <p className="text-xs text-[var(--muted)]">
+                JPEG, PNG or WebP, up to 5 MB.
+              </p>
             </div>
             <div className="min-w-0 flex-1 space-y-2">
               <h2
@@ -336,6 +352,9 @@ export default function ProfileForm({
                   <p className="text-sm text-[var(--muted)]">
                     When you change your profile picture and save, applications
                     that show your picture will use the new image automatically.
+                    If you remove it, those applications show a Picture missing
+                    warning on the dashboard until you add a picture again or
+                    turn show-picture off when editing.
                   </p>
                 )}
               </div>
@@ -344,6 +363,18 @@ export default function ProfileForm({
         </div>
 
         <div className="space-y-6 px-5 py-5 sm:px-6 sm:py-6">
+          {warning ? (
+            <p
+              className="flex items-start gap-2 rounded-xl border border-[var(--ink)]/12 bg-[var(--status-wash-notice)] p-3 text-sm text-[var(--ink)]"
+              role="status"
+            >
+              <FiAlertTriangle
+                className="mt-0.5 size-4 shrink-0"
+                aria-hidden
+              />
+              <span>{warning}</span>
+            </p>
+          ) : null}
           {error ? (
             <p
               className="rounded-xl border border-[var(--status-danger-fg)]/20 bg-[var(--status-danger-bg)] p-3 text-sm text-[var(--status-danger-fg)]"

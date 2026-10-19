@@ -5,11 +5,13 @@ import Link from 'next/link';
 import {
   APPLICATION_STATUS_LEGEND_ITEMS,
   CV_MISSING_LEGEND,
+  PROFILE_PICTURE_MISSING_LEGEND,
   DRAFT_ACTION_LEGEND_ITEMS,
 } from '@/lib/utils/application-status-display';
 import {
   ApplicationStatusIconBadge,
   MissingCvBadge,
+  MissingProfilePictureBadge,
 } from '@/components/admin/ApplicationStatusIcon';
 import {
   ADMIN_PANEL_CLASS,
@@ -173,6 +175,19 @@ export default function ApplicationStatusLegend({
                   </p>
                   <p className="mt-0.5 text-sm leading-snug text-[var(--muted)]">
                     {CV_MISSING_LEGEND.description}
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3 px-1 py-3 last:pb-1">
+                <div className="flex h-9 shrink-0 items-center" aria-hidden>
+                  <MissingProfilePictureBadge />
+                </div>
+                <div className="min-w-0 pt-1">
+                  <p className="text-sm font-medium leading-snug text-[var(--ink)]">
+                    {PROFILE_PICTURE_MISSING_LEGEND.label}
+                  </p>
+                  <p className="mt-0.5 text-sm leading-snug text-[var(--muted)]">
+                    {PROFILE_PICTURE_MISSING_LEGEND.description}
                   </p>
                 </div>
               </li>

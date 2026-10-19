@@ -45,7 +45,12 @@ import {
   APPLICATION_LIST_DEFAULT_LIMIT,
   APPLICATION_LIST_MAX_LIMIT,
 } from "@/lib/types/application";
-import { okWithCount, dbError, makeSupabaseClient } from "../../helpers/supabase-mock";
+import {
+  ok,
+  okWithCount,
+  dbError,
+  makeSupabaseClient,
+} from "../../helpers/supabase-mock";
 
 const MOCK_USER = { id: "user-abc" };
 
@@ -89,7 +94,12 @@ describe("GET /api/applications", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.data).toEqual([
-      { ...LIST_ITEM, public_id: "k7x2m9ab", cv_exists: true },
+      {
+        ...LIST_ITEM,
+        public_id: "k7x2m9ab",
+        cv_exists: true,
+        profile_picture_missing: false,
+      },
     ]);
     expect(json.meta).toEqual({
       limit: APPLICATION_LIST_DEFAULT_LIMIT,
@@ -118,6 +128,41 @@ describe("GET /api/applications", () => {
     const response = await GET(makeGetRequest());
     const json = await response.json();
     expect(json.data[0].cv_exists).toBe(false);
+  });
+
+  it("sets profile_picture_missing:true when show is on and the profile has no picture", async () => {
+    const listChain = okWithCount(
+      [{ ...LIST_ITEM, show_profile_picture: true }],
+      1,
+    );
+    const profileChain = ok({ profile_picture_url: null });
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([listChain, profileChain]),
+    );
+
+    const response = await GET(makeGetRequest());
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data[0].profile_picture_missing).toBe(true);
+    expect(json.data[0]).not.toHaveProperty("show_profile_picture");
+  });
+
+  it("sets profile_picture_missing:false when show is on and a live picture exists", async () => {
+    const listChain = okWithCount(
+      [{ ...LIST_ITEM, show_profile_picture: true }],
+      1,
+    );
+    const profileChain = ok({
+      profile_picture_url:
+        "https://example.supabase.co/storage/v1/object/public/profile-pictures/user/avatar.jpg",
+    });
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([listChain, profileChain]),
+    );
+
+    const response = await GET(makeGetRequest());
+    const json = await response.json();
+    expect(json.data[0].profile_picture_missing).toBe(false);
   });
 
   it("returns null public_id when none can be resolved (does not coerce to empty string)", async () => {

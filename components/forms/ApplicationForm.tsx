@@ -101,7 +101,7 @@ interface ApplicationFormProps {
   profilePictureUrl?: string | null;
   /** Cache-bust key for the live profile picture (e.g. profiles.updated_at). */
   profilePictureVersion?: string | null;
-  /** When set, the field offers Add/Change picture via a modal (new/edit flows). */
+  /** When set, the field offers Add/Manage picture via a modal (new/edit flows). */
   onProfilePictureSaved?: (result: {
     url: string | null;
     updated_at?: string | null;
@@ -147,8 +147,13 @@ export default function ApplicationForm({
     setStyle: setFormStyle,
     switchEnabled: formStyleSwitchEnabled,
   } = useApplicationFormStyle();
-  const [currentStepId, setCurrentStepId] =
-    useState<ApplicationFormStepId>("role");
+  /**
+   * Active step for wizard, or open accordion section for sections.
+   * `null` = all sections collapsed (sections layout only).
+   */
+  const [currentStepId, setCurrentStepId] = useState<
+    ApplicationFormStepId | null
+  >("role");
   const [completedStepIds, setCompletedStepIds] = useState<
     Set<ApplicationFormStepId>
   >(() => new Set());
@@ -190,7 +195,7 @@ export default function ApplicationForm({
       ? restoredDraft.showProfilePicture
       : initialData?.show_profile_picture !== undefined
         ? initialData.show_profile_picture === true
-        : true;
+        : hasProfilePicture;
   const [showProfilePicture, setShowProfilePicture] = useState(
     showProfilePictureDefault,
   );
@@ -1206,8 +1211,9 @@ export default function ApplicationForm({
   };
 
   const continueBlockedReasonFor = (
-    id: ApplicationFormStepId,
+    id: ApplicationFormStepId | null,
   ): string | null => {
+    if (id == null) return null;
     if (formBusy) return "Please wait until the current action finishes.";
     switch (id) {
       case "role":
@@ -1293,6 +1299,8 @@ export default function ApplicationForm({
       <ProfilePictureField
         profilePictureUrl={profilePictureUrl}
         profilePictureVersion={profilePictureVersion}
+        firstName={formData.first_name}
+        lastName={formData.last_name}
         onProfilePictureSaved={onProfilePictureSaved}
         showProfilePicture={showProfilePicture}
         onShowProfilePictureChange={setShowProfilePicture}
@@ -1680,9 +1688,11 @@ export default function ApplicationForm({
       {formStyle === "wizard" ? (
         <ApplicationFormWizardLayout
           stepContents={stepContents}
-          currentStepId={currentStepId}
+          currentStepId={currentStepId ?? "role"}
           onStepChange={setCurrentStepId}
-          continueBlockedReason={continueBlockedReasonFor(currentStepId)}
+          continueBlockedReason={continueBlockedReasonFor(
+            currentStepId ?? "role",
+          )}
           actions={formActions}
         />
       ) : (

@@ -88,6 +88,7 @@ List the authenticated user’s applications (newest first), paginated. Returns 
       "archived_at": null,
       "cv_url": "https://pub.example/cvs/…",
       "cv_exists": true,
+      "profile_picture_missing": false,
       "view_count": 12,
       "download_count": 3,
       "created_at": "2026-07-01T12:00:00.000Z",
@@ -112,6 +113,7 @@ List the authenticated user’s applications (newest first), paginated. Returns 
 | `data[].archived_at`    | `string` (ISO) \| `null`                | Set when archived; retention clock                 |
 | `data[].cv_url`         | `string`                                | Used for `cv_exists` check                         |
 | `data[].cv_exists`      | `boolean`                               | Dashboard “CV missing” badge when **false**. URLs outside our R2 public base default to **true** (unchecked). |
+| `data[].profile_picture_missing` | `boolean`                        | Dashboard “Picture missing” badge when **true** (`show_profile_picture` on the row but no live `profiles.profile_picture_url`). |
 | `data[].view_count`     | `number`                                | Status icon + insights                             |
 | `data[].download_count` | `number`                                | Insights                                           |
 | `data[].created_at`     | `string` (ISO)                          | Insights                                           |
@@ -549,7 +551,7 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 
 `POST /api/upload/profile-picture`
 
-Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png|webp}` in the `profile-pictures` bucket and return the public URL. Does **not** purge other folder objects — that runs on successful `PUT /api/profile` after the URL is committed (F9-037 / F9-062). Intended to be called from profile **Save** (upload-on-save), not on file pick. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upload a unique avatar object at `{user_id}/{uuid}.{jpg|png|webp}` in the `profile-pictures` bucket (`upsert: false`) and return the public URL. Does **not** overwrite the live committed URL and does **not** purge other folder objects — that runs on successful `PUT /api/profile` after the URL is committed (F9-037 / F9-062). Intended to be called from profile **Save** (upload-on-save), not on file pick. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -559,10 +561,10 @@ Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png
 
 **What works**
 
-- Canonical path + upsert; folder leftovers are cleaned on profile URL commit, not on upload.
+- Unique path per upload; folder leftovers / previous object are cleaned on profile URL commit, not on upload.
 - Auth required (dedicated check → **401**); Storage / unexpected failures use `handleApiError` → **500** with a generic client message. Server logs include log-only `meta` (`userId`, file `size`, Storage `status` / `statusCode` as `storageStatus`).
 - Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8\*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
-- **Client Save UX (F8 / F9-052):** `ProfileForm` and `ProfilePictureModal` share `uploadProfilePictureFile` for request + friendly error mapping (null JSON bodies are safe); Save shows **Uploading…** during `POST /api/upload/profile-picture`, then **Saving…**. PUT `warnings` (and any legacy upload `warning`) are shown to the user (modal stays open until dismissed when a warning is present). While upload/save is in flight, `ProfilePictureModal` ignores Escape and backdrop dismiss so the request can finish.
+- **Client Save UX (F8 / F9-052):** `ProfileForm` and `ProfilePictureModal` share `uploadProfilePictureFile` (30s timeout) + friendly error/warning mapping; Save shows **Uploading…** then **Saving…**. PUT `warnings` are mapped to plain copy (modal stays open until dismissed when a warning is present). `ProfilePictureModal` does not close on backdrop click. While upload/save is in flight, Escape is ignored until the request finishes or times out.
 
 **Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 

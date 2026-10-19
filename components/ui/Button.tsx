@@ -1,37 +1,52 @@
-import { ButtonHTMLAttributes, ReactNode } from 'react';
+import { ButtonHTMLAttributes, ReactNode, forwardRef } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'danger';
+  /**
+   * Corner radius. Defaults: primary → pill; secondary/danger → rounded (xl).
+   * Pass explicitly when a paired footer should share one shape.
+   */
+  shape?: 'pill' | 'rounded';
   loading?: boolean;
   /** Shown instead of children while `loading` is true. Defaults to "Loading…". */
   loadingLabel?: string;
 }
 
-export default function Button({
-  children,
-  variant = 'primary',
-  loading = false,
-  loadingLabel = 'Loading…',
-  className = '',
-  disabled,
-  ...props
-}: ButtonProps) {
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    children,
+    variant = 'primary',
+    shape,
+    loading = false,
+    loadingLabel = 'Loading…',
+    className = '',
+    disabled,
+    ...props
+  },
+  ref,
+) {
+  const resolvedShape =
+    shape ?? (variant === 'primary' ? 'pill' : 'rounded');
+  const shapeClass =
+    resolvedShape === 'pill' ? 'rounded-full' : 'rounded-xl';
+
   const baseStyles =
-    'inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex min-h-11 items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantStyles = {
     primary:
-      'rounded-full bg-[var(--ink)] text-[var(--white)] hover:opacity-95 focus-visible:outline-[var(--ink)]',
+      'bg-[var(--ink)] text-[var(--white)] hover:opacity-95 focus-visible:outline-[var(--ink)]',
     secondary:
-      'rounded-xl border border-[var(--ink)]/12 bg-[var(--white)] text-[var(--ink)] hover:bg-[var(--ink)]/[0.04] focus-visible:outline-[var(--ink)]',
+      'border border-[var(--ink)]/12 bg-[var(--white)] text-[var(--ink)] hover:bg-[var(--ink)]/[0.04] focus-visible:outline-[var(--ink)]',
     danger:
-      'rounded-xl bg-[var(--status-danger-solid)] text-white hover:opacity-90 focus-visible:outline-[var(--status-danger-solid)]',
+      'bg-[var(--status-danger-solid)] text-white hover:opacity-90 focus-visible:outline-[var(--status-danger-solid)]',
   };
 
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${loading ? 'motion-safe:animate-pulse' : ''} ${className}`}
+      ref={ref}
+      className={`${baseStyles} ${shapeClass} ${variantStyles[variant]} ${loading ? 'motion-safe:animate-pulse' : ''} ${className}`}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...props}
@@ -49,4 +64,6 @@ export default function Button({
       )}
     </button>
   );
-}
+});
+
+export default Button;

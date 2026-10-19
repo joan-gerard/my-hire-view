@@ -14,7 +14,7 @@ import {
 } from "@/lib/utils/image";
 import {
   PROFILE_PICTURES_BUCKET,
-  canonicalProfilePicturePath,
+  uniqueProfilePicturePath,
 } from "@/lib/utils/profile-picture-storage";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -41,10 +41,10 @@ function pictureUploadErrorMeta(
 }
 
 /**
- * Upload (or overwrite) the caller's canonical profile picture at
- * `{user_id}/avatar.{ext}`. Does **not** purge other folder objects — that runs
- * after a successful `PUT /api/profile` URL commit (F9-037 / F9-062). Prefer
- * calling from profile Save (upload-on-save), not on file pick.
+ * Upload a unique profile picture object at `{user_id}/{uuid}.{ext}`.
+ * Does **not** overwrite the live committed URL and does **not** purge other
+ * folder objects — cleanup runs after a successful `PUT /api/profile` URL
+ * commit (F9-037 / F9-062). Prefer calling from profile Save (upload-on-save).
  */
 export async function POST(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     uploadSize = file.size;
     if (file.size > MAX_SIZE_BYTES) {
       return NextResponse.json(
-        { error: "File size must be less than 5MB" },
+        { error: "File size must be 5 MB or smaller" },
         { status: 400 },
       );
     }
@@ -93,11 +93,11 @@ export async function POST(request: NextRequest) {
     }
 
     const ext = extensionForImageMime(detected);
-    const path = canonicalProfilePicturePath(user.id, ext);
+    const path = uniqueProfilePicturePath(user.id, ext);
 
     const { data, error } = await supabase.storage
       .from(PROFILE_PICTURES_BUCKET)
-      .upload(path, body, { contentType: detected, upsert: true });
+      .upload(path, body, { contentType: detected, upsert: false });
 
     if (error) {
       return handleApiError(

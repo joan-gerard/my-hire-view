@@ -118,12 +118,34 @@ export async function GET(request: NextRequest) {
     const existence = await Promise.all(
       rows.map((row) => checkCvObjectExists(row.cv_url)),
     );
-    const items = rows.map((row, i) => ({
-      ...row,
-      public_id: publicId,
-      // Non-R2 / unchecked URLs → true so they are not flagged missing
-      cv_exists: existence[i] ?? true,
-    }));
+
+    const anyShowPicture = rows.some(
+      (row) => row.show_profile_picture === true,
+    );
+    let hasLiveProfilePicture = false;
+    if (anyShowPicture) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("profile_picture_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      hasLiveProfilePicture = Boolean(
+        typeof profile?.profile_picture_url === "string" &&
+          profile.profile_picture_url.trim(),
+      );
+    }
+
+    const items = rows.map((row, i) => {
+      const { show_profile_picture, ...listFields } = row;
+      return {
+        ...listFields,
+        public_id: publicId,
+        // Non-R2 / unchecked URLs → true so they are not flagged missing
+        cv_exists: existence[i] ?? true,
+        profile_picture_missing:
+          show_profile_picture === true && !hasLiveProfilePicture,
+      };
+    });
 
     return NextResponse.json({
       data: items,

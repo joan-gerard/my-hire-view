@@ -78,4 +78,27 @@ describe("uploadProfilePictureFile", () => {
       expect(result.error).toMatch(/couldn’t upload your picture/i);
     }
   });
+
+  it("returns a timeout message when fetch aborts", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((_url, init: { signal?: AbortSignal }) => {
+        return new Promise((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () => {
+            reject(new DOMException("Aborted", "AbortError"));
+          });
+        });
+      }),
+    );
+    vi.useFakeTimers();
+    const file = new File(["x"], "a.jpg", { type: "image/jpeg" });
+    const pending = uploadProfilePictureFile(file);
+    await vi.advanceTimersByTimeAsync(30_000);
+    const result = await pending;
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/took too long/i);
+    }
+    vi.useRealTimers();
+  });
 });

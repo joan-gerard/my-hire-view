@@ -70,24 +70,102 @@ Defined in `components/forms/application-form-steps.ts`. Both layouts render the
 - `ApplicationFormWizardLayout` — step progress, gated Continue, Save on review  
 - `ApplicationFormSectionsLayout` — accordion sections, “Continue to next step”, Save on review  
 
-Per-step **Continue** uses the same readiness rules as Save (company/role, CV + video, slug available, etc.), so users cannot advance via Continue with missing required inputs. In the **sections** shell, accordion headers stay clickable — users can still jump to any step; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
+Per-step **Continue** uses the same readiness rules as Save (company/role, CV + video, slug available, etc.), so users cannot advance via Continue with missing required inputs. In the **sections** shell, accordion headers stay clickable — users can jump to any step, toggle the open section closed, or collapse **all** sections; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
 
 ---
 
 ## How to manual-test both
 
-1. Run the app locally (`pnpm dev`).  
-2. Open **Create** or **Edit** application.  
-3. Use the **Form layout (F35 test)** control, **or**  
-   - `/admin/new?formStyle=wizard`  
-   - `/admin/new?formStyle=sections`  
-4. Walk the full journey for the route you opened:  
-   - **Create** (`/admin/new`): draft leave, CV primary/tailored, slug reset, then **Save & Preview**.  
-   - **Edit** (`/admin/edit/[id]`): CV primary/tailored, slug reset, then **Save Application** (edit does not use Save & Preview).  
-5. Flip the switch and repeat — note friction, clarity, and mobile feel.  
-6. Record the decision here (or in the PR) when one layout wins; then remove the switch and the losing shell.
+Run locally (`pnpm dev`). Switch layouts with the **Form layout (F35 test)** control, or:
+
+- `/admin/new?formStyle=wizard` / `?formStyle=sections`  
+- `/admin/edit/[id]?formStyle=wizard` / `?formStyle=sections`  
+
+Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) and [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](../manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md) — this checklist is the **layout evaluation** pass.
+
+### Setup
+
+- [ ] Layout switch is visible in local/dev (hidden in production unless `NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH=1`)
+- [ ] Choosing Wizard / Sections updates the URL (`formStyle=…`) and survives a reload
+- [ ] Re-clicking the already-active layout does **not** reset you to step 1
+- [ ] Switching layout mid-form does reset to step 1 / clears section “completed” marks (expected for the test switch)
+
+### Matrix (run both layouts)
+
+For each layout (**wizard**, **sections**), smoke **Create** and **Edit**:
+
+| Surface | Save control | Must pass |
+| ------- | ------------ | --------- |
+| Create `/admin/new` | **Save & Preview** | Draft leave, CV, slug, save → preview |
+| Edit `/admin/edit/[id]` | **Save Application** | CV, slug, save → dashboard (no Save & Preview) |
+
+- [ ] Wizard — Create  
+- [ ] Wizard — Edit  
+- [ ] Sections — Create  
+- [ ] Sections — Edit  
+
+### Step flow & gating
+
+- [ ] Step order feels right: Role → About you → CV & video → Share URL → Review & save  
+- [ ] **Continue** stays blocked with a clear reason until that step’s required fields are ready (company/role; CV + YouTube; slug available)
+- [ ] **Sections only:** accordion headers open any step; clicking the open header collapses it; all sections can be closed at once (only Continue is gated) — note whether that helps or confuses  
+- [ ] **Wizard only:** progress chips for future steps are disabled; past steps are reachable  
+- [ ] Review summary matches what you entered before Save  
+
+### Enter / Save path (regressions)
+
+- [ ] On a non-Review step, pressing **Enter** in a text field (especially YouTube URL on CV & video) does **not** save the application  
+- [ ] Save only succeeds from **Review** (Create: Save & Preview; Edit: Save Application)  
+- [ ] Force a save-time failure from Review (e.g. go offline mid tailored CV upload, or race a taken slug) — you are taken to the step that owns the error (materials / share), and the message is visible  
+
+### Keyboard / focus
+
+- [ ] After **Continue**, focus moves to the new step heading (wizard) or the newly opened section header (sections) — not the document body  
+- [ ] Layout radios are keyboard-reachable; focus ring is visible  
+- [ ] When Continue is blocked, you can still focus it and hear/see the blocked reason (tooltip / `aria-describedby`)  
+
+### Create-only: draft leave (F15)
+
+- [ ] Fill some fields → browser Back / in-app leave → confirm dialog appears  
+- [ ] Switching **layout** does **not** open the leave-confirm dialog by itself  
+- [ ] Discard clears draft; Stay keeps values; successful Save & Preview clears draft  
+
+### Behavior parity (both layouts, Create + Edit)
+
+- [ ] Primary vs tailored CV + library modal still work  
+- [ ] Name in URL + slug live status + **Reset to suggested**  
+- [ ] Share URL preview shows under slug  
+- [ ] Profile picture show/hide still works  
+- [ ] Edit tip still makes sense (candidate fields are from the saved app, not live profile)  
+
+### Mobile / narrow viewport
+
+Test at least one phone width (~375px) and one desktop width for **both** layouts:
+
+- [ ] No horizontal overflow; Continue / Save reachable  
+- [ ] Accordion headers / progress chips usable with touch  
+- [ ] Note which layout feels better on phone vs desktop (feeds the viewport hybrid open question — do **not** assume we should ship both)  
+
+### Hybrid lenses (optional, while testing)
+
+Deliberately try these combinations and jot notes — they are decision options, not requirements:
+
+- [ ] Create as **wizard**, Edit as **sections** (route hybrid)  
+- [ ] Same form on phone vs desktop — does one layout clearly win per surface?  
+
+### Decision prompts (fill the log below)
+
+After the matrix, ask yourself:
+
+1. Which layout would you ship for **everyone** if you could keep only one?  
+2. Does create-vs-edit hybrid earn the cost of two shells?  
+3. Did viewport differences feel like “one responsive shell is enough” or “we need two patterns”?  
+4. Any tip overload / confusion left on Review or Share URL?  
+
+Then record the choice in the decision log and remove the switch + losing shell when ready.
 
 ---
+
 
 ## Decision log (fill in after testing)
 
@@ -95,7 +173,7 @@ Per-step **Continue** uses the same readiness rules as Save (company/role, CV + 
 | ---- | ---------- | ----- |
 | _(pending)_ | wizard everywhere / sections everywhere / hybrid by route (create=wizard, edit=sections) / hybrid by viewport (e.g. mobile=wizard, desktop=sections) | See open questions below; prefer at most one hybrid rule if any |
 
-**Out of scope for F35:** post-launch product tour (`F31-105`), public `/view` polish (`F38-122`), monetization gates.
+**Out of scope for F35:** post-launch product tour (`F31-105`), public `/view` polish (`F38-122`), monetization gates, and **incomplete server draft saves** (`F40-124` — park plan [INCOMPLETE_DRAFT_SAVES.md](../product/INCOMPLETE_DRAFT_SAVES.md); implement in a separate PR after the layout pick so Save/publish rules are not changed under the dual-layout test). Running decision diary: [DEVELOPMENT_JOURNAL.md](DEVELOPMENT_JOURNAL.md).
 
 ---
 
@@ -231,3 +309,5 @@ The instinct matches how people use phones vs laptops, but a **viewport-based la
 - Product chrome: [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md)  
 - Related Preferences precedent: status indicator style under Account settings → Preferences  
 - Related mobile pass: backlog `F39-123` (final mobile / responsiveness review)  
+- Deferred incomplete drafts: `F40-124` — [INCOMPLETE_DRAFT_SAVES.md](../product/INCOMPLETE_DRAFT_SAVES.md)  
+- Decision diary: [DEVELOPMENT_JOURNAL.md](DEVELOPMENT_JOURNAL.md)  

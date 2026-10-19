@@ -6,6 +6,8 @@ import {
   resolveCvUploadIdempotencyKey,
 } from "@/lib/utils/cv-upload-client-key";
 import {
+  mapProfileSaveWarnings,
+  messageForProfileSaveWarning,
   messageForUploadFailure,
   messageForUploadNetworkError,
 } from "@/lib/utils/upload-form-messages";
@@ -54,6 +56,36 @@ describe("messageForUploadFailure", () => {
     expect(messageForUploadNetworkError("profile-picture")).toMatch(
       /Network error/i,
     );
+  });
+});
+
+describe("messageForProfileSaveWarning", () => {
+  it("maps known cleanup / metadata warnings to plain copy", () => {
+    expect(
+      messageForProfileSaveWarning(
+        "Saved profile but failed to sync name to account metadata",
+      ),
+    ).toMatch(/account name/i);
+    expect(
+      messageForProfileSaveWarning(
+        "Saved profile but failed to delete the previous profile picture from storage",
+      ),
+    ).toMatch(/previous picture/i);
+  });
+
+  it("uses a generic fallback for unknown warnings", () => {
+    expect(messageForProfileSaveWarning("weird internal code")).toMatch(
+      /something else needs attention/i,
+    );
+  });
+
+  it("joins mapped warnings", () => {
+    const joined = mapProfileSaveWarnings([
+      "Saved profile but failed to sync name to account metadata",
+      "Saved profile but could not remove older profile picture files from storage",
+    ]);
+    expect(joined).toMatch(/account name/i);
+    expect(joined).toMatch(/older picture files/i);
   });
 });
 

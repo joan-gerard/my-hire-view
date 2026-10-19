@@ -1,9 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import type { ApplicationStatus } from "@/lib/types/application";
 import {
   CV_MISSING_LEGEND,
+  PROFILE_PICTURE_MISSING_LEGEND,
   getApplicationStatusDisplay,
   getApplicationStatusDisplayByKey,
   type ApplicationStatusVisualKey,
@@ -166,7 +168,22 @@ export function ApplicationStatusIcon({
   );
 }
 
-/** Inline “CV missing” chip (card + legend). */
+const WARNING_ICON = (
+  <svg
+    className="h-3.5 w-3.5"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+    aria-hidden
+  >
+    <path
+      fillRule="evenodd"
+      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.518 11.594c.75 1.335-.213 2.982-1.742 2.982H3.48c-1.53 0-2.493-1.647-1.743-2.982L8.257 3.1zM11 14a1 1 0 10-2 0 1 1 0 002 0zm-1-2a1 1 0 01-1-1V8a1 1 0 112 0v3a1 1 0 01-1 1z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
+
+/** Inline “CV missing” chip (card + legend) — pink warning wash. */
 export function MissingCvBadge() {
   return (
     <span
@@ -174,19 +191,26 @@ export function MissingCvBadge() {
       title={CV_MISSING_LEGEND.description}
       aria-label="CV file missing"
     >
-      <svg
-        className="h-3.5 w-3.5"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-        aria-hidden
-      >
-        <path
-          fillRule="evenodd"
-          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.518 11.594c.75 1.335-.213 2.982-1.742 2.982H3.48c-1.53 0-2.493-1.647-1.743-2.982L8.257 3.1zM11 14a1 1 0 10-2 0 1 1 0 002 0zm-1-2a1 1 0 01-1-1V8a1 1 0 112 0v3a1 1 0 01-1 1z"
-          clipRule="evenodd"
-        />
-      </svg>
-      CV missing
+      {WARNING_ICON}
+      {CV_MISSING_LEGEND.label}
     </span>
+  );
+}
+
+/**
+ * Inline chip when show-picture is on but the account has no photo.
+ * Cool blue wash (distinct from CV missing pink). Links to Profile to add one.
+ */
+export function MissingProfilePictureBadge() {
+  return (
+    <Link
+      href="/admin/profile"
+      className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--status-dot-active)]/50 bg-[var(--status-wash-active)] px-2 py-0.5 text-xs font-medium text-[var(--ink)] hover:bg-[var(--status-dot-active)]/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+      title={`${PROFILE_PICTURE_MISSING_LEGEND.description} Open Profile to add a picture.`}
+      aria-label="Profile picture missing. Open Profile to add a picture."
+    >
+      {WARNING_ICON}
+      {PROFILE_PICTURE_MISSING_LEGEND.label}
+    </Link>
   );
 }

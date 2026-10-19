@@ -42,13 +42,26 @@ export function getProfilePictureStoragePath(
   }
 }
 
-/** `{userId}/avatar.{ext}` — one logical picture per user. */
+/** `{userId}/avatar.{ext}` — legacy canonical basename (still accepted as owned). */
 export function canonicalProfilePicturePath(
   userId: string,
   ext: string,
 ): string {
   const normalized = ext.toLowerCase() === "jpeg" ? "jpg" : ext.toLowerCase();
   return `${userId}/${PROFILE_PICTURE_BASENAME}.${normalized}`;
+}
+
+/**
+ * `{userId}/{uuid}.{ext}` — unique object per upload so a discarded upload cannot
+ * overwrite the live picture at the previously committed URL (upsert-safe).
+ * Old objects are removed after a successful `PUT /api/profile` commit.
+ */
+export function uniqueProfilePicturePath(
+  userId: string,
+  ext: string,
+): string {
+  const normalized = ext.toLowerCase() === "jpeg" ? "jpg" : ext.toLowerCase();
+  return `${userId}/${crypto.randomUUID()}.${normalized}`;
 }
 
 /**
