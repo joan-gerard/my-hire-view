@@ -10,13 +10,13 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 
 | Effort | Count | PRs               |
 | :----: | ----: | ----------------- |
-| **1**  |     5 | A3, F22, F24, F32, F33 |
+| **1**  |     6 | A3, F22, F24, F32, F33, J4 |
 | **2**  |     4 | E1, E4, F23, F39  |
 | **3**  |     5 | F28, F30, F38, F40, L6 |
-| **4**  |     4 | F21, F29, F35, I2 |
+| **4**  |     5 | F21, F29, F35, I2, J1 |
 | **5**  |     1 | E2                |
 
-**~21 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped; **J4** docs + **J1** signup username pulled into before-launch from the competitive decision). Effort table above is approximate — treat **J4** ≈1, **J1** ≈4. Complexity still concentrates in **E2**, then **F35 / F21 / F29 / I2 / J1**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group). **F40** (incomplete draft saves) is planned after F35 — see [INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md).
+**21 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped; **J4** + **J1** pulled into before-launch from the competitive username decision). **Weighted average ≈ 2.57** — many 1–3 polish items; complexity concentrates in **E2**, then **F35 / F21 / F29 / I2 / J1**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group). **F40** (incomplete draft saves) is planned after F35 — see [INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md).
 
 ---
 
@@ -76,7 +76,7 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 
 - **E4** swaps annual → quarterly on the working draft + `#pricing` UI (can ship early; not a lock)
 - **J4** (`J4-125`) drops Premium-only vanity from pricing docs/copy — username for all tiers ([COMPETITIVE_COMPARISON.md](COMPETITIVE_COMPARISON.md)); can ship early with E4
-- **J1** (`J1-079`) implements Reslink-style username at signup for all tiers — prefer after J4; before E1 lock when possible
+- **J1** (`J1-126`) implements Reslink-style username at signup for all tiers — prefer after J4; before E1 lock when possible (supersedes cancelled Premium vanity `J1-079`)
 - Product lock (**E1**) before Stripe/gates (**E2**) — lock **monthly + quarterly** (no annual) and **username-for-all** (not Premium vanity)
 - **A3** (confirm email in prod) is ops with no code — last config before public launch
 - **`F20-020`** is launch-gated and stays outside the open-PR count: counsel-reviewed Terms, Privacy, and Cookies are required before public launch, but they are not an open PR group

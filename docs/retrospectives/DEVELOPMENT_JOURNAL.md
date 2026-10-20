@@ -32,6 +32,6 @@ The username thread mattered most. Reslink calls it a **username** (handle), aut
 
 **Decision:** copy Reslink-style username for **all tiers at signup**, not Premium-only vanity. Keep opaque as internal/canonical if useful; privacy as an optional private-link mode later, not the default. Premium branding should ride durable unlocks (personalization, analytics, caps), not a scarce name string.
 
-Backlog caught up: `J1-079` rewritten and pulled to before-launch Should; new `J4-125` to fix pricing docs/copy first; `E1` / Epic J / [BEFORE_LAUNCH_PR_ORDER.md](../product/BEFORE_LAUNCH_PR_ORDER.md) nudged so we do not lock Premium vanity into E1. Trello Pre Launch cards match. Order when we act: **J4 → J1 → E1**.
+Backlog caught up: cancelled Premium vanity `J1-079`; new before-launch Should `J1-126` (implement username) + `J4-125` (pricing docs first); `E1` / Epic J / [BEFORE_LAUNCH_PR_ORDER.md](../product/BEFORE_LAUNCH_PR_ORDER.md) nudged so we do not lock Premium vanity into E1. Trello Pre Launch cards match. Order when we act: **J4 → J1 → E1**.
 
 F35 path for the rest of the week is unchanged — this was a packaging/identity fork, not a create-form commit.
