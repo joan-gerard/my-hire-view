@@ -1,6 +1,6 @@
 /**
  * Shared step map for F35 wizard + collapsible-sections layouts.
- * Order: Role & share URL → Candidate → CV & video → Review/save.
+ * Order: Role & share URL → Candidate → CV → Video → Review/save.
  */
 
 import type { ApplicationFormData } from "@/lib/types/application";
@@ -9,6 +9,7 @@ export const APPLICATION_FORM_STEP_IDS = [
   "role",
   "candidate",
   "materials",
+  "video",
   "review",
 ] as const;
 
@@ -30,7 +31,7 @@ const FIELD_TO_STEP: Partial<
   linkedin_url: "candidate",
   cv_url: "materials",
   cv_filename: "materials",
-  video_url: "materials",
+  video_url: "video",
 };
 
 /**
@@ -83,9 +84,15 @@ export const APPLICATION_FORM_STEPS: readonly ApplicationFormStepDef[] = [
   },
   {
     id: "materials",
-    title: "CV & video",
+    title: "CV",
     shortLabel: "CV",
-    description: "Attach a CV and the YouTube intro for this role.",
+    description: "Attach a primary or tailored CV for this role.",
+  },
+  {
+    id: "video",
+    title: "Video",
+    shortLabel: "Video",
+    description: "Add the YouTube intro for this application.",
   },
   {
     id: "review",
@@ -116,7 +123,7 @@ export function isWizardStepReachable(
 
 /**
  * Wizard progress-pill "done" mark — earlier than the current step and still
- * ready (same readiness idea as sections: clearing Role/Materials drops the check).
+ * ready (same readiness idea as sections: clearing Role/CV/Video drops the check).
  */
 export function isWizardStepCompleted(
   stepIndex: number,

@@ -43,16 +43,19 @@ function pillClassName(args: {
   completed: boolean;
 }): string {
   const { active, reachable, completed } = args;
+  // Match form shell radius (`ADMIN_PANEL_CLASS` / `rounded-2xl`), not full pills.
+  const base =
+    "inline-flex w-full items-center justify-center gap-1 rounded-2xl px-2 py-3.5 text-xs font-medium sm:px-2.5 sm:py-4";
   if (active) {
-    return "cursor-pointer rounded-full bg-[var(--ink)] px-2.5 py-1 text-xs font-semibold text-[var(--white)] ring-2 ring-[var(--lime)] ring-offset-2 ring-offset-[var(--white)]";
+    return `${base} cursor-pointer bg-[var(--ink)] font-semibold text-[var(--white)] ring-2 ring-[var(--lime)] ring-offset-2 ring-offset-[var(--white)]`;
   }
   if (completed) {
-    return "inline-flex cursor-pointer items-center gap-1 rounded-full border border-[var(--status-dot-viewed)]/50 bg-[var(--status-wash-viewed)] px-2.5 py-1 text-xs font-semibold text-[var(--ink)] hover:brightness-[0.98]";
+    return `${base} cursor-pointer border border-[var(--status-dot-viewed)]/50 bg-[var(--status-wash-viewed)] font-semibold text-[var(--ink)] hover:brightness-[0.98]`;
   }
   if (reachable) {
-    return "cursor-pointer rounded-full border border-[var(--ink)]/15 bg-[var(--paper)] px-2.5 py-1 text-xs font-medium text-[var(--ink)] hover:bg-[var(--status-wash-active)]/60";
+    return `${base} cursor-pointer border border-[var(--ink)]/15 bg-[var(--paper)] text-[var(--ink)] hover:bg-[var(--status-wash-active)]/60`;
   }
-  return "cursor-not-allowed rounded-full border border-[var(--ink)]/10 bg-[var(--paper)] px-2.5 py-1 text-xs font-medium text-[var(--muted)] opacity-60";
+  return `${base} cursor-not-allowed border border-[var(--ink)]/10 bg-[var(--paper)] text-[var(--muted)] opacity-60`;
 }
 
 export default function ApplicationFormWizardLayout({
@@ -73,10 +76,6 @@ export default function ApplicationFormWizardLayout({
   const canContinue = !continueBlockedReason;
   const headingRef = useRef<HTMLHeadingElement>(null);
   const skipInitialFocusRef = useRef(true);
-  const progressRatio =
-    APPLICATION_FORM_STEPS.length <= 1
-      ? 1
-      : Math.max(0, index) / (APPLICATION_FORM_STEPS.length - 1);
 
   useEffect(() => {
     if (skipInitialFocusRef.current) {
@@ -88,23 +87,15 @@ export default function ApplicationFormWizardLayout({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Flat progress — no nested cards inside the form shell */}
+      {/* Flat progress — equal-width step pills; no nested cards */}
       <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-medium text-[var(--muted)]">
-            Step {index + 1} of {APPLICATION_FORM_STEPS.length}
-          </p>
-          <div
-            className="h-1.5 w-28 overflow-hidden rounded-full bg-[var(--ink)]/10"
-            aria-hidden
-          >
-            <div
-              className="h-full rounded-full bg-[var(--lime)] transition-[width] duration-300 ease-out"
-              style={{ width: `${Math.round(progressRatio * 100)}%` }}
-            />
-          </div>
-        </div>
-        <ol className="flex flex-wrap gap-2" aria-label="Form progress">
+        <ol
+          className="grid w-full gap-1.5 sm:gap-2"
+          style={{
+            gridTemplateColumns: `repeat(${APPLICATION_FORM_STEPS.length}, minmax(0, 1fr))`,
+          }}
+          aria-label="Form progress"
+        >
           {APPLICATION_FORM_STEPS.map((s, i) => {
             const active = s.id === currentStepId;
             const reachable = isWizardStepReachable(
@@ -118,7 +109,7 @@ export default function ApplicationFormWizardLayout({
               stepReady(s.id),
             );
             return (
-              <li key={s.id}>
+              <li key={s.id} className="min-w-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -129,9 +120,11 @@ export default function ApplicationFormWizardLayout({
                   aria-current={active ? "step" : undefined}
                 >
                   {completed ? (
-                    <FiCheck className="size-3" strokeWidth={2.5} aria-hidden />
+                    <FiCheck className="size-3 shrink-0" strokeWidth={2.5} aria-hidden />
                   ) : null}
-                  {i + 1}. {s.shortLabel}
+                  <span className="truncate">
+                    {i + 1}. {s.shortLabel}
+                  </span>
                 </button>
               </li>
             );

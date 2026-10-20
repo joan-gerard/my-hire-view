@@ -59,8 +59,9 @@ Order matches the backlog example:
 
 1. **Role & share URL** — company + position + name-in-URL, slug, live preview
 2. **About you** — candidate fields + profile picture
-3. **CV & video** — primary/tailored CV + YouTube
-4. **Review & save** — short summary + Save / **Leave without saving** (page leave; not step Back)
+3. **CV** — primary/tailored CV
+4. **Video** — YouTube intro URL
+5. **Review & save** — short summary + Save / **Leave without saving** (page leave; not step Back)
 
 Defined in `components/forms/application-form-steps.ts`. Both layouts render the **same field content** from `ApplicationForm` so draft persistence (F15), preview/publish path (F16), share URL preview (F19-046), and primary-CV library behavior stay one code path.
 
@@ -69,9 +70,9 @@ Defined in `components/forms/application-form-steps.ts`. Both layouts render the
 - `ApplicationFormWizardLayout` — step progress, gated Continue, Save on review
 - `ApplicationFormSectionsLayout` — accordion sections, “Continue to next step”, Save on review
 
-**Atmosphere (shared brand tokens):** create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. Progress chrome and field groups stay flat inside — lime edge on the active step/heading, success wash on completed markers/pills, short lime track (wizard), hairline dividers (sections). No nested white/bordered cards (avoids box-in-box on every breakpoint). Wizard check marks use the same **step readiness** as sections (`isWizardStepCompleted` + `stepReady`) so clearing Role or Materials drops the check.
+**Atmosphere (shared brand tokens):** create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. Progress chrome and field groups stay flat inside — lime edge on the active step/heading, success wash on completed markers/pills, full-width equal-column wizard pills (no separate “Step x of n” / track row), hairline dividers (sections). No nested white/bordered cards (avoids box-in-box on every breakpoint). Wizard check marks use the same **step readiness** as sections (`isWizardStepCompleted` + `stepReady`) so clearing Role, CV, or Video drops the check.
 
-Per-step **Continue** uses the same readiness rules as Save (company/role + slug, CV + video, etc.), so users cannot advance via Continue with missing required inputs. **Wizard create** unlocks progress pills via a Continue frontier (Back does not lock previously reached steps). **Wizard edit** makes every pill reachable. In the **sections** shell, accordion headers stay clickable — users can jump to any step, toggle the open section closed, or collapse **all** sections; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
+Per-step **Continue** uses the same readiness rules as Save (company/role + slug, CV, video, etc.), so users cannot advance via Continue with missing required inputs. **Wizard create** unlocks progress pills via a Continue frontier (Back does not lock previously reached steps). **Wizard edit** makes every pill reachable. In the **sections** shell, accordion headers stay clickable — users can jump to any step, toggle the open section closed, or collapse **all** sections; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
 
 ---
 
@@ -107,8 +108,8 @@ For each layout (**wizard**, **sections**), smoke **Create** and **Edit**:
 
 ### Step flow & gating
 
-- [ ] Step order feels right: Role & share URL → About you → CV & video → Review & save
-- [ ] **Continue** stays blocked with a clear reason until that step’s required fields are ready (company/role + slug available; CV + YouTube)
+- [ ] Step order feels right: Role & share URL → About you → CV → Video → Review & save
+- [ ] **Continue** stays blocked with a clear reason until that step’s required fields are ready (company/role + slug available; CV; YouTube)
 - [ ] **Sections only:** accordion headers open any step; clicking the open header collapses it; all sections can be closed at once (only Continue is gated) — note whether that helps or confuses
 - [ ] **Wizard + create:** progress chips unlock via Continue frontier — after Back, previously reached steps stay clickable; unreached future steps stay disabled; Continue stays gated
 - [ ] **Wizard + edit:** all progress chips are reachable (Continue still gated on the current step’s required fields)
@@ -116,9 +117,9 @@ For each layout (**wizard**, **sections**), smoke **Create** and **Edit**:
 
 ### Enter / Save path (regressions)
 
-- [ ] On a non-Review step, pressing **Enter** in a text field (especially YouTube URL on CV & video) does **not** save the application
+- [ ] On a non-Review step, pressing **Enter** in a text field (especially YouTube URL on Video) does **not** save the application
 - [ ] Save only succeeds from **Review** (Create: Save & Preview; Edit: Save Application)
-- [ ] Force a save-time failure from Review (e.g. go offline mid tailored CV upload, or race a taken slug) — you are taken to the step that owns the error (materials / role), and the message is visible
+- [ ] Force a save-time failure from Review (e.g. go offline mid tailored CV upload, or race a taken slug) — you are taken to the step that owns the error (materials / video / role), and the message is visible
 
 ### Keyboard / focus
 
@@ -218,7 +219,7 @@ This is a **stronger** dual-layout story than a Profile preference, because the 
 
 | Mode                | Fit                                                                                                          |
 | ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Create + wizard** | Linear path, progress (“step 2 of 4”), less tip overload for first draft / Save & Preview — helps activation |
+| **Create + wizard** | Linear path, progress (“step 2 of 5”), less tip overload for first draft / Save & Preview — helps activation |
 | **Edit + sections** | Open the CV step or slug step directly; accordion matches “I already know this form”                         |
 
 **Why it can work**

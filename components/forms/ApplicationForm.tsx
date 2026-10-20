@@ -1214,7 +1214,9 @@ export default function ApplicationForm({
       case "candidate":
         return true;
       case "materials":
-        return hasCv && hasVideo;
+        return hasCv;
+      case "video":
+        return hasVideo;
       case "review":
         return requiredReady;
       default:
@@ -1254,6 +1256,8 @@ export default function ApplicationForm({
             ? "Select a primary CV, or upload a tailored CV."
             : "Upload a CV file for this application.";
         }
+        return null;
+      case "video":
         if (!hasVideo) return "YouTube URL is required.";
         return null;
       case "review":
@@ -1606,12 +1610,15 @@ export default function ApplicationForm({
         preparing={cvPendingDigesting}
         disabled={submitPhase !== "idle"}
       />
-      <YouTubeUrlInput
-        value={formData.video_url}
-        onChange={(url) => setFormData((prev) => ({ ...prev, video_url: url }))}
-        error={errors.video_url}
-      />
     </>
+  );
+
+  const videoStep = (
+    <YouTubeUrlInput
+      value={formData.video_url}
+      onChange={(url) => setFormData((prev) => ({ ...prev, video_url: url }))}
+      error={errors.video_url}
+    />
   );
 
   const reviewStep = (
@@ -1654,6 +1661,7 @@ export default function ApplicationForm({
     role: roleStep,
     candidate: candidateStep,
     materials: materialsStep,
+    video: videoStep,
     review: reviewStep,
   };
 

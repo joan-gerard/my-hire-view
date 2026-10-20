@@ -15,6 +15,9 @@ describe("applicationFormStepForErrors", () => {
     expect(applicationFormStepForErrors({ cv_url: "Upload a CV" })).toBe(
       "materials",
     );
+    expect(applicationFormStepForErrors({ video_url: "required" })).toBe(
+      "video",
+    );
     expect(applicationFormStepForErrors({ slug: "taken" })).toBe("role");
   });
 
@@ -39,6 +42,13 @@ describe("applicationFormStepForErrors", () => {
         cv_url: "missing",
       }),
     ).toBe("candidate");
+    // CV is before video.
+    expect(
+      applicationFormStepForErrors({
+        cv_url: "missing",
+        video_url: "required",
+      }),
+    ).toBe("materials");
   });
 });
 
@@ -51,7 +61,7 @@ describe("isWizardStepReachable", () => {
   });
 
   it("allows every step on edit", () => {
-    for (const stepIndex of [0, 1, 2, 3]) {
+    for (const stepIndex of [0, 1, 2, 3, 4]) {
       expect(isWizardStepReachable(stepIndex, 0, true)).toBe(true);
     }
   });
@@ -59,10 +69,10 @@ describe("isWizardStepReachable", () => {
 
 describe("isWizardStepCompleted", () => {
   it("marks earlier steps complete only while they stay ready", () => {
-    const current = 2; // on CV & video
+    const current = 3; // on Video
     expect(isWizardStepCompleted(0, current, true)).toBe(true);
     expect(isWizardStepCompleted(0, current, false)).toBe(false);
-    expect(isWizardStepCompleted(1, current, true)).toBe(true);
-    expect(isWizardStepCompleted(2, current, true)).toBe(false);
+    expect(isWizardStepCompleted(2, current, true)).toBe(true);
+    expect(isWizardStepCompleted(3, current, true)).toBe(false);
   });
 });
