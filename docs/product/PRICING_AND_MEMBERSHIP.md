@@ -2,7 +2,7 @@
 
 **Purpose of this doc:** Working decisions on Free / Pro / Premium for MyHireView. It is **not** a second backlog — actionable engineering work lives in [Backlog.md](Backlog.md).
 
-**Status:** Plan names, monthly and annual USD prices, numeric caps, Free primary-only, analytics split, and application-cap counting rules below are **working decisions** — expected to change before launch. **E1** (lock tiers) and **E2** (Stripe checkout / gates) are **deferred until near public launch**; do not treat this matrix as final. Display currency on the homepage `#pricing` section is **USD**; Stripe adaptive/local presentment can come later with checkout.
+**Status:** Plan names, monthly and annual USD prices, numeric caps, Free primary-only, analytics split, and application-cap counting rules below are **working decisions** — expected to change before launch. **E1** (lock tiers) and **E2** (Stripe checkout / gates) are **deferred until near public launch**; do not treat this matrix as final. Display currency on the homepage `#pricing` section is **USD**; Stripe adaptive/local presentment can come later with checkout. **Public id:** Premium-only vanity is **superseded** (cancelled `J1-079`); username for all tiers is the decision ([COMPETITIVE_COMPARISON.md](COMPETITIVE_COMPARISON.md)) — full matrix/copy rewrite is `J4-125`, implementation `J1-126`.
 
 Homepage marketing FAQ copy is **placeholder** and is intentionally **not** used here as input for what tiers should offer.
 
@@ -49,8 +49,8 @@ These are the core concepts the tier matrix refers to. Full product behaviour: [
 | **Profile** | Account defaults (name, location, LinkedIn, portfolio, profile picture) used when creating applications. |
 | **Primary CV library** | Résumé PDFs owned by the profile and reusable across applications. Free/Pro max **5**; Premium max **15**. |
 | **Tailored CV** | A one-off PDF uploaded for a **single** application (role-specific version), in addition to the primary library. Pro/Premium only; optional per application (primary still allowed). |
-| **Public link** | Shape: `/view/{publicId}/{slug}`. Default **public id** is an opaque account id (not the user’s name) — marketed as a **private shareable link**. Slug is derived from company/role (optional name-in-URL). |
-| **Vanity public id** | Custom public id (e.g. `/view/joan-gerard/…`) — Premium branding unlock. |
+| **Public link** | Shape: `/view/{publicId}/{slug}`. **Today (shipped):** opaque account id — marketed as a **private shareable link**. **Decision (pending `J4-125` / `J1-126`):** username for **all tiers** at signup — see [COMPETITIVE_COMPARISON.md](COMPETITIVE_COMPARISON.md). Slug is derived from company/role (optional name-in-URL). |
+| **Vanity public id** | ~~Custom public id as Premium unlock~~ — **superseded.** Do not gate name-like URLs on Premium (cancelled `J1-079`). All-tiers signup username is `J1-126`; rewrite this matrix in `J4-125`. |
 | **Video pitch** | YouTube URL embedded on the public page (included on every plan). In-app recording/hosting is a separate future feature. |
 | **Basic analytics** | Aggregate view count, CV download count, created / last viewed (View Insights). Owner self-views are excluded from counts. |
 
@@ -64,7 +64,7 @@ Unless a row in §3 says otherwise, candidates on **any** plan are expected to u
 - Primary CV library (within the plan’s library size)
 - At least basic analytics
 
-**Tiers mainly differ on:** application caps, whether you can upload **tailored** CVs, public-link branding (private/opaque vs vanity), analytics depth, and primary-library size.
+**Tiers mainly differ on:** application caps, whether you can upload **tailored** CVs, analytics depth, and primary-library size. ~~Public-link branding (opaque vs Premium vanity)~~ — **superseded:** username for all tiers (`J4-125` / `J1-126`); Premium branding leans on personalization (`N0`–`N3`) and other durable unlocks.
 
 ---
 
@@ -98,7 +98,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | **CV workflow** | **Primary CVs only** | **Primary + tailored** (tailored optional per app) | Same as Pro |
 | **Video pitch** | Included (YouTube URL) | Included | Included |
 | **Primary library size** | **5** | **5** | **15** |
-| **Public id** | Private/opaque link | Private/opaque link | **Custom vanity** public id |
+| **Public id** | ~~Private/opaque~~ → **Username (all tiers)** pending `J4-125` / `J1-126` | Same | Same (~~**Custom vanity** Premium~~ superseded) |
 | **Public page style** | Default layout | Default layout | **+ personalization** (planned after launch — colors, headline, quotes, photos; see Epic N) |
 | **Analytics** | Aggregate views/downloads (+ created / last viewed) | Basic + **per-view timestamp history** | + duration, geography, referrer, video engagement, CSV export, cross-app comparison |
 
@@ -109,7 +109,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | **Up to 3 applications** | Hard cap. Count rules in §3.6. | Working decision (this doc) |
 | **Primary CVs only** | Upload/use the primary library; no tailored-CV workflow. | Working decision (this doc); [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md) |
 | **Video pitch** | YouTube URL on the application page. | Working decision (this doc) |
-| Private/opaque public id | Default `/view/{opaquePublicId}/{slug}` — no personal name in the public id segment. | [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md) |
+| Private/opaque public id | **Shipped today:** `/view/{opaquePublicId}/{slug}`. **Superseded plan:** username for all tiers at signup (`J1-126`); opaque may remain internal/canonical. Privacy tradeoff noted in [COMPETITIVE_COMPARISON.md](COMPETITIVE_COMPARISON.md). | [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md), `J4-125` |
 | Basic analytics | View count, CV download count, created / last viewed (View Insights). | [USER_GUIDE.md](../engineering/USER_GUIDE.md), [DATA_FLOW.md](../architecture/DATA_FLOW.md) |
 | Primary library | Up to **5**. | Working decision (this doc); today’s product max |
 
@@ -117,7 +117,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 
 | Capability | Notes | Sources |
 | ---------- | ----- | ------- |
-| **Everything in Free** | Including video pitch and private/opaque links. | Working decision (this doc) |
+| **Everything in Free** | Including video pitch and public link (opaque today; username all tiers after `J1-126`). | Working decision (this doc); username decision [COMPETITIVE_COMPARISON.md](COMPETITIVE_COMPARISON.md) |
 | **Primary + tailored CVs** | Per-application tailored uploads in addition to the primary library. Tailored is **optional** — Pro users may still attach a primary CV only. | Working decision (this doc) |
 | **Up to 15 applications** | Hard cap. Count rules in §3.6. | Working decision (this doc) |
 | Analytics | Basic metrics **plus per-view timestamp history**. | Working decision (this doc) |
@@ -129,11 +129,11 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | Capability | Notes | Sources |
 | ---------- | ----- | ------- |
 | Everything in Pro | Including primary + tailored CVs and per-view history. | Working decision (this doc) |
-| **Custom vanity public id** | LinkedIn-style branded public id (e.g. `/view/joan-gerard/...`). | [Backlog.md](Backlog.md) (After launch → Could), [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md#future-custom-public-id-vanity-handle) |
+| ~~**Custom vanity public id**~~ | ~~LinkedIn-style branded public id as Premium unlock.~~ **Superseded** — cancelled `J1-079`; username for all tiers is `J1-126` (docs align `J4-125`). | [COMPETITIVE_COMPARISON.md](COMPETITIVE_COMPARISON.md), [Backlog.md](Backlog.md) |
 | **Unlimited applications** | Marketed as unlimited; internal fair-use soft ceiling **100** (protects R2 storage). Soft-ceiling UX copy TBD (§5). | Working decision (this doc) |
 | **Richer analytics** | Beyond Pro: view duration, geographic origin, referrer/traffic source, video-pitch engagement (played vs page-only), CSV export, side-by-side comparison across the candidate’s own applications. | Working decision (this doc) |
 | **Primary library up to 15** | Raise above Free/Pro’s 5. | Working decision (this doc); Free/Pro still use `PRIMARY_CV_MAX_PER_USER` = 5 and DB `primary_cv_library_max_for_user()` = 5 (F13-032); raise that function (and the early API check) when Premium gating ships (E2) |
-| **Public view personalization** (planned) | Optional personality / branding on `/view` beyond name, picture, video, CV — e.g. theme/accent colors, headline, quotes, extra photos. **After launch**; design brainstorm `N0-109`, scope `N1-106`, then `N2-107` / `N3-108`. Natural **Premium** unlock alongside vanity public id. | [Backlog.md](Backlog.md) (After launch → Could, Epic N) |
+| **Public view personalization** (planned) | Optional personality / branding on `/view` beyond name, picture, video, CV — e.g. theme/accent colors, headline, quotes, extra photos. **After launch**; design brainstorm `N0-109`, scope `N1-106`, then `N2-107` / `N3-108`. Natural **Premium** unlock (vanity public id is **not** the Premium differentiator — see `J1-126`). | [Backlog.md](Backlog.md) (After launch → Could, Epic N) |
 | **Price** | **$14/mo** or **$59/yr** (~$4.92/mo effective). | Working decision (this doc) |
 
 ### 3.5 Adjacent features
@@ -152,7 +152,7 @@ These rules are product truth for when E2 gates ship; not implemented in API/UI 
 | **What the application cap counts** | **All applications ever created** that still exist as rows: **active + archived** count toward the cap. **Permanently deleted** applications do **not** count (hard-delete frees a slot). Soft-archive does **not** free a slot — archive-cycling cannot bypass Free/Pro limits. |
 | **At cap** | Block **creating** a new application. Do not auto-delete or auto-archive. User may upgrade, or permanently delete an existing application to free a slot (within the counting rules above). |
 | **Tailored on Pro/Premium** | Optional per application; reject `cv_type: "tailored"` on Free when gated. |
-| **Downgrade** | Existing applications stay accessible (view/edit/archive per product rules). New creates are blocked while count ≥ new tier’s cap. Leaving Premium: vanity public id reverts to the opaque private id. |
+| **Downgrade** | Existing applications stay accessible (view/edit/archive per product rules). New creates are blocked while count ≥ new tier’s cap. ~~Leaving Premium: vanity public id reverts to opaque.~~ **Superseded** — username is all-tiers (`J1-126`); no Premium vanity revert. |
 | **Premium soft ceiling** | Market “unlimited”; enforce a generous internal soft ceiling of **100** applications for storage fair use. Exact customer-facing messaging when approaching/hitting the ceiling is TBD (§5). |
 
 ---
@@ -171,9 +171,9 @@ These rules are product truth for when E2 gates ship; not implemented in API/UI 
 
 ### Vanity public id as premium
 
-> A planned enhancement (potentially **premium**): Let users choose a custom **public id** … Natural fit for a paid tier (custom branding).
+> ~~A planned enhancement (potentially **premium**): Let users choose a custom **public id** … Natural fit for a paid tier (custom branding).~~
 
-— [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md)
+— [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md) (**superseded** 2026-10-20; see [COMPETITIVE_COMPARISON.md](COMPETITIVE_COMPARISON.md), `J4-125` → `J1-126`)
 
 ---
 
