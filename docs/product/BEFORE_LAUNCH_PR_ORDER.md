@@ -16,7 +16,7 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 | **4**  |     4 | F21, F29, F35, I2 |
 | **5**  |     1 | E2                |
 
-**19 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped). **Weighted average ≈ 2.58** — many 1–3 polish items; complexity concentrates in **E2**, then **F35 / F21 / F29 / I2**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group). **F40** (incomplete draft saves) is planned after F35 — see [INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md).
+**~21 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped; **J4** docs + **J1** signup username pulled into before-launch from the competitive decision). Effort table above is approximate — treat **J4** ≈1, **J1** ≈4. Complexity still concentrates in **E2**, then **F35 / F21 / F29 / I2 / J1**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group). **F40** (incomplete draft saves) is planned after F35 — see [INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md).
 
 ---
 
@@ -72,32 +72,35 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 
 ### Phase 5 — Near launch only (Must + ops)
 
-**E4 (anytime) → E1 → E2 → A3**
+**E4 / J4 (anytime) → J1 (prefer before E1) → E1 → E2 → A3**
 
 - **E4** swaps annual → quarterly on the working draft + `#pricing` UI (can ship early; not a lock)
-- Product lock (**E1**) before Stripe/gates (**E2**) — lock **monthly + quarterly** (no annual)
+- **J4** (`J4-125`) drops Premium-only vanity from pricing docs/copy — username for all tiers ([COMPETITIVE_COMPARISON.md](COMPETITIVE_COMPARISON.md)); can ship early with E4
+- **J1** (`J1-079`) implements Reslink-style username at signup for all tiers — prefer after J4; before E1 lock when possible
+- Product lock (**E1**) before Stripe/gates (**E2**) — lock **monthly + quarterly** (no annual) and **username-for-all** (not Premium vanity)
 - **A3** (confirm email in prod) is ops with no code — last config before public launch
-- **`F20-020`** is launch-gated and stays outside the 18-PR count: counsel-reviewed Terms, Privacy, and Cookies are required before public launch, but they are not an open PR group
+- **`F20-020`** is launch-gated and stays outside the open-PR count: counsel-reviewed Terms, Privacy, and Cookies are required before public launch, but they are not an open PR group
 - Doing **E2** earlier wastes work if tiers/prices still change
 
 ---
 
-## 3. Suggested sequence (all 19 open)
+## 3. Suggested sequence (open before-launch PRs)
 
 ```
 F35 / F38
   → F40 (after F35 layout pick when possible)
   → F23 → F21
-  → F22 / F24 / F33 / E4 (whenever; E4 before E1)
+  → F22 / F24 / F33 / E4 / J4 (whenever; E4 + J4 before E1)
+  → J1 (prefer after J4; before E1 when possible)
   → L6 → I2 → F28 → F39 → F32 → F29 → F30
   → E1 → E2 → A3
 ```
 
 **Why this beats “easiest first”:**
 
-1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, E4→E1→E2, L6/I2→F30 are real; ignore them and you thrash. Prefer F40 after F35 layout pick when possible (soft ordering, not a hard gate — see sequence above).
+1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, E4/J4→E1→E2, J4→J1, L6/I2→F30 are real; ignore them and you thrash. Prefer F40 after F35 layout pick when possible (soft ordering, not a hard gate — see sequence above).
 2. **Risk before paint** — API/storage races before branding.
 3. **Reviews stay useful** — F28/F39/F29/F30 after the bulk of pre-launch code, not before.
-4. **Monetization last** — backlog already defers E1/E2 until launch is imminent; E4 only updates the draft.
+4. **Monetization last** — backlog already defers E1/E2 until launch is imminent; E4/J4 only update the draft.
 
 If capacity is short: finish **F35** (create/edit steps) and **F38** (`/view` polish) before **F39** / **F32** QA. Do not mix **F40** incomplete draft saves into the F35 dual-layout test.

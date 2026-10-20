@@ -19,3 +19,19 @@ Late in the day: should people save a real draft on the server even when require
 Competitive comparison notes (live edit vs Reslink, PDF badge gap) came up separately; they should not hitch a ride on the F35 layout commits.
 
 Tomorrow’s path: finish F35 manual testing, choose a layout (or a deliberate hybrid); then F38 when ready; then F40 once Save meaning is stable.
+
+---
+
+## 20 October 2026
+
+Stepped away from F35 shells long enough to turn the Reslink notes into a real product decision.
+
+[COMPETITIVE_COMPARISON.md](../product/COMPETITIVE_COMPARISON.md) is now the living vs-Reslink list: wins and gaps, High/Medium/Low impact with an evaluation, and a short **Decision** on each item. Early entries covered Getting started, quarterly billing, live edit (Reslink only edits drafts), the CV PDF badge, cover photo, and username-in-URL.
+
+The username thread mattered most. Reslink calls it a **username** (handle), auto-generates at signup, lets you edit, and blocks signup until the handle is free. We had planned opaque public ids everywhere and vanity only on Premium (`J1-079`). That looks weak next to Reslink’s Free branded links — and worse: someone could pay for Premium, fail to get `joan-gerard`, and feel cheated. Claiming once at signup for every tier is also simpler than opaque-now / vanity-later migrations.
+
+**Decision:** copy Reslink-style username for **all tiers at signup**, not Premium-only vanity. Keep opaque as internal/canonical if useful; privacy as an optional private-link mode later, not the default. Premium branding should ride durable unlocks (personalization, analytics, caps), not a scarce name string.
+
+Backlog caught up: `J1-079` rewritten and pulled to before-launch Should; new `J4-125` to fix pricing docs/copy first; `E1` / Epic J / [BEFORE_LAUNCH_PR_ORDER.md](../product/BEFORE_LAUNCH_PR_ORDER.md) nudged so we do not lock Premium vanity into E1. Trello Pre Launch cards match. Order when we act: **J4 → J1 → E1**.
+
+F35 path for the rest of the week is unchanged — this was a packaging/identity fork, not a create-form commit.
