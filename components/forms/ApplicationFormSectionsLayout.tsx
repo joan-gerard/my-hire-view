@@ -28,6 +28,20 @@ interface ApplicationFormSectionsLayoutProps {
   actions: ReactNode;
 }
 
+function markerClassName(args: {
+  open: boolean;
+  showComplete: boolean;
+}): string {
+  const { open, showComplete } = args;
+  if (showComplete) {
+    return "flex size-7 shrink-0 items-center justify-center rounded-full border border-[var(--status-dot-viewed)]/50 bg-[var(--status-wash-viewed)] text-xs font-semibold text-[var(--ink)]";
+  }
+  if (open) {
+    return "flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-xs font-semibold text-[var(--white)] ring-2 ring-[var(--lime)] ring-offset-2 ring-offset-[var(--white)]";
+  }
+  return "flex size-7 shrink-0 items-center justify-center rounded-full border border-[var(--ink)]/15 bg-[var(--paper)] text-xs font-semibold text-[var(--muted)]";
+}
+
 export default function ApplicationFormSectionsLayout({
   stepContents,
   openStepId,
@@ -66,8 +80,18 @@ export default function ApplicationFormSectionsLayout({
         return (
           <section
             key={step.id}
-            className="overflow-hidden rounded-xl border border-[var(--ink)]/10 bg-[var(--white)]"
+            className={
+              open
+                ? "relative overflow-hidden rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] shadow-sm"
+                : "overflow-hidden rounded-xl border border-[var(--ink)]/10 bg-[var(--white)]"
+            }
           >
+            {open ? (
+              <span
+                className="absolute inset-y-0 left-0 z-10 w-1 bg-[var(--lime)]"
+                aria-hidden
+              />
+            ) : null}
             <h2 className="m-0">
               <button
                 type="button"
@@ -78,14 +102,16 @@ export default function ApplicationFormSectionsLayout({
                 onClick={() => onOpenStepChange(open ? null : step.id)}
                 aria-expanded={open}
                 aria-controls={panelId}
-                className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+                className={
+                  open
+                    ? "flex w-full cursor-pointer items-center gap-3 bg-[var(--paper)]/80 px-4 py-3 pl-5 text-left hover:bg-[var(--paper)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+                    : showComplete
+                      ? "flex w-full cursor-pointer items-center gap-3 bg-[var(--status-wash-viewed)]/40 px-4 py-3 text-left hover:bg-[var(--status-wash-viewed)]/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+                      : "flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+                }
               >
                 <span
-                  className={
-                    showComplete
-                      ? "flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-xs font-semibold text-[var(--white)]"
-                      : "flex size-7 shrink-0 items-center justify-center rounded-full border border-[var(--ink)]/15 text-xs font-semibold text-[var(--muted)]"
-                  }
+                  className={markerClassName({ open, showComplete })}
                   aria-hidden
                 >
                   {showComplete ? (
@@ -110,7 +136,7 @@ export default function ApplicationFormSectionsLayout({
                 <FiChevronDown
                   className={
                     open
-                      ? "size-4 shrink-0 rotate-180 text-[var(--muted)] transition-transform"
+                      ? "size-4 shrink-0 rotate-180 text-[var(--ink)] transition-transform"
                       : "size-4 shrink-0 text-[var(--muted)] transition-transform"
                   }
                   aria-hidden
@@ -123,7 +149,7 @@ export default function ApplicationFormSectionsLayout({
               hidden={!open}
               className={
                 open
-                  ? "space-y-6 border-t border-[var(--ink)]/8 px-4 py-4"
+                  ? "space-y-6 border-t border-[var(--ink)]/8 px-4 py-4 pl-5"
                   : undefined
               }
             >

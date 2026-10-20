@@ -8,6 +8,7 @@ import {
 } from "@/components/forms/application-form-steps";
 import Button from "@/components/ui/Button";
 import { useEffect, useRef, type ReactNode } from "react";
+import { FiCheck } from "react-icons/fi";
 
 export type ApplicationFormStepContentMap = Record<
   ApplicationFormStepId,
@@ -33,6 +34,24 @@ interface ApplicationFormWizardLayoutProps {
   actions: ReactNode;
 }
 
+function pillClassName(args: {
+  active: boolean;
+  reachable: boolean;
+  completed: boolean;
+}): string {
+  const { active, reachable, completed } = args;
+  if (active) {
+    return "cursor-pointer rounded-full bg-[var(--ink)] px-2.5 py-1 text-xs font-semibold text-[var(--white)] ring-2 ring-[var(--lime)] ring-offset-2 ring-offset-[var(--white)]";
+  }
+  if (completed) {
+    return "inline-flex cursor-pointer items-center gap-1 rounded-full border border-[var(--status-dot-viewed)]/50 bg-[var(--status-wash-viewed)] px-2.5 py-1 text-xs font-semibold text-[var(--ink)] hover:brightness-[0.98]";
+  }
+  if (reachable) {
+    return "cursor-pointer rounded-full border border-[var(--ink)]/15 bg-[var(--paper)] px-2.5 py-1 text-xs font-medium text-[var(--ink)] hover:bg-[var(--status-wash-active)]/60";
+  }
+  return "cursor-not-allowed rounded-full border border-[var(--ink)]/10 bg-[var(--white)] px-2.5 py-1 text-xs font-medium text-[var(--muted)] opacity-60";
+}
+
 export default function ApplicationFormWizardLayout({
   stepContents,
   currentStepId,
@@ -50,6 +69,10 @@ export default function ApplicationFormWizardLayout({
   const canContinue = !continueBlockedReason;
   const headingRef = useRef<HTMLHeadingElement>(null);
   const skipInitialFocusRef = useRef(true);
+  const progressRatio =
+    APPLICATION_FORM_STEPS.length <= 1
+      ? 1
+      : Math.max(0, index) / (APPLICATION_FORM_STEPS.length - 1);
 
   useEffect(() => {
     if (skipInitialFocusRef.current) {
@@ -61,10 +84,21 @@ export default function ApplicationFormWizardLayout({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-3">
-        <p className="text-xs font-medium text-[var(--muted)]">
-          Step {index + 1} of {APPLICATION_FORM_STEPS.length}
-        </p>
+      <div className="space-y-3 rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper)]/70 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-medium text-[var(--muted)]">
+            Step {index + 1} of {APPLICATION_FORM_STEPS.length}
+          </p>
+          <div
+            className="h-1.5 w-28 overflow-hidden rounded-full bg-[var(--ink)]/10"
+            aria-hidden
+          >
+            <div
+              className="h-full rounded-full bg-[var(--lime)] transition-[width] duration-300 ease-out"
+              style={{ width: `${Math.round(progressRatio * 100)}%` }}
+            />
+          </div>
+        </div>
         <ol className="flex flex-wrap gap-2" aria-label="Form progress">
           {APPLICATION_FORM_STEPS.map((s, i) => {
             const active = s.id === currentStepId;
@@ -73,6 +107,7 @@ export default function ApplicationFormWizardLayout({
               furthestIndex,
               allowAllSteps,
             );
+            const completed = reachable && i < index;
             return (
               <li key={s.id}>
                 <button
@@ -81,22 +116,23 @@ export default function ApplicationFormWizardLayout({
                     if (reachable) onStepChange(s.id);
                   }}
                   disabled={!reachable}
-                  className={
-                    active
-                      ? "cursor-pointer rounded-full bg-[var(--ink)] px-2.5 py-1 text-xs font-semibold text-[var(--white)]"
-                      : reachable
-                        ? "cursor-pointer rounded-full border border-[var(--ink)]/20 bg-[var(--white)] px-2.5 py-1 text-xs font-medium text-[var(--ink)] hover:bg-[var(--ink)]/[0.04]"
-                        : "cursor-not-allowed rounded-full border border-[var(--ink)]/10 px-2.5 py-1 text-xs font-medium text-[var(--muted)] opacity-60"
-                  }
+                  className={pillClassName({ active, reachable, completed })}
                   aria-current={active ? "step" : undefined}
                 >
+                  {completed ? (
+                    <FiCheck className="size-3" strokeWidth={2.5} aria-hidden />
+                  ) : null}
                   {i + 1}. {s.shortLabel}
                 </button>
               </li>
             );
           })}
         </ol>
-        <div>
+        <div className="relative overflow-hidden rounded-xl border border-[var(--ink)]/8 bg-[var(--white)] px-4 py-3 pl-5">
+          <span
+            className="absolute inset-y-0 left-0 w-1 bg-[var(--lime)]"
+            aria-hidden
+          />
           <h2
             ref={headingRef}
             tabIndex={-1}

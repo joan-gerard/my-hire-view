@@ -1,32 +1,32 @@
 "use client";
 
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-} from "@/components/admin/icons";
 import { ADMIN_PANEL_CLASS } from "@/components/admin/admin-chrome";
+import {
+    CheckIcon,
+    ChevronDownIcon,
+    ChevronUpIcon,
+} from "@/components/admin/icons";
+import { requestAccountSettingsTab } from "@/lib/admin/account-settings-tabs";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/types/profile";
 import {
-  ONBOARDING_STEP_IDS,
-  buildOnboardingSteps,
-  liveCompletedStepIds,
-  mergeStepIdLists,
-  onboardingProgress,
-  type OnboardingChecklistInput,
-  type OnboardingStepId,
+    ONBOARDING_STEP_IDS,
+    buildOnboardingSteps,
+    liveCompletedStepIds,
+    mergeStepIdLists,
+    onboardingProgress,
+    type OnboardingChecklistInput,
+    type OnboardingStepId,
 } from "@/lib/utils/onboarding-checklist";
 import {
-  DEFAULT_ONBOARDING_CHECKLIST_PREFS,
-  readOnboardingChecklistPrefs,
-  resolveOnboardingAccountKey,
-  writeOnboardingChecklistStorage,
-  type OnboardingChecklistPrefs,
+    DEFAULT_ONBOARDING_CHECKLIST_PREFS,
+    readOnboardingChecklistPrefs,
+    resolveOnboardingAccountKey,
+    writeOnboardingChecklistStorage,
+    type OnboardingChecklistPrefs,
 } from "@/lib/utils/onboarding-checklist-storage";
 import { subscribeOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
-import { requestAccountSettingsTab } from "@/lib/admin/account-settings-tabs";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -373,7 +373,9 @@ export default function OnboardingChecklist({
                     <p className="min-w-0 flex-1 text-sm font-medium leading-snug line-through">
                       {step.label}
                     </p>
-                    <span className="shrink-0 text-xs font-medium">Skipped</span>
+                    <span className="shrink-0 text-xs font-medium">
+                      Skipped
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1 rounded-xl hover:bg-[var(--ink)]/[0.03]">

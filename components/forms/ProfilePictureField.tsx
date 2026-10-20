@@ -1,10 +1,10 @@
 "use client";
 
 import { AvatarIcon } from "@/components/admin/icons";
-import Button from "@/components/ui/Button";
 import ProfilePictureModal, {
-  type ProfilePictureSaveResult,
+    type ProfilePictureSaveResult,
 } from "@/components/forms/ProfilePictureModal";
+import Button from "@/components/ui/Button";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { useRef, useState } from "react";
 
@@ -74,8 +74,8 @@ export default function ProfilePictureField({
             className="mb-3 rounded-xl border border-[var(--status-dot-active)]/50 bg-[var(--status-wash-active)] p-3 text-sm text-[var(--ink)]"
             role="status"
           >
-            This application is set to show your profile picture, but you do
-            not have one. Add a picture below, or the public page will have no
+            This application is set to show your profile picture, but you do not
+            have one. Add a picture below, or the public page will have no
             avatar until you do.
           </p>
         )}

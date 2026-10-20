@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  ADMIN_PANEL_CLASS,
-  ADMIN_TIP_CLASS,
+    ADMIN_PANEL_CLASS,
+    ADMIN_TIP_CLASS,
 } from "@/components/admin/admin-chrome";
 import { AvatarIcon } from "@/components/admin/icons";
 import PublicIdAccountField from "@/components/admin/PublicIdAccountField";
@@ -11,12 +11,12 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import type { Profile } from "@/lib/types/profile";
 import {
-  PROFILE_LOCATION_MAX_LENGTH,
-  PROFILE_NAME_MAX_LENGTH,
-  PROFILE_URL_MAX_LENGTH,
+    PROFILE_LOCATION_MAX_LENGTH,
+    PROFILE_NAME_MAX_LENGTH,
+    PROFILE_URL_MAX_LENGTH,
 } from "@/lib/types/profile";
-import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
+import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { mapProfileSaveWarnings } from "@/lib/utils/upload-form-messages";
 import { uploadProfilePictureFile } from "@/lib/utils/upload-profile-picture-client";
 import { useRouter } from "next/navigation";
@@ -60,9 +60,9 @@ export default function ProfileForm({
 }: ProfileFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [submitPhase, setSubmitPhase] = useState<"idle" | "uploading" | "saving">(
-    "idle",
-  );
+  const [submitPhase, setSubmitPhase] = useState<
+    "idle" | "uploading" | "saving"
+  >("idle");
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -133,8 +133,7 @@ export default function ProfileForm({
     !hasExistingProfile ||
     firstName !== normalizeText(initialData?.first_name) ||
     lastName !== normalizeText(initialData?.last_name) ||
-    normalizeText(formData.location) !==
-      normalizeText(initialData?.location) ||
+    normalizeText(formData.location) !== normalizeText(initialData?.location) ||
     normalizeText(formData.portfolio_url) !==
       normalizeText(initialData?.portfolio_url) ||
     normalizeText(formData.linkedin_url) !==
@@ -397,10 +396,7 @@ export default function ProfileForm({
               className="flex items-start gap-2 rounded-xl border border-[var(--ink)]/12 bg-[var(--status-wash-notice)] p-3 text-sm text-[var(--ink)]"
               role="status"
             >
-              <FiAlertTriangle
-                className="mt-0.5 size-4 shrink-0"
-                aria-hidden
-              />
+              <FiAlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
               <span>{warning}</span>
             </p>
           ) : null}

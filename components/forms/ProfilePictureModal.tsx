@@ -4,12 +4,12 @@ import { AvatarIcon } from "@/components/admin/icons";
 import ProfilePictureIconActions from "@/components/forms/ProfilePictureIconActions";
 import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
+import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { mapProfileSaveWarnings } from "@/lib/utils/upload-form-messages";
 import {
-  putProfilePictureUrl,
-  uploadProfilePictureFile,
+    putProfilePictureUrl,
+    uploadProfilePictureFile,
 } from "@/lib/utils/upload-profile-picture-client";
 import { useEffect, useId, useRef, useState } from "react";
 import { FiAlertCircle, FiAlertTriangle } from "react-icons/fi";
@@ -71,9 +71,9 @@ export default function ProfilePictureModal({
    */
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [removed, setRemoved] = useState(false);
-  const [submitPhase, setSubmitPhase] = useState<"idle" | "uploading" | "saving">(
-    "idle",
-  );
+  const [submitPhase, setSubmitPhase] = useState<
+    "idle" | "uploading" | "saving"
+  >("idle");
   const [error, setError] = useState<string | null>(null);
   /** Post-save side-effect notice (not a failure). */
   const [notice, setNotice] = useState<string | null>(null);
@@ -124,9 +124,7 @@ export default function ProfilePictureModal({
     currentUrl,
     currentUrlVersion,
   );
-  const displayUrl = removed
-    ? null
-    : (previewObjectUrl ?? savedDisplayUrl);
+  const displayUrl = removed ? null : (previewObjectUrl ?? savedDisplayUrl);
   const loading = submitPhase !== "idle";
   const isRemoveOnly = removed && !pendingFile;
   const primaryLabel = isRemoveOnly ? "Remove and save" : "Save picture";
@@ -357,10 +355,7 @@ export default function ProfilePictureModal({
               className="flex items-start gap-2 rounded-xl border border-[var(--ink)]/12 bg-[var(--status-wash-notice)] p-3 text-sm text-[var(--ink)]"
               role="status"
             >
-              <FiAlertTriangle
-                className="mt-0.5 size-4 shrink-0"
-                aria-hidden
-              />
+              <FiAlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
               <span>{notice}</span>
             </p>
           ) : null}
@@ -369,10 +364,7 @@ export default function ProfilePictureModal({
               className="flex items-start gap-2 rounded-xl border border-[var(--status-danger-fg)]/20 bg-[var(--status-danger-bg)] p-3 text-sm text-[var(--status-danger-fg)]"
               role="alert"
             >
-              <FiAlertCircle
-                className="mt-0.5 size-4 shrink-0"
-                aria-hidden
-              />
+              <FiAlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
               <span>{error}</span>
             </p>
           ) : null}
@@ -401,9 +393,7 @@ export default function ProfilePictureModal({
                   ? handleMarkRemoved
                   : undefined
             }
-            removeLabel={
-              pendingFile ? "Discard new picture" : "Remove picture"
-            }
+            removeLabel={pendingFile ? "Discard new picture" : "Remove picture"}
           >
             {displayUrl ? (
               <div className="h-48 w-48 overflow-hidden rounded-full bg-[var(--ink)]/10 ring-2 ring-[var(--ink)]/10">
