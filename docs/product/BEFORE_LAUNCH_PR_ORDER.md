@@ -12,11 +12,11 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 | :----: | ----: | ----------------- |
 | **1**  |     6 | A3, F22, F24, F32, F33, J4 |
 | **2**  |     4 | E1, E4, F23, F39  |
-| **3**  |     5 | F28, F30, F38, F40, L6 |
+| **3**  |     6 | F28, F30, F38, F40, F41, L6 |
 | **4**  |     5 | F21, F29, F35, I2, J1 |
 | **5**  |     1 | E2                |
 
-**21 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped; **J4** + **J1** pulled into before-launch from the competitive username decision). **Weighted average ≈ 2.57** — many 1–3 polish items; complexity concentrates in **E2**, then **F35 / F21 / F29 / I2 / J1**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group). **F40** (incomplete draft saves) is planned after F35 — see [INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md).
+**22 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped; **J4** + **J1** pulled into before-launch from the competitive username decision). **Weighted average ≈ 2.59** — many 1–3 polish items; complexity concentrates in **E2**, then **F35 / F21 / F29 / I2 / J1**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group). **F40** (incomplete draft saves) and **F41** (create final-step preview + Publish / Save as draft) are planned after F35 — see [INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md) and backlog `F41-127`.
 
 ---
 
@@ -47,6 +47,7 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 - **F17** branded `/admin`, `/view`, auth to the warm product palette (PR #56)
 - **F34** restyled those surfaces to the **marketing** brand system and rewrote [STYLE_GUIDE_PRODUCT.md](../design/STYLE_GUIDE_PRODUCT.md) (working plan: [F34_PRODUCT_MARKETING_BRANDING.md](../design/F34_PRODUCT_MARKETING_BRANDING.md))
 - **F35** rethinks the long create/edit `ApplicationForm` into a stepped flow — modal/wizard **or** one-page collapsible sections (after F34 chrome; before F32 QA)
+- **F40** / **F41** follow the F35 layout pick when possible (incomplete drafts + create final-step preview/publish — do not mix into the dual-layout test)
 - **F38** polishes public `/view` to the same F34 quality bar as admin/Account settings (F34 only lightly touched `/view`)
 
 ### Phase 3 — Trust / compliance Shoulds
@@ -89,6 +90,7 @@ Optional anytime docs/assets/marketing: **F22**, **F24**, **F33** (don’t block
 ```
 F35 / F38
   → F40 (after F35 layout pick when possible)
+  → F41 (after F35; with F40 when publish completeness matters)
   → F23 → F21
   → F22 / F24 / F33 / E4 / J4 (whenever; E4 + J4 before E1)
   → J1 (prefer after J4; before E1 when possible)
@@ -98,9 +100,9 @@ F35 / F38
 
 **Why this beats “easiest first”:**
 
-1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, E4/J4→E1→E2, J4→J1, L6/I2→F30 are real; ignore them and you thrash. Prefer F40 after F35 layout pick when possible (soft ordering, not a hard gate — see sequence above).
+1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, E4/J4→E1→E2, J4→J1, L6/I2→F30 are real; ignore them and you thrash. Prefer F40 / F41 after F35 layout pick when possible (soft ordering, not a hard gate — see sequence above).
 2. **Risk before paint** — API/storage races before branding.
 3. **Reviews stay useful** — F28/F39/F29/F30 after the bulk of pre-launch code, not before.
 4. **Monetization last** — backlog already defers E1/E2 until launch is imminent; E4/J4 only update the draft.
 
-If capacity is short: finish **F35** (create/edit steps) and **F38** (`/view` polish) before **F39** / **F32** QA. Do not mix **F40** incomplete draft saves into the F35 dual-layout test.
+If capacity is short: finish **F35** (create/edit steps) and **F38** (`/view` polish) before **F39** / **F32** QA. Do not mix **F40** incomplete draft saves or **F41** create preview/publish into the F35 dual-layout test.

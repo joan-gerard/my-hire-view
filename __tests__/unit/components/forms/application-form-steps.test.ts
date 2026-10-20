@@ -50,6 +50,8 @@ describe("isWizardStepReachable", () => {
   });
 
   it("allows every step on edit", () => {
-    expect(isWizardStepReachable(3, 0, true)).toBe(true);
+    for (const stepIndex of [0, 1, 2, 3]) {
+      expect(isWizardStepReachable(stepIndex, 0, true)).toBe(true);
+    }
   });
 });

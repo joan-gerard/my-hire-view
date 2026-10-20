@@ -35,7 +35,7 @@ Living list of where MyHireView **wins** vs competitors, and where it **lags** (
 
 - **Impact:** High
 - **Impact evaluation:** Active job searches mean many applications. Re-uploading the same résumé each time is busywork and error-prone; a reusable primary library speeds create/edit and is a clear day-to-day reason to prefer MHV. Strong pitch vs Reslink’s upload-every-time flow (MHV still allows a tailored one-off PDF when the role needs it).
-- **Notes:** MHV has a **Primary CV library** (up to 5 on Free/Pro; higher on Premium plan) managed from Account settings and from New/Edit via **Manage library** — pick a primary for an app or upload tailored. Reslink does not offer a primary CV library; users upload a CV each time.
+- **Notes:** MHV has a **Primary CV library** (currently **5** for every account — API/DB enforced) managed from Account settings and from New/Edit via **Manage library** — pick a primary for an app or upload tailored. A higher **Premium** cap (planned **15**) is a working pricing decision, not shipped yet. Reslink does not offer a primary CV library; users upload a CV each time.
 - **Decision:** Keep as it is — pitch as a clear win vs Reslink.
 
 #### Getting started checklist
