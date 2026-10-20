@@ -91,10 +91,10 @@ export default function ApplicationFormSectionsLayout({
                 aria-controls={panelId}
                 className={
                   open
-                    ? "flex w-full cursor-pointer items-center gap-3 border-l-2 border-[var(--lime)] py-3 pl-3 text-left hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+                    ? "flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left shadow-[inset_2px_0_0_0_var(--lime)] hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
                     : showComplete
-                      ? "flex w-full cursor-pointer items-center gap-3 bg-[var(--status-wash-viewed)]/40 py-3 text-left hover:bg-[var(--status-wash-viewed)]/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
-                      : "flex w-full cursor-pointer items-center gap-3 py-3 text-left hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+                      ? "flex w-full cursor-pointer items-center gap-3 bg-[var(--status-wash-viewed)]/40 px-4 py-3 text-left hover:bg-[var(--status-wash-viewed)]/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+                      : "flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
                 }
               >
                 <span
@@ -136,7 +136,7 @@ export default function ApplicationFormSectionsLayout({
               hidden={!open}
               className={
                 open
-                  ? "space-y-4 border-l-2 border-[var(--lime)] py-3 pl-3 sm:space-y-6"
+                  ? "space-y-4 px-4 py-3 shadow-[inset_2px_0_0_0_var(--lime)] sm:space-y-6"
                   : undefined
               }
             >
