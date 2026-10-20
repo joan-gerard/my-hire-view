@@ -1,8 +1,9 @@
 "use client";
 
+import { ADMIN_FIELDSET_CLASS } from "@/components/admin/admin-chrome";
 import { AvatarIcon } from "@/components/admin/icons";
 import ProfilePictureModal, {
-    type ProfilePictureSaveResult,
+  type ProfilePictureSaveResult,
 } from "@/components/forms/ProfilePictureModal";
 import Button from "@/components/ui/Button";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
@@ -59,8 +60,8 @@ export default function ProfilePictureField({
 
   return (
     <>
-      <fieldset className="rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4">
-        <legend className="px-1 text-base font-semibold text-[var(--ink)]">
+      <fieldset className={ADMIN_FIELDSET_CLASS}>
+        <legend className="text-base font-semibold text-[var(--ink)]">
           Profile picture
         </legend>
         <p className="mt-0.5 mb-2 text-sm text-[var(--muted)]">

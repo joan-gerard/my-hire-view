@@ -1,5 +1,6 @@
 "use client";
 
+import { ADMIN_FIELDSET_CLASS } from "@/components/admin/admin-chrome";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
 import FileUpload from "@/components/forms/FileUpload";
@@ -95,8 +96,8 @@ export default function CvSourceField({
   const generatedName = slug ? getCvDownloadFilename(slug) : "CV-Slug.pdf";
 
   return (
-    <fieldset className="space-y-5 rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4">
-      <legend className="px-1 text-base font-semibold text-[var(--ink)]">
+    <fieldset className={`space-y-4 sm:space-y-5 ${ADMIN_FIELDSET_CLASS}`}>
+      <legend className="text-base font-semibold text-[var(--ink)]">
         CV
       </legend>
 
@@ -105,7 +106,7 @@ export default function CvSourceField({
         <div className="space-y-2">
           <p className="text-sm font-medium text-[var(--ink)]">Current</p>
           {currentUrl.trim() || currentFilename ? (
-            <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] px-3 py-2.5">
+            <div className="rounded-xl bg-[var(--paper)]/80 px-3 py-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 {currentType && (
                   <span className="shrink-0 rounded border border-[var(--ink)]/15 px-1.5 py-0.5 text-xs text-[var(--muted)]">

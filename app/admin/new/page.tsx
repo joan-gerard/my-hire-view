@@ -4,7 +4,7 @@ import ApplicationForm from "@/components/forms/ApplicationForm";
 import ApplicationFormPageHeader from "@/components/forms/ApplicationFormPageHeader";
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
 import {
-  ADMIN_PANEL_CLASS,
+  ADMIN_FORM_SHELL_CLASS,
   ADMIN_TIP_CLASS,
 } from "@/components/admin/admin-chrome";
 import { ArrowRightIcon } from "@/components/admin/icons";
@@ -255,7 +255,7 @@ export default function NewApplicationPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <ApplicationFormPageHeader title="Create New Application" />
       {showProfileNudge && (
         <p className={`flex items-start gap-2 ${ADMIN_TIP_CLASS}`}>
@@ -274,7 +274,7 @@ export default function NewApplicationPage() {
           </Link>
         </p>
       )}
-      <div className={`${ADMIN_PANEL_CLASS} p-6`}>
+      <div className={ADMIN_FORM_SHELL_CLASS}>
         <ApplicationForm
           initialData={initialData}
           onSubmit={handleSubmit}

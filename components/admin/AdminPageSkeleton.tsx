@@ -1,5 +1,6 @@
 import {
   ADMIN_MAIN_MIN_CLASS,
+  ADMIN_FORM_SHELL_CLASS,
   ADMIN_PANEL_CLASS,
 } from '@/components/admin/admin-chrome';
 
@@ -99,7 +100,7 @@ export default function AdminPageSkeleton({
   // form (create / edit)
   return (
     <div
-      className={`${ADMIN_MAIN_MIN_CLASS} space-y-6`}
+      className={`${ADMIN_MAIN_MIN_CLASS} space-y-4 sm:space-y-6`}
       role="status"
       aria-busy="true"
       aria-live="polite"
@@ -110,9 +111,9 @@ export default function AdminPageSkeleton({
         <div className="h-16 motion-safe:animate-pulse rounded-xl border border-[var(--ink)]/10 bg-[var(--white)]" />
       ) : null}
       <div
-        className={`${ADMIN_PANEL_CLASS} min-h-[calc(100svh-72px-4rem-6rem)] p-6`}
+        className={`${ADMIN_FORM_SHELL_CLASS} min-h-[calc(100svh-72px-4rem-6rem)]`}
       >
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           <div className="h-24 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
           <div className="h-40 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
           <div className="h-48 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />

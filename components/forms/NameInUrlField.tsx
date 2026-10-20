@@ -1,5 +1,7 @@
 "use client";
 
+import { ADMIN_FIELDSET_CLASS } from "@/components/admin/admin-chrome";
+
 export type SlugNamePosition = "start" | "end" | null;
 
 export interface NameInUrlFieldProps {
@@ -12,8 +14,8 @@ export default function NameInUrlField({
   onChange,
 }: NameInUrlFieldProps) {
   return (
-    <fieldset className="rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4">
-      <legend className="px-1 text-base font-semibold text-[var(--ink)]">
+    <fieldset className={ADMIN_FIELDSET_CLASS}>
+      <legend className="text-base font-semibold text-[var(--ink)]">
         Name in URL
       </legend>
       <p className="mt-0.5 mb-3 text-sm text-[var(--muted)]">

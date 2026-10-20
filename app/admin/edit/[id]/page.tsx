@@ -6,7 +6,7 @@ import ApplicationForm, { type ApplicationFormInitialData } from '@/components/f
 import ApplicationFormPageHeader from '@/components/forms/ApplicationFormPageHeader';
 import AdminPageSkeleton from '@/components/admin/AdminPageSkeleton';
 import {
-  ADMIN_PANEL_CLASS,
+  ADMIN_FORM_SHELL_CLASS,
   ADMIN_TIP_CLASS,
 } from '@/components/admin/admin-chrome';
 import type { ApplicationFormData, Application } from '@/lib/types/application';
@@ -203,7 +203,7 @@ export default function EditApplicationPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <ApplicationFormPageHeader title="Edit Application" />
       <p className={ADMIN_TIP_CLASS}>
         The candidate details below (name, location, links) are from when this
@@ -212,7 +212,7 @@ export default function EditApplicationPage() {
         live: if this application shows it, recruiters see the current picture
         from your profile.
       </p>
-      <div className={`${ADMIN_PANEL_CLASS} p-6`}>
+      <div className={ADMIN_FORM_SHELL_CLASS}>
         <ApplicationForm
           initialData={initialData}
           onSubmit={handleSubmit}

@@ -1276,8 +1276,8 @@ export default function ApplicationForm({
   };
 
   const roleStep = (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
         <Input
           label="Company Name *"
           value={formData.company}
@@ -1615,7 +1615,7 @@ export default function ApplicationForm({
   );
 
   const reviewStep = (
-    <dl className="space-y-3 rounded-xl border border-[var(--ink)]/10 bg-[var(--paper)]/60 px-4 py-3 text-sm">
+    <dl className="space-y-3 rounded-xl bg-[var(--paper)]/60 px-3 py-3 text-sm">
       <div className="flex flex-wrap justify-between gap-2">
         <dt className="text-[var(--muted)]">Company / role</dt>
         <dd className="font-medium text-[var(--ink)]">
@@ -1681,7 +1681,7 @@ export default function ApplicationForm({
     ) : null;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       {formStyle === "wizard" ? (
         <ApplicationFormWizardLayout
           stepContents={stepContents}
@@ -1701,6 +1701,7 @@ export default function ApplicationForm({
           continueBlockedReason={continueBlockedReasonFor(
             currentStepId ?? "role",
           )}
+          stepReady={stepReady}
           actions={formActions}
         />
       ) : (

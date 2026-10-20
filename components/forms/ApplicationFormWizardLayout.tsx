@@ -3,6 +3,7 @@
 import {
   APPLICATION_FORM_STEPS,
   applicationFormStepIndex,
+  isWizardStepCompleted,
   isWizardStepReachable,
   type ApplicationFormStepId,
 } from "@/components/forms/application-form-steps";
@@ -30,6 +31,8 @@ interface ApplicationFormWizardLayoutProps {
   allowAllSteps?: boolean;
   /** When set, Continue is blocked and this message is shown. */
   continueBlockedReason?: string | null;
+  /** Whether a step still has the minimum required inputs (drives check marks). */
+  stepReady: (id: ApplicationFormStepId) => boolean;
   /** Final step actions (Save / Leave without saving). */
   actions: ReactNode;
 }
@@ -49,7 +52,7 @@ function pillClassName(args: {
   if (reachable) {
     return "cursor-pointer rounded-full border border-[var(--ink)]/15 bg-[var(--paper)] px-2.5 py-1 text-xs font-medium text-[var(--ink)] hover:bg-[var(--status-wash-active)]/60";
   }
-  return "cursor-not-allowed rounded-full border border-[var(--ink)]/10 bg-[var(--white)] px-2.5 py-1 text-xs font-medium text-[var(--muted)] opacity-60";
+  return "cursor-not-allowed rounded-full border border-[var(--ink)]/10 bg-[var(--paper)] px-2.5 py-1 text-xs font-medium text-[var(--muted)] opacity-60";
 }
 
 export default function ApplicationFormWizardLayout({
@@ -59,6 +62,7 @@ export default function ApplicationFormWizardLayout({
   furthestStepId,
   allowAllSteps = false,
   continueBlockedReason = null,
+  stepReady,
   actions,
 }: ApplicationFormWizardLayoutProps) {
   const index = APPLICATION_FORM_STEPS.findIndex((s) => s.id === currentStepId);
@@ -83,8 +87,9 @@ export default function ApplicationFormWizardLayout({
   }, [currentStepId]);
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-3 rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper)]/70 p-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Flat progress — no nested cards inside the form shell */}
+      <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-medium text-[var(--muted)]">
             Step {index + 1} of {APPLICATION_FORM_STEPS.length}
@@ -107,7 +112,11 @@ export default function ApplicationFormWizardLayout({
               furthestIndex,
               allowAllSteps,
             );
-            const completed = reachable && i < index;
+            const completed = isWizardStepCompleted(
+              i,
+              index,
+              stepReady(s.id),
+            );
             return (
               <li key={s.id}>
                 <button
@@ -128,11 +137,7 @@ export default function ApplicationFormWizardLayout({
             );
           })}
         </ol>
-        <div className="relative overflow-hidden rounded-xl border border-[var(--ink)]/8 bg-[var(--white)] px-4 py-3 pl-5">
-          <span
-            className="absolute inset-y-0 left-0 w-1 bg-[var(--lime)]"
-            aria-hidden
-          />
+        <div className="border-l-2 border-[var(--lime)] pl-3">
           <h2
             ref={headingRef}
             tabIndex={-1}
@@ -144,10 +149,12 @@ export default function ApplicationFormWizardLayout({
         </div>
       </div>
 
-      <div className="space-y-6">{stepContents[currentStepId]}</div>
+      <div className="space-y-4 sm:space-y-6">
+        {stepContents[currentStepId]}
+      </div>
 
       {!isLast ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ink)]/10 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ink)]/10 pt-3 sm:pt-4">
           <Button
             type="button"
             variant="secondary"
@@ -194,7 +201,7 @@ export default function ApplicationFormWizardLayout({
           </div>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ink)]/10 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ink)]/10 pt-3 sm:pt-4">
           <Button
             type="button"
             variant="secondary"

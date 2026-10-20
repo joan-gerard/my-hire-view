@@ -67,7 +67,7 @@ export default function ApplicationFormSectionsLayout({
   }, [openStepId]);
 
   return (
-    <div className="space-y-3">
+    <div className="divide-y divide-[var(--ink)]/10">
       {APPLICATION_FORM_STEPS.map((step, index) => {
         const open = step.id === openStepId;
         const ready = stepReady(step.id);
@@ -78,20 +78,7 @@ export default function ApplicationFormSectionsLayout({
         const panelId = `application-form-section-panel-${step.id}`;
 
         return (
-          <section
-            key={step.id}
-            className={
-              open
-                ? "relative overflow-hidden rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] shadow-sm"
-                : "overflow-hidden rounded-xl border border-[var(--ink)]/10 bg-[var(--white)]"
-            }
-          >
-            {open ? (
-              <span
-                className="absolute inset-y-0 left-0 z-10 w-1 bg-[var(--lime)]"
-                aria-hidden
-              />
-            ) : null}
+          <section key={step.id} className="relative">
             <h2 className="m-0">
               <button
                 type="button"
@@ -104,10 +91,10 @@ export default function ApplicationFormSectionsLayout({
                 aria-controls={panelId}
                 className={
                   open
-                    ? "flex w-full cursor-pointer items-center gap-3 bg-[var(--paper)]/80 px-4 py-3 pl-5 text-left hover:bg-[var(--paper)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+                    ? "flex w-full cursor-pointer items-center gap-3 border-l-2 border-[var(--lime)] py-3 pl-3 text-left hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
                     : showComplete
-                      ? "flex w-full cursor-pointer items-center gap-3 bg-[var(--status-wash-viewed)]/40 px-4 py-3 text-left hover:bg-[var(--status-wash-viewed)]/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
-                      : "flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+                      ? "flex w-full cursor-pointer items-center gap-3 bg-[var(--status-wash-viewed)]/40 py-3 text-left hover:bg-[var(--status-wash-viewed)]/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+                      : "flex w-full cursor-pointer items-center gap-3 py-3 text-left hover:bg-[var(--ink)]/[0.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
                 }
               >
                 <span
@@ -149,7 +136,7 @@ export default function ApplicationFormSectionsLayout({
               hidden={!open}
               className={
                 open
-                  ? "space-y-6 border-t border-[var(--ink)]/8 px-4 py-4 pl-5"
+                  ? "space-y-4 border-l-2 border-[var(--lime)] py-3 pl-3 sm:space-y-6"
                   : undefined
               }
             >
@@ -158,10 +145,12 @@ export default function ApplicationFormSectionsLayout({
                   <p className="text-sm text-[var(--muted)]">
                     {step.description}
                   </p>
-                  <div className="space-y-6">{stepContents[step.id]}</div>
+                  <div className="space-y-4 sm:space-y-6">
+                    {stepContents[step.id]}
+                  </div>
 
                   {!isLast ? (
-                    <div className="flex justify-end border-t border-[var(--ink)]/8 pt-4">
+                    <div className="flex justify-end border-t border-[var(--ink)]/8 pt-3 sm:pt-4">
                       <div className="group relative inline-flex">
                         <Button
                           type="button"
@@ -196,7 +185,7 @@ export default function ApplicationFormSectionsLayout({
                       </div>
                     </div>
                   ) : (
-                    <div className="border-t border-[var(--ink)]/8 pt-4">
+                    <div className="border-t border-[var(--ink)]/8 pt-3 sm:pt-4">
                       {actions}
                     </div>
                   )}

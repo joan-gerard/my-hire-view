@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applicationFormStepForErrors,
+  isWizardStepCompleted,
   isWizardStepReachable,
 } from "@/components/forms/application-form-steps";
 
@@ -53,5 +54,15 @@ describe("isWizardStepReachable", () => {
     for (const stepIndex of [0, 1, 2, 3]) {
       expect(isWizardStepReachable(stepIndex, 0, true)).toBe(true);
     }
+  });
+});
+
+describe("isWizardStepCompleted", () => {
+  it("marks earlier steps complete only while they stay ready", () => {
+    const current = 2; // on CV & video
+    expect(isWizardStepCompleted(0, current, true)).toBe(true);
+    expect(isWizardStepCompleted(0, current, false)).toBe(false);
+    expect(isWizardStepCompleted(1, current, true)).toBe(true);
+    expect(isWizardStepCompleted(2, current, true)).toBe(false);
   });
 });

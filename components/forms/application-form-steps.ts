@@ -113,3 +113,15 @@ export function isWizardStepReachable(
   if (allowAllSteps) return true;
   return stepIndex <= furthestIndex;
 }
+
+/**
+ * Wizard progress-pill "done" mark — earlier than the current step and still
+ * ready (same readiness idea as sections: clearing Role/Materials drops the check).
+ */
+export function isWizardStepCompleted(
+  stepIndex: number,
+  currentIndex: number,
+  stepReady: boolean,
+): boolean {
+  return stepIndex < currentIndex && stepReady;
+}

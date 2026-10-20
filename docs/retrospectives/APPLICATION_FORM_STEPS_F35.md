@@ -69,7 +69,7 @@ Defined in `components/forms/application-form-steps.ts`. Both layouts render the
 - `ApplicationFormWizardLayout` — step progress, gated Continue, Save on review
 - `ApplicationFormSectionsLayout` — accordion sections, “Continue to next step”, Save on review
 
-**Atmosphere (shared brand tokens):** both shells stay ink-on-paper for fields, and put color on **progress chrome** only — lime accent bar + paper wash on the active step, success wash on completed markers/pills, short lime progress track (wizard). Same palette so switching layouts does not feel like two products.
+**Atmosphere (shared brand tokens):** create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. Progress chrome and field groups stay flat inside — lime edge on the active step/heading, success wash on completed markers/pills, short lime track (wizard), hairline dividers (sections). No nested white/bordered cards (avoids box-in-box on every breakpoint). Wizard check marks use the same **step readiness** as sections (`isWizardStepCompleted` + `stepReady`) so clearing Role or Materials drops the check.
 
 Per-step **Continue** uses the same readiness rules as Save (company/role + slug, CV + video, etc.), so users cannot advance via Continue with missing required inputs. **Wizard create** unlocks progress pills via a Continue frontier (Back does not lock previously reached steps). **Wizard edit** makes every pill reachable. In the **sections** shell, accordion headers stay clickable — users can jump to any step, toggle the open section closed, or collapse **all** sections; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
 

@@ -116,7 +116,7 @@ Local FunnelSans / FaunaOne / Varela Round `@font-face` rules remain for leftove
 | Inputs           | Prefer **white** fields on paper panels; ink focus ring — not lime on light                                                                                                                                                                                                      |
 | Logo             | Wordmark + small lime (or pink) circular accent dot                                                                                                                                                                                                                              |
 
-Shared admin class strings: `components/admin/admin-chrome.ts` (`ADMIN_PRIMARY_CLASS`, `ADMIN_SECONDARY_CLASS`, `ADMIN_PANEL_CLASS`, …).
+Shared admin class strings: `components/admin/admin-chrome.ts` (`ADMIN_PRIMARY_CLASS`, `ADMIN_SECONDARY_CLASS`, `ADMIN_PANEL_CLASS`, `ADMIN_FORM_SHELL_CLASS`, `ADMIN_FIELDSET_CLASS`, …). Create/edit: one bordered white shell; field groups inside do not add a second card.
 
 ---
 

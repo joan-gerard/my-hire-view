@@ -34,13 +34,22 @@ export const ADMIN_DISABLED_CLASS =
 export const ADMIN_PANEL_CLASS =
   "rounded-2xl border border-[var(--ink)]/10 bg-[var(--white)]";
 
+/**
+ * Create/edit form outer shell — the single bordered white box on the paper page.
+ * Wizard/sections chrome and field groups stay flat inside (no nested cards).
+ */
+export const ADMIN_FORM_SHELL_CLASS =
+  `${ADMIN_PANEL_CLASS} p-4 sm:p-6`;
+
 /** Inline tip / nudge banner on form pages. */
 export const ADMIN_TIP_CLASS =
   "rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] px-4 py-3 text-sm text-[var(--ink)]";
 
-/** Nested fieldset / section inside a panel. */
-export const ADMIN_FIELDSET_CLASS =
-  "rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4";
+/**
+ * Field group inside the form shell. No border/fill — nesting a second white
+ * card inside `ADMIN_FORM_SHELL_CLASS` squeezes width and reads as box-in-box.
+ */
+export const ADMIN_FIELDSET_CLASS = "";
 
 /** List row inside a dashboard panel (hairline divider, no nested card). */
 export const ADMIN_LIST_ROW_CLASS =
