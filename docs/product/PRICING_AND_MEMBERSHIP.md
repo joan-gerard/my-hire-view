@@ -64,7 +64,7 @@ Unless a row in §3 says otherwise, candidates on **any** plan are expected to u
 - Primary CV library (within the plan’s library size)
 - At least basic analytics
 
-**Tiers mainly differ on:** application caps, whether you can upload **tailored** CVs, analytics depth, and primary-library size. ~~Public-link branding (opaque vs Premium vanity)~~ — **superseded:** username for all tiers (`J4-125` / `J1-126`); Premium branding leans on personalization (`N0`–`N3`) and other durable unlocks.
+**Tiers mainly differ on:** application caps, whether you can upload **tailored** CVs, analytics depth, and primary-library size. ~~Public-link branding (opaque vs Premium vanity)~~ — Premium vanity **superseded** (cancelled `J1-079`); **planned change:** username for all tiers (`J4-125` / `J1-126`). Premium branding leans on personalization (`N0`–`N3`) and other durable unlocks.
 
 ---
 
@@ -109,7 +109,7 @@ Working plan names: **Free**, **Pro**, **Premium**. Billing gates are not implem
 | **Up to 3 applications** | Hard cap. Count rules in §3.6. | Working decision (this doc) |
 | **Primary CVs only** | Upload/use the primary library; no tailored-CV workflow. | Working decision (this doc); [CV_REUSE_AND_STORAGE.md](../retrospectives/CV_REUSE_AND_STORAGE.md) |
 | **Video pitch** | YouTube URL on the application page. | Working decision (this doc) |
-| Private/opaque public id | **Shipped today:** `/view/{opaquePublicId}/{slug}`. **Superseded plan:** username for all tiers at signup (`J1-126`); opaque may remain internal/canonical. Privacy tradeoff noted in [COMPETITIVE_COMPARISON.md](COMPETITIVE_COMPARISON.md). | [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md), `J4-125` |
+| Private/opaque public id | **Shipped today:** `/view/{opaquePublicId}/{slug}`. **Planned change:** username for all tiers at signup (`J1-126`); opaque may remain internal/canonical. Privacy tradeoff noted in [COMPETITIVE_COMPARISON.md](COMPETITIVE_COMPARISON.md). | [PUBLIC_URL_OPTION_B.md](../retrospectives/PUBLIC_URL_OPTION_B.md), `J4-125` |
 | Basic analytics | View count, CV download count, created / last viewed (View Insights). | [USER_GUIDE.md](../engineering/USER_GUIDE.md), [DATA_FLOW.md](../architecture/DATA_FLOW.md) |
 | Primary library | Up to **5**. | Working decision (this doc); today’s product max |
 
