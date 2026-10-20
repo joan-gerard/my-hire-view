@@ -11,7 +11,7 @@ describe("applicationFormStepForErrors", () => {
     expect(applicationFormStepForErrors({ cv_url: "Upload a CV" })).toBe(
       "materials",
     );
-    expect(applicationFormStepForErrors({ slug: "taken" })).toBe("share");
+    expect(applicationFormStepForErrors({ slug: "taken" })).toBe("role");
   });
 
   it("prefers earlier steps when several fields fail", () => {
@@ -27,7 +27,7 @@ describe("applicationFormStepForErrors", () => {
         slug: "taken",
         video_url: "required",
       }),
-    ).toBe("materials");
+    ).toBe("role");
     // Candidate is before materials — must win over cv_url.
     expect(
       applicationFormStepForErrors({

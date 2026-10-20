@@ -1201,13 +1201,11 @@ export default function ApplicationForm({
   const stepReady = (id: ApplicationFormStepId): boolean => {
     switch (id) {
       case "role":
-        return hasCompany && hasRole;
+        return hasCompany && hasRole && slugReady;
       case "candidate":
         return true;
       case "materials":
         return hasCv && hasVideo;
-      case "share":
-        return slugReady;
       case "review":
         return requiredReady;
       default:
@@ -1224,18 +1222,6 @@ export default function ApplicationForm({
       case "role":
         if (!hasCompany) return "Company name is required.";
         if (!hasRole) return "Role is required.";
-        return null;
-      case "candidate":
-        return null;
-      case "materials":
-        if (!hasCv) {
-          return cvMode === "primary"
-            ? "Select a primary CV, or upload a tailored CV."
-            : "Upload a CV file for this application.";
-        }
-        if (!hasVideo) return "YouTube URL is required.";
-        return null;
-      case "share":
         if (slugLiveStatus.kind === "checking") {
           return "Please wait until the slug has finished updating.";
         }
@@ -1250,6 +1236,16 @@ export default function ApplicationForm({
         }
         if (!hasSlug) return "Slug is required.";
         if (!slugReady) return "Wait until the slug is available.";
+        return null;
+      case "candidate":
+        return null;
+      case "materials":
+        if (!hasCv) {
+          return cvMode === "primary"
+            ? "Select a primary CV, or upload a tailored CV."
+            : "Upload a CV file for this application.";
+        }
+        if (!hasVideo) return "YouTube URL is required.";
         return null;
       case "review":
         return null;
@@ -1271,25 +1267,94 @@ export default function ApplicationForm({
   };
 
   const roleStep = (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-      <Input
-        label="Company Name *"
-        value={formData.company}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, company: e.target.value }))
-        }
-        error={errors.company}
-        required
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <Input
+          label="Company Name *"
+          value={formData.company}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, company: e.target.value }))
+          }
+          error={errors.company}
+          required
+        />
+        <Input
+          label="Role/Position *"
+          value={formData.role}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, role: e.target.value }))
+          }
+          error={errors.role}
+          required
+        />
+      </div>
+      <NameInUrlField
+        value={slugNamePosition}
+        onChange={handleSlugNamePositionChange}
       />
-      <Input
-        label="Role/Position *"
-        value={formData.role}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, role: e.target.value }))
-        }
-        error={errors.role}
-        required
-      />
+      <div>
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <label
+            htmlFor="application-slug"
+            className="block text-sm font-medium text-[var(--ink)]"
+          >
+            Slug *
+          </label>
+          <button
+            type="button"
+            onClick={handleResetSlugToSuggested}
+            disabled={!hasCompany || !hasRole || formBusy}
+            className="cursor-pointer text-sm font-medium text-[var(--ink)] hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+          >
+            Reset to suggested
+          </button>
+        </div>
+        <Input
+          id="application-slug"
+          value={formData.slug}
+          onChange={(e) => {
+            setFormData((prev) => ({ ...prev, slug: e.target.value }));
+            setSlugManuallyEdited(true);
+          }}
+          error={errors.slug}
+          placeholder="auto-generated-slug"
+          required
+        />
+      </div>
+      {slugLiveStatus.kind === "checking" && (
+        <p
+          className="flex items-center gap-1.5 text-xs text-[var(--muted)]"
+          role="status"
+        >
+          <FiRefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden />
+          Checking slug…
+        </p>
+      )}
+      {slugLiveStatus.kind === "available" && !errors.slug && (
+        <p
+          className="flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"
+          role="status"
+        >
+          <FiCheck
+            className="mt-0.5 size-3.5 shrink-0"
+            strokeWidth={2.5}
+            aria-hidden
+          />
+          <span>This slug is available.</span>
+        </p>
+      )}
+      {(slugLiveStatus.kind === "invalid" ||
+        slugLiveStatus.kind === "unavailable") &&
+        !errors.slug && (
+          <p
+            className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
+            role="alert"
+          >
+            <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            <span>{slugLiveStatus.message}</span>
+          </p>
+        )}
+      <ShareUrlPreview publicId={publicId} slug={formData.slug} />
     </div>
   );
 
@@ -1540,78 +1605,6 @@ export default function ApplicationForm({
     </>
   );
 
-  const shareStep = (
-    <>
-      <NameInUrlField
-        value={slugNamePosition}
-        onChange={handleSlugNamePositionChange}
-      />
-      <div>
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-          <label
-            htmlFor="application-slug"
-            className="block text-sm font-medium text-[var(--ink)]"
-          >
-            Slug *
-          </label>
-          <button
-            type="button"
-            onClick={handleResetSlugToSuggested}
-            disabled={!hasCompany || !hasRole || formBusy}
-            className="cursor-pointer text-sm font-medium text-[var(--ink)] hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
-          >
-            Reset to suggested
-          </button>
-        </div>
-        <Input
-          id="application-slug"
-          value={formData.slug}
-          onChange={(e) => {
-            setFormData((prev) => ({ ...prev, slug: e.target.value }));
-            setSlugManuallyEdited(true);
-          }}
-          error={errors.slug}
-          placeholder="auto-generated-slug"
-          required
-        />
-      </div>
-      {slugLiveStatus.kind === "checking" && (
-        <p
-          className="flex items-center gap-1.5 text-xs text-[var(--muted)]"
-          role="status"
-        >
-          <FiRefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden />
-          Checking slug…
-        </p>
-      )}
-      {slugLiveStatus.kind === "available" && !errors.slug && (
-        <p
-          className="flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"
-          role="status"
-        >
-          <FiCheck
-            className="mt-0.5 size-3.5 shrink-0"
-            strokeWidth={2.5}
-            aria-hidden
-          />
-          <span>This slug is available.</span>
-        </p>
-      )}
-      {(slugLiveStatus.kind === "invalid" ||
-        slugLiveStatus.kind === "unavailable") &&
-        !errors.slug && (
-          <p
-            className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
-            role="alert"
-          >
-            <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-            <span>{slugLiveStatus.message}</span>
-          </p>
-        )}
-      <ShareUrlPreview publicId={publicId} slug={formData.slug} />
-    </>
-  );
-
   const reviewStep = (
     <dl className="space-y-3 rounded-xl border border-[var(--ink)]/10 bg-[var(--paper)]/60 px-4 py-3 text-sm">
       <div className="flex flex-wrap justify-between gap-2">
@@ -1652,7 +1645,6 @@ export default function ApplicationForm({
     role: roleStep,
     candidate: candidateStep,
     materials: materialsStep,
-    share: shareStep,
     review: reviewStep,
   };
 

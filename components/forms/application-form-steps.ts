@@ -1,6 +1,6 @@
 /**
  * Shared step map for F35 wizard + collapsible-sections layouts.
- * Order: Role → Candidate → CV & video → Share URL → Review/save.
+ * Order: Role & share URL → Candidate → CV & video → Review/save.
  */
 
 import type { ApplicationFormData } from "@/lib/types/application";
@@ -9,7 +9,6 @@ export const APPLICATION_FORM_STEP_IDS = [
   "role",
   "candidate",
   "materials",
-  "share",
   "review",
 ] as const;
 
@@ -22,6 +21,8 @@ const FIELD_TO_STEP: Partial<
 > = {
   company: "role",
   role: "role",
+  slug: "role",
+  slugNamePosition: "role",
   first_name: "candidate",
   last_name: "candidate",
   location: "candidate",
@@ -30,8 +31,6 @@ const FIELD_TO_STEP: Partial<
   cv_url: "materials",
   cv_filename: "materials",
   video_url: "materials",
-  slug: "share",
-  slugNamePosition: "share",
 };
 
 /**
@@ -71,9 +70,10 @@ export type ApplicationFormStepDef = {
 export const APPLICATION_FORM_STEPS: readonly ApplicationFormStepDef[] = [
   {
     id: "role",
-    title: "Role",
+    title: "Role & share URL",
     shortLabel: "Role",
-    description: "Company and position for this application.",
+    description:
+      "Company, position, and how your public link looks for this application.",
   },
   {
     id: "candidate",
@@ -86,12 +86,6 @@ export const APPLICATION_FORM_STEPS: readonly ApplicationFormStepDef[] = [
     title: "CV & video",
     shortLabel: "CV",
     description: "Attach a CV and the YouTube intro for this role.",
-  },
-  {
-    id: "share",
-    title: "Share URL",
-    shortLabel: "URL",
-    description: "Choose how your public link looks before you save.",
   },
   {
     id: "review",

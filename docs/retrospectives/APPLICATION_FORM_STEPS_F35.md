@@ -57,11 +57,10 @@ Show/hide the switch:
 
 Order matches the backlog example:
 
-1. **Role** — company + position  
+1. **Role & share URL** — company + position + name-in-URL, slug, live preview  
 2. **About you** — candidate fields + profile picture  
 3. **CV & video** — primary/tailored CV + YouTube  
-4. **Share URL** — name-in-URL, slug, live preview  
-5. **Review & save** — short summary + existing Save / Cancel actions  
+4. **Review & save** — short summary + existing Save / Cancel actions  
 
 Defined in `components/forms/application-form-steps.ts`. Both layouts render the **same field content** from `ApplicationForm` so draft persistence (F15), preview/publish path (F16), share URL preview (F19-046), and primary-CV library behavior stay one code path.
 
@@ -106,8 +105,8 @@ For each layout (**wizard**, **sections**), smoke **Create** and **Edit**:
 
 ### Step flow & gating
 
-- [ ] Step order feels right: Role → About you → CV & video → Share URL → Review & save  
-- [ ] **Continue** stays blocked with a clear reason until that step’s required fields are ready (company/role; CV + YouTube; slug available)
+- [ ] Step order feels right: Role & share URL → About you → CV & video → Review & save  
+- [ ] **Continue** stays blocked with a clear reason until that step’s required fields are ready (company/role + slug available; CV + YouTube)
 - [ ] **Sections only:** accordion headers open any step; clicking the open header collapses it; all sections can be closed at once (only Continue is gated) — note whether that helps or confuses  
 - [ ] **Wizard only:** progress chips for future steps are disabled; past steps are reachable  
 - [ ] Review summary matches what you entered before Save  
@@ -116,7 +115,7 @@ For each layout (**wizard**, **sections**), smoke **Create** and **Edit**:
 
 - [ ] On a non-Review step, pressing **Enter** in a text field (especially YouTube URL on CV & video) does **not** save the application  
 - [ ] Save only succeeds from **Review** (Create: Save & Preview; Edit: Save Application)  
-- [ ] Force a save-time failure from Review (e.g. go offline mid tailored CV upload, or race a taken slug) — you are taken to the step that owns the error (materials / share), and the message is visible  
+- [ ] Force a save-time failure from Review (e.g. go offline mid tailored CV upload, or race a taken slug) — you are taken to the step that owns the error (materials / role), and the message is visible  
 
 ### Keyboard / focus
 
@@ -160,7 +159,7 @@ After the matrix, ask yourself:
 1. Which layout would you ship for **everyone** if you could keep only one?  
 2. Does create-vs-edit hybrid earn the cost of two shells?  
 3. Did viewport differences feel like “one responsive shell is enough” or “we need two patterns”?  
-4. Any tip overload / confusion left on Review or Share URL?  
+4. Any tip overload / confusion left on Review or the Role & share URL step?  
 
 Then record the choice in the decision log and remove the switch + losing shell when ready.
 
@@ -217,7 +216,7 @@ This is a **stronger** dual-layout story than a Profile preference, because the 
 
 | Mode | Fit |
 | ---- | --- |
-| **Create + wizard** | Linear path, progress (“step 2 of 5”), less tip overload for first draft / Save & Preview — helps activation |
+| **Create + wizard** | Linear path, progress (“step 2 of 4”), less tip overload for first draft / Save & Preview — helps activation |
 | **Edit + sections** | Open the CV step or slug step directly; accordion matches “I already know this form” |
 
 **Why it can work**

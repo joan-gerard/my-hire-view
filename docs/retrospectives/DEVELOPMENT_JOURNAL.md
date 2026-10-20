@@ -8,7 +8,7 @@ A running diary of how the product is evolving — what we chose, what we deferr
 
 Picked up the before-launch sequence after F34. Next on the board: F35 (rethink create/edit) and F38 (polish the public view page). Both cards went to In Progress; the day belonged to F35.
 
-The create/edit form has been a long scroll for a while — company, role, candidate bits, media, share URL, tips. F35’s point was to stop arguing in the abstract and try two patterns for real: a wizard (one job per screen) and a single page of collapsible sections. Same field map and save behaviour underneath; two shells on top so we are comparing layout, not two half-finished forms. Steps roughly: Role → About you → CV & video → Share URL → Review & save. Working notes live in [APPLICATION_FORM_STEPS_F35.md](APPLICATION_FORM_STEPS_F35.md).
+The create/edit form has been a long scroll for a while — company, role, candidate bits, media, share URL, tips. F35’s point was to stop arguing in the abstract and try two patterns for real: a wizard (one job per screen) and a single page of collapsible sections. Same field map and save behaviour underneath; two shells on top so we are comparing layout, not two half-finished forms. Steps roughly: Role & share URL → About you → CV & video → Review & save. Working notes live in [APPLICATION_FORM_STEPS_F35.md](APPLICATION_FORM_STEPS_F35.md).
 
 Once both shells existed, the day shifted to shaking them down — saving too early from the middle of the form, focus and keyboard rough edges, sections that felt too rigid. The fixes are logged in the F35 retrospective; the lesson for later is that trying both patterns only helps if the shared form stays boring and we find the sharp edges before picking a winner.
 
