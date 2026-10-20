@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ApplicationForm, { type ApplicationFormInitialData } from '@/components/forms/ApplicationForm';
+import ApplicationFormPageHeader from '@/components/forms/ApplicationFormPageHeader';
 import AdminPageSkeleton from '@/components/admin/AdminPageSkeleton';
 import {
   ADMIN_PANEL_CLASS,
@@ -203,9 +204,7 @@ export default function EditApplicationPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)]">
-        Edit Application
-      </h1>
+      <ApplicationFormPageHeader title="Edit Application" />
       <p className={ADMIN_TIP_CLASS}>
         The candidate details below (name, location, links) are from when this
         application was saved, not from your current profile. Updating your

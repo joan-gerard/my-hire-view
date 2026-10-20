@@ -23,14 +23,14 @@ export default function ApplicationFormActions({
   const disabled = !canSubmit || loading;
 
   return (
-    <div className="flex justify-end gap-4">
+    <div className="flex flex-wrap justify-end gap-3">
       <Button
         type="button"
         variant="secondary"
         onClick={() => window.history.back()}
         disabled={loading}
       >
-        Cancel
+        Leave without saving
       </Button>
       <div
         className="group relative inline-flex"

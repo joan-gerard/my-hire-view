@@ -30,7 +30,7 @@ We did not want to guess the winner from a mock alone. We wanted to **use both**
 | Full feature-flag SaaS | Overkill for a pre-launch layout experiment |
 | **Query param + localStorage + optional env default** | Instant toggle, bookmarkable URLs, survives reload; remove when we pick a winner |
 
-The switch is an **evaluation tool**, not a candidate-facing product setting. It is labeled “F35 test” in the UI and hidden in production builds unless explicitly enabled.
+The switch is an **evaluation tool**, not a candidate-facing product setting. It shows as a compact Sections / Wizard toggle on the same row as the page title (Create / Edit), with an accessible name that still marks it as testing. Hidden in production builds unless explicitly enabled.
 
 ---
 
@@ -60,7 +60,7 @@ Order matches the backlog example:
 1. **Role & share URL** — company + position + name-in-URL, slug, live preview  
 2. **About you** — candidate fields + profile picture  
 3. **CV & video** — primary/tailored CV + YouTube  
-4. **Review & save** — short summary + existing Save / Cancel actions  
+4. **Review & save** — short summary + Save / **Leave without saving** (page leave; not step Back)  
 
 Defined in `components/forms/application-form-steps.ts`. Both layouts render the **same field content** from `ApplicationForm` so draft persistence (F15), preview/publish path (F16), share URL preview (F19-046), and primary-CV library behavior stay one code path.
 
@@ -69,13 +69,13 @@ Defined in `components/forms/application-form-steps.ts`. Both layouts render the
 - `ApplicationFormWizardLayout` — step progress, gated Continue, Save on review  
 - `ApplicationFormSectionsLayout` — accordion sections, “Continue to next step”, Save on review  
 
-Per-step **Continue** uses the same readiness rules as Save (company/role, CV + video, slug available, etc.), so users cannot advance via Continue with missing required inputs. In the **sections** shell, accordion headers stay clickable — users can jump to any step, toggle the open section closed, or collapse **all** sections; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
+Per-step **Continue** uses the same readiness rules as Save (company/role + slug, CV + video, etc.), so users cannot advance via Continue with missing required inputs. **Wizard create** unlocks progress pills via a Continue frontier (Back does not lock previously reached steps). **Wizard edit** makes every pill reachable. In the **sections** shell, accordion headers stay clickable — users can jump to any step, toggle the open section closed, or collapse **all** sections; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
 
 ---
 
 ## How to manual-test both
 
-Run locally (`pnpm dev`). Switch layouts with the **Form layout (F35 test)** control, or:
+Run locally (`pnpm dev`). Switch layouts with the **Sections / Wizard** toggle, or:
 
 - `/admin/new?formStyle=wizard` / `?formStyle=sections`  
 - `/admin/edit/[id]?formStyle=wizard` / `?formStyle=sections`  
@@ -84,7 +84,7 @@ Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_
 
 ### Setup
 
-- [ ] Layout switch is visible in local/dev (hidden in production unless `NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH=1`)
+- [ ] Layout switch is on the Create / Edit title row in local/dev (hidden in production unless `NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH=1`)
 - [ ] Choosing Wizard / Sections updates the URL (`formStyle=…`) and survives a reload
 - [ ] Re-clicking the already-active layout does **not** reset you to step 1
 - [ ] Switching layout mid-form does reset to step 1 / clears section “completed” marks (expected for the test switch)
@@ -108,7 +108,8 @@ For each layout (**wizard**, **sections**), smoke **Create** and **Edit**:
 - [ ] Step order feels right: Role & share URL → About you → CV & video → Review & save  
 - [ ] **Continue** stays blocked with a clear reason until that step’s required fields are ready (company/role + slug available; CV + YouTube)
 - [ ] **Sections only:** accordion headers open any step; clicking the open header collapses it; all sections can be closed at once (only Continue is gated) — note whether that helps or confuses  
-- [ ] **Wizard only:** progress chips for future steps are disabled; past steps are reachable  
+- [ ] **Wizard + create:** progress chips unlock via Continue frontier — after Back, previously reached steps stay clickable; unreached future steps stay disabled; Continue stays gated  
+- [ ] **Wizard + edit:** all progress chips are reachable (Continue still gated on the current step’s required fields)  
 - [ ] Review summary matches what you entered before Save  
 
 ### Enter / Save path (regressions)
@@ -194,7 +195,7 @@ Account settings → Preferences is a good home **if** we later decide both layo
 
 | Phase | Recommendation |
 | ----- | -------------- |
-| **Now (F35)** | Keep the in-form test switch + `?formStyle=` / localStorage. Do not expose a Profile preference yet. |
+| **Now (F35)** | Keep the page-header test switch + `?formStyle=` / localStorage. Do not expose a Profile preference yet. |
 | **After we pick a winner** | Ship **one** default. Optionally remember last-used layout in `localStorage` with **no** Preferences UI (invisible continuity). |
 | **Later, only if evidence says so** | If manual testing / launch feedback shows a durable split (e.g. mobile vs desktop habits, accessibility), add **Account settings → Preferences → Application form style** — same browser-local pattern as status indicators unless cross-device sync is required (then persist on the profile row). |
 

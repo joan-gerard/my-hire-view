@@ -1,6 +1,7 @@
 "use client";
 
 import ApplicationForm from "@/components/forms/ApplicationForm";
+import ApplicationFormPageHeader from "@/components/forms/ApplicationFormPageHeader";
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
 import {
   ADMIN_PANEL_CLASS,
@@ -255,9 +256,7 @@ export default function NewApplicationPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)]">
-        Create New Application
-      </h1>
+      <ApplicationFormPageHeader title="Create New Application" />
       {showProfileNudge && (
         <p className={`flex items-start gap-2 ${ADMIN_TIP_CLASS}`}>
           <span className="min-w-0 flex-1">

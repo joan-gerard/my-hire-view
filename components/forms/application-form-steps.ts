@@ -100,3 +100,16 @@ export function applicationFormStepIndex(
 ): number {
   return APPLICATION_FORM_STEP_IDS.indexOf(id);
 }
+
+/**
+ * Wizard progress-pill reachability.
+ * Create uses a Continue frontier; edit allows every step.
+ */
+export function isWizardStepReachable(
+  stepIndex: number,
+  furthestIndex: number,
+  allowAllSteps: boolean,
+): boolean {
+  if (allowAllSteps) return true;
+  return stepIndex <= furthestIndex;
+}

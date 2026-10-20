@@ -2,6 +2,8 @@
 
 import {
   APPLICATION_FORM_STEPS,
+  applicationFormStepIndex,
+  isWizardStepReachable,
   type ApplicationFormStepId,
 } from "@/components/forms/application-form-steps";
 import Button from "@/components/ui/Button";
@@ -16,9 +18,18 @@ interface ApplicationFormWizardLayoutProps {
   stepContents: ApplicationFormStepContentMap;
   currentStepId: ApplicationFormStepId;
   onStepChange: (id: ApplicationFormStepId) => void;
+  /**
+   * Furthest step unlocked via Continue (create). Pills allow this step and
+   * earlier ones even after Back. Ignored when `allowAllSteps` is true.
+   */
+  furthestStepId: ApplicationFormStepId;
+  /**
+   * Edit: every progress pill is clickable. Create: use the frontier only.
+   */
+  allowAllSteps?: boolean;
   /** When set, Continue is blocked and this message is shown. */
   continueBlockedReason?: string | null;
-  /** Final step actions (Save / Cancel). */
+  /** Final step actions (Save / Leave without saving). */
   actions: ReactNode;
 }
 
@@ -26,11 +37,14 @@ export default function ApplicationFormWizardLayout({
   stepContents,
   currentStepId,
   onStepChange,
+  furthestStepId,
+  allowAllSteps = false,
   continueBlockedReason = null,
   actions,
 }: ApplicationFormWizardLayoutProps) {
   const index = APPLICATION_FORM_STEPS.findIndex((s) => s.id === currentStepId);
   const step = APPLICATION_FORM_STEPS[index] ?? APPLICATION_FORM_STEPS[0];
+  const furthestIndex = applicationFormStepIndex(furthestStepId);
   const isFirst = index <= 0;
   const isLast = index >= APPLICATION_FORM_STEPS.length - 1;
   const canContinue = !continueBlockedReason;
@@ -54,19 +68,23 @@ export default function ApplicationFormWizardLayout({
         <ol className="flex flex-wrap gap-2" aria-label="Form progress">
           {APPLICATION_FORM_STEPS.map((s, i) => {
             const active = s.id === currentStepId;
-            const done = i < index;
+            const reachable = isWizardStepReachable(
+              i,
+              furthestIndex,
+              allowAllSteps,
+            );
             return (
               <li key={s.id}>
                 <button
                   type="button"
                   onClick={() => {
-                    if (i <= index) onStepChange(s.id);
+                    if (reachable) onStepChange(s.id);
                   }}
-                  disabled={i > index}
+                  disabled={!reachable}
                   className={
                     active
                       ? "cursor-pointer rounded-full bg-[var(--ink)] px-2.5 py-1 text-xs font-semibold text-[var(--white)]"
-                      : done
+                      : reachable
                         ? "cursor-pointer rounded-full border border-[var(--ink)]/20 bg-[var(--white)] px-2.5 py-1 text-xs font-medium text-[var(--ink)] hover:bg-[var(--ink)]/[0.04]"
                         : "cursor-not-allowed rounded-full border border-[var(--ink)]/10 px-2.5 py-1 text-xs font-medium text-[var(--muted)] opacity-60"
                   }
@@ -140,7 +158,7 @@ export default function ApplicationFormWizardLayout({
           </div>
         </div>
       ) : (
-        <div className="space-y-4 border-t border-[var(--ink)]/10 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ink)]/10 pt-4">
           <Button
             type="button"
             variant="secondary"

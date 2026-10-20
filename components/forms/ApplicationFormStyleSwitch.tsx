@@ -25,47 +25,37 @@ export default function ApplicationFormStyleSwitch({
   onChange,
 }: ApplicationFormStyleSwitchProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-[var(--ink)]/20 bg-[var(--paper)]/80 px-3 py-2.5">
-      <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
-          Form layout (F35 test)
-        </p>
-        <p className="text-xs text-[var(--muted)]">
-          Switch freely while manual-testing. Choice is saved in this browser.
-        </p>
-      </div>
-      <div
-        className="inline-flex shrink-0 rounded-full border border-[var(--ink)]/12 bg-[var(--white)] p-0.5"
-        role="radiogroup"
-        aria-label="Application form layout (testing)"
-      >
-        {APPLICATION_FORM_STYLE_VALUES.map((value) => {
-          const active = style === value;
-          return (
-            <label
-              key={value}
-              className={
-                active
-                  ? `cursor-pointer rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-semibold text-[var(--white)] ${PILL_FOCUS}`
-                  : `cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium text-[var(--ink)] hover:bg-[var(--ink)]/[0.04] ${PILL_FOCUS}`
-              }
-            >
-              <input
-                type="radio"
-                name="application-form-style"
-                value={value}
-                checked={active}
-                onChange={() => {
-                  if (value === style) return;
-                  onChange(value);
-                }}
-                className="sr-only"
-              />
-              {LABELS[value]}
-            </label>
-          );
-        })}
-      </div>
+    <div
+      className="inline-flex rounded-full border border-[var(--ink)]/12 bg-[var(--white)] p-0.5"
+      role="radiogroup"
+      aria-label="Application form layout (testing)"
+    >
+      {APPLICATION_FORM_STYLE_VALUES.map((value) => {
+        const active = style === value;
+        return (
+          <label
+            key={value}
+            className={
+              active
+                ? `cursor-pointer rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-semibold text-[var(--white)] ${PILL_FOCUS}`
+                : `cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium text-[var(--ink)] hover:bg-[var(--ink)]/[0.04] ${PILL_FOCUS}`
+            }
+          >
+            <input
+              type="radio"
+              name="application-form-style"
+              value={value}
+              checked={active}
+              onChange={() => {
+                if (value === style) return;
+                onChange(value);
+              }}
+              className="sr-only"
+            />
+            {LABELS[value]}
+          </label>
+        );
+      })}
     </div>
   );
 }

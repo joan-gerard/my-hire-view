@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { applicationFormStepForErrors } from "@/components/forms/application-form-steps";
+import {
+  applicationFormStepForErrors,
+  isWizardStepReachable,
+} from "@/components/forms/application-form-steps";
 
 describe("applicationFormStepForErrors", () => {
   it("returns null when there are no errors", () => {
@@ -35,5 +38,18 @@ describe("applicationFormStepForErrors", () => {
         cv_url: "missing",
       }),
     ).toBe("candidate");
+  });
+});
+
+describe("isWizardStepReachable", () => {
+  it("allows steps up to the create frontier after going back", () => {
+    const furthest = 1; // reached About you
+    expect(isWizardStepReachable(0, furthest, false)).toBe(true);
+    expect(isWizardStepReachable(1, furthest, false)).toBe(true);
+    expect(isWizardStepReachable(2, furthest, false)).toBe(false);
+  });
+
+  it("allows every step on edit", () => {
+    expect(isWizardStepReachable(3, 0, true)).toBe(true);
   });
 });

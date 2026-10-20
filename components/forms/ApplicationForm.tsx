@@ -40,11 +40,11 @@ import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
 import ApplicationFormSectionsLayout from "./ApplicationFormSectionsLayout";
-import ApplicationFormStyleSwitch from "./ApplicationFormStyleSwitch";
 import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
 import {
   APPLICATION_FORM_STEPS,
   applicationFormStepForErrors,
+  applicationFormStepIndex,
   type ApplicationFormStepId,
 } from "./application-form-steps";
 import type { CandidateFieldKey } from "./CandidateFieldsSection";
@@ -142,11 +142,7 @@ export default function ApplicationForm({
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
-  const {
-    style: formStyle,
-    setStyle: setFormStyle,
-    switchEnabled: formStyleSwitchEnabled,
-  } = useApplicationFormStyle();
+  const { style: formStyle } = useApplicationFormStyle();
   /**
    * Active step for wizard, or open accordion section for sections.
    * `null` = all sections collapsed (sections layout only).
@@ -154,9 +150,22 @@ export default function ApplicationForm({
   const [currentStepId, setCurrentStepId] = useState<
     ApplicationFormStepId | null
   >("role");
+  /** Create wizard: furthest step unlocked via Continue (survives Back). */
+  const [furthestStepId, setFurthestStepId] =
+    useState<ApplicationFormStepId>("role");
   const [completedStepIds, setCompletedStepIds] = useState<
     Set<ApplicationFormStepId>
   >(() => new Set());
+  const previousFormStyleRef = useRef(formStyle);
+
+  // Header toggle lives on the page; reset step chrome when layout changes.
+  useEffect(() => {
+    if (previousFormStyleRef.current === formStyle) return;
+    previousFormStyleRef.current = formStyle;
+    setCurrentStepId("role");
+    setFurthestStepId("role");
+    setCompletedStepIds(new Set());
+  }, [formStyle]);
 
   /** Load once per mount; ignore later key changes while the form is open. */
   const restoredDraftRef = useRef<CreateApplicationDraft | null | undefined>(
@@ -1662,7 +1671,7 @@ export default function ApplicationForm({
     persistDraftKey ? (
       <ConfirmDialog
         open={leaveConfirmOpen}
-        title="Leave this page?"
+        title="Want to leave this page?"
         message="Leaving this page will discard this draft. Are you sure?"
         confirmLabel="Yes, I'm sure"
         cancelLabel="No, stay on this page"
@@ -1673,23 +1682,22 @@ export default function ApplicationForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {formStyleSwitchEnabled ? (
-        <ApplicationFormStyleSwitch
-          style={formStyle}
-          onChange={(next) => {
-            if (next === formStyle) return;
-            setFormStyle(next);
-            setCurrentStepId("role");
-            setCompletedStepIds(new Set());
-          }}
-        />
-      ) : null}
-
       {formStyle === "wizard" ? (
         <ApplicationFormWizardLayout
           stepContents={stepContents}
           currentStepId={currentStepId ?? "role"}
-          onStepChange={setCurrentStepId}
+          furthestStepId={furthestStepId}
+          allowAllSteps={isEdit}
+          onStepChange={(id) => {
+            setCurrentStepId(id);
+            if (
+              !isEdit &&
+              applicationFormStepIndex(id) >
+                applicationFormStepIndex(furthestStepId)
+            ) {
+              setFurthestStepId(id);
+            }
+          }}
           continueBlockedReason={continueBlockedReasonFor(
             currentStepId ?? "role",
           )}
