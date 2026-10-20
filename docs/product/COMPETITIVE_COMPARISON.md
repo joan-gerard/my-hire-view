@@ -68,6 +68,13 @@ Living list of where MyHireView **wins** vs competitors, and where it **lags** (
 - **Notes:** Reslink lets candidates add a cover photo that appears on applications. MHV has no cover-photo option — only profile picture (and application media such as CV / video).
 - **Decision:** Don’t update.
 
+#### Shorter share-path prefix (`/r` vs `/view`)
+
+- **Impact:** Low
+- **Impact evaluation:** Reslink’s `/r/...` saves a few characters vs MHV’s `/view/...`. Recruiters click links; path aesthetics rarely matter, and `/view` is clearer about what the URL is. Barely a Reslink win on brevity — close to a wash.
+- **Notes:** Example MHV: `/view/{publicId}/{slug}` (e.g. `/view/f4592wty/volvo-producer`). Example Reslink: `/r/{username}/{slug}` (e.g. `/r/joan-gerard/joan-gg-lead-dev-volvo`).
+- **Decision:** Keep `/view` — clarity over a shorter opaque prefix; optional short alias later only if link length becomes a real pain (SMS, badges).
+
 ---
 
 ## Other competitors
