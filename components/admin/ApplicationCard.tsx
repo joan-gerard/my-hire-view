@@ -69,9 +69,9 @@ export default function ApplicationCard({
     "opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:group-has-[[aria-expanded=true]]:opacity-100";
 
   return (
-    <article className="group relative z-0 overflow-visible hover:bg-[var(--ink)]/[0.03] has-[[aria-expanded=true]]:z-20">
+    <article className="group relative z-0 overflow-visible hover:bg-[var(--ink)]/[0.03] has-[[aria-expanded=true]]:z-40">
       <div className="px-3 py-3 sm:px-4 sm:py-3.5">
-        <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+        <div className="flex flex-wrap items-start gap-3 sm:flex-nowrap sm:items-center sm:gap-4">
           <time
             dateTime={application.created_at}
             className="w-14 shrink-0 pt-0.5 text-xs tabular-nums text-[var(--muted)] sm:pt-0"
@@ -97,7 +97,7 @@ export default function ApplicationCard({
           </div>
 
           <div
-            className={`flex shrink-0 flex-wrap items-center justify-end gap-2 transition-opacity ${actionsVisibleClass}`}
+            className={`flex min-w-0 flex-wrap items-center justify-end gap-2 transition-opacity ${actionsVisibleClass}`}
           >
             {isDraft && onPublish ? (
               <button

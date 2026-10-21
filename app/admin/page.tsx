@@ -97,42 +97,32 @@ export default function AdminDashboard() {
         />
       ) : (
         <div className="space-y-6">
+          {/* Mount SearchBar once so focus survives empty ↔ non-empty result flips. */}
+          {showListChrome ? (
+            <div className="flex justify-end">
+              <div className="w-full sm:max-w-xs">
+                <SearchBar value={searchQuery} onChange={setSearchQuery} />
+              </div>
+            </div>
+          ) : null}
+
           {applications.length === 0 &&
           (hasSearchFilter || !isFetching) ? (
-            <div className="space-y-3">
-              {showListChrome ? (
-                <div className="flex justify-end">
-                  <div className="w-full sm:max-w-xs">
-                    <SearchBar value={searchQuery} onChange={setSearchQuery} />
-                  </div>
-                </div>
-              ) : null}
-              <AdminDashboardEmpty
-                hasSearchQuery={hasSearchFilter}
-                onClearSearch={() => setSearchQuery('')}
-                embedded
-              />
-            </div>
+            <AdminDashboardEmpty
+              hasSearchQuery={hasSearchFilter}
+              onClearSearch={() => setSearchQuery('')}
+              embedded
+            />
           ) : applications.length > 0 ? (
             <>
               <div
                 className={`space-y-6 transition-opacity ${isFetching ? 'opacity-60' : ''}`}
               >
-                {dayGroups.map((group, groupIndex) => (
+                {dayGroups.map((group) => (
                   <section key={group.dayKey} className="space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h2 className="text-xs font-medium uppercase tracking-[0.04em] text-[var(--muted)]">
-                        {group.label}
-                      </h2>
-                      {groupIndex === 0 && showListChrome ? (
-                        <div className="w-full sm:w-auto sm:max-w-xs sm:shrink-0">
-                          <SearchBar
-                            value={searchQuery}
-                            onChange={setSearchQuery}
-                          />
-                        </div>
-                      ) : null}
-                    </div>
+                    <h2 className="text-xs font-medium uppercase tracking-[0.04em] text-[var(--muted)]">
+                      {group.label}
+                    </h2>
                     <div
                       className={`${ADMIN_PANEL_CLASS} divide-y divide-[var(--ink)]/8`}
                     >

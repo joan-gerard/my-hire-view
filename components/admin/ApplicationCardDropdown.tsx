@@ -65,7 +65,7 @@ export default function ApplicationCardDropdown({
       </button>
       {dropdownOpen && (
         <div
-          className="absolute right-0 top-full z-[60] mt-1 w-48 rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] py-1 shadow-lg"
+          className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] py-1 shadow-lg"
           role="menu"
         >
           <Link

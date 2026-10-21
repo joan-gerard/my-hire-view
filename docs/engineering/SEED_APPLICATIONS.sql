@@ -1,11 +1,14 @@
 -- Seed sample applications for local / staging dashboard testing.
 -- Run in the Supabase SQL Editor (service role / postgres), not via the app API.
 --
--- Configured for one account (edit cfg below before running elsewhere):
+-- FAIL-CLOSED: leave cfg user_id / primary_cv_id / cv_url as NULL until you
+-- intentionally opt in. With nulls, the join matches nothing and INSERT selects
+-- zero rows. Set all three to real values for the target account before running.
+--
 --   user_id       — must exist in auth.users
 --   primary_cv_id — must exist in primary_cvs for that user
 --   cv_url        — must match primary_cvs.url for that id + user
--- If the join matches nothing, the INSERT selects zero rows (fail closed).
+--
 -- The upsert still updates on (user_id, slug) once set — only run against an
 -- account you intend to seed.
 --
@@ -15,8 +18,13 @@
 --   - created_at: several calendar days + varied times of day
 --   - insights: view_count, download_count, last_viewed_at (drafts stay quiet)
 --
+-- Timestamps: fixture clock times are LEAST(..., NOW()) so days_ago = 0 rows
+-- never land in the future. last_viewed_at uses hours-ago from NOW(), then
+-- clamps into [created_at, NOW()] so it cannot precede creation or sit in the future.
+--
 -- Idempotent: re-run upserts on (user_id, slug). Deterministic company-role slugs.
 -- include_name_in_slug is NULL (company-role slugs only — no name in URL).
+-- Re-runs do NOT rewrite created_at on conflict (preserves day-group history).
 --
 -- Schema notes (vs older seeds):
 --   - is_active → status ('active' | 'draft' | 'archived') + archived_at
@@ -62,21 +70,23 @@ SELECT
   role,
   params.cv_url,
   'https://youtu.be/1cImNJ3bNH4',
-  date_trunc('day', NOW())
-    - (days_ago || ' days')::interval
-    + make_interval(hours => hour_of_day, mins => minute_of_day),
-  date_trunc('day', NOW())
-    - (days_ago || ' days')::interval
-    + make_interval(hours => hour_of_day, mins => minute_of_day)
-    + CASE WHEN status = 'draft' THEN interval '0' ELSE interval '2 hours' END,
+  stamped.created_at,
+  LEAST(
+    stamped.created_at
+      + CASE WHEN status = 'draft' THEN interval '0' ELSE interval '2 hours' END,
+    NOW()
+  ),
   view_count,
   params.user_id,
   status,
   CASE
     WHEN status = 'archived' THEN
-      date_trunc('day', NOW())
-        - (coalesce(archived_days_ago, days_ago) || ' days')::interval
-        + make_interval(hours => hour_of_day, mins => minute_of_day)
+      LEAST(
+        date_trunc('day', NOW())
+          - (coalesce(archived_days_ago, days_ago) || ' days')::interval
+          + make_interval(hours => hour_of_day, mins => minute_of_day),
+        NOW()
+      )
     ELSE NULL
   END,
   NULL,
@@ -88,7 +98,13 @@ SELECT
   download_count,
   CASE
     WHEN last_viewed_hours_ago IS NULL THEN NULL
-    ELSE NOW() - (last_viewed_hours_ago || ' hours')::interval
+    ELSE LEAST(
+      NOW(),
+      GREATEST(
+        stamped.created_at,
+        NOW() - (last_viewed_hours_ago || ' hours')::interval
+      )
+    )
   END,
   params.cv_filename,
   true,
@@ -148,12 +164,26 @@ FROM (
   archived_days_ago
 )
 CROSS JOIN LATERAL (
-  -- Edit these for another account. Fail closed if primary_cvs row missing/mismatched.
+  -- Opt-in: replace NULLs with the target account (fail closed while null).
   SELECT
-    '17305170-d4a6-4313-b73f-e56cdd1590c2'::uuid AS user_id,
-    'cb01733a-df28-4b72-88e6-85de5ba8c311'::uuid AS primary_cv_id,
-    'https://pub-87b38b8cc8f5460dbc5e6d79e952bd83.r2.dev/cvs/17305170-d4a6-4313-b73f-e56cdd1590c2/primary/b882be89-4db3-4b0e-ae46-f54ba73e6cc7.pdf'::text AS cv_url
+    NULL::uuid AS user_id,
+    NULL::uuid AS primary_cv_id,
+    NULL::text AS cv_url
+  -- Example (uncomment and fill after clearing NULLs above):
+  -- SELECT
+  --   '00000000-0000-0000-0000-000000000000'::uuid AS user_id,
+  --   '00000000-0000-0000-0000-000000000000'::uuid AS primary_cv_id,
+  --   'https://example.r2.dev/cvs/.../primary/....pdf'::text AS cv_url
 ) AS cfg
+CROSS JOIN LATERAL (
+  SELECT
+    LEAST(
+      date_trunc('day', NOW())
+        - (days_ago || ' days')::interval
+        + make_interval(hours => hour_of_day, mins => minute_of_day),
+      NOW()
+    ) AS created_at
+) AS stamped
 INNER JOIN LATERAL (
   SELECT
     p.id AS primary_cv_id,
@@ -161,7 +191,10 @@ INNER JOIN LATERAL (
     p.filename AS cv_filename,
     cfg.user_id
   FROM primary_cvs p
-  WHERE p.id = cfg.primary_cv_id
+  WHERE cfg.user_id IS NOT NULL
+    AND cfg.primary_cv_id IS NOT NULL
+    AND cfg.cv_url IS NOT NULL
+    AND p.id = cfg.primary_cv_id
     AND p.user_id = cfg.user_id
     AND p.url = cfg.cv_url
   LIMIT 1
@@ -171,7 +204,6 @@ ON CONFLICT (user_id, slug) DO UPDATE SET
   role = EXCLUDED.role,
   cv_url = EXCLUDED.cv_url,
   video_url = EXCLUDED.video_url,
-  created_at = EXCLUDED.created_at,
   updated_at = EXCLUDED.updated_at,
   view_count = EXCLUDED.view_count,
   status = EXCLUDED.status,
