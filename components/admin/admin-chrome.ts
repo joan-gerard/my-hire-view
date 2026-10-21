@@ -1,7 +1,7 @@
 /**
  * Shared admin / product chrome (F34).
- * Soft paper page + white bordered panels (Reslink-style dashboard density).
- * Reserve `--paper` for page wash and quiet chips — not nested grey boxes.
+ * White page + bordered panels (Reslink-style dashboard density).
+ * Reserve `--paper` for quiet chips / nested wells — not the admin page wash.
  */
 
 /** Shared content width for admin header + main (keep in sync). */
@@ -25,6 +25,10 @@ export const ADMIN_ACCENT_PRIMARY_CLASS =
 /** Secondary control — white chip with border. */
 export const ADMIN_SECONDARY_CLASS =
   "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[var(--ink)]/12 bg-[var(--white)] px-3 py-1.5 text-sm font-medium text-[var(--ink)] hover:bg-[var(--ink)]/[0.04] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40";
+
+/** Icon-only secondary control — equal padding on all sides. */
+export const ADMIN_ICON_SECONDARY_CLASS =
+  "inline-flex shrink-0 cursor-pointer items-center justify-center rounded-xl border border-[var(--ink)]/12 bg-[var(--white)] p-2 text-[var(--ink)] hover:bg-[var(--ink)]/[0.04] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40";
 
 /** Disabled / unavailable action chrome on cards. */
 export const ADMIN_DISABLED_CLASS =

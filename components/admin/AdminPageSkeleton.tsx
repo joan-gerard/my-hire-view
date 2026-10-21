@@ -30,24 +30,37 @@ export default function AdminPageSkeleton({
       >
         <span className="sr-only">Loading applications</span>
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="h-10 w-48 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.08]" />
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="h-10 w-48 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.08]" />
+            <div className="h-9 w-9 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.06]" />
+          </div>
           <div className="h-10 w-52 motion-safe:animate-pulse rounded-full bg-[var(--ink)]/[0.08]" />
         </div>
-        <div
-          className={`${ADMIN_PANEL_CLASS} flex min-h-[calc(100svh-72px-4rem-5.5rem)] flex-col p-5 sm:p-6`}
-        >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="h-6 w-40 motion-safe:animate-pulse rounded-lg bg-[var(--ink)]/[0.06]" />
-            <div className="h-10 w-full max-w-xs motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.06]" />
-          </div>
-          <div className="mt-4 flex-1 divide-y divide-[var(--ink)]/8">
-            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <div className="min-h-[calc(100svh-72px-4rem-5.5rem)] space-y-6">
+          {[0, 1].map((group) => (
+            <div key={group} className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="h-3 w-36 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.06]" />
+                {group === 0 ? (
+                  <div className="h-10 w-full max-w-xs motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.06]" />
+                ) : null}
+              </div>
               <div
-                key={i}
-                className="h-16 motion-safe:animate-pulse bg-[var(--ink)]/[0.03] sm:h-20"
-              />
-            ))}
-          </div>
+                className={`${ADMIN_PANEL_CLASS} divide-y divide-[var(--ink)]/8`}
+              >
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 px-4 py-3.5"
+                  >
+                    <div className="h-3 w-12 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+                    <div className="size-5 motion-safe:animate-pulse rounded-full bg-[var(--ink)]/[0.06]" />
+                    <div className="h-4 w-48 max-w-[50%] motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.06]" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

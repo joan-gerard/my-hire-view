@@ -108,7 +108,7 @@ Local FunnelSans / FaunaOne / Varela Round `@font-face` rules remain for leftove
 
 | Pattern          | Guidance                                                                                                                                                                                                                                                                         |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Page wash        | Admin: soft `--paper` page; content in white bordered panels (`ADMIN_PANEL_CLASS`)                                                                                                                                                                                               |
+| Page wash        | Admin: `--white` page; content in bordered panels (`ADMIN_PANEL_CLASS`) when grouping chrome is needed                                                                                                                                                                            |
 | Primary CTAs     | Pill (`rounded-full` / ~100px) — ink fill + white text                                                                                                                                                                                                                           |
 | Dense controls   | Inputs, secondary/danger buttons, fieldsets: `rounded-xl`                                                                                                                                                                                                                        |
 | Panels / dialogs | In-flow panels (`ADMIN_PANEL_CLASS`): `rounded-2xl` (16px). Floating dialogs/modals: larger radius (`rounded-[28px]` ≈ 28px). Soft shadow (`shadow-lg` / similar) for **floating** surfaces: menus, confirm/status dialogs, library/picture modals — not for in-flow page panels |
@@ -153,7 +153,7 @@ Pair `*-bg` + `*-fg` tokens. Confirm / library modals use paper/white + ink; des
 
 | Surface              | Expectation                                                                                          |
 | -------------------- | ---------------------------------------------------------------------------------------------------- |
-| `/admin`             | Paper page wash, white panels, ink nav + pills, lime Create CTA, status dots/glyphs                  |
+| `/admin`             | White page, bordered day-group panels, ink nav + pills, lime Create CTA, status dots/glyphs          |
 | `/login`, `/signup`  | White/ink auth shells, Switzer headings, pill submit; soft pink/lime atmosphere OK on auth only      |
 | `/view`              | Quiet paper/ink chrome so CV / video stay primary; draft banner uses pink-text warning + ink Publish |
 | Marketing `/`, legal | **Frozen for product work** — `.mhv-landing` / marketing components; see marketing guide             |
