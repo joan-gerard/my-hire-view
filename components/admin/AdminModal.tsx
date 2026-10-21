@@ -56,7 +56,10 @@ export default function AdminModal({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const closeEmittedRef = useRef(false);
+  /** True only when the press started on the dialog backdrop (not the panel). */
+  const pointerDownOnBackdropRef = useRef(false);
   const titleId = useId();
+  const descriptionId = useId();
 
   const requestDismiss = () => {
     const dialog = dialogRef.current;
@@ -115,8 +118,16 @@ export default function AdminModal({
       ref={dialogRef}
       className={`fixed left-1/2 top-1/2 z-50 max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 border-0 bg-transparent p-0 shadow-none backdrop:bg-black/40 open:flex open:flex-col ${widthClassName}`}
       aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
+      onPointerDown={(e) => {
+        pointerDownOnBackdropRef.current = e.target === dialogRef.current;
+      }}
       onClick={(e) => {
-        if (e.target === dialogRef.current) {
+        const startedOnBackdrop = pointerDownOnBackdropRef.current;
+        pointerDownOnBackdropRef.current = false;
+        // Require press + release on the backdrop so a text-selection drag that
+        // starts in the panel and ends on the backdrop does not dismiss.
+        if (startedOnBackdrop && e.target === dialogRef.current) {
           requestDismiss();
         }
       }}
@@ -135,7 +146,10 @@ export default function AdminModal({
               {title}
             </h2>
             {description ? (
-              <div className="mt-1.5 text-sm leading-snug text-[var(--muted)]">
+              <div
+                id={descriptionId}
+                className="mt-1.5 text-sm leading-snug text-[var(--muted)]"
+              >
                 {description}
               </div>
             ) : null}
