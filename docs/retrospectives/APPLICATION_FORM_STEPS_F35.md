@@ -47,11 +47,11 @@ Helpers: `lib/utils/application-form-style.ts`
 Hook: `hooks/useApplicationFormStyle.ts` (reads URL + localStorage via `useSyncExternalStore`; notifies via `mhv:application-form-style-changed` — **not** a synthetic `popstate`, so create draft leave-confirm stays quiet)  
 In-form control: `components/forms/ApplicationFormStyleSwitch.tsx` (native radio group)
 
-Show/hide the switch:
+Show/hide the switch (temporary A/B control — no Preview env required):
 
-- unset → show when `NODE_ENV !== "production"`
-- `NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH=1` → show (e.g. Vercel preview)
-- `=0` → always hide
+- unset → show (local, Vercel Preview, and Production)
+- `NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH=0` → hide early if needed
+- When one layout wins, delete the switch — do not keep an env gate
 
 ### Shared step map (same product in both skins)
 
@@ -87,7 +87,7 @@ Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_
 
 ### Setup
 
-- [ ] Layout switch is on the Create / Edit title row in local/dev (hidden in production unless `NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH=1`)
+- [ ] Layout switch is on the Create / Edit title row (local and Preview; hide only with `NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH=0`)
 - [ ] Choosing Wizard / Sections updates the URL (`formStyle=…`) and survives a reload
 - [ ] Re-clicking the already-active layout does **not** reset you to step 1
 - [ ] Switching layout mid-form does reset to step 1 / clears section “completed” marks (expected for the test switch)

@@ -72,16 +72,13 @@ export function getEnvApplicationFormStyleDefault(): ApplicationFormStyle | null
 }
 
 /**
- * Show the in-form switch unless explicitly disabled.
+ * Temporary F35 A/B control — show unless explicitly killed.
+ * - unset / anything else → show (local, Vercel Preview, and Production)
  * - `NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH=0` → hide
- * - `=1` → show (including production preview deploys)
- * - unset → show outside production builds
+ * Remove the switch entirely when one layout wins; do not gate on NODE_ENV.
  */
 export function isApplicationFormStyleSwitchEnabled(): boolean {
-  const raw = process.env.NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH;
-  if (raw === "0") return false;
-  if (raw === "1") return true;
-  return process.env.NODE_ENV !== "production";
+  return process.env.NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH !== "0";
 }
 
 function getBrowserLocalStorage(): Storage | null {

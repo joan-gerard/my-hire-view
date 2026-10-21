@@ -98,10 +98,12 @@ describe("env helpers", () => {
     expect(getEnvApplicationFormStyleDefault()).toBe("wizard");
   });
 
-  it("gates the switch via NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH", () => {
-    vi.stubEnv("NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH", "0");
-    expect(isApplicationFormStyleSwitchEnabled()).toBe(false);
+  it("shows the temporary layout switch unless explicitly set to 0", () => {
+    vi.stubEnv("NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH", undefined);
+    expect(isApplicationFormStyleSwitchEnabled()).toBe(true);
     vi.stubEnv("NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH", "1");
     expect(isApplicationFormStyleSwitchEnabled()).toBe(true);
+    vi.stubEnv("NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH", "0");
+    expect(isApplicationFormStyleSwitchEnabled()).toBe(false);
   });
 });
