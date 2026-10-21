@@ -41,24 +41,32 @@ const TOGGLE_BUTTON_CLASS = `pointer-events-auto inline-flex cursor-pointer item
 type OnboardingSnapshot = OnboardingChecklistInput;
 
 export type OnboardingChecklistProps = {
-  /** From admin layout server load — avoids four /api GETs on first paint. */
+  /** From admin dashboard server load — avoids four /api GETs on first paint. */
   initialAccountKey: string | null;
   initialSnapshot: OnboardingChecklistInput | null;
+  /**
+   * `rail` — embedded under the dashboard summary (default).
+   * `floating` — legacy bottom-right control (kept for tests / optional reuse).
+   */
+  variant?: "rail" | "floating";
 };
 
 /**
- * Floating Getting started checklist for all `/admin` routes (F19-044).
+ * Getting started checklist (F19-044).
+ * Default: dashboard right rail under the status summary.
  * Stays visible after every step is complete or skipped until the user dismisses it.
  * Prefs are one localStorage blob scoped by account key (public_id or user id).
- * Initial data comes from the admin layout (Supabase); client refetches only when
- * mutations notify — not on every navigation/focus.
+ * Initial data comes from the admin dashboard page (Supabase); client refetches
+ * only when mutations notify — not on every navigation/focus.
  */
 export default function OnboardingChecklist({
   initialAccountKey,
   initialSnapshot,
+  variant = "rail",
 }: OnboardingChecklistProps) {
   const panelId = useId();
   const toggleId = useId();
+  const isRail = variant === "rail";
   const [snapshot, setSnapshot] = useState<OnboardingSnapshot | null>(
     initialSnapshot,
   );
@@ -283,72 +291,17 @@ export default function OnboardingChecklist({
   const steps = buildOnboardingSteps(snapshot, prefs.skipped, prefs.completed);
   const { completed, total, allDone } = onboardingProgress(steps);
   const progressPct = total === 0 ? 0 : Math.round((completed / total) * 100);
+  const panelExpanded = prefs.expanded;
+  const bodyId = `${panelId}-body`;
 
-  return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex w-[min(100vw-2rem,22rem)] flex-col items-stretch sm:bottom-6 sm:right-6">
-      {/* Stay mounted so aria-controls always resolves; animate height instead of unmounting. */}
-      <motion.div
-        initial={false}
-        animate={
-          prefs.expanded
-            ? { height: "auto", opacity: 1 }
-            : { height: 0, opacity: 0 }
-        }
-        transition={motionTransition}
-        className={`overflow-hidden ${prefs.expanded ? "mb-3" : ""}`}
-        inert={prefs.expanded ? undefined : true}
-        aria-hidden={!prefs.expanded}
-      >
-        <section
-          id={panelId}
-          className={`pointer-events-auto flex max-h-[min(70vh,36rem)] flex-col overflow-hidden ${ADMIN_PANEL_CLASS} shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)]`}
-          aria-labelledby="onboarding-checklist-heading"
-        >
-          {/* Outer px-3 + inner px-2.5 matches list row inset so title/bar line up with icons. */}
-          <header className="shrink-0 space-y-3 border-b border-[var(--ink)]/8 px-3 pb-4 pt-5">
-            <div className="flex items-start justify-between gap-3 px-2.5">
-              <div className="min-w-0">
-                <h2
-                  id="onboarding-checklist-heading"
-                  className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]"
-                >
-                  Getting started
-                </h2>
-                <p className="mt-1 text-sm leading-snug text-[var(--muted)]">
-                  {allDone
-                    ? "You are all set — dismiss when you are ready."
-                    : `${completed} of ${total} complete`}
-                </p>
-              </div>
-              <span
-                className="shrink-0 rounded-full bg-[var(--lime)] px-2.5 py-1 text-xs font-semibold tabular-nums text-[var(--ink)]"
-                aria-hidden
-              >
-                {allDone ? "Done" : `${completed}/${total}`}
-              </span>
-            </div>
-            <div className="px-2.5">
-              <div
-                className="h-1.5 overflow-hidden rounded-full bg-[var(--ink)]/[0.08]"
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={total}
-                aria-valuenow={completed}
-                aria-label={`${completed} of ${total} steps complete`}
-              >
-                <div
-                  className={`h-full rounded-full bg-[var(--lime)]${
-                    reduceMotion
-                      ? ""
-                      : " transition-[width] duration-300 ease-out"
-                  }`}
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-            </div>
-          </header>
-
-          <ol className="min-h-0 flex-1 space-y-0 overflow-y-auto px-3 py-2">
+  const stepList = (
+          <ol
+            className={
+              isRail
+                ? "space-y-0 px-3 py-2"
+                : "min-h-0 flex-1 space-y-0 overflow-y-auto px-3 py-2"
+            }
+          >
             {steps.map((step) => (
               <li key={step.id}>
                 {step.done ? (
@@ -417,7 +370,9 @@ export default function OnboardingChecklist({
               </li>
             ))}
           </ol>
+  );
 
+  const footer = (
           <footer className="flex shrink-0 justify-end border-t border-[var(--ink)]/8 px-4 py-3">
             {allDone ? (
               <button
@@ -437,7 +392,140 @@ export default function OnboardingChecklist({
               </button>
             )}
           </footer>
+  );
+
+  if (isRail) {
+    return (
+      <section
+        id={panelId}
+        className={`flex flex-col overflow-hidden ${ADMIN_PANEL_CLASS}`}
+        aria-labelledby="onboarding-checklist-heading"
+      >
+        <button
+          type="button"
+          className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left sm:px-5 ${FOCUS_RING} focus-visible:outline-offset-[-2px]`}
+          aria-expanded={panelExpanded}
+          aria-controls={bodyId}
+          onClick={() => setExpandedAndPersist(!prefs.expanded)}
+        >
+          <h2
+            id="onboarding-checklist-heading"
+            className="min-w-0 font-heading text-sm font-semibold tracking-[-0.01em] text-[var(--ink)]"
+          >
+            Getting started
+          </h2>
+          <span className="inline-flex shrink-0 items-center gap-2">
+            <span
+              className="rounded-full bg-[var(--lime)] px-2.5 py-1 text-xs font-semibold tabular-nums text-[var(--ink)]"
+              aria-hidden
+            >
+              {allDone ? "Done" : `${completed}/${total}`}
+            </span>
+            {panelExpanded ? (
+              <ChevronUpIcon className="h-4 w-4 text-[var(--muted)]" />
+            ) : (
+              <ChevronDownIcon className="h-4 w-4 text-[var(--muted)]" />
+            )}
+          </span>
+        </button>
+
+        {panelExpanded ? (
+          <div id={bodyId}>
+            <div className="border-t border-[var(--ink)]/8 px-4 pb-3 pt-3 sm:px-5">
+              <div
+                className="h-1.5 overflow-hidden rounded-full bg-[var(--ink)]/[0.08]"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={total}
+                aria-valuenow={completed}
+                aria-label={`${completed} of ${total} steps complete`}
+              >
+                <div
+                  className={`h-full rounded-full bg-[var(--lime)]${
+                    reduceMotion
+                      ? ""
+                      : " transition-[width] duration-300 ease-out"
+                  }`}
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+            </div>
+            {stepList}
+            {footer}
+          </div>
+        ) : (
+          <div id={bodyId} hidden />
+        )}
+      </section>
+    );
+  }
+
+  const panel = (
+        <section
+          id={panelId}
+          className={`flex max-h-[min(70vh,36rem)] flex-col overflow-hidden ${ADMIN_PANEL_CLASS} pointer-events-auto shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)]`}
+          aria-labelledby="onboarding-checklist-heading"
+        >
+          {/* Outer px-3 + inner px-2.5 matches list row inset so title/bar line up with icons. */}
+          <header className="shrink-0 space-y-3 border-b border-[var(--ink)]/8 px-3 pb-4 pt-5">
+            <div className="flex items-start justify-between gap-3 px-2.5">
+              <div className="min-w-0">
+                <h2
+                  id="onboarding-checklist-heading"
+                  className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]"
+                >
+                  Getting started
+                </h2>
+              </div>
+              <span
+                className="shrink-0 rounded-full bg-[var(--lime)] px-2.5 py-1 text-xs font-semibold tabular-nums text-[var(--ink)]"
+                aria-hidden
+              >
+                {allDone ? "Done" : `${completed}/${total}`}
+              </span>
+            </div>
+            <div className="px-2.5">
+              <div
+                className="h-1.5 overflow-hidden rounded-full bg-[var(--ink)]/[0.08]"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={total}
+                aria-valuenow={completed}
+                aria-label={`${completed} of ${total} steps complete`}
+              >
+                <div
+                  className={`h-full rounded-full bg-[var(--lime)]${
+                    reduceMotion
+                      ? ""
+                      : " transition-[width] duration-300 ease-out"
+                  }`}
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+            </div>
+          </header>
+
+          {stepList}
+          {footer}
         </section>
+  );
+
+  return (
+    <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex w-[min(100vw-2rem,22rem)] flex-col items-stretch sm:bottom-6 sm:right-6">
+      {/* Stay mounted so aria-controls always resolves; animate height instead of unmounting. */}
+      <motion.div
+        initial={false}
+        animate={
+          panelExpanded
+            ? { height: "auto", opacity: 1 }
+            : { height: 0, opacity: 0 }
+        }
+        transition={motionTransition}
+        className={`overflow-hidden ${panelExpanded ? "mb-3" : ""}`}
+        inert={panelExpanded ? undefined : true}
+        aria-hidden={!panelExpanded}
+      >
+        {panel}
       </motion.div>
 
       {/* Stable disclosure control — panel stays mounted so aria-controls remains valid. */}

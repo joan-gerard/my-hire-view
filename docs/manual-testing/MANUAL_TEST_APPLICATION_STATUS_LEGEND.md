@@ -40,6 +40,7 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 ## Smoke
 
+- [ ] Search field is at the top of the right rail, above Getting started
 - [ ] Empty dashboard (no apps, no search) hides the legend button and search bar
 - [ ] After creating the first application, legend button and search bar appear
 - [ ] Search with no matches still shows the legend button and search bar (Clear search works)

@@ -1,6 +1,6 @@
 # Manual test — new-user onboarding checklist (F19-044)
 
-Covers **F19-044**: floating Getting started checklist on all `/admin` routes for profile, photo, primary CV, first application, and publish/share.
+Covers **F19-044**: Getting started checklist on the `/admin` dashboard right rail (above Summary) for profile, photo, primary CV, first application, and publish/share.
 
 Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FLOW_ONBOARDING_CHECKLIST.md).
 
@@ -10,12 +10,14 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FL
 - [ ] Logged in
 - [ ] To reset in this browser: clear `localStorage` key `myhireview:onboarding-checklist` (single blob: `accountKey`, `completed`, `skipped`, `dismissed`, `expanded`)
 
-## Floating availability
+## Dashboard rail
 
-- [ ] Checklist appears as a floating panel (bottom-right) on `/admin`, `/admin/profile`, `/admin/new`, and `/admin/edit/[id]`
-- [ ] Collapsed control shows **Getting started**, a lime count badge (`N/6` or **Done**), and a chevron; tap/click expands the panel
-- [ ] Expanded panel shows heading **Getting started**, progress text (`N of 6 complete` or all-set copy), a lime progress bar, and an ordered list of all six steps
-- [ ] Expanded control label switches to **Minimize**; open/closed choice survives refresh and navigation
+- [ ] On `/admin`, the right rail shows **Search** first once you have applications (it stays visible while the column scrolls), then **Getting started** (unless dismissed), then **Summary** (All / Live / Draft / Archived counts)
+- [ ] Checklist does **not** float on `/admin/profile`, `/admin/new`, or `/admin/edit/[id]`
+- [ ] **Summary** and **Getting started** each collapse/expand from their header; open/closed choice survives refresh
+- [ ] Getting started header shows only the title plus a lime **N/6** or **Done** pill (no subtitle); expanded body shows progress bar and the six steps
+- [ ] On small screens, Summary + Getting started appear below the applications list
+- [ ] On desktop (`lg+`), with the page still at the top and both panels expanded, wheel/trackpad over the right rail scrolls **only that column** (no visible scrollbar). Summary's last row (Archived hint and the card's bottom edge) and the Getting started footer (Skip all / Dismiss, without a clipped extra line) are reachable inside the rail. The applications list does not move
 
 ## Steps
 
@@ -39,15 +41,13 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FL
 - [ ] After a step ticks off from real data, it **stays checked** even if that data is later removed (e.g. publish → delete the only application; Publish & share remains complete in this browser **for that account key**)
 - [ ] Account **without** a profiles row still shows the checklist with **Create your profile** incomplete
 - [ ] Delete account + recreate with the same email (new public id / user) → checklist starts fresh (does not inherit the previous account’s completed/skipped/dismissed prefs)
-- [ ] After all six are done or skipped, the panel stays visible with progress **All set** (minimized chip shows **Done**) and **Dismiss** instead of **Skip all**
-- [ ] **Dismiss** hides the checklist for this browser + account (survives refresh); clearing the storage key brings it back
-- [ ] Completing a step (save profile, upload photo/CV, create app, publish) ticks it off **without** a full page refresh while you stay on `/admin`
-- [ ] First paint of `/admin/*` does **not** fire four checklist `/api/*` GETs (snapshot comes from the admin layout); saving/publishing still refreshes via notify
-- [ ] Navigating between admin routes does **not** refetch checklist counts by itself
+- [ ] After all six are done or skipped, the panel stays visible with progress **All set** and **Dismiss** instead of **Skip all**
+- [ ] **Dismiss** hides the checklist for this browser + account (survives refresh); clearing the storage key brings it back; Summary remains
+- [ ] Completing a step (save profile, upload photo/CV, create app, publish) ticks it off **without** a full page refresh when you return to `/admin`
+- [ ] First paint of `/admin` does **not** fire four checklist `/api/*` GETs (snapshot comes from the dashboard page); saving/publishing still refreshes via notify when the rail is mounted
+- [ ] Summary counts update after publish / archive / restore / delete on the dashboard
 
 ## Smoke
 
-- [ ] First paint does not flash an expanded panel when the checklist was previously minimized or dismissed (prefs hydrate before display)
-- [ ] Dismissed users do not trigger checklist `/api` refetches on later profile/CV/application saves
-- [ ] Keyboard: Tab to the disclosure control, Enter/Space toggles expand/collapse; focus stays on the control; `aria-controls` targets the panel (panel stays mounted and is inert/`aria-hidden` when collapsed)
+- [ ] Dismissed users do not show the checklist rail; Summary still shows
 - [ ] With OS “reduce motion” enabled, the progress bar width does not animate

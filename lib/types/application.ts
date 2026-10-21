@@ -294,7 +294,14 @@ export interface ApplicationListParams {
   offset?: number;
   /** Case-insensitive match on company, role, or slug. */
   q?: string;
+  /** When set, only applications with this status. */
+  status?: ApplicationStatus;
 }
+
+/** Global status tallies for the admin dashboard summary rail (not search-scoped). */
+export type ApplicationDashboardCounts = ApplicationStatusCounts & {
+  all: number;
+};
 
 export interface ApplicationFormData {
   company: string;

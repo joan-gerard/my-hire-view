@@ -39,31 +39,46 @@ export default function AdminPageSkeleton({
           </div>
           <div className="size-11 motion-safe:animate-pulse rounded-full bg-[var(--ink)]/[0.08]" />
         </div>
-        <div className="min-h-[calc(100svh-72px-4rem-5.5rem)] space-y-6">
-          {[0, 1].map((group) => (
-            <div key={group} className="space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="grid min-h-[calc(100svh-72px-4rem-5.5rem)] gap-8 lg:grid-cols-[minmax(0,1fr)_17.5rem] xl:grid-cols-[minmax(0,1fr)_19rem]">
+          <div className="min-w-0 space-y-6">
+            {[0, 1].map((group) => (
+              <div key={group} className="space-y-4">
                 <div className="h-3 w-36 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.06]" />
-                {group === 0 ? (
-                  <div className="h-10 w-full max-w-xs motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.06]" />
-                ) : null}
+                <div
+                  className={`${ADMIN_PANEL_CLASS} divide-y divide-[var(--ink)]/8`}
+                >
+                  {[0, 1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-4 px-4 py-3.5"
+                    >
+                      <div className="h-3 w-12 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+                      <div className="size-5 motion-safe:animate-pulse rounded-full bg-[var(--ink)]/[0.06]" />
+                      <div className="h-4 w-48 max-w-[50%] motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.06]" />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div
-                className={`${ADMIN_PANEL_CLASS} divide-y divide-[var(--ink)]/8`}
-              >
-                {[0, 1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-4 px-4 py-3.5"
-                  >
-                    <div className="h-3 w-12 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.05]" />
-                    <div className="size-5 motion-safe:animate-pulse rounded-full bg-[var(--ink)]/[0.06]" />
-                    <div className="h-4 w-48 max-w-[50%] motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.06]" />
-                  </div>
-                ))}
+            ))}
+          </div>
+          <aside className="flex w-full flex-col gap-4">
+            <div className="h-10 w-full motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.06]" />
+            <div className={`${ADMIN_PANEL_CLASS} h-56 motion-safe:animate-pulse bg-[var(--ink)]/[0.03]`} />
+            <div className={`${ADMIN_PANEL_CLASS} overflow-hidden`}>
+              <div className="border-b border-[var(--ink)]/8 px-5 py-3.5">
+                <div className="h-4 w-20 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.06]" />
               </div>
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-3 border-b border-[var(--ink)]/8 px-5 py-3 last:border-b-0"
+                >
+                  <div className="h-4 w-16 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+                  <div className="h-5 w-8 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.06]" />
+                </div>
+              ))}
             </div>
-          ))}
+          </aside>
         </div>
       </div>
     );

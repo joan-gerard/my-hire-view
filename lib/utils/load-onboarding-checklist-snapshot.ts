@@ -11,8 +11,8 @@ export type OnboardingChecklistBootstrap = {
 };
 
 /**
- * Build the floating checklist snapshot from already-fetched account signals
- * (shared by the server layout loader and tests).
+ * Build the checklist snapshot from already-fetched account signals
+ * (shared by the admin dashboard loader and tests).
  */
 export function buildOnboardingChecklistSnapshot(input: {
   profile: Profile | null;
@@ -35,7 +35,7 @@ export function buildOnboardingChecklistSnapshot(input: {
 }
 
 /**
- * Server-side bootstrap for the admin-layout checklist.
+ * Server-side bootstrap for the admin dashboard checklist rail.
  * Uses Supabase directly (no /api/* rate-limit budget) so client routes that
  * already fetch overlapping data are not charged four GETs on first paint.
  */

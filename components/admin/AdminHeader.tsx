@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLayoutEffect, useRef } from "react";
 import { ADMIN_SHELL_CLASS } from "@/components/admin/admin-chrome";
 import { LogoBlack } from "../ui/Logo";
 
@@ -31,6 +32,28 @@ const ADMIN_NAV_LINKS = [
  */
 export default function AdminHeader({ user }: AdminHeaderProps) {
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+
+  // Day labels stick just under this bar. Height changes when the nav wraps.
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const sync = () => {
+      document.documentElement.style.setProperty(
+        "--admin-header-height",
+        `${Math.ceil(nav.getBoundingClientRect().height)}px`,
+      );
+    };
+
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(nav);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--admin-header-height");
+    };
+  }, []);
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -41,6 +64,7 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
 
   return (
     <nav
+      ref={navRef}
       className="sticky top-0 z-30 border-b border-[var(--ink)]/10 bg-[var(--white)]/95 backdrop-blur-sm"
       aria-label="Admin"
     >

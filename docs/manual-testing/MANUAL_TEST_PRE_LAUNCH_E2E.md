@@ -177,29 +177,30 @@ With **zero** applications:
 - [ ] **What do these icons mean?** is hidden
 - [ ] Admin header: **Dashboard** (active), **New Application**, **Profile**, user email, **Sign Out**, centered logo
 - [ ] Active nav underline follows Dashboard / New Application / Profile
-- [ ] Getting started checklist is visible (unless you already dismissed it on this browser — use a fresh account)
+- [ ] Right rail: **Getting started** checklist (unless dismissed), then **Summary** counts (All / Live / Draft / Archived)
+- [ ] On small screens, Summary + Getting started appear below the empty state / list
 
 ---
 
-## 7. Getting started checklist
+## 7. Dashboard summary + Getting started checklist
 
-Checklist appears on `/admin`, `/admin/profile`, `/admin/new`, and `/admin/edit/[id]`.
+On `/admin` only (right rail under Summary). Not on profile / new / edit.
 
-- [ ] Floating panel, bottom-right; progress `N of 6 complete` while incomplete
+- [ ] **Summary** shows All, Live, Draft, Archived; counts update after publish / archive / restore / delete
+- [ ] **Summary** and **Getting started** collapse/expand from their headers; choice survives refresh
+- [ ] Getting started above Summary; header is title + **N/6** or **Done** pill only
 - [ ] Six steps: **Create your profile**, **Add location or a link**, **Add a profile photo**, **Upload a primary CV**, **Create your first application draft**, **Publish & share**
 - [ ] Each incomplete step has **Skip**; **Skip all** is in the footer
-- [ ] **Minimize** → compact **Getting started N/6**; expand restores; choice survives refresh and admin navigation
 - [ ] Step links go to the right page (profile vs new application)
-- [ ] Completing a step (save profile, upload photo/CV, create app, publish) ticks it **without** a full page reload
+- [ ] Completing a step (save profile, upload photo/CV, create app, publish) ticks it when you are on `/admin` (or after navigating back)
 - [ ] Completing a previously skipped step shows **completed**, not Skipped
-- [ ] After skip/complete of all six: progress **All set** / minimized **Done**; footer **Dismiss** (not Skip all)
-- [ ] **Dismiss** hides the panel; survives refresh; does not come back on navigation
+- [ ] After skip/complete of all six: progress **All set**; footer **Dismiss** (not Skip all)
+- [ ] **Dismiss** hides Getting started only; Summary remains; survives refresh
 - [ ] A completed step **stays checked** if you later remove the data (e.g. delete the only published app — Publish & share stays done for this browser + account)
 - [ ] **Skip all** then complete one step via real data: that step shows completed; others stay skipped
 - [ ] Completing via **LinkedIn only** (no location) ticks “Add location or a link”
-- [ ] Photo uploaded from `/admin/new` ticks the photo step on `/admin` without a refresh
-- [ ] First paint does not flash expanded if it was minimized/dismissed
-- [ ] After **Dismiss**, saving profile/CV/apps does not bring the panel back
+- [ ] Photo uploaded from `/admin/new` ticks the photo step when you return to `/admin`
+- [ ] After **Dismiss**, saving profile/CV/apps does not bring Getting started back
 - [ ] Account B (or a new public id) does not inherit Account A’s completed/skipped/dismissed prefs
 
 Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
@@ -208,7 +209,7 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 
 ## 8. Account settings (`/admin/profile`)
 
-Header nav still says **Profile**. Page title is **Account settings** with tabs: Profile · CVs · Preferences · Billing and plan · Password. URL stays `/admin/profile` (tabs are client state). The old active/draft/archived applications summary is removed (planned for the dashboard via `L7-080`); **Billing and plan** still shows total application and primary-CV usage vs draft Free caps.
+Header nav still says **Profile**. Page title is **Account settings** with tabs: Profile · CVs · Preferences · Billing and plan · Password. URL stays `/admin/profile` (tabs are client state). Application status tallies live on the dashboard Summary rail; **Billing and plan** still shows total application and primary-CV usage vs draft Free caps.
 
 ### Tabs chrome
 
@@ -397,6 +398,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 - [ ] Cards show **company - role**
 - [ ] List dims slightly while a search/refetch is in flight (`opacity`)
 - [ ] Newest applications appear first
+- [ ] Day labels stick under the admin header while that day's cards are on screen, then yield to the next day
 
 ### Status legend
 
@@ -463,6 +465,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 
 ### Search
 
+- [ ] Field sits at the top of the right rail, above Getting started (below the list on small screens)
 - [ ] Placeholder: company, role, or slug
 - [ ] Debounced (~300 ms); typing does not thrash
 - [ ] Match by **company**, **role**, and **slug** (case-insensitive)
