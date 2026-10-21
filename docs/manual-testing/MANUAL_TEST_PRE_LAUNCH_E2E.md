@@ -170,8 +170,8 @@ From `/signup` (login page “create a new account”, or type the URL).
 
 With **zero** applications:
 
-- [ ] Title **Applications**
-- [ ] **Create New Application** in the header row
+- [ ] Personalized greeting with first name when known (e.g. **Good afternoon, Joan**) above title **Applications**
+- [ ] Lime **+** create button in the header row (tooltip / aria-label: Create new application)
 - [ ] Empty state: “Create your first application”, short explanation, **New application** link
 - [ ] **Search bar is hidden**
 - [ ] **What do these icons mean?** is hidden
@@ -412,31 +412,31 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 **Draft**
 
 - [ ] Amber clock icon
-- [ ] **Publish** button on the card
-- [ ] **Publish to share** (not Copy Link)
-- [ ] **Preview** (not View Application) opens the share URL with the banner
-- [ ] 3-dot: Edit, Publish, Delete — **no Archive**
+- [ ] Labeled **Publish** button on the card
+- [ ] Copy-link icon is disabled; tooltip explains publish-before-share (not an enabled Copy link)
+- [ ] External-link icon tooltip is **Preview**; opens the share URL with the banner
+- [ ] **More options** (⋯) tooltip; menu: Edit, Publish, Delete — **no Archive**
 
 **Active, 0 views**
 
 - [ ] Green clock
-- [ ] **Copy Link** works; button shows **Copied!** briefly
+- [ ] Copy-link icon works; tooltip / `aria-label` shows **Copied!** briefly
 - [ ] Copied URL is `…/view/{publicId}/{slug}`
-- [ ] If `public_id` were missing, Copy Link / View stay **disabled** (`Publish to share` / `View unavailable`) — no `/view//slug`
-- [ ] **View Application** opens a new tab (live page, no draft banner)
-- [ ] 3-dot: Edit, Archive, Delete
+- [ ] If `public_id` were missing, Copy / View icons stay **disabled** with tooltips — no `/view//slug`
+- [ ] View-application icon opens a new tab (live page, no draft banner)
+- [ ] **More options**: Edit, Archive, Delete
 
 **Active, viewed**
 
 - [ ] Green check after a non-owner view (§14)
-- [ ] Copy Link / View Application still work
+- [ ] Copy link / View application icons still work
 
 **Archived**
 
 - [ ] Grey archive icon
-- [ ] **Link unavailable** (not Copy Link)
+- [ ] Copy-link icon disabled (tooltip: restore / link unavailable)
 - [ ] View/Preview disabled or empty-state for everyone including owner (no draft banner)
-- [ ] 3-dot: Edit, **Restore**, Delete — no Archive / no Publish
+- [ ] **More options**: Edit, **Restore**, Delete — no Archive / no Publish
 
 **CV missing**
 
@@ -445,8 +445,8 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 
 ### View Insights
 
-- [ ] Expand / collapse per card
-- [ ] Expanding insights on **two cards** at once works independently
+- [ ] Insights icon opens a modal per card
+- [ ] Opening insights on **two cards** at once works independently
 - [ ] **Views**, **CV downloads**, **Created** (date), **Last viewed** (date/time or —)
 - [ ] Owner opening their own live page does **not** bump Views or Last viewed
 - [ ] Recruiter view (incognito) increments Views by **1 per browser session**; refresh in the same session does not add another

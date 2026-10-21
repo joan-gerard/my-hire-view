@@ -24,7 +24,7 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 ### Colorful dots (Preferences default)
 
-- [ ] Draft card: bright gold dot; **Publish**; **Publish to share**; **Preview** (not View Application)
+- [ ] Draft card: bright gold dot; labeled **Publish**; copy-link icon disabled (publish-to-share tooltip); external-link icon is **Preview** (not View application)
 - [ ] Active, never viewed: bright sky dot
 - [ ] Active, viewed at least once: bright lime dot
 - [ ] Archived: soft grey dot; link unavailable until restore

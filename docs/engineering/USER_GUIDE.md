@@ -29,15 +29,14 @@ Active / draft / archived application totals are no longer on Account settings. 
 
 At **Dashboard** (`/admin`) you can:
 
+- See a personalized greeting (**Good morning/afternoon/evening, {name}**) above the **Applications** title when your first name is known.
 - See all your applications in horizontal cards showing: status icon, company, role, and action buttons. If you have none yet, the dashboard explains the next step and links to **New application** (legend and search stay hidden until you have at least one application); a search with no matches offers **Clear search**.
 - Use the floating **Getting started** checklist (while incomplete) on any admin page for create profile, add location or a link, photo, primary CV, first application, and publish/share. You can skip steps or skip all.
 - Once you have applications, open **What do these icons mean?** (header button) for a modal legend of status icons (**draft**, **active not viewed**, **active viewed**, **archived**, **CV missing**, and **Picture missing**) and a short explanation of draft actions (**Publish**, **Preview**, **Publish to share** vs **Copy Link**).
 - **Search** by company or role (shown once you have applications).
-- **Create** a new application (New Application).
-- **Copy Link** to copy the shareable link to send to recruiters (after the application is published).
-- **View Insights** to expand a card and see view count, CV downloads, creation date, and last viewed date/time.
-- **View Application** to open a live application page in a new tab, or **Preview** for a draft (recruiters cannot see drafts until you publish).
-- Use the **3-dot menu** on each card to **Edit**, **Archive** (or **Restore** if archived), **Publish** (drafts), or **Delete**.
+- **Create** a new application via the lime **+** button (tooltip: Create new application), or **New Application** in the admin header.
+- On each card, **Copy link**, **View insights**, and **View application** (or **Preview** for drafts) are icon-only buttons — hover or focus shows an instant custom tooltip. **Copy link** copies the shareable URL after the application is published; **View insights** opens view count, CV downloads, creation date, and last viewed; **View application** opens the live page in a new tab.
+- Use **More options** (⋯; tooltip on hover/focus) on each card to **Edit**, **Archive** (or **Restore** if archived), **Publish** (drafts), or **Delete**. Drafts still show a labeled **Publish** button on the card.
 
 ### Creating an application
 

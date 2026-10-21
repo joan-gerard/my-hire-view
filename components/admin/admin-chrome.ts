@@ -22,6 +22,10 @@ export const ADMIN_PRIMARY_CLASS =
 export const ADMIN_ACCENT_PRIMARY_CLASS =
   "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--lime)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:opacity-90 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40";
 
+/** Icon-only accent CTA — lime circle (Create application). */
+export const ADMIN_ICON_ACCENT_PRIMARY_CLASS =
+  "inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[var(--lime)] text-[var(--ink)] hover:opacity-90 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40";
+
 /** Secondary control — white chip with border. */
 export const ADMIN_SECONDARY_CLASS =
   "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[var(--ink)]/12 bg-[var(--white)] px-3 py-1.5 text-sm font-medium text-[var(--ink)] hover:bg-[var(--ink)]/[0.04] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40";
@@ -33,6 +37,10 @@ export const ADMIN_ICON_SECONDARY_CLASS =
 /** Disabled / unavailable action chrome on cards. */
 export const ADMIN_DISABLED_CLASS =
   "inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] px-3 py-1.5 text-sm font-medium text-[var(--muted)]";
+
+/** Icon-only disabled / unavailable chrome on cards. */
+export const ADMIN_ICON_DISABLED_CLASS =
+  "inline-flex shrink-0 items-center justify-center rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-2 text-[var(--muted)]";
 
 /** Soft panel — white fill + light border on paper page. */
 export const ADMIN_PANEL_CLASS =

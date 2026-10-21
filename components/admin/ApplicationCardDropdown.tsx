@@ -9,6 +9,8 @@ import {
   PencilIcon,
   TrashIcon,
 } from '@/components/admin/icons';
+import { ADMIN_ICON_SECONDARY_CLASS } from '@/components/admin/admin-chrome';
+import AdminTooltip from '@/components/admin/AdminTooltip';
 
 export interface ApplicationCardDropdownProps {
   applicationId: string;
@@ -53,16 +55,18 @@ export default function ApplicationCardDropdown({
 
   return (
     <div className="relative shrink-0" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--white)] hover:text-[var(--ink)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-        aria-label="Open menu"
-        aria-expanded={dropdownOpen}
-        aria-haspopup="true"
-      >
-        <EllipsisIcon className="h-5 w-5" />
-      </button>
+      <AdminTooltip label="More options">
+        <button
+          type="button"
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className={ADMIN_ICON_SECONDARY_CLASS}
+          aria-label="More options"
+          aria-expanded={dropdownOpen}
+          aria-haspopup="true"
+        >
+          <EllipsisIcon className="h-4 w-4" />
+        </button>
+      </AdminTooltip>
       {dropdownOpen && (
         <div
           className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] py-1 shadow-lg"

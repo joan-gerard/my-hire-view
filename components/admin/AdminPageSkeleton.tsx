@@ -29,12 +29,15 @@ export default function AdminPageSkeleton({
         aria-live="polite"
       >
         <span className="sr-only">Loading applications</span>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <div className="h-10 w-48 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.08]" />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-end gap-2 sm:gap-3">
+            <div className="space-y-3">
+              <div className="h-4 w-40 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+              <div className="h-10 w-56 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.08]" />
+            </div>
             <div className="h-9 w-9 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.06]" />
           </div>
-          <div className="h-10 w-52 motion-safe:animate-pulse rounded-full bg-[var(--ink)]/[0.08]" />
+          <div className="size-11 motion-safe:animate-pulse rounded-full bg-[var(--ink)]/[0.08]" />
         </div>
         <div className="min-h-[calc(100svh-72px-4rem-5.5rem)] space-y-6">
           {[0, 1].map((group) => (

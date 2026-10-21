@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useState } from "react";
 import ApplicationCardDropdown from "@/components/admin/ApplicationCardDropdown";
 import ApplicationCardInsights from "@/components/admin/ApplicationCardInsights";
+import AdminTooltip from "@/components/admin/AdminTooltip";
 import {
   ApplicationStatusIcon,
   MissingCvBadge,
@@ -20,9 +21,9 @@ import {
   ExternalLinkIcon,
 } from "@/components/admin/icons";
 import {
-  ADMIN_DISABLED_CLASS,
+  ADMIN_ICON_DISABLED_CLASS,
+  ADMIN_ICON_SECONDARY_CLASS,
   ADMIN_PRIMARY_CLASS,
-  ADMIN_SECONDARY_CLASS,
 } from "@/components/admin/admin-chrome";
 
 interface ApplicationCardProps {
@@ -55,6 +56,12 @@ export default function ApplicationCard({
       .filter(Boolean)
       .join(" - ") || "Untitled application";
 
+  const copyUnavailableLabel = isDraft
+    ? "Publish this application before sharing the link"
+    : isArchived
+      ? "Restore this application before sharing the link"
+      : "Complete your profile to get a share link";
+
   const handleCopyLink = async () => {
     if (!shareableUrl || !canCopyLink) return;
     const success = await copyToClipboard(shareableUrl);
@@ -69,7 +76,7 @@ export default function ApplicationCard({
     "opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:group-has-[[aria-expanded=true]]:opacity-100";
 
   return (
-    <article className="group relative z-0 overflow-visible hover:bg-[var(--ink)]/[0.03] has-[[aria-expanded=true]]:z-40">
+    <article className="group relative z-0 overflow-visible hover:z-30 hover:bg-[var(--ink)]/[0.03] has-[[aria-expanded=true]]:z-40">
       <div className="px-3 py-3 sm:px-4 sm:py-3.5">
         <div className="flex flex-wrap items-start gap-3 sm:flex-nowrap sm:items-center sm:gap-4">
           <time
@@ -86,7 +93,7 @@ export default function ApplicationCard({
 
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="min-w-0 text-sm font-medium text-[var(--ink)] sm:text-base">
+              <span className="min-w-0 text-sm text-[var(--ink)]">
                 {companyRole}
               </span>
               {application.cv_exists === false && <MissingCvBadge />}
@@ -97,78 +104,91 @@ export default function ApplicationCard({
           </div>
 
           <div
-            className={`flex min-w-0 flex-wrap items-center justify-end gap-2 transition-opacity ${actionsVisibleClass}`}
+            className={`flex min-w-0 flex-wrap items-center justify-end gap-1.5 transition-opacity ${actionsVisibleClass}`}
           >
             {isDraft && onPublish ? (
-              <button
-                type="button"
-                onClick={() => onPublish(application.id)}
-                className={ADMIN_PRIMARY_CLASS}
-                title="Make this application live so recruiters can open the share link"
-              >
-                <CheckIcon className="h-4 w-4" />
-                Publish
-              </button>
+              <AdminTooltip label="Make this application live so recruiters can open the share link">
+                <button
+                  type="button"
+                  onClick={() => onPublish(application.id)}
+                  className={ADMIN_PRIMARY_CLASS}
+                >
+                  <CheckIcon className="h-4 w-4" />
+                  Publish
+                </button>
+              </AdminTooltip>
             ) : null}
 
             {canCopyLink ? (
-              <button
-                type="button"
-                onClick={handleCopyLink}
-                className={ADMIN_SECONDARY_CLASS}
-              >
-                <CopyIcon className="h-4 w-4" />
-                {copied ? "Copied!" : "Copy Link"}
-              </button>
+              <AdminTooltip label={copied ? "Copied!" : "Copy link"}>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className={ADMIN_ICON_SECONDARY_CLASS}
+                  aria-label={copied ? "Copied!" : "Copy link"}
+                >
+                  <CopyIcon className="h-4 w-4" />
+                </button>
+              </AdminTooltip>
             ) : (
-              <span
-                className={ADMIN_DISABLED_CLASS}
-                title={
-                  isDraft
-                    ? "Publish this application before sharing the link"
-                    : isArchived
-                      ? "Restore this application before sharing the link"
-                      : "Complete your profile to get a share link"
-                }
-              >
-                <CopyIcon className="h-4 w-4" />
-                {isDraft ? "Publish to share" : "Link unavailable"}
-              </span>
+              <AdminTooltip label={copyUnavailableLabel}>
+                <span
+                  className={ADMIN_ICON_DISABLED_CLASS}
+                  aria-label={
+                    isDraft
+                      ? "Publish to share"
+                      : isArchived
+                        ? "Link unavailable — restore first"
+                        : "Link unavailable"
+                  }
+                >
+                  <CopyIcon className="h-4 w-4" />
+                </span>
+              </AdminTooltip>
             )}
 
-            <button
-              type="button"
-              onClick={() => setInsightsOpen(true)}
-              className={ADMIN_SECONDARY_CLASS}
-              aria-haspopup="dialog"
-            >
-              <ChartIcon className="h-4 w-4" />
-              View Insights
-            </button>
+            <AdminTooltip label="View insights">
+              <button
+                type="button"
+                onClick={() => setInsightsOpen(true)}
+                className={ADMIN_ICON_SECONDARY_CLASS}
+                aria-label="View insights"
+                aria-haspopup="dialog"
+                aria-expanded={insightsOpen}
+              >
+                <ChartIcon className="h-4 w-4" />
+              </button>
+            </AdminTooltip>
 
             {canShare ? (
-              <Link
-                href={`/view/${application.public_id}/${application.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={ADMIN_PRIMARY_CLASS}
-                title={
+              <AdminTooltip
+                label={
                   isDraft
                     ? "Preview the public page (recruiters cannot see it until you publish)"
-                    : "Open the live public application page"
+                    : "View application"
                 }
               >
-                <ExternalLinkIcon className="h-4 w-4" />
-                {isDraft ? "Preview" : "View Application"}
-              </Link>
+                <Link
+                  href={`/view/${application.public_id}/${application.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={ADMIN_ICON_SECONDARY_CLASS}
+                  aria-label={
+                    isDraft ? "Preview application" : "View application"
+                  }
+                >
+                  <ExternalLinkIcon className="h-4 w-4" />
+                </Link>
+              </AdminTooltip>
             ) : (
-              <span
-                className={ADMIN_DISABLED_CLASS}
-                title="Complete your profile to preview the public page"
-              >
-                <ExternalLinkIcon className="h-4 w-4" />
-                View unavailable
-              </span>
+              <AdminTooltip label="Complete your profile to preview the public page">
+                <span
+                  className={ADMIN_ICON_DISABLED_CLASS}
+                  aria-label="View unavailable"
+                >
+                  <ExternalLinkIcon className="h-4 w-4" />
+                </span>
+              </AdminTooltip>
             )}
 
             <ApplicationCardDropdown
@@ -182,7 +202,6 @@ export default function ApplicationCard({
             />
           </div>
         </div>
-
       </div>
 
       <ApplicationCardInsights

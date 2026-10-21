@@ -16,14 +16,14 @@ Related: local browser form draft (F15) is separate — [MANUAL_TEST_CREATE_APP_
 - [ ] Page shows CV, video, and candidate fields as recruiters will see them after publish
 - [ ] Open the same URL in a private/incognito window (or signed out) → empty “doesn’t have an active application” state (no CV/video)
 - [ ] Click **Publish** on the banner → banner disappears; page stays as the live public view
-- [ ] Dashboard card is **active**; **Copy Link** works; **View Application** (not Preview)
+- [ ] Dashboard card is **active**; copy-link icon works; view-application icon (not Preview tooltip)
 
 ## Dashboard draft card
 
 - [ ] Create another draft and return to `/admin` without publishing
-- [ ] Card shows draft status icon; **Publish** button; **Publish to share** instead of Copy Link; **Preview** opens the share URL with the banner
-- [ ] 3-dot menu: **Publish** (not Archive); Edit and Delete still work
-- [ ] Publish from the card → active; Copy Link enabled
+- [ ] Card shows draft status icon; labeled **Publish**; copy-link icon disabled; **Preview** tooltip on external-link icon opens the share URL with the banner
+- [ ] **More options** menu: **Publish** (not Archive); Edit and Delete still work
+- [ ] Publish from the card → active; copy-link icon enabled
 
 ## Edit keeps draft
 
