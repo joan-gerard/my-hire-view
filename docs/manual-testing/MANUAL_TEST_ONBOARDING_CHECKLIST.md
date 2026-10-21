@@ -1,6 +1,6 @@
 # Manual test — new-user onboarding checklist (F19-044)
 
-Covers **F19-044**: Getting started checklist on the `/admin` dashboard right rail (above Summary) for profile, photo, primary CV, first application, and publish/share.
+Covers **F19-044**: Getting started checklist on the `/admin` dashboard right rail (below Summary) for profile, photo, primary CV, first application, and publish/share.
 
 Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FLOW_ONBOARDING_CHECKLIST.md).
 
@@ -12,7 +12,7 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FL
 
 ## Dashboard rail
 
-- [ ] On `/admin`, the right rail shows **Search** first once you have applications (it stays visible while the column scrolls), then **Getting started** (unless dismissed), then **Summary** (All / Live / Draft / Archived counts)
+- [ ] On `/admin`, the right rail shows **Search** first once you have applications (it stays visible while the column scrolls), then **Summary** (All / Live / Draft / Archived counts), then **Getting started** (unless dismissed)
 - [ ] Checklist does **not** float on `/admin/profile`, `/admin/new`, or `/admin/edit/[id]`
 - [ ] **Summary** and **Getting started** each collapse/expand from their header; open/closed choice survives refresh
 - [ ] Getting started header shows only the title plus a lime **N/6** or **Done** pill (no subtitle); expanded body shows progress bar and the six steps

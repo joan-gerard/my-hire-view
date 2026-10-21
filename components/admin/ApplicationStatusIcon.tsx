@@ -68,23 +68,30 @@ function StatusGlyph({ visual }: { visual: ApplicationStatusVisualKey }) {
   return <ClockIcon className={iconClass} />;
 }
 
+/** Dot glyphs are small; icon wash badges fill a 36px disc. Size the shell to match. */
+const STATUS_SHELL_CLASS: Record<StatusIndicatorStyle, string> = {
+  colorful: "flex size-3.5 shrink-0 items-center justify-center",
+  high_contrast: "flex size-9 shrink-0 items-center justify-center",
+};
+
 function StatusBadgeShell({
   label,
   description,
   decorative,
+  style,
   children,
 }: {
   label: string;
   description: string;
   decorative?: boolean;
+  style: StatusIndicatorStyle;
   children: ReactNode;
 }) {
+  const shellClass = STATUS_SHELL_CLASS[style];
+
   if (decorative) {
     return (
-      <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center"
-        aria-hidden
-      >
+      <div className={shellClass} aria-hidden>
         {children}
       </div>
     );
@@ -93,7 +100,7 @@ function StatusBadgeShell({
   return (
     <div
       role="img"
-      className="flex h-9 w-9 shrink-0 items-center justify-center"
+      className={shellClass}
       title={`${label}: ${description}`}
       aria-label={label}
     >
@@ -142,6 +149,7 @@ export function ApplicationStatusIconBadge({
       label={displayLabel}
       description={display.description}
       decorative={decorative}
+      style={style}
     >
       {style === "high_contrast" ? (
         <HighContrastBadge visual={visual} />

@@ -63,7 +63,6 @@ export default function AdminPageSkeleton({
           </div>
           <aside className="flex w-full flex-col gap-4">
             <div className="h-10 w-full motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.06]" />
-            <div className={`${ADMIN_PANEL_CLASS} h-56 motion-safe:animate-pulse bg-[var(--ink)]/[0.03]`} />
             <div className={`${ADMIN_PANEL_CLASS} overflow-hidden`}>
               <div className="border-b border-[var(--ink)]/8 px-5 py-3.5">
                 <div className="h-4 w-20 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.06]" />
@@ -78,6 +77,7 @@ export default function AdminPageSkeleton({
                 </div>
               ))}
             </div>
+            <div className={`${ADMIN_PANEL_CLASS} h-56 motion-safe:animate-pulse bg-[var(--ink)]/[0.03]`} />
           </aside>
         </div>
       </div>

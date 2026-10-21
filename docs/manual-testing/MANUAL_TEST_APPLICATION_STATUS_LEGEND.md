@@ -24,6 +24,7 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 ### Colorful dots (Preferences default)
 
+- [ ] Status column is compact (dot-sized); switching Preferences to high-contrast icons widens it to the wash badge
 - [ ] Draft card: bright gold dot; labeled **Publish**; copy-link icon disabled (publish-to-share tooltip); external-link icon is **Preview** (not View application)
 - [ ] Active, never viewed: bright sky dot
 - [ ] Active, viewed at least once: bright lime dot
@@ -40,7 +41,7 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 ## Smoke
 
-- [ ] Search field is at the top of the right rail, above Getting started
+- [ ] Search field is at the top of the right rail, above Summary
 - [ ] Empty dashboard (no apps, no search) hides the legend button and search bar
 - [ ] After creating the first application, legend button and search bar appear
 - [ ] Search with no matches still shows the legend button and search bar (Clear search works)

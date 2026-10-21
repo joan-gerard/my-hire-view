@@ -65,7 +65,7 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
   return (
     <nav
       ref={navRef}
-      className="sticky top-0 z-30 border-b border-[var(--ink)]/10 bg-[var(--white)]/95 backdrop-blur-sm"
+      className="sticky top-0 z-50 border-b border-[var(--ink)]/10 bg-[var(--white)]/95 backdrop-blur-sm"
       aria-label="Admin"
     >
       <div className={ADMIN_SHELL_CLASS}>

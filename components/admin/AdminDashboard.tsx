@@ -248,14 +248,14 @@ export default function AdminDashboard({
         }
       >
         <div className="shrink-0">
+          <ApplicationStatusSummary counts={counts} loading={countsLoading} />
+        </div>
+        <div className="shrink-0">
           <OnboardingChecklist
             variant="rail"
             initialAccountKey={onboardingAccountKey}
             initialSnapshot={onboardingSnapshot}
           />
-        </div>
-        <div className="shrink-0">
-          <ApplicationStatusSummary counts={counts} loading={countsLoading} />
         </div>
       </div>
     </aside>
@@ -326,7 +326,7 @@ export default function AdminDashboard({
                     className={`space-y-6 transition-opacity ${isFetching ? 'opacity-60' : ''}`}
                   >
                     {dayGroups.map((group) => (
-                      <section key={group.dayKey} className="space-y-4">
+                      <section key={group.dayKey} className="space-y-2">
                         <h2 className="sticky top-[var(--admin-header-height,72px)] z-20 bg-[var(--white)] py-2 text-sm font-medium uppercase tracking-[0.04em] text-[var(--muted)]">
                           {group.label}
                         </h2>

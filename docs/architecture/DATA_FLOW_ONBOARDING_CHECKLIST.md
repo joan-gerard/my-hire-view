@@ -1,6 +1,6 @@
 # Getting started checklist — data flow (F19-044)
 
-How the **Getting started** checklist loads, updates, and persists on the `/admin` dashboard right rail (above Summary). For the wider app data model, see [DATA_FLOW.md](DATA_FLOW.md). Design / buy-in context for F19 (legend, Public id, checklist, empty state): [ACTIVATION_UX_F19.md](../retrospectives/ACTIVATION_UX_F19.md). Manual checks: [MANUAL_TEST_ONBOARDING_CHECKLIST.md](../manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md). Product copy: [USER_GUIDE.md](../engineering/USER_GUIDE.md).
+How the **Getting started** checklist loads, updates, and persists on the `/admin` dashboard right rail (below Summary). For the wider app data model, see [DATA_FLOW.md](DATA_FLOW.md). Design / buy-in context for F19 (legend, Public id, checklist, empty state): [ACTIVATION_UX_F19.md](../retrospectives/ACTIVATION_UX_F19.md). Manual checks: [MANUAL_TEST_ONBOARDING_CHECKLIST.md](../manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md). Product copy: [USER_GUIDE.md](../engineering/USER_GUIDE.md).
 
 ---
 
@@ -18,7 +18,7 @@ How the **Getting started** checklist loads, updates, and persists on the `/admi
 
 ## 1. Overview
 
-The checklist is a **client** panel embedded in the **admin dashboard** right rail (above Summary). It is not shown on other `/admin/*` routes.
+The checklist is a **client** panel embedded in the **admin dashboard** right rail (below Summary). It is not shown on other `/admin/*` routes.
 
 | Concern | Source of truth |
 | --- | --- |

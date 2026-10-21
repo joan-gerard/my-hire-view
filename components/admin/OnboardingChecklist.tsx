@@ -45,7 +45,7 @@ export type OnboardingChecklistProps = {
   initialAccountKey: string | null;
   initialSnapshot: OnboardingChecklistInput | null;
   /**
-   * `rail` — embedded under the dashboard summary (default).
+   * `rail` — embedded below the dashboard Summary (default).
    * `floating` — legacy bottom-right control (kept for tests / optional reuse).
    */
   variant?: "rail" | "floating";

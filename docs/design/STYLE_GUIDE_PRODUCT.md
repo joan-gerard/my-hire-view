@@ -76,7 +76,7 @@ On dark chrome, focus may use `--lime`. Body secondary on dark may use `--mist`.
 
 ### Dashboard status markers
 
-Account preference (Account settings → **Preferences**): colorful dots (default) or high-contrast wash + ink glyphs.
+Account preference (Account settings → **Preferences**): colorful dots (default) or high-contrast wash + ink glyphs. The badge shell sizes to the glyph — compact for dots, 36px for the wash circle — so card layout does not reserve icon space when using dots.
 
 | Token                   | Hex                 | Role                              |
 | ----------------------- | ------------------- | --------------------------------- |

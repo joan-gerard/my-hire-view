@@ -177,18 +177,18 @@ With **zero** applications:
 - [ ] **What do these icons mean?** is hidden
 - [ ] Admin header: **Dashboard** (active), **New Application**, **Profile**, user email, **Sign Out**, centered logo
 - [ ] Active nav underline follows Dashboard / New Application / Profile
-- [ ] Right rail: **Getting started** checklist (unless dismissed), then **Summary** counts (All / Live / Draft / Archived)
+- [ ] Right rail: **Summary** counts (All / Live / Draft / Archived), then **Getting started** checklist (unless dismissed)
 - [ ] On small screens, Summary + Getting started appear below the empty state / list
 
 ---
 
 ## 7. Dashboard summary + Getting started checklist
 
-On `/admin` only (right rail under Summary). Not on profile / new / edit.
+On `/admin` only (right rail under Search / list). Not on profile / new / edit.
 
 - [ ] **Summary** shows All, Live, Draft, Archived; counts update after publish / archive / restore / delete
 - [ ] **Summary** and **Getting started** collapse/expand from their headers; choice survives refresh
-- [ ] Getting started above Summary; header is title + **N/6** or **Done** pill only
+- [ ] Summary above Getting started; Getting started header is title + **N/6** or **Done** pill only
 - [ ] Six steps: **Create your profile**, **Add location or a link**, **Add a profile photo**, **Upload a primary CV**, **Create your first application draft**, **Publish & share**
 - [ ] Each incomplete step has **Skip**; **Skip all** is in the footer
 - [ ] Step links go to the right page (profile vs new application)
@@ -398,7 +398,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 - [ ] Cards show **company - role**
 - [ ] List dims slightly while a search/refetch is in flight (`opacity`)
 - [ ] Newest applications appear first
-- [ ] Day labels stick under the admin header while that day's cards are on screen, then yield to the next day
+- [ ] Day labels stick under the admin header while that day's cards are on screen, then yield to the next day. A hovered card still slides under the label; its icon tooltip stays visible above the label
 
 ### Status legend
 
@@ -410,6 +410,8 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 - [ ] Hover/focus titles on card status icons match the legend
 
 ### Card actions by status
+
+- [ ] On desktop, the action row shows on hover and hides again after a click once the pointer leaves the card. Tabbing to an action still shows the row.
 
 **Draft**
 
@@ -465,7 +467,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 
 ### Search
 
-- [ ] Field sits at the top of the right rail, above Getting started (below the list on small screens)
+- [ ] Field sits at the top of the right rail, above Summary (below the list on small screens)
 - [ ] Placeholder: company, role, or slug
 - [ ] Debounced (~300 ms); typing does not thrash
 - [ ] Match by **company**, **role**, and **slug** (case-insensitive)
