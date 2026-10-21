@@ -122,13 +122,19 @@ export function isWizardStepReachable(
 }
 
 /**
- * Wizard progress-pill "done" mark — earlier than the current step and still
- * ready (same readiness idea as sections: clearing Role/CV/Video drops the check).
+ * Wizard progress-pill "done" mark.
+ * Create: before the furthest step reached via Continue, and still ready.
+ * Going back does not clear ticks on steps already passed.
+ * Edit (`allowAllSteps`): every ready step is already saved, so it stays done
+ * until Role, CV, or Video is cleared.
  */
 export function isWizardStepCompleted(
   stepIndex: number,
-  currentIndex: number,
+  furthestIndex: number,
   stepReady: boolean,
+  allowAllSteps = false,
 ): boolean {
-  return stepIndex < currentIndex && stepReady;
+  if (!stepReady) return false;
+  if (allowAllSteps) return true;
+  return stepIndex < furthestIndex;
 }

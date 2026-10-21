@@ -307,6 +307,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] **Profile picture:** Yes/No disabled until a picture exists; **Add profile picture** / **Manage picture** modal uploads JPEG/PNG/WebP, preview, Save, Cancel, type/size errors
 - [ ] After adding a picture from this page, Yes/No enables; **Yes** shows the avatar on `/view` after publish
 - [ ] **No** (or remove picture) → no avatar on `/view` even if the account still has a picture
+- [ ] **Review & save** (wizard and sections) follows step order: company/role, share slug, then Info shown to recruiters (included values, **Hidden** when toggled off, **Empty** when included but blank, profile picture **Shown** / **Hidden** / **None**), then CV, then video
 - [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
 
 ### Company, role, slug, Name in URL

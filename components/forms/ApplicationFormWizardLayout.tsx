@@ -47,7 +47,8 @@ function pillClassName(args: {
   const base =
     "inline-flex w-full items-center justify-center gap-1 rounded-2xl px-2 py-3.5 text-xs font-medium sm:px-2.5 sm:py-4";
   if (active) {
-    return `${base} cursor-pointer bg-[var(--ink)] font-semibold text-[var(--white)] ring-2 ring-[var(--lime)] ring-offset-2 ring-offset-[var(--white)]`;
+    // The open step is always ink, including on edit. Green is for other done steps.
+    return `${base} cursor-pointer bg-[var(--ink)] font-semibold text-[var(--white)]`;
   }
   if (completed) {
     return `${base} cursor-pointer border border-[var(--status-dot-viewed)]/50 bg-[var(--status-wash-viewed)] font-semibold text-[var(--ink)] hover:brightness-[0.98]`;
@@ -105,8 +106,9 @@ export default function ApplicationFormWizardLayout({
             );
             const completed = isWizardStepCompleted(
               i,
-              index,
+              furthestIndex,
               stepReady(s.id),
+              allowAllSteps,
             );
             return (
               <li key={s.id} className="min-w-0">
@@ -130,7 +132,7 @@ export default function ApplicationFormWizardLayout({
             );
           })}
         </ol>
-        <div className="border-l-2 border-[var(--lime)] pl-3">
+        <div className="pl-3">
           <h2
             ref={headingRef}
             tabIndex={-1}

@@ -47,8 +47,10 @@ import {
   applicationFormStepIndex,
   type ApplicationFormStepId,
 } from "./application-form-steps";
-import type { CandidateFieldKey } from "./CandidateFieldsSection";
-import CandidateFieldsSection from "./CandidateFieldsSection";
+import CandidateFieldsSection, {
+  RECRUITER_INFO_FIELDS,
+  type CandidateFieldKey,
+} from "./CandidateFieldsSection";
 import CvSourceField from "./CvSourceField";
 import NameInUrlField, { type SlugNamePosition } from "./NameInUrlField";
 import ProfilePictureField from "./ProfilePictureField";
@@ -1630,29 +1632,58 @@ export default function ApplicationForm({
         </dd>
       </div>
       <div className="flex flex-wrap justify-between gap-2">
-        <dt className="text-[var(--muted)]">CV</dt>
-        <dd className="font-medium text-[var(--ink)]">
-          {hasCv
-            ? cvMode === "primary"
-              ? "Primary CV selected"
-              : cvPendingFile?.name ||
-                formData.cv_filename ||
-                "Tailored CV ready"
-            : "Missing"}
-        </dd>
-      </div>
-      <div className="flex flex-wrap justify-between gap-2">
-        <dt className="text-[var(--muted)]">Video</dt>
-        <dd className="font-medium text-[var(--ink)]">
-          {hasVideo ? "YouTube URL set" : "Missing"}
-        </dd>
-      </div>
-      <div className="flex flex-wrap justify-between gap-2">
         <dt className="text-[var(--muted)]">Share slug</dt>
         <dd className="max-w-[min(100%,20rem)] truncate font-medium text-[var(--ink)]">
           {formData.slug.trim() || "—"}
           {slugReady ? " (available)" : ""}
         </dd>
+      </div>
+      <div className="space-y-3 border-t border-[var(--ink)]/10 pt-3">
+        <dt className="font-semibold text-[var(--ink)]">
+          Info shown to recruiters
+        </dt>
+        {RECRUITER_INFO_FIELDS.map(({ key, label }) => {
+          const value = (formData[key] ?? "").trim();
+          const shown = !include[key] ? "Hidden" : value || "Empty";
+          return (
+            <div key={key} className="flex flex-wrap justify-between gap-2">
+              <dt className="text-[var(--muted)]">{label}</dt>
+              <dd className="max-w-[min(100%,20rem)] truncate font-medium text-[var(--ink)]">
+                {shown}
+              </dd>
+            </div>
+          );
+        })}
+        <div className="flex flex-wrap justify-between gap-2">
+          <dt className="text-[var(--muted)]">Profile picture</dt>
+          <dd className="font-medium text-[var(--ink)]">
+            {!hasProfilePicture
+              ? "None"
+              : showProfilePicture
+                ? "Shown"
+                : "Hidden"}
+          </dd>
+        </div>
+      </div>
+      <div className="space-y-3 border-t border-[var(--ink)]/10 pt-3">
+        <div className="flex flex-wrap justify-between gap-2">
+          <dt className="text-[var(--muted)]">CV</dt>
+          <dd className="font-medium text-[var(--ink)]">
+            {hasCv
+              ? cvMode === "primary"
+                ? "Primary CV selected"
+                : cvPendingFile?.name ||
+                  formData.cv_filename ||
+                  "Tailored CV ready"
+              : "Missing"}
+          </dd>
+        </div>
+        <div className="flex flex-wrap justify-between gap-2">
+          <dt className="text-[var(--muted)]">Video</dt>
+          <dd className="font-medium text-[var(--ink)]">
+            {hasVideo ? "YouTube URL set" : "Missing"}
+          </dd>
+        </div>
       </div>
     </dl>
   );

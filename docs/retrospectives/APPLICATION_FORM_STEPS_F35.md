@@ -61,7 +61,7 @@ Order matches the backlog example:
 2. **About you** — candidate fields + profile picture
 3. **CV** — primary/tailored CV
 4. **Video** — YouTube intro URL
-5. **Review & save** — short summary + Save / **Leave without saving** (page leave; not step Back)
+5. **Review & save** — short summary in the same order as the steps above (role and share slug, recruiter info, CV, video) + Save / **Leave without saving** (page leave; not step Back)
 
 Defined in `components/forms/application-form-steps.ts`. Both layouts render the **same field content** from `ApplicationForm` so draft persistence (F15), preview/publish path (F16), share URL preview (F19-046), and primary-CV library behavior stay one code path.
 
@@ -70,7 +70,7 @@ Defined in `components/forms/application-form-steps.ts`. Both layouts render the
 - `ApplicationFormWizardLayout` — step progress, gated Continue, Save on review
 - `ApplicationFormSectionsLayout` — accordion sections, “Continue to next step”, Save on review
 
-**Atmosphere (shared brand tokens):** create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. Progress chrome and field groups stay flat inside — lime edge on the active step/heading, success wash on completed markers/pills, full-width equal-column wizard pills (no separate “Step x of n” / track row), hairline dividers (sections). No nested white/bordered cards (avoids box-in-box on every breakpoint). Wizard check marks use the same **step readiness** as sections (`isWizardStepCompleted` + `stepReady`) so clearing Role, CV, or Video drops the check.
+**Atmosphere (shared brand tokens):** create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. Progress chrome and field groups stay flat inside — the open wizard pill stays ink with no lime ring (create and edit), success wash on the other completed pills, full-width equal-column wizard pills (no separate “Step x of n” / track row), hairline dividers (sections). No nested white/bordered cards (avoids box-in-box on every breakpoint). Wizard check marks use the same **step readiness** as sections (`isWizardStepCompleted` + `stepReady`) so clearing Role, CV, or Video drops the check. A tick stays on every step before the furthest one reached with Continue, including after you click back to an earlier pill. On edit, every step that still has its required fields starts complete.
 
 Per-step **Continue** uses the same readiness rules as Save (company/role + slug, CV, video, etc.), so users cannot advance via Continue with missing required inputs. **Wizard create** unlocks progress pills via a Continue frontier (Back does not lock previously reached steps). **Wizard edit** makes every pill reachable. In the **sections** shell, accordion headers stay clickable — users can jump to any step, toggle the open section closed, or collapse **all** sections; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
 

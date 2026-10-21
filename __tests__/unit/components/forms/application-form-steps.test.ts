@@ -68,11 +68,24 @@ describe("isWizardStepReachable", () => {
 });
 
 describe("isWizardStepCompleted", () => {
-  it("marks earlier steps complete only while they stay ready", () => {
-    const current = 3; // on Video
-    expect(isWizardStepCompleted(0, current, true)).toBe(true);
-    expect(isWizardStepCompleted(0, current, false)).toBe(false);
-    expect(isWizardStepCompleted(2, current, true)).toBe(true);
-    expect(isWizardStepCompleted(3, current, true)).toBe(false);
+  it("marks steps before the furthest frontier complete only while they stay ready", () => {
+    const furthest = 3; // reached Video
+    expect(isWizardStepCompleted(0, furthest, true)).toBe(true);
+    expect(isWizardStepCompleted(0, furthest, false)).toBe(false);
+    expect(isWizardStepCompleted(2, furthest, true)).toBe(true);
+    expect(isWizardStepCompleted(3, furthest, true)).toBe(false);
+  });
+
+  it("keeps passed steps complete when the user goes back to an earlier step", () => {
+    const furthest = 2; // reached step 3, now viewing step 1
+    expect(isWizardStepCompleted(0, furthest, true)).toBe(true);
+    expect(isWizardStepCompleted(1, furthest, true)).toBe(true);
+    expect(isWizardStepCompleted(2, furthest, true)).toBe(false);
+  });
+
+  it("marks every ready step complete when editing an existing application", () => {
+    expect(isWizardStepCompleted(0, 0, true, true)).toBe(true);
+    expect(isWizardStepCompleted(4, 0, true, true)).toBe(true);
+    expect(isWizardStepCompleted(2, 0, false, true)).toBe(false);
   });
 });
