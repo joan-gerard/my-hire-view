@@ -13,7 +13,7 @@ import {
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Returns the slug derived from company/role (and name-in-URL rules) if available for this user; 409 if already taken.
+ * Returns the slug derived from company/role (and segment order) if available for this user; 409 if already taken.
  */
 export async function POST(request: NextRequest) {
   const rate = await checkRateLimit(request, DEFAULT_API_RATE_LIMIT);
@@ -62,9 +62,7 @@ export async function POST(request: NextRequest) {
       body.role,
       user.id,
       body.excludeId,
-      body.first_name ?? null,
-      body.last_name ?? null,
-      body.slugNamePosition ?? null,
+      body.slugSegmentOrder,
     );
     return NextResponse.json({ slug });
   } catch (error) {

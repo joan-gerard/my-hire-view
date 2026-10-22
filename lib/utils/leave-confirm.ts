@@ -59,7 +59,7 @@ export function leaveRelevantDraftSnapshot(
     portfolio_url: draft.portfolio_url,
     linkedin_url: draft.linkedin_url,
     include: draft.include,
-    slugNamePosition: draft.slugNamePosition,
+    slugSegmentOrder: draft.slugSegmentOrder,
     slugManuallyEdited: draft.slugManuallyEdited,
     slug: draft.slugManuallyEdited ? draft.slug : null,
     showProfilePicture: draft.showProfilePicture,

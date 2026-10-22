@@ -1,16 +1,16 @@
 -- Seed sample applications for local / staging dashboard testing.
 -- Run in the Supabase SQL Editor (service role / postgres), not via the app API.
 --
--- FAIL-CLOSED: leave cfg user_id / primary_cv_id / cv_url as NULL until you
--- intentionally opt in. With nulls, the join matches nothing and INSERT selects
--- zero rows. Set all three to real values for the target account before running.
+-- cfg below is filled for Joan's account + primary CV. Swap those three values
+-- for another account before seeding elsewhere. If any are wrong or missing in
+-- primary_cvs, the join matches nothing and INSERT selects zero rows.
 --
 --   user_id       — must exist in auth.users
 --   primary_cv_id — must exist in primary_cvs for that user
 --   cv_url        — must match primary_cvs.url for that id + user
 --
--- The upsert still updates on (user_id, slug) once set — only run against an
--- account you intend to seed.
+-- The upsert still updates on (user_id, slug) — only run against an account
+-- you intend to seed. Prefer not to commit other people's IDs/URLs.
 --
 -- Coverage goals (admin dashboard / day groups / insights):
 --   - status mix: active (published), draft, archived
@@ -23,7 +23,7 @@
 -- clamps into [created_at, NOW()] so it cannot precede creation or sit in the future.
 --
 -- Idempotent: re-run upserts on (user_id, slug). Deterministic company-role slugs.
--- include_name_in_slug is NULL (company-role slugs only — no name in URL).
+-- slug_segment_order defaults to company_role (company-role slugs).
 -- Re-runs do NOT rewrite created_at on conflict (preserves day-group history).
 --
 -- Schema notes (vs older seeds):
@@ -54,7 +54,7 @@ INSERT INTO "public"."applications" (
   "location",
   "portfolio_url",
   "linkedin_url",
-  "include_name_in_slug",
+  "slug_segment_order",
   "download_count",
   "last_viewed_at",
   "cv_filename",
@@ -94,7 +94,7 @@ SELECT
   NULL,
   NULL,
   NULL,
-  NULL, -- company-role slug only (matches generated slug; edit form stays consistent)
+  'company_role', -- matches generated slug; edit form stays consistent
   download_count,
   CASE
     WHEN last_viewed_hours_ago IS NULL THEN NULL
@@ -164,16 +164,11 @@ FROM (
   archived_days_ago
 )
 CROSS JOIN LATERAL (
-  -- Opt-in: replace NULLs with the target account (fail closed while null).
+  -- Target account + Joan's primary CV (local/staging seed).
   SELECT
-    NULL::uuid AS user_id,
-    NULL::uuid AS primary_cv_id,
-    NULL::text AS cv_url
-  -- Example (uncomment and fill after clearing NULLs above):
-  -- SELECT
-  --   '00000000-0000-0000-0000-000000000000'::uuid AS user_id,
-  --   '00000000-0000-0000-0000-000000000000'::uuid AS primary_cv_id,
-  --   'https://example.r2.dev/cvs/.../primary/....pdf'::text AS cv_url
+    '17305170-d4a6-4313-b73f-e56cdd1590c2'::uuid AS user_id,
+    'cb01733a-df28-4b72-88e6-85de5ba8c311'::uuid AS primary_cv_id,
+    'https://pub-87b38b8cc8f5460dbc5e6d79e952bd83.r2.dev/cvs/17305170-d4a6-4313-b73f-e56cdd1590c2/primary/b882be89-4db3-4b0e-ae46-f54ba73e6cc7.pdf'::text AS cv_url
 ) AS cfg
 CROSS JOIN LATERAL (
   SELECT
@@ -213,7 +208,7 @@ ON CONFLICT (user_id, slug) DO UPDATE SET
   location = EXCLUDED.location,
   portfolio_url = EXCLUDED.portfolio_url,
   linkedin_url = EXCLUDED.linkedin_url,
-  include_name_in_slug = EXCLUDED.include_name_in_slug,
+  slug_segment_order = EXCLUDED.slug_segment_order,
   download_count = EXCLUDED.download_count,
   last_viewed_at = EXCLUDED.last_viewed_at,
   cv_filename = EXCLUDED.cv_filename,

@@ -39,7 +39,7 @@ const DRAFT_APP: Application = {
   download_count: 0,
   last_viewed_at: null,
   archived_at: null,
-  include_name_in_slug: null,
+  slug_segment_order: "company_role",
   show_profile_picture: true,
   cv_type: "tailored",
   primary_cv_id: null,

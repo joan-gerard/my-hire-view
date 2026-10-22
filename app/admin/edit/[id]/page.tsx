@@ -14,15 +14,6 @@ import type { Profile } from '@/lib/types/profile';
 import { publicIdFromUserMetadata } from '@/lib/auth/ensure-public-id';
 import { createClient } from '@/lib/supabase/client';
 
-/** Normalize DB value (legacy boolean or 'start'|'end'|null) to form slugNamePosition. */
-function slugNamePositionFromDb(
-  value: boolean | 'start' | 'end' | null | undefined
-): 'start' | 'end' | null {
-  if (value === true) return 'start';
-  if (value === false) return null;
-  return value ?? null;
-}
-
 export default function EditApplicationPage() {
   const router = useRouter();
   const params = useParams();
@@ -104,10 +95,11 @@ export default function EditApplicationPage() {
       setLoading(true);
 
       // Manual edits are validated by ApplicationForm (/api/slug/validate); keep them.
-      // Auto mode: if company/role/name-in-URL changed, re-derive via /api/slug.
+      // Auto mode: if company/role/segment order changed, re-derive via /api/slug.
+      const savedOrder = application?.slug_segment_order ?? 'company_role';
       const slugOrPreferenceChanged =
         data.slug !== application?.slug ||
-        data.slugNamePosition !== slugNamePositionFromDb(application?.include_name_in_slug);
+        (data.slugSegmentOrder ?? 'company_role') !== savedOrder;
       let slug = data.slug.trim();
       if (slugOrPreferenceChanged && data.slugManuallyEdited !== true) {
         const slugResponse = await fetch('/api/slug', {
@@ -120,11 +112,7 @@ export default function EditApplicationPage() {
             company: data.company,
             role: data.role,
             excludeId: id,
-            slugNamePosition: data.slugNamePosition ?? null,
-            ...((data.slugNamePosition === 'start' || data.slugNamePosition === 'end') && {
-              first_name: data.slugFirstName ?? data.first_name ?? undefined,
-              last_name: data.slugLastName ?? data.last_name ?? undefined,
-            }),
+            slugSegmentOrder: data.slugSegmentOrder ?? 'company_role',
           }),
         });
 
@@ -142,10 +130,7 @@ export default function EditApplicationPage() {
         slug = uniqueSlug.trim();
       }
 
-      const { slugFirstName, slugLastName, slugManuallyEdited, ...dataForApi } =
-        data;
-      void slugFirstName;
-      void slugLastName;
+      const { slugManuallyEdited, ...dataForApi } = data;
       void slugManuallyEdited;
 
       const response = await fetch('/api/applications', {
@@ -181,7 +166,7 @@ export default function EditApplicationPage() {
     return null;
   }
 
-  // Normalize DB shape to form shape; candidate fields and include_name_in_slug from application only
+  // Normalize DB shape to form shape; candidate fields and slug order from application only
   const initialData: ApplicationFormInitialData = {
     company: application.company,
     role: application.role,
@@ -193,7 +178,7 @@ export default function EditApplicationPage() {
     location: application.location ?? undefined,
     portfolio_url: application.portfolio_url ?? undefined,
     linkedin_url: application.linkedin_url ?? undefined,
-    slugNamePosition: slugNamePositionFromDb(application.include_name_in_slug),
+    slugSegmentOrder: application.slug_segment_order ?? 'company_role',
     cv_filename: application.cv_filename ?? null,
     use_original_cv_filename: application.use_original_cv_filename ?? true,
     cvUrlExists: application.cv_exists,

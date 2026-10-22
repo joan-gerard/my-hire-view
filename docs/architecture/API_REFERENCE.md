@@ -148,7 +148,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug`, `cv_url`, `video_url` (required); optional `status` (`"active"` \| `"draft"` \| `"archived"`, **default `"draft"`** — F16-050), `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugNamePosition` (`"start"` | `"end"` | `null` → stored as `include_name_in_slug`), `cv_filename`, `use_original_cv_filename` (default `true`), `show_profile_picture`
+- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug`, `cv_url`, `video_url` (required); optional `status` (`"active"` \| `"draft"` \| `"archived"`, **default `"draft"`** — F16-050), `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugSegmentOrder` (`"company_role"` | `"role_company"` → stored as `slug_segment_order`, default `company_role`), `cv_filename`, `use_original_cv_filename` (default `true`), `show_profile_picture`
 - **Success:** `201` `{ data: Application }`
 - **Errors:** `400` schema validation / insert / primary CV missing; `401`; `409` slug taken (`validateSlugForApplication` or unique constraint) or tailored `cv_url` already used; `429`; `500` unexpected failures
 
@@ -177,7 +177,7 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ApplicationUpdateInput`, Zod `applicationUpdateSchema`): `id` (UUID, required) plus optional partial fields (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields, `slugNamePosition`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Unexpected keys → **400**. Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
+- **Body** (`ApplicationUpdateInput`, Zod `applicationUpdateSchema`): `id` (UUID, required) plus optional partial fields (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields, `slugSegmentOrder`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Unexpected keys → **400**. Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
 - **Success:** `200` `{ data: Application }`
 - **Errors:** `400` schema / insert-style validation / primary CV missing; `401`; `404` if missing or not owned; `409` slug collision or tailored `cv_url` already used; `429`; `500` unexpected failures
 
@@ -192,7 +192,7 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 - Rejects a new tailored `cv_url` that is not a caller-owned tailored upload (**400**), or that is already used by another of the caller’s applications (**409**, object-key compare + partial unique index). Keeping the same object on the current row is allowed. Switching to **primary** resolves URL from the caller’s `primary_cvs` library via `primary_cv_id` (falls back to the row’s existing `primary_cv_id` when the body omits it). Same-user ownership is also enforced in Postgres (B3-042 trigger).
 - **Download filename:** a PUT that only sets `cv_filename` (no `cv_type` / `primary_cv_id` / `cv_url`) updates the download name without re-resolving or requiring a primary CV id. When the primary path does run, an explicit `cv_filename` in the body is kept; otherwise the library filename is used.
 - Persists `show_profile_picture` when provided (public view uses live profile picture).
-- Maps `slugNamePosition` → `include_name_in_slug` instead of exposing the DB column name as the only contract.
+- Maps `slugSegmentOrder` → `slug_segment_order` instead of exposing the DB column name as the only contract.
 
 **Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
@@ -473,7 +473,7 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body:** `company`, `role` (required); optional `excludeId` (UUID), `first_name`, `last_name`, `slugNamePosition` (`"start"` | `"end"` | `null`)
+- **Body:** `company`, `role` (required); optional `excludeId` (UUID), `slugSegmentOrder` (`"company_role"` | `"role_company"`)
 - **Success:** `200` `{ slug: string }`
 - **Errors:** `400` invalid JSON / schema; `401`; `404` `excludeId` missing or not owned; `409` collision; `429`; `500`
 
@@ -481,7 +481,7 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 
 - Auth required; dedicated auth try/catch → **401**.
 - Rate limited.
-- **Schema validation** (`slugReserveSchema` in `lib/validation/slug.ts`): trimmed non-empty `company` / `role` (max length); optional names; `slugNamePosition` enum or null; UUID `excludeId`; rejects unexpected keys; malformed JSON / non-object bodies → clear **400**.
+- **Schema validation** (`slugReserveSchema` in `lib/validation/slug.ts`): trimmed non-empty `company` / `role` (max length); optional `slugSegmentOrder`; UUID `excludeId`; rejects unexpected keys; malformed JSON / non-object bodies → clear **400**.
 - When `excludeId` is present, verifies the application belongs to the current user before reserving (**404** otherwise).
 - Uses shared `reserveBaseSlug` / `SlugCollisionError` for consistent slug rules and a clear **409** when taken.
 - Supports name-in-URL positions and `excludeId` for edit flows without inventing numeric suffixes.

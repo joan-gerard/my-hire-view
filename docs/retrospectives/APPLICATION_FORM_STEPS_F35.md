@@ -12,10 +12,10 @@ Create/edit still used one long `ApplicationForm`: company/role, candidate field
 
 F35’s product ask was explicit: **brainstorm and pick a pattern** before locking the UX:
 
-| Pattern          | Idea                                                                          |
-| ---------------- | ----------------------------------------------------------------------------- |
-| **A — Wizard**   | One job per screen; progress chips; Back / Continue; Save on the last step    |
-| **B — Sections** | One page, collapsible steps; confirm a step → it collapses and the next opens |
+| Pattern          | Idea                                                                                                           |
+| ---------------- | -------------------------------------------------------------------------------------------------------------- |
+| **A — Wizard**   | One job per screen; left step rail (horizontal strip on small screens); Back / Continue; Save on the last step |
+| **B — Sections** | One page, collapsible steps; confirm a step → it collapses and the next opens                                  |
 
 We did not want to guess the winner from a mock alone. We wanted to **use both** on real create/edit (draft leave, CV library, slug preview, Save & Preview) and decide with manual testing.
 
@@ -61,16 +61,16 @@ Order matches the backlog example:
 2. **About you** — candidate fields + profile picture
 3. **CV** — primary/tailored CV
 4. **Video** — YouTube intro URL
-5. **Review & save** — short summary in the same order as the steps above (role and share slug, recruiter info, CV, video) + Save / **Leave without saving** (page leave; not step Back)
+5. **Review & save** — collapsible summary in the same order as the steps above, then **Show preview**, which opens the recruiter page (header, CV, video) in a dialog without leaving the form, then Save / **Leave without saving** (page leave; not step Back). Publish-from-this-step is still `F41-127`.
 
 Defined in `components/forms/application-form-steps.ts`. Both layouts render the **same field content** from `ApplicationForm` so draft persistence (F15), preview/publish path (F16), share URL preview (F19-046), and primary-CV library behavior stay one code path.
 
 ### Layout shells
 
-- `ApplicationFormWizardLayout` — step progress, gated Continue, Save on review
+- `ApplicationFormWizardLayout` — left progress rail + right form (desktop); compact horizontal step rail on smaller screens; gated Continue; Save on review
 - `ApplicationFormSectionsLayout` — accordion sections, “Continue to next step”, Save on review
 
-**Atmosphere (shared brand tokens):** create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. Progress chrome and field groups stay flat inside — the open wizard pill stays ink with no lime ring (create and edit), success wash on the other completed pills, full-width equal-column wizard pills (no separate “Step x of n” / track row), hairline dividers (sections). No nested white/bordered cards (avoids box-in-box on every breakpoint). Wizard check marks use the same **step readiness** as sections (`isWizardStepCompleted` + `stepReady`) so clearing Role, CV, or Video drops the check. A tick stays on every step before the furthest one reached with Continue, including after you click back to an earlier pill. On edit, every step that still has its required fields starts complete.
+**Atmosphere (shared brand tokens):** create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. The wizard splits that shell with a hairline (no nested white card): **desktop** sticky vertical step list with progress label + bar; **mobile/tablet** sticky progress chrome + scrollable compact step strip under the admin header, then the form. The progress bar and “N of M complete” count checked steps only (not the step you are viewing). Active step is ink; other completed steps use success wash + check; locked steps stay muted. Sections stay a single accordion column without a lime inset edge. Wizard check marks use the same **step readiness** as sections (`isWizardStepCompleted` + `stepReady`) so clearing Role, CV, or Video drops the check. A tick stays on every step before the furthest one reached with Continue, including after you click back to an earlier pill. On edit, every step that still has its required fields starts complete.
 
 Per-step **Continue** uses the same readiness rules as Save (company/role + slug, CV, video, etc.), so users cannot advance via Continue with missing required inputs. **Wizard create** unlocks progress pills via a Continue frontier (Back does not lock previously reached steps). **Wizard edit** makes every pill reachable. In the **sections** shell, accordion headers stay clickable — users can jump to any step, toggle the open section closed, or collapse **all** sections; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
 
@@ -113,6 +113,7 @@ For each layout (**wizard**, **sections**), smoke **Create** and **Edit**:
 - [ ] **Sections only:** accordion headers open any step; clicking the open header collapses it; all sections can be closed at once (only Continue is gated) — note whether that helps or confuses
 - [ ] **Wizard + create:** progress chips unlock via Continue frontier — after Back, previously reached steps stay clickable; unreached future steps stay disabled; Continue stays gated
 - [ ] **Wizard + edit:** all progress chips are reachable (Continue still gated on the current step’s required fields)
+- [ ] **Wizard layout:** desktop shows a left step panel + right form; narrow viewports show a sticky progress + horizontal step strip under the admin header (no clipped chips; active chip scrolls into view)
 - [ ] Review summary matches what you entered before Save
 
 ### Enter / Save path (regressions)

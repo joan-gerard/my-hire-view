@@ -23,7 +23,7 @@ const FIELD_TO_STEP: Partial<
   company: "role",
   role: "role",
   slug: "role",
-  slugNamePosition: "role",
+  slugSegmentOrder: "role",
   first_name: "candidate",
   last_name: "candidate",
   location: "candidate",

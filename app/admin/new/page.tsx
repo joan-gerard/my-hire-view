@@ -87,17 +87,10 @@ export default function NewApplicationPage() {
     try {
       setLoading(true);
 
-      // Same name source as live preview (typed form values), not visibility-filtered
-      // candidate fields — so Name in URL stays consistent when include toggles are off.
       const slugBody = {
         company: data.company,
         role: data.role,
-        slugNamePosition: data.slugNamePosition ?? null,
-        ...((data.slugNamePosition === "start" ||
-          data.slugNamePosition === "end") && {
-          first_name: data.slugFirstName ?? data.first_name ?? undefined,
-          last_name: data.slugLastName ?? data.last_name ?? undefined,
-        }),
+        slugSegmentOrder: data.slugSegmentOrder ?? "company_role",
       };
 
       async function reserveSlugFromRole(): Promise<string> {
@@ -169,15 +162,12 @@ export default function NewApplicationPage() {
         finalSlug = trimmed;
       } else {
         // Auto: keep the previewed slug (same derivation as the live form), after a
-        // final uniqueness check — do not re-derive from visibility-filtered names.
+        // final uniqueness check.
         finalSlug = await confirmPreviewedSlug(data.slug.trim());
       }
 
-      const { slugManuallyEdited, slugFirstName, slugLastName, ...dataForApi } =
-        data;
+      const { slugManuallyEdited, ...dataForApi } = data;
       void slugManuallyEdited;
-      void slugFirstName;
-      void slugLastName;
 
       const response = await fetch("/api/applications", {
         method: "POST",

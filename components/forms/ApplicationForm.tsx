@@ -9,6 +9,7 @@ import type { PrimaryCv } from "@/lib/types/primary-cv";
 import {
   buildSlug,
   isCustomSlug,
+  SLUG_SEGMENT_ORDER_DEFAULT,
   validateSlugFormat,
 } from "@/lib/utils/slug-generate";
 import {
@@ -35,6 +36,7 @@ import {
   hasLeaveRelevantDraftChanges,
   leaveRelevantDraftSnapshot,
 } from "@/lib/utils/leave-confirm";
+import { ChevronDownIcon, ChevronUpIcon } from "@/components/admin/icons";
 import { useApplicationFormStyle } from "@/hooks/useApplicationFormStyle";
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -51,8 +53,11 @@ import CandidateFieldsSection, {
   RECRUITER_INFO_FIELDS,
   type CandidateFieldKey,
 } from "./CandidateFieldsSection";
+import ApplicationReviewPreview from "./ApplicationReviewPreview";
 import CvSourceField from "./CvSourceField";
-import NameInUrlField, { type SlugNamePosition } from "./NameInUrlField";
+import SlugSegmentOrderField, {
+  type SlugSegmentOrder,
+} from "./SlugSegmentOrderField";
 import ProfilePictureField from "./ProfilePictureField";
 import ShareUrlPreview from "./ShareUrlPreview";
 import YouTubeUrlInput from "./YouTubeUrlInput";
@@ -242,9 +247,11 @@ export default function ApplicationForm({
     () => restoredDraft?.include ?? defaultInclude(initialData),
   );
 
-  const [slugNamePosition, setSlugNamePosition] = useState<
-    "start" | "end" | null
-  >(restoredDraft?.slugNamePosition ?? initialData?.slugNamePosition ?? null);
+  const [slugSegmentOrder, setSlugSegmentOrder] = useState<SlugSegmentOrder>(
+    restoredDraft?.slugSegmentOrder ??
+      initialData?.slugSegmentOrder ??
+      SLUG_SEGMENT_ORDER_DEFAULT,
+  );
   const [errors, setErrors] = useState<
     Partial<Record<keyof ApplicationFormData, string>>
   >({});
@@ -258,9 +265,7 @@ export default function ApplicationForm({
       initialData?.slug ?? "",
       initialData?.company ?? "",
       initialData?.role ?? "",
-      initialData?.first_name,
-      initialData?.last_name,
-      initialData?.slugNamePosition ?? null,
+      initialData?.slugSegmentOrder ?? SLUG_SEGMENT_ORDER_DEFAULT,
     );
   });
   const slugManuallyEditedRef = useRef(false);
@@ -270,6 +275,7 @@ export default function ApplicationForm({
    * in auto mode (F27-101).
    */
   const [slugAutoReserveNonce, setSlugAutoReserveNonce] = useState(0);
+  const [reviewSummaryOpen, setReviewSummaryOpen] = useState(true);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
   /** True while SHA-256 digest of the pending CV is in flight. */
@@ -542,7 +548,7 @@ export default function ApplicationForm({
         portfolio_url: formData.portfolio_url ?? "",
         linkedin_url: formData.linkedin_url ?? "",
         include,
-        slugNamePosition,
+        slugSegmentOrder,
         slugManuallyEdited,
         showProfilePicture,
         showProfilePictureUserChosen: showProfilePictureUserChosenRef.current,
@@ -566,7 +572,7 @@ export default function ApplicationForm({
     formData.linkedin_url,
     formData.use_original_cv_filename,
     include,
-    slugNamePosition,
+    slugSegmentOrder,
     slugManuallyEdited,
     showProfilePicture,
     cvMode,
@@ -585,7 +591,7 @@ export default function ApplicationForm({
     portfolio_url: formData.portfolio_url ?? "",
     linkedin_url: formData.linkedin_url ?? "",
     include,
-    slugNamePosition,
+    slugSegmentOrder,
     slugManuallyEdited,
     showProfilePicture,
     showProfilePictureUserChosen: showProfilePictureUserChosenRef.current,
@@ -662,6 +668,15 @@ export default function ApplicationForm({
   const hasVideo = Boolean(formData.video_url.trim());
   const slugReady =
     slugLiveStatus.kind === "available" && hasSlug;
+  /**
+   * Segment-order (and other auto) rechecks set status to "checking" while the
+   * previous slug is still in the field. Treat that as still complete for the
+   * progress bar so the check does not flicker off and back on.
+   * Save / Continue stay blocked until the new check is "available".
+   */
+  const slugHoldsStepComplete =
+    hasSlug &&
+    (slugReady || slugLiveStatus.kind === "checking");
 
   const requiredReady =
     hasCompany && hasRole && hasCv && hasVideo && slugReady;
@@ -710,20 +725,18 @@ export default function ApplicationForm({
     formData.slug,
     formData.company,
     formData.role,
-    formData.first_name,
-    formData.last_name,
-    slugNamePosition,
+    slugSegmentOrder,
     slugManuallyEdited,
   ]);
 
-  /** Name-in-URL is a structured slug rule; re-enable auto slug when the user changes it. */
-  const handleSlugNamePositionChange = (next: SlugNamePosition) => {
-    setSlugNamePosition(next);
+  /** Segment order is a structured slug rule; re-enable auto slug when the user changes it. */
+  const handleSlugSegmentOrderChange = (next: SlugSegmentOrder) => {
+    setSlugSegmentOrder(next);
     setSlugManuallyEdited(false);
   };
 
   /**
-   * Exit manual slug mode and re-derive from company + role + Name in URL
+   * Exit manual slug mode and re-derive from company + role + segment order
    * via POST /api/slug (create and edit; excludeId on edit) — F27-101.
    */
   const handleResetSlugToSuggested = () => {
@@ -744,18 +757,14 @@ export default function ApplicationForm({
       const slug = buildSlug(
         formData.company,
         formData.role,
-        formData.first_name,
-        formData.last_name,
-        slugNamePosition,
+        slugSegmentOrder,
       );
       setFormData((prev) => ({ ...prev, slug }));
     }
   }, [
     formData.company,
     formData.role,
-    formData.first_name,
-    formData.last_name,
-    slugNamePosition,
+    slugSegmentOrder,
     slugManuallyEdited,
     shouldAutoReserveSlug,
   ]);
@@ -786,9 +795,7 @@ export default function ApplicationForm({
       const derivedSlug = buildSlug(
         formData.company,
         formData.role,
-        formData.first_name,
-        formData.last_name,
-        slugNamePosition,
+        slugSegmentOrder,
       );
       try {
         const res = await fetch("/api/slug", {
@@ -798,14 +805,10 @@ export default function ApplicationForm({
           body: JSON.stringify({
             company: formData.company,
             role: formData.role,
-            slugNamePosition: slugNamePosition ?? null,
+            slugSegmentOrder,
             ...(slugExcludeApplicationId
               ? { excludeId: slugExcludeApplicationId }
               : {}),
-            ...((slugNamePosition === "start" || slugNamePosition === "end") && {
-              first_name: formData.first_name ?? undefined,
-              last_name: formData.last_name ?? undefined,
-            }),
           }),
         });
         const data: { slug?: string; error?: string } = await res
@@ -852,9 +855,7 @@ export default function ApplicationForm({
     slugExcludeApplicationId,
     formData.company,
     formData.role,
-    formData.first_name,
-    formData.last_name,
-    slugNamePosition,
+    slugSegmentOrder,
   ]);
 
   const runManualSlugValidate =
@@ -904,7 +905,7 @@ export default function ApplicationForm({
           .json()
           .catch(() => ({}));
         if (cancelled) return;
-        // Discard if the user left manual mode (e.g. Reset to suggested / Name in URL).
+        // Discard if the user left manual mode (e.g. Reset to suggested / segment order).
         if (!slugManuallyEditedRef.current) return;
         if (res.status === 401) {
           setSlugLiveStatus({
@@ -1148,15 +1149,12 @@ export default function ApplicationForm({
         linkedin_url: include.linkedin_url
           ? formData.linkedin_url?.trim() || null
           : null,
-        slugNamePosition,
+        slugSegmentOrder,
         cv_filename: cvFilename,
         use_original_cv_filename: formData.use_original_cv_filename ?? true,
         show_profile_picture: includePicture,
         cv_type: cvMode,
         primary_cv_id: primaryCvId,
-        // Name-in-URL uses typed values; include toggles only affect public-page fields.
-        slugFirstName: formData.first_name?.trim() || null,
-        slugLastName: formData.last_name?.trim() || null,
         // Create and edit both need this so handlers keep a validated typed slug.
         slugManuallyEdited,
       };
@@ -1212,7 +1210,7 @@ export default function ApplicationForm({
   const stepReady = (id: ApplicationFormStepId): boolean => {
     switch (id) {
       case "role":
-        return hasCompany && hasRole && slugReady;
+        return hasCompany && hasRole && slugHoldsStepComplete;
       case "candidate":
         return true;
       case "materials":
@@ -1220,7 +1218,13 @@ export default function ApplicationForm({
       case "video":
         return hasVideo;
       case "review":
-        return requiredReady;
+        return (
+          hasCompany &&
+          hasRole &&
+          hasCv &&
+          hasVideo &&
+          slugHoldsStepComplete
+        );
       default:
         return false;
     }
@@ -1303,9 +1307,9 @@ export default function ApplicationForm({
           required
         />
       </div>
-      <NameInUrlField
-        value={slugNamePosition}
-        onChange={handleSlugNamePositionChange}
+      <SlugSegmentOrderField
+        value={slugSegmentOrder}
+        onChange={handleSlugSegmentOrderChange}
       />
       <div>
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -1624,7 +1628,33 @@ export default function ApplicationForm({
   );
 
   const reviewStep = (
-    <dl className="space-y-3 rounded-xl bg-[var(--paper)]/60 px-3 py-3 text-sm">
+    <>
+    <section className="rounded-xl bg-[var(--paper)]/60">
+      <div className="flex items-center justify-between gap-3 px-3 py-3">
+        <h3 className="text-sm font-semibold text-[var(--ink)]">Summary</h3>
+        <button
+          type="button"
+          onClick={() => setReviewSummaryOpen((open) => !open)}
+          className="inline-flex shrink-0 cursor-pointer rounded p-1 text-[var(--muted)] hover:bg-[var(--ink)]/5 hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+          aria-expanded={reviewSummaryOpen}
+          aria-controls="application-review-summary"
+          aria-label={
+            reviewSummaryOpen ? "Hide application summary" : "Show application summary"
+          }
+          title={reviewSummaryOpen ? "Hide summary" : "Show summary"}
+        >
+          {reviewSummaryOpen ? (
+            <ChevronUpIcon className="h-5 w-5" />
+          ) : (
+            <ChevronDownIcon className="h-5 w-5" />
+          )}
+        </button>
+      </div>
+      <dl
+        id="application-review-summary"
+        hidden={!reviewSummaryOpen}
+        className="space-y-3 border-t border-[var(--ink)]/10 px-3 py-3 text-sm"
+      >
       <div className="flex flex-wrap justify-between gap-2">
         <dt className="text-[var(--muted)]">Company / role</dt>
         <dd className="font-medium text-[var(--ink)]">
@@ -1685,7 +1715,27 @@ export default function ApplicationForm({
           </dd>
         </div>
       </div>
-    </dl>
+      </dl>
+    </section>
+      <ApplicationReviewPreview
+        company={formData.company.trim()}
+        role={formData.role.trim()}
+        firstName={include.first_name ? formData.first_name : null}
+        lastName={include.last_name ? formData.last_name : null}
+        location={include.location ? formData.location : null}
+        portfolioUrl={include.portfolio_url ? formData.portfolio_url : null}
+        linkedinUrl={include.linkedin_url ? formData.linkedin_url : null}
+        profilePictureUrl={profilePictureUrl}
+        profilePictureVersion={profilePictureVersion}
+        showProfilePicture={hasProfilePicture && showProfilePicture}
+        cvUrl={formData.cv_url}
+        cvPendingFile={cvPendingFile}
+        cvFilename={formData.cv_filename}
+        useOriginalCvFilename={formData.use_original_cv_filename ?? true}
+        slug={formData.slug}
+        videoUrl={formData.video_url}
+      />
+    </>
   );
 
   const stepContents = {

@@ -434,7 +434,7 @@ export async function POST(request: NextRequest) {
         status,
         archived_at: status === "archived" ? new Date().toISOString() : null,
         ...candidateFields,
-        include_name_in_slug: body.slugNamePosition ?? null,
+        slug_segment_order: body.slugSegmentOrder ?? "company_role",
         cv_filename: cvFilename,
         use_original_cv_filename: body.use_original_cv_filename ?? true,
         show_profile_picture: showProfilePicture,
@@ -517,8 +517,8 @@ export async function PUT(request: NextRequest) {
     if (body.use_original_cv_filename !== undefined) {
       updatePayload.use_original_cv_filename = body.use_original_cv_filename;
     }
-    if (body.slugNamePosition !== undefined) {
-      updatePayload.include_name_in_slug = body.slugNamePosition;
+    if (body.slugSegmentOrder !== undefined) {
+      updatePayload.slug_segment_order = body.slugSegmentOrder;
     }
     if (body.show_profile_picture !== undefined) {
       updatePayload.show_profile_picture = body.show_profile_picture === true;

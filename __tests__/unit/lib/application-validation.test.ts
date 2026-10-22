@@ -184,7 +184,7 @@ describe("applicationCreateSchema", () => {
   it("accepts optional enums and booleans", () => {
     const result = applicationCreateSchema.safeParse({
       ...VALID_BODY,
-      slugNamePosition: "start",
+      slugSegmentOrder: "role_company",
       status: "draft",
       cv_type: "tailored",
       use_original_cv_filename: false,

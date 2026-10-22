@@ -23,7 +23,7 @@ export interface Database {
           location: string | null;
           portfolio_url: string | null;
           linkedin_url: string | null;
-          include_name_in_slug: "start" | "end" | null;
+          slug_segment_order: "company_role" | "role_company";
           cv_filename: string | null;
           use_original_cv_filename: boolean;
           show_profile_picture: boolean;
@@ -50,7 +50,7 @@ export interface Database {
           location?: string | null;
           portfolio_url?: string | null;
           linkedin_url?: string | null;
-          include_name_in_slug?: "start" | "end" | null;
+          slug_segment_order?: "company_role" | "role_company";
           cv_filename?: string | null;
           use_original_cv_filename?: boolean;
           show_profile_picture?: boolean;
@@ -77,7 +77,7 @@ export interface Database {
           location?: string | null;
           portfolio_url?: string | null;
           linkedin_url?: string | null;
-          include_name_in_slug?: "start" | "end" | null;
+          slug_segment_order?: "company_role" | "role_company";
           cv_filename?: string | null;
           use_original_cv_filename?: boolean;
           show_profile_picture?: boolean;

@@ -55,7 +55,7 @@ describe("leaveRelevantDraftSnapshot", () => {
       portfolio_url: false,
       linkedin_url: false,
     },
-    slugNamePosition: null as "start" | "end" | null,
+    slugSegmentOrder: "company_role" as "start" | "end" | null,
     slugManuallyEdited: false,
     showProfilePicture: true,
     showProfilePictureUserChosen: false,

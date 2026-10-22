@@ -43,14 +43,14 @@ Create these as you go so later sections have the right mix. Reuse the same prim
 
 | #   | Company / role (example)                    | Status by the end          | Notes                                                                                                                         |
 | --- | ------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Acme / Software Engineer                    | **active**, viewed         | Full: all candidate fields on, picture shown, primary CV, YouTube, Name in URL **At start**                                   |
+| 1   | Acme / Software Engineer                    | **active**, viewed         | Full: all candidate fields on, picture shown, primary CV, YouTube, segment order **company-role**                             |
 | 2   | Globex / Product Manager                    | **active**, never viewed   | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required**                                      |
-| 3   | Initech / Designer                          | **draft**                  | Tailored CV; Name in URL **None**; custom slug                                                                                |
-| 4   | Umbrella / Data Analyst                     | **archived**               | Publish first, then archive; Name in URL **At end**                                                                           |
+| 3   | Initech / Designer                          | **draft**                  | Tailored CV; segment order **company-role**; custom slug                                                                      |
+| 4   | Umbrella / Data Analyst                     | **archived**               | Publish first, then archive; segment order **role-company**                                                                   |
 | 5   | Soylent / QA Engineer                       | **active**                 | Same **primary CV** as #1 (reuse)                                                                                             |
 | 6   | MissingCvCo / Intern                        | **active**, **CV missing** | Point at a primary, then delete that primary from the library                                                                 |
 | 7   | Café Müller / Senior Engineer               | **active**                 | Accents / unicode in company; slug must strip special chars (`cafe-muller-…`)                                                 |
-| 8   | (very long company + role, ~200 chars each) | **draft**                  | Hits **128-char slug clamp**; with Name in URL **At start**, the **name segment is kept** and company/role is truncated first |
+| 8   | (very long company + role, ~200 chars each) | **draft**                  | Hits **128-char slug clamp** (no trailing hyphen)                                                                             |
 | 9+  | PageFill-01 …                               | whatever                   | Extra rows so the dashboard has **more than 20** applications (page size is 20)                                               |
 
 ---
@@ -307,26 +307,25 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] **Profile picture:** Yes/No disabled until a picture exists; **Add profile picture** / **Manage picture** modal uploads JPEG/PNG/WebP, preview, Save, Cancel, type/size errors
 - [ ] After adding a picture from this page, Yes/No enables; **Yes** shows the avatar on `/view` after publish
 - [ ] **No** (or remove picture) → no avatar on `/view` even if the account still has a picture
-- [ ] **Review & save** (wizard and sections) follows step order: company/role, share slug, then Info shown to recruiters (included values, **Hidden** when toggled off, **Empty** when included but blank, profile picture **Shown** / **Hidden** / **None**), then CV, then video
+- [ ] **Review & save** (wizard and sections) summary starts open and can be collapsed; order is company/role, share slug, then Info shown to recruiters (included values, **Hidden** when toggled off, **Empty** when included but blank, profile picture **Shown** / **Hidden** / **None**), then CV, then video
+- [ ] **Show preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form or count a view
 - [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
 
-### Company, role, slug, Name in URL
+### Company, role, slug, URL segment order
 
 - [ ] Company and role required; Save blocked until valid
 - [ ] Whitespace-only company or role cannot save (trim)
 - [ ] Special characters (`Acme & Co.`, `Café`, punctuation) produce a lowercase hyphenated slug with extras stripped
 - [ ] Auto slug from company + role as you type (live checking); typing faster than the debounce only checks the **final** value
 - [ ] Clearing company or role hides the availability indicator (does not leave a stale green tick)
-- [ ] **Name in URL: None** → slug is `company-role` style
-- [ ] **At start** → slug begins with `first-last-…` (example: `john-doe-acme-software-engineer`)
-- [ ] **At end** → slug ends with `…-first-last`
-- [ ] Name in URL with **first name only** (clear last name on the form) omits the missing segment (`john-acme-…`, not `john--acme`)
-- [ ] Name in URL with **no names at all** falls back to company-role only
-- [ ] Very long company+role: slug is clamped to **128** chars (no trailing hyphen). With name in URL, **name is preserved** and company/role is truncated first
+- [ ] **URL segment order: Company then role** → slug is `company-role` style (e.g. `acme-software-engineer`)
+- [ ] **Role then company** → slug is `role-company` style (e.g. `software-engineer-acme`)
+- [ ] Very long company+role: slug is clamped to **128** chars (no trailing hyphen)
 - [ ] Manual slug edit: uppercase, spaces, and trailing hyphens fail **immediately** (no network)
 - [ ] Duplicate slug vs another of **your** apps → unavailable (slugs are unique **per user**, not globally — Account B may reuse the same slug)
-- [ ] **Reset to suggested** restores the auto slug from current company, role, and Name in URL
-- [ ] After a manual slug, toggling Name in URL or Reset exits manual mode and re-derives
+- [ ] **Reset to suggested** restores the auto slug from current company, role, and segment order
+- [ ] After a manual slug, changing segment order or Reset exits manual mode and re-derives
+- [ ] Editing an app with an old name-based or custom slug does **not** rewrite the stored slug until Reset or a manual edit
 - [ ] **Share link preview** shows `/view/{publicId}/{slug}` and explains Public id
 - [ ] Invalid slug characters / empty slug cannot save
 - [ ] Save while the slug row still says **checking** is blocked (“wait until the slug has finished updating”)
@@ -559,7 +558,7 @@ Use incognito / signed-out (and owner, where noted).
 
 - [ ] Picture off / no picture → no avatar; layout still balanced
 - [ ] All candidate toggles off → header still shows company/role; no name/location/links
-- [ ] Name in URL at start / at end / none → URL shape matches; page still resolves
+- [ ] Segment order company-role / role-company → URL shape matches; page still resolves; old name-based slugs still open until changed
 - [ ] Custom slug resolves; a typo slug → unavailable empty state (not another user’s app)
 - [ ] Wrong **publicId** with a valid-looking slug → unavailable (no leak of another account)
 - [ ] Extra query string or hash on the share URL still resolves (`?utm=…`, `#section`)

@@ -40,7 +40,7 @@ export type CreateApplicationDraft = {
   portfolio_url: string;
   linkedin_url: string;
   include: CreateApplicationDraftInclude;
-  slugNamePosition: "start" | "end" | null;
+  slugSegmentOrder: "company_role" | "role_company";
   slugManuallyEdited: boolean;
   showProfilePicture: boolean;
   /**
@@ -120,10 +120,10 @@ function isCvMode(value: unknown): value is ApplicationCvType {
   return value === "primary" || value === "tailored";
 }
 
-function isSlugNamePosition(
+function isSlugSegmentOrder(
   value: unknown,
-): value is "start" | "end" | null {
-  return value === "start" || value === "end" || value === null;
+): value is "company_role" | "role_company" {
+  return value === "company_role" || value === "role_company";
 }
 
 function defaultIncludeFromValues(
@@ -199,7 +199,7 @@ export function parseCreateApplicationDraft(
   if (typeof obj.showProfilePicture !== "boolean") return null;
   if (typeof obj.use_original_cv_filename !== "boolean") return null;
   if (!isCvMode(obj.cvMode)) return null;
-  if (!isSlugNamePosition(obj.slugNamePosition)) return null;
+  if (!isSlugSegmentOrder(obj.slugSegmentOrder)) return null;
   if (
     obj.selectedPrimaryId !== null &&
     typeof obj.selectedPrimaryId !== "string"
@@ -236,7 +236,7 @@ export function parseCreateApplicationDraft(
     portfolio_url,
     linkedin_url,
     include,
-    slugNamePosition: obj.slugNamePosition,
+    slugSegmentOrder: obj.slugSegmentOrder,
     slugManuallyEdited: obj.slugManuallyEdited,
     showProfilePicture: obj.showProfilePicture,
     showProfilePictureUserChosen,
@@ -262,7 +262,7 @@ export function isCreateApplicationDraftBlank(
     !draft.cvModeUserChosen &&
     !draft.showProfilePictureUserChosen &&
     !draft.slugManuallyEdited &&
-    draft.slugNamePosition == null &&
+    draft.slugSegmentOrder === "company_role" &&
     draft.use_original_cv_filename === true;
 
   const noPersonalProgress =
@@ -326,7 +326,7 @@ export function saveCreateApplicationDraft(
       portfolio_url: draft.portfolio_url,
       linkedin_url: draft.linkedin_url,
       include: draft.include,
-      slugNamePosition: draft.slugNamePosition,
+      slugSegmentOrder: draft.slugSegmentOrder,
       slugManuallyEdited: draft.slugManuallyEdited,
       showProfilePicture: draft.showProfilePicture,
       showProfilePictureUserChosen: draft.showProfilePictureUserChosen,

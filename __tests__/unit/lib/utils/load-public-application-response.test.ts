@@ -41,7 +41,7 @@ const PUBLIC_APP: Application = {
   download_count: 2,
   last_viewed_at: "2026-01-01T00:00:00Z",
   archived_at: null,
-  include_name_in_slug: null,
+  slug_segment_order: "company_role",
   show_profile_picture: true,
   cv_type: "tailored",
   primary_cv_id: null,

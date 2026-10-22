@@ -50,8 +50,8 @@ export interface Application {
   location: string | null;
   portfolio_url: string | null;
   linkedin_url: string | null;
-  /** Name position in slug: null = not included, 'start' = name-company-role, 'end' = company-role-name */
-  include_name_in_slug: "start" | "end" | null;
+  /** Order of company vs role in auto-derived slugs. */
+  slug_segment_order: "company_role" | "role_company";
   /** Original filename of the uploaded CV (e.g. My Resume.pdf). Used for download when use_original_cv_filename is true. Omitted before migration 011. */
   cv_filename?: string | null;
   /** When true, public download uses cv_filename; when false, uses generated name CV-{Slug}.pdf. Default true. Omitted before migration 011. */
@@ -315,8 +315,8 @@ export interface ApplicationFormData {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
-  /** Name in slug: null = not included, 'start' = name at start, 'end' = name at end. Stored in DB as include_name_in_slug. */
-  slugNamePosition?: "start" | "end" | null;
+  /** Company/role order in auto-derived slug. Stored as slug_segment_order. */
+  slugSegmentOrder?: "company_role" | "role_company";
   /** Original CV filename (set when file selected or from server). Used for download when use_original_cv_filename is true. */
   cv_filename?: string | null;
   /** When true, download uses cv_filename; when false, uses generated name CV-{Slug}.pdf. */
@@ -328,12 +328,6 @@ export interface ApplicationFormData {
    * after format + availability checks (do not re-derive via POST /api/slug).
    */
   slugManuallyEdited?: boolean;
-  /**
-   * Typed candidate names for slug generation (Name in URL), even when first/last
-   * are toggled off for the public page. Stripped before POST/PUT applications.
-   */
-  slugFirstName?: string | null;
-  slugLastName?: string | null;
   /** primary = selected from library; tailored = uploaded for this application. */
   cv_type?: ApplicationCvType;
   /** When cv_type is primary, the selected library id. */
@@ -351,7 +345,7 @@ export interface ApplicationCreateInput {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
-  slugNamePosition?: "start" | "end" | null;
+  slugSegmentOrder?: "company_role" | "role_company";
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;
   /** When true, public view shows the live profile picture from profiles. */
@@ -374,7 +368,7 @@ export interface ApplicationUpdateInput {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
-  slugNamePosition?: "start" | "end" | null;
+  slugSegmentOrder?: "company_role" | "role_company";
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;
   show_profile_picture?: boolean;
