@@ -359,7 +359,7 @@ my-hire-view/
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminPageSkeleton / AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── auth/                   # SignOutButton
-│   ├── forms/                  # ApplicationForm, ApplicationReviewPreview, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, SlugSegmentOrderField, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, ProfileForm, YouTubeUrlInput
+│   ├── forms/                  # ApplicationForm, ApplicationFormWizardLayout, ApplicationReviewPreview, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, SlugSegmentOrderField, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
 │   ├── public/                 # ApplicationPageHeader, CvUnavailableWithRetry, faq/constants (homepage FAQ copy), how-it-works/constants (step videos), pricing/constants (homepage #pricing tiers)
 │   ├── ui/                     # Button, Input, Textarea

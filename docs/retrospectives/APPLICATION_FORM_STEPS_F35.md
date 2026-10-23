@@ -1,8 +1,10 @@
-# Application form steps: two layouts behind a test switch (F35)
+# Application form steps: wizard (F35)
 
 **Working design context** for before-launch PR group **F35** (`F35-119` — stepped create/edit application workflow). Companion to [BEFORE_LAUNCH_PR_ORDER.md](../product/BEFORE_LAUNCH_PR_ORDER.md) and [Backlog.md](../product/Backlog.md).
 
-This retrospective records **why** we are evaluating two flows in parallel, and **how** the temporary layout switch works — not a second checklist.
+## Decision (23 October 2026)
+
+**Wizard on create and on edit.** The collapsible-sections shell, the title-row Sections / Wizard switch, `?formStyle=`, and the form-style env vars are gone. Create still unlocks steps through Continue; edit still lets every step be opened. Route hybrid, viewport hybrid, and a Profile layout preference stay rejected — the notes below are the record of why, not open work.
 
 ---
 
@@ -21,7 +23,7 @@ We did not want to guess the winner from a mock alone. We wanted to **use both**
 
 ---
 
-## Why a feature-flag-like switch (not two branches)
+## Why a feature-flag-like switch (experiment, now removed)
 
 | Approach                                              | Why we rejected / accepted it                                                    |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------- |
@@ -30,30 +32,13 @@ We did not want to guess the winner from a mock alone. We wanted to **use both**
 | Full feature-flag SaaS                                | Overkill for a pre-launch layout experiment                                      |
 | **Query param + localStorage + optional env default** | Instant toggle, bookmarkable URLs, survives reload; remove when we pick a winner |
 
-The switch is an **evaluation tool**, not a candidate-facing product setting. It shows as a compact Sections / Wizard toggle on the same row as the page title (Create / Edit), with an accessible name that still marks it as testing. Hidden in production builds unless explicitly enabled.
+The switch was an **evaluation tool**, not a candidate-facing setting: a compact Sections / Wizard toggle on the Create / Edit title row. It is removed. Old `mhv:application-form-style` values in a browser are unused.
 
 ---
 
-## What we implemented
+## What we ship
 
-### Layout resolution (priority order)
-
-1. `?formStyle=wizard` or `?formStyle=sections`
-2. `localStorage` key `mhv:application-form-style`
-3. `NEXT_PUBLIC_APPLICATION_FORM_STYLE` (optional build default)
-4. Hard default: **`sections`**
-
-Helpers: `lib/utils/application-form-style.ts`  
-Hook: `hooks/useApplicationFormStyle.ts` (reads URL + localStorage via `useSyncExternalStore`; notifies via `mhv:application-form-style-changed` — **not** a synthetic `popstate`, so create draft leave-confirm stays quiet)  
-In-form control: `components/forms/ApplicationFormStyleSwitch.tsx` (native radio group)
-
-Show/hide the switch (temporary A/B control — no Preview env required):
-
-- unset → show (local, Vercel Preview, and Production)
-- `NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH=0` → hide early if needed
-- When one layout wins, delete the switch — do not keep an env gate
-
-### Shared step map (same product in both skins)
+### Step map
 
 Order matches the backlog example:
 
@@ -63,57 +48,42 @@ Order matches the backlog example:
 4. **Video** — YouTube intro URL
 5. **Review & save** — collapsible summary in the same order as the steps above, then **Show preview**, which opens the recruiter page (header, CV, video) in a dialog without leaving the form, then Save / **Leave without saving** (page leave; not step Back). Publish-from-this-step is still `F41-127`.
 
-Defined in `components/forms/application-form-steps.ts`. Both layouts render the **same field content** from `ApplicationForm` so draft persistence (F15), preview/publish path (F16), share URL preview (F19-046), and primary-CV library behavior stay one code path.
+Defined in `components/forms/application-form-steps.ts`. `ApplicationForm` owns the fields; `ApplicationFormWizardLayout` is the only shell. Draft persistence (F15), preview/publish path (F16), share URL preview (F19-046), and primary-CV library behavior stay on that one path.
 
-### Layout shells
+### Wizard shell
 
-- `ApplicationFormWizardLayout` — left progress rail + right form (desktop); compact horizontal step rail on smaller screens; gated Continue; Save on review
-- `ApplicationFormSectionsLayout` — accordion sections, “Continue to next step”, Save on review
+`ApplicationFormWizardLayout` — left progress rail + right form (desktop); compact horizontal step rail on smaller screens; gated Continue; Save on review.
 
-**Atmosphere (shared brand tokens):** create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. The wizard splits that shell with a hairline (no nested white card): **desktop** sticky vertical step list with progress label + bar; **mobile/tablet** sticky progress chrome + scrollable compact step strip under the admin header, then the form. The progress bar and “N of M complete” count checked steps only (not the step you are viewing). Active step is ink; other completed steps use success wash + check; locked steps stay muted. Sections stay a single accordion column without a lime inset edge. Wizard check marks use the same **step readiness** as sections (`isWizardStepCompleted` + `stepReady`) so clearing Role, CV, or Video drops the check. A tick stays on every step before the furthest one reached with Continue, including after you click back to an earlier pill. On edit, every step that still has its required fields starts complete.
+Create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. The wizard splits that shell with a hairline (no nested white card): **desktop** sticky vertical step list with progress label + bar; **mobile/tablet** sticky progress chrome + scrollable compact step strip under the admin header, then the form. The progress bar and “N of M complete” count checked steps only (not the step you are viewing). Active step is ink; other completed steps use success wash + check; locked steps stay muted. Check marks follow step readiness (`isWizardStepCompleted` + `stepReady`) so clearing Role, CV, or Video drops the check. A tick stays on every step before the furthest one reached with Continue, including after you click back to an earlier pill. On edit, every step that still has its required fields starts complete.
 
-Per-step **Continue** uses the same readiness rules as Save (company/role + slug, CV, video, etc.), so users cannot advance via Continue with missing required inputs. **Wizard create** unlocks progress pills via a Continue frontier (Back does not lock previously reached steps). **Wizard edit** makes every pill reachable. In the **sections** shell, accordion headers stay clickable — users can jump to any step, toggle the open section closed, or collapse **all** sections; only Continue is gated (not header navigation). Save / implicit Enter submit is limited to the Review step.
+Per-step **Continue** uses the same readiness rules as Save (company/role + slug, CV, video, etc.), so users cannot advance via Continue with missing required inputs. **Create** unlocks progress pills via a Continue frontier (Back does not lock previously reached steps). **Edit** makes every pill reachable. Save / implicit Enter submit is limited to the Review step.
 
 ---
 
-## How to manual-test both
+## How to manual-test the wizard
 
-Run locally (`pnpm dev`). Switch layouts with the **Sections / Wizard** toggle, or:
+Run locally (`pnpm dev`) on `/admin/new` and `/admin/edit/[id]`. There is no layout switch.
 
-- `/admin/new?formStyle=wizard` / `?formStyle=sections`
-- `/admin/edit/[id]?formStyle=wizard` / `?formStyle=sections`
+Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) and [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](../manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md).
 
-Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) and [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](../manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md) — this checklist is the **layout evaluation** pass.
-
-### Setup
-
-- [ ] Layout switch is on the Create / Edit title row (local and Preview; hide only with `NEXT_PUBLIC_SHOW_FORM_STYLE_SWITCH=0`)
-- [ ] Choosing Wizard / Sections updates the URL (`formStyle=…`) and survives a reload
-- [ ] Re-clicking the already-active layout does **not** reset you to step 1
-- [ ] Switching layout mid-form does reset to step 1 / clears section “completed” marks (expected for the test switch)
-
-### Matrix (run both layouts)
-
-For each layout (**wizard**, **sections**), smoke **Create** and **Edit**:
+### Surfaces
 
 | Surface                 | Save control         | Must pass                                      |
 | ----------------------- | -------------------- | ---------------------------------------------- |
 | Create `/admin/new`     | **Save & Preview**   | Draft leave, CV, slug, save → preview          |
 | Edit `/admin/edit/[id]` | **Save Application** | CV, slug, save → dashboard (no Save & Preview) |
 
-- [ ] Wizard — Create
-- [ ] Wizard — Edit
-- [ ] Sections — Create
-- [ ] Sections — Edit
+- [ ] Create
+- [ ] Edit
+- [ ] Create and Edit titles have no Sections / Wizard toggle
 
 ### Step flow & gating
 
 - [ ] Step order feels right: Role & share URL → About you → CV → Video → Review & save
 - [ ] **Continue** stays blocked with a clear reason until that step’s required fields are ready (company/role + slug available; CV; YouTube)
-- [ ] **Sections only:** accordion headers open any step; clicking the open header collapses it; all sections can be closed at once (only Continue is gated) — note whether that helps or confuses
-- [ ] **Wizard + create:** progress chips unlock via Continue frontier — after Back, previously reached steps stay clickable; unreached future steps stay disabled; Continue stays gated
-- [ ] **Wizard + edit:** all progress chips are reachable (Continue still gated on the current step’s required fields)
-- [ ] **Wizard layout:** desktop shows a left step panel + right form; narrow viewports show a sticky progress + horizontal step strip under the admin header (no clipped chips; active chip scrolls into view)
+- [ ] **Create:** progress chips unlock via Continue frontier — after Back, previously reached steps stay clickable; unreached future steps stay disabled; Continue stays gated
+- [ ] **Edit:** all progress chips are reachable (Continue still gated on the current step’s required fields)
+- [ ] Desktop shows a left step panel + right form; narrow viewports show a sticky progress + horizontal step strip under the admin header (no clipped chips; active chip scrolls into view)
 - [ ] Review summary matches what you entered before Save
 
 ### Enter / Save path (regressions)
@@ -124,17 +94,15 @@ For each layout (**wizard**, **sections**), smoke **Create** and **Edit**:
 
 ### Keyboard / focus
 
-- [ ] After **Continue**, focus moves to the new step heading (wizard) or the newly opened section header (sections) — not the document body
-- [ ] Layout radios are keyboard-reachable; focus ring is visible
+- [ ] After **Continue**, focus moves to the new step heading — not the document body
 - [ ] When Continue is blocked, you can still focus it and hear/see the blocked reason (tooltip / `aria-describedby`)
 
 ### Create-only: draft leave (F15)
 
 - [ ] Fill some fields → browser Back / in-app leave → confirm dialog appears
-- [ ] Switching **layout** does **not** open the leave-confirm dialog by itself
 - [ ] Discard clears draft; Stay keeps values; successful Save & Preview clears draft
 
-### Behavior parity (both layouts, Create + Edit)
+### Behavior parity (Create + Edit)
 
 - [ ] Primary vs tailored CV + library modal still work
 - [ ] Name in URL + slug live status + **Reset to suggested**
@@ -144,43 +112,26 @@ For each layout (**wizard**, **sections**), smoke **Create** and **Edit**:
 
 ### Mobile / narrow viewport
 
-Test at least one phone width (~375px) and one desktop width for **both** layouts:
+Test at least one phone width (~375px) and one desktop width:
 
 - [ ] No horizontal overflow; Continue / Save reachable
-- [ ] Accordion headers / progress chips usable with touch
-- [ ] Note which layout feels better on phone vs desktop (feeds the viewport hybrid open question — do **not** assume we should ship both)
-
-### Hybrid lenses (optional, while testing)
-
-Deliberately try these combinations and jot notes — they are decision options, not requirements:
-
-- [ ] Create as **wizard**, Edit as **sections** (route hybrid)
-- [ ] Same form on phone vs desktop — does one layout clearly win per surface?
-
-### Decision prompts (fill the log below)
-
-After the matrix, ask yourself:
-
-1. Which layout would you ship for **everyone** if you could keep only one?
-2. Does create-vs-edit hybrid earn the cost of two shells?
-3. Did viewport differences feel like “one responsive shell is enough” or “we need two patterns”?
-4. Any tip overload / confusion left on Review or the Role & share URL step?
-
-Then record the choice in the decision log and remove the switch + losing shell when ready.
+- [ ] Progress chips usable with touch
 
 ---
 
-## Decision log (fill in after testing)
+## Decision log
 
-| Date        | Preference                                                                                                                                           | Notes                                                           |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| _(pending)_ | wizard everywhere / sections everywhere / hybrid by route (create=wizard, edit=sections) / hybrid by viewport (e.g. mobile=wizard, desktop=sections) | See open questions below; prefer at most one hybrid rule if any |
+| Date             | Preference        | Notes                                                                                                      |
+| ---------------- | ----------------- | ---------------------------------------------------------------------------------------------------------- |
+| 23 October 2026  | Wizard everywhere | Sections shell and the test switch removed. Route hybrid, viewport hybrid, and a Profile preference stay out. |
 
-**Out of scope for F35:** post-launch product tour (`F31-105`), public `/view` polish (`F38-122`), monetization gates, and **incomplete server draft saves** (`F40-124` — park plan [INCOMPLETE_DRAFT_SAVES.md](../product/INCOMPLETE_DRAFT_SAVES.md); implement in a separate PR after the layout pick so Save/publish rules are not changed under the dual-layout test). Running decision diary: [DEVELOPMENT_JOURNAL.md](DEVELOPMENT_JOURNAL.md).
+**Out of scope for F35:** post-launch product tour (`F31-105`), public `/view` polish (`F38-122`), monetization gates, and **incomplete server draft saves** (`F40-124` — park plan [INCOMPLETE_DRAFT_SAVES.md](../product/INCOMPLETE_DRAFT_SAVES.md); still a separate PR now that the layout is the wizard). Running decision diary: [DEVELOPMENT_JOURNAL.md](DEVELOPMENT_JOURNAL.md).
 
 ---
 
-## Open question: Profile preference for form layout?
+## Record: Profile preference for form layout?
+
+**Closed 23 October 2026.** We ship one layout, so there is no preference to store.
 
 **Question (product):** After we have both layouts, can we consider adding a new preference on the profile / Account settings page so users can choose wizard **or** sections for create/edit?
 
@@ -198,7 +149,7 @@ Account settings → Preferences is a good home **if** we later decide both layo
 
 | Phase                               | Recommendation                                                                                                                                                                                                                                                                                      |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Now (F35)**                       | Keep the page-header test switch + `?formStyle=` / localStorage. Do not expose a Profile preference yet.                                                                                                                                                                                            |
+| **During the experiment**           | Keep the page-header test switch + `?formStyle=` / localStorage. Do not expose a Profile preference yet.                                                                                                                                                                                            |
 | **After we pick a winner**          | Ship **one** default. Optionally remember last-used layout in `localStorage` with **no** Preferences UI (invisible continuity).                                                                                                                                                                     |
 | **Later, only if evidence says so** | If manual testing / launch feedback shows a durable split (e.g. mobile vs desktop habits, accessibility), add **Account settings → Preferences → Application form style** — same browser-local pattern as status indicators unless cross-device sync is required (then persist on the profile row). |
 
@@ -208,7 +159,9 @@ Account settings → Preferences is a good home **if** we later decide both layo
 
 ---
 
-## Open question: Wizard on create, sections on edit?
+## Record: Wizard on create, sections on edit?
+
+**Closed 23 October 2026.** Wizard on both routes. Edit already unlocks every step, which covers “jump in and change one thing” without a second shell.
 
 **Question (product):** What if we did **not** pick a single layout for both routes — use the **wizard** on `/admin/new` (create) and the **sections** layout on `/admin/edit/[id]` (edit)?
 
@@ -255,7 +208,9 @@ This is a **stronger** dual-layout story than a Profile preference, because the 
 
 ---
 
-## Open question: One layout for desktop, another for mobile?
+## Record: One layout for desktop, another for mobile?
+
+**Closed 23 October 2026.** One wizard, responsive: left rail on desktop, sticky step strip on smaller screens.
 
 **Question (product):** What if we split by **viewport** instead of (or in addition to) route — e.g. **wizard on mobile / narrow screens**, **sections on desktop**?
 

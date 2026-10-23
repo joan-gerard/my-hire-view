@@ -291,7 +291,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Page chrome
 
-- [ ] Title **Create New Application**
+- [ ] Title **Create New Application** (no layout toggle; the form is the wizard on create and edit)
 - [ ] If location, links, and picture are still empty: nudge to complete profile; arrow goes to Profile
 - [ ] After profile has location/link/picture, nudge is gone
 - [ ] Form skeleton/pulse while profile loads; then the form
@@ -307,7 +307,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] **Profile picture:** Yes/No disabled until a picture exists; **Add profile picture** / **Manage picture** modal uploads JPEG/PNG/WebP, preview, Save, Cancel, type/size errors
 - [ ] After adding a picture from this page, Yes/No enables; **Yes** shows the avatar on `/view` after publish
 - [ ] **No** (or remove picture) → no avatar on `/view` even if the account still has a picture
-- [ ] **Review & save** (wizard and sections) summary starts open and can be collapsed; order is company/role, share slug, then Info shown to recruiters (included values, **Hidden** when toggled off, **Empty** when included but blank, profile picture **Shown** / **Hidden** / **None**), then CV, then video
+- [ ] **Review & save** summary starts open and can be collapsed; order is company/role, share slug, then Info shown to recruiters (included values, **Hidden** when toggled off, **Empty** when included but blank, profile picture **Shown** / **Hidden** / **None**), then CV, then video
 - [ ] **Show preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form or count a view
 - [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
 

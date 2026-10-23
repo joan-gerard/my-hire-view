@@ -37,14 +37,11 @@ import {
   leaveRelevantDraftSnapshot,
 } from "@/lib/utils/leave-confirm";
 import { ChevronDownIcon, ChevronUpIcon } from "@/components/admin/icons";
-import { useApplicationFormStyle } from "@/hooks/useApplicationFormStyle";
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
-import ApplicationFormSectionsLayout from "./ApplicationFormSectionsLayout";
 import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
 import {
-  APPLICATION_FORM_STEPS,
   applicationFormStepForErrors,
   applicationFormStepIndex,
   type ApplicationFormStepId,
@@ -149,30 +146,11 @@ export default function ApplicationForm({
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
-  const { style: formStyle } = useApplicationFormStyle();
-  /**
-   * Active step for wizard, or open accordion section for sections.
-   * `null` = all sections collapsed (sections layout only).
-   */
-  const [currentStepId, setCurrentStepId] = useState<
-    ApplicationFormStepId | null
-  >("role");
+  const [currentStepId, setCurrentStepId] =
+    useState<ApplicationFormStepId>("role");
   /** Create wizard: furthest step unlocked via Continue (survives Back). */
   const [furthestStepId, setFurthestStepId] =
     useState<ApplicationFormStepId>("role");
-  const [completedStepIds, setCompletedStepIds] = useState<
-    Set<ApplicationFormStepId>
-  >(() => new Set());
-  const previousFormStyleRef = useRef(formStyle);
-
-  // Header toggle lives on the page; reset step chrome when layout changes.
-  useEffect(() => {
-    if (previousFormStyleRef.current === formStyle) return;
-    previousFormStyleRef.current = formStyle;
-    setCurrentStepId("role");
-    setFurthestStepId("role");
-    setCompletedStepIds(new Set());
-  }, [formStyle]);
 
   /** Load once per mount; ignore later key changes while the form is open. */
   const restoredDraftRef = useRef<CreateApplicationDraft | null | undefined>(
@@ -963,7 +941,7 @@ export default function ApplicationForm({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Implicit Enter submit from intermediate steps must not save (no submit
-    // button until Review). Wizard + sections both rely on this gate.
+    // button until Review).
     if (currentStepId !== "review") return;
     if (formBusy || isSubmittingRef.current || !canSubmit) return;
     isSubmittingRef.current = true;
@@ -1231,9 +1209,8 @@ export default function ApplicationForm({
   };
 
   const continueBlockedReasonFor = (
-    id: ApplicationFormStepId | null,
+    id: ApplicationFormStepId,
   ): string | null => {
-    if (id == null) return null;
     if (formBusy) return "Please wait until the current action finishes.";
     switch (id) {
       case "role":
@@ -1271,18 +1248,6 @@ export default function ApplicationForm({
       default:
         return null;
     }
-  };
-
-  const markStepCompleteAndAdvance = (id: ApplicationFormStepId) => {
-    const index = APPLICATION_FORM_STEPS.findIndex((s) => s.id === id);
-    if (index < 0) return;
-    setCompletedStepIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-    const nextStep = APPLICATION_FORM_STEPS[index + 1];
-    if (nextStep) setCurrentStepId(nextStep.id);
   };
 
   const roleStep = (
@@ -1771,40 +1736,25 @@ export default function ApplicationForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-      {formStyle === "wizard" ? (
-        <ApplicationFormWizardLayout
-          stepContents={stepContents}
-          currentStepId={currentStepId ?? "role"}
-          furthestStepId={furthestStepId}
-          allowAllSteps={isEdit}
-          onStepChange={(id) => {
-            setCurrentStepId(id);
-            if (
-              !isEdit &&
-              applicationFormStepIndex(id) >
-                applicationFormStepIndex(furthestStepId)
-            ) {
-              setFurthestStepId(id);
-            }
-          }}
-          continueBlockedReason={continueBlockedReasonFor(
-            currentStepId ?? "role",
-          )}
-          stepReady={stepReady}
-          actions={formActions}
-        />
-      ) : (
-        <ApplicationFormSectionsLayout
-          stepContents={stepContents}
-          openStepId={currentStepId}
-          onOpenStepChange={setCurrentStepId}
-          completedStepIds={completedStepIds}
-          onConfirmStep={markStepCompleteAndAdvance}
-          continueBlockedReason={continueBlockedReasonFor(currentStepId)}
-          stepReady={stepReady}
-          actions={formActions}
-        />
-      )}
+      <ApplicationFormWizardLayout
+        stepContents={stepContents}
+        currentStepId={currentStepId}
+        furthestStepId={furthestStepId}
+        allowAllSteps={isEdit}
+        onStepChange={(id) => {
+          setCurrentStepId(id);
+          if (
+            !isEdit &&
+            applicationFormStepIndex(id) >
+              applicationFormStepIndex(furthestStepId)
+          ) {
+            setFurthestStepId(id);
+          }
+        }}
+        continueBlockedReason={continueBlockedReasonFor(currentStepId)}
+        stepReady={stepReady}
+        actions={formActions}
+      />
 
       {leaveDialog}
     </form>

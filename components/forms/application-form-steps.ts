@@ -1,5 +1,5 @@
 /**
- * Shared step map for F35 wizard + collapsible-sections layouts.
+ * Step map for the create/edit application wizard.
  * Order: Role & share URL → Candidate → CV → Video → Review/save.
  */
 

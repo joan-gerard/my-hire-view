@@ -48,7 +48,7 @@ export const ADMIN_PANEL_CLASS =
 
 /**
  * Create/edit form outer shell — the single bordered white box on the paper page.
- * Wizard/sections chrome and field groups stay flat inside (no nested cards).
+ * Wizard chrome and field groups stay flat inside (no nested cards).
  */
 export const ADMIN_FORM_SHELL_CLASS =
   `${ADMIN_PANEL_CLASS} p-4 sm:p-6`;
