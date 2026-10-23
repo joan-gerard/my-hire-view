@@ -304,9 +304,11 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Toggle **on** a field but leave it blank → stored/shown as empty (no placeholder junk)
 - [ ] Edit a value here (e.g. location) → **does not** change Profile
 - [ ] Collapse / expand the section; preference remembered on the next visit (`localStorage`)
-- [ ] **Profile picture:** Yes/No disabled until a picture exists; **Add profile picture** / **Manage picture** modal uploads JPEG/PNG/WebP, preview, Save, Cancel, type/size errors
-- [ ] After adding a picture from this page, Yes/No enables; **Yes** shows the avatar on `/view` after publish
-- [ ] **No** (or remove picture) → no avatar on `/view` even if the account still has a picture
+- [ ] Picture block is above **Info shown to recruiters**. Each field is **Show** / **Hidden**, label above the value; **Hidden** mutes the field and blocks editing
+- [ ] **Profile picture:** Yes/No hidden until a picture exists; **Add profile picture** / **Manage picture** modal uploads JPEG/PNG/WebP, preview, Save, Cancel, type/size errors
+- [ ] After adding a picture from this page, Yes/No appears; **Yes** shows the thumbnail and the avatar on `/view` after publish
+- [ ] **No** hides the thumbnail and keeps **Manage picture**; no avatar on `/view` even if the account still has a picture
+- [ ] **Download name for recruiters** is hidden until a primary CV is selected or a tailored PDF is chosen
 - [ ] **Review & save** summary starts open and can be collapsed; order is company/role, share slug, then Info shown to recruiters (included values, **Hidden** when toggled off, **Empty** when included but blank, profile picture **Shown** / **Hidden** / **None**), then CV, then video
 - [ ] **Show preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form or count a view
 - [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile

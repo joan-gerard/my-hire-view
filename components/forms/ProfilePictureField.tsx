@@ -49,6 +49,7 @@ export default function ProfilePictureField({
   );
   const initials = initialsFromNames(firstName, lastName);
   const hasInitials = Boolean(initials.trim());
+  const hideThumbnail = hasProfilePicture && !showProfilePicture;
 
   const closeModal = () => {
     setModalOpen(false);
@@ -111,7 +112,7 @@ export default function ProfilePictureField({
         )}
 
         <div className="flex items-center gap-3">
-          {hasProfilePicture && thumbnailUrl ? (
+          {hideThumbnail ? null : hasProfilePicture && thumbnailUrl ? (
             <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-[var(--ink)]/10 ring-1 ring-[var(--ink)]/10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

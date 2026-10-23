@@ -24,14 +24,6 @@ export default function ApplicationFormActions({
 
   return (
     <div className="flex flex-wrap justify-end gap-3">
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() => window.history.back()}
-        disabled={loading}
-      >
-        Leave without saving
-      </Button>
       <div
         className="group relative inline-flex"
         title={disabled && disabledReason ? disabledReason : undefined}

@@ -9,7 +9,7 @@ import {
 } from "@/components/forms/application-form-steps";
 import Button from "@/components/ui/Button";
 import { useEffect, useRef, type ReactNode } from "react";
-import { FiCheck } from "react-icons/fi";
+import { FiArrowLeft, FiArrowRight, FiCheck } from "react-icons/fi";
 
 export type ApplicationFormStepContentMap = Record<
   ApplicationFormStepId,
@@ -35,7 +35,7 @@ interface ApplicationFormWizardLayoutProps {
   continueBlockedReason?: string | null;
   /** Whether a step still has the minimum required inputs (drives check marks). */
   stepReady: (id: ApplicationFormStepId) => boolean;
-  /** Final step actions (Save / Leave without saving). */
+  /** Final step actions (Save). */
   actions: ReactNode;
 }
 
@@ -50,7 +50,7 @@ function stepButtonClassName(args: {
   const base = compact
     ? // Fixed width: wider than content-sized chips, but the full strip stays near the progress bar width.
       "inline-flex w-[6.75rem] shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-left text-xs font-medium sm:w-[7.5rem]"
-    : "flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors";
+    : "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors";
 
   if (active) {
     return `${base} cursor-pointer bg-[var(--ink)] text-[var(--white)]`;
@@ -230,16 +230,17 @@ export default function ApplicationFormWizardLayout({
         }}
         disabled={isFirst}
       >
+        <FiArrowLeft className="size-4" aria-hidden />
         Back
       </Button>
       <div className="group relative inline-flex">
         <Button
           type="button"
           variant="primary"
-          aria-disabled={!canContinue ? true : undefined}
+          aria-disabled={!canContinue || undefined}
           className={
             !canContinue
-              ? "cursor-not-allowed opacity-50 hover:opacity-50"
+              ? "cursor-not-allowed opacity-50 hover:opacity-50!"
               : undefined
           }
           onClick={() => {
@@ -254,6 +255,7 @@ export default function ApplicationFormWizardLayout({
           }
         >
           Continue
+          <FiArrowRight className="size-4" aria-hidden />
         </Button>
         {!canContinue && continueBlockedReason ? (
           <span
@@ -273,6 +275,7 @@ export default function ApplicationFormWizardLayout({
         variant="secondary"
         onClick={() => onStepChange(APPLICATION_FORM_STEPS[index - 1].id)}
       >
+        <FiArrowLeft className="size-4" aria-hidden />
         Back
       </Button>
       {actions}
@@ -326,14 +329,16 @@ export default function ApplicationFormWizardLayout({
         </ol>
       </div>
 
-      {/* Desktop: sticky vertical step panel */}
-      <aside className="hidden w-[17.5rem] shrink-0 flex-col gap-4 border-[var(--ink)]/10 p-4 sm:p-6 lg:flex lg:border-r xl:w-[19rem]">
-        {progressHeader}
-        <ol className="flex flex-col gap-1.5" aria-label="Form progress">
-          {APPLICATION_FORM_STEPS.map((s, i) => (
-            <li key={s.id}>{renderStepButton(s, i, false)}</li>
-          ))}
-        </ol>
+      {/* Desktop: full-height rail; the step list sticks under the admin header. */}
+      <aside className="hidden w-[17.5rem] shrink-0 border-[var(--ink)]/10 lg:flex lg:flex-col lg:border-r xl:w-[19rem]">
+        <div className="sticky top-[var(--admin-header-height,72px)] z-20 flex max-h-[calc(100svh-var(--admin-header-height,72px))] flex-col gap-4 overflow-y-auto bg-[var(--white)] p-4 sm:p-6">
+          {progressHeader}
+          <ol className="flex flex-col gap-1.5" aria-label="Form progress">
+            {APPLICATION_FORM_STEPS.map((s, i) => (
+              <li key={s.id}>{renderStepButton(s, i, false)}</li>
+            ))}
+          </ol>
+        </div>
       </aside>
 
       {/* Form column */}

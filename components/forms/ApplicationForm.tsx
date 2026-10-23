@@ -1408,12 +1408,6 @@ export default function ApplicationForm({
 
   const candidateStep = (
     <>
-      <CandidateFieldsSection
-        values={candidateValues}
-        include={include}
-        onValueChange={handleCandidateValueChange}
-        onIncludeChange={handleCandidateIncludeChange}
-      />
       <ProfilePictureField
         profilePictureUrl={profilePictureUrl}
         profilePictureVersion={profilePictureVersion}
@@ -1425,6 +1419,12 @@ export default function ApplicationForm({
           showProfilePictureUserChosenRef.current = true;
           setShowProfilePicture(next);
         }}
+      />
+      <CandidateFieldsSection
+        values={candidateValues}
+        include={include}
+        onValueChange={handleCandidateValueChange}
+        onIncludeChange={handleCandidateIncludeChange}
       />
     </>
   );

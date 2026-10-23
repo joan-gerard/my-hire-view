@@ -91,6 +91,13 @@ export default function CvSourceField({
   /** Create-only lock while library loads (F15-049); edit keeps saved cv_type. */
   const lockCvSourceWhileLoading = !isEdit && primaryCvsLoading;
 
+  const hasCvSelection =
+    mode === "primary"
+      ? Boolean(selectedPrimaryId)
+      : Boolean(pendingFile) ||
+        (isEdit &&
+          currentType === "tailored" &&
+          Boolean(currentUrl.trim() || currentFilename));
   const pendingOrCurrentName =
     pendingFile?.name ??
     (mode === "primary"
@@ -363,7 +370,7 @@ export default function CvSourceField({
         )}
       </div>
 
-      {/* Download name */}
+      {hasCvSelection ? (
       <div className="space-y-3 border-t border-[var(--ink)]/10 pt-4">
         <p className="text-sm font-medium text-[var(--ink)]">
           Download name for recruiters
@@ -414,6 +421,7 @@ export default function CvSourceField({
               : "…"}
         </p>
       </div>
+      ) : null}
 
       <ConfirmDialog
         open={switchToPrimaryConfirmOpen}

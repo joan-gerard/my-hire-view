@@ -16,9 +16,9 @@ This is the behavior reference. The decision to keep only the wizard is in [APPL
 4. **Video** — a YouTube intro.
 5. **Review & save** — read the summary, preview the recruiter page, then save.
 
-On a wide screen the steps sit in a left rail and the fields sit on the right. On a phone or tablet, a progress strip stays under the header and the steps scroll sideways as short labels: Role, You, CV, Video, Save.
+On a wide screen the steps sit in a left rail that stays under the header while the fields scroll. On a phone or tablet, a progress strip stays under the header and the steps scroll sideways as short labels: Role, You, CV, Video, Save.
 
-**Continue** moves forward. It stays quiet until that step is ready, and hovering or focusing it explains why. **Back** goes to the previous step. Pressing Enter in a field does not save. Save exists only on the last step.
+**Continue** (with a right arrow) moves forward. It stays quiet until that step is ready, and hovering or focusing it explains why. **Back** (with a left arrow) goes to the previous step. Pressing Enter in a field does not save. Save exists only on the last step. Leave the form from the header or with the browser Back button. On create, those exits still ask before discarding the browser draft.
 
 After you move to a new step, focus lands on that step’s heading.
 
@@ -50,7 +50,7 @@ About you has no required fields, so passing it is enough for its check.
 
 **Save & Preview** saves a **draft**. Recruiters cannot open it yet. If your account has a Public id, you land on your own preview of the share link. If it does not, you land on the dashboard and can open **Preview** from the card once the id exists. Publish is a separate action, on the preview banner or the dashboard card.
 
-**Leave without saving**, the browser Back button, or another admin link asks you to confirm. Confirming throws away the browser draft so the next New Application starts empty. A successful save clears that draft too. A failed save keeps it. The draft remembers what you typed for about a week, in this browser, for this account. It does not remember a tailored PDF you had selected — choose the file again.
+The browser Back button or another admin link asks you to confirm. Confirming throws away the browser draft so the next New Application starts empty. A successful save clears that draft too. A failed save keeps it. The draft remembers what you typed for about a week, in this browser, for this account. It does not remember a tailored PDF you had selected — choose the file again.
 
 ---
 
@@ -62,7 +62,7 @@ Steps that already have their required data start done. The step you land on (Ro
 
 **Save Application** returns you to the dashboard. A draft stays a draft. A live application stays live. Saving does not publish.
 
-There is no browser draft and no leave confirmation on edit. **Leave without saving** goes back.
+There is no browser draft and no leave confirmation on edit. Leave from the header or with the browser Back button.
 
 A notice at the top tells you that name, location, and links on this form come from the application as it was saved, not from your live profile. The profile picture is live: if this application shows it, recruiters see the current picture.
 
@@ -93,8 +93,8 @@ Changing the segment order rechecks the slug. The check stays put during that re
 
 **You enter**
 
-- First name, last name, location, portfolio, LinkedIn. Each can be included or hidden. Hidden fields are not shown to recruiters. An included field that is blank is shown as empty, not as a placeholder.
-- Profile picture: **Shown**, **Hidden**, or **None** until you add one. **Add profile picture** / **Manage picture** updates the account picture without leaving the form.
+- Profile picture first. **Yes** shows the picture. **No** hides it and keeps **Manage picture**. Until a picture exists, the choice is **Add profile picture**.
+- Then first name, last name, location, portfolio, and LinkedIn. Each is **Show** or **Hidden**, with the label above the value. A hidden field is muted and not editable. Hidden fields are not shown to recruiters. A shown field that is blank is shown as empty, not as a placeholder.
 
 Nothing here blocks Continue.
 
@@ -109,6 +109,7 @@ Nothing here blocks Continue.
 
 - A **primary CV** from your library (up to five, the same library as on Profile). **Manage library** uploads or deletes without leaving the page.
 - A **tailored PDF** for this application only.
+- **Download name for recruiters**, once a CV is selected: the original file name, or a generated `CV-{slug}.pdf`. The section stays hidden until then.
 
 On create, the source choices stay locked for a moment while the library loads, so a slow load cannot overwrite your choice.
 
@@ -141,7 +142,6 @@ On create, the source choices stay locked for a moment while the library loads, 
 - A **Summary**, open at first, that you can collapse. Order matches the steps: company and role, share slug, info shown to recruiters (value, **Hidden**, or **Empty**, plus picture **Shown** / **Hidden** / **None**), then CV, then video.
 - **Show preview** opens the recruiter page in a dialog: header, CV (including a tailored file you have chosen but not uploaded yet), and video. **Watch Video Pitch** plays here. Closing the dialog, Escape, or the backdrop returns you to the form. This does not count a view and does not leave the form. If the video is open, Escape closes the video first.
 - **Save & Preview** on create, or **Save Application** on edit.
-- **Leave without saving**.
 
 Save stays disabled until company, role, an available slug, a usable CV, and a YouTube URL are all in place. The button explains which one is missing. On the last step, Continue is not shown.
 
