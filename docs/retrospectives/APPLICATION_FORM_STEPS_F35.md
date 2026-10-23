@@ -46,7 +46,7 @@ Order matches the backlog example:
 2. **About you** — candidate fields + profile picture
 3. **CV** — primary/tailored CV
 4. **Video** — YouTube intro URL
-5. **Review & save** — collapsible summary in the same order as the steps above, then **Show preview**, which opens the recruiter page (header, CV, video) in a dialog without leaving the form, then Save. Leave the form from the header or the browser Back button, not a button on the step. Publish-from-this-step is still `F41-127`.
+5. **Review & save** — collapsible summary grouped like the steps (Role, About you, CV, Video) with status chips, then **Show preview**, which opens the recruiter page (header, CV, video) in a dialog without leaving the form, then Save. Leave the form from the header or the browser Back button, not a button on the step. Publish-from-this-step is still `F41-127`.
 
 Defined in `components/forms/application-form-steps.ts`. `ApplicationForm` owns the fields; `ApplicationFormWizardLayout` is the only shell. Draft persistence (F15), preview/publish path (F16), share URL preview (F19-046), and primary-CV library behavior stay on that one path.
 
@@ -84,7 +84,7 @@ Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_
 - [ ] **Create:** progress chips unlock via Continue frontier — after Back, previously reached steps stay clickable; unreached future steps stay disabled; Continue stays gated
 - [ ] **Edit:** all progress chips are reachable (Continue still gated on the current step’s required fields)
 - [ ] Desktop shows a left step panel that stays under the admin header while the form scrolls, plus the form on the right; narrow viewports show a sticky progress + horizontal step strip under the admin header (no clipped chips; active chip scrolls into view)
-- [ ] Review summary matches what you entered before Save
+- [ ] Review summary matches what you entered before Save; groups follow Role → About you → CV → Video with status chips for Hidden / Empty / Missing / Available / Ready
 
 ### Enter / Save path (regressions)
 

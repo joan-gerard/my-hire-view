@@ -309,7 +309,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] After adding a picture from this page, Yes/No appears; **Yes** shows the thumbnail and the avatar on `/view` after publish
 - [ ] **No** hides the thumbnail and keeps **Manage picture**; no avatar on `/view` even if the account still has a picture
 - [ ] **Download name for recruiters** is hidden until a primary CV is selected or a tailored PDF is chosen
-- [ ] **Review & save** summary starts open and can be collapsed; order is company/role, share slug, then Info shown to recruiters (included values, **Hidden** when toggled off, **Empty** when included but blank, profile picture **Shown** / **Hidden** / **None**), then CV, then video
+- [ ] **Review & save** summary starts open and can be collapsed; groups match the steps (Role, About you, CV, Video) with stacked labels and status chips (**Hidden** / **Empty** / **Shown** / **None** / **Available** / **Missing** / **Ready**); About you lists profile picture before the recruiter fields
 - [ ] **Show preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form or count a view
 - [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
 

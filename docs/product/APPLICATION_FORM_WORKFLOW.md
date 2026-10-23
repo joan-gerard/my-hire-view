@@ -139,7 +139,7 @@ On create, the source choices stay locked for a moment while the library loads, 
 
 **You see**
 
-- A **Summary**, open at first, that you can collapse. Order matches the steps: company and role, share slug, info shown to recruiters (value, **Hidden**, or **Empty**, plus picture **Shown** / **Hidden** / **None**), then CV, then video.
+- A **Summary**, open at first, that you can collapse. It is grouped like the steps: Role (company and role as the lead line, then share slug with an Available / Not ready / Missing chip), About you (picture Shown / Hidden / None first, then each field’s value or a Hidden / Empty chip), CV (filename or Missing), and Video (Ready or Missing).
 - **Show preview** opens the recruiter page in a dialog: header, CV (including a tailored file you have chosen but not uploaded yet), and video. **Watch Video Pitch** plays here. Closing the dialog, Escape, or the backdrop returns you to the form. This does not count a view and does not leave the form. If the video is open, Escape closes the video first.
 - **Save & Preview** on create, or **Save Application** on edit.
 

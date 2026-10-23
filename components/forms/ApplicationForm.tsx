@@ -36,7 +36,6 @@ import {
   hasLeaveRelevantDraftChanges,
   leaveRelevantDraftSnapshot,
 } from "@/lib/utils/leave-confirm";
-import { ChevronDownIcon, ChevronUpIcon } from "@/components/admin/icons";
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
@@ -47,10 +46,10 @@ import {
   type ApplicationFormStepId,
 } from "./application-form-steps";
 import CandidateFieldsSection, {
-  RECRUITER_INFO_FIELDS,
   type CandidateFieldKey,
 } from "./CandidateFieldsSection";
 import ApplicationReviewPreview from "./ApplicationReviewPreview";
+import ApplicationReviewSummary from "./ApplicationReviewSummary";
 import CvSourceField from "./CvSourceField";
 import SlugSegmentOrderField, {
   type SlugSegmentOrder,
@@ -1656,96 +1655,35 @@ export default function ApplicationForm({
     />
   );
 
+  const reviewCvLabel = (() => {
+    if (!hasCv) return null;
+    if (cvMode === "primary") {
+      const primaryName = primaryCvs.find(
+        (m) => m.id === selectedPrimaryId,
+      )?.filename;
+      return primaryName || "Primary CV selected";
+    }
+    return (
+      cvPendingFile?.name || formData.cv_filename || "Tailored CV ready"
+    );
+  })();
+
   const reviewStep = (
     <>
-    <section className="rounded-xl bg-[var(--paper)]/60">
-      <div className="flex items-center justify-between gap-3 px-3 py-3">
-        <h3 className="text-sm font-semibold text-[var(--ink)]">Summary</h3>
-        <button
-          type="button"
-          onClick={() => setReviewSummaryOpen((open) => !open)}
-          className="inline-flex shrink-0 cursor-pointer rounded p-1 text-[var(--muted)] hover:bg-[var(--ink)]/5 hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-          aria-expanded={reviewSummaryOpen}
-          aria-controls="application-review-summary"
-          aria-label={
-            reviewSummaryOpen ? "Hide application summary" : "Show application summary"
-          }
-          title={reviewSummaryOpen ? "Hide summary" : "Show summary"}
-        >
-          {reviewSummaryOpen ? (
-            <ChevronUpIcon className="h-5 w-5" />
-          ) : (
-            <ChevronDownIcon className="h-5 w-5" />
-          )}
-        </button>
-      </div>
-      <dl
-        id="application-review-summary"
-        hidden={!reviewSummaryOpen}
-        className="space-y-3 border-t border-[var(--ink)]/10 px-3 py-3 text-sm"
-      >
-      <div className="flex flex-wrap justify-between gap-2">
-        <dt className="text-[var(--muted)]">Company / role</dt>
-        <dd className="font-medium text-[var(--ink)]">
-          {formData.company.trim() || "—"} · {formData.role.trim() || "—"}
-        </dd>
-      </div>
-      <div className="flex flex-wrap justify-between gap-2">
-        <dt className="text-[var(--muted)]">Share slug</dt>
-        <dd className="max-w-[min(100%,20rem)] truncate font-medium text-[var(--ink)]">
-          {formData.slug.trim() || "—"}
-          {slugReady ? " (available)" : ""}
-        </dd>
-      </div>
-      <div className="space-y-3 border-t border-[var(--ink)]/10 pt-3">
-        <dt className="font-semibold text-[var(--ink)]">
-          Info shown to recruiters
-        </dt>
-        {RECRUITER_INFO_FIELDS.map(({ key, label }) => {
-          const value = (formData[key] ?? "").trim();
-          const shown = !include[key] ? "Hidden" : value || "Empty";
-          return (
-            <div key={key} className="flex flex-wrap justify-between gap-2">
-              <dt className="text-[var(--muted)]">{label}</dt>
-              <dd className="max-w-[min(100%,20rem)] truncate font-medium text-[var(--ink)]">
-                {shown}
-              </dd>
-            </div>
-          );
-        })}
-        <div className="flex flex-wrap justify-between gap-2">
-          <dt className="text-[var(--muted)]">Profile picture</dt>
-          <dd className="font-medium text-[var(--ink)]">
-            {!hasProfilePicture
-              ? "None"
-              : showProfilePicture
-                ? "Shown"
-                : "Hidden"}
-          </dd>
-        </div>
-      </div>
-      <div className="space-y-3 border-t border-[var(--ink)]/10 pt-3">
-        <div className="flex flex-wrap justify-between gap-2">
-          <dt className="text-[var(--muted)]">CV</dt>
-          <dd className="font-medium text-[var(--ink)]">
-            {hasCv
-              ? cvMode === "primary"
-                ? "Primary CV selected"
-                : cvPendingFile?.name ||
-                  formData.cv_filename ||
-                  "Tailored CV ready"
-              : "Missing"}
-          </dd>
-        </div>
-        <div className="flex flex-wrap justify-between gap-2">
-          <dt className="text-[var(--muted)]">Video</dt>
-          <dd className="font-medium text-[var(--ink)]">
-            {hasVideo ? "YouTube URL set" : "Missing"}
-          </dd>
-        </div>
-      </div>
-      </dl>
-    </section>
+      <ApplicationReviewSummary
+        open={reviewSummaryOpen}
+        onOpenChange={setReviewSummaryOpen}
+        company={formData.company}
+        role={formData.role}
+        slug={formData.slug}
+        slugReady={slugReady}
+        fieldValues={candidateValues}
+        include={include}
+        hasProfilePicture={hasProfilePicture}
+        showProfilePicture={showProfilePicture}
+        cvLabel={reviewCvLabel}
+        hasVideo={hasVideo}
+      />
       <ApplicationReviewPreview
         company={formData.company.trim()}
         role={formData.role.trim()}
