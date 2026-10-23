@@ -1,0 +1,38 @@
+---
+description: When and how to append to docs/retrospectives/DEVELOPMENT_JOURNAL.md (milestones, not every task)
+alwaysApply: true
+---
+
+# Development journal — update policy
+
+`docs/retrospectives/DEVELOPMENT_JOURNAL.md` is the narrative spine of product/engineering decisions. Keep it useful by writing less often and writing well.
+
+## When to append
+
+Update the journal when **one** of these is true:
+
+- Closing or pausing a meaningful work thread (feature shipped, layout chosen, plan parked for a later PR)
+- A product or architecture decision was made that future-you should not re-litigate cold
+- End of a substantial session/day on a before-launch or multi-PR theme, and the day is not already covered
+- The user explicitly asks to update the journal
+
+If the work only needs a topic retrospective (e.g. `APPLICATION_FORM_STEPS_F35.md`), prefer that file for checklists and open questions; link it from the journal in a short narrative beat when you do append.
+
+## When not to update
+
+Do **not** append after every task, commit, bugfix, a11y tweak, or docs-only nit. Do **not** treat the suggest-commit-message habit as a trigger for a journal entry.
+
+Skip when the change is routine and adds no new decision, doubt, or “what we actually shipped” story.
+
+## How to write
+
+1. Read the journal intro and the **latest** dated section before editing.
+2. **Append after the latest entry** (oldest → newest). Prefer a new dated `##` heading for a new day; continue the same day’s section only when still writing that day’s story.
+3. Do **not** rewrite past entries unless clarifying, fixing an error, or lightly reorganising for readability.
+4. Write for a read **months later**: short narrative paragraphs that answer what we were trying, what we decided, what we deferred, and what the day taught — not a changelog of fixes.
+5. Avoid implementation detail (ARIA attributes, event names, storage keys, file lists, API shapes). Put that in a topic retrospective and link it.
+6. When a thread outgrows a few paragraphs, spin details into `docs/retrospectives/` and keep the journal as the spine with a link.
+
+## Default stance
+
+When unsure whether to update: **skip**, and mention that a journal beat might be worth adding if the user wants one. Never invent filler entries to “stay consistent.”

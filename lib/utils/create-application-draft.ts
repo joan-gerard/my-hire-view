@@ -6,6 +6,11 @@
  */
 
 import type { ApplicationCvType } from "@/lib/types/application";
+import {
+  isSlugSegmentOrder,
+  SLUG_SEGMENT_ORDER_DEFAULT,
+  type SlugSegmentOrder,
+} from "@/lib/utils/slug-generate";
 
 export const CREATE_APPLICATION_DRAFT_VERSION = 2 as const;
 
@@ -40,9 +45,15 @@ export type CreateApplicationDraft = {
   portfolio_url: string;
   linkedin_url: string;
   include: CreateApplicationDraftInclude;
-  slugNamePosition: "start" | "end" | null;
+  slugSegmentOrder: "company_role" | "role_company";
   slugManuallyEdited: boolean;
   showProfilePicture: boolean;
+  /**
+   * True when the user explicitly set show/hide picture (vs the default that
+   * follows whether a live photo exists). Keeps a create draft when No is the
+   * only change.
+   */
+  showProfilePictureUserChosen: boolean;
   cvMode: ApplicationCvType;
   /** True only when the user (or an explicit prior choice) picked the CV source. */
   cvModeUserChosen: boolean;
@@ -114,11 +125,6 @@ function isCvMode(value: unknown): value is ApplicationCvType {
   return value === "primary" || value === "tailored";
 }
 
-function isSlugNamePosition(
-  value: unknown,
-): value is "start" | "end" | null {
-  return value === "start" || value === "end" || value === null;
-}
 
 function defaultIncludeFromValues(
   draft: Pick<
@@ -193,11 +199,21 @@ export function parseCreateApplicationDraft(
   if (typeof obj.showProfilePicture !== "boolean") return null;
   if (typeof obj.use_original_cv_filename !== "boolean") return null;
   if (!isCvMode(obj.cvMode)) return null;
-  if (!isSlugNamePosition(obj.slugNamePosition)) return null;
   if (
     obj.selectedPrimaryId !== null &&
     typeof obj.selectedPrimaryId !== "string"
   ) {
+    return null;
+  }
+
+  let slugSegmentOrder: SlugSegmentOrder;
+  if (isSlugSegmentOrder(obj.slugSegmentOrder)) {
+    slugSegmentOrder = obj.slugSegmentOrder;
+  } else if (version === 1 && obj.slugSegmentOrder === undefined) {
+    // v1 drafts predated company/role order. Name-in-URL (`slugNamePosition`)
+    // did not encode segment order — default to company then role.
+    slugSegmentOrder = SLUG_SEGMENT_ORDER_DEFAULT;
+  } else {
     return null;
   }
 
@@ -210,6 +226,12 @@ export function parseCreateApplicationDraft(
     // choice — preserve it so a late library load cannot flip back to primary.
     cvModeUserChosen = obj.cvMode === "tailored";
   }
+
+  // Older drafts omit the flag; treat as not explicitly chosen.
+  const showProfilePictureUserChosen =
+    typeof obj.showProfilePictureUserChosen === "boolean"
+      ? obj.showProfilePictureUserChosen
+      : false;
 
   return {
     v: CREATE_APPLICATION_DRAFT_VERSION,
@@ -224,9 +246,10 @@ export function parseCreateApplicationDraft(
     portfolio_url,
     linkedin_url,
     include,
-    slugNamePosition: obj.slugNamePosition,
+    slugSegmentOrder,
     slugManuallyEdited: obj.slugManuallyEdited,
     showProfilePicture: obj.showProfilePicture,
+    showProfilePictureUserChosen,
     cvMode: obj.cvMode,
     cvModeUserChosen,
     selectedPrimaryId: obj.selectedPrimaryId,
@@ -247,9 +270,9 @@ export function isCreateApplicationDraftBlank(
     !draft.role.trim() &&
     !draft.video_url.trim() &&
     !draft.cvModeUserChosen &&
+    !draft.showProfilePictureUserChosen &&
     !draft.slugManuallyEdited &&
-    draft.slugNamePosition == null &&
-    draft.showProfilePicture === true &&
+    draft.slugSegmentOrder === "company_role" &&
     draft.use_original_cv_filename === true;
 
   const noPersonalProgress =
@@ -313,9 +336,10 @@ export function saveCreateApplicationDraft(
       portfolio_url: draft.portfolio_url,
       linkedin_url: draft.linkedin_url,
       include: draft.include,
-      slugNamePosition: draft.slugNamePosition,
+      slugSegmentOrder: draft.slugSegmentOrder,
       slugManuallyEdited: draft.slugManuallyEdited,
       showProfilePicture: draft.showProfilePicture,
+      showProfilePictureUserChosen: draft.showProfilePictureUserChosen,
       cvMode: draft.cvMode,
       cvModeUserChosen: draft.cvModeUserChosen,
       selectedPrimaryId: draft.selectedPrimaryId,

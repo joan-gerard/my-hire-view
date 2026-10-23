@@ -1,5 +1,6 @@
 "use client";
 
+import { ADMIN_FIELDSET_CLASS } from "@/components/admin/admin-chrome";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
 import FileUpload from "@/components/forms/FileUpload";
@@ -17,7 +18,8 @@ interface CvSourceFieldProps {
   currentType: ApplicationCvType | null;
   currentUrl: string;
   cvUrlExists?: boolean;
-  onRetryCvCheck?: () => Promise<void>;
+  /** Resolves false when storage still has no file. */
+  onRetryCvCheck?: () => Promise<boolean | void>;
 
   mode: ApplicationCvType;
   primaryCvs: PrimaryCv[];
@@ -81,12 +83,21 @@ export default function CvSourceField({
   disabled = false,
 }: CvSourceFieldProps) {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
+  const [checkingCv, setCheckingCv] = useState(false);
+  const [cvRecheckNote, setCvRecheckNote] = useState<string | null>(null);
   const selectedPrimary = primaryCvs.find((cv) => cv.id === selectedPrimaryId);
   const hasPrimaryCvs = primaryCvs.length > 0;
   const canManageLibrary = typeof onPrimaryLibraryChange === "function";
   /** Create-only lock while library loads (F15-049); edit keeps saved cv_type. */
   const lockCvSourceWhileLoading = !isEdit && primaryCvsLoading;
 
+  const hasCvSelection =
+    mode === "primary"
+      ? Boolean(selectedPrimaryId)
+      : Boolean(pendingFile) ||
+        (isEdit &&
+          currentType === "tailored" &&
+          Boolean(currentUrl.trim() || currentFilename));
   const pendingOrCurrentName =
     pendingFile?.name ??
     (mode === "primary"
@@ -95,8 +106,8 @@ export default function CvSourceField({
   const generatedName = slug ? getCvDownloadFilename(slug) : "CV-Slug.pdf";
 
   return (
-    <fieldset className="space-y-5 rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4">
-      <legend className="px-1 text-base font-semibold text-[var(--ink)]">
+    <fieldset className={`space-y-4 sm:space-y-5 ${ADMIN_FIELDSET_CLASS}`}>
+      <legend className="text-base font-semibold text-[var(--ink)]">
         CV
       </legend>
 
@@ -105,7 +116,7 @@ export default function CvSourceField({
         <div className="space-y-2">
           <p className="text-sm font-medium text-[var(--ink)]">Current</p>
           {currentUrl.trim() || currentFilename ? (
-            <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] px-3 py-2.5">
+            <div className="rounded-xl bg-[var(--paper)]/80 px-3 py-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 {currentType && (
                   <span className="shrink-0 rounded border border-[var(--ink)]/15 px-1.5 py-0.5 text-xs text-[var(--muted)]">
@@ -138,13 +149,41 @@ export default function CvSourceField({
                     upload a new tailored PDF below.
                   </p>
                   {onRetryCvCheck && (
-                    <button
-                      type="button"
-                      onClick={() => void onRetryCvCheck()}
-                      className="mt-2 rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--white)] hover:opacity-90"
-                    >
-                      Check again
-                    </button>
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        disabled={checkingCv}
+                        aria-busy={checkingCv}
+                        onClick={() => {
+                          void (async () => {
+                            setCheckingCv(true);
+                            setCvRecheckNote(null);
+                            try {
+                              const found = await onRetryCvCheck();
+                              if (found === false) {
+                                setCvRecheckNote(
+                                  "Checked just now. The file is still not in storage.",
+                                );
+                              }
+                            } catch {
+                              setCvRecheckNote(
+                                "Could not check storage. Try again.",
+                              );
+                            } finally {
+                              setCheckingCv(false);
+                            }
+                          })();
+                        }}
+                        className="rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--white)] hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {checkingCv ? "Checking…" : "Check again"}
+                      </button>
+                      {cvRecheckNote ? (
+                        <p className="mt-2 text-xs" role="status">
+                          {cvRecheckNote}
+                        </p>
+                      ) : null}
+                    </div>
                   )}
                 </div>
               )}
@@ -244,7 +283,7 @@ export default function CvSourceField({
                     Choose from your library
                   </label>
                   <select
-                    className="w-full rounded-xl border-0 bg-[var(--white)] px-3 py-2 text-sm text-[var(--ink)] shadow-sm ring-1 ring-inset ring-[var(--ink)]/15 focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                    className="w-full rounded-xl border-0 bg-[var(--white)] px-3 py-2 text-sm text-[var(--ink)] shadow-sm outline-none ring-1 ring-inset ring-[var(--ink)]/15 focus:ring-2 focus:ring-inset focus:ring-[var(--ink)]"
                     value={selectedPrimaryId ?? ""}
                     onChange={(e) => onSelectPrimary(e.target.value)}
                   >
@@ -331,7 +370,7 @@ export default function CvSourceField({
         )}
       </div>
 
-      {/* Download name */}
+      {hasCvSelection ? (
       <div className="space-y-3 border-t border-[var(--ink)]/10 pt-4">
         <p className="text-sm font-medium text-[var(--ink)]">
           Download name for recruiters
@@ -382,6 +421,7 @@ export default function CvSourceField({
               : "…"}
         </p>
       </div>
+      ) : null}
 
       <ConfirmDialog
         open={switchToPrimaryConfirmOpen}

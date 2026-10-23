@@ -145,45 +145,21 @@ describe("reserveBaseSlug", () => {
     );
   });
 
-  it("incorporates name at start when position is 'start'", async () => {
+  it("uses role then company when order is role_company", async () => {
     mockFrom.mockReturnValue(buildChain({ data: [], error: null }));
     const slug = await reserveBaseSlug(
-      "Volvo",
-      "Engineer",
+      "Acme",
+      "Software Engineer",
       MOCK_USER_ID,
       undefined,
-      "John",
-      "Doe",
-      "start",
+      "role_company",
     );
-    expect(slug).toBe("john-doe-volvo-engineer");
+    expect(slug).toBe("software-engineer-acme");
   });
 
-  it("incorporates name at end when position is 'end'", async () => {
+  it("defaults to company then role", async () => {
     mockFrom.mockReturnValue(buildChain({ data: [], error: null }));
-    const slug = await reserveBaseSlug(
-      "Volvo",
-      "Engineer",
-      MOCK_USER_ID,
-      undefined,
-      "John",
-      "Doe",
-      "end",
-    );
-    expect(slug).toBe("volvo-engineer-john-doe");
-  });
-
-  it("falls back to base slug when name is empty and position is set", async () => {
-    mockFrom.mockReturnValue(buildChain({ data: [], error: null }));
-    const slug = await reserveBaseSlug(
-      "Volvo",
-      "Engineer",
-      MOCK_USER_ID,
-      undefined,
-      "",
-      "",
-      "start",
-    );
+    const slug = await reserveBaseSlug("Volvo", "Engineer", MOCK_USER_ID);
     expect(slug).toBe("volvo-engineer");
   });
 });

@@ -1,7 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
-import { generateSlug, buildSlug, validateSlugFormat } from './slug-generate';
+import {
+  generateSlug,
+  buildSlug,
+  validateSlugFormat,
+  type SlugSegmentOrder,
+} from './slug-generate';
 
 export { generateSlug, buildSlug, validateSlugFormat };
+export type { SlugSegmentOrder };
 
 export async function checkSlugUniqueness(
   slug: string,
@@ -65,9 +71,9 @@ export async function validateSlugForApplication(
 }
 
 /**
- * Returns the slug derived from company/role (and name-in-URL rules when `position` and names are set)
- * if it is not already used in the database. Otherwise throws {@link SlugCollisionError}.
- * Output is capped at {@link SLUG_MAX_LENGTH} via `generateSlug` / `buildSlug`.
+ * Returns the slug derived from company/role (and segment order) if it is not
+ * already used in the database. Otherwise throws {@link SlugCollisionError}.
+ * Output is capped at {@link SLUG_MAX_LENGTH} via `buildSlug`.
  * `excludeId` ignores that application row when checking (edit flow).
  */
 export async function reserveBaseSlug(
@@ -75,14 +81,9 @@ export async function reserveBaseSlug(
   role: string,
   userId: string,
   excludeId?: string,
-  first_name?: string | null,
-  last_name?: string | null,
-  position?: "start" | "end" | null,
+  order?: SlugSegmentOrder,
 ): Promise<string> {
-  const baseSlug =
-    position && (first_name?.trim() || last_name?.trim())
-      ? buildSlug(company, role, first_name, last_name, position)
-      : generateSlug(company, role);
+  const baseSlug = buildSlug(company, role, order);
 
   const unique = await checkSlugUniqueness(baseSlug, userId, excludeId);
   if (!unique) {

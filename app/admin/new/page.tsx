@@ -1,9 +1,10 @@
 "use client";
 
 import ApplicationForm from "@/components/forms/ApplicationForm";
+import ApplicationFormPageHeader from "@/components/forms/ApplicationFormPageHeader";
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
 import {
-  ADMIN_PANEL_CLASS,
+  ADMIN_FORM_SHELL_CLASS,
   ADMIN_TIP_CLASS,
 } from "@/components/admin/admin-chrome";
 import { ArrowRightIcon } from "@/components/admin/icons";
@@ -86,17 +87,10 @@ export default function NewApplicationPage() {
     try {
       setLoading(true);
 
-      // Same name source as live preview (typed form values), not visibility-filtered
-      // candidate fields — so Name in URL stays consistent when include toggles are off.
       const slugBody = {
         company: data.company,
         role: data.role,
-        slugNamePosition: data.slugNamePosition ?? null,
-        ...((data.slugNamePosition === "start" ||
-          data.slugNamePosition === "end") && {
-          first_name: data.slugFirstName ?? data.first_name ?? undefined,
-          last_name: data.slugLastName ?? data.last_name ?? undefined,
-        }),
+        slugSegmentOrder: data.slugSegmentOrder ?? "company_role",
       };
 
       async function reserveSlugFromRole(): Promise<string> {
@@ -168,15 +162,12 @@ export default function NewApplicationPage() {
         finalSlug = trimmed;
       } else {
         // Auto: keep the previewed slug (same derivation as the live form), after a
-        // final uniqueness check — do not re-derive from visibility-filtered names.
+        // final uniqueness check.
         finalSlug = await confirmPreviewedSlug(data.slug.trim());
       }
 
-      const { slugManuallyEdited, slugFirstName, slugLastName, ...dataForApi } =
-        data;
+      const { slugManuallyEdited, ...dataForApi } = data;
       void slugManuallyEdited;
-      void slugFirstName;
-      void slugLastName;
 
       const response = await fetch("/api/applications", {
         method: "POST",
@@ -254,10 +245,8 @@ export default function NewApplicationPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)]">
-        Create New Application
-      </h1>
+    <div className="space-y-4 sm:space-y-6">
+      <ApplicationFormPageHeader title="Create New Application" />
       {showProfileNudge && (
         <p className={`flex items-start gap-2 ${ADMIN_TIP_CLASS}`}>
           <span className="min-w-0 flex-1">
@@ -275,7 +264,7 @@ export default function NewApplicationPage() {
           </Link>
         </p>
       )}
-      <div className={`${ADMIN_PANEL_CLASS} p-6`}>
+      <div className={ADMIN_FORM_SHELL_CLASS}>
         <ApplicationForm
           initialData={initialData}
           onSubmit={handleSubmit}

@@ -8,10 +8,8 @@ interface FileUploadProps {
   /** Called when user selects a file (not uploaded yet; upload happens on form submit). */
   pendingFile?: File | null;
   onPendingFileChange: (file: File | null) => void | Promise<void>;
-  /** When false, hide the View link (e.g. CV missing in storage). When true or undefined, show View if value is set. */
+  /** When false, hide the View link (e.g. CV missing in storage). When true or undefined, show View if value is set. Missing-file retry lives on CvSourceField. */
   cvUrlExists?: boolean;
-  /** When provided and cvUrlExists is false, show a "Check again" button to re-run the existence check. */
-  onRetryCvCheck?: () => Promise<void>;
   error?: string;
   /** Hide the top "CV (PDF)" label when nested in CvSourceField. */
   hideLabel?: boolean;
@@ -35,7 +33,6 @@ export default function FileUpload({
   pendingFile,
   onPendingFileChange,
   cvUrlExists = true,
-  onRetryCvCheck,
   error,
   hideLabel = false,
   chooseLabel = "CV (PDF)",
@@ -44,7 +41,6 @@ export default function FileUpload({
   disabled = false,
 }: FileUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [checkingCv, setCheckingCv] = useState(false);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -231,25 +227,6 @@ export default function FileUpload({
               The file may have been removed from storage (e.g. Cloudflare R2).
               Please upload a new CV below to replace it.
             </p>
-            {onRetryCvCheck && (
-              <>
-                <p className="mt-2 text-xs text-[var(--status-warning-fg)]">
-                  If this might be a temporary issue (e.g. network), you can check again.
-                </p>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setCheckingCv(true);
-                    await onRetryCvCheck();
-                    setCheckingCv(false);
-                  }}
-                  disabled={checkingCv}
-                  className="mt-2 rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--white)] hover:opacity-90 disabled:opacity-50"
-                >
-                  {checkingCv ? 'Checking…' : 'Check again'}
-                </button>
-              </>
-            )}
           </div>
         )}
       </div>

@@ -9,6 +9,7 @@ import type { PrimaryCv } from "@/lib/types/primary-cv";
 import {
   buildSlug,
   isCustomSlug,
+  SLUG_SEGMENT_ORDER_DEFAULT,
   validateSlugFormat,
 } from "@/lib/utils/slug-generate";
 import {
@@ -38,10 +39,21 @@ import {
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
-import type { CandidateFieldKey } from "./CandidateFieldsSection";
-import CandidateFieldsSection from "./CandidateFieldsSection";
+import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
+import {
+  applicationFormStepForErrors,
+  applicationFormStepIndex,
+  type ApplicationFormStepId,
+} from "./application-form-steps";
+import CandidateFieldsSection, {
+  type CandidateFieldKey,
+} from "./CandidateFieldsSection";
+import ApplicationReviewPreview from "./ApplicationReviewPreview";
+import ApplicationReviewSummary from "./ApplicationReviewSummary";
 import CvSourceField from "./CvSourceField";
-import NameInUrlField, { type SlugNamePosition } from "./NameInUrlField";
+import SlugSegmentOrderField, {
+  type SlugSegmentOrder,
+} from "./SlugSegmentOrderField";
 import ProfilePictureField from "./ProfilePictureField";
 import ShareUrlPreview from "./ShareUrlPreview";
 import YouTubeUrlInput from "./YouTubeUrlInput";
@@ -87,12 +99,13 @@ interface ApplicationFormProps {
   /** Primary submit button label (create uses “Save & Preview”; edit keeps “Save Application”). */
   submitLabel?: string;
   /** When provided, passed to FileUpload so user can re-check CV existence (edit page). */
-  onRetryCvCheck?: () => Promise<void>;
+  /** Resolves false when the saved CV is still missing from storage. */
+  onRetryCvCheck?: () => Promise<boolean | void>;
   /** Profile picture URL; when set, Yes/No toggle is enabled; when null, toggle is disabled with No selected. */
   profilePictureUrl?: string | null;
   /** Cache-bust key for the live profile picture (e.g. profiles.updated_at). */
   profilePictureVersion?: string | null;
-  /** When set, the field offers Add/Change picture via a modal (new/edit flows). */
+  /** When set, the field offers Add/Manage picture via a modal (new/edit flows). */
   onProfilePictureSaved?: (result: {
     url: string | null;
     updated_at?: string | null;
@@ -133,6 +146,20 @@ export default function ApplicationForm({
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
+  const [currentStepId, setCurrentStepId] =
+    useState<ApplicationFormStepId>("role");
+  /**
+   * Edit of a missing CV file: the replacement does not count as done until
+   * Continue. Stores the choice that was confirmed, so a later swap waits again.
+   */
+  const [confirmedMissingCvKey, setConfirmedMissingCvKey] = useState<
+    string | null
+  >(null);
+  /** Review tick after a successful save. Navigation usually leaves before it shows. */
+  const [reviewSaved, setReviewSaved] = useState(false);
+  /** Create wizard: furthest step unlocked via Continue (survives Back). */
+  const [furthestStepId, setFurthestStepId] =
+    useState<ApplicationFormStepId>("role");
 
   /** Load once per mount; ignore later key changes while the form is open. */
   const restoredDraftRef = useRef<CreateApplicationDraft | null | undefined>(
@@ -151,6 +178,9 @@ export default function ApplicationForm({
    */
   const cvModeUserChosenRef = useRef(
     Boolean(restoredDraft?.cvModeUserChosen),
+  );
+  const showProfilePictureUserChosenRef = useRef(
+    Boolean(restoredDraft?.showProfilePictureUserChosen),
   );
   /** After a successful create, ignore further draft writes (F15-045). */
   const skipDraftSaveRef = useRef(false);
@@ -171,7 +201,7 @@ export default function ApplicationForm({
       ? restoredDraft.showProfilePicture
       : initialData?.show_profile_picture !== undefined
         ? initialData.show_profile_picture === true
-        : true;
+        : hasProfilePicture;
   const [showProfilePicture, setShowProfilePicture] = useState(
     showProfilePictureDefault,
   );
@@ -204,9 +234,11 @@ export default function ApplicationForm({
     () => restoredDraft?.include ?? defaultInclude(initialData),
   );
 
-  const [slugNamePosition, setSlugNamePosition] = useState<
-    "start" | "end" | null
-  >(restoredDraft?.slugNamePosition ?? initialData?.slugNamePosition ?? null);
+  const [slugSegmentOrder, setSlugSegmentOrder] = useState<SlugSegmentOrder>(
+    restoredDraft?.slugSegmentOrder ??
+      initialData?.slugSegmentOrder ??
+      SLUG_SEGMENT_ORDER_DEFAULT,
+  );
   const [errors, setErrors] = useState<
     Partial<Record<keyof ApplicationFormData, string>>
   >({});
@@ -220,9 +252,7 @@ export default function ApplicationForm({
       initialData?.slug ?? "",
       initialData?.company ?? "",
       initialData?.role ?? "",
-      initialData?.first_name,
-      initialData?.last_name,
-      initialData?.slugNamePosition ?? null,
+      initialData?.slugSegmentOrder ?? SLUG_SEGMENT_ORDER_DEFAULT,
     );
   });
   const slugManuallyEditedRef = useRef(false);
@@ -232,6 +262,7 @@ export default function ApplicationForm({
    * in auto mode (F27-101).
    */
   const [slugAutoReserveNonce, setSlugAutoReserveNonce] = useState(0);
+  const [reviewSummaryOpen, setReviewSummaryOpen] = useState(true);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
   /** True while SHA-256 digest of the pending CV is in flight. */
@@ -504,9 +535,10 @@ export default function ApplicationForm({
         portfolio_url: formData.portfolio_url ?? "",
         linkedin_url: formData.linkedin_url ?? "",
         include,
-        slugNamePosition,
+        slugSegmentOrder,
         slugManuallyEdited,
         showProfilePicture,
+        showProfilePictureUserChosen: showProfilePictureUserChosenRef.current,
         cvMode,
         cvModeUserChosen: cvModeUserChosenRef.current,
         selectedPrimaryId,
@@ -527,7 +559,7 @@ export default function ApplicationForm({
     formData.linkedin_url,
     formData.use_original_cv_filename,
     include,
-    slugNamePosition,
+    slugSegmentOrder,
     slugManuallyEdited,
     showProfilePicture,
     cvMode,
@@ -546,9 +578,10 @@ export default function ApplicationForm({
     portfolio_url: formData.portfolio_url ?? "",
     linkedin_url: formData.linkedin_url ?? "",
     include,
-    slugNamePosition,
+    slugSegmentOrder,
     slugManuallyEdited,
     showProfilePicture,
+    showProfilePictureUserChosen: showProfilePictureUserChosenRef.current,
     cvMode,
     cvModeUserChosen: cvModeUserChosenRef.current,
     selectedPrimaryId,
@@ -619,12 +652,80 @@ export default function ApplicationForm({
               formData.cv_url.trim() &&
               initialData?.cv_type === "tailored"),
         );
+  /** Saved file is gone from storage. Choosing a replacement is not done yet. */
+  const savedCvFileMissing = isEdit && initialData?.cvUrlExists === false;
+  const stillUsingMissingSavedCv =
+    savedCvFileMissing &&
+    !cvPendingFile &&
+    (initialData?.cv_type === "primary"
+      ? cvMode === "primary" &&
+        selectedPrimaryId === (initialData.primary_cv_id ?? null)
+      : cvMode === "tailored");
+  const hasUsableCv = hasCv && !stillUsingMissingSavedCv;
+  const cvChoiceKey =
+    cvMode === "primary"
+      ? selectedPrimaryId
+        ? `primary:${selectedPrimaryId}`
+        : ""
+      : cvPendingFile
+        ? `tailored:${cvPendingFile.name}:${cvPendingFile.size}:${cvPendingFile.lastModified}`
+        : "";
   const hasVideo = Boolean(formData.video_url.trim());
   const slugReady =
     slugLiveStatus.kind === "available" && hasSlug;
+  /**
+   * Segment-order (and other auto) rechecks set status to "checking" while the
+   * previous slug is still in the field. Treat that as still complete for the
+   * progress bar so the check does not flicker off and back on.
+   * Save / Continue stay blocked until the new check is "available".
+   */
+  const slugHoldsStepComplete =
+    hasSlug &&
+    (slugReady || slugLiveStatus.kind === "checking");
+  /**
+   * Edit (and a restored draft) already know the primary CV id, but the library
+   * list starts empty. Keep the CV and Review ticks while that list loads.
+   * Continue / Save still use `hasCv`, so they wait until the id is confirmed
+   * or cleared if that primary was deleted.
+   */
+  const cvHoldsStepComplete =
+    hasCv ||
+    (!savedCvFileMissing &&
+      primaryCvsLoading &&
+      cvMode === "primary" &&
+      Boolean(selectedPrimaryId));
+  /**
+   * A missing saved file stays unchecked after a new primary or tailored file
+   * is chosen. Continue on the CV step is what marks that choice done.
+   */
+  const cvCountsForProgress = savedCvFileMissing
+    ? hasUsableCv &&
+      cvChoiceKey !== "" &&
+      confirmedMissingCvKey === cvChoiceKey
+    : cvHoldsStepComplete;
+  /**
+   * Review is not a Continue checkpoint. It is green on edit only when the
+   * saved application already had every required field, and after a successful
+   * save. Fixing a missing CV must not light it early.
+   */
+  const savedReviewWasComplete =
+    isEdit &&
+    Boolean(initialData?.company?.trim()) &&
+    Boolean(initialData?.role?.trim()) &&
+    Boolean(initialData?.slug?.trim()) &&
+    Boolean(initialData?.video_url?.trim()) &&
+    initialData?.cvUrlExists !== false &&
+    Boolean(initialData?.cv_url?.trim());
+  const reviewCountsForProgress =
+    (savedReviewWasComplete || reviewSaved) &&
+    hasCompany &&
+    hasRole &&
+    (savedCvFileMissing ? hasUsableCv : cvHoldsStepComplete) &&
+    hasVideo &&
+    slugHoldsStepComplete;
 
   const requiredReady =
-    hasCompany && hasRole && hasCv && hasVideo && slugReady;
+    hasCompany && hasRole && hasUsableCv && hasVideo && slugReady;
 
   const formBusy =
     loading || submitPhase !== "idle" || cvPendingDigesting;
@@ -640,7 +741,7 @@ export default function ApplicationForm({
     if (canSubmit || formBusy) return null;
     if (!hasCompany) return "Company name is required.";
     if (!hasRole) return "Role is required.";
-    if (!hasCv)
+    if (!hasUsableCv)
       return cvMode === "primary"
         ? "Select a primary CV, or upload a tailored CV."
         : "Upload a CV file for this application.";
@@ -670,20 +771,18 @@ export default function ApplicationForm({
     formData.slug,
     formData.company,
     formData.role,
-    formData.first_name,
-    formData.last_name,
-    slugNamePosition,
+    slugSegmentOrder,
     slugManuallyEdited,
   ]);
 
-  /** Name-in-URL is a structured slug rule; re-enable auto slug when the user changes it. */
-  const handleSlugNamePositionChange = (next: SlugNamePosition) => {
-    setSlugNamePosition(next);
+  /** Segment order is a structured slug rule; re-enable auto slug when the user changes it. */
+  const handleSlugSegmentOrderChange = (next: SlugSegmentOrder) => {
+    setSlugSegmentOrder(next);
     setSlugManuallyEdited(false);
   };
 
   /**
-   * Exit manual slug mode and re-derive from company + role + Name in URL
+   * Exit manual slug mode and re-derive from company + role + segment order
    * via POST /api/slug (create and edit; excludeId on edit) — F27-101.
    */
   const handleResetSlugToSuggested = () => {
@@ -704,18 +803,14 @@ export default function ApplicationForm({
       const slug = buildSlug(
         formData.company,
         formData.role,
-        formData.first_name,
-        formData.last_name,
-        slugNamePosition,
+        slugSegmentOrder,
       );
       setFormData((prev) => ({ ...prev, slug }));
     }
   }, [
     formData.company,
     formData.role,
-    formData.first_name,
-    formData.last_name,
-    slugNamePosition,
+    slugSegmentOrder,
     slugManuallyEdited,
     shouldAutoReserveSlug,
   ]);
@@ -746,9 +841,7 @@ export default function ApplicationForm({
       const derivedSlug = buildSlug(
         formData.company,
         formData.role,
-        formData.first_name,
-        formData.last_name,
-        slugNamePosition,
+        slugSegmentOrder,
       );
       try {
         const res = await fetch("/api/slug", {
@@ -758,14 +851,10 @@ export default function ApplicationForm({
           body: JSON.stringify({
             company: formData.company,
             role: formData.role,
-            slugNamePosition: slugNamePosition ?? null,
+            slugSegmentOrder,
             ...(slugExcludeApplicationId
               ? { excludeId: slugExcludeApplicationId }
               : {}),
-            ...((slugNamePosition === "start" || slugNamePosition === "end") && {
-              first_name: formData.first_name ?? undefined,
-              last_name: formData.last_name ?? undefined,
-            }),
           }),
         });
         const data: { slug?: string; error?: string } = await res
@@ -812,9 +901,7 @@ export default function ApplicationForm({
     slugExcludeApplicationId,
     formData.company,
     formData.role,
-    formData.first_name,
-    formData.last_name,
-    slugNamePosition,
+    slugSegmentOrder,
   ]);
 
   const runManualSlugValidate =
@@ -864,7 +951,7 @@ export default function ApplicationForm({
           .json()
           .catch(() => ({}));
         if (cancelled) return;
-        // Discard if the user left manual mode (e.g. Reset to suggested / Name in URL).
+        // Discard if the user left manual mode (e.g. Reset to suggested / segment order).
         if (!slugManuallyEditedRef.current) return;
         if (res.status === 401) {
           setSlugLiveStatus({
@@ -910,8 +997,20 @@ export default function ApplicationForm({
     runManualSlugValidate,
   ]);
 
+  /** Surface field errors on the step that still mounts those inputs. */
+  const revealFormErrors = (
+    nextErrors: Partial<Record<keyof ApplicationFormData, string>>,
+  ) => {
+    setErrors(nextErrors);
+    const step = applicationFormStepForErrors(nextErrors);
+    if (step) setCurrentStepId(step);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Implicit Enter submit from intermediate steps must not save (no submit
+    // button until Review).
+    if (currentStepId !== "review") return;
     if (formBusy || isSubmittingRef.current || !canSubmit) return;
     isSubmittingRef.current = true;
     setErrors({});
@@ -940,7 +1039,7 @@ export default function ApplicationForm({
         newErrors.video_url = "YouTube URL is required";
 
       if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
+        revealFormErrors(newErrors);
         return;
       }
 
@@ -950,7 +1049,7 @@ export default function ApplicationForm({
         const formatCheck = validateSlugFormat(slugTrimmed);
         if (!formatCheck.ok) {
           newErrors.slug = formatCheck.error;
-          setErrors(newErrors);
+          revealFormErrors(newErrors);
           return;
         }
 
@@ -972,7 +1071,7 @@ export default function ApplicationForm({
           const msg =
             "Could not verify slug. Check your connection and retry.";
           newErrors.slug = msg;
-          setErrors(newErrors);
+          revealFormErrors(newErrors);
           return;
         }
         const slugValidateJson: { ok?: boolean; error?: string } =
@@ -980,7 +1079,7 @@ export default function ApplicationForm({
         if (slugValidateRes.status === 401) {
           const msg = "Your session expired. Sign in again and retry.";
           newErrors.slug = msg;
-          setErrors(newErrors);
+          revealFormErrors(newErrors);
           setSlugLiveStatus({ kind: "unavailable", message: msg });
           return;
         }
@@ -989,7 +1088,7 @@ export default function ApplicationForm({
             slugValidateJson.error ||
             "This slug is not available. Change it before saving.";
           newErrors.slug = slugErr;
-          setErrors(newErrors);
+          revealFormErrors(newErrors);
           setSlugLiveStatus({ kind: "unavailable", message: slugErr });
           return;
         }
@@ -1002,7 +1101,7 @@ export default function ApplicationForm({
       if (cvMode === "primary") {
         const primary = primaryCvs.find((m) => m.id === selectedPrimaryId);
         if (!primary) {
-          setErrors({ cv_url: "Select a primary CV" });
+          revealFormErrors({ cv_url: "Select a primary CV" });
           return;
         }
         cvUrl = primary.url;
@@ -1036,7 +1135,7 @@ export default function ApplicationForm({
             });
           } catch {
             // Keep the same idempotency key for retry (F8-063).
-            setErrors({
+            revealFormErrors({
               cv_url: messageForUploadNetworkError("cv"),
             });
             return;
@@ -1054,7 +1153,7 @@ export default function ApplicationForm({
               );
               uploadedPendingFileRef.current = null;
             }
-            setErrors({
+            revealFormErrors({
               cv_url: messageForUploadFailure(
                 "cv",
                 response.status,
@@ -1067,7 +1166,7 @@ export default function ApplicationForm({
             url?: string;
           };
           if (typeof body.url !== "string" || !body.url) {
-            setErrors({
+            revealFormErrors({
               cv_url: messageForUploadFailure("cv", 500, null),
             });
             return;
@@ -1096,15 +1195,12 @@ export default function ApplicationForm({
         linkedin_url: include.linkedin_url
           ? formData.linkedin_url?.trim() || null
           : null,
-        slugNamePosition,
+        slugSegmentOrder,
         cv_filename: cvFilename,
         use_original_cv_filename: formData.use_original_cv_filename ?? true,
         show_profile_picture: includePicture,
         cv_type: cvMode,
         primary_cv_id: primaryCvId,
-        // Name-in-URL uses typed values; include toggles only affect public-page fields.
-        slugFirstName: formData.first_name?.trim() || null,
-        slugLastName: formData.last_name?.trim() || null,
         // Create and edit both need this so handlers keep a validated typed slug.
         slugManuallyEdited,
       };
@@ -1117,6 +1213,7 @@ export default function ApplicationForm({
       }
       try {
         await onSubmit(payload);
+        setReviewSaved(true);
         if (persistDraftKey) {
           clearCreateApplicationDraft(persistDraftKey);
         }
@@ -1157,24 +1254,68 @@ export default function ApplicationForm({
     setInclude((prev) => ({ ...prev, [field]: included }));
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <CandidateFieldsSection
-        values={candidateValues}
-        include={include}
-        onValueChange={handleCandidateValueChange}
-        onIncludeChange={handleCandidateIncludeChange}
-      />
+  const stepReady = (id: ApplicationFormStepId): boolean => {
+    switch (id) {
+      case "role":
+        return hasCompany && hasRole && slugHoldsStepComplete;
+      case "candidate":
+        return true;
+      case "materials":
+        return cvCountsForProgress;
+      case "video":
+        return hasVideo;
+      case "review":
+        return reviewCountsForProgress;
+      default:
+        return false;
+    }
+  };
 
-      <ProfilePictureField
-        profilePictureUrl={profilePictureUrl}
-        profilePictureVersion={profilePictureVersion}
-        onProfilePictureSaved={onProfilePictureSaved}
-        showProfilePicture={showProfilePicture}
-        onShowProfilePictureChange={setShowProfilePicture}
-      />
+  const continueBlockedReasonFor = (
+    id: ApplicationFormStepId,
+  ): string | null => {
+    if (formBusy) return "Please wait until the current action finishes.";
+    switch (id) {
+      case "role":
+        if (!hasCompany) return "Company name is required.";
+        if (!hasRole) return "Role is required.";
+        if (slugLiveStatus.kind === "checking") {
+          return "Please wait until the slug has finished updating.";
+        }
+        if (slugLiveStatus.kind === "invalid") {
+          return slugLiveStatus.message || "Fix the slug before continuing.";
+        }
+        if (slugLiveStatus.kind === "unavailable") {
+          return (
+            slugLiveStatus.message ||
+            "This slug is not available. Change it before continuing."
+          );
+        }
+        if (!hasSlug) return "Slug is required.";
+        if (!slugReady) return "Wait until the slug is available.";
+        return null;
+      case "candidate":
+        return null;
+      case "materials":
+        if (!hasUsableCv) {
+          return cvMode === "primary"
+            ? "Select a primary CV, or upload a tailored CV."
+            : "Upload a CV file for this application.";
+        }
+        return null;
+      case "video":
+        if (!hasVideo) return "YouTube URL is required.";
+        return null;
+      case "review":
+        return null;
+      default:
+        return null;
+    }
+  };
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+  const roleStep = (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
         <Input
           label="Company Name *"
           value={formData.company}
@@ -1194,12 +1335,10 @@ export default function ApplicationForm({
           required
         />
       </div>
-
-      <NameInUrlField
-        value={slugNamePosition}
-        onChange={handleSlugNamePositionChange}
+      <SlugSegmentOrderField
+        value={slugSegmentOrder}
+        onChange={handleSlugSegmentOrderChange}
       />
-
       <div>
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <label
@@ -1263,7 +1402,34 @@ export default function ApplicationForm({
           </p>
         )}
       <ShareUrlPreview publicId={publicId} slug={formData.slug} />
+    </div>
+  );
 
+  const candidateStep = (
+    <>
+      <ProfilePictureField
+        profilePictureUrl={profilePictureUrl}
+        profilePictureVersion={profilePictureVersion}
+        firstName={formData.first_name}
+        lastName={formData.last_name}
+        onProfilePictureSaved={onProfilePictureSaved}
+        showProfilePicture={showProfilePicture}
+        onShowProfilePictureChange={(next) => {
+          showProfilePictureUserChosenRef.current = true;
+          setShowProfilePicture(next);
+        }}
+      />
+      <CandidateFieldsSection
+        values={candidateValues}
+        include={include}
+        onValueChange={handleCandidateValueChange}
+        onIncludeChange={handleCandidateIncludeChange}
+      />
+    </>
+  );
+
+  const materialsStep = (
+    <>
       <CvSourceField
         isEdit={isEdit}
         currentFilename={initialData?.cv_filename ?? null}
@@ -1324,9 +1490,7 @@ export default function ApplicationForm({
         }}
         onSwitchToPrimary={() => {
           const leavingSavedTailored =
-            cvMode === "tailored" &&
-            hadTailoredCvOnLoad &&
-            !cvPendingFile;
+            cvMode === "tailored" && hadTailoredCvOnLoad && !cvPendingFile;
           if (leavingSavedTailored) {
             setSwitchToPrimaryConfirmOpen(true);
             return;
@@ -1480,32 +1644,126 @@ export default function ApplicationForm({
         preparing={cvPendingDigesting}
         disabled={submitPhase !== "idle"}
       />
+    </>
+  );
 
-      <YouTubeUrlInput
-        value={formData.video_url}
-        onChange={(url) => setFormData((prev) => ({ ...prev, video_url: url }))}
-        error={errors.video_url}
+  const videoStep = (
+    <YouTubeUrlInput
+      value={formData.video_url}
+      onChange={(url) => setFormData((prev) => ({ ...prev, video_url: url }))}
+      error={errors.video_url}
+    />
+  );
+
+  const reviewCvLabel = (() => {
+    if (!hasCv) return null;
+    if (cvMode === "primary") {
+      const primaryName = primaryCvs.find(
+        (m) => m.id === selectedPrimaryId,
+      )?.filename;
+      return primaryName || "Primary CV selected";
+    }
+    return (
+      cvPendingFile?.name || formData.cv_filename || "Tailored CV ready"
+    );
+  })();
+
+  const reviewStep = (
+    <>
+      <ApplicationReviewSummary
+        open={reviewSummaryOpen}
+        onOpenChange={setReviewSummaryOpen}
+        company={formData.company}
+        role={formData.role}
+        slug={formData.slug}
+        slugReady={slugReady}
+        fieldValues={candidateValues}
+        include={include}
+        hasProfilePicture={hasProfilePicture}
+        showProfilePicture={showProfilePicture}
+        cvLabel={reviewCvLabel}
+        hasVideo={hasVideo}
+      />
+      <ApplicationReviewPreview
+        company={formData.company.trim()}
+        role={formData.role.trim()}
+        firstName={include.first_name ? formData.first_name : null}
+        lastName={include.last_name ? formData.last_name : null}
+        location={include.location ? formData.location : null}
+        portfolioUrl={include.portfolio_url ? formData.portfolio_url : null}
+        linkedinUrl={include.linkedin_url ? formData.linkedin_url : null}
+        profilePictureUrl={profilePictureUrl}
+        profilePictureVersion={profilePictureVersion}
+        showProfilePicture={hasProfilePicture && showProfilePicture}
+        cvUrl={formData.cv_url}
+        cvPendingFile={cvPendingFile}
+        cvFilename={formData.cv_filename}
+        useOriginalCvFilename={formData.use_original_cv_filename ?? true}
+        slug={formData.slug}
+        videoUrl={formData.video_url}
+      />
+    </>
+  );
+
+  const stepContents = {
+    role: roleStep,
+    candidate: candidateStep,
+    materials: materialsStep,
+    video: videoStep,
+    review: reviewStep,
+  };
+
+  const formActions = (
+    <ApplicationFormActions
+      loading={formBusy}
+      loadingLabel={saveLoadingLabel}
+      submitLabel={submitLabel}
+      canSubmit={canSubmit}
+      disabledReason={disabledReason}
+    />
+  );
+
+  const leaveDialog =
+    persistDraftKey ? (
+      <ConfirmDialog
+        open={leaveConfirmOpen}
+        title="Want to leave this page?"
+        message="Leaving this page will discard this draft. Are you sure?"
+        confirmLabel="Yes, I'm sure"
+        cancelLabel="No, stay on this page"
+        onConfirm={onConfirmLeave}
+        onCancel={onCancelLeave}
+      />
+    ) : null;
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <ApplicationFormWizardLayout
+        stepContents={stepContents}
+        currentStepId={currentStepId}
+        furthestStepId={furthestStepId}
+        allowAllSteps={isEdit}
+        onStepChange={(id) => {
+          setCurrentStepId(id);
+          if (
+            !isEdit &&
+            applicationFormStepIndex(id) >
+              applicationFormStepIndex(furthestStepId)
+          ) {
+            setFurthestStepId(id);
+          }
+        }}
+        onContinue={(fromId) => {
+          if (fromId === "materials" && hasUsableCv && cvChoiceKey) {
+            setConfirmedMissingCvKey(cvChoiceKey);
+          }
+        }}
+        continueBlockedReason={continueBlockedReasonFor(currentStepId)}
+        stepReady={stepReady}
+        actions={formActions}
       />
 
-      <ApplicationFormActions
-        loading={formBusy}
-        loadingLabel={saveLoadingLabel}
-        submitLabel={submitLabel}
-        canSubmit={canSubmit}
-        disabledReason={disabledReason}
-      />
-
-      {persistDraftKey ? (
-        <ConfirmDialog
-          open={leaveConfirmOpen}
-          title="Leave this page?"
-          message="Leaving this page will discard this draft. Are you sure?"
-          confirmLabel="Yes, I'm sure"
-          cancelLabel="No, stay on this page"
-          onConfirm={onConfirmLeave}
-          onCancel={onCancelLeave}
-        />
-      ) : null}
+      {leaveDialog}
     </form>
   );
 }

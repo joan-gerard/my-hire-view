@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ADMIN_FIELDSET_CLASS } from '@/components/admin/admin-chrome';
 import { ChevronDownIcon, ChevronUpIcon } from '@/components/admin/icons';
 import CandidateFieldRow from './CandidateFieldRow';
 
@@ -21,7 +22,11 @@ export interface CandidateFieldsSectionProps {
   onIncludeChange: (field: CandidateFieldKey, included: boolean) => void;
 }
 
-const FIELDS: { key: CandidateFieldKey; label: string; type: 'text' | 'url' }[] = [
+export const RECRUITER_INFO_FIELDS: {
+  key: CandidateFieldKey;
+  label: string;
+  type: 'text' | 'url';
+}[] = [
   { key: 'first_name', label: 'First name', type: 'text' },
   { key: 'last_name', label: 'Last name', type: 'text' },
   { key: 'location', label: 'Location', type: 'text' },
@@ -29,7 +34,7 @@ const FIELDS: { key: CandidateFieldKey; label: string; type: 'text' | 'url' }[] 
   { key: 'linkedin_url', label: 'LinkedIn URL', type: 'url' },
 ];
 
-const TOTAL_FIELDS = FIELDS.length;
+const TOTAL_FIELDS = RECRUITER_INFO_FIELDS.length;
 
 function getStoredExpanded(): boolean {
   if (typeof window === 'undefined') return true;
@@ -61,10 +66,10 @@ export default function CandidateFieldsSection({
     });
   }, []);
 
-  const includedCount = FIELDS.filter(({ key }) => include[key]).length;
+  const includedCount = RECRUITER_INFO_FIELDS.filter(({ key }) => include[key]).length;
 
   return (
-    <section className="rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] p-4">
+    <section className={ADMIN_FIELDSET_CLASS}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-[var(--ink)]">
@@ -104,7 +109,7 @@ export default function CandidateFieldsSection({
             className="overflow-hidden"
           >
             <div className="mt-4 space-y-3">
-              {FIELDS.map(({ key, label, type }) => (
+              {RECRUITER_INFO_FIELDS.map(({ key, label, type }) => (
                 <CandidateFieldRow
                   key={key}
                   id={`include-${key}`}

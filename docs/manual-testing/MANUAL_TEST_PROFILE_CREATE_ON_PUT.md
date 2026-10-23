@@ -31,7 +31,7 @@ Requires `SUPABASE_SERVICE_ROLE_KEY` in the server env (signup profile insert).
 ## 3. Add / change picture from New Application
 
 - [ ] Open `/admin/new`
-- [ ] Under Profile picture, click **Add profile picture** (or **Change picture** if one exists)
+- [ ] Under Profile picture, click **Add profile picture** (or **Manage picture** if one exists)
 - [ ] Modal: choose JPEG/PNG/WebP, preview, **Save picture**
 - [ ] Thumbnail appears; Yes/No toggle enables; Yes can be selected
 - [ ] Save the application with “show picture” on; public view shows the avatar

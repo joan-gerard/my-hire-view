@@ -167,6 +167,7 @@ Dashboard status markers offer two styles via one account-scoped browser prefere
 | `--status-dot-viewed` | `#9efc65` | Colorful active (viewed) |
 | `--status-dot-archived` | `#c5c9c9` | Colorful archived |
 | `--status-wash-draft` | `#fff1b8` | High-contrast draft wash |
+| `--status-wash-notice` | `#fff1b8` | Soft amber notice (warnings); same hex as draft wash today, separate token |
 | `--status-wash-active` | `#d3f2ff` | High-contrast active wash |
 | `--status-wash-viewed` | `#e8fad9` | High-contrast viewed wash |
 | `--status-wash-archived` | `#eceeee` | High-contrast archived wash |

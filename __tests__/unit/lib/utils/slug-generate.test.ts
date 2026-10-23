@@ -163,105 +163,35 @@ describe("generateSlug", () => {
 // buildSlug
 // ---------------------------------------------------------------------------
 describe("buildSlug", () => {
-  it("returns the base slug when position is null", () => {
-    expect(buildSlug("Volvo", "Engineer", "John", "Doe", null)).toBe(
-      "volvo-engineer",
-    );
-  });
-
-  it("returns the base slug when position is undefined", () => {
+  it("defaults to company then role", () => {
     expect(buildSlug("Volvo", "Engineer")).toBe("volvo-engineer");
-  });
-
-  it("prepends the name slug when position is 'start'", () => {
-    expect(buildSlug("Volvo", "Engineer", "John", "Doe", "start")).toBe(
-      "john-doe-volvo-engineer",
-    );
-  });
-
-  it("appends the name slug when position is 'end'", () => {
-    expect(buildSlug("Volvo", "Engineer", "John", "Doe", "end")).toBe(
-      "volvo-engineer-john-doe",
-    );
-  });
-
-  it("uses only first name when last name is absent (start)", () => {
-    expect(buildSlug("Volvo", "Engineer", "John", null, "start")).toBe(
-      "john-volvo-engineer",
-    );
-  });
-
-  it("uses only last name when first name is absent (end)", () => {
-    expect(buildSlug("Volvo", "Engineer", null, "Doe", "end")).toBe(
-      "volvo-engineer-doe",
-    );
-  });
-
-  it("falls back to base slug when both names are empty strings (start)", () => {
-    expect(buildSlug("Volvo", "Engineer", "", "", "start")).toBe(
+    expect(buildSlug("Volvo", "Engineer", "company_role")).toBe(
       "volvo-engineer",
     );
   });
 
-  it("falls back to base slug when both names are null (end)", () => {
-    expect(buildSlug("Volvo", "Engineer", null, null, "end")).toBe(
-      "volvo-engineer",
+  it("puts role before company when order is role_company", () => {
+    expect(buildSlug("Acme", "Software Engineer", "role_company")).toBe(
+      "software-engineer-acme",
     );
   });
 
-  it("clamps name+company+role combinations to SLUG_MAX_LENGTH", () => {
+  it("handles a single non-empty segment", () => {
+    expect(buildSlug("Volvo", "", "company_role")).toBe("volvo");
+    expect(buildSlug("", "Engineer", "role_company")).toBe("engineer");
+  });
+
+  it("clamps long company+role combinations to SLUG_MAX_LENGTH", () => {
     const company = "a".repeat(80);
     const role = "b".repeat(80);
-    const first = "c".repeat(40);
-    const last = "d".repeat(40);
-    const slug = buildSlug(company, role, first, last, "start");
+    const slug = buildSlug(company, role, "role_company");
     expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
     expect(validateSlugFormat(slug).ok).toBe(true);
   });
 
-  it("preserves the name segment when clamping a long start slug (F14-033)", () => {
-    const company = "a".repeat(100);
-    const role = "b".repeat(100);
-    const first = "jane";
-    const last = "doe";
-    const slug = buildSlug(company, role, first, last, "start");
-    expect(slug.startsWith("jane-doe-")).toBe(true);
-    expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
-    expect(validateSlugFormat(slug).ok).toBe(true);
-    // Pre-clamp of company+role alone would have been 128 chars; name must still appear.
-    expect(generateSlug(company, role).length).toBe(SLUG_MAX_LENGTH);
-  });
-
-  it("preserves the name segment when clamping a long end slug (F14-033)", () => {
-    const company = "a".repeat(100);
-    const role = "b".repeat(100);
-    const first = "jane";
-    const last = "doe";
-    const slug = buildSlug(company, role, first, last, "end");
-    expect(slug.endsWith("-jane-doe")).toBe(true);
-    expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
-    expect(validateSlugFormat(slug).ok).toBe(true);
-  });
-
-  it("returns a clamped name-only slug when the name alone fills the max length", () => {
-    const longFirst = "n".repeat(SLUG_MAX_LENGTH + 10);
-    const slug = buildSlug("Acme", "Engineer", longFirst, null, "start");
-    expect(slug.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
-    expect(slug.startsWith("n")).toBe(true);
-    expect(slug.includes("acme")).toBe(false);
-    expect(validateSlugFormat(slug).ok).toBe(true);
-  });
-
-  it("does not leave a trailing hyphen when company/role normalize to empty (start)", () => {
-    const slug = buildSlug("!!!", "@@@", "john", "doe", "start");
-    expect(slug).toBe("john-doe");
-    expect(validateSlugFormat(slug).ok).toBe(true);
-  });
-
-  it("does not leave a leading hyphen when company/role normalize to empty (end)", () => {
-    const slug = buildSlug("!!!", "@@@", "john", "doe", "end");
-    expect(slug).toBe("john-doe");
-    expect(validateSlugFormat(slug).ok).toBe(true);
+  it("does not leave a trailing hyphen when one side normalizes to empty", () => {
+    expect(buildSlug("!!!", "Engineer", "company_role")).toBe("engineer");
+    expect(buildSlug("Acme", "@@@", "role_company")).toBe("acme");
   });
 });
 
@@ -277,16 +207,19 @@ describe("isCustomSlug", () => {
     expect(isCustomSlug("volvo-engineer", "Volvo", "Engineer")).toBe(false);
   });
 
-  it("returns false when the slug matches a name-in-URL derived slug", () => {
+  it("returns false when the slug matches a role-company derived slug", () => {
     expect(
-      isCustomSlug("john-doe-volvo-engineer", "Volvo", "Engineer", "John", "Doe", "start"),
+      isCustomSlug(
+        "software-engineer-acme",
+        "Acme",
+        "Software Engineer",
+        "role_company",
+      ),
     ).toBe(false);
   });
 
   it("returns true when the saved slug differs from the derived value (F14-099)", () => {
-    expect(
-      isCustomSlug("my-custom-link", "Volvo", "Engineer", "John", "Doe", null),
-    ).toBe(true);
+    expect(isCustomSlug("my-custom-link", "Volvo", "Engineer")).toBe(true);
   });
 
   it("trims before comparing", () => {

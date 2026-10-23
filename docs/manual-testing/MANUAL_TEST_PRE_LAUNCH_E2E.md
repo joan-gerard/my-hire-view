@@ -43,14 +43,14 @@ Create these as you go so later sections have the right mix. Reuse the same prim
 
 | #   | Company / role (example)                    | Status by the end          | Notes                                                                                                                         |
 | --- | ------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Acme / Software Engineer                    | **active**, viewed         | Full: all candidate fields on, picture shown, primary CV, YouTube, Name in URL **At start**                                   |
+| 1   | Acme / Software Engineer                    | **active**, viewed         | Full: all candidate fields on, picture shown, primary CV, YouTube, segment order **company-role**                             |
 | 2   | Globex / Product Manager                    | **active**, never viewed   | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required**                                      |
-| 3   | Initech / Designer                          | **draft**                  | Tailored CV; Name in URL **None**; custom slug                                                                                |
-| 4   | Umbrella / Data Analyst                     | **archived**               | Publish first, then archive; Name in URL **At end**                                                                           |
+| 3   | Initech / Designer                          | **draft**                  | Tailored CV; segment order **company-role**; custom slug                                                                      |
+| 4   | Umbrella / Data Analyst                     | **archived**               | Publish first, then archive; segment order **role-company**                                                                   |
 | 5   | Soylent / QA Engineer                       | **active**                 | Same **primary CV** as #1 (reuse)                                                                                             |
 | 6   | MissingCvCo / Intern                        | **active**, **CV missing** | Point at a primary, then delete that primary from the library                                                                 |
 | 7   | Café Müller / Senior Engineer               | **active**                 | Accents / unicode in company; slug must strip special chars (`cafe-muller-…`)                                                 |
-| 8   | (very long company + role, ~200 chars each) | **draft**                  | Hits **128-char slug clamp**; with Name in URL **At start**, the **name segment is kept** and company/role is truncated first |
+| 8   | (very long company + role, ~200 chars each) | **draft**                  | Hits **128-char slug clamp** (no trailing hyphen)                                                                             |
 | 9+  | PageFill-01 …                               | whatever                   | Extra rows so the dashboard has **more than 20** applications (page size is 20)                                               |
 
 ---
@@ -170,36 +170,37 @@ From `/signup` (login page “create a new account”, or type the URL).
 
 With **zero** applications:
 
-- [ ] Title **Applications**
-- [ ] **Create New Application** in the header row
+- [ ] Personalized greeting with first name when known (e.g. **Good afternoon, Joan**) above title **Applications**
+- [ ] Lime **+** create button in the header row (tooltip / aria-label: Create new application)
 - [ ] Empty state: “Create your first application”, short explanation, **New application** link
 - [ ] **Search bar is hidden**
 - [ ] **What do these icons mean?** is hidden
 - [ ] Admin header: **Dashboard** (active), **New Application**, **Profile**, user email, **Sign Out**, centered logo
 - [ ] Active nav underline follows Dashboard / New Application / Profile
-- [ ] Getting started checklist is visible (unless you already dismissed it on this browser — use a fresh account)
+- [ ] Right rail: **Summary** counts (All / Live / Draft / Archived), then **Getting started** checklist (unless dismissed)
+- [ ] On small screens, Summary + Getting started appear below the empty state / list
 
 ---
 
-## 7. Getting started checklist
+## 7. Dashboard summary + Getting started checklist
 
-Checklist appears on `/admin`, `/admin/profile`, `/admin/new`, and `/admin/edit/[id]`.
+On `/admin` only (right rail under Search / list). Not on profile / new / edit.
 
-- [ ] Floating panel, bottom-right; progress `N of 6 complete` while incomplete
+- [ ] **Summary** shows All, Live, Draft, Archived; counts update after publish / archive / restore / delete
+- [ ] **Summary** and **Getting started** collapse/expand from their headers; choice survives refresh
+- [ ] Summary above Getting started; Getting started header is title + **N/6** or **Done** pill only
 - [ ] Six steps: **Create your profile**, **Add location or a link**, **Add a profile photo**, **Upload a primary CV**, **Create your first application draft**, **Publish & share**
 - [ ] Each incomplete step has **Skip**; **Skip all** is in the footer
-- [ ] **Minimize** → compact **Getting started N/6**; expand restores; choice survives refresh and admin navigation
 - [ ] Step links go to the right page (profile vs new application)
-- [ ] Completing a step (save profile, upload photo/CV, create app, publish) ticks it **without** a full page reload
+- [ ] Completing a step (save profile, upload photo/CV, create app, publish) ticks it when you are on `/admin` (or after navigating back)
 - [ ] Completing a previously skipped step shows **completed**, not Skipped
-- [ ] After skip/complete of all six: progress **All set** / minimized **Done**; footer **Dismiss** (not Skip all)
-- [ ] **Dismiss** hides the panel; survives refresh; does not come back on navigation
+- [ ] After skip/complete of all six: progress **All set**; footer **Dismiss** (not Skip all)
+- [ ] **Dismiss** hides Getting started only; Summary remains; survives refresh
 - [ ] A completed step **stays checked** if you later remove the data (e.g. delete the only published app — Publish & share stays done for this browser + account)
 - [ ] **Skip all** then complete one step via real data: that step shows completed; others stay skipped
 - [ ] Completing via **LinkedIn only** (no location) ticks “Add location or a link”
-- [ ] Photo uploaded from `/admin/new` ticks the photo step on `/admin` without a refresh
-- [ ] First paint does not flash expanded if it was minimized/dismissed
-- [ ] After **Dismiss**, saving profile/CV/apps does not bring the panel back
+- [ ] Photo uploaded from `/admin/new` ticks the photo step when you return to `/admin`
+- [ ] After **Dismiss**, saving profile/CV/apps does not bring Getting started back
 - [ ] Account B (or a new public id) does not inherit Account A’s completed/skipped/dismissed prefs
 
 Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
@@ -208,7 +209,7 @@ Optional reset: clear `localStorage` key `myhireview:onboarding-checklist`.
 
 ## 8. Account settings (`/admin/profile`)
 
-Header nav still says **Profile**. Page title is **Account settings** with tabs: Profile · CVs · Preferences · Billing and plan · Password. URL stays `/admin/profile` (tabs are client state). The old active/draft/archived applications summary is removed (planned for the dashboard via `L7-080`); **Billing and plan** still shows total application and primary-CV usage vs draft Free caps.
+Header nav still says **Profile**. Page title is **Account settings** with tabs: Profile · CVs · Preferences · Billing and plan · Password. URL stays `/admin/profile` (tabs are client state). Application status tallies live on the dashboard Summary rail; **Billing and plan** still shows total application and primary-CV usage vs draft Free caps.
 
 ### Tabs chrome
 
@@ -241,7 +242,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Profile picture (Profile tab — identity header only)
 
-- [ ] Avatar preview, Change/Remove (or Choose), and help copy live in the identity header — not a second picture block lower on the page
+- [ ] Avatar preview, Change picture / Remove picture (or Choose picture), and help copy live in the identity header — not a second picture block lower on the page
 - [ ] Choose JPEG → preview → Save → thumbnail persists after refresh
 - [ ] Replace with PNG (and WebP if you have one) → new image shows (cache-bust, not a stale JPEG)
 - [ ] **Remove** picture → Save → initials/placeholder in the header; applications that **show** the picture no longer display an avatar on `/view`
@@ -290,7 +291,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Page chrome
 
-- [ ] Title **Create New Application**
+- [ ] Title **Create New Application** (no layout toggle; the form is the wizard on create and edit)
 - [ ] If location, links, and picture are still empty: nudge to complete profile; arrow goes to Profile
 - [ ] After profile has location/link/picture, nudge is gone
 - [ ] Form skeleton/pulse while profile loads; then the form
@@ -303,28 +304,30 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Toggle **on** a field but leave it blank → stored/shown as empty (no placeholder junk)
 - [ ] Edit a value here (e.g. location) → **does not** change Profile
 - [ ] Collapse / expand the section; preference remembered on the next visit (`localStorage`)
-- [ ] **Profile picture:** Yes/No disabled until a picture exists; **Add / Change picture** modal uploads JPEG/PNG/WebP, preview, Save, Cancel, type/size errors
-- [ ] After adding a picture from this page, Yes/No enables; **Yes** shows the avatar on `/view` after publish
-- [ ] **No** (or remove picture) → no avatar on `/view` even if the account still has a picture
+- [ ] Picture block is above **Info shown to recruiters**. Each field is **Show** / **Hidden**, label above the value; **Hidden** mutes the field and blocks editing
+- [ ] **Profile picture:** Yes/No hidden until a picture exists; **Add profile picture** / **Manage picture** modal uploads JPEG/PNG/WebP, preview, Save, Cancel, type/size errors
+- [ ] After adding a picture from this page, Yes/No appears; **Yes** shows the thumbnail and the avatar on `/view` after publish
+- [ ] **No** hides the thumbnail and keeps **Manage picture**; no avatar on `/view` even if the account still has a picture
+- [ ] **Download name for recruiters** is hidden until a primary CV is selected or a tailored PDF is chosen
+- [ ] **Review & save** summary starts open and can be collapsed; groups match the steps (Role, About you, CV, Video) with stacked labels and status chips (**Hidden** / **Empty** / **Shown** / **None** / **Available** / **Missing** / **Ready**); About you lists profile picture before the recruiter fields
+- [ ] **Show preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form or count a view
 - [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
 
-### Company, role, slug, Name in URL
+### Company, role, slug, URL segment order
 
 - [ ] Company and role required; Save blocked until valid
 - [ ] Whitespace-only company or role cannot save (trim)
 - [ ] Special characters (`Acme & Co.`, `Café`, punctuation) produce a lowercase hyphenated slug with extras stripped
 - [ ] Auto slug from company + role as you type (live checking); typing faster than the debounce only checks the **final** value
 - [ ] Clearing company or role hides the availability indicator (does not leave a stale green tick)
-- [ ] **Name in URL: None** → slug is `company-role` style
-- [ ] **At start** → slug begins with `first-last-…` (example: `john-doe-acme-software-engineer`)
-- [ ] **At end** → slug ends with `…-first-last`
-- [ ] Name in URL with **first name only** (clear last name on the form) omits the missing segment (`john-acme-…`, not `john--acme`)
-- [ ] Name in URL with **no names at all** falls back to company-role only
-- [ ] Very long company+role: slug is clamped to **128** chars (no trailing hyphen). With name in URL, **name is preserved** and company/role is truncated first
+- [ ] **URL segment order: Company then role** → slug is `company-role` style (e.g. `acme-software-engineer`)
+- [ ] **Role then company** → slug is `role-company` style (e.g. `software-engineer-acme`)
+- [ ] Very long company+role: slug is clamped to **128** chars (no trailing hyphen)
 - [ ] Manual slug edit: uppercase, spaces, and trailing hyphens fail **immediately** (no network)
 - [ ] Duplicate slug vs another of **your** apps → unavailable (slugs are unique **per user**, not globally — Account B may reuse the same slug)
-- [ ] **Reset to suggested** restores the auto slug from current company, role, and Name in URL
-- [ ] After a manual slug, toggling Name in URL or Reset exits manual mode and re-derives
+- [ ] **Reset to suggested** restores the auto slug from current company, role, and segment order
+- [ ] After a manual slug, changing segment order or Reset exits manual mode and re-derives
+- [ ] Editing an app with an old name-based or custom slug does **not** rewrite the stored slug until Reset or a manual edit
 - [ ] **Share link preview** shows `/view/{publicId}/{slug}` and explains Public id
 - [ ] Invalid slug characters / empty slug cannot save
 - [ ] Save while the slug row still says **checking** is blocked (“wait until the slug has finished updating”)
@@ -397,11 +400,12 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 - [ ] Cards show **company - role**
 - [ ] List dims slightly while a search/refetch is in flight (`opacity`)
 - [ ] Newest applications appear first
+- [ ] Day labels stick under the admin header while that day's cards are on screen, then yield to the next day. A hovered card still slides under the label; its icon tooltip stays visible above the label
 
 ### Status legend
 
 - [ ] Button opens modal **Status icons & draft actions**
-- [ ] Lists Draft, Active (not viewed yet), Active (viewed), Archived, CV missing — icons match cards
+- [ ] Lists Draft, Active (not viewed yet), Active (viewed), Archived, CV missing, Picture missing — icons match cards
 - [ ] Explains **Publish**, **Preview**, **Publish to share**
 - [ ] Close via Close, Escape, or backdrop; focus returns; heading focused on open
 - [ ] Body scroll locked while open
@@ -409,34 +413,36 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 
 ### Card actions by status
 
+- [ ] On desktop, the action row shows on hover and hides again after a click once the pointer leaves the card. Tabbing to an action still shows the row.
+
 **Draft**
 
 - [ ] Amber clock icon
-- [ ] **Publish** button on the card
-- [ ] **Publish to share** (not Copy Link)
-- [ ] **Preview** (not View Application) opens the share URL with the banner
-- [ ] 3-dot: Edit, Publish, Delete — **no Archive**
+- [ ] Labeled **Publish** button on the card
+- [ ] Copy-link icon is disabled; tooltip explains publish-before-share (not an enabled Copy link)
+- [ ] External-link icon tooltip is **Preview**; opens the share URL with the banner
+- [ ] **More options** (⋯) tooltip; menu: Edit, Publish, Delete — **no Archive**
 
 **Active, 0 views**
 
 - [ ] Green clock
-- [ ] **Copy Link** works; button shows **Copied!** briefly
+- [ ] Copy-link icon works; tooltip / `aria-label` shows **Copied!** briefly
 - [ ] Copied URL is `…/view/{publicId}/{slug}`
-- [ ] If `public_id` were missing, Copy Link / View stay **disabled** (`Publish to share` / `View unavailable`) — no `/view//slug`
-- [ ] **View Application** opens a new tab (live page, no draft banner)
-- [ ] 3-dot: Edit, Archive, Delete
+- [ ] If `public_id` were missing, Copy / View icons stay **disabled** with tooltips — no `/view//slug`
+- [ ] View-application icon opens a new tab (live page, no draft banner)
+- [ ] **More options**: Edit, Archive, Delete
 
 **Active, viewed**
 
 - [ ] Green check after a non-owner view (§14)
-- [ ] Copy Link / View Application still work
+- [ ] Copy link / View application icons still work
 
 **Archived**
 
 - [ ] Grey archive icon
-- [ ] **Link unavailable** (not Copy Link)
+- [ ] Copy-link icon disabled (tooltip: restore / link unavailable)
 - [ ] View/Preview disabled or empty-state for everyone including owner (no draft banner)
-- [ ] 3-dot: Edit, **Restore**, Delete — no Archive / no Publish
+- [ ] **More options**: Edit, **Restore**, Delete — no Archive / no Publish
 
 **CV missing**
 
@@ -445,8 +451,8 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 
 ### View Insights
 
-- [ ] Expand / collapse per card
-- [ ] Expanding insights on **two cards** at once works independently
+- [ ] Insights icon opens a modal per card
+- [ ] Opening insights on **two cards** at once works independently
 - [ ] **Views**, **CV downloads**, **Created** (date), **Last viewed** (date/time or —)
 - [ ] Owner opening their own live page does **not** bump Views or Last viewed
 - [ ] Recruiter view (incognito) increments Views by **1 per browser session**; refresh in the same session does not add another
@@ -463,6 +469,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 
 ### Search
 
+- [ ] Field sits at the top of the right rail, above Summary (below the list on small screens)
 - [ ] Placeholder: company, role, or slug
 - [ ] Debounced (~300 ms); typing does not thrash
 - [ ] Match by **company**, **role**, and **slug** (case-insensitive)
@@ -505,9 +512,12 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 - [ ] Toggle candidate fields and picture Yes/No; `/view` matches
 - [ ] Change/remove picture from the modal; Profile library/picture stays in sync
 - [ ] Invalid / foreign / Account B’s edit id → redirected to dashboard (no crash, no leak)
-- [ ] **Check again** on a missing CV retries existence without a full-page spinner
+- [ ] **Check again** on a missing CV shows **Checking…**, then either the warning clears or **Checked just now. The file is still not in storage.** A failed check says to try again. No full-page spinner
 - [ ] No leave-confirm browser draft on edit (create-only feature)
 - [ ] Edit radios stay **usable** while the primary library loads (saved source is not overwritten)
+- [ ] On edit, CV and Review ticks are green immediately for a saved primary CV; they drop only if that primary is gone after the library loads. Save stays unavailable until the library confirms it
+- [ ] On edit of a **missing** CV file, choosing another primary or a new tailored PDF does not turn CV green until **Continue** on the CV step. Changing that choice again waits for Continue once more. Review stays unticked through that Continue
+- [ ] On edit of an application that already has company, role, slug, CV, and video, Review is green on open. Clearing a required field drops it. It does not turn green merely because an earlier step was continued
 - [ ] Two tabs editing the **same** app: last save wins; no 500; reload shows one consistent row
 
 ---
@@ -553,7 +563,7 @@ Use incognito / signed-out (and owner, where noted).
 
 - [ ] Picture off / no picture → no avatar; layout still balanced
 - [ ] All candidate toggles off → header still shows company/role; no name/location/links
-- [ ] Name in URL at start / at end / none → URL shape matches; page still resolves
+- [ ] Segment order company-role / role-company → URL shape matches; page still resolves; old name-based slugs still open until changed
 - [ ] Custom slug resolves; a typo slug → unavailable empty state (not another user’s app)
 - [ ] Wrong **publicId** with a valid-looking slug → unavailable (no leak of another account)
 - [ ] Extra query string or hash on the share URL still resolves (`?utm=…`, `#section`)

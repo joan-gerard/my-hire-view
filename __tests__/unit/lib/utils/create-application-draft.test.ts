@@ -36,9 +36,10 @@ function sampleDraft(
       portfolio_url: false,
       linkedin_url: false,
     },
-    slugNamePosition: null,
+    slugSegmentOrder: "company_role",
     slugManuallyEdited: false,
     showProfilePicture: true,
+    showProfilePictureUserChosen: false,
     cvMode: "primary",
     cvModeUserChosen: false,
     selectedPrimaryId: "cv-1",
@@ -81,6 +82,15 @@ describe("parseCreateApplicationDraft", () => {
     expect(parseCreateApplicationDraft(draft)?.cvModeUserChosen).toBe(true);
   });
 
+  it("defaults omitted showProfilePictureUserChosen to false on v2 payloads", () => {
+    const draft = { ...sampleDraft({ showProfilePictureUserChosen: true }) };
+    delete (draft as { showProfilePictureUserChosen?: boolean })
+      .showProfilePictureUserChosen;
+    expect(
+      parseCreateApplicationDraft(draft)?.showProfilePictureUserChosen,
+    ).toBe(false);
+  });
+
   it("migrates v1 tailored drafts as user-chosen and primary as automatic", () => {
     const v1Tailored = {
       ...sampleDraft({
@@ -103,6 +113,17 @@ describe("parseCreateApplicationDraft", () => {
     expect(parseCreateApplicationDraft(v1Primary)?.cvModeUserChosen).toBe(
       false,
     );
+  });
+
+  it("migrates v1 drafts that omit slugSegmentOrder to company_role", () => {
+    const v1 = {
+      ...sampleDraft({ slugSegmentOrder: "role_company" }),
+      v: 1,
+    };
+    delete (v1 as { slugSegmentOrder?: string }).slugSegmentOrder;
+    const parsed = parseCreateApplicationDraft(v1);
+    expect(parsed?.v).toBe(2);
+    expect(parsed?.slugSegmentOrder).toBe("company_role");
   });
 
   it("rejects wrong version, corrupt include, expired, and future-dated drafts", () => {
@@ -148,15 +169,78 @@ describe("isCreateApplicationDraftBlank", () => {
           portfolio_url: false,
           linkedin_url: false,
         },
-        slugNamePosition: null,
+        slugSegmentOrder: "company_role",
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
         use_original_cv_filename: true,
       }),
     ).toBe(true);
+  });
+
+  it("treats empty create form as blank when showProfilePicture is false without an explicit choice", () => {
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "",
+        last_name: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: false,
+          last_name: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugSegmentOrder: "company_role",
+        slugManuallyEdited: false,
+        showProfilePicture: false,
+        showProfilePictureUserChosen: false,
+        cvMode: "primary",
+        cvModeUserChosen: false,
+        selectedPrimaryId: null,
+        use_original_cv_filename: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps a draft when showProfilePicture No was explicitly chosen", () => {
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "",
+        last_name: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: false,
+          last_name: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugSegmentOrder: "company_role",
+        slugManuallyEdited: false,
+        showProfilePicture: false,
+        showProfilePictureUserChosen: true,
+        cvMode: "primary",
+        cvModeUserChosen: false,
+        selectedPrimaryId: null,
+        use_original_cv_filename: true,
+      }),
+    ).toBe(false);
   });
 
   it("treats auto slug and automatic primary selection as blank", () => {
@@ -178,9 +262,10 @@ describe("isCreateApplicationDraftBlank", () => {
           portfolio_url: false,
           linkedin_url: false,
         },
-        slugNamePosition: null,
+        slugSegmentOrder: "company_role",
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: "cv-auto",
@@ -208,9 +293,10 @@ describe("isCreateApplicationDraftBlank", () => {
           portfolio_url: false,
           linkedin_url: false,
         },
-        slugNamePosition: null,
+        slugSegmentOrder: "company_role",
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
@@ -236,9 +322,10 @@ describe("isCreateApplicationDraftBlank", () => {
           portfolio_url: false,
           linkedin_url: false,
         },
-        slugNamePosition: null,
+        slugSegmentOrder: "company_role",
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "tailored",
         cvModeUserChosen: true,
         selectedPrimaryId: null,
@@ -265,9 +352,10 @@ describe("isCreateApplicationDraftBlank", () => {
           portfolio_url: false,
           linkedin_url: false,
         },
-        slugNamePosition: null,
+        slugSegmentOrder: "company_role",
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "tailored",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
@@ -295,9 +383,10 @@ describe("isCreateApplicationDraftBlank", () => {
           portfolio_url: false,
           linkedin_url: false,
         },
-        slugNamePosition: null,
+        slugSegmentOrder: "company_role",
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
@@ -338,9 +427,10 @@ describe("load/save/clearCreateApplicationDraft", () => {
           portfolio_url: false,
           linkedin_url: false,
         },
-        slugNamePosition: null,
+        slugSegmentOrder: "company_role",
         slugManuallyEdited: false,
         showProfilePicture: true,
+        showProfilePictureUserChosen: false,
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,

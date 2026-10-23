@@ -141,23 +141,25 @@ Public resolution: `public_id` → profile (`user_id`) → application by `(user
 
 ## Future: custom public id (vanity handle)
 
-A planned enhancement (potentially **premium**):
+> **Superseded (2026-10-20).** Premium-only vanity (`J1-079`) was **cancelled**. Product decision: **username / public id for all tiers at signup** (Reslink-style) — see [COMPETITIVE_COMPARISON.md](../product/COMPETITIVE_COMPARISON.md) and backlog `J4-125` → `J1-126`. Opaque Option B remains what ships today; the table below is historical design notes only.
 
-- Let users choose a custom **public id** (e.g. `joan-gerard`) instead of the assigned opaque id (`k7x2m9ab`), similar to a LinkedIn custom URL.
-- URLs would become `/view/joan-gerard/acme-software-engineer` while the opaque id remains the fallback or internal canonical key until the user claims a vanity id.
+~~A planned enhancement (potentially **premium**):~~
 
-**Considerations for that feature:**
+- ~~Let users choose a custom **public id** (e.g. `joan-gerard`) instead of the assigned opaque id (`k7x2m9ab`), similar to a LinkedIn custom URL.~~
+- ~~URLs would become `/view/joan-gerard/acme-software-engineer` while the opaque id remains the fallback or internal canonical key until the user claims a vanity id.~~
+
+**Historical considerations (still useful for `J1-126` signup username):**
 
 | Area | Notes |
 |------|--------|
 | **Uniqueness** | Global uniqueness on vanity handles; reserved/blocked words |
 | **Validation** | Format rules, profanity, impersonation, trademark |
 | **Migration** | Old opaque links should keep working (redirect or dual lookup) |
-| **Privacy** | Vanity ids are more identifying than opaque ids — clear consent and UI copy |
-| **Tiering** | Natural fit for a paid tier (custom branding) |
-| **Implementation** | Likely `profiles.vanity_public_id` nullable + unique, or `public_id` type enum (`opaque` \| `vanity`) |
+| **Privacy** | Name-like ids are more identifying than opaque ids — clear consent and UI copy; optional private-link mode may return later |
+| **Tiering** | ~~Natural fit for a paid tier~~ — **superseded:** all tiers at signup (`J1-126`); do not sell name-in-URL as Premium |
+| **Implementation** | Likely claimable username on `profiles` (or `public_id` type enum); opaque may remain internal/canonical |
 
-This is **out of scope** for the initial Option B release; opaque ids are the only public id type today.
+Opaque ids are the only public id type **in production today**; username-for-all is planned via `J1-126` (after pricing align `J4-125`).
 
 ---
 

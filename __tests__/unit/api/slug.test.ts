@@ -108,28 +108,24 @@ describe("POST /api/slug", () => {
     expect(mockCreateClient).not.toHaveBeenCalled();
   });
 
-  it("includes name in slug when slugNamePosition and names are provided", async () => {
-    mockReserveBaseSlug.mockResolvedValue("john-doe-volvo-software-engineer");
+  it("passes slugSegmentOrder through to reserveBaseSlug", async () => {
+    mockReserveBaseSlug.mockResolvedValue("software-engineer-volvo");
 
     const req = makeRequest("http://localhost/api/slug", {
       company: "Volvo",
       role: "Software Engineer",
-      first_name: "John",
-      last_name: "Doe",
-      slugNamePosition: "start",
+      slugSegmentOrder: "role_company",
     });
     const response = await slugPost(req);
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.slug).toBe("john-doe-volvo-software-engineer");
+    expect(json.slug).toBe("software-engineer-volvo");
     expect(mockReserveBaseSlug).toHaveBeenCalledWith(
       "Volvo",
       "Software Engineer",
       "user-123",
       undefined,
-      "John",
-      "Doe",
-      "start",
+      "role_company",
     );
   });
 
@@ -166,11 +162,11 @@ describe("POST /api/slug", () => {
     expect(mockReserveBaseSlug).not.toHaveBeenCalled();
   });
 
-  it("returns 400 for invalid slugNamePosition", async () => {
+  it("returns 400 for invalid slugSegmentOrder", async () => {
     const req = makeRequest("http://localhost/api/slug", {
       company: "Volvo",
       role: "Engineer",
-      slugNamePosition: "middle",
+      slugSegmentOrder: "middle",
     });
     const response = await slugPost(req);
     expect(response.status).toBe(400);
@@ -206,9 +202,7 @@ describe("POST /api/slug", () => {
       "Engineer",
       "user-123",
       OWNED_EXCLUDE_ID,
-      null,
-      null,
-      null,
+      undefined,
     );
   });
 

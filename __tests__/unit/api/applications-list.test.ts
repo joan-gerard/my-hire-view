@@ -34,18 +34,26 @@ vi.mock("@/lib/utils/cv-storage", () => ({
   checkCvObjectExists: mockCheckCvObjectExists,
   isOwnedTailoredCvUrl: vi.fn().mockReturnValue(true),
 }));
-vi.mock("@/lib/auth/ensure-public-id", () => ({
-  resolvePublicIdReadOnly: vi.fn().mockResolvedValue("k7x2m9ab"),
-  ensureProfilePublicId: vi.fn().mockResolvedValue("k7x2m9ab"),
-}));
+vi.mock("@/lib/auth/ensure-public-id", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/auth/ensure-public-id")>();
+  return {
+    ...actual,
+    ensureProfilePublicId: vi.fn().mockResolvedValue("k7x2m9ab"),
+  };
+});
 
 import { GET } from "@/app/api/applications/route";
-import { resolvePublicIdReadOnly } from "@/lib/auth/ensure-public-id";
 import {
   APPLICATION_LIST_DEFAULT_LIMIT,
   APPLICATION_LIST_MAX_LIMIT,
 } from "@/lib/types/application";
-import { okWithCount, dbError, makeSupabaseClient } from "../../helpers/supabase-mock";
+import {
+  ok,
+  okWithCount,
+  dbError,
+  makeSupabaseClient,
+} from "../../helpers/supabase-mock";
 
 const MOCK_USER = { id: "user-abc" };
 
@@ -62,6 +70,23 @@ const LIST_ITEM = {
   last_viewed_at: null,
   cv_url: "https://r2.example.com/cv.pdf",
 };
+
+const DEFAULT_PROFILE = {
+  public_id: "k7x2m9ab",
+  profile_picture_url: null as string | null,
+};
+
+function mockListClient(
+  listChain: ReturnType<typeof okWithCount>,
+  profile: {
+    public_id?: string | null;
+    profile_picture_url?: string | null;
+  } = DEFAULT_PROFILE,
+) {
+  mockCreateClient.mockResolvedValue(
+    makeSupabaseClient([listChain, ok(profile)]),
+  );
+}
 
 function makeGetRequest(query = ""): NextRequest {
   const url = query
@@ -83,13 +108,18 @@ beforeEach(() => {
 describe("GET /api/applications", () => {
   it("returns a page with default limit and meta.total", async () => {
     const chain = okWithCount([LIST_ITEM], 21);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(chain);
 
     const response = await GET(makeGetRequest());
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.data).toEqual([
-      { ...LIST_ITEM, public_id: "k7x2m9ab", cv_exists: true },
+      {
+        ...LIST_ITEM,
+        public_id: "k7x2m9ab",
+        cv_exists: true,
+        profile_picture_missing: false,
+      },
     ]);
     expect(json.meta).toEqual({
       limit: APPLICATION_LIST_DEFAULT_LIMIT,
@@ -101,8 +131,7 @@ describe("GET /api/applications", () => {
 
   it("sets cv_exists:true when existence is unknown (non-R2 URL)", async () => {
     mockCheckCvObjectExists.mockResolvedValue(undefined);
-    const chain = okWithCount([LIST_ITEM], 1);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(okWithCount([LIST_ITEM], 1));
 
     const response = await GET(makeGetRequest());
     expect(response.status).toBe(200);
@@ -112,18 +141,60 @@ describe("GET /api/applications", () => {
 
   it("sets cv_exists:false when HeadObject confirms the R2 object is missing", async () => {
     mockCheckCvObjectExists.mockResolvedValue(false);
-    const chain = okWithCount([LIST_ITEM], 1);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(okWithCount([LIST_ITEM], 1));
 
     const response = await GET(makeGetRequest());
     const json = await response.json();
     expect(json.data[0].cv_exists).toBe(false);
   });
 
+  it("sets profile_picture_missing:true when show is on and the profile has no picture", async () => {
+    mockListClient(
+      okWithCount([{ ...LIST_ITEM, show_profile_picture: true }], 1),
+      { public_id: "k7x2m9ab", profile_picture_url: null },
+    );
+
+    const response = await GET(makeGetRequest());
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data[0].profile_picture_missing).toBe(true);
+    expect(json.data[0]).not.toHaveProperty("show_profile_picture");
+  });
+
+  it("sets profile_picture_missing:false when show is on and a live picture exists", async () => {
+    mockListClient(
+      okWithCount([{ ...LIST_ITEM, show_profile_picture: true }], 1),
+      {
+        public_id: "k7x2m9ab",
+        profile_picture_url:
+          "https://example.supabase.co/storage/v1/object/public/profile-pictures/user/avatar.jpg",
+      },
+    );
+
+    const response = await GET(makeGetRequest());
+    const json = await response.json();
+    expect(json.data[0].profile_picture_missing).toBe(false);
+  });
+
+  it("returns 500 when the profile lookup fails", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        okWithCount([LIST_ITEM], 1),
+        dbError("profile boom"),
+      ]),
+    );
+
+    const response = await GET(makeGetRequest());
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("profile boom");
+  });
+
   it("returns null public_id when none can be resolved (does not coerce to empty string)", async () => {
-    vi.mocked(resolvePublicIdReadOnly).mockResolvedValueOnce(null);
-    const chain = okWithCount([LIST_ITEM], 1);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(okWithCount([LIST_ITEM], 1), {
+      public_id: null,
+      profile_picture_url: null,
+    });
 
     const response = await GET(makeGetRequest());
     expect(response.status).toBe(200);
@@ -133,7 +204,7 @@ describe("GET /api/applications", () => {
 
   it("respects limit and offset query params", async () => {
     const chain = okWithCount([LIST_ITEM], 50);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(chain);
 
     const response = await GET(makeGetRequest("limit=10&offset=20"));
     expect(response.status).toBe(200);
@@ -144,7 +215,7 @@ describe("GET /api/applications", () => {
 
   it("caps limit at APPLICATION_LIST_MAX_LIMIT", async () => {
     const chain = okWithCount([], 0);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(chain);
 
     const response = await GET(makeGetRequest("limit=999"));
     expect(response.status).toBe(200);
@@ -158,7 +229,7 @@ describe("GET /api/applications", () => {
 
   it("applies search filter when q is present", async () => {
     const chain = okWithCount([LIST_ITEM], 1);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(chain);
 
     const response = await GET(makeGetRequest("q=Acme"));
     expect(response.status).toBe(200);
@@ -169,7 +240,7 @@ describe("GET /api/applications", () => {
 
   it("filters by status when status=active|draft|archived (F19-044)", async () => {
     const chain = okWithCount([LIST_ITEM], 1);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(chain);
 
     const response = await GET(makeGetRequest("status=active&limit=1"));
     expect(response.status).toBe(200);
@@ -179,7 +250,7 @@ describe("GET /api/applications", () => {
 
   it("ignores invalid status query values", async () => {
     const chain = okWithCount([LIST_ITEM], 1);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(chain);
 
     const response = await GET(makeGetRequest("status=nope"));
     expect(response.status).toBe(200);
@@ -189,7 +260,7 @@ describe("GET /api/applications", () => {
 
   it("strips quotes and reserved filter chars from q before the or filter", async () => {
     const chain = okWithCount([LIST_ITEM], 1);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(chain);
 
     const q = new URLSearchParams({ q: '"Acme":Corp' }).toString();
     const response = await GET(makeGetRequest(q));
@@ -201,7 +272,7 @@ describe("GET /api/applications", () => {
 
   it("strips * from q so it cannot act as an ilike % wildcard", async () => {
     const chain = okWithCount([LIST_ITEM], 1);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(chain);
 
     const q = new URLSearchParams({ q: "Acme*Corp" }).toString();
     const response = await GET(makeGetRequest(q));
@@ -213,7 +284,7 @@ describe("GET /api/applications", () => {
 
   it("keeps apostrophes in q so names like O'Brien still match", async () => {
     const chain = okWithCount([LIST_ITEM], 1);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(chain);
 
     const q = new URLSearchParams({ q: "O'Brien" }).toString();
     const response = await GET(makeGetRequest(q));
@@ -225,7 +296,7 @@ describe("GET /api/applications", () => {
 
   it("skips the search filter when q is only reserved characters", async () => {
     const chain = okWithCount([LIST_ITEM], 1);
-    mockCreateClient.mockResolvedValue(makeSupabaseClient([chain]));
+    mockListClient(chain);
 
     const q = new URLSearchParams({ q: '":.()*"' }).toString();
     const response = await GET(makeGetRequest(q));

@@ -11,6 +11,7 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 - [Conventions](#conventions)
 - [Applications](#applications)
   - [GET applications](#get-applications) — `GET /api/applications`
+  - [GET application status counts](#get-application-status-counts) — `GET /api/applications/counts`
   - [POST applications](#post-applications) — `POST /api/applications`
   - [PUT applications](#put-applications) — `PUT /api/applications`
   - [DELETE applications](#delete-applications) — `DELETE /api/applications`
@@ -88,6 +89,7 @@ List the authenticated user’s applications (newest first), paginated. Returns 
       "archived_at": null,
       "cv_url": "https://pub.example/cvs/…",
       "cv_exists": true,
+      "profile_picture_missing": false,
       "view_count": 12,
       "download_count": 3,
       "created_at": "2026-07-01T12:00:00.000Z",
@@ -112,6 +114,7 @@ List the authenticated user’s applications (newest first), paginated. Returns 
 | `data[].archived_at`    | `string` (ISO) \| `null`                | Set when archived; retention clock                 |
 | `data[].cv_url`         | `string`                                | Used for `cv_exists` check                         |
 | `data[].cv_exists`      | `boolean`                               | Dashboard “CV missing” badge when **false**. URLs outside our R2 public base default to **true** (unchecked). |
+| `data[].profile_picture_missing` | `boolean`                        | Dashboard “Picture missing” badge when **true** (`show_profile_picture` on the row but no live `profiles.profile_picture_url`). |
 | `data[].view_count`     | `number`                                | Status icon + insights                             |
 | `data[].download_count` | `number`                                | Insights                                           |
 | `data[].created_at`     | `string` (ISO)                          | Insights                                           |
@@ -128,6 +131,41 @@ TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_
 - Rate limited (default 60/min) before auth/query work.
 - Dedicated `withAuth` → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
 - Offset pagination with default page size **20** (max **50**) and `meta.total` for UI pagers.
+
+### GET application status counts
+
+`GET /api/applications/counts`
+
+One snapshot of the authenticated user’s application tallies for the dashboard Summary rail. Selects only `status` (no list rows, profile lookup, or R2 HeadObject). Prefer this over four filtered `GET /api/applications` calls.
+
+- **Auth:** Required
+- **Rate limit:** Default (60/min)
+- **Errors:** `401` `{ error: "Unauthorized" }`; `429`; `500` `{ error: string }`
+
+**Success — `200`**
+
+```json
+{
+  "data": {
+    "all": 4,
+    "active": 2,
+    "draft": 1,
+    "archived": 1
+  }
+}
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `data.all` | `number` | Every application for this user |
+| `data.active` | `number` | Live / published |
+| `data.draft` | `number` | Not visible to recruiters |
+| `data.archived` | `number` | Hidden from recruiters |
+
+**What works**
+
+- Single HTTP request and a consistent snapshot across the four tallies.
+- Leaves list-budget headroom for search and pagination.
 - Optional server-side `q` search so pagination and filtering stay consistent.
 - Stable ordering (`created_at` descending) for the dashboard.
 - Clear success shape `{ data, meta }`.
@@ -146,7 +184,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug`, `cv_url`, `video_url` (required); optional `status` (`"active"` \| `"draft"` \| `"archived"`, **default `"draft"`** — F16-050), `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugNamePosition` (`"start"` | `"end"` | `null` → stored as `include_name_in_slug`), `cv_filename`, `use_original_cv_filename` (default `true`), `show_profile_picture`
+- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug`, `cv_url`, `video_url` (required); optional `status` (`"active"` \| `"draft"` \| `"archived"`, **default `"draft"`** — F16-050), `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugSegmentOrder` (`"company_role"` | `"role_company"` → stored as `slug_segment_order`, default `company_role`), `cv_filename`, `use_original_cv_filename` (default `true`), `show_profile_picture`
 - **Success:** `201` `{ data: Application }`
 - **Errors:** `400` schema validation / insert / primary CV missing; `401`; `409` slug taken (`validateSlugForApplication` or unique constraint) or tailored `cv_url` already used; `429`; `500` unexpected failures
 
@@ -175,7 +213,7 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ApplicationUpdateInput`, Zod `applicationUpdateSchema`): `id` (UUID, required) plus optional partial fields (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields, `slugNamePosition`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Unexpected keys → **400**. Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
+- **Body** (`ApplicationUpdateInput`, Zod `applicationUpdateSchema`): `id` (UUID, required) plus optional partial fields (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields, `slugSegmentOrder`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Unexpected keys → **400**. Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
 - **Success:** `200` `{ data: Application }`
 - **Errors:** `400` schema / insert-style validation / primary CV missing; `401`; `404` if missing or not owned; `409` slug collision or tailored `cv_url` already used; `429`; `500` unexpected failures
 
@@ -190,7 +228,7 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 - Rejects a new tailored `cv_url` that is not a caller-owned tailored upload (**400**), or that is already used by another of the caller’s applications (**409**, object-key compare + partial unique index). Keeping the same object on the current row is allowed. Switching to **primary** resolves URL from the caller’s `primary_cvs` library via `primary_cv_id` (falls back to the row’s existing `primary_cv_id` when the body omits it). Same-user ownership is also enforced in Postgres (B3-042 trigger).
 - **Download filename:** a PUT that only sets `cv_filename` (no `cv_type` / `primary_cv_id` / `cv_url`) updates the download name without re-resolving or requiring a primary CV id. When the primary path does run, an explicit `cv_filename` in the body is kept; otherwise the library filename is used.
 - Persists `show_profile_picture` when provided (public view uses live profile picture).
-- Maps `slugNamePosition` → `include_name_in_slug` instead of exposing the DB column name as the only contract.
+- Maps `slugSegmentOrder` → `slug_segment_order` instead of exposing the DB column name as the only contract.
 
 **Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 
@@ -471,7 +509,7 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body:** `company`, `role` (required); optional `excludeId` (UUID), `first_name`, `last_name`, `slugNamePosition` (`"start"` | `"end"` | `null`)
+- **Body:** `company`, `role` (required); optional `excludeId` (UUID), `slugSegmentOrder` (`"company_role"` | `"role_company"`)
 - **Success:** `200` `{ slug: string }`
 - **Errors:** `400` invalid JSON / schema; `401`; `404` `excludeId` missing or not owned; `409` collision; `429`; `500`
 
@@ -479,7 +517,7 @@ Derive a slug from company/role (and optional name-in-URL rules) via `reserveBas
 
 - Auth required; dedicated auth try/catch → **401**.
 - Rate limited.
-- **Schema validation** (`slugReserveSchema` in `lib/validation/slug.ts`): trimmed non-empty `company` / `role` (max length); optional names; `slugNamePosition` enum or null; UUID `excludeId`; rejects unexpected keys; malformed JSON / non-object bodies → clear **400**.
+- **Schema validation** (`slugReserveSchema` in `lib/validation/slug.ts`): trimmed non-empty `company` / `role` (max length); optional `slugSegmentOrder`; UUID `excludeId`; rejects unexpected keys; malformed JSON / non-object bodies → clear **400**.
 - When `excludeId` is present, verifies the application belongs to the current user before reserving (**404** otherwise).
 - Uses shared `reserveBaseSlug` / `SlugCollisionError` for consistent slug rules and a clear **409** when taken.
 - Supports name-in-URL positions and `excludeId` for edit flows without inventing numeric suffixes.
@@ -549,7 +587,7 @@ Upload a tailored CV PDF to Cloudflare R2. Requires an idempotency key so retrie
 
 `POST /api/upload/profile-picture`
 
-Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png|webp}` in the `profile-pictures` bucket and return the public URL. Does **not** purge other folder objects — that runs on successful `PUT /api/profile` after the URL is committed (F9-037 / F9-062). Intended to be called from profile **Save** (upload-on-save), not on file pick. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
+Upload a unique avatar object at `{user_id}/{uuid}.{jpg|png|webp}` in the `profile-pictures` bucket (`upsert: false`) and return the public URL. Does **not** overwrite the live committed URL and does **not** purge other folder objects — that runs on successful `PUT /api/profile` after the URL is committed (F9-037 / F9-062). Intended to be called from profile **Save** (upload-on-save), not on file pick. See [PROFILE_PICTURE.md](PROFILE_PICTURE.md).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -559,10 +597,10 @@ Upload (overwrite) the caller’s canonical avatar at `{user_id}/avatar.{jpg|png
 
 **What works**
 
-- Canonical path + upsert; folder leftovers are cleaned on profile URL commit, not on upload.
+- Unique path per upload; folder leftovers / previous object are cleaned on profile URL commit, not on upload.
 - Auth required (dedicated check → **401**); Storage / unexpected failures use `handleApiError` → **500** with a generic client message. Server logs include log-only `meta` (`userId`, file `size`, Storage `status` / `statusCode` as `storageStatus`).
 - Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8\*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
-- **Client Save UX (F8 / F9-052):** `ProfileForm` and `ProfilePictureModal` share `uploadProfilePictureFile` for request + friendly error mapping (null JSON bodies are safe); Save shows **Uploading…** during `POST /api/upload/profile-picture`, then **Saving…**. PUT `warnings` (and any legacy upload `warning`) are shown to the user (modal stays open until dismissed when a warning is present). While upload/save is in flight, `ProfilePictureModal` ignores Escape and backdrop dismiss so the request can finish.
+- **Client Save UX (F8 / F9-052):** `ProfileForm` and `ProfilePictureModal` share `uploadProfilePictureFile` (30s timeout) + friendly error/warning mapping; Save shows **Uploading…** then **Saving…**. PUT `warnings` are mapped to plain copy (modal stays open until dismissed when a warning is present). `ProfilePictureModal` does not close on backdrop click. While upload/save is in flight, Escape is ignored until the request finishes or times out.
 
 **Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 

@@ -3,24 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ApplicationForm, { type ApplicationFormInitialData } from '@/components/forms/ApplicationForm';
+import ApplicationFormPageHeader from '@/components/forms/ApplicationFormPageHeader';
 import AdminPageSkeleton from '@/components/admin/AdminPageSkeleton';
 import {
-  ADMIN_PANEL_CLASS,
+  ADMIN_FORM_SHELL_CLASS,
   ADMIN_TIP_CLASS,
 } from '@/components/admin/admin-chrome';
 import type { ApplicationFormData, Application } from '@/lib/types/application';
 import type { Profile } from '@/lib/types/profile';
 import { publicIdFromUserMetadata } from '@/lib/auth/ensure-public-id';
 import { createClient } from '@/lib/supabase/client';
-
-/** Normalize DB value (legacy boolean or 'start'|'end'|null) to form slugNamePosition. */
-function slugNamePositionFromDb(
-  value: boolean | 'start' | 'end' | null | undefined
-): 'start' | 'end' | null {
-  if (value === true) return 'start';
-  if (value === false) return null;
-  return value ?? null;
-}
 
 export default function EditApplicationPage() {
   const router = useRouter();
@@ -86,16 +78,18 @@ export default function EditApplicationPage() {
     }
   };
 
-  /** Re-fetch application to get fresh cv_exists (no full-page loading). */
-  const refetchCvCheck = async () => {
-    try {
-      const response = await fetch(`/api/applications/by-id/${id}`);
-      if (!response.ok) return;
-      const { data } = await response.json();
-      setApplication(data);
-    } catch {
-      // Ignore; user can try again
+  /**
+   * Re-check whether the saved CV is still in storage, without a full-page load.
+   * Returns false when the file is still missing so the form can say so.
+   */
+  const refetchCvCheck = async (): Promise<boolean> => {
+    const response = await fetch(`/api/applications/by-id/${id}`);
+    if (!response.ok) {
+      throw new Error("Could not check the CV.");
     }
+    const { data } = await response.json();
+    setApplication(data);
+    return data?.cv_exists !== false;
   };
 
   const handleSubmit = async (data: ApplicationFormData) => {
@@ -103,10 +97,11 @@ export default function EditApplicationPage() {
       setLoading(true);
 
       // Manual edits are validated by ApplicationForm (/api/slug/validate); keep them.
-      // Auto mode: if company/role/name-in-URL changed, re-derive via /api/slug.
+      // Auto mode: if company/role/segment order changed, re-derive via /api/slug.
+      const savedOrder = application?.slug_segment_order ?? 'company_role';
       const slugOrPreferenceChanged =
         data.slug !== application?.slug ||
-        data.slugNamePosition !== slugNamePositionFromDb(application?.include_name_in_slug);
+        (data.slugSegmentOrder ?? 'company_role') !== savedOrder;
       let slug = data.slug.trim();
       if (slugOrPreferenceChanged && data.slugManuallyEdited !== true) {
         const slugResponse = await fetch('/api/slug', {
@@ -119,11 +114,7 @@ export default function EditApplicationPage() {
             company: data.company,
             role: data.role,
             excludeId: id,
-            slugNamePosition: data.slugNamePosition ?? null,
-            ...((data.slugNamePosition === 'start' || data.slugNamePosition === 'end') && {
-              first_name: data.slugFirstName ?? data.first_name ?? undefined,
-              last_name: data.slugLastName ?? data.last_name ?? undefined,
-            }),
+            slugSegmentOrder: data.slugSegmentOrder ?? 'company_role',
           }),
         });
 
@@ -141,10 +132,7 @@ export default function EditApplicationPage() {
         slug = uniqueSlug.trim();
       }
 
-      const { slugFirstName, slugLastName, slugManuallyEdited, ...dataForApi } =
-        data;
-      void slugFirstName;
-      void slugLastName;
+      const { slugManuallyEdited, ...dataForApi } = data;
       void slugManuallyEdited;
 
       const response = await fetch('/api/applications', {
@@ -180,7 +168,7 @@ export default function EditApplicationPage() {
     return null;
   }
 
-  // Normalize DB shape to form shape; candidate fields and include_name_in_slug from application only
+  // Normalize DB shape to form shape; candidate fields and slug order from application only
   const initialData: ApplicationFormInitialData = {
     company: application.company,
     role: application.role,
@@ -192,7 +180,7 @@ export default function EditApplicationPage() {
     location: application.location ?? undefined,
     portfolio_url: application.portfolio_url ?? undefined,
     linkedin_url: application.linkedin_url ?? undefined,
-    slugNamePosition: slugNamePositionFromDb(application.include_name_in_slug),
+    slugSegmentOrder: application.slug_segment_order ?? 'company_role',
     cv_filename: application.cv_filename ?? null,
     use_original_cv_filename: application.use_original_cv_filename ?? true,
     cvUrlExists: application.cv_exists,
@@ -202,10 +190,8 @@ export default function EditApplicationPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)]">
-        Edit Application
-      </h1>
+    <div className="space-y-4 sm:space-y-6">
+      <ApplicationFormPageHeader title="Edit Application" />
       <p className={ADMIN_TIP_CLASS}>
         The candidate details below (name, location, links) are from when this
         application was saved, not from your current profile. Updating your
@@ -213,7 +199,7 @@ export default function EditApplicationPage() {
         live: if this application shows it, recruiters see the current picture
         from your profile.
       </p>
-      <div className={`${ADMIN_PANEL_CLASS} p-6`}>
+      <div className={ADMIN_FORM_SHELL_CLASS}>
         <ApplicationForm
           initialData={initialData}
           onSubmit={handleSubmit}

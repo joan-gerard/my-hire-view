@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   cacheBustProfilePictureUrl,
   canonicalProfilePicturePath,
+  uniqueProfilePicturePath,
   getProfilePictureStoragePath,
   isCanonicalProfilePicturePath,
   isOwnedProfilePictureUrl,
@@ -72,6 +73,16 @@ describe("canonicalProfilePicturePath", () => {
     expect(canonicalProfilePicturePath(USER_ID, "jpeg")).toBe(
       "user-123/avatar.jpg",
     );
+  });
+});
+
+describe("uniqueProfilePicturePath", () => {
+  it("builds a unique userId/uuid.ext path and normalizes jpeg to jpg", () => {
+    const a = uniqueProfilePicturePath(USER_ID, "jpeg");
+    const b = uniqueProfilePicturePath(USER_ID, "png");
+    expect(a).toMatch(/^user-123\/[0-9a-f-]+\.jpg$/i);
+    expect(b).toMatch(/^user-123\/[0-9a-f-]+\.png$/i);
+    expect(a).not.toBe(b);
   });
 });
 

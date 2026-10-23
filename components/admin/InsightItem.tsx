@@ -13,7 +13,7 @@ export interface InsightItemProps {
 
 /**
  * Single insight row with label and value, wrapped in a bordered container.
- * Used in application cards and other admin insight lists.
+ * Used in the application insights dialog and other admin insight lists.
  */
 export default function InsightItem({ label, children, className = "" }: InsightItemProps) {
   return (

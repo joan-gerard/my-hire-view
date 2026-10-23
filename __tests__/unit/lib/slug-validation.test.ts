@@ -78,28 +78,28 @@ describe("slugReserveSchema", () => {
     }
   });
 
-  it("accepts slugNamePosition start/end/null and rejects other values", () => {
+  it("accepts slugSegmentOrder company_role/role_company and rejects other values", () => {
     expect(
       slugReserveSchema.safeParse({
         ...VALID_BODY,
-        slugNamePosition: "start",
+        slugSegmentOrder: "company_role",
       }).success,
     ).toBe(true);
     expect(
       slugReserveSchema.safeParse({
         ...VALID_BODY,
-        slugNamePosition: null,
+        slugSegmentOrder: "role_company",
       }).success,
     ).toBe(true);
     expect(
       slugReserveSchema.safeParse({
         ...VALID_BODY,
-        slugNamePosition: "middle",
+        slugSegmentOrder: "middle",
       }).success,
     ).toBe(false);
   });
 
-  it("rejects overlong names and unexpected keys", () => {
+  it("rejects overlong fields and unexpected keys", () => {
     expect(
       slugReserveSchema.safeParse({
         ...VALID_BODY,

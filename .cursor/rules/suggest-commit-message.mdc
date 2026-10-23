@@ -12,6 +12,7 @@ After finishing a task that changed files (create, edit, or delete):
 3. Do not create a commit unless the user explicitly asks.
 4. Do not use double quotation marks (`"`) anywhere in the suggested message. Prefer plain text or single quotes if quoting is needed.
 5. Skip the suggestion if there are no changes.
+6. Do not append to `docs/retrospectives/DEVELOPMENT_JOURNAL.md` just because you suggested a commit message. Journal cadence is separate (see `development-journal.mdc`).
 
 Format the suggestion clearly, for example:
 

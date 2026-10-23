@@ -1,4 +1,7 @@
-import { validateSlugFormat } from "@/lib/utils/slug-generate";
+import {
+  SLUG_SEGMENT_ORDER_VALUES,
+  validateSlugFormat,
+} from "@/lib/utils/slug-generate";
 import {
   PROFILE_LOCATION_MAX_LENGTH,
   PROFILE_NAME_MAX_LENGTH,
@@ -24,7 +27,7 @@ const FIELD_LABELS: Record<string, string> = {
   location: "Location",
   portfolio_url: "Portfolio URL",
   linkedin_url: "LinkedIn URL",
-  slugNamePosition: "Slug name position",
+  slugSegmentOrder: "URL segment order",
   cv_filename: "CV filename",
   use_original_cv_filename: "Use original CV filename",
   show_profile_picture: "Show profile picture",
@@ -166,11 +169,10 @@ const candidateFields = {
   ),
   portfolio_url: optionalNullableHttpUrl(FIELD_LABELS.portfolio_url),
   linkedin_url: optionalNullableHttpUrl(FIELD_LABELS.linkedin_url),
-  slugNamePosition: z
-    .enum(["start", "end"], {
-      error: "Slug name position must be start, end, or null",
+  slugSegmentOrder: z
+    .enum(SLUG_SEGMENT_ORDER_VALUES, {
+      error: "URL segment order must be company_role or role_company",
     })
-    .nullable()
     .optional(),
   cv_filename: optionalNullableString(
     APPLICATION_CV_FILENAME_MAX_LENGTH,

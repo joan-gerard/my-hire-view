@@ -141,9 +141,9 @@ describe("POST /api/upload/profile-picture", () => {
     const json = await response.json();
     expect(json.url).toContain("avatar.png");
     expect(client._upload).toHaveBeenCalledWith(
-      "user-123/avatar.png",
+      expect.stringMatching(/^user-123\/[0-9a-f-]+\.png$/i),
       expect.any(Buffer),
-      { contentType: "image/png", upsert: true },
+      { contentType: "image/png", upsert: false },
     );
   });
 

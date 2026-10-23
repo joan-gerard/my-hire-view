@@ -1,7 +1,7 @@
 import { withAuth } from "@/lib/api/with-auth";
 import {
   ensureProfilePublicId,
-  resolvePublicIdReadOnly,
+  resolvePublicIdFromLoadedProfile,
 } from "@/lib/auth/ensure-public-id";
 import {
   checkRateLimit,
@@ -113,17 +113,42 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const publicId = await resolvePublicIdReadOnly(supabase, user);
     const rows = data ?? [];
-    const existence = await Promise.all(
-      rows.map((row) => checkCvObjectExists(row.cv_url)),
+    const [{ data: profile, error: profileError }, existence] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("public_id, profile_picture_url")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        Promise.all(rows.map((row) => checkCvObjectExists(row.cv_url))),
+      ]);
+
+    if (profileError) {
+      console.error("GET /api/applications profile:", profileError);
+      return NextResponse.json(
+        { error: profileError.message },
+        { status: 500 },
+      );
+    }
+
+    const publicId = resolvePublicIdFromLoadedProfile(profile, user);
+    const hasLiveProfilePicture = Boolean(
+      typeof profile?.profile_picture_url === "string" &&
+        profile.profile_picture_url.trim(),
     );
-    const items = rows.map((row, i) => ({
-      ...row,
-      public_id: publicId,
-      // Non-R2 / unchecked URLs → true so they are not flagged missing
-      cv_exists: existence[i] ?? true,
-    }));
+
+    const items = rows.map((row, i) => {
+      const { show_profile_picture, ...listFields } = row;
+      return {
+        ...listFields,
+        public_id: publicId,
+        // Non-R2 / unchecked URLs → true so they are not flagged missing
+        cv_exists: existence[i] ?? true,
+        profile_picture_missing:
+          show_profile_picture === true && !hasLiveProfilePicture,
+      };
+    });
 
     return NextResponse.json({
       data: items,
@@ -409,7 +434,7 @@ export async function POST(request: NextRequest) {
         status,
         archived_at: status === "archived" ? new Date().toISOString() : null,
         ...candidateFields,
-        include_name_in_slug: body.slugNamePosition ?? null,
+        slug_segment_order: body.slugSegmentOrder ?? "company_role",
         cv_filename: cvFilename,
         use_original_cv_filename: body.use_original_cv_filename ?? true,
         show_profile_picture: showProfilePicture,
@@ -492,8 +517,8 @@ export async function PUT(request: NextRequest) {
     if (body.use_original_cv_filename !== undefined) {
       updatePayload.use_original_cv_filename = body.use_original_cv_filename;
     }
-    if (body.slugNamePosition !== undefined) {
-      updatePayload.include_name_in_slug = body.slugNamePosition;
+    if (body.slugSegmentOrder !== undefined) {
+      updatePayload.slug_segment_order = body.slugSegmentOrder;
     }
     if (body.show_profile_picture !== undefined) {
       updatePayload.show_profile_picture = body.show_profile_picture === true;

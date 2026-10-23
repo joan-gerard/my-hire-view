@@ -157,7 +157,7 @@ Extend dashboard list with a CV existence signal (HeadObject or equivalent) so c
 
 ### Application form UX
 
-One **CV** fieldset (`CvSourceField`): on edit, a **Current** summary (filename, primary/tailored badge, View / missing); **Change CV** via radios with progressive disclosure (primary dropdown or tailored upload); **Download name** for recruiters in the same section. Switching tailored → primary confirms before the tailored object is dropped on save.
+One **CV** fieldset (`CvSourceField`): on edit, a **Current** summary (filename, primary/tailored badge, View / missing); **Change CV** via radios with progressive disclosure (primary dropdown or tailored upload); **Download name** for recruiters in the same section, shown only once a CV is selected. Switching tailored → primary confirms before the tailored object is dropped on save.
 
 ---
 

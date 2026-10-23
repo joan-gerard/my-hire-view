@@ -8,6 +8,25 @@ export const SLUG_MAX_LENGTH = 128;
 
 const SLUG_SEGMENT_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/** Order of company vs role segments in the shareable application slug. */
+export const SLUG_SEGMENT_ORDER_VALUES = [
+  "company_role",
+  "role_company",
+] as const;
+
+export type SlugSegmentOrder = (typeof SLUG_SEGMENT_ORDER_VALUES)[number];
+
+export const SLUG_SEGMENT_ORDER_DEFAULT: SlugSegmentOrder = "company_role";
+
+export function isSlugSegmentOrder(
+  value: unknown,
+): value is SlugSegmentOrder {
+  return (
+    typeof value === "string" &&
+    (SLUG_SEGMENT_ORDER_VALUES as readonly string[]).includes(value)
+  );
+}
+
 /**
  * Normalize free text into a lowercase hyphenated slug segment (no length clamp).
  */
@@ -35,43 +54,6 @@ function clampSlugLength(
 }
 
 /**
- * Join name + company/role, clamping to {@link SLUG_MAX_LENGTH} while preferring
- * to keep the full name segment when possible (truncate company/role first).
- */
-function joinPreferringName(
-  nameSlug: string,
-  baseSlug: string,
-  nameAt: "start" | "end",
-): string {
-  if (!baseSlug) {
-    return clampSlugLength(nameSlug);
-  }
-
-  const combined =
-    nameAt === "start" ? `${nameSlug}-${baseSlug}` : `${baseSlug}-${nameSlug}`;
-  if (combined.length <= SLUG_MAX_LENGTH) return combined;
-
-  // Name alone at/over the limit — keep as much of the name as fits.
-  if (nameSlug.length >= SLUG_MAX_LENGTH) {
-    return clampSlugLength(nameSlug);
-  }
-
-  const roomForBase = SLUG_MAX_LENGTH - nameSlug.length - 1; // hyphen separator
-  if (roomForBase < 1) {
-    return clampSlugLength(nameSlug);
-  }
-
-  const truncatedBase = clampSlugLength(baseSlug, roomForBase);
-  if (!truncatedBase) {
-    return clampSlugLength(nameSlug);
-  }
-
-  return nameAt === "start"
-    ? `${nameSlug}-${truncatedBase}`
-    : `${truncatedBase}-${nameSlug}`;
-}
-
-/**
  * Validates a user-facing slug string (format only). Shared by client preview and server.
  */
 export function validateSlugFormat(
@@ -95,36 +77,31 @@ export function validateSlugFormat(
   return { ok: true };
 }
 
+/** Company then role (legacy default). */
 export function generateSlug(company: string, role: string): string {
-  return clampSlugLength(normalizeSlugInput(`${company} ${role}`));
+  return buildSlug(company, role, "company_role");
 }
 
-export type SlugNamePosition = "start" | "end" | null;
-
 /**
- * Build slug with optional name at start or end.
- * - position 'start': name-company-role (e.g. john-doe-acme-software-engineer)
- * - position 'end': company-role-name (e.g. acme-software-engineer-john-doe)
- * - position null: company-role only
- *
- * When the combined slug exceeds {@link SLUG_MAX_LENGTH}, the company/role
- * segment is truncated first so the requested name is preserved when possible.
+ * Build slug from company + role in the chosen segment order.
+ * - `company_role`: e.g. acme-software-engineer
+ * - `role_company`: e.g. software-engineer-acme
  */
 export function buildSlug(
   company: string,
   role: string,
-  first_name?: string | null,
-  last_name?: string | null,
-  position?: SlugNamePosition,
+  order: SlugSegmentOrder = SLUG_SEGMENT_ORDER_DEFAULT,
 ): string {
-  const baseSlug = normalizeSlugInput(`${company} ${role}`);
-  if (!position) return clampSlugLength(baseSlug);
-  const first = first_name?.trim() ?? "";
-  const last = last_name?.trim() ?? "";
-  if (!first && !last) return clampSlugLength(baseSlug);
-  const nameSlug = normalizeSlugInput(`${first} ${last}`);
-  if (!nameSlug) return clampSlugLength(baseSlug);
-  return joinPreferringName(nameSlug, baseSlug, position);
+  const companySlug = normalizeSlugInput(company);
+  const roleSlug = normalizeSlugInput(role);
+  if (!companySlug && !roleSlug) return "";
+  if (!companySlug) return clampSlugLength(roleSlug);
+  if (!roleSlug) return clampSlugLength(companySlug);
+  const joined =
+    order === "role_company"
+      ? `${roleSlug}-${companySlug}`
+      : `${companySlug}-${roleSlug}`;
+  return clampSlugLength(joined);
 }
 
 /**
@@ -135,13 +112,9 @@ export function isCustomSlug(
   slug: string,
   company: string,
   role: string,
-  first_name?: string | null,
-  last_name?: string | null,
-  position?: SlugNamePosition,
+  order: SlugSegmentOrder = SLUG_SEGMENT_ORDER_DEFAULT,
 ): boolean {
   const trimmed = slug.trim();
   if (!trimmed) return false;
-  return (
-    trimmed !== buildSlug(company, role, first_name, last_name, position)
-  );
+  return trimmed !== buildSlug(company, role, order);
 }

@@ -1,19 +1,14 @@
 import {
   APPLICATION_COMPANY_ROLE_MAX_LENGTH,
 } from "@/lib/validation/application";
-import {
-  PROFILE_NAME_MAX_LENGTH,
-} from "@/lib/validation/profile";
-import { SLUG_MAX_LENGTH } from "@/lib/utils/slug-generate";
+import { SLUG_MAX_LENGTH, SLUG_SEGMENT_ORDER_VALUES } from "@/lib/utils/slug-generate";
 import { z } from "zod";
 
 const FIELD_LABELS: Record<string, string> = {
   company: "Company",
   role: "Role",
   slug: "Slug",
-  first_name: "First name",
-  last_name: "Last name",
-  slugNamePosition: "Slug name position",
+  slugSegmentOrder: "URL segment order",
   excludeId: "excludeId",
 };
 
@@ -28,14 +23,6 @@ function requiredTrimmedString(max: number, label: string) {
       .min(1, { error: `${label} is required` })
       .max(max, { error: `${label} must be at most ${max} characters` }),
   );
-}
-
-function optionalNullableString(max: number, label: string) {
-  return z
-    .string()
-    .max(max, { error: `${label} must be at most ${max} characters` })
-    .nullable()
-    .optional();
 }
 
 /** Empty / whitespace → undefined; otherwise require a UUID. */
@@ -63,19 +50,10 @@ export const slugReserveSchema = z
       FIELD_LABELS.role,
     ),
     excludeId: optionalExcludeIdSchema,
-    first_name: optionalNullableString(
-      PROFILE_NAME_MAX_LENGTH,
-      FIELD_LABELS.first_name,
-    ),
-    last_name: optionalNullableString(
-      PROFILE_NAME_MAX_LENGTH,
-      FIELD_LABELS.last_name,
-    ),
-    slugNamePosition: z
-      .enum(["start", "end"], {
-        error: "Slug name position must be start, end, or null",
+    slugSegmentOrder: z
+      .enum(SLUG_SEGMENT_ORDER_VALUES, {
+        error: "URL segment order must be company_role or role_company",
       })
-      .nullable()
       .optional(),
   })
   .strict();

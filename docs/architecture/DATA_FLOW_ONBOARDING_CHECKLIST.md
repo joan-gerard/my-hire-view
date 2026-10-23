@@ -1,6 +1,6 @@
 # Getting started checklist — data flow (F19-044)
 
-How the floating **Getting started** checklist loads, updates, and persists across `/admin` routes. For the wider app data model, see [DATA_FLOW.md](DATA_FLOW.md). Design / buy-in context for F19 (legend, Public id, checklist, empty state): [ACTIVATION_UX_F19.md](../retrospectives/ACTIVATION_UX_F19.md). Manual checks: [MANUAL_TEST_ONBOARDING_CHECKLIST.md](../manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md). Product copy: [USER_GUIDE.md](../engineering/USER_GUIDE.md).
+How the **Getting started** checklist loads, updates, and persists on the `/admin` dashboard right rail (below Summary). For the wider app data model, see [DATA_FLOW.md](DATA_FLOW.md). Design / buy-in context for F19 (legend, Public id, checklist, empty state): [ACTIVATION_UX_F19.md](../retrospectives/ACTIVATION_UX_F19.md). Manual checks: [MANUAL_TEST_ONBOARDING_CHECKLIST.md](../manual-testing/MANUAL_TEST_ONBOARDING_CHECKLIST.md). Product copy: [USER_GUIDE.md](../engineering/USER_GUIDE.md).
 
 ---
 
@@ -18,21 +18,21 @@ How the floating **Getting started** checklist loads, updates, and persists acro
 
 ## 1. Overview
 
-The checklist is a **client** panel mounted from the **admin layout**. It is not a separate page.
+The checklist is a **client** panel embedded in the **admin dashboard** right rail (below Summary). It is not shown on other `/admin/*` routes.
 
 | Concern | Source of truth |
 | --- | --- |
 | Whether a step is *currently* true in the product | Live account data (`profiles`, `primary_cvs`, `applications`) |
 | Sticky “already completed once” / skips / dismiss / expand | Browser `localStorage` blob scoped by **account key** |
-| First paint snapshot | Server loader in admin layout (Supabase direct — **no** `/api/*` GETs) |
-| Refresh after save / upload / publish | Browser event → client refetch via `/api/*` |
+| First paint snapshot | Server loader on `app/admin/page` (Supabase direct — **no** `/api/*` GETs) |
+| Refresh after save / upload / publish | Browser event → client refetch via `/api/*` (while the dashboard rail is mounted) |
 
 Six steps (ids): `create_profile` → `finish_profile` → `photo` → `primary_cv` → `first_application` → `publish_share`.
 
 ```mermaid
 %%{init: {'flowchart': {'rankSpacing': 80, 'nodeSpacing': 40, 'curve': 'linear'}}}%%
 flowchart TB
-  subgraph Server[Admin layout — first paint]
+  subgraph Server[Admin dashboard page — first paint]
     Auth[requireAuth]
     Boot[loadOnboardingChecklistBootstrap]
     DB[(profiles / primary_cvs / applications)]
@@ -40,8 +40,8 @@ flowchart TB
     Boot --> DB
   end
 
-  subgraph Client[OnboardingChecklist]
-    UI[Floating panel]
+  subgraph Client[OnboardingChecklist rail]
+    UI[Dashboard right rail]
     Prefs[(localStorage accountKey blob)]
     Build[buildOnboardingSteps]
     Boot -->|initialSnapshot + accountKey| UI
@@ -64,19 +64,19 @@ flowchart TB
 
 ## 2. First paint (server bootstrap)
 
-On any `/admin/*` request that renders the layout, the server loads a checklist **bootstrap** once and passes it into the client component. That avoids four rate-limited `/api` GETs competing with the dashboard, profile, and create/edit pages.
+On `/admin` (dashboard), the server loads a checklist **bootstrap** once and passes it into the client rail. That avoids four rate-limited `/api` GETs on first paint.
 
 ```mermaid
 sequenceDiagram
   participant U as User
-  participant Layout as app/admin/layout
+  participant Page as app/admin/page
   participant Boot as loadOnboardingChecklistBootstrap
   participant DB as Supabase
   participant Panel as OnboardingChecklist
 
-  U->>Layout: Open /admin/...
-  Layout->>Layout: requireAuth
-  Layout->>Boot: user
+  U->>Page: Open /admin
+  Page->>Page: requireAuth
+  Page->>Boot: user
   par Parallel reads
     Boot->>DB: profiles maybeSingle
     Boot->>DB: primary_cvs count
@@ -86,12 +86,12 @@ sequenceDiagram
   DB-->>Boot: rows / counts
   Boot->>Boot: resolveOnboardingAccountKey
   Boot->>Boot: buildOnboardingChecklistSnapshot
-  Boot-->>Layout: accountKey + snapshot or null
-  Layout->>Panel: initialAccountKey, initialSnapshot
+  Boot-->>Page: accountKey + snapshot or null
+  Page->>Panel: initialAccountKey, initialSnapshot
   Panel->>U: Render (or hide if bootstrap null / dismissed)
 ```
 
-When the layout later re-renders with a new bootstrap (for example after `router.refresh()`), the panel **copies** those props into React state. A failed notify-triggered `/api` load can therefore recover on the next successful bootstrap instead of staying blank or stale.
+When the dashboard later re-renders with a new bootstrap (for example after `router.refresh()`), the panel **copies** those props into React state. A failed notify-triggered `/api` load can therefore recover on the next successful bootstrap instead of staying blank or stale.
 
 **Account key** (prefs scope), in order:
 
@@ -197,7 +197,8 @@ Notify call sites include (non-exhaustive): `ProfileForm`, `ProfilePictureModal`
 
 | File | Role |
 | --- | --- |
-| `app/admin/layout.tsx` | Auth + bootstrap props into the panel |
+| `app/admin/page.tsx` | Dashboard: auth + checklist bootstrap into the rail |
+| `app/admin/layout.tsx` | Auth + admin chrome (checklist lives on the dashboard page) |
 | `lib/utils/load-onboarding-checklist-snapshot.ts` | Server Supabase bootstrap |
 | `components/admin/OnboardingChecklist.tsx` | UI, prefs, mutation refetch |
 | `lib/utils/onboarding-checklist.ts` | Step definitions + progress |

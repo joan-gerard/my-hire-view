@@ -8,7 +8,7 @@ export type UploadFormKind = "cv" | "profile-picture";
 const DEFAULT_400: Record<UploadFormKind, string> = {
   cv: "That CV couldn’t be uploaded. Check it’s a PDF under 3MB and try again.",
   "profile-picture":
-    "That picture couldn’t be uploaded. Use a JPEG, PNG, or WebP under 5MB.",
+    "That picture couldn’t be uploaded. Use a JPEG, PNG, or WebP up to 5 MB.",
 };
 
 const DEFAULT_429 =
@@ -61,4 +61,42 @@ export function messageForUploadFailure(
 
 export function messageForUploadNetworkError(kind: UploadFormKind): string {
   return NETWORK[kind];
+}
+
+const PROFILE_SAVE_WARNING_FALLBACK =
+  "Your profile was saved, but something else needs attention. Check your profile or try again.";
+
+/**
+ * Map raw `PUT /api/profile` / upload warning strings to plain user-facing copy.
+ * Name-sync / fallback copy stays picture-neutral (Profile also saves without a picture change).
+ */
+export function messageForProfileSaveWarning(raw: string): string {
+  const text = raw.trim();
+  if (!text) return PROFILE_SAVE_WARNING_FALLBACK;
+  if (/failed to sync name/i.test(text)) {
+    return "Your profile was saved, but we couldn’t update your account name. Save again if your name looks wrong.";
+  }
+  if (/could not verify the current picture/i.test(text)) {
+    return "Your picture was saved, but we couldn’t finish storage cleanup. Your picture should still work.";
+  }
+  if (/failed to delete the previous/i.test(text)) {
+    return "Your picture was saved, but the previous picture file may still be in storage.";
+  }
+  if (/could not remove older/i.test(text)) {
+    return "Your picture was saved, but older picture files may still be in storage.";
+  }
+  if (/failed during profile picture storage cleanup/i.test(text)) {
+    return "Your picture was saved, but storage cleanup didn’t finish.";
+  }
+  return PROFILE_SAVE_WARNING_FALLBACK;
+}
+
+/** Join one or more raw profile-save warnings into friendly copy. */
+export function mapProfileSaveWarnings(
+  warnings: Array<string | undefined | null>,
+): string {
+  return warnings
+    .filter((w): w is string => typeof w === "string" && Boolean(w.trim()))
+    .map(messageForProfileSaveWarning)
+    .join(" ");
 }

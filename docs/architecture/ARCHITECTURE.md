@@ -206,7 +206,7 @@ API routes under `app/api/` are documented in **[API_REFERENCE.md](API_REFERENCE
   - **Same-user ownership (B3-042):** trigger `applications_primary_cv_same_user` ensures `primary_cv_id` belongs to the same `user_id` as the application; trigger `primary_cvs_user_id_immutable` prevents reassigning library ownership (API also checks; DB is the backstop). Composite FK was avoided so `ON DELETE SET NULL` does not clear `user_id`. Migration `027` quarantines any pre-existing cross-user rows (draft + scrubbed `cv_url`) because public pages read denormalized `cv_url`, not the FK.
   - **CV download filename:** `cv_filename` (TEXT, nullable) stores the original uploaded file name; `use_original_cv_filename` (BOOLEAN, default true) controls whether the public download uses that name or the generated `CV-{Slug}.pdf`. Set on create/update from the application form.
   - **Candidate snapshot fields** (nullable): `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`. These are copied from the user’s **profile** when an application is created or updated, so the recruiter view always reads from the application row (no join to profile). Existing rows may have NULLs until the next edit or a backfill.
-  - **`include_name_in_slug`** (TEXT, nullable): Name position in the slug: `null` (not included), `'start'` (name-company-role), or `'end'` (company-role-name). Persisted so the edit form shows the correct choice and users can change it on save.
+  - **`slug_segment_order`** (TEXT, not null, default `company_role`): Order of company vs role in auto-derived slugs — `company_role` or `role_company`. Existing stored `slug` values are not rewritten when this preference changes until the user resets or edits.
 - **Table: `profiles`**
   - One row per user: `user_id` (PK, FK to `auth.users`), `public_id`, `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url`, `updated_at`. Created at signup (`createInitialProfile`) with names + `public_id`; other columns null until the user fills them. DB columns remain nullable; product rules require first/last name at signup and on profile save. Users edit this on the profile page (and can change the picture from new/edit via a shared modal); the applications API does not expose profile directly to the public.
   - **Snapshot rule:** On POST or PUT to `/api/applications`, the server loads the current user’s profile and merges `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url` into the insert or update. The recruiter-facing page at `/view/[publicId]/[slug]` uses only data from the application row.
@@ -226,7 +226,7 @@ Video is not stored; only YouTube URLs are stored and embedded via `YouTubeEmbed
 
 ### 5.5 Profile pictures (Supabase Storage)
 
-- **Use case:** One profile picture per user at `{user_id}/avatar.{ext}`, uploaded on profile Save. Applications store only `show_profile_picture`; the public view reads the live URL from `profiles` when that flag is true. See **docs/architecture/PROFILE_PICTURE.md**.
+- **Use case:** One live profile picture per user (unique Storage object per upload; committed on profile Save). Applications store only `show_profile_picture`; the public view reads the live URL from `profiles` when that flag is true. See **docs/architecture/PROFILE_PICTURE.md**.
 
 ---
 
@@ -359,7 +359,7 @@ my-hire-view/
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminPageSkeleton / AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── auth/                   # SignOutButton
-│   ├── forms/                  # ApplicationForm, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, NameInUrlField, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, ProfileForm, YouTubeUrlInput
+│   ├── forms/                  # ApplicationForm, ApplicationFormWizardLayout, ApplicationReviewPreview, ApplicationReviewSummary, CandidateFieldsSection, CandidateFieldRow, ApplicationFormActions, ProfilePictureField, ProfilePictureModal, SlugSegmentOrderField, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
 │   ├── public/                 # ApplicationPageHeader, CvUnavailableWithRetry, faq/constants (homepage FAQ copy), how-it-works/constants (step videos), pricing/constants (homepage #pricing tiers)
 │   ├── ui/                     # Button, Input, Textarea
@@ -386,7 +386,7 @@ my-hire-view/
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Next.js App Router              | Single codebase for SSR, API, and client components; good fit for auth and public/private routes.                                                                                                                                                            |
 | Supabase                        | Managed Postgres + Auth + RLS in one product; reduces custom backend code.                                                                                                                                                                                   |
-| Slug-based public URLs          | Stable, shareable links that don’t expose internal IDs; uniqueness enforced in DB and slug API. Users can optionally include their name at the start (name-company-role) or end (company-role-name) of the slug.                                             |
+| Slug-based public URLs          | Stable, shareable links that don’t expose internal IDs; uniqueness enforced in DB and slug API. Auto-derived slugs use `slug_segment_order` (`company_role` or `role_company`).                                             |
 | Cloudflare R2 for PDFs        | S3-compatible object storage with no egress fees from R2; pairs well with Next.js on Vercel.                                                                                                                                                               |
 | View count in DB                | Simple and accurate; one increment per browser path (httpOnly cookie + client `sessionStorage`), with per-IP and per-path rate limits.                                                                                                                                                                       |
 | Last viewed at in DB            | Set to current time whenever view_count is incremented (non-owner only); null if never viewed.                                                                                                                                                               |

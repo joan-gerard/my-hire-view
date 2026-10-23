@@ -14,7 +14,7 @@ export default function Input({ label, error, className = '', ...props }: InputP
         </label>
       )}
       <input
-        className={`mt-1 block w-full rounded-xl border-0 bg-[var(--white)] px-3.5 py-2.5 text-[var(--ink)] shadow-sm ring-1 ring-inset ring-[var(--ink)]/15 placeholder:text-[var(--muted)] focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] sm:text-sm sm:leading-6 ${
+        className={`mt-1 block w-full rounded-xl border-0 bg-[var(--white)] px-3.5 py-2.5 text-[var(--ink)] shadow-sm ring-1 ring-inset ring-[var(--ink)]/15 placeholder:text-[var(--muted)] outline-hidden focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:bg-[var(--paper)] disabled:text-[var(--muted)] disabled:ring-[var(--ink)]/10 sm:text-sm sm:leading-6 ${
           error ? 'ring-[var(--status-danger-fg)]/40' : ''
         } ${className}`}
         {...props}

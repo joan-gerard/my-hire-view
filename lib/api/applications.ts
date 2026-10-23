@@ -3,6 +3,7 @@ import type {
   ApplicationListItem,
   ApplicationListParams,
   ApplicationListResponse,
+  ApplicationDashboardCounts,
 } from '@/lib/types/application';
 import {
   APPLICATION_LIST_DEFAULT_LIMIT,
@@ -23,6 +24,7 @@ export async function fetchApplications(
   searchParams.set('offset', String(offset));
   const q = params.q?.trim();
   if (q) searchParams.set('q', q);
+  if (params.status) searchParams.set('status', params.status);
 
   const response = await fetch(`/api/applications?${searchParams.toString()}`);
   if (!response.ok) {
@@ -32,6 +34,26 @@ export async function fetchApplications(
   return {
     data: (json.data as ApplicationListItem[] | undefined) ?? [],
     meta: json.meta ?? { limit, offset, total: 0 },
+  };
+}
+
+/**
+ * Global status tallies for the dashboard summary rail (not scoped to search).
+ * One request → one DB status scan (no list/profile/R2 work).
+ * @throws Error when the counts request fails
+ */
+export async function fetchApplicationStatusCounts(): Promise<ApplicationDashboardCounts> {
+  const response = await fetch('/api/applications/counts');
+  if (!response.ok) {
+    throw new Error('Failed to fetch application counts');
+  }
+  const json = await response.json();
+  const data = json.data as ApplicationDashboardCounts | undefined;
+  return {
+    all: data?.all ?? 0,
+    active: data?.active ?? 0,
+    draft: data?.draft ?? 0,
+    archived: data?.archived ?? 0,
   };
 }
 

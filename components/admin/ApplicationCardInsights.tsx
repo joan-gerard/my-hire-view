@@ -1,10 +1,13 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import AdminModal from "@/components/admin/AdminModal";
 import InsightItem from "./InsightItem";
 
 export interface ApplicationCardInsightsProps {
-  expanded: boolean;
+  open: boolean;
+  onClose: () => void;
+  /** Shown in the dialog description for context. */
+  applicationLabel: string;
   viewCount: number;
   downloadCount: number;
   createdAt: string;
@@ -12,41 +15,41 @@ export interface ApplicationCardInsightsProps {
   lastViewedAt: string | null;
 }
 
+/** Application insights modal (shared `AdminModal` chrome). */
 export default function ApplicationCardInsights({
-  expanded,
+  open,
+  onClose,
+  applicationLabel,
   viewCount,
   downloadCount,
   createdAt,
   lastViewedAt,
 }: ApplicationCardInsightsProps) {
   return (
-    <AnimatePresence initial={false}>
-      {expanded && (
-        <motion.div
-          key="insights"
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-          className="overflow-hidden"
-        >
-          <div className="mt-3 grid grid-cols-1 gap-4 border-t border-[var(--ink)]/10 pt-3 md:grid-cols-2 lg:grid-cols-4">
-            <InsightItem label="Views:">{viewCount}</InsightItem>
-            <InsightItem label="CV downloads:">{downloadCount}</InsightItem>
-            <InsightItem label="Created:">
-              {new Date(createdAt).toLocaleDateString()}
-            </InsightItem>
-            <InsightItem label="Last viewed:">
-              {lastViewedAt
-                ? new Date(lastViewedAt).toLocaleString(undefined, {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  })
-                : "—"}
-            </InsightItem>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <AdminModal
+      open={open}
+      onClose={onClose}
+      title="Insights"
+      description={
+        <p className="truncate">{applicationLabel}</p>
+      }
+      widthClassName="w-[min(100vw-2rem,28rem)]"
+    >
+      <div className="space-y-3">
+        <InsightItem label="Views:">{viewCount}</InsightItem>
+        <InsightItem label="CV downloads:">{downloadCount}</InsightItem>
+        <InsightItem label="Created:">
+          {new Date(createdAt).toLocaleDateString()}
+        </InsightItem>
+        <InsightItem label="Last viewed:">
+          {lastViewedAt
+            ? new Date(lastViewedAt).toLocaleString(undefined, {
+                dateStyle: "short",
+                timeStyle: "short",
+              })
+            : "—"}
+        </InsightItem>
+      </div>
+    </AdminModal>
   );
 }
