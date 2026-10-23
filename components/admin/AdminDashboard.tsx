@@ -20,6 +20,7 @@ import {
   ADMIN_ICON_SECONDARY_CLASS,
   ADMIN_PANEL_CLASS,
 } from '@/components/admin/admin-chrome';
+import { useClientMounted } from '@/hooks/useClientMounted';
 import { groupApplicationsByDay } from '@/lib/utils/group-applications-by-day';
 import { timeOfDayGreeting } from '@/lib/utils/admin-dashboard-greeting';
 import type { OnboardingChecklistInput } from '@/lib/utils/onboarding-checklist';
@@ -173,7 +174,12 @@ export default function AdminDashboard({
     refetch: refetchCounts,
   } = useApplicationStatusCounts();
 
-  const dayGroups = groupApplicationsByDay(applications);
+  // Day labels, row times, and the greeting use the browser clock — wait until
+  // mount so SSR (server TZ) cannot disagree with hydration.
+  const localClockReady = useClientMounted();
+  const dayGroups = localClockReady
+    ? groupApplicationsByDay(applications)
+    : [];
   const trimmedName = firstName?.trim() || null;
   const [railBoxEl, setRailBoxEl] = useState<HTMLElement | null>(null);
   const [railScrollEl, setRailScrollEl] = useState<HTMLDivElement | null>(null);
@@ -212,7 +218,7 @@ export default function AdminDashboard({
     [handlePublish, refetchCounts],
   );
 
-  if (loading) {
+  if (loading || !localClockReady) {
     return <AdminDashboardSkeleton />;
   }
 

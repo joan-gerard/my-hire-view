@@ -7,6 +7,8 @@ import {
   useId,
   useRef,
   type ReactNode,
+  type RefObject,
+  type SyntheticEvent,
 } from "react";
 import {
   ADMIN_PANEL_CLASS,
@@ -27,6 +29,8 @@ export function useAdminModalDismiss(): () => void {
 export type AdminModalProps = {
   open: boolean;
   onClose: () => void;
+  /** Optional id for `aria-controls` on the open trigger. */
+  id?: string;
   title: string;
   /** Optional subtitle / help under the title. */
   description?: ReactNode;
@@ -36,6 +40,23 @@ export type AdminModalProps = {
    * Example: `w-[min(100vw-2rem,28rem)]`
    */
   widthClassName?: string;
+  /**
+   * `centered` (default): translate centering, max height 40rem.
+   * `viewport`: `m-auto`, max height 90vh, no transform — required when a
+   * nested `position: fixed` overlay (e.g. VideoModal) must not be clipped.
+   */
+  layout?: "centered" | "viewport";
+  /** Replace the default padded scroll body classes. */
+  bodyClassName?: string;
+  /** Content inside the dialog but outside the panel (nested overlays). */
+  overlay?: ReactNode;
+  /** Focus this element after the dialog closes (e.g. the open trigger). */
+  returnFocusRef?: RefObject<HTMLElement | null>;
+  /**
+   * Native dialog `cancel` (Escape). Call `preventDefault` to keep the dialog
+   * open (e.g. close a nested video first).
+   */
+  onCancel?: (event: SyntheticEvent<HTMLDialogElement>) => void;
   /** Replace the default Close footer. */
   footer?: ReactNode;
 };
@@ -47,10 +68,16 @@ export type AdminModalProps = {
 export default function AdminModal({
   open,
   onClose,
+  id,
   title,
   description,
   children,
   widthClassName = "w-[min(100vw-2rem,32rem)]",
+  layout = "centered",
+  bodyClassName = "min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6",
+  overlay,
+  returnFocusRef,
+  onCancel,
   footer,
 }: AdminModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -60,6 +87,13 @@ export default function AdminModal({
   const pointerDownOnBackdropRef = useRef(false);
   const titleId = useId();
   const descriptionId = useId();
+  const isViewport = layout === "viewport";
+  const dialogLayoutClass = isViewport
+    ? "z-50 m-auto h-fit max-h-[90vh] overflow-visible border-0 bg-transparent p-0 shadow-none backdrop:bg-black/40 open:flex open:flex-col"
+    : "fixed left-1/2 top-1/2 z-50 max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 border-0 bg-transparent p-0 shadow-none backdrop:bg-black/40 open:flex open:flex-col";
+  const panelMaxHeightClass = isViewport
+    ? "max-h-[90vh]"
+    : "max-h-[min(90vh,40rem)]";
 
   const requestDismiss = () => {
     const dialog = dialogRef.current;
@@ -99,10 +133,11 @@ export default function AdminModal({
       if (closeEmittedRef.current) return;
       closeEmittedRef.current = true;
       onClose();
+      returnFocusRef?.current?.focus();
     };
     dialog.addEventListener("close", handleClose);
     return () => dialog.removeEventListener("close", handleClose);
-  }, [onClose]);
+  }, [onClose, returnFocusRef]);
 
   useEffect(() => {
     if (!open) return;
@@ -116,9 +151,11 @@ export default function AdminModal({
   return (
     <dialog
       ref={dialogRef}
-      className={`fixed left-1/2 top-1/2 z-50 max-h-[min(90vh,40rem)] -translate-x-1/2 -translate-y-1/2 border-0 bg-transparent p-0 shadow-none backdrop:bg-black/40 open:flex open:flex-col ${widthClassName}`}
+      id={id}
+      className={`${dialogLayoutClass} ${widthClassName}`}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
+      onCancel={onCancel}
       onPointerDown={(e) => {
         pointerDownOnBackdropRef.current = e.target === dialogRef.current;
       }}
@@ -134,7 +171,7 @@ export default function AdminModal({
     >
       <AdminModalDismissContext.Provider value={requestDismiss}>
         <div
-          className={`flex max-h-[min(90vh,40rem)] w-full flex-col overflow-hidden text-[var(--ink)] shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)] ${ADMIN_PANEL_CLASS}`}
+          className={`flex ${panelMaxHeightClass} w-full flex-col overflow-hidden text-[var(--ink)] shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)] ${ADMIN_PANEL_CLASS}`}
         >
           <header className="shrink-0 border-b border-[var(--ink)]/8 px-5 pb-4 pt-5 sm:px-6">
             <h2
@@ -155,9 +192,7 @@ export default function AdminModal({
             ) : null}
           </header>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-            {children}
-          </div>
+          <div className={bodyClassName}>{children}</div>
 
           <footer className="relative z-10 flex shrink-0 justify-end border-t border-[var(--ink)]/8 bg-[var(--white)] px-5 py-3 sm:px-6">
             {footer ?? (
@@ -171,6 +206,7 @@ export default function AdminModal({
             )}
           </footer>
         </div>
+        {overlay}
       </AdminModalDismissContext.Provider>
     </dialog>
   );

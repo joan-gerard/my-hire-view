@@ -45,3 +45,14 @@ describe("formatApplicationTime", () => {
     expect(formatted).toMatch(/\d/);
   });
 });
+
+describe("applicationDayKey with an explicit time zone", () => {
+  it("can place a near-midnight UTC instant on different local days", () => {
+    // 04:00 UTC on 15 Oct is still 14 Oct evening in Los Angeles.
+    const nearMidnightUtc = "2026-10-15T04:00:00.000Z";
+    expect(applicationDayKey(nearMidnightUtc, "UTC")).toBe("2026-10-15");
+    expect(applicationDayKey(nearMidnightUtc, "America/Los_Angeles")).toBe(
+      "2026-10-14",
+    );
+  });
+});

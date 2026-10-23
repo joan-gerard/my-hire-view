@@ -11,6 +11,7 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 - [Conventions](#conventions)
 - [Applications](#applications)
   - [GET applications](#get-applications) — `GET /api/applications`
+  - [GET application status counts](#get-application-status-counts) — `GET /api/applications/counts`
   - [POST applications](#post-applications) — `POST /api/applications`
   - [PUT applications](#put-applications) — `PUT /api/applications`
   - [DELETE applications](#delete-applications) — `DELETE /api/applications`
@@ -130,6 +131,41 @@ TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_
 - Rate limited (default 60/min) before auth/query work.
 - Dedicated `withAuth` → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
 - Offset pagination with default page size **20** (max **50**) and `meta.total` for UI pagers.
+
+### GET application status counts
+
+`GET /api/applications/counts`
+
+One snapshot of the authenticated user’s application tallies for the dashboard Summary rail. Selects only `status` (no list rows, profile lookup, or R2 HeadObject). Prefer this over four filtered `GET /api/applications` calls.
+
+- **Auth:** Required
+- **Rate limit:** Default (60/min)
+- **Errors:** `401` `{ error: "Unauthorized" }`; `429`; `500` `{ error: string }`
+
+**Success — `200`**
+
+```json
+{
+  "data": {
+    "all": 4,
+    "active": 2,
+    "draft": 1,
+    "archived": 1
+  }
+}
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `data.all` | `number` | Every application for this user |
+| `data.active` | `number` | Live / published |
+| `data.draft` | `number` | Not visible to recruiters |
+| `data.archived` | `number` | Hidden from recruiters |
+
+**What works**
+
+- Single HTTP request and a consistent snapshot across the four tallies.
+- Leaves list-budget headroom for search and pagination.
 - Optional server-side `q` search so pagination and filtering stay consistent.
 - Stable ordering (`created_at` descending) for the dashboard.
 - Clear success shape `{ data, meta }`.

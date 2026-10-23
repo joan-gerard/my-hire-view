@@ -37,29 +37,24 @@ export async function fetchApplications(
   };
 }
 
-async function fetchApplicationTotal(
-  status?: ApplicationListParams['status'],
-): Promise<number> {
-  const { meta } = await fetchApplications({
-    limit: 1,
-    offset: 0,
-    status,
-  });
-  return meta.total;
-}
-
 /**
  * Global status tallies for the dashboard summary rail (not scoped to search).
- * @throws Error when any count request fails
+ * One request → one DB status scan (no list/profile/R2 work).
+ * @throws Error when the counts request fails
  */
 export async function fetchApplicationStatusCounts(): Promise<ApplicationDashboardCounts> {
-  const [all, active, draft, archived] = await Promise.all([
-    fetchApplicationTotal(),
-    fetchApplicationTotal('active'),
-    fetchApplicationTotal('draft'),
-    fetchApplicationTotal('archived'),
-  ]);
-  return { all, active, draft, archived };
+  const response = await fetch('/api/applications/counts');
+  if (!response.ok) {
+    throw new Error('Failed to fetch application counts');
+  }
+  const json = await response.json();
+  const data = json.data as ApplicationDashboardCounts | undefined;
+  return {
+    all: data?.all ?? 0,
+    active: data?.active ?? 0,
+    draft: data?.draft ?? 0,
+    archived: data?.archived ?? 0,
+  };
 }
 
 /**
