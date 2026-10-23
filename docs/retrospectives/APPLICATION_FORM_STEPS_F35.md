@@ -54,7 +54,7 @@ Defined in `components/forms/application-form-steps.ts`. `ApplicationForm` owns 
 
 `ApplicationFormWizardLayout` — left progress rail + right form (desktop); compact horizontal step rail on smaller screens; gated Continue; Save on review.
 
-Create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. The wizard splits that shell with a hairline (no nested white card): **desktop** sticky vertical step list with progress label + bar; **mobile/tablet** sticky progress chrome + scrollable compact step strip under the admin header, then the form. The progress bar and “N of M complete” count checked steps only (not the step you are viewing). Active step is ink; other completed steps use success wash + check; locked steps stay muted. Check marks follow step readiness (`isWizardStepCompleted` + `stepReady`) so clearing Role, CV, or Video drops the check. A tick stays on every step before the furthest one reached with Continue, including after you click back to an earlier pill. On edit, every step that still has its required fields starts complete.
+Create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. The wizard splits that shell with a hairline (no nested white card): **desktop** sticky vertical step list with progress label + bar; **mobile/tablet** sticky progress chrome + scrollable compact step strip under the admin header, then the form. The progress bar and “N of M complete” count checked steps only (not the step you are viewing). Active step is ink; other completed steps use success wash + check; locked steps stay muted. Check marks follow step readiness (`isWizardStepCompleted` + `stepReady`) so clearing Role, CV, or Video drops the check. A tick stays on every step before the furthest one reached with Continue, including after you click back to an earlier pill. On edit, every step that still has its required fields starts complete, including CV and Review while the primary-CV library is still loading. If that saved primary is gone once the library returns, those ticks drop. Save still waits for the library. When the saved CV file is missing, choosing another primary or a new tailored file does not tick CV until Continue on the CV step. Review stays unticked until save, and is green on open only when the saved application already had every required field.
 
 Per-step **Continue** uses the same readiness rules as Save (company/role + slug, CV, video, etc.), so users cannot advance via Continue with missing required inputs. **Create** unlocks progress pills via a Continue frontier (Back does not lock previously reached steps). **Edit** makes every pill reachable. Save / implicit Enter submit is limited to the Review step.
 
@@ -261,6 +261,7 @@ The instinct matches how people use phones vs laptops, but a **viewport-based la
 
 ## Related
 
+- Behavior reference (journey, per-step requirements, when checks appear): [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_WORKFLOW.md)
 - Backlog ticket: `F35-119`
 - PR group branch intent: `feat/f35-application-form-steps`
 - Prior create-flow context: [CREATE_APP_DRAFT_AND_LEAVE.md](CREATE_APP_DRAFT_AND_LEAVE.md), [ACTIVATION_UX_F19.md](ACTIVATION_UX_F19.md)

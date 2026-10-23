@@ -510,9 +510,12 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 - [ ] Toggle candidate fields and picture Yes/No; `/view` matches
 - [ ] Change/remove picture from the modal; Profile library/picture stays in sync
 - [ ] Invalid / foreign / Account B’s edit id → redirected to dashboard (no crash, no leak)
-- [ ] **Check again** on a missing CV retries existence without a full-page spinner
+- [ ] **Check again** on a missing CV shows **Checking…**, then either the warning clears or **Checked just now. The file is still not in storage.** A failed check says to try again. No full-page spinner
 - [ ] No leave-confirm browser draft on edit (create-only feature)
 - [ ] Edit radios stay **usable** while the primary library loads (saved source is not overwritten)
+- [ ] On edit, CV and Review ticks are green immediately for a saved primary CV; they drop only if that primary is gone after the library loads. Save stays unavailable until the library confirms it
+- [ ] On edit of a **missing** CV file, choosing another primary or a new tailored PDF does not turn CV green until **Continue** on the CV step. Changing that choice again waits for Continue once more. Review stays unticked through that Continue
+- [ ] On edit of an application that already has company, role, slug, CV, and video, Review is green on open. Clearing a required field drops it. It does not turn green merely because an earlier step was continued
 - [ ] Two tabs editing the **same** app: last save wins; no 500; reload shows one consistent row
 
 ---

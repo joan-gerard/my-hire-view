@@ -18,7 +18,8 @@ interface CvSourceFieldProps {
   currentType: ApplicationCvType | null;
   currentUrl: string;
   cvUrlExists?: boolean;
-  onRetryCvCheck?: () => Promise<void>;
+  /** Resolves false when storage still has no file. */
+  onRetryCvCheck?: () => Promise<boolean | void>;
 
   mode: ApplicationCvType;
   primaryCvs: PrimaryCv[];
@@ -82,6 +83,8 @@ export default function CvSourceField({
   disabled = false,
 }: CvSourceFieldProps) {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
+  const [checkingCv, setCheckingCv] = useState(false);
+  const [cvRecheckNote, setCvRecheckNote] = useState<string | null>(null);
   const selectedPrimary = primaryCvs.find((cv) => cv.id === selectedPrimaryId);
   const hasPrimaryCvs = primaryCvs.length > 0;
   const canManageLibrary = typeof onPrimaryLibraryChange === "function";
@@ -139,13 +142,41 @@ export default function CvSourceField({
                     upload a new tailored PDF below.
                   </p>
                   {onRetryCvCheck && (
-                    <button
-                      type="button"
-                      onClick={() => void onRetryCvCheck()}
-                      className="mt-2 rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--white)] hover:opacity-90"
-                    >
-                      Check again
-                    </button>
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        disabled={checkingCv}
+                        aria-busy={checkingCv}
+                        onClick={() => {
+                          void (async () => {
+                            setCheckingCv(true);
+                            setCvRecheckNote(null);
+                            try {
+                              const found = await onRetryCvCheck();
+                              if (found === false) {
+                                setCvRecheckNote(
+                                  "Checked just now. The file is still not in storage.",
+                                );
+                              }
+                            } catch {
+                              setCvRecheckNote(
+                                "Could not check storage. Try again.",
+                              );
+                            } finally {
+                              setCheckingCv(false);
+                            }
+                          })();
+                        }}
+                        className="rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--white)] hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {checkingCv ? "Checking…" : "Check again"}
+                      </button>
+                      {cvRecheckNote ? (
+                        <p className="mt-2 text-xs" role="status">
+                          {cvRecheckNote}
+                        </p>
+                      ) : null}
+                    </div>
                   )}
                 </div>
               )}

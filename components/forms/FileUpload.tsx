@@ -10,8 +10,8 @@ interface FileUploadProps {
   onPendingFileChange: (file: File | null) => void | Promise<void>;
   /** When false, hide the View link (e.g. CV missing in storage). When true or undefined, show View if value is set. */
   cvUrlExists?: boolean;
-  /** When provided and cvUrlExists is false, show a "Check again" button to re-run the existence check. */
-  onRetryCvCheck?: () => Promise<void>;
+  /** When provided and cvUrlExists is false, show a "Check again" button to re-run the existence check. Resolves false when the file is still missing. */
+  onRetryCvCheck?: () => Promise<boolean | void>;
   error?: string;
   /** Hide the top "CV (PDF)" label when nested in CvSourceField. */
   hideLabel?: boolean;
@@ -45,6 +45,7 @@ export default function FileUpload({
 }: FileUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [checkingCv, setCheckingCv] = useState(false);
+  const [cvRecheckNote, setCvRecheckNote] = useState<string | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -238,16 +239,37 @@ export default function FileUpload({
                 </p>
                 <button
                   type="button"
-                  onClick={async () => {
-                    setCheckingCv(true);
-                    await onRetryCvCheck();
-                    setCheckingCv(false);
-                  }}
                   disabled={checkingCv}
-                  className="mt-2 rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--white)] hover:opacity-90 disabled:opacity-50"
+                  aria-busy={checkingCv}
+                  onClick={() => {
+                    void (async () => {
+                      setCheckingCv(true);
+                      setCvRecheckNote(null);
+                      try {
+                        const found = await onRetryCvCheck();
+                        if (found === false) {
+                          setCvRecheckNote(
+                            "Checked just now. The file is still not in storage.",
+                          );
+                        }
+                      } catch {
+                        setCvRecheckNote(
+                          "Could not check storage. Try again.",
+                        );
+                      } finally {
+                        setCheckingCv(false);
+                      }
+                    })();
+                  }}
+                  className="mt-2 rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--white)] hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {checkingCv ? 'Checking…' : 'Check again'}
                 </button>
+                {cvRecheckNote ? (
+                  <p className="mt-2 text-xs" role="status">
+                    {cvRecheckNote}
+                  </p>
+                ) : null}
               </>
             )}
           </div>

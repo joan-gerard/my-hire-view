@@ -100,7 +100,8 @@ interface ApplicationFormProps {
   /** Primary submit button label (create uses “Save & Preview”; edit keeps “Save Application”). */
   submitLabel?: string;
   /** When provided, passed to FileUpload so user can re-check CV existence (edit page). */
-  onRetryCvCheck?: () => Promise<void>;
+  /** Resolves false when the saved CV is still missing from storage. */
+  onRetryCvCheck?: () => Promise<boolean | void>;
   /** Profile picture URL; when set, Yes/No toggle is enabled; when null, toggle is disabled with No selected. */
   profilePictureUrl?: string | null;
   /** Cache-bust key for the live profile picture (e.g. profiles.updated_at). */
@@ -148,6 +149,15 @@ export default function ApplicationForm({
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
   const [currentStepId, setCurrentStepId] =
     useState<ApplicationFormStepId>("role");
+  /**
+   * Edit of a missing CV file: the replacement does not count as done until
+   * Continue. Stores the choice that was confirmed, so a later swap waits again.
+   */
+  const [confirmedMissingCvKey, setConfirmedMissingCvKey] = useState<
+    string | null
+  >(null);
+  /** Review tick after a successful save. Navigation usually leaves before it shows. */
+  const [reviewSaved, setReviewSaved] = useState(false);
   /** Create wizard: furthest step unlocked via Continue (survives Back). */
   const [furthestStepId, setFurthestStepId] =
     useState<ApplicationFormStepId>("role");
@@ -643,6 +653,24 @@ export default function ApplicationForm({
               formData.cv_url.trim() &&
               initialData?.cv_type === "tailored"),
         );
+  /** Saved file is gone from storage. Choosing a replacement is not done yet. */
+  const savedCvFileMissing = isEdit && initialData?.cvUrlExists === false;
+  const stillUsingMissingSavedCv =
+    savedCvFileMissing &&
+    !cvPendingFile &&
+    (initialData?.cv_type === "primary"
+      ? cvMode === "primary" &&
+        selectedPrimaryId === (initialData.primary_cv_id ?? null)
+      : cvMode === "tailored");
+  const hasUsableCv = hasCv && !stillUsingMissingSavedCv;
+  const cvChoiceKey =
+    cvMode === "primary"
+      ? selectedPrimaryId
+        ? `primary:${selectedPrimaryId}`
+        : ""
+      : cvPendingFile
+        ? `tailored:${cvPendingFile.name}:${cvPendingFile.size}:${cvPendingFile.lastModified}`
+        : "";
   const hasVideo = Boolean(formData.video_url.trim());
   const slugReady =
     slugLiveStatus.kind === "available" && hasSlug;
@@ -655,9 +683,50 @@ export default function ApplicationForm({
   const slugHoldsStepComplete =
     hasSlug &&
     (slugReady || slugLiveStatus.kind === "checking");
+  /**
+   * Edit (and a restored draft) already know the primary CV id, but the library
+   * list starts empty. Keep the CV and Review ticks while that list loads.
+   * Continue / Save still use `hasCv`, so they wait until the id is confirmed
+   * or cleared if that primary was deleted.
+   */
+  const cvHoldsStepComplete =
+    hasCv ||
+    (!savedCvFileMissing &&
+      primaryCvsLoading &&
+      cvMode === "primary" &&
+      Boolean(selectedPrimaryId));
+  /**
+   * A missing saved file stays unchecked after a new primary or tailored file
+   * is chosen. Continue on the CV step is what marks that choice done.
+   */
+  const cvCountsForProgress = savedCvFileMissing
+    ? hasUsableCv &&
+      cvChoiceKey !== "" &&
+      confirmedMissingCvKey === cvChoiceKey
+    : cvHoldsStepComplete;
+  /**
+   * Review is not a Continue checkpoint. It is green on edit only when the
+   * saved application already had every required field, and after a successful
+   * save. Fixing a missing CV must not light it early.
+   */
+  const savedReviewWasComplete =
+    isEdit &&
+    Boolean(initialData?.company?.trim()) &&
+    Boolean(initialData?.role?.trim()) &&
+    Boolean(initialData?.slug?.trim()) &&
+    Boolean(initialData?.video_url?.trim()) &&
+    initialData?.cvUrlExists !== false &&
+    Boolean(initialData?.cv_url?.trim());
+  const reviewCountsForProgress =
+    (savedReviewWasComplete || reviewSaved) &&
+    hasCompany &&
+    hasRole &&
+    (savedCvFileMissing ? hasUsableCv : cvHoldsStepComplete) &&
+    hasVideo &&
+    slugHoldsStepComplete;
 
   const requiredReady =
-    hasCompany && hasRole && hasCv && hasVideo && slugReady;
+    hasCompany && hasRole && hasUsableCv && hasVideo && slugReady;
 
   const formBusy =
     loading || submitPhase !== "idle" || cvPendingDigesting;
@@ -673,7 +742,7 @@ export default function ApplicationForm({
     if (canSubmit || formBusy) return null;
     if (!hasCompany) return "Company name is required.";
     if (!hasRole) return "Role is required.";
-    if (!hasCv)
+    if (!hasUsableCv)
       return cvMode === "primary"
         ? "Select a primary CV, or upload a tailored CV."
         : "Upload a CV file for this application.";
@@ -1145,6 +1214,7 @@ export default function ApplicationForm({
       }
       try {
         await onSubmit(payload);
+        setReviewSaved(true);
         if (persistDraftKey) {
           clearCreateApplicationDraft(persistDraftKey);
         }
@@ -1192,17 +1262,11 @@ export default function ApplicationForm({
       case "candidate":
         return true;
       case "materials":
-        return hasCv;
+        return cvCountsForProgress;
       case "video":
         return hasVideo;
       case "review":
-        return (
-          hasCompany &&
-          hasRole &&
-          hasCv &&
-          hasVideo &&
-          slugHoldsStepComplete
-        );
+        return reviewCountsForProgress;
       default:
         return false;
     }
@@ -1234,7 +1298,7 @@ export default function ApplicationForm({
       case "candidate":
         return null;
       case "materials":
-        if (!hasCv) {
+        if (!hasUsableCv) {
           return cvMode === "primary"
             ? "Select a primary CV, or upload a tailored CV."
             : "Upload a CV file for this application.";
@@ -1749,6 +1813,11 @@ export default function ApplicationForm({
               applicationFormStepIndex(furthestStepId)
           ) {
             setFurthestStepId(id);
+          }
+        }}
+        onContinue={(fromId) => {
+          if (fromId === "materials" && hasUsableCv && cvChoiceKey) {
+            setConfirmedMissingCvKey(cvChoiceKey);
           }
         }}
         continueBlockedReason={continueBlockedReasonFor(currentStepId)}

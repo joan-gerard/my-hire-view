@@ -78,16 +78,18 @@ export default function EditApplicationPage() {
     }
   };
 
-  /** Re-fetch application to get fresh cv_exists (no full-page loading). */
-  const refetchCvCheck = async () => {
-    try {
-      const response = await fetch(`/api/applications/by-id/${id}`);
-      if (!response.ok) return;
-      const { data } = await response.json();
-      setApplication(data);
-    } catch {
-      // Ignore; user can try again
+  /**
+   * Re-check whether the saved CV is still in storage, without a full-page load.
+   * Returns false when the file is still missing so the form can say so.
+   */
+  const refetchCvCheck = async (): Promise<boolean> => {
+    const response = await fetch(`/api/applications/by-id/${id}`);
+    if (!response.ok) {
+      throw new Error("Could not check the CV.");
     }
+    const { data } = await response.json();
+    setApplication(data);
+    return data?.cv_exists !== false;
   };
 
   const handleSubmit = async (data: ApplicationFormData) => {

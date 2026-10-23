@@ -20,6 +20,8 @@ interface ApplicationFormWizardLayoutProps {
   stepContents: ApplicationFormStepContentMap;
   currentStepId: ApplicationFormStepId;
   onStepChange: (id: ApplicationFormStepId) => void;
+  /** Fired when Continue leaves a step. Pill clicks and Back do not confirm it. */
+  onContinue?: (fromStepId: ApplicationFormStepId) => void;
   /**
    * Furthest step unlocked via Continue (create). Pills allow this step and
    * earlier ones even after Back. Ignored when `allowAllSteps` is true.
@@ -86,6 +88,7 @@ export default function ApplicationFormWizardLayout({
   stepContents,
   currentStepId,
   onStepChange,
+  onContinue,
   furthestStepId,
   allowAllSteps = false,
   continueBlockedReason = null,
@@ -241,6 +244,7 @@ export default function ApplicationFormWizardLayout({
           }
           onClick={() => {
             if (!canContinue) return;
+            onContinue?.(step.id);
             onStepChange(APPLICATION_FORM_STEPS[index + 1].id);
           }}
           aria-describedby={
