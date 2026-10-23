@@ -115,6 +115,17 @@ describe("parseCreateApplicationDraft", () => {
     );
   });
 
+  it("migrates v1 drafts that omit slugSegmentOrder to company_role", () => {
+    const v1 = {
+      ...sampleDraft({ slugSegmentOrder: "role_company" }),
+      v: 1,
+    };
+    delete (v1 as { slugSegmentOrder?: string }).slugSegmentOrder;
+    const parsed = parseCreateApplicationDraft(v1);
+    expect(parsed?.v).toBe(2);
+    expect(parsed?.slugSegmentOrder).toBe("company_role");
+  });
+
   it("rejects wrong version, corrupt include, expired, and future-dated drafts", () => {
     expect(
       parseCreateApplicationDraft({ ...sampleDraft(), v: 999 }),

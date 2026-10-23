@@ -29,7 +29,7 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Search applications"
-        className="block w-full rounded-xl border-0 bg-[var(--white)] py-2.5 pl-10 pr-3 text-[var(--ink)] outline-none ring-1 ring-inset ring-[var(--ink)]/10 placeholder:text-[var(--muted)] focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] sm:text-sm sm:leading-6"
+        className="block w-full rounded-xl border-0 bg-[var(--white)] py-2.5 pl-10 pr-3 text-[var(--ink)] outline-hidden ring-1 ring-inset ring-[var(--ink)]/10 placeholder:text-[var(--muted)] focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] sm:text-sm sm:leading-6"
         placeholder="Company, role, or slug"
       />
     </div>

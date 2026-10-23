@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
   type FocusEvent,
+  type KeyboardEvent,
   type MouseEvent,
   type ReactElement,
   type RefObject,
@@ -34,6 +35,7 @@ type TriggerProps = {
   onMouseLeave?: (event: MouseEvent<HTMLElement>) => void;
   onFocus?: (event: FocusEvent<HTMLElement>) => void;
   onBlur?: (event: FocusEvent<HTMLElement>) => void;
+  onKeyDown?: (event: KeyboardEvent<HTMLElement>) => void;
 };
 
 type TipAnchor = { top: number; left: number };
@@ -91,6 +93,13 @@ export default function AdminTooltip({
     onBlur: (event: FocusEvent<HTMLElement>) => {
       childProps.onBlur?.(event);
       setOpen(false);
+    },
+    onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+      childProps.onKeyDown?.(event);
+      if (event.key === "Escape" && open) {
+        event.stopPropagation();
+        setOpen(false);
+      }
     },
   });
 

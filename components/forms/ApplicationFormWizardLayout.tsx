@@ -313,7 +313,7 @@ export default function ApplicationFormWizardLayout({
      * Bleed to the form shell edges so the rail/form split reads as two
      * regions without nesting a second bordered card (F35 atmosphere).
      */
-    <div className="-m-4 flex flex-col lg:-m-6 lg:flex-row lg:items-stretch">
+    <div className="-m-4 flex flex-col sm:-m-6 lg:flex-row lg:items-stretch">
       {/* Mobile / tablet: sticky progress + horizontal step rail */}
       <div className="sticky top-[var(--admin-header-height,72px)] z-20 shrink-0 space-y-3 border-b border-[var(--ink)]/10 bg-[var(--white)] p-4 sm:p-6 lg:hidden">
         {progressHeader}

@@ -401,33 +401,34 @@ export default function OnboardingChecklist({
         className={`flex flex-col overflow-hidden ${ADMIN_PANEL_CLASS}`}
         aria-labelledby="onboarding-checklist-heading"
       >
-        <button
-          type="button"
-          className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left sm:px-5 ${FOCUS_RING} focus-visible:outline-offset-[-2px]`}
-          aria-expanded={panelExpanded}
-          aria-controls={bodyId}
-          onClick={() => setExpandedAndPersist(!prefs.expanded)}
-        >
-          <h2
-            id="onboarding-checklist-heading"
-            className="min-w-0 font-heading text-sm font-semibold tracking-[-0.01em] text-[var(--ink)]"
+        <h2 id="onboarding-checklist-heading" className="m-0">
+          <button
+            type="button"
+            className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left sm:px-5 ${FOCUS_RING} focus-visible:outline-offset-[-2px]`}
+            aria-expanded={panelExpanded}
+            aria-controls={bodyId}
+            aria-label={
+              allDone
+                ? "Getting started, all steps done"
+                : `Getting started, ${completed} of ${total} complete`
+            }
+            onClick={() => setExpandedAndPersist(!prefs.expanded)}
           >
-            Getting started
-          </h2>
-          <span className="inline-flex shrink-0 items-center gap-2">
-            <span
-              className="rounded-full bg-[var(--lime)] px-2.5 py-1 text-xs font-semibold tabular-nums text-[var(--ink)]"
-              aria-hidden
-            >
-              {allDone ? "Done" : `${completed}/${total}`}
+            <span className="min-w-0 font-heading text-sm font-semibold tracking-[-0.01em] text-[var(--ink)]">
+              Getting started
             </span>
-            {panelExpanded ? (
-              <ChevronUpIcon className="h-4 w-4 text-[var(--muted)]" />
-            ) : (
-              <ChevronDownIcon className="h-4 w-4 text-[var(--muted)]" />
-            )}
-          </span>
-        </button>
+            <span className="inline-flex shrink-0 items-center gap-2">
+              <span className="rounded-full bg-[var(--lime)] px-2.5 py-1 text-xs font-semibold tabular-nums text-[var(--ink)]">
+                {allDone ? "Done" : `${completed}/${total}`}
+              </span>
+              {panelExpanded ? (
+                <ChevronUpIcon className="h-4 w-4 text-[var(--muted)]" />
+              ) : (
+                <ChevronDownIcon className="h-4 w-4 text-[var(--muted)]" />
+              )}
+            </span>
+          </button>
+        </h2>
 
         {panelExpanded ? (
           <div id={bodyId}>

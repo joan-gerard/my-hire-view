@@ -137,6 +137,7 @@ export default function ApplicationCard({
             ) : (
               <AdminTooltip label={copyUnavailableLabel}>
                 <span
+                  role="img"
                   className={ADMIN_ICON_DISABLED_CLASS}
                   aria-label={
                     isDraft
@@ -146,7 +147,7 @@ export default function ApplicationCard({
                         : "Link unavailable"
                   }
                 >
-                  <CopyIcon className="h-4 w-4" />
+                  <CopyIcon className="h-4 w-4" aria-hidden />
                 </span>
               </AdminTooltip>
             )}
@@ -187,10 +188,11 @@ export default function ApplicationCard({
             ) : (
               <AdminTooltip label="Complete your profile to preview the public page">
                 <span
+                  role="img"
                   className={ADMIN_ICON_DISABLED_CLASS}
                   aria-label="View unavailable"
                 >
-                  <ExternalLinkIcon className="h-4 w-4" />
+                  <ExternalLinkIcon className="h-4 w-4" aria-hidden />
                 </span>
               </AdminTooltip>
             )}

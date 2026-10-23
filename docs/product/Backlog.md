@@ -364,7 +364,7 @@ First observability step when Vercel Runtime Logs are no longer enough. Upload-s
 Full effort rollup and phased order for open before-launch PRs: [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md).
 
 1. Continue the phased sequence in [BEFORE_LAUNCH_PR_ORDER.md](BEFORE_LAUNCH_PR_ORDER.md) — next user-facing: **F35** (stepped create/edit) and/or **F38** (`/view` polish); ~~**F34**~~ shipped
-2. **After F35 layout pick (when ready):** **F40** — incomplete server draft saves + publish gate ([INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md)); **F41** (`F41-127` create final-step preview + Publish / Save as draft, either layout)
+2. **After F35 wizard (when ready):** **F40** — incomplete server draft saves + publish gate ([INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md)); **F41** (`F41-127` create final-step Publish / Save as draft — Show preview already ships in the wizard)
 3. **Anytime (pricing draft):** **E4** (`E4-116` quarterly) and/or **J4** (`J4-125` username all tiers in pricing docs) before E1 locks
 4. **Before launch (identity):** **J1** (`J1-126`) signup username for all tiers — prefer after `J4-125`; then **J5** (`J5-128`) company/role slug order (retire Name in URL)
 5. **Before F30:** `I2`, `L6` (targeted code-quality / refactor; `F5`, `F25` shipped)

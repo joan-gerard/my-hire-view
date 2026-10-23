@@ -105,20 +105,24 @@ function useContainRailWheel(
       const canScroll = scrollHeight > clientHeight + 1;
       if (!canScroll) return;
 
-      const overScrollport = scrollEl.contains(event.target as Node);
-      if (!overScrollport) {
-        scrollEl.scrollTop += event.deltaY;
-        event.preventDefault();
-        return;
-      }
-
       const scrollingUp = event.deltaY < 0;
       const scrollingDown = event.deltaY > 0;
       const atTop = scrollTop <= 0;
       const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+      // At an edge, let the page scroll (including when the target is Search).
       if ((scrollingUp && atTop) || (scrollingDown && atBottom)) {
+        return;
+      }
+
+      const overScrollport = scrollEl.contains(event.target as Node);
+      if (!overScrollport) {
+        // Wheel is over sticky chrome (e.g. Search) — drive the rail instead
+        // of the page while the rail can still move.
+        scrollEl.scrollTop += event.deltaY;
         event.preventDefault();
       }
+      // Inside the scrollport and not at an edge: leave the event alone so
+      // the browser scrolls the rail natively.
     };
 
     boundaryEl.addEventListener('wheel', onWheel, { passive: false });
@@ -165,6 +169,7 @@ export default function AdminDashboard({
   const {
     counts,
     loading: countsLoading,
+    error: countsError,
     refetch: refetchCounts,
   } = useApplicationStatusCounts();
 
@@ -248,7 +253,11 @@ export default function AdminDashboard({
         }
       >
         <div className="shrink-0">
-          <ApplicationStatusSummary counts={counts} loading={countsLoading} />
+          <ApplicationStatusSummary
+            counts={counts}
+            loading={countsLoading}
+            error={countsError}
+          />
         </div>
         <div className="shrink-0">
           <OnboardingChecklist

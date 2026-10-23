@@ -10,6 +10,8 @@ const SUMMARY_EXPANDED_STORAGE_KEY = "myhireview:dashboard-summary-expanded";
 export type ApplicationStatusSummaryProps = {
   counts: ApplicationDashboardCounts;
   loading?: boolean;
+  /** When set, counts are unreliable — show the message instead of zeros. */
+  error?: string | null;
 };
 
 type SummaryRow = {
@@ -42,6 +44,7 @@ function readStoredExpanded(): boolean {
 export default function ApplicationStatusSummary({
   counts,
   loading = false,
+  error = null,
 }: ApplicationStatusSummaryProps) {
   const panelId = useId();
   const headingId = useId();
@@ -69,45 +72,53 @@ export default function ApplicationStatusSummary({
       aria-labelledby={headingId}
       aria-busy={loading || undefined}
     >
-      <button
-        type="button"
-        className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left sm:px-5 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
-        aria-expanded={expanded}
-        aria-controls={panelId}
-        onClick={() => setExpandedAndPersist(!expanded)}
-      >
-        <div className="min-w-0">
-          <h2
-            id={headingId}
-            className="font-heading text-sm font-semibold tracking-[-0.01em] text-[var(--ink)]"
-          >
-            Summary
-          </h2>
-          <p className="mt-0.5 text-xs text-[var(--muted)]">
-            {expanded
-              ? "Across all your applications"
-              : `${counts.all} total · ${counts.active} live`}
-          </p>
-        </div>
-        <span className="mt-0.5 inline-flex shrink-0 items-center gap-2 text-[var(--muted)]">
-          {!expanded ? (
-            <span
-              className={`text-sm font-semibold tabular-nums text-[var(--ink)] ${
-                loading ? "opacity-40" : ""
-              }`}
-            >
-              {counts.all}
+      <h2 id={headingId} className="m-0">
+        <button
+          type="button"
+          className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left sm:px-5 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--ink)]"
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          onClick={() => setExpandedAndPersist(!expanded)}
+        >
+          <span className="min-w-0">
+            <span className="block font-heading text-sm font-semibold tracking-[-0.01em] text-[var(--ink)]">
+              Summary
             </span>
-          ) : null}
-          {expanded ? (
-            <ChevronUpIcon className="h-4 w-4" />
-          ) : (
-            <ChevronDownIcon className="h-4 w-4" />
-          )}
-        </span>
-      </button>
+            <span className="mt-0.5 block text-xs font-normal text-[var(--muted)]">
+              {expanded
+                ? "Across all your applications"
+                : `${counts.all} total · ${counts.active} live`}
+            </span>
+          </span>
+          <span className="mt-0.5 inline-flex shrink-0 items-center gap-2 text-[var(--muted)]">
+            {!expanded ? (
+              <span
+                className={`text-sm font-semibold tabular-nums text-[var(--ink)] ${
+                  loading ? "opacity-40" : ""
+                }`}
+              >
+                {counts.all}
+              </span>
+            ) : null}
+            {expanded ? (
+              <ChevronUpIcon className="h-4 w-4" />
+            ) : (
+              <ChevronDownIcon className="h-4 w-4" />
+            )}
+          </span>
+        </button>
+      </h2>
 
       {expanded ? (
+        error ? (
+          <p
+            id={panelId}
+            role="alert"
+            className="border-t border-[var(--ink)]/8 px-4 py-3 text-sm text-[var(--status-danger-fg)] sm:px-5"
+          >
+            Couldn’t load status counts. Try refreshing the page.
+          </p>
+        ) : (
         <ul
           id={panelId}
           className="divide-y divide-[var(--ink)]/8 border-t border-[var(--ink)]/8"
@@ -133,6 +144,7 @@ export default function ApplicationStatusSummary({
             </li>
           ))}
         </ul>
+        )
       ) : (
         <div id={panelId} hidden />
       )}

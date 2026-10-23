@@ -6,6 +6,11 @@
  */
 
 import type { ApplicationCvType } from "@/lib/types/application";
+import {
+  isSlugSegmentOrder,
+  SLUG_SEGMENT_ORDER_DEFAULT,
+  type SlugSegmentOrder,
+} from "@/lib/utils/slug-generate";
 
 export const CREATE_APPLICATION_DRAFT_VERSION = 2 as const;
 
@@ -120,11 +125,6 @@ function isCvMode(value: unknown): value is ApplicationCvType {
   return value === "primary" || value === "tailored";
 }
 
-function isSlugSegmentOrder(
-  value: unknown,
-): value is "company_role" | "role_company" {
-  return value === "company_role" || value === "role_company";
-}
 
 function defaultIncludeFromValues(
   draft: Pick<
@@ -199,11 +199,21 @@ export function parseCreateApplicationDraft(
   if (typeof obj.showProfilePicture !== "boolean") return null;
   if (typeof obj.use_original_cv_filename !== "boolean") return null;
   if (!isCvMode(obj.cvMode)) return null;
-  if (!isSlugSegmentOrder(obj.slugSegmentOrder)) return null;
   if (
     obj.selectedPrimaryId !== null &&
     typeof obj.selectedPrimaryId !== "string"
   ) {
+    return null;
+  }
+
+  let slugSegmentOrder: SlugSegmentOrder;
+  if (isSlugSegmentOrder(obj.slugSegmentOrder)) {
+    slugSegmentOrder = obj.slugSegmentOrder;
+  } else if (version === 1 && obj.slugSegmentOrder === undefined) {
+    // v1 drafts predated company/role order. Name-in-URL (`slugNamePosition`)
+    // did not encode segment order — default to company then role.
+    slugSegmentOrder = SLUG_SEGMENT_ORDER_DEFAULT;
+  } else {
     return null;
   }
 
@@ -236,7 +246,7 @@ export function parseCreateApplicationDraft(
     portfolio_url,
     linkedin_url,
     include,
-    slugSegmentOrder: obj.slugSegmentOrder,
+    slugSegmentOrder,
     slugManuallyEdited: obj.slugManuallyEdited,
     showProfilePicture: obj.showProfilePicture,
     showProfilePictureUserChosen,

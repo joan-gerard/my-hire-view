@@ -101,9 +101,9 @@ F35 / F38
 
 **Why this beats “easiest first”:**
 
-1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, E4/J4→E1→E2, J4→J1→J5, L6/I2→F30 are real; ignore them and you thrash. Prefer F40 / F41 after F35 layout pick when possible (soft ordering, not a hard gate — see sequence above).
+1. **Dependencies** — F15→F16→F19, marketing rebrand→F34→F35/F38, E4/J4→E1→E2, J4→J1→J5, L6/I2→F30 are real; ignore them and you thrash. Prefer F40 / F41 after the F35 wizard when possible (soft ordering, not a hard gate — see sequence above).
 2. **Risk before paint** — API/storage races before branding.
 3. **Reviews stay useful** — F28/F39/F29/F30 after the bulk of pre-launch code, not before.
 4. **Monetization last** — backlog already defers E1/E2 until launch is imminent; E4/J4 only update the draft.
 
-If capacity is short: finish **F35** (create/edit steps) and **F38** (`/view` polish) before **F39** / **F32** QA. Do not mix **F40** incomplete draft saves or **F41** create preview/publish into the F35 dual-layout test.
+If capacity is short: finish the **F35** wizard and **F38** (`/view` polish) before **F39** / **F32** QA. Do not mix **F40** incomplete draft saves or **F41** create preview/publish into the F35 wizard work.

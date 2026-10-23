@@ -70,7 +70,7 @@ function SummaryGroup({
           {title}
         </h4>
       </div>
-      <div className="space-y-3 pl-[2.125rem]">{children}</div>
+      <dl className="space-y-3 pl-[2.125rem]">{children}</dl>
     </div>
   );
 }
@@ -155,22 +155,21 @@ export default function ApplicationReviewSummary({
         </button>
       </div>
 
-      <dl
+      <div
         id="application-review-summary"
         hidden={!open}
         className="space-y-5 border-t border-[var(--ink)]/10 px-4 py-4"
       >
         <SummaryGroup step={1} title="Role & share URL">
           <div className="min-w-0">
-            <p className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
+            <dt className="sr-only">Company and role</dt>
+            <dd className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
               {roleHero}
-            </p>
+            </dd>
           </div>
           <SummaryRow label="Share slug">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="max-w-full truncate">
-                {slugTrim || "—"}
-              </span>
+              <span className="max-w-full truncate">{slugTrim || "—"}</span>
               {slugTrim ? (
                 <StatusChip tone={slugReady ? "ok" : "warn"}>
                   {slugReady ? "Available" : "Not ready"}
@@ -182,7 +181,7 @@ export default function ApplicationReviewSummary({
           </SummaryRow>
         </SummaryGroup>
 
-        <div className="border-t border-[var(--ink)]/10" />
+        <div className="border-t border-[var(--ink)]/10" role="separator" />
 
         <SummaryGroup step={2} title="About you">
           <SummaryRow label="Profile picture">
@@ -205,7 +204,7 @@ export default function ApplicationReviewSummary({
           })}
         </SummaryGroup>
 
-        <div className="border-t border-[var(--ink)]/10" />
+        <div className="border-t border-[var(--ink)]/10" role="separator" />
 
         <SummaryGroup step={3} title="CV">
           <SummaryRow label="Résumé">
@@ -217,7 +216,7 @@ export default function ApplicationReviewSummary({
           </SummaryRow>
         </SummaryGroup>
 
-        <div className="border-t border-[var(--ink)]/10" />
+        <div className="border-t border-[var(--ink)]/10" role="separator" />
 
         <SummaryGroup step={4} title="Video">
           <SummaryRow label="YouTube intro">
@@ -228,7 +227,7 @@ export default function ApplicationReviewSummary({
             )}
           </SummaryRow>
         </SummaryGroup>
-      </dl>
+      </div>
     </section>
   );
 }
