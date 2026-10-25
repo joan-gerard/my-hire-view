@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { ADMIN_PRIMARY_CLASS } from '@/components/admin/admin-chrome';
-import { useState } from 'react';
+import Button from "@/components/ui/Button";
+import { useState } from "react";
 
 interface CvUnavailableWithRetryProps {
   /** When provided, "Try again" calls this instead of refreshing the route. Enables a single API fetch + state update. */
@@ -26,7 +26,7 @@ export default function CvUnavailableWithRetry({
   return (
     <div
       role="alert"
-      className="rounded-[24px] border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-6 py-8 text-center"
+      className="rounded-2xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-6 py-8 text-center"
     >
       <p className="font-semibold text-[var(--status-warning-fg)]">
         CV is not available
@@ -38,24 +38,16 @@ export default function CvUnavailableWithRetry({
       <p className="mt-3 text-xs text-[var(--status-warning-fg)]">
         If this might be a temporary issue (e.g. network), you can try again.
       </p>
-      <button
+      <Button
         type="button"
         onClick={handleTryAgain}
-        disabled={retrying || !onRetry}
-        className={`mt-4 ${ADMIN_PRIMARY_CLASS} ${retrying ? 'animate-pulse' : ''}`}
+        disabled={!onRetry}
+        loading={retrying}
+        loadingLabel="Reloading…"
+        className="mt-4"
       >
-        {retrying ? (
-          <>
-            <span
-              className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-[var(--white)] border-t-transparent"
-              aria-hidden
-            />
-            Reloading…
-          </>
-        ) : (
-          'Try again'
-        )}
-      </button>
+        Try again
+      </Button>
     </div>
   );
 }

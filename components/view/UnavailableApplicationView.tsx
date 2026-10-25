@@ -15,13 +15,14 @@ const BACKGROUND_IMAGE = "/hero-image.webp";
 
 /**
  * Single recruiter-facing empty state for archived, draft, deleted, or
- * otherwise missing public application links. Quiet brand chrome on dark:
+ * otherwise missing public application links. Intentional dark brand empty
+ * state (not a marketing landing clone, not the live paper `/view` wash):
  * wordmark top bar, full-bleed atmosphere, light display type, lime+ink CTA,
- * compact dark footer — not a marketing landing clone.
+ * compact dark footer.
  */
 export default function UnavailableApplicationView() {
   return (
-    <div className="flex min-h-screen flex-col bg-black">
+    <div className="flex min-h-screen flex-col bg-[var(--ink)]">
       <motion.header
         className="fixed top-0 left-0 right-0 z-50 flex h-[72px] items-center px-4 md:px-6 lg:px-10"
         initial={headerEntrance.initial}
@@ -45,7 +46,7 @@ export default function UnavailableApplicationView() {
             sizes="100vw"
           />
           <div
-            className="pointer-events-none absolute inset-0 bg-linear-to-t from-black via-black/60 to-black/30"
+            className="pointer-events-none absolute inset-0 bg-linear-to-t from-[var(--ink)] via-[var(--ink)]/60 to-[var(--ink)]/30"
             aria-hidden
           />
         </div>
@@ -59,14 +60,14 @@ export default function UnavailableApplicationView() {
           >
             <motion.h1
               id="unavailable-heading"
-              className="text-3xl sm:text-4xl lg:text-5xl font-light tracking-tight text-white text-balance drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+              className="font-heading text-3xl font-semibold tracking-tight text-[var(--white)] text-balance drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-4xl lg:text-5xl"
               variants={staggerItem}
             >
               This link doesn’t have an active application
             </motion.h1>
 
             <motion.p
-              className="mt-4 max-w-xl text-base sm:text-lg font-light text-white/80 text-balance drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+              className="mt-4 max-w-xl text-base text-[var(--mist)] text-balance drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-lg"
               variants={staggerItem}
             >
               The candidate may have archived or removed this application, or
@@ -74,7 +75,7 @@ export default function UnavailableApplicationView() {
             </motion.p>
 
             <motion.p
-              className="mt-8 max-w-md text-sm sm:text-base font-light text-white/65 text-balance"
+              className="mt-8 max-w-md text-sm text-white/65 text-balance sm:text-base"
               variants={staggerItem}
             >
               Candidates use MyHireView to share a CV and video pitch in one
@@ -87,7 +88,7 @@ export default function UnavailableApplicationView() {
             >
               <Link
                 href="/"
-                className="inline-flex w-full items-center justify-center rounded-full bg-[var(--lime)] px-6 py-3 text-base font-semibold text-[var(--ink)] shadow-md transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--lime)] focus:ring-offset-2 focus:ring-offset-black whitespace-nowrap"
+                className="inline-flex w-full items-center justify-center rounded-full bg-[var(--lime)] px-6 py-3 text-base font-semibold text-[var(--ink)] shadow-md transition hover:opacity-90 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--lime)] whitespace-nowrap"
               >
                 See how candidates stand out
               </Link>

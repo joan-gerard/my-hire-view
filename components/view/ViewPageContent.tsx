@@ -10,11 +10,12 @@ import {
   isUnavailablePublicApplication,
   toOwnerPreviewApplication,
 } from "@/lib/types/application";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import ApplicationPageContent from "./ApplicationPageContent";
 import ApplicationViewFooter from "./ApplicationViewFooter";
 import DraftPreviewBanner from "./DraftPreviewBanner";
 import UnavailableApplicationView from "./UnavailableApplicationView";
+import { VIEW_PAGE_CLASS, VIEW_SHELL_CLASS } from "./view-chrome";
 
 interface ViewPageContentProps {
   initialApplication: PublicApplication;
@@ -27,6 +28,10 @@ interface ViewPageContentProps {
   draftPreviewApplicationId?: string;
 }
 
+function hasVideoUrl(videoUrl: string | null | undefined): boolean {
+  return videoUrl != null && String(videoUrl).trim() !== "";
+}
+
 export default function ViewPageContent({
   initialApplication,
   publicId,
@@ -37,16 +42,6 @@ export default function ViewPageContent({
     useState<PublicApplicationResponse>(initialApplication);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const isDraftPreview = Boolean(draftPreviewApplicationId);
-
-  // Close modal on Escape key
-  useEffect(() => {
-    if (!isVideoModalOpen) return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsVideoModalOpen(false);
-    };
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isVideoModalOpen]);
 
   const refetchApplication = useCallback(async () => {
     if (draftPreviewApplicationId) {
@@ -90,8 +85,10 @@ export default function ViewPageContent({
     return <UnavailableApplicationView />;
   }
 
+  const canWatchVideo = hasVideoUrl(application.video_url);
+
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--white)]">
+    <div className={VIEW_PAGE_CLASS}>
       {draftPreviewApplicationId ? (
         <DraftPreviewBanner applicationId={draftPreviewApplicationId} />
       ) : null}
@@ -104,7 +101,9 @@ export default function ViewPageContent({
         portfolioUrl={application.portfolio_url}
         linkedinUrl={application.linkedin_url}
         profileImageUrl={application.profile_picture_url?.trim() || undefined}
-        onWatchVideo={() => setIsVideoModalOpen(true)}
+        onWatchVideo={
+          canWatchVideo ? () => setIsVideoModalOpen(true) : undefined
+        }
         cvUrl={application.cv_url}
         publicId={publicId}
         slug={slug}
@@ -112,13 +111,13 @@ export default function ViewPageContent({
         useOriginalCvFilename={application.use_original_cv_filename}
       />
 
-      <div className="mx-auto mt-6 w-full max-w-6xl flex-1">
+      <div className={`${VIEW_SHELL_CLASS} mt-6 flex-1 pb-12`}>
         <ApplicationPageContent
           publicId={publicId}
           slug={slug}
           application={application}
           refetchApplication={refetchApplication}
-          isVideoModalOpen={isVideoModalOpen}
+          isVideoModalOpen={isVideoModalOpen && canWatchVideo}
           onCloseVideoModal={() => setIsVideoModalOpen(false)}
           trackViews={!isDraftPreview}
         />

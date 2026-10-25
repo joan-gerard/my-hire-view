@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VIEW_SHELL_CLASS } from "@/components/view/view-chrome";
 
 type ApplicationViewFooterProps = {
   /** `light` for the live application page; `dark` for the unavailable empty state. */
@@ -18,11 +19,13 @@ export default function ApplicationViewFooter({
     <footer
       className={
         isDark
-          ? "mt-auto border-t border-white/10 bg-black text-white"
-          : "mt-10 border-t border-[var(--ink)]/10 bg-[var(--white)] text-[var(--ink)]"
+          ? "mt-auto border-t border-white/10 bg-[var(--ink)] text-[var(--white)]"
+          : "mt-auto border-t border-[var(--ink)]/10 bg-[var(--white)] text-[var(--ink)]"
       }
     >
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-4 text-center sm:flex-row sm:gap-4 sm:text-left md:px-6">
+      <div
+        className={`${VIEW_SHELL_CLASS} flex flex-col items-center justify-between gap-3 py-4 text-center sm:flex-row sm:gap-4 sm:text-left`}
+      >
         <Link
           href="/"
           className={

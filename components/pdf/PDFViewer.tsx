@@ -47,26 +47,29 @@ export default function PDFViewer({
       /fetch|404|failed|network|Failed to fetch/i.test(error) ||
       error.includes("Missing PDF");
     return (
-      <div
-        role="alert"
-        className="rounded-[24px] border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-6 py-8 text-center"
-      >
-        <p className="font-semibold text-[var(--status-warning-fg)]">
-          {isMissingOrUnavailable ? "CV is not available" : "Failed to load CV"}
-        </p>
-        <p className="mt-2 text-sm text-[var(--status-warning-fg)]">
-          {isMissingOrUnavailable
-            ? "The resume file is no longer available. It may have been removed from storage. Please contact the candidate if you need their CV."
-            : `The document could not be loaded. (${error})`}
-        </p>
-        {!isMissingOrUnavailable && (
-          <button
-            onClick={() => window.open(url, "_blank")}
-            className="mt-4 cursor-pointer rounded-full bg-[var(--ink)] px-4 py-2 text-sm font-medium text-[var(--white)] hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-          >
-            Try opening in new tab
-          </button>
-        )}
+      <div className="p-4 sm:p-6">
+        <div
+          role="alert"
+          className="rounded-2xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-6 py-8 text-center"
+        >
+          <p className="font-semibold text-[var(--status-warning-fg)]">
+            {isMissingOrUnavailable ? "CV is not available" : "Failed to load CV"}
+          </p>
+          <p className="mt-2 text-sm text-[var(--status-warning-fg)]">
+            {isMissingOrUnavailable
+              ? "The resume file is no longer available. It may have been removed from storage. Please contact the candidate if you need their CV."
+              : `The document could not be loaded. (${error})`}
+          </p>
+          {!isMissingOrUnavailable && (
+            <button
+              type="button"
+              onClick={() => window.open(url, "_blank")}
+              className="mt-4 inline-flex cursor-pointer items-center justify-center rounded-full bg-[var(--ink)] px-4 py-2 text-sm font-semibold text-[var(--white)] hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+            >
+              Try opening in new tab
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -77,11 +80,15 @@ export default function PDFViewer({
   );
 
   return (
-    <div className="space-y-4 p-2">
-      <div className="flex max-h-[calc(100vh-200px)] justify-center overflow-y-auto rounded-xl bg-[var(--white)] p-4">
+    <div className="p-3 sm:p-4">
+      <div className="flex max-h-[calc(100vh-200px)] justify-center overflow-y-auto rounded-xl bg-[var(--paper)]/60 p-3 sm:p-4">
         {loading && (
-          <div className="flex items-center justify-center p-8">
-            <div className="text-[var(--muted)]">Loading PDF...</div>
+          <div className="flex items-center justify-center gap-2 p-8 text-sm text-[var(--muted)]">
+            <span
+              className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-[var(--muted)] border-t-transparent motion-safe:animate-spin"
+              aria-hidden
+            />
+            Loading CV…
           </div>
         )}
         <Document
@@ -89,8 +96,12 @@ export default function PDFViewer({
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
           loading={
-            <div className="flex items-center justify-center p-8">
-              <div className="text-[var(--muted)]">Loading PDF...</div>
+            <div className="flex items-center justify-center gap-2 p-8 text-sm text-[var(--muted)]">
+              <span
+                className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-[var(--muted)] border-t-transparent motion-safe:animate-spin"
+                aria-hidden
+              />
+              Loading CV…
             </div>
           }
           className="max-w-full"

@@ -32,30 +32,30 @@ export default function ApplicationPageContent({
   trackViews = true,
 }: ApplicationPageContentProps) {
   return (
-    <div className="pb-12">
+    <>
       {trackViews ? <ViewTracker publicId={publicId} slug={slug} /> : null}
-      <div className="space-y-12">
-        <section className={`${ADMIN_PANEL_CLASS} overflow-hidden`}>
-          {application.cv_exists === false ? (
+      <section className={`${ADMIN_PANEL_CLASS} overflow-hidden`}>
+        {application.cv_exists === false ? (
+          <div className="p-4 sm:p-6">
             <CvUnavailableWithRetry onRetry={refetchApplication} />
-          ) : (
-            <PDFViewer
-              url={application.cv_url}
-              publicId={publicId}
-              slug={slug}
-              cvFilename={application.cv_filename}
-              useOriginalCvFilename={application.use_original_cv_filename}
-            />
-          )}
-        </section>
-
-        {isVideoModalOpen && (
-          <VideoModal
-            videoUrl={application.video_url}
-            onClose={onCloseVideoModal}
+          </div>
+        ) : (
+          <PDFViewer
+            url={application.cv_url}
+            publicId={publicId}
+            slug={slug}
+            cvFilename={application.cv_filename}
+            useOriginalCvFilename={application.use_original_cv_filename}
           />
         )}
-      </div>
-    </div>
+      </section>
+
+      {isVideoModalOpen ? (
+        <VideoModal
+          videoUrl={application.video_url}
+          onClose={onCloseVideoModal}
+        />
+      ) : null}
+    </>
   );
 }

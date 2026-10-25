@@ -5,6 +5,7 @@ import {
   ADMIN_PRIMARY_CLASS,
   ADMIN_SECONDARY_CLASS,
 } from "@/components/admin/admin-chrome";
+import { VIEW_SHELL_CLASS } from "@/components/view/view-chrome";
 import ExternalLinkButton from "@/components/ui/ExternalLinkButton";
 import { LogoBlack } from "@/components/ui/Logo";
 import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
@@ -61,7 +62,7 @@ export default function ApplicationPageHeader({
   role,
   firstName,
   lastName,
-  location: _location,
+  location,
   portfolioUrl,
   linkedinUrl,
   profileImageUrl,
@@ -76,10 +77,13 @@ export default function ApplicationPageHeader({
   const hasProfileImage =
     profileImageUrl != null && String(profileImageUrl).trim() !== "";
   const displayName = [firstName, lastName].filter(nonEmpty).join(" ").trim();
+  const hasLocation = nonEmpty(location);
   const hasPortfolio = nonEmpty(portfolioUrl);
   const hasLinkedIn = nonEmpty(linkedinUrl);
   const hasLinks = hasPortfolio || hasLinkedIn;
   const hasCv = nonEmpty(cvUrl);
+  const hasIdentity =
+    Boolean(displayName) || hasLocation || hasLinks || hasProfileImage;
 
   const handleViewFile = () => {
     if (cvUrl) window.open(cvUrl, "_blank");
@@ -113,118 +117,124 @@ export default function ApplicationPageHeader({
   };
 
   return (
-    <header className="px-2 pt-5 sm:px-6 sm:pt-6 lg:px-8">
+    <header className={`${VIEW_SHELL_CLASS} pt-5 sm:pt-6`}>
       <div className="mb-4">
         <LogoBlack />
       </div>
 
-      <div className="mx-auto max-w-6xl">
-        {/* Primary: name + Portfolio/LinkedIn + profile picture */}
-        <div
-          className={`flex flex-col-reverse gap-6 ${ADMIN_PANEL_CLASS} p-4 sm:flex-row sm:items-stretch sm:justify-between sm:gap-8 sm:p-6 lg:p-8`}
-        >
-          {hasProfileImage && (
-            <div className="flex shrink-0 items-center justify-start sm:justify-end">
-              <div
-                className="h-28 w-28 overflow-hidden rounded-full bg-[var(--white)] ring-2 ring-[var(--ink)]/10 sm:h-36 sm:w-36"
-                aria-hidden
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={profileImageUrl!.trim()}
-                  alt=""
-                  className="h-full w-full object-cover"
-                  width={144}
-                  height={144}
-                  decoding="async"
-                />
-              </div>
+      {/* Primary: identity (name, location, links, avatar) + optional video */}
+      {hasIdentity || onWatchVideo ? (
+        <div className={`${ADMIN_PANEL_CLASS} p-4 sm:p-6`}>
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">
+              {displayName ? (
+                <h1 className="font-heading text-2xl font-semibold tracking-[-0.03em] text-[var(--ink)] sm:text-4xl lg:text-5xl">
+                  {displayName}
+                </h1>
+              ) : null}
+              {hasLocation ? (
+                <p className="text-sm text-[var(--muted)] sm:text-base">
+                  {location!.trim()}
+                </p>
+              ) : null}
+              {hasLinks ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  {hasPortfolio ? (
+                    <ExternalLinkButton
+                      href={portfolioUrl!.trim()}
+                      variant="portfolio"
+                    >
+                      Portfolio
+                    </ExternalLinkButton>
+                  ) : null}
+                  {hasLinkedIn ? (
+                    <ExternalLinkButton
+                      href={linkedinUrl!.trim()}
+                      variant="linkedin"
+                    >
+                      <LinkedInIcon className="shrink-0" />
+                    </ExternalLinkButton>
+                  ) : null}
+                </div>
+              ) : null}
+              {onWatchVideo ? (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={onWatchVideo}
+                    className={ADMIN_PRIMARY_CLASS}
+                    aria-label="Watch video pitch"
+                  >
+                    <svg
+                      className="h-4 w-4 shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    Watch Video Pitch
+                  </button>
+                </div>
+              ) : null}
             </div>
-          )}
 
-          <div className="flex w-full flex-col justify-between gap-6 py-2">
-            <h1 className="font-heading text-xl font-semibold tracking-[-0.03em] text-[var(--ink)] sm:text-5xl">
-              {displayName}
-            </h1>
-            {hasLinks && (
-              <div className="flex flex-wrap items-center gap-2">
-                {hasPortfolio && (
-                  <ExternalLinkButton
-                    href={portfolioUrl!.trim()}
-                    variant="portfolio"
-                  >
-                    Portfolio
-                  </ExternalLinkButton>
-                )}
-                {hasLinkedIn && (
-                  <ExternalLinkButton
-                    href={linkedinUrl!.trim()}
-                    variant="linkedin"
-                  >
-                    <LinkedInIcon className="shrink-0" />
-                  </ExternalLinkButton>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-end justify-end">
-            {onWatchVideo && (
-              <button
-                type="button"
-                onClick={onWatchVideo}
-                className={`${ADMIN_PRIMARY_CLASS} px-4 py-2.5`}
-                aria-label="Watch video pitch"
-              >
-                <svg
-                  className="h-5 w-5 shrink-0"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
+            {hasProfileImage ? (
+              <div className="flex shrink-0 items-center justify-start sm:justify-end">
+                <div
+                  className="h-28 w-28 overflow-hidden rounded-full bg-[var(--paper)] ring-2 ring-[var(--ink)]/10 sm:h-36 sm:w-36"
                   aria-hidden
                 >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-                Watch Video Pitch
-              </button>
-            )}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={profileImageUrl!.trim()}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    width={144}
+                    height={144}
+                    decoding="async"
+                  />
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
+      ) : null}
 
-        {/* Job (company + role) and optional candidate info */}
-        <div
-          className={`mt-3 flex flex-wrap items-center justify-between gap-4 ${ADMIN_PANEL_CLASS} p-4 sm:p-6 lg:p-8`}
-          aria-label="Job and candidate details"
-        >
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xl text-[var(--ink)]/80 sm:gap-y-1 sm:text-2xl">
-            <span className="inline-flex items-center gap-2">
-              <BuildingIcon className="h-5 w-5 shrink-0 text-[var(--muted)] sm:h-6 sm:w-6" />
-              <span className="truncate">{company}</span>
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <BriefcaseIcon className="h-5 w-5 shrink-0 text-[var(--muted)] sm:h-6 sm:w-6" />
-              <span className="truncate">{role}</span>
-            </span>
-          </div>
-          {hasCv && (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleViewFile}
-                className={`${ADMIN_SECONDARY_CLASS} px-4 py-2 font-semibold`}
-              >
-                View CV
-              </button>
-              <button
-                type="button"
-                onClick={handleDownload}
-                disabled={downloading}
-                className={`${ADMIN_PRIMARY_CLASS} px-4 py-2`}
-              >
-                {downloading ? "Downloading…" : "Download CV"}
-              </button>
-            </div>
-          )}
+      {/* Quieter job + CV actions strip */}
+      <div
+        className={`mt-3 flex flex-wrap items-center justify-between gap-3 ${ADMIN_PANEL_CLASS} px-4 py-3 sm:px-6 sm:py-4`}
+        aria-label="Job and candidate details"
+      >
+        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-base text-[var(--ink)] sm:text-xl">
+          <span className="inline-flex min-w-0 items-center gap-2">
+            <BuildingIcon className="h-5 w-5 shrink-0 text-[var(--muted)]" />
+            <span className="truncate font-medium">{company}</span>
+          </span>
+          <span className="inline-flex min-w-0 items-center gap-2">
+            <BriefcaseIcon className="h-5 w-5 shrink-0 text-[var(--muted)]" />
+            <span className="truncate font-medium">{role}</span>
+          </span>
         </div>
+        {hasCv ? (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleViewFile}
+              className={ADMIN_SECONDARY_CLASS}
+            >
+              View CV
+            </button>
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={downloading}
+              className={ADMIN_PRIMARY_CLASS}
+            >
+              {downloading ? "Downloading…" : "Download CV"}
+            </button>
+          </div>
+        ) : null}
       </div>
     </header>
   );
