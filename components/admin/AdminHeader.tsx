@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef } from "react";
 import { ADMIN_SHELL_CLASS } from "@/components/admin/admin-chrome";
+import { WIZARD_NEW_PATH } from "@/lib/admin/wizard-routes";
 import { LogoBlack } from "../ui/Logo";
 
 const ADMIN_NAV_PILL_CLASS =
@@ -21,7 +22,8 @@ interface AdminHeaderProps {
 
 const ADMIN_NAV_LINKS = [
   { href: "/admin", label: "Dashboard" },
-  { href: "/admin/new", label: "New Application" },
+  // Parked wizard. Point this back at `/admin/new` when that route is the real create flow again.
+  { href: WIZARD_NEW_PATH, label: "New Application" },
   { href: "/admin/profile", label: "Profile" },
 ] as const;
 

@@ -4,6 +4,8 @@ How create and edit feel in the wizard: the journey, what each step asks for, an
 
 Create is `/admin/new`. Edit is `/admin/edit/[id]`. Both use the same five steps and the same fields. What differs is how far you can jump, when a step counts as done, and what Save does afterward.
 
+While a replacement create/edit flow is being tried, the wizard itself is parked at `/admin/wizard/new` and `/admin/wizard/edit/[id]`. The canonical routes only forward there. The header **New Application** pill points at the parked create URL so it does not ask you to discard a draft you are already editing. Dashboard, onboarding, and edit links still use `/admin/new` and `/admin/edit/[id]`. When one flow wins, delete the other route pair and drop the forward.
+
 This is the behavior reference. The decision to keep only the wizard is in [APPLICATION_FORM_STEPS_F35.md](../retrospectives/APPLICATION_FORM_STEPS_F35.md). Candidate-facing steps are in [USER_GUIDE.md](../engineering/USER_GUIDE.md).
 
 ---

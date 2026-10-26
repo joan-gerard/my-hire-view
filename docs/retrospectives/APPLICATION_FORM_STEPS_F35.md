@@ -6,6 +6,8 @@
 
 **Wizard on create and on edit.** The collapsible-sections shell, the title-row Sections / Wizard switch, `?formStyle=`, and the form-style env vars are gone. Create still unlocks steps through Continue; edit still lets every step be opened. Route hybrid, viewport hybrid, and a Profile layout preference stay rejected — the notes below are the record of why, not open work.
 
+**26 October 2026 — wizard parked, not retired.** A new create/edit flow will be tried on the canonical URLs. Until one side wins, the wizard lives at `/admin/wizard/new` and `/admin/wizard/edit/[id]`, and `/admin/new` plus `/admin/edit/[id]` only forward there so New / Edit still create and edit real applications. Delete the loser (parked wizard or the new flow). Do not keep both.
+
 ---
 
 ## The wish
@@ -62,7 +64,7 @@ Per-step **Continue** uses the same readiness rules as Save (company/role + slug
 
 ## How to manual-test the wizard
 
-Run locally (`pnpm dev`) on `/admin/new` and `/admin/edit/[id]`. There is no layout switch.
+Run locally (`pnpm dev`) on `/admin/new` and `/admin/edit/[id]`. Those URLs currently forward to `/admin/wizard/new` and `/admin/wizard/edit/[id]`. There is no layout switch.
 
 Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) and [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](../manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md).
 
