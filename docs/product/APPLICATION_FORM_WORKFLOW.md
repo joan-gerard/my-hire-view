@@ -1,10 +1,12 @@
 # Application form workflow
 
-How create and edit feel in the wizard: the journey, what each step asks for, and when a step turns green and shows a check.
+Create is `/admin/new`. Edit is `/admin/edit/[id]`. Both are one scrolling page of five bands: Role & share URL, About you, CV, Video, Review & save. The same fields, draft, CV, and save behavior sit under that page. Save stays on the Review band.
 
-Create is `/admin/new`. Edit is `/admin/edit/[id]`. Both use the same five steps and the same fields. What differs is how far you can jump, when a step counts as done, and what Save does afterward.
+From 1200px wide, each band is split in half. The left side is a step pill, the title, one sentence, and a few recommendations, and it stays in view while that band’s fields scroll. The right side is the fields on a paper panel. Create has no page title and no jump cards. Edit keeps its title, fixed under the admin header. Through 1199px, phone and tablet stack each band: pill, title, description, recommendations, then the fields.
 
-This is the behavior reference. The decision to keep only the wizard is in [APPLICATION_FORM_STEPS_F35.md](../retrospectives/APPLICATION_FORM_STEPS_F35.md). Candidate-facing steps are in [USER_GUIDE.md](../engineering/USER_GUIDE.md).
+The previous wizard is parked at `/admin/wizard/new` and `/admin/wizard/edit/[id]` for comparison. Delete whichever flow loses. The sections below describe that parked wizard (Continue, check marks, one step at a time).
+
+This is the behavior reference. The decision record is in [APPLICATION_FORM_STEPS_F35.md](../retrospectives/APPLICATION_FORM_STEPS_F35.md). Candidate-facing steps are in [USER_GUIDE.md](../engineering/USER_GUIDE.md).
 
 ---
 
@@ -28,12 +30,12 @@ After you move to a new step, focus lands on that step’s heading.
 
 A step is always in one of these states. If you are looking at a step, that wins: the pill is black even when the step is also done.
 
-| What you see | Meaning |
-| --- | --- |
-| **Black pill**, white text | The step you are on. No green fill and no green outline. |
-| **Check** inside the black pill | You are on a step that already counts as done. |
-| **Green pill** and a **check** | A step you are not on, and it counts as done. |
-| **Number**, normal text, clickable | You can open it, and it is not done yet. |
+| What you see                            | Meaning                                                    |
+| --------------------------------------- | ---------------------------------------------------------- |
+| **Black pill**, white text              | The step you are on. No green fill and no green outline.   |
+| **Check** inside the black pill         | You are on a step that already counts as done.             |
+| **Green pill** and a **check**          | A step you are not on, and it counts as done.              |
+| **Number**, normal text, clickable      | You can open it, and it is not done yet.                   |
 | **Number**, quieter text, not clickable | Create only. You have not reached this step with Continue. |
 
 The line under **Application progress** says **N of M complete**. N is how many steps have a check, including the one you are on if its marker is a check. Clicking around does not move the bar. Only gaining or losing a check does.
@@ -174,11 +176,11 @@ A tailored PDF is uploaded as part of save. The button can read **Preparing…**
 
 ## After save
 
-| | Create | Edit |
-| --- | --- | --- |
-| Button | **Save & Preview** | **Save Application** |
-| What is stored | A draft | The same status it already had |
-| Where you go | Owner preview of the share link, or the dashboard if Public id is missing | Dashboard |
-| Who can see it | Only you, until you publish | Unchanged: drafts stay private, live links stay live |
+|                | Create                                                                    | Edit                                                 |
+| -------------- | ------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Button         | **Save & Preview**                                                        | **Save Application**                                 |
+| What is stored | A draft                                                                   | The same status it already had                       |
+| Where you go   | Owner preview of the share link, or the dashboard if Public id is missing | Dashboard                                            |
+| Who can see it | Only you, until you publish                                               | Unchanged: drafts stay private, live links stay live |
 
 Publishing from the review step, and saving a draft that is still missing required fields, are not part of this flow. Those are `F41-127` and `F40-124`.

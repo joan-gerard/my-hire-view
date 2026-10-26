@@ -4,15 +4,22 @@
  * Reserve `--paper` for quiet chips / nested wells — not the admin page wash.
  */
 
-/** Shared content width for admin header + main (keep in sync). */
+/** Dashboard and profile content width. */
 export const ADMIN_SHELL_CLASS = "mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8";
 
 /**
- * Min height for admin main skeletons / loading shells.
- * Header is 72px; main has py-8 (4rem). Keeps content tall enough that the
- * document scrollbar does not vanish during route transitions.
+ * Horizontal inset of the admin header. Create and edit pages use the same
+ * inset so their content lines up with the logo and Sign Out.
  */
-export const ADMIN_MAIN_MIN_CLASS = "min-h-[calc(100svh-72px-4rem)]";
+export const ADMIN_HEADER_INSET_CLASS = "px-4 min-[720px]:px-[30px]";
+
+/**
+ * Min height for admin main skeletons / loading shells.
+ * Header is at least 102px from 720px up (marketing header height); main has
+ * py-8 (4rem). Keeps content tall enough that the document scrollbar does not
+ * vanish during route transitions.
+ */
+export const ADMIN_MAIN_MIN_CLASS = "min-h-[calc(100svh-102px-4rem)]";
 
 /** Primary CTA — ink pill (Publish, View, dialog confirm). */
 export const ADMIN_PRIMARY_CLASS =

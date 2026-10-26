@@ -172,10 +172,12 @@ With **zero** applications:
 
 - [ ] Personalized greeting with first name when known (e.g. **Good afternoon, Joan**) above title **Applications**
 - [ ] Lime **+** create button in the header row (tooltip / aria-label: Create new application)
+- [ ] Scrolling the list does **not** move the greeting, **Applications** title, legend button (when shown), or **+** create button — they stay put under the admin header from the first pixel of scroll
+- [ ] Day labels stick under that toolbar until the next day label reaches them (same stack behavior as before)
 - [ ] Empty state: “Create your first application”, short explanation, **New application** link
 - [ ] **Search bar is hidden**
 - [ ] **What do these icons mean?** is hidden
-- [ ] Admin header: **Dashboard** (active), **New Application**, **Profile**, user email, **Sign Out**, centered logo
+- [ ] Admin header: logo on the left, **Dashboard** (active), **New Application**, and **Profile** in the center, **Sign Out** on the right. No account email.
 - [ ] Active nav underline follows Dashboard / New Application / Profile
 - [ ] Right rail: **Summary** counts (All / Live / Draft / Archived), then **Getting started** checklist (unless dismissed)
 - [ ] On small screens, Summary + Getting started appear below the empty state / list
@@ -291,7 +293,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Page chrome
 
-- [ ] Title **Create New Application** (no layout toggle; the form is the wizard on create and edit)
+- [ ] No page title. The first band is Role & share URL (the parked wizard at `/admin/wizard/new` still shows **Create New Application**)
 - [ ] If location, links, and picture are still empty: nudge to complete profile; arrow goes to Profile
 - [ ] After profile has location/link/picture, nudge is gone
 - [ ] Form skeleton/pulse while profile loads; then the form

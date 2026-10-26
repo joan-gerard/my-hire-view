@@ -1,23 +1,17 @@
 "use client";
 
+import { ADMIN_HEADER_INSET_CLASS } from "@/components/admin/admin-chrome";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef } from "react";
-import { ADMIN_SHELL_CLASS } from "@/components/admin/admin-chrome";
 import { LogoBlack } from "../ui/Logo";
 
 const ADMIN_NAV_PILL_CLASS =
   "inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
 const ADMIN_NAV_PILL_INACTIVE_CLASS =
   "bg-[var(--ink)]/[0.06] text-[var(--muted)] hover:bg-[var(--ink)]/[0.1] hover:text-[var(--ink)]";
-const ADMIN_NAV_PILL_ACTIVE_CLASS =
-  "bg-[var(--ink)] text-[var(--white)]";
-
-interface AdminHeaderProps {
-  user: User;
-}
+const ADMIN_NAV_PILL_ACTIVE_CLASS = "bg-[var(--ink)] text-[var(--white)]";
 
 const ADMIN_NAV_LINKS = [
   { href: "/admin", label: "Dashboard" },
@@ -26,15 +20,15 @@ const ADMIN_NAV_LINKS = [
 ] as const;
 
 /**
- * Navigation header for the admin area (/admin).
- * Narrow: logo + Sign Out on the first row; nav pills scroll on the next.
- * md+: left nav, centered logo, email + Sign Out (single link set — no duplicate DOM).
+ * Admin header, aligned with the marketing header: full width, logo on the
+ * left, nav in the center, account actions on the right.
+ * Below 720px the nav drops to its own row so the logo and Sign Out stay put.
  */
-export default function AdminHeader({ user }: AdminHeaderProps) {
+export default function AdminHeader() {
   const pathname = usePathname();
   const navRef = useRef<HTMLElement>(null);
 
-  // Day labels stick just under this bar. Height changes when the nav wraps.
+  // Dashboard toolbar / day labels stick under this bar. Height changes when the nav wraps.
   useLayoutEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
@@ -63,51 +57,48 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
   };
 
   return (
-    <nav
+    <header
       ref={navRef}
       className="sticky top-0 z-50 border-b border-[var(--ink)]/10 bg-[var(--white)]/95 backdrop-blur-sm"
-      aria-label="Admin"
     >
-      <div className={ADMIN_SHELL_CLASS}>
-        <div className="relative flex flex-wrap items-center gap-x-3 gap-y-2 py-3 md:h-[72px] md:flex-nowrap md:py-0">
-          <div className="order-1 md:absolute md:left-1/2 md:top-1/2 md:order-none md:-translate-x-1/2 md:-translate-y-1/2">
-            <LogoBlack />
-          </div>
-          <div className="order-3 flex w-full gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] md:order-1 md:w-auto md:flex-1 md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
-            {ADMIN_NAV_LINKS.map(({ href, label }) => {
-              const isActive =
-                href === "/admin"
-                  ? pathname === "/admin"
-                  : pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`${ADMIN_NAV_PILL_CLASS} ${
-                    isActive
-                      ? ADMIN_NAV_PILL_ACTIVE_CLASS
-                      : ADMIN_NAV_PILL_INACTIVE_CLASS
-                  }`}
-                >
-                  {label}
-                </Link>
-              );
-            })}
-          </div>
-          <div className="order-2 ml-auto flex items-center gap-3 md:order-3 md:ml-0 md:flex-1 md:justify-end">
-            <span className="hidden text-sm text-[var(--muted)] lg:inline">
-              {user.email}
-            </span>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className={`cursor-pointer ${ADMIN_NAV_PILL_CLASS} ${ADMIN_NAV_PILL_INACTIVE_CLASS}`}
-            >
-              Sign Out
-            </button>
-          </div>
+      <div
+        className={`relative py-4 min-[720px]:min-h-[102px] min-[720px]:py-[30px] ${ADMIN_HEADER_INSET_CLASS}`}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <LogoBlack />
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className={`cursor-pointer ${ADMIN_NAV_PILL_CLASS} ${ADMIN_NAV_PILL_INACTIVE_CLASS}`}
+          >
+            Sign Out
+          </button>
         </div>
+        <nav
+          aria-label="Admin"
+          className="mt-3 flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] min-[720px]:absolute min-[720px]:left-1/2 min-[720px]:top-1/2 min-[720px]:mt-0 min-[720px]:-translate-x-1/2 min-[720px]:-translate-y-1/2 min-[720px]:overflow-visible min-[720px]:pb-0 [&::-webkit-scrollbar]:hidden"
+        >
+          {ADMIN_NAV_LINKS.map(({ href, label }) => {
+            const isActive =
+              href === "/admin"
+                ? pathname === "/admin"
+                : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`${ADMIN_NAV_PILL_CLASS} ${
+                  isActive
+                    ? ADMIN_NAV_PILL_ACTIVE_CLASS
+                    : ADMIN_NAV_PILL_INACTIVE_CLASS
+                }`}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
-    </nav>
+    </header>
   );
 }

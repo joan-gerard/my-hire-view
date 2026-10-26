@@ -131,6 +131,8 @@ Shared admin class strings: `components/admin/admin-chrome.ts` (`ADMIN_PRIMARY_C
 
 Loud accent CTAs (e.g. Create application) may use lime fill + ink text (`ADMIN_ACCENT_PRIMARY_CLASS`) — reserve for one primary create action, not every button.
 
+Header **Sign Out** uses `ArrowCtaButton` — ink pill + white arrow disc + label roll on hover — matching marketing Login / Dashboard without importing `mhv-demo.css`.
+
 ### Links styled as buttons
 
 - `PrimaryLinkButton` — ink pill (same family as primary `Button`).
@@ -153,7 +155,8 @@ Pair `*-bg` + `*-fg` tokens. Confirm / library modals use paper/white + ink; des
 
 | Surface              | Expectation                                                                                          |
 | -------------------- | ---------------------------------------------------------------------------------------------------- |
-| `/admin`             | White page, bordered day-group panels, ink nav + pills, lime Create CTA, status dots/glyphs          |
+| `/admin`             | White page, bordered day-group panels, ink nav pills, **Sign Out** as ink arrow CTA (same family as marketing Login / Dashboard; `ArrowCtaButton`), lime Create CTA, status dots/glyphs |
+| `/admin/new`, `/admin/edit` | Split bands. Create has no page title and no step jump cards. The edit title stays fixed under the admin header. At 1920px the left title is 80px/600, the step pill is 14px/500, and the left description and recommendations are 18px/400. Field labels are 18px/500. Placeholders and typed text are 16px/400. Below 1920 those sizes step down (title 56px from 1200px, 44px from 720px, 36px on a phone; description, recommendations, and labels 17px from 1200px and 16px below). The step pill stays 14px/500. Typed text stays 16px. Profile and the parked wizard keep the shared `text-sm` labels. |
 | `/login`, `/signup`  | White/ink auth shells, Switzer headings, pill submit; soft pink/lime atmosphere OK on auth only      |
 | `/view`              | Quiet paper/ink chrome so CV / video stay primary; draft banner uses pink-text warning + ink Publish |
 | Marketing `/`, legal | **Frozen for product work** — `.mhv-landing` / marketing components; see marketing guide             |
