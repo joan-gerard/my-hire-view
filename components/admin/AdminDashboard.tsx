@@ -26,8 +26,35 @@ import { timeOfDayGreeting } from '@/lib/utils/admin-dashboard-greeting';
 import type { OnboardingChecklistInput } from '@/lib/utils/onboarding-checklist';
 
 const DESKTOP_RAIL_MQ = '(min-width: 1024px)';
-/** Matches the sticky offset gap under the 72px header. */
+/** Matches the sticky offset gap under the sticky dashboard toolbar. */
 const RAIL_BOTTOM_GAP_PX = 16;
+
+/**
+ * Publishes the greeting / title / actions bar height so day labels and the
+ * right rail can stick just under it (same pattern as `--admin-header-height`).
+ */
+function useDashboardToolbarHeight(toolbarEl: HTMLElement | null) {
+  useLayoutEffect(() => {
+    if (!toolbarEl) return;
+
+    const sync = () => {
+      document.documentElement.style.setProperty(
+        '--admin-dashboard-toolbar-height',
+        `${Math.ceil(toolbarEl.getBoundingClientRect().height)}px`,
+      );
+    };
+
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(toolbarEl);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty(
+        '--admin-dashboard-toolbar-height',
+      );
+    };
+  }, [toolbarEl]);
+}
 
 /**
  * Pixel height of the space from the rail's current top to the viewport bottom.
@@ -181,8 +208,10 @@ export default function AdminDashboard({
     ? groupApplicationsByDay(applications)
     : [];
   const trimmedName = firstName?.trim() || null;
+  const [toolbarEl, setToolbarEl] = useState<HTMLElement | null>(null);
   const [railBoxEl, setRailBoxEl] = useState<HTMLElement | null>(null);
   const [railScrollEl, setRailScrollEl] = useState<HTMLDivElement | null>(null);
+  useDashboardToolbarHeight(toolbarEl);
   const railHeight = useDesktopRailHeight(railBoxEl);
   useContainRailWheel(railBoxEl, railScrollEl);
 
@@ -235,13 +264,13 @@ export default function AdminDashboard({
 
   // Desktop: the rail is only as tall as the visible gap under its current top,
   // including while the page is still at the top and the column sits below the
-  // greeting. Cards use overflow:hidden, which lets a flex item shrink to 0 and
+  // toolbar. Cards use overflow:hidden, which lets a flex item shrink to 0 and
   // clip instead of scrolling — shrink-0 keeps their real height so this
   // scrollport can move. Mobile: natural document flow.
   const sidebar = (
     <aside
       ref={setRailBoxEl}
-      className="flex w-full flex-col gap-4 lg:sticky lg:top-[calc(72px+1rem)] lg:self-start"
+      className="flex w-full flex-col gap-4 lg:sticky lg:top-[calc(var(--admin-header-height,102px)_+_var(--admin-dashboard-toolbar-height,0px)_+_1rem)] lg:self-start"
       style={railHeight != null ? { height: railHeight } : undefined}
     >
       {/* Stable mount so focus survives empty ↔ non-empty result flips. */}
@@ -277,41 +306,54 @@ export default function AdminDashboard({
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-          <div className="min-w-0 space-y-3">
-            {trimmedName ? (
-              <p className="text-sm text-[var(--muted)]">
-                {timeOfDayGreeting()}, {trimmedName}
-              </p>
+    <div>
+      {/*
+        Sticky under the admin header so greeting, title, legend, and create
+        never move when the list scrolls. AdminMain uses pt-0 on /admin and
+        this bar owns pt-8, so at scroll 0 it is already at its stick position
+        and day labels below can use the measured height as their sticky top
+        (a negative margin pull-up put labels above that threshold so they
+        never stuck). pb-6 is the gap above the grid.
+      */}
+      <div
+        ref={setToolbarEl}
+        className="sticky top-[var(--admin-header-height,72px)] z-30 -mx-4 bg-[var(--white)]/95 px-4 pt-8 pb-6 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+            <div className="min-w-0 space-y-3">
+              {trimmedName ? (
+                <p className="text-sm text-[var(--muted)]">
+                  {timeOfDayGreeting()}, {trimmedName}
+                </p>
+              ) : null}
+              <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)] sm:text-4xl">
+                Applications
+              </h1>
+            </div>
+            {showListChrome ? (
+              <button
+                type="button"
+                onClick={() => setLegendOpen(true)}
+                className={`${ADMIN_ICON_SECONDARY_CLASS} self-end`}
+                aria-haspopup="dialog"
+                aria-label="What do these icons mean?"
+                title="What do these icons mean?"
+              >
+                <QuestionIcon className="h-4 w-4" />
+              </button>
             ) : null}
-            <h1 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-[var(--ink)] sm:text-4xl">
-              Applications
-            </h1>
           </div>
-          {showListChrome ? (
-            <button
-              type="button"
-              onClick={() => setLegendOpen(true)}
-              className={`${ADMIN_ICON_SECONDARY_CLASS} self-end`}
-              aria-haspopup="dialog"
-              aria-label="What do these icons mean?"
-              title="What do these icons mean?"
+          <AdminTooltip label="Create new application">
+            <Link
+              href="/admin/new"
+              className={ADMIN_ICON_ACCENT_PRIMARY_CLASS}
+              aria-label="Create new application"
             >
-              <QuestionIcon className="h-4 w-4" />
-            </button>
-          ) : null}
+              <PlusIcon className="h-7 w-7" />
+            </Link>
+          </AdminTooltip>
         </div>
-        <AdminTooltip label="Create new application">
-          <Link
-            href="/admin/new"
-            className={ADMIN_ICON_ACCENT_PRIMARY_CLASS}
-            aria-label="Create new application"
-          >
-            <PlusIcon className="h-7 w-7" />
-          </Link>
-        </AdminTooltip>
       </div>
 
       <ApplicationStatusLegend
@@ -342,7 +384,7 @@ export default function AdminDashboard({
                   >
                     {dayGroups.map((group) => (
                       <section key={group.dayKey} className="space-y-2">
-                        <h2 className="sticky top-[var(--admin-header-height,72px)] z-20 bg-[var(--white)] py-2 text-sm font-medium uppercase tracking-[0.04em] text-[var(--muted)]">
+                        <h2 className="sticky top-[calc(var(--admin-header-height,72px)_+_var(--admin-dashboard-toolbar-height,0px))] z-20 bg-[var(--white)] py-2 text-sm font-medium uppercase tracking-[0.04em] text-[var(--muted)]">
                           {group.label}
                         </h2>
                         <div

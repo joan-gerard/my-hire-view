@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Current create wizard, parked at `/admin/wizard/new`.
- * `/admin/new` only forwards here until the next create flow replaces that route.
+ * Create application. Default presentation is the parked wizard.
+ * `/admin/new` passes `presentation="split"`.
  */
 
 import ApplicationForm from "@/components/forms/ApplicationForm";
@@ -25,7 +25,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export default function CreateApplicationWizardPage() {
+export default function CreateApplicationWizardPage({
+  presentation = "wizard",
+}: {
+  /** Parked wizard, or the one-page split layout on `/admin/new`. */
+  presentation?: "wizard" | "split";
+}) {
   const router = useRouter();
   const isSubmittingRef = useRef(false);
   const [loading, setLoading] = useState(false);
@@ -249,9 +254,48 @@ export default function CreateApplicationWizardPage() {
     return <AdminPageSkeleton variant="form" />;
   }
 
+  const form = (
+    <ApplicationForm
+      initialData={initialData}
+      onSubmit={handleSubmit}
+      loading={loading}
+      submitLabel="Save & Preview"
+      profilePictureUrl={profile?.profile_picture_url ?? null}
+      profilePictureVersion={profile?.updated_at ?? null}
+      onProfilePictureSaved={({ url, updated_at }) =>
+        setProfile((prev) => {
+          if (prev) {
+            return {
+              ...prev,
+              profile_picture_url: url,
+              updated_at: updated_at ?? prev.updated_at,
+            };
+          }
+          return {
+            user_id: "",
+            public_id: publicId ?? undefined,
+            first_name: metaNames?.first_name ?? null,
+            last_name: metaNames?.last_name ?? null,
+            location: null,
+            portfolio_url: null,
+            linkedin_url: null,
+            updated_at: updated_at ?? new Date().toISOString(),
+            profile_picture_url: url,
+          };
+        })
+      }
+      publicId={publicId ?? undefined}
+      resolveSlugOnCreate
+      persistDraftKey={draftStorageKey ?? undefined}
+      presentation={presentation}
+    />
+  );
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      <ApplicationFormPageHeader title="Create New Application" />
+      {presentation === "wizard" ? (
+        <ApplicationFormPageHeader title="Create New Application" />
+      ) : null}
       {showProfileNudge && (
         <p className={`flex items-start gap-2 ${ADMIN_TIP_CLASS}`}>
           <span className="min-w-0 flex-1">
@@ -269,41 +313,11 @@ export default function CreateApplicationWizardPage() {
           </Link>
         </p>
       )}
-      <div className={ADMIN_FORM_SHELL_CLASS}>
-        <ApplicationForm
-          initialData={initialData}
-          onSubmit={handleSubmit}
-          loading={loading}
-          submitLabel="Save & Preview"
-          profilePictureUrl={profile?.profile_picture_url ?? null}
-          profilePictureVersion={profile?.updated_at ?? null}
-          onProfilePictureSaved={({ url, updated_at }) =>
-            setProfile((prev) => {
-              if (prev) {
-                return {
-                  ...prev,
-                  profile_picture_url: url,
-                  updated_at: updated_at ?? prev.updated_at,
-                };
-              }
-              return {
-                user_id: "",
-                public_id: publicId ?? undefined,
-                first_name: metaNames?.first_name ?? null,
-                last_name: metaNames?.last_name ?? null,
-                location: null,
-                portfolio_url: null,
-                linkedin_url: null,
-                updated_at: updated_at ?? new Date().toISOString(),
-                profile_picture_url: url,
-              };
-            })
-          }
-          publicId={publicId ?? undefined}
-          resolveSlugOnCreate
-          persistDraftKey={draftStorageKey ?? undefined}
-        />
-      </div>
+      {presentation === "split" ? (
+        form
+      ) : (
+        <div className={ADMIN_FORM_SHELL_CLASS}>{form}</div>
+      )}
     </div>
   );
 }

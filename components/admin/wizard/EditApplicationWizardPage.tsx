@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * Current edit wizard, parked at `/admin/wizard/edit/[id]`.
- * `/admin/edit/[id]` only forwards here until the next edit flow replaces that route.
+ * Edit application. Default presentation is the parked wizard.
+ * `/admin/edit/[id]` passes `presentation="split"`.
  */
 
 import { useEffect, useState } from 'react';
@@ -19,7 +19,12 @@ import type { Profile } from '@/lib/types/profile';
 import { publicIdFromUserMetadata } from '@/lib/auth/ensure-public-id';
 import { createClient } from '@/lib/supabase/client';
 
-export default function EditApplicationWizardPage() {
+export default function EditApplicationWizardPage({
+  presentation = "wizard",
+}: {
+  /** Parked wizard, or the one-page split layout on `/admin/edit/[id]`. */
+  presentation?: "wizard" | "split";
+}) {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
@@ -194,39 +199,51 @@ export default function EditApplicationWizardPage() {
     primary_cv_id: application.primary_cv_id ?? null,
   };
 
+  const form = (
+    <ApplicationForm
+      initialData={initialData}
+      onSubmit={handleSubmit}
+      loading={loading}
+      onRetryCvCheck={refetchCvCheck}
+      profilePictureUrl={profile?.profile_picture_url ?? null}
+      profilePictureVersion={profile?.updated_at ?? null}
+      onProfilePictureSaved={({ url, updated_at }) =>
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                profile_picture_url: url,
+                updated_at: updated_at ?? prev.updated_at,
+              }
+            : prev,
+        )
+      }
+      publicId={publicId ?? undefined}
+      slugExcludeApplicationId={id}
+      presentation={presentation}
+    />
+  );
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      <ApplicationFormPageHeader title="Edit Application" />
-      <p className={ADMIN_TIP_CLASS}>
-        The candidate details below (name, location, links) are from when this
-        application was saved, not from your current profile. Updating your
-        profile does not change those fields here. Your profile picture is
-        live: if this application shows it, recruiters see the current picture
-        from your profile.
-      </p>
-      <div className={ADMIN_FORM_SHELL_CLASS}>
-        <ApplicationForm
-          initialData={initialData}
-          onSubmit={handleSubmit}
-          loading={loading}
-          onRetryCvCheck={refetchCvCheck}
-          profilePictureUrl={profile?.profile_picture_url ?? null}
-          profilePictureVersion={profile?.updated_at ?? null}
-          onProfilePictureSaved={({ url, updated_at }) =>
-            setProfile((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    profile_picture_url: url,
-                    updated_at: updated_at ?? prev.updated_at,
-                  }
-                : prev,
-            )
-          }
-          publicId={publicId ?? undefined}
-          slugExcludeApplicationId={id}
-        />
-      </div>
+      <ApplicationFormPageHeader
+        sticky={presentation === "split"}
+        title={presentation === "split" ? "Edit application" : "Edit Application"}
+      />
+      {presentation === "wizard" ? (
+        <p className={ADMIN_TIP_CLASS}>
+          The candidate details below (name, location, links) are from when this
+          application was saved, not from your current profile. Updating your
+          profile does not change those fields here. Your profile picture is
+          live: if this application shows it, recruiters see the current picture
+          from your profile.
+        </p>
+      ) : null}
+      {presentation === "split" ? (
+        form
+      ) : (
+        <div className={ADMIN_FORM_SHELL_CLASS}>{form}</div>
+      )}
     </div>
   );
 }

@@ -39,6 +39,7 @@ import {
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
+import ApplicationFormSplitLayout from "./ApplicationFormSplitLayout";
 import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
 import {
   applicationFormStepForErrors,
@@ -127,6 +128,11 @@ interface ApplicationFormProps {
    * key and restore on mount (F15-045). Cleared after a successful submit.
    */
   persistDraftKey?: string;
+  /**
+   * `wizard` is the parked create/edit flow. `split` is the one-page band layout
+   * on `/admin/new` and `/admin/edit/[id]`.
+   */
+  presentation?: "wizard" | "split";
 }
 
 export default function ApplicationForm({
@@ -142,12 +148,18 @@ export default function ApplicationForm({
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
   persistDraftKey,
+  presentation = "wizard",
 }: ApplicationFormProps) {
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
   const [currentStepId, setCurrentStepId] =
     useState<ApplicationFormStepId>("role");
+  /** Bumps when a failed save should scroll the split layout to that band. */
+  const [errorScroll, setErrorScroll] = useState<{
+    stepId: ApplicationFormStepId;
+    nonce: number;
+  } | null>(null);
   /**
    * Edit of a missing CV file: the replacement does not count as done until
    * Continue. Stores the choice that was confirmed, so a later swap waits again.
@@ -1003,14 +1015,18 @@ export default function ApplicationForm({
   ) => {
     setErrors(nextErrors);
     const step = applicationFormStepForErrors(nextErrors);
-    if (step) setCurrentStepId(step);
+    if (!step) return;
+    setCurrentStepId(step);
+    if (presentation === "split") {
+      setErrorScroll({ stepId: step, nonce: Date.now() });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Implicit Enter submit from intermediate steps must not save (no submit
-    // button until Review).
-    if (currentStepId !== "review") return;
+    // Wizard: implicit Enter from an earlier step must not save. The split
+    // page keeps Save on Review, but every field is on the page, so Enter may save.
+    if (presentation !== "split" && currentStepId !== "review") return;
     if (formBusy || isSubmittingRef.current || !canSubmit) return;
     isSubmittingRef.current = true;
     setErrors({});
@@ -1737,31 +1753,43 @@ export default function ApplicationForm({
     ) : null;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-      <ApplicationFormWizardLayout
-        stepContents={stepContents}
-        currentStepId={currentStepId}
-        furthestStepId={furthestStepId}
-        allowAllSteps={isEdit}
-        onStepChange={(id) => {
-          setCurrentStepId(id);
-          if (
-            !isEdit &&
-            applicationFormStepIndex(id) >
-              applicationFormStepIndex(furthestStepId)
-          ) {
-            setFurthestStepId(id);
-          }
-        }}
-        onContinue={(fromId) => {
-          if (fromId === "materials" && hasUsableCv && cvChoiceKey) {
-            setConfirmedMissingCvKey(cvChoiceKey);
-          }
-        }}
-        continueBlockedReason={continueBlockedReasonFor(currentStepId)}
-        stepReady={stepReady}
-        actions={formActions}
-      />
+    <form
+      onSubmit={handleSubmit}
+      className={presentation === "split" ? undefined : "space-y-4 sm:space-y-6"}
+    >
+      {presentation === "split" ? (
+        <ApplicationFormSplitLayout
+          mode={isEdit ? "edit" : "create"}
+          stepContents={stepContents}
+          errorScroll={errorScroll}
+          actions={formActions}
+        />
+      ) : (
+        <ApplicationFormWizardLayout
+          stepContents={stepContents}
+          currentStepId={currentStepId}
+          furthestStepId={furthestStepId}
+          allowAllSteps={isEdit}
+          onStepChange={(id) => {
+            setCurrentStepId(id);
+            if (
+              !isEdit &&
+              applicationFormStepIndex(id) >
+                applicationFormStepIndex(furthestStepId)
+            ) {
+              setFurthestStepId(id);
+            }
+          }}
+          onContinue={(fromId) => {
+            if (fromId === "materials" && hasUsableCv && cvChoiceKey) {
+              setConfirmedMissingCvKey(cvChoiceKey);
+            }
+          }}
+          continueBlockedReason={continueBlockedReasonFor(currentStepId)}
+          stepReady={stepReady}
+          actions={formActions}
+        />
+      )}
 
       {leaveDialog}
     </form>
