@@ -319,9 +319,16 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] After adding a picture, Yes/No appears; **Yes** shows the thumbnail and the avatar on `/view` after publish
 - [ ] **No** hides the thumbnail and keeps **Manage picture**
 
-### Create Role, preview, and résumé notes
+### Résumé (create checklist)
 
-- [ ] **Download name for recruiters** is hidden until a primary CV is selected or a tailored PDF is chosen
+- [ ] **Choose one résumé** lists library files as cards under **From your library**, then **A PDF just for this role**
+- [ ] **Manage library** sits beside the library heading and opens the same library as Profile
+- [ ] Selecting a library card sets that primary CV; tailored shows **Choose a PDF**
+- [ ] Once a file is chosen, the line says **Recruiters download it as…** with **Use a generated name** / **Use the original file name**
+- [ ] There is no separate **Download name for recruiters** heading block on create
+
+### Create Role, preview, and edit notes
+
 - [ ] **Edit link** reveals **Order in the link** (**Company, then role** / **Role, then company**) and **Link ending**. There is no segment-order explanation, no examples, and no Public id preview. **Use the suggested link** appears after the ending is edited, and hides again if the ending matches the suggestion. The checklist footer shows `/view/{publicId}/{slug}`
 - [ ] With company and role filled, the Role line says **Checking...** in grey italic while the ending is checked, **Add a link ending** when it is empty, **Fix the link ending** when it is invalid, **Link already used** when another of your applications has it, and **Couldn't check the link** when the check fails. A ready link shows the company and role
 - [ ] On edit, **Review & save** summary starts open and can be collapsed; groups match the steps (Role, About you, CV, Video) with stacked labels and status chips (**Hidden** / **Empty** / **Shown** / **None** / **Available** / **Missing** / **Ready**); About you lists profile picture before the recruiter fields
@@ -347,22 +354,22 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Save while the slug row still says **checking** is blocked (“wait until the slug has finished updating”)
 - [ ] Save while slug is **unavailable** is blocked; no row is created
 
-### CV
+### CV (shared rules; create uses the checklist cards above)
 
-- [ ] While library is loading (create only), primary / tailored radios are **disabled**
-- [ ] If the library request is slow/blocked, radios unlock within ~**12s** so a tailored CV can still be chosen
-- [ ] With primaries in the library: defaults to **Use a primary CV**; dropdown lists them
-- [ ] **Manage library** opens the same library as Profile; upload/delete there updates the dropdown
+- [ ] While library is loading (create only), primary / tailored choices are **disabled**
+- [ ] If the library request is slow/blocked, choices unlock within ~**12s** so a tailored CV can still be chosen
+- [ ] With primaries in the library: create defaults to a library card; edit/wizard default to **Use a primary CV** with a dropdown
+- [ ] **Manage library** opens the same library as Profile; upload/delete there updates the list
 - [ ] Uploading the first primary from the modal can switch create to primary (if you had not already chosen tailored)
 - [ ] If you already chose **tailored** before adding a primary, mode stays tailored
 - [ ] Close the library modal while Loading…, reopen and upload → selection still sticks (late response from the closed modal must not wipe it)
 - [ ] Delete the **selected** primary in the modal → selection moves to another primary, or switches to tailored if none remain
-- [ ] **Upload a different CV (tailored)**: PDF only, ≤ 3 MB; fake `.pdf` rejected; file itself is **not** restored after refresh — re-choose if you leave
+- [ ] Tailored PDF: ≤ 3 MB; fake `.pdf` rejected; file itself is **not** restored after refresh — re-choose if you leave
 - [ ] Cannot save create with neither a primary selected nor a tailored file
 - [ ] Empty library: primary disabled until you upload via Manage library; tailored still works
 - [ ] Restore a browser draft whose primary was **deleted** meanwhile: stale id is not saveable; falls back to another primary or tailored
 - [ ] Failed Save then retry **the same** tailored file does not upload a second R2 object (idempotency); changing the file does
-- [ ] Download-name control: original filename vs generated `CV-{Slug}.pdf` — verify later on `/view` Download
+- [ ] Download-name control: original filename vs generated `CV-{Slug}.pdf` — verify later on `/view` Download. Edit/wizard keep the **Download name for recruiters** block
 
 ### YouTube
 

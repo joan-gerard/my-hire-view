@@ -1627,6 +1627,7 @@ export default function ApplicationForm({
   const materialsStep = (
     <>
       <CvSourceField
+        variant={presentation === "checklist" ? "checklist" : "default"}
         isEdit={isEdit}
         currentFilename={initialData?.cv_filename ?? null}
         currentType={initialData?.cv_type ?? null}
@@ -1643,6 +1644,8 @@ export default function ApplicationForm({
           const primary = primaryCvs.find((m) => m.id === primaryId);
           if (!primary) return;
           cvModeUserChosenRef.current = true;
+          setCvMode("primary");
+          clearPendingCvSelection();
           setSelectedPrimaryId(primaryId);
           setFormData((prev) => ({
             ...prev,

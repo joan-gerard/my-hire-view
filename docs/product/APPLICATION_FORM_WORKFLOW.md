@@ -12,6 +12,8 @@ Create is `/admin/new`. Edit is `/admin/edit/[id]`. They share the same fields, 
 
 **About you** starts with **Profile picture**: short copy, **Show picture** / **Hide picture** cards, and **Manage picture** or **Add profile picture** under those choices. First and last name sit side by side, then location, **Portfolio**, and **LinkedIn**, each with **Show** / **Hidden**. There is no collapsible **Info shown to recruiters** block on create.
 
+**Résumé** uses **Choose one résumé**: library files as cards under **From your library**, then **A PDF just for this role**. **Manage library** sits beside the library heading. Once a file is chosen, the download line says **Recruiters download it as…**, with a toggle for the original or generated name.
+
 Leaving create from the header or with the browser Back button still asks before discarding the browser draft. A successful save clears that draft. A failed save keeps it.
 
 ## Edit
