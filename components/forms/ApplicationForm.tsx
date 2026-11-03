@@ -1577,28 +1577,52 @@ export default function ApplicationForm({
     </div>
   );
 
-  const candidateStep = (
-    <>
-      <ProfilePictureField
-        profilePictureUrl={profilePictureUrl}
-        profilePictureVersion={profilePictureVersion}
-        firstName={formData.first_name}
-        lastName={formData.last_name}
-        onProfilePictureSaved={onProfilePictureSaved}
-        showProfilePicture={showProfilePicture}
-        onShowProfilePictureChange={(next) => {
-          showProfilePictureUserChosenRef.current = true;
-          setShowProfilePicture(next);
-        }}
-      />
-      <CandidateFieldsSection
-        values={candidateValues}
-        include={include}
-        onValueChange={handleCandidateValueChange}
-        onIncludeChange={handleCandidateIncludeChange}
-      />
-    </>
-  );
+  const candidateStep =
+    presentation === "checklist" ? (
+      <div className="space-y-5">
+        <ProfilePictureField
+          variant="checklist"
+          profilePictureUrl={profilePictureUrl}
+          profilePictureVersion={profilePictureVersion}
+          firstName={formData.first_name}
+          lastName={formData.last_name}
+          onProfilePictureSaved={onProfilePictureSaved}
+          showProfilePicture={showProfilePicture}
+          onShowProfilePictureChange={(next) => {
+            showProfilePictureUserChosenRef.current = true;
+            setShowProfilePicture(next);
+          }}
+        />
+        <CandidateFieldsSection
+          variant="checklist"
+          values={candidateValues}
+          include={include}
+          onValueChange={handleCandidateValueChange}
+          onIncludeChange={handleCandidateIncludeChange}
+        />
+      </div>
+    ) : (
+      <>
+        <ProfilePictureField
+          profilePictureUrl={profilePictureUrl}
+          profilePictureVersion={profilePictureVersion}
+          firstName={formData.first_name}
+          lastName={formData.last_name}
+          onProfilePictureSaved={onProfilePictureSaved}
+          showProfilePicture={showProfilePicture}
+          onShowProfilePictureChange={(next) => {
+            showProfilePictureUserChosenRef.current = true;
+            setShowProfilePicture(next);
+          }}
+        />
+        <CandidateFieldsSection
+          values={candidateValues}
+          include={include}
+          onValueChange={handleCandidateValueChange}
+          onIncludeChange={handleCandidateIncludeChange}
+        />
+      </>
+    );
 
   const materialsStep = (
     <>

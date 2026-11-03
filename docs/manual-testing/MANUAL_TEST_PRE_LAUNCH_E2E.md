@@ -298,24 +298,34 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] After profile has location/link/picture, nudge is gone
 - [ ] Form skeleton/pulse while profile loads; then the form
 
-### Info shown to recruiters
+### About you (create checklist)
 
 - [ ] Prefills first/last name from profile; location and URLs if set
-- [ ] Count e.g. `(N/5)` for included fields
+- [ ] **Profile picture** uses **Show picture** / **Hide picture** cards; the thumbnail appears only when showing
+- [ ] **Manage picture** / **Add profile picture** sits under those choices and opens the modal (JPEG/PNG/WebP, preview, Save, Cancel, type/size errors)
+- [ ] **Hide picture** hides the thumbnail and keeps **Manage picture**; no avatar on `/view` even if the account still has a picture
+- [ ] First and last name sit side by side; then location, **Portfolio**, and **LinkedIn**. Each field is **Show** / **Hidden**; **Hidden** mutes the field and blocks editing
+- [ ] There is no collapsible **Info shown to recruiters** block and no `(N/5)` count on create
 - [ ] Toggle **off** a field → it will not appear on `/view` (verify later)
 - [ ] Toggle **on** a field but leave it blank → stored/shown as empty (no placeholder junk)
 - [ ] Edit a value here (e.g. location) → **does not** change Profile
-- [ ] Collapse / expand the section; preference remembered on the next visit (`localStorage`)
+- [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
+
+### Info shown to recruiters (edit and wizard)
+
 - [ ] Picture block is above **Info shown to recruiters**. Each field is **Show** / **Hidden**, label above the value; **Hidden** mutes the field and blocks editing
-- [ ] **Profile picture:** Yes/No hidden until a picture exists; **Add profile picture** / **Manage picture** modal uploads JPEG/PNG/WebP, preview, Save, Cancel, type/size errors
-- [ ] After adding a picture from this page, Yes/No appears; **Yes** shows the thumbnail and the avatar on `/view` after publish
-- [ ] **No** hides the thumbnail and keeps **Manage picture**; no avatar on `/view` even if the account still has a picture
+- [ ] Count e.g. `(N/5)` for included fields; collapse / expand remembered (`localStorage`)
+- [ ] **Profile picture:** Yes/No hidden until a picture exists; **Add profile picture** / **Manage picture** beside the large thumbnail
+- [ ] After adding a picture, Yes/No appears; **Yes** shows the thumbnail and the avatar on `/view` after publish
+- [ ] **No** hides the thumbnail and keeps **Manage picture**
+
+### Create Role, preview, and résumé notes
+
 - [ ] **Download name for recruiters** is hidden until a primary CV is selected or a tailored PDF is chosen
 - [ ] **Edit link** reveals **Order in the link** (**Company, then role** / **Role, then company**) and **Link ending**. There is no segment-order explanation, no examples, and no Public id preview. **Use the suggested link** appears after the ending is edited, and hides again if the ending matches the suggestion. The checklist footer shows `/view/{publicId}/{slug}`
 - [ ] With company and role filled, the Role line says **Checking...** in grey italic while the ending is checked, **Add a link ending** when it is empty, **Fix the link ending** when it is invalid, **Link already used** when another of your applications has it, and **Couldn't check the link** when the check fails. A ready link shows the company and role
 - [ ] On edit, **Review & save** summary starts open and can be collapsed; groups match the steps (Role, About you, CV, Video) with stacked labels and status chips (**Hidden** / **Empty** / **Shown** / **None** / **Available** / **Missing** / **Ready**); About you lists profile picture before the recruiter fields
 - [ ] On edit, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form, save, or count a view. Create has no preview dialog
-- [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
 
 ### Company, role, slug, URL segment order
 

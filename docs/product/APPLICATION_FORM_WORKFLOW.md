@@ -10,6 +10,8 @@ Create is `/admin/new`. Edit is `/admin/edit/[id]`. They share the same fields, 
 
 **Role** shows company and role. The share link is taken from those two. While both names are filled, the closed Role line says what the link is doing. **Checking...** is grey and italic while the ending is checked. The gaps stay pink: **Add a link ending**, **Fix the link ending**, **Link already used**, or **Couldn't check the link**. A ready link shows the company and role. **Edit link** opens **Order in the link** (**Company, then role** or **Role, then company**) and **Link ending**. **Use the suggested link** appears after the ending is changed. The checklist ends with `/view/{publicId}/{slug}`.
 
+**About you** starts with **Profile picture**: short copy, **Show picture** / **Hide picture** cards, and **Manage picture** or **Add profile picture** under those choices. First and last name sit side by side, then location, **Portfolio**, and **LinkedIn**, each with **Show** / **Hidden**. There is no collapsible **Info shown to recruiters** block on create.
+
 Leaving create from the header or with the browser Back button still asks before discarding the browser draft. A successful save clears that draft. A failed save keeps it.
 
 ## Edit
