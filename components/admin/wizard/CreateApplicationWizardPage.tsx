@@ -2,10 +2,11 @@
 
 /**
  * Create application. Default presentation is the parked wizard.
- * `/admin/new` passes `presentation="checklist"`.
+ * `/admin/new` passes `presentation="checklist"` (one page).
  */
 
 import ApplicationForm from "@/components/forms/ApplicationForm";
+import { profileWithSavedLink } from "@/components/forms/ProfileLinkDialog";
 import ApplicationFormPageHeader from "@/components/forms/ApplicationFormPageHeader";
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
 import {
@@ -28,7 +29,7 @@ import { useEffect, useRef, useState } from "react";
 export default function CreateApplicationWizardPage({
   presentation = "wizard",
 }: {
-  /** Parked wizard, the edit split page, or the checklist on `/admin/new`. */
+  /** Parked wizard, the edit split page, or the one-page form on `/admin/new`. */
   presentation?: "wizard" | "split" | "checklist";
 }) {
   const router = useRouter();
@@ -251,7 +252,7 @@ export default function CreateApplicationWizardPage({
   };
 
   if (profileLoading) {
-    return <AdminPageSkeleton variant="form" />;
+    return <AdminPageSkeleton variant="create" />;
   }
 
   const form = (
@@ -262,28 +263,16 @@ export default function CreateApplicationWizardPage({
       submitLabel="Save draft & preview"
       profilePictureUrl={profile?.profile_picture_url ?? null}
       profilePictureVersion={profile?.updated_at ?? null}
-      onProfilePictureSaved={({ url, updated_at }) =>
-        setProfile((prev) => {
-          if (prev) {
-            return {
-              ...prev,
-              profile_picture_url: url,
-              updated_at: updated_at ?? prev.updated_at,
-            };
-          }
-          return {
-            user_id: "",
+      onProfileLinkSaved={(field, url) => {
+        setProfile((prev) =>
+          profileWithSavedLink(prev, field, url, {
+            user_id: authUserId ?? undefined,
             public_id: publicId ?? undefined,
             first_name: metaNames?.first_name ?? null,
             last_name: metaNames?.last_name ?? null,
-            location: null,
-            portfolio_url: null,
-            linkedin_url: null,
-            updated_at: updated_at ?? new Date().toISOString(),
-            profile_picture_url: url,
-          };
-        })
-      }
+          }),
+        );
+      }}
       publicId={publicId ?? undefined}
       resolveSlugOnCreate
       persistDraftKey={draftStorageKey ?? undefined}
@@ -295,7 +284,7 @@ export default function CreateApplicationWizardPage({
     <div
       className={
         presentation === "checklist"
-          ? "mx-auto w-full max-w-6xl space-y-4 sm:space-y-6"
+          ? "mx-auto w-full max-w-2xl space-y-4"
           : "space-y-4 sm:space-y-6"
       }
     >
@@ -306,8 +295,8 @@ export default function CreateApplicationWizardPage({
         <p className={`flex items-start gap-2 ${ADMIN_TIP_CLASS}`}>
           <span className="min-w-0 flex-1">
             {hasSavedProfile
-              ? "Add location, links, or a picture on your profile for richer prefills — or use Add picture below."
-              : "Complete your profile to prefill location, links, and picture on new applications. Your name from signup is used below until then."}
+              ? "Add location, links, or a picture on your profile so this page can offer them."
+              : "Complete your profile to add location, links, and a picture. Your name from signup is shown below until then."}
           </span>
           <Link
             href="/admin/profile"

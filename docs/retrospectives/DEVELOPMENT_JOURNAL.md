@@ -59,3 +59,11 @@ Save, the browser draft, and the leave prompt did not change. The share link sta
 ## 3 November 2026
 
 The checklist won for create, so the comparison surfaces came down. `/admin/wizard` and the application-form demo are gone. Edit stays the scrolling page. The wizard layout code is still in the form, unused by a route.
+
+Later the same day the checklist itself felt like too many doors for a short form. Create is one card again: every field on the page, the name beside the control, Save at the bottom. The width stays tight (`2xl`) so it reads as a form, not a dashboard. Edit is unchanged. What you fill in, and what blocks a save, did not change.
+
+The same pass cut the identity editors. A name, a location, a portfolio, and a LinkedIn belong on the profile, not on every application. Create and edit show those values and only choose what this page includes: the name is always on, and location, portfolio, and LinkedIn can be hidden when the profile has them. A missing picture or link points at Profile instead of a second field. Saving still copies the current profile onto the application, so a public page does not follow a later profile edit until the next save. The résumé download name is the generated one; the original-filename switch is gone. The inventory and the calls are in [CREATE_FORM_FIELD_TRIM.md](../product/CREATE_FORM_FIELD_TRIM.md).
+
+A missing portfolio or LinkedIn should not send someone away from a half-finished application. Those two open a small dialog, save onto the profile, and come back as Show / Hidden. Location still sends you to Profile. The profile remains the only copy of the URL.
+
+Link order and the ending no longer hide behind a toggle. They stay on the share-link row, and the read-only URL with the copy button sits under them.

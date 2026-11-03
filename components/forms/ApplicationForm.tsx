@@ -6,7 +6,6 @@ import type {
   ApplicationFormData,
 } from "@/lib/types/application";
 import type { PrimaryCv } from "@/lib/types/primary-cv";
-import { roleChecklistSummary } from "@/lib/utils/role-checklist-summary";
 import {
   buildSlug,
   isCustomSlug,
@@ -40,10 +39,9 @@ import {
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
-import ApplicationFormChecklistLayout, {
-  type ChecklistChapter,
-  type ChecklistChapterId,
-} from "./ApplicationFormChecklistLayout";
+import ApplicationFormSinglePageLayout, {
+  ApplicationFormFieldRow,
+} from "./ApplicationFormSinglePageLayout";
 import ApplicationFormSplitLayout from "./ApplicationFormSplitLayout";
 import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
 import {
@@ -54,6 +52,7 @@ import {
 import CandidateFieldsSection, {
   type CandidateFieldKey,
 } from "./CandidateFieldsSection";
+import type { ProfileLinkField } from "./ProfileLinkDialog";
 import ApplicationReviewPreview from "./ApplicationReviewPreview";
 import ApplicationReviewSummary from "./ApplicationReviewSummary";
 import CvSourceField from "./CvSourceField";
@@ -64,18 +63,67 @@ import ProfilePictureField from "./ProfilePictureField";
 import ShareUrlPreview from "./ShareUrlPreview";
 import YouTubeUrlInput from "./YouTubeUrlInput";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import AdminTooltip from "@/components/admin/AdminTooltip";
+import { CopyIcon } from "@/components/admin/icons";
+import SlugOrderDropdown from "./SlugOrderDropdown";
+import { copyToClipboard } from "@/lib/utils/clipboard";
+import { getApplicationUrl, getBaseUrl } from "@/lib/utils/url";
 import { FiAlertCircle, FiCheck, FiRefreshCw } from "react-icons/fi";
 
 function hasValue(v: string | null | undefined): boolean {
   return v != null && String(v).trim() !== "";
 }
 
+function checklistErrorTarget(
+  errors: Partial<Record<keyof ApplicationFormData, string>>,
+): { rowId: string; inputId?: string } | null {
+  if (errors.company) {
+    return { rowId: "application-row-company", inputId: "application-company" };
+  }
+  if (errors.role) {
+    return { rowId: "application-row-role", inputId: "application-role" };
+  }
+  if (errors.slug) {
+    return { rowId: "application-row-ending", inputId: "application-slug" };
+  }
+  if (errors.cv_url || errors.cv_filename) {
+    return { rowId: "application-row-resume" };
+  }
+  if (errors.video_url) {
+    return { rowId: "application-row-pitch", inputId: "application-video" };
+  }
+  const step = applicationFormStepForErrors(errors);
+  if (step === "materials") return { rowId: "application-row-resume" };
+  if (step === "video") {
+    return { rowId: "application-row-pitch", inputId: "application-video" };
+  }
+  if (step === "candidate") return { rowId: "application-section-about" };
+  if (step === "role") {
+    return { rowId: "application-row-company", inputId: "application-company" };
+  }
+  return null;
+}
+
+/** Scroll a create-form row into view and focus its control. */
+function focusApplicationRow(rowId: string, inputId?: string) {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const row = document.getElementById(rowId);
+  row?.scrollIntoView({
+    behavior: reduce ? "auto" : "smooth",
+    block: "center",
+  });
+  const target =
+    (inputId ? document.getElementById(inputId) : null) ??
+    row?.querySelector<HTMLElement>("input, textarea, select");
+  target?.focus();
+}
+
 function defaultInclude(
   initialData?: Partial<ApplicationFormData>,
 ): Record<CandidateFieldKey, boolean> {
   return {
-    first_name: hasValue(initialData?.first_name),
-    last_name: hasValue(initialData?.last_name),
+    first_name: true,
+    last_name: true,
     location: hasValue(initialData?.location),
     portfolio_url: hasValue(initialData?.portfolio_url),
     linkedin_url: hasValue(initialData?.linkedin_url),
@@ -107,15 +155,21 @@ interface ApplicationFormProps {
   /** When provided, passed to FileUpload so user can re-check CV existence (edit page). */
   /** Resolves false when the saved CV is still missing from storage. */
   onRetryCvCheck?: () => Promise<boolean | void>;
-  /** Profile picture URL; when set, Yes/No toggle is enabled; when null, toggle is disabled with No selected. */
+  /** Profile picture URL. Show/Hide appears only when this is set. */
   profilePictureUrl?: string | null;
   /** Cache-bust key for the live profile picture (e.g. profiles.updated_at). */
   profilePictureVersion?: string | null;
-  /** When set, the field offers Add/Manage picture via a modal (new/edit flows). */
-  onProfilePictureSaved?: (result: {
-    url: string | null;
-    updated_at?: string | null;
-  }) => void;
+  /**
+   * Which optional profile fields this application currently shares.
+   * Names are always shared. Edit passes this from the saved row so a
+   * hidden location stays hidden even when the live profile has a value.
+   */
+  initialInclude?: Partial<Record<CandidateFieldKey, boolean>>;
+  /**
+   * Portfolio or LinkedIn was saved onto the profile from this form.
+   * Parents refresh their profile copy so nudges stay in sync.
+   */
+  onProfileLinkSaved?: (field: ProfileLinkField, url: string) => void;
   /** Opaque public id for share URL preview (from profile or auth metadata). */
   publicId?: string;
   /**
@@ -134,7 +188,8 @@ interface ApplicationFormProps {
    */
   persistDraftKey?: string;
   /**
-   * `checklist` is `/admin/new`. `split` is the edit page. `wizard` is parked.
+   * `checklist` is the one-page form on `/admin/new`.
+   * `split` is the edit page. `wizard` is parked.
    */
   presentation?: "wizard" | "split" | "checklist";
 }
@@ -147,7 +202,8 @@ export default function ApplicationForm({
   onRetryCvCheck,
   profilePictureUrl,
   profilePictureVersion,
-  onProfilePictureSaved,
+  initialInclude,
+  onProfileLinkSaved,
   publicId,
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
@@ -176,8 +232,7 @@ export default function ApplicationForm({
   /** Create wizard: furthest step unlocked via Continue (survives Back). */
   const [furthestStepId, setFurthestStepId] =
     useState<ApplicationFormStepId>("role");
-  /** Checklist create: slug order and ending stay behind Edit link. */
-  const [linkOpen, setLinkOpen] = useState(false);
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   /** Load once per mount; ignore later key changes while the form is open. */
   const restoredDraftRef = useRef<CreateApplicationDraft | null | undefined>(
@@ -230,26 +285,36 @@ export default function ApplicationForm({
     slug: restoredDraft?.slug || initialData?.slug || "",
     cv_url: initialData?.cv_url || "",
     video_url: restoredDraft?.video_url || initialData?.video_url || "",
-    first_name:
-      restoredDraft?.first_name ?? initialData?.first_name ?? "",
-    last_name: restoredDraft?.last_name ?? initialData?.last_name ?? "",
-    location: restoredDraft?.location ?? initialData?.location ?? "",
-    portfolio_url:
-      restoredDraft?.portfolio_url ?? initialData?.portfolio_url ?? "",
-    linkedin_url:
-      restoredDraft?.linkedin_url ?? initialData?.linkedin_url ?? "",
+    first_name: initialData?.first_name ?? "",
+    last_name: initialData?.last_name ?? "",
+    location: initialData?.location ?? "",
+    portfolio_url: initialData?.portfolio_url ?? "",
+    linkedin_url: initialData?.linkedin_url ?? "",
     cv_filename: initialData?.cv_filename ?? null,
-    use_original_cv_filename:
-      restoredDraft?.use_original_cv_filename ??
-      initialData?.use_original_cv_filename ??
-      true,
+    use_original_cv_filename: false,
     cv_type: restoredDraft?.cvMode ?? initialData?.cv_type,
     primary_cv_id:
       restoredDraft?.selectedPrimaryId ?? initialData?.primary_cv_id ?? null,
   });
 
   const [include, setInclude] = useState<Record<CandidateFieldKey, boolean>>(
-    () => restoredDraft?.include ?? defaultInclude(initialData),
+    () => {
+      const fallback = defaultInclude(initialData);
+      const base = restoredDraft?.include ?? fallback;
+      return {
+        first_name: true,
+        last_name: true,
+        location: restoredDraft?.include
+          ? base.location
+          : (initialInclude?.location ?? fallback.location),
+        portfolio_url: restoredDraft?.include
+          ? base.portfolio_url
+          : (initialInclude?.portfolio_url ?? fallback.portfolio_url),
+        linkedin_url: restoredDraft?.include
+          ? base.linkedin_url
+          : (initialInclude?.linkedin_url ?? fallback.linkedin_url),
+      };
+    },
   );
 
   const [slugSegmentOrder, setSlugSegmentOrder] = useState<SlugSegmentOrder>(
@@ -569,7 +634,7 @@ export default function ApplicationForm({
         cvMode,
         cvModeUserChosen: cvModeUserChosenRef.current,
         selectedPrimaryId,
-        use_original_cv_filename: formData.use_original_cv_filename ?? true,
+        use_original_cv_filename: false,
       });
     }, 400);
     return () => window.clearTimeout(timer);
@@ -612,7 +677,7 @@ export default function ApplicationForm({
     cvMode,
     cvModeUserChosen: cvModeUserChosenRef.current,
     selectedPrimaryId,
-    use_original_cv_filename: formData.use_original_cv_filename ?? true,
+    use_original_cv_filename: false,
   };
   if (persistDraftKey && leaveBaselineRef.current === null) {
     leaveBaselineRef.current = leaveRelevantDraftSnapshot(draftSnapshot);
@@ -775,24 +840,24 @@ export default function ApplicationForm({
     if (!hasRole) items.push({ name: "Role", stepId: "role" });
     if (slugLiveStatus.kind === "checking") {
       items.push({
-        name: "Share link",
-        note: "Share link is still being checked",
+        name: "Shareable link",
+        note: "Shareable link is still being checked",
         stepId: "role",
       });
     } else if (slugLiveStatus.kind === "invalid") {
       items.push({
-        name: "Share link",
-        note: slugLiveStatus.message || "Share link is not valid",
+        name: "Shareable link",
+        note: slugLiveStatus.message || "Shareable link is not valid",
         stepId: "role",
       });
     } else if (slugLiveStatus.kind === "unavailable") {
       items.push({
-        name: "Share link",
-        note: slugLiveStatus.message || "Share link is taken",
+        name: "Shareable link",
+        note: slugLiveStatus.message || "Shareable link is taken",
         stepId: "role",
       });
     } else if (!hasSlug || !slugReady) {
-      items.push({ name: "Share link", stepId: "role" });
+      items.push({ name: "Shareable link", stepId: "role" });
     }
     if (!hasUsableCv) items.push({ name: "Résumé", stepId: "materials" });
     if (!hasVideo) items.push({ name: "YouTube intro", stepId: "video" });
@@ -1071,8 +1136,14 @@ export default function ApplicationForm({
     if (presentation === "split") {
       setErrorScroll({ stepId: step, nonce: Date.now() });
     }
-    if (presentation === "checklist" && nextErrors.slug) {
-      setLinkOpen(true);
+    if (presentation === "checklist") {
+      const target = checklistErrorTarget(nextErrors);
+      if (target) {
+        window.setTimeout(
+          () => focusApplicationRow(target.rowId, target.inputId),
+          0,
+        );
+      }
     }
   };
 
@@ -1255,10 +1326,8 @@ export default function ApplicationForm({
         ...formData,
         slug: slugTrimmed,
         cv_url: cvUrl,
-        first_name: include.first_name
-          ? formData.first_name?.trim() || null
-          : null,
-        last_name: include.last_name ? formData.last_name?.trim() || null : null,
+        first_name: formData.first_name?.trim() || null,
+        last_name: formData.last_name?.trim() || null,
         location: include.location ? formData.location?.trim() || null : null,
         portfolio_url: include.portfolio_url
           ? formData.portfolio_url?.trim() || null
@@ -1268,7 +1337,7 @@ export default function ApplicationForm({
           : null,
         slugSegmentOrder,
         cv_filename: cvFilename,
-        use_original_cv_filename: formData.use_original_cv_filename ?? true,
+        use_original_cv_filename: false,
         show_profile_picture: includePicture,
         cv_type: cvMode,
         primary_cv_id: primaryCvId,
@@ -1311,11 +1380,10 @@ export default function ApplicationForm({
     linkedin_url: formData.linkedin_url ?? "",
   };
 
-  const handleCandidateValueChange = (
-    field: CandidateFieldKey,
-    value: string,
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleProfileLinkSaved = (field: ProfileLinkField, url: string) => {
+    setFormData((prev) => ({ ...prev, [field]: url }));
+    setInclude((prev) => ({ ...prev, [field]: true }));
+    onProfileLinkSaved?.(field, url);
   };
 
   const handleCandidateIncludeChange = (
@@ -1473,135 +1541,147 @@ export default function ApplicationForm({
     </div>
   );
 
-  const checklistRoleStep = (
-    <div className="space-y-5">
+  const trimmedPublicId = publicId?.trim() || "";
+  const trimmedSlug = formData.slug.trim();
+  const shareLinkPath = `/view/${trimmedPublicId || "…"}/${trimmedSlug || "…"}`;
+  const shareLinkFull = `${getBaseUrl()}${shareLinkPath}`;
+  const shareableUrl =
+    trimmedPublicId && trimmedSlug
+      ? getApplicationUrl(trimmedPublicId, trimmedSlug)
+      : null;
+  const shareLinkCopyUnavailableLabel = !trimmedPublicId
+    ? "Complete your profile to get a share link"
+    : !trimmedSlug
+      ? "Add a company and role to build the link"
+      : "Link is not ready to copy";
+
+  const handleCopyShareLink = async () => {
+    if (!shareableUrl) return;
+    const success = await copyToClipboard(shareableUrl);
+    if (success) {
+      setShareLinkCopied(true);
+      window.setTimeout(() => setShareLinkCopied(false), 2000);
+    }
+  };
+
+  const shareLinkCopyClass =
+    "inline-flex size-7 items-center justify-center rounded-lg border border-[var(--ink)]/15 bg-[var(--white)] shadow-sm focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
+
+  const linkEndingControl = (
+    <div className="space-y-3">
       <Input
-        label="Company"
-        value={formData.company}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, company: e.target.value }))
-        }
-        error={errors.company}
-        required
-        autoComplete="organization"
+        id="application-slug"
+        dense
+        value={formData.slug}
+        onChange={(e) => handleSlugFieldChange(e.target.value)}
+        error={errors.slug}
+        autoComplete="off"
+        spellCheck={false}
       />
-      <Input
-        label="Role"
-        value={formData.role}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, role: e.target.value }))
-        }
-        error={errors.role}
-        required
-        autoComplete="organization-title"
-      />
-      <div className="rounded-xl bg-[var(--pink)] px-4 py-3.5">
-        <p className="text-sm font-medium text-[var(--ink)]">Share link</p>
-        <p className="mt-1 text-sm leading-relaxed break-words">
-          <span className="text-[var(--muted)]">/view/{publicId?.trim() || "…"}/</span>
-          <span>{formData.slug.trim() || "…"}</span>
-        </p>
+      {slugManuallyEdited ? (
         <button
           type="button"
-          className="mt-2 rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-          onClick={() => setLinkOpen((open) => !open)}
+          onClick={handleResetSlugToSuggested}
+          disabled={!hasCompany || !hasRole || formBusy}
+          className="rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
         >
-          {linkOpen ? "Hide link options" : "Edit link"}
+          Use the suggested link
         </button>
-        {linkOpen ? (
-          <div className="mt-4 space-y-4">
-            <fieldset>
-              <legend className="text-sm font-medium text-[var(--ink)]">
-                Order in the link
-              </legend>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {(
-                  [
-                    ["company_role", "Company, then role"],
-                    ["role_company", "Role, then company"],
-                  ] as const
-                ).map(([order, label]) => (
-                  <label
-                    key={order}
-                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm ring-1 ring-inset ${
-                      slugSegmentOrder === order
-                        ? "bg-[var(--paper)] text-[var(--ink)] ring-[var(--ink)]"
-                        : "bg-[var(--white)] text-[var(--ink)] ring-[var(--ink)]/15 hover:bg-[var(--paper)]/70"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="checklist-slug-segment-order"
-                      value={order}
-                      checked={slugSegmentOrder === order}
-                      onChange={() => handleSlugSegmentOrderChange(order)}
-                      className="size-4 shrink-0 accent-[var(--ink)]"
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <Input
-              id="application-slug"
-              label="Link ending"
-              value={formData.slug}
-              onChange={(e) => handleSlugFieldChange(e.target.value)}
-              error={errors.slug}
-              autoComplete="off"
-              spellCheck={false}
-            />
-            {(slugLiveStatus.kind === "invalid" ||
-              slugLiveStatus.kind === "unavailable") &&
-              !errors.slug && (
-                <p
-                  className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
-                  role="alert"
-                >
-                  <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                  <span>{slugLiveStatus.message}</span>
-                </p>
-              )}
-            {slugManuallyEdited ? (
+      ) : null}
+      {slugLiveStatus.kind === "checking" ? (
+        <p
+          className="text-sm leading-relaxed text-[var(--muted)] italic"
+          role="status"
+        >
+          Checking...
+        </p>
+      ) : null}
+      {(slugLiveStatus.kind === "invalid" ||
+        slugLiveStatus.kind === "unavailable") &&
+      !errors.slug ? (
+        <p
+          className="flex items-start gap-1.5 text-sm text-[var(--status-danger-fg)]"
+          role="alert"
+        >
+          <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          <span>{slugLiveStatus.message}</span>
+        </p>
+      ) : null}
+    </div>
+  );
+
+  const shareLinkControl = (
+    <div className="relative">
+        <div
+          id="application-share-link"
+          role="textbox"
+          aria-readonly="true"
+          aria-label="Shareable link"
+          className="block w-full cursor-not-allowed break-all rounded-xl border-0 bg-[var(--white)] py-1.5 pr-12 pl-3.5 text-[var(--ink)] ring-1 ring-inset ring-[var(--ink)]/15 sm:text-sm sm:leading-6"
+        >
+          <span className="sm:hidden">{shareLinkPath}</span>
+          <span className="hidden sm:inline">{shareLinkFull}</span>
+        </div>
+        <div className="absolute inset-y-0 right-1.5 flex items-center">
+          {shareableUrl ? (
+            <AdminTooltip
+              label={shareLinkCopied ? "Copied!" : "Copy link"}
+              side="top"
+            >
               <button
                 type="button"
-                onClick={handleResetSlugToSuggested}
-                disabled={!hasCompany || !hasRole || formBusy}
-                className="rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+                onClick={handleCopyShareLink}
+                className={`${shareLinkCopyClass} cursor-pointer text-[var(--ink)] hover:bg-[var(--paper)]`}
+                aria-label={shareLinkCopied ? "Copied!" : "Copy link"}
               >
-                Use the suggested link
+                <CopyIcon className="h-4 w-4" />
               </button>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
+            </AdminTooltip>
+          ) : (
+            <AdminTooltip label={shareLinkCopyUnavailableLabel} side="top">
+              <span
+                role="img"
+                className={`${shareLinkCopyClass} text-[var(--muted)]`}
+                aria-label={shareLinkCopyUnavailableLabel}
+              >
+                <CopyIcon className="h-4 w-4" aria-hidden />
+              </span>
+            </AdminTooltip>
+          )}
+        </div>
     </div>
   );
 
   const candidateStep =
     presentation === "checklist" ? (
-      <div className="space-y-5">
-        <ProfilePictureField
-          variant="checklist"
-          profilePictureUrl={profilePictureUrl}
-          profilePictureVersion={profilePictureVersion}
-          firstName={formData.first_name}
-          lastName={formData.last_name}
-          onProfilePictureSaved={onProfilePictureSaved}
-          showProfilePicture={showProfilePicture}
-          onShowProfilePictureChange={(next) => {
-            showProfilePictureUserChosenRef.current = true;
-            setShowProfilePicture(next);
-          }}
-        />
+      <>
+        <ApplicationFormFieldRow
+          id="application-row-picture"
+          label="Picture"
+          align="top"
+        >
+          <ProfilePictureField
+            variant="checklist"
+            hideLegend
+            profilePictureUrl={profilePictureUrl}
+            profilePictureVersion={profilePictureVersion}
+            firstName={formData.first_name}
+            lastName={formData.last_name}
+            showProfilePicture={showProfilePicture}
+            onShowProfilePictureChange={(next) => {
+              showProfilePictureUserChosenRef.current = true;
+              setShowProfilePicture(next);
+            }}
+          />
+        </ApplicationFormFieldRow>
         <CandidateFieldsSection
-          variant="checklist"
+          layout="rows"
           values={candidateValues}
           include={include}
-          onValueChange={handleCandidateValueChange}
           onIncludeChange={handleCandidateIncludeChange}
+          onProfileLinkSaved={handleProfileLinkSaved}
         />
-      </div>
+      </>
     ) : (
       <>
         <ProfilePictureField
@@ -1609,7 +1689,6 @@ export default function ApplicationForm({
           profilePictureVersion={profilePictureVersion}
           firstName={formData.first_name}
           lastName={formData.last_name}
-          onProfilePictureSaved={onProfilePictureSaved}
           showProfilePicture={showProfilePicture}
           onShowProfilePictureChange={(next) => {
             showProfilePictureUserChosenRef.current = true;
@@ -1619,8 +1698,8 @@ export default function ApplicationForm({
         <CandidateFieldsSection
           values={candidateValues}
           include={include}
-          onValueChange={handleCandidateValueChange}
           onIncludeChange={handleCandidateIncludeChange}
+          onProfileLinkSaved={handleProfileLinkSaved}
         />
       </>
     );
@@ -1835,10 +1914,6 @@ export default function ApplicationForm({
           }
         }}
         onCancelSwitchToPrimary={() => setSwitchToPrimaryConfirmOpen(false)}
-        useOriginalCvFilename={formData.use_original_cv_filename ?? true}
-        onUseOriginalCvFilenameChange={(use) =>
-          setFormData((prev) => ({ ...prev, use_original_cv_filename: use }))
-        }
         slug={formData.slug}
         uploading={submitPhase === "uploading"}
         preparing={cvPendingDigesting}
@@ -1879,8 +1954,8 @@ export default function ApplicationForm({
     <ApplicationReviewPreview
       company={formData.company.trim()}
       role={formData.role.trim()}
-      firstName={include.first_name ? formData.first_name : null}
-      lastName={include.last_name ? formData.last_name : null}
+      firstName={formData.first_name}
+      lastName={formData.last_name}
       location={include.location ? formData.location : null}
       portfolioUrl={include.portfolio_url ? formData.portfolio_url : null}
       linkedinUrl={include.linkedin_url ? formData.linkedin_url : null}
@@ -1890,7 +1965,7 @@ export default function ApplicationForm({
       cvUrl={formData.cv_url}
       cvPendingFile={cvPendingFile}
       cvFilename={formData.cv_filename}
-      useOriginalCvFilename={formData.use_original_cv_filename ?? true}
+      useOriginalCvFilename={false}
       slug={formData.slug}
       videoUrl={formData.video_url}
       label={presentation === "wizard" ? "Show preview" : "Preview"}
@@ -1979,74 +2054,29 @@ export default function ApplicationForm({
       />
     ) : null;
 
-  const checklistOpenId: ChecklistChapterId =
-    currentStepId === "role" ||
-    currentStepId === "candidate" ||
-    currentStepId === "materials" ||
-    currentStepId === "video"
-      ? currentStepId
-      : "video";
-
-  const roleSummary = roleChecklistSummary({
-    company: formData.company,
-    role: formData.role,
-    slug: formData.slug,
-    roleReady: stepReady("role"),
-    slugStatus: slugLiveStatus,
-  });
-
-  const aboutYouParts = [
-    hasProfilePicture && showProfilePicture ? "Picture" : "",
-    [
-      include.first_name ? formData.first_name?.trim() : "",
-      include.last_name ? formData.last_name?.trim() : "",
-    ]
-      .filter(Boolean)
-      .join(" "),
-    include.location ? formData.location?.trim() : "",
-    include.portfolio_url && formData.portfolio_url?.trim() ? "Portfolio" : "",
-    include.linkedin_url && formData.linkedin_url?.trim() ? "LinkedIn" : "",
-  ].filter(Boolean);
-
-  const checklistChapters: ChecklistChapter[] = [
-    {
-      id: "role",
-      title: "Role",
-      description: "Company, role, and the link recruiters open.",
-      summary: roleSummary.text,
-      summaryPending: roleSummary.pending,
-      summaryProgress: roleSummary.progress,
-      tone: stepReady("role") ? "done" : "pending",
-      content: checklistRoleStep,
-    },
-    {
-      id: "candidate",
-      title: "About you",
-      description: "Choose what this page shows about you. None of this is required.",
-      summary: aboutYouParts.length > 0 ? aboutYouParts.join(", ") : "Optional",
-      summaryPending: false,
-      tone: aboutYouParts.length > 0 ? "done" : "optional",
-      content: candidateStep,
-    },
-    {
-      id: "materials",
-      title: "Résumé",
-      description: "A résumé from your library, or a PDF only for this role.",
-      summary: reviewCvLabel || "Choose a file",
-      summaryPending: !cvCountsForProgress,
-      tone: cvCountsForProgress ? "done" : "pending",
-      content: materialsStep,
-    },
-    {
-      id: "video",
-      title: "Pitch",
-      description: "A YouTube video they can watch on the page.",
-      summary: hasVideo ? "YouTube link added" : "Still needed",
-      summaryPending: !hasVideo,
-      tone: stepReady("video") ? "done" : "pending",
-      content: videoStep,
-    },
-  ];
+  const focusFirstGap = () => {
+    const item = saveBlockers[0];
+    if (!item) return;
+    const target =
+      item.name === "Company"
+        ? { rowId: "application-row-company", inputId: "application-company" }
+        : item.name === "Role"
+          ? { rowId: "application-row-role", inputId: "application-role" }
+          : item.name === "Shareable link"
+            ? { rowId: "application-row-ending", inputId: "application-slug" }
+            : item.stepId === "materials"
+              ? { rowId: "application-row-resume" }
+              : item.stepId === "video"
+                ? {
+                    rowId: "application-row-pitch",
+                    inputId: "application-video",
+                  }
+                : { rowId: "application-row-company", inputId: "application-company" };
+    window.setTimeout(
+      () => focusApplicationRow(target.rowId, target.inputId),
+      0,
+    );
+  };
 
   return (
     <form
@@ -2066,12 +2096,143 @@ export default function ApplicationForm({
       className={presentation === "wizard" ? "space-y-4 sm:space-y-6" : undefined}
     >
       {presentation === "checklist" ? (
-        <ApplicationFormChecklistLayout
-          chapters={checklistChapters}
-          openId={checklistOpenId}
-          onOpen={setCurrentStepId}
-          sharePath={`/view/${publicId?.trim() || "…"}/${formData.slug.trim() || "…"}`}
+        <ApplicationFormSinglePageLayout
+          title="New application"
+          description="This role gets its own page and share link. Save a draft when the required pieces are ready, then preview it."
+          cancelHref="/admin"
           actions={formActions}
+          blockedReason={disabledReason}
+          onBlockedReason={focusFirstGap}
+          rows={[
+            {
+              type: "section",
+              id: "application-section-link",
+              label: "Your link",
+            },
+            {
+              type: "field",
+              id: "application-row-company",
+              label: "Company",
+              labelFor: "application-company",
+              align: "field",
+              children: (
+                <Input
+                  id="application-company"
+                  dense
+                  value={formData.company}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      company: e.target.value,
+                    }))
+                  }
+                  error={errors.company}
+                  required
+                  autoComplete="organization"
+                />
+              ),
+            },
+            {
+              type: "field",
+              id: "application-row-role",
+              label: "Role",
+              labelFor: "application-role",
+              align: "field",
+              children: (
+                <Input
+                  id="application-role"
+                  dense
+                  value={formData.role}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, role: e.target.value }))
+                  }
+                  error={errors.role}
+                  required
+                  autoComplete="organization-title"
+                />
+              ),
+            },
+            {
+              type: "field",
+              id: "application-row-slug-order",
+              label: "How the link reads",
+              align: "field",
+              info: "Choose whether the company or the role comes first.",
+              className: "relative z-10",
+              children: (
+                <SlugOrderDropdown
+                  id="application-slug-order"
+                  fieldLabel="How the link reads"
+                  value={slugSegmentOrder}
+                  onChange={handleSlugSegmentOrderChange}
+                />
+              ),
+            },
+            {
+              type: "field",
+              id: "application-row-ending",
+              label: "Link ending",
+              labelFor: "application-slug",
+              align: "field",
+              info: "Pre-filled for you. Edit it if you like. Each ending must be unique.",
+              children: linkEndingControl,
+            },
+            {
+              type: "field",
+              id: "application-row-share",
+              label: "Shareable link",
+              layout: "result",
+              hint: "The link you will send, built from the choices above.",
+              children: shareLinkControl,
+            },
+            {
+              type: "section",
+              id: "application-section-about",
+              label: "About you",
+              optional: true,
+            },
+            {
+              type: "block",
+              id: "application-row-about",
+              children: candidateStep,
+            },
+            {
+              type: "section",
+              id: "application-section-resume",
+              label: "Résumé",
+            },
+            {
+              type: "block",
+              id: "application-row-resume",
+              children: materialsStep,
+            },
+            {
+              type: "section",
+              id: "application-section-pitch",
+              label: "Pitch",
+            },
+            {
+              type: "field",
+              id: "application-row-pitch",
+              label: "YouTube",
+              labelFor: "application-video",
+              align: "field",
+              hint: "A YouTube video they can watch on the page.",
+              children: (
+                <YouTubeUrlInput
+                  id="application-video"
+                  hideLabel
+                  dense
+                  placeholder="https://www.youtube.com/watch?v=…"
+                  value={formData.video_url}
+                  onChange={(url) =>
+                    setFormData((prev) => ({ ...prev, video_url: url }))
+                  }
+                  error={errors.video_url}
+                />
+              ),
+            },
+          ]}
         />
       ) : presentation === "split" ? (
         <ApplicationFormSplitLayout

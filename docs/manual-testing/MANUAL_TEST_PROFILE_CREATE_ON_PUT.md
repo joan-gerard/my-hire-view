@@ -28,30 +28,30 @@ Requires `SUPABASE_SERVICE_ROLE_KEY` in the server env (signup profile insert).
 
 ---
 
-## 3. Add / change picture from New Application
+## 3. Picture from Profile, then New Application
 
-- [ ] Open `/admin/new`
-- [ ] Under Profile picture, click **Add profile picture** (or **Manage picture** if one exists)
-- [ ] Modal: choose JPEG/PNG/WebP, preview, **Save picture**
-- [ ] Thumbnail appears; Yes/No toggle enables; Yes can be selected
-- [ ] Save the application with “show picture” on; public view shows the avatar
-- [ ] Replace and remove from the modal; confirm Storage / profile URL update
+- [ ] Open `/admin/new` with no picture: **Add a picture on your profile** goes to `/admin/profile`. There is no upload on the application form
+- [ ] On Profile, choose JPEG/PNG/WebP, preview, **Save profile**
+- [ ] Return to New Application: **Show picture** / **Hide picture** appear and the thumbnail shows when Show is selected
+- [ ] Save the application with the picture shown; public view shows the avatar
+- [ ] Remove the picture on Profile; New and Edit link back to Profile and do not offer Show / Hide
 
 ---
 
-## 4. Same modal on Edit Application
+## 4. Edit Application uses the live profile
 
 - [ ] Open `/admin/edit/[id]` for an existing application
-- [ ] Change picture via the modal; application form preview updates without leaving the page
-- [ ] Candidate text fields still do **not** update from live profile (snapshot notice remains true for name/location/links); picture remains live when shown
+- [ ] Name, location, and links match the profile, not an older custom value stored on the application
+- [ ] A location, portfolio, or LinkedIn the saved application left empty starts Hidden
+- [ ] Picture Show / Hide (Yes / No) follows the live profile picture. There is no upload on this page
 
 ---
 
 ## 5. Failure / edge cases
 
-- [ ] Invalid file type or >5MB in modal → error, no save
-- [ ] Cancel modal → no profile change
-- [ ] (Optional) Temporarily break service role and sign up: Auth user exists; after fixing env and confirming email / hitting callback, profiles row appears. Or delete the profiles row while keeping Auth metadata, then Save picture from `/admin/new` — PUT should create the row from metadata (C3-026).
+- [ ] Invalid file type or >5MB on Profile → error, no save
+- [ ] Leave Profile without saving → no profile change
+- [ ] (Optional) Temporarily break service role and sign up: Auth user exists; after fixing env and confirming email / hitting callback, profiles row appears. Or delete the profiles row while keeping Auth metadata, then Save picture from `/admin/profile` — PUT should create the row from metadata (C3-026).
 
 ---
 

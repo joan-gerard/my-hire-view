@@ -10,6 +10,10 @@
 
 **3 November 2026 — wizard routes and the form demo removed.** Create is the checklist on `/admin/new`. Edit stays the scrolling page. `/admin/wizard/*` and `/demo/application-form` are gone. The notes below are the record of the wizard, not a live route.
 
+**3 November 2026 — create is one page.** The checklist on `/admin/new` is replaced by a single form: one card, at most `2xl` wide, name on the left and control on the right, Cancel and Save at the bottom. Edit stays the scrolling page. The checklist is no longer the live create page.
+
+**3 November 2026 — identity is profile-owned.** Name, location, portfolio, and LinkedIn are not edited on create or edit. Names are always shown. Location, portfolio, and LinkedIn can be shown or hidden when the profile has a value; otherwise the form links to Profile. Pictures are added on Profile. New saves use a generated CV download name. Detail: [CREATE_FORM_FIELD_TRIM.md](../product/CREATE_FORM_FIELD_TRIM.md).
+
 ---
 
 ## The wish

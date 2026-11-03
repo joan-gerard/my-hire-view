@@ -2,12 +2,8 @@
 
 import { ADMIN_FIELDSET_CLASS } from "@/components/admin/admin-chrome";
 import { AvatarIcon } from "@/components/admin/icons";
-import ProfilePictureModal, {
-  type ProfilePictureSaveResult,
-} from "@/components/forms/ProfilePictureModal";
-import Button from "@/components/ui/Button";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
-import { useRef, useState } from "react";
+import Link from "next/link";
 
 export interface ProfilePictureFieldProps {
   /** Live profile picture URL from profiles (not stored on the application). */
@@ -17,15 +13,15 @@ export interface ProfilePictureFieldProps {
   /** Used for initials when there is no picture (same idea as Profile). */
   firstName?: string | null;
   lastName?: string | null;
-  /** Called when the user saves a new/cleared picture via the modal. */
-  onProfilePictureSaved?: (result: ProfilePictureSaveResult) => void;
   showProfilePicture: boolean;
   onShowProfilePictureChange: (show: boolean) => void;
   /**
-   * `checklist` matches the create About you demo: Show/Hide cards,
-   * short copy, and Manage/Add under the choices.
+   * `checklist` uses Show/Hide cards. `default` uses Yes/No.
+   * A missing picture links to Profile instead of uploading here.
    */
   variant?: "default" | "checklist";
+  /** The surrounding row already names the field. */
+  hideLegend?: boolean;
 }
 
 function initialsFromNames(
@@ -36,96 +32,83 @@ function initialsFromNames(
 }
 
 function choiceCardClass(selected: boolean): string {
-  return `flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm ring-1 ring-inset ${
+  return `flex min-h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm ring-1 ring-inset ${
     selected
       ? "bg-[var(--paper)] text-[var(--ink)] ring-[var(--ink)]"
       : "bg-[var(--white)] text-[var(--ink)] ring-[var(--ink)]/15 hover:bg-[var(--paper)]/70"
   }`;
 }
 
-const manageLinkClass =
+const profileLinkClass =
   "rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
+
+function AddPictureOnProfile() {
+  return (
+    <p className="mt-1 text-sm text-[var(--muted)]">
+      <Link href="/admin/profile" className={profileLinkClass}>
+        Add a picture on your profile
+      </Link>
+    </p>
+  );
+}
 
 export default function ProfilePictureField({
   profilePictureUrl,
   profilePictureVersion,
   firstName,
   lastName,
-  onProfilePictureSaved,
   showProfilePicture,
   onShowProfilePictureChange,
   variant = "default",
+  hideLegend = false,
 }: ProfilePictureFieldProps) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
-  const canManage = typeof onProfilePictureSaved === "function";
   const thumbnailUrl = cacheBustProfilePictureUrl(
     profilePictureUrl,
     profilePictureVersion,
   );
   const initials = initialsFromNames(firstName, lastName);
   const hasInitials = Boolean(initials.trim());
-  const manageLabel = hasProfilePicture
-    ? "Manage picture"
-    : "Add profile picture";
 
-  const closeModal = () => {
-    setModalOpen(false);
-    // Return focus to the trigger after the native dialog closes.
-    requestAnimationFrame(() => {
-      triggerRef.current?.focus();
-    });
-  };
-
-  const modal = canManage ? (
-    <ProfilePictureModal
-      open={modalOpen}
-      currentUrl={profilePictureUrl ?? null}
-      currentUrlVersion={profilePictureVersion}
-      firstName={firstName}
-      lastName={lastName}
-      usage="application"
-      onClose={closeModal}
-      onSaved={(result) => {
-        const hadPictureBefore = hasProfilePicture;
-        onProfilePictureSaved!(result);
-        if (!result.url) {
-          onShowProfilePictureChange(false);
-          return;
-        }
-        // First picture only — replacing must not flip a deliberate No to Yes.
-        if (!hadPictureBefore) onShowProfilePictureChange(true);
-      }}
-    />
-  ) : null;
+  if (!hasProfilePicture) {
+    return (
+      <fieldset
+        className={variant === "default" ? ADMIN_FIELDSET_CLASS : undefined}
+      >
+        {hideLegend ? null : (
+          <legend
+            className={
+              variant === "checklist"
+                ? "text-sm font-medium text-[var(--ink)]"
+                : "text-base font-semibold text-[var(--ink)]"
+            }
+          >
+            Profile picture
+          </legend>
+        )}
+        <AddPictureOnProfile />
+      </fieldset>
+    );
+  }
 
   if (variant === "checklist") {
     return (
-      <>
-        <fieldset>
+      <fieldset>
+        {hideLegend ? null : (
           <legend className="text-sm font-medium text-[var(--ink)]">
             Profile picture
           </legend>
-          <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">
-            The picture stays on your profile. This only chooses whether the page
-            shows it.
+        )}
+        {hideLegend ? null : (
+          <p className="mt-0.5 text-sm leading-snug text-[var(--muted)]">
+            The picture stays on your profile. This only chooses whether the
+            page shows it.
           </p>
+        )}
 
-          {!hasProfilePicture && showProfilePicture ? (
-            <p
-              className="mt-3 rounded-xl border border-[var(--status-dot-active)]/50 bg-[var(--status-wash-active)] p-3 text-sm text-[var(--ink)]"
-              role="status"
-            >
-              This application is set to show your profile picture, but you do
-              not have one. Add a picture below, or the public page will have no
-              avatar until you do.
-            </p>
-          ) : null}
-
-          <div className="mt-3 flex items-center gap-3">
+        <div className={`${hideLegend ? "" : "mt-2 "}flex items-center gap-2.5`}>
             {showProfilePicture ? (
-              hasProfilePicture && thumbnailUrl ? (
+              thumbnailUrl ? (
                 <div className="size-12 shrink-0 overflow-hidden rounded-full bg-[var(--ink)]/10 ring-1 ring-[var(--ink)]/10">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -145,7 +128,7 @@ export default function ProfilePictureField({
                 </span>
               )
             ) : null}
-            <div className="grid flex-1 gap-2 sm:grid-cols-2">
+            <div className="grid flex-1 gap-1.5 sm:grid-cols-2">
               {(
                 [
                   [true, "Show picture"],
@@ -169,49 +152,22 @@ export default function ProfilePictureField({
             </div>
           </div>
 
-          {canManage ? (
-            <button
-              ref={triggerRef}
-              type="button"
-              className={`mt-3 ${manageLinkClass}`}
-              onClick={() => setModalOpen(true)}
-            >
-              {manageLabel}
-            </button>
-          ) : null}
-        </fieldset>
-        {modal}
-      </>
+      </fieldset>
     );
   }
 
   const hideThumbnail = hasProfilePicture && !showProfilePicture;
 
   return (
-    <>
-      <fieldset className={ADMIN_FIELDSET_CLASS}>
-        <legend className="text-base font-semibold text-[var(--ink)]">
-          Profile picture
-        </legend>
-        <p className="mt-0.5 mb-2 text-sm text-[var(--muted)]">
-          {hasProfilePicture
-            ? "Show your profile picture on this application?"
-            : "Add a picture to use on your applications."}
-        </p>
+    <fieldset className={ADMIN_FIELDSET_CLASS}>
+      <legend className="text-base font-semibold text-[var(--ink)]">
+        Profile picture
+      </legend>
+      <p className="mt-0.5 mb-2 text-sm text-[var(--muted)]">
+        Show your profile picture on this application?
+      </p>
 
-        {!hasProfilePicture && showProfilePicture && (
-          <p
-            className="mb-3 rounded-xl border border-[var(--status-dot-active)]/50 bg-[var(--status-wash-active)] p-3 text-sm text-[var(--ink)]"
-            role="status"
-          >
-            This application is set to show your profile picture, but you do not
-            have one. Add a picture below, or the public page will have no
-            avatar until you do.
-          </p>
-        )}
-
-        {hasProfilePicture && (
-          <div className="mb-4 flex flex-wrap gap-x-6 gap-y-3">
+      <div className="mb-4 flex flex-wrap gap-x-6 gap-y-3">
             <label className="inline-flex cursor-pointer items-center gap-2.5">
               <input
                 type="radio"
@@ -236,11 +192,10 @@ export default function ProfilePictureField({
                 No
               </span>
             </label>
-          </div>
-        )}
+        </div>
 
-        <div className="flex items-center gap-3">
-          {hideThumbnail ? null : hasProfilePicture && thumbnailUrl ? (
+      <div className="flex items-center gap-3">
+        {hideThumbnail ? null : thumbnailUrl ? (
             <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-[var(--ink)]/10 ring-1 ring-[var(--ink)]/10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -265,20 +220,7 @@ export default function ProfilePictureField({
               )}
             </div>
           )}
-          {canManage && (
-            <Button
-              ref={triggerRef}
-              type="button"
-              variant="secondary"
-              onClick={() => setModalOpen(true)}
-            >
-              {manageLabel}
-            </Button>
-          )}
-        </div>
-      </fieldset>
-
-      {modal}
-    </>
+      </div>
+    </fieldset>
   );
 }

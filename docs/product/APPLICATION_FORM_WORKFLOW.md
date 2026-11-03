@@ -4,15 +4,13 @@ Create is `/admin/new`. Edit is `/admin/edit/[id]`. They share the same fields, 
 
 ## Create
 
-`/admin/new` keeps one chapter open: **Role**, **About you**, **Résumé**, **Pitch**. The others stay as a single line you can reopen. The checklist and chapters sit in a centered column. From 1100px wide, a checklist titled **This application** stays beside the chapters, under the admin header. It shows how many parts are ready, a bar, and a row for each chapter. A lime check means that part is ready. **About you** is optional: a dashed circle and **Optional** when nothing is shown, and it still counts. Clicking a row opens that chapter. **Next** moves to the next chapter without waiting for the current one to be finished. Below 1100px the checklist sits above the chapters.
+`/admin/new` is one form no wider than `2xl`. The title and a short description sit at the top, above the sections. Sections are **Your link**, **About you**, **Résumé**, and **Pitch**. Each section name sits above its own card. Inside the card, every entry has its title on the left and the control on the right. A short description, when there is one, sits under that title. On a narrow screen the title sits above the control. **About you** is marked optional. **Cancel** returns to the dashboard. **Save draft & preview** sits at the bottom and stays greyed out until company, role, the share link, a résumé, and a YouTube intro are ready. A line above the buttons names what is still missing. Pressing Enter in a field does not save.
 
-**Save draft & preview** stays at the top. It stays greyed out until company, role, the share link, a résumé, and a YouTube intro are ready. The checklist names those gaps. Pressing Enter in a field does not save.
+**Your link** holds company, role, how the link reads, the ending of the link, and the shareable link, each on its own row. **How the link reads** is a custom dropdown, **Company + Role** (the default) or **Role + Company**. An info icon beside the title opens a dialog: choose whether the company or the role comes first. That dialog closes from an icon on the right of its title. **Link ending** is pre-filled. An info icon beside the title opens a dialog: edit it if you like, and each ending must be unique. That dialog closes from an icon on the right of its title. **Use the suggested link** appears there after the ending is changed. **Checking...** is grey and italic while the ending is checked, and a problem with the ending stays on that row. **Shareable link** is the result: a full-width tinted row, with the title above a read-only field. From the `sm` breakpoint the field shows the full URL and wraps so the ending stays visible. On a narrow screen it shows `/view/{publicId}/{slug}` so the host does not crowd out the ending. A copy-icon button copies the full URL.
 
-**Role** shows company and role. The share link is taken from those two. While both names are filled, the closed Role line says what the link is doing. **Checking...** is grey and italic while the ending is checked. The gaps stay pink: **Add a link ending**, **Fix the link ending**, **Link already used**, or **Couldn't check the link**. A ready link shows the company and role. **Edit link** opens **Order in the link** (**Company, then role** or **Role, then company**) and **Link ending**. **Use the suggested link** appears after the ending is changed. The checklist ends with `/view/{publicId}/{slug}`.
+**About you** starts with **Profile picture**. When a picture exists, **Show picture** / **Hide picture** choose whether this page shows it. When it does not, the row links to Profile. The name comes from the profile and is always shown. Location, portfolio, and LinkedIn show the profile value with **Show** / **Hidden** when that value exists. An empty location links to Profile. An empty portfolio or LinkedIn opens a dialog, saves the URL on the profile, and then shows it here. There is no collapsible **Info shown to recruiters** block on create.
 
-**About you** starts with **Profile picture**: short copy, **Show picture** / **Hide picture** cards, and **Manage picture** or **Add profile picture** under those choices. First and last name sit side by side, then location, **Portfolio**, and **LinkedIn**, each with **Show** / **Hidden**. There is no collapsible **Info shown to recruiters** block on create.
-
-**Résumé** uses **Choose one résumé**: library files as cards under **From your library**, then **A PDF just for this role**. **Manage library** sits beside the library heading. Once a file is chosen, the download line says **Recruiters download it as…**, with a toggle for the original or generated name.
+**Résumé** has two rows. **Library** lists saved files as cards, with **Manage library** above them. **This role** is **A PDF just for this role**. Once a file is chosen, the row says **Recruiters download it as…** and names the generated file.
 
 Leaving create from the header or with the browser Back button still asks before discarding the browser draft. A successful save clears that draft. A failed save keeps it.
 
@@ -113,8 +111,8 @@ Changing the segment order rechecks the slug. The check stays put during that re
 
 **You enter**
 
-- Profile picture first. **Yes** shows the picture. **No** hides it and keeps **Manage picture**. Until a picture exists, the choice is **Add profile picture**.
-- Then first name, last name, location, portfolio, and LinkedIn. Each is **Show** or **Hidden**, with the label above the value. A hidden field is muted and not editable. Hidden fields are not shown to recruiters. A shown field that is blank is shown as empty, not as a placeholder.
+- Profile picture first. **Yes** shows the picture. **No** hides it. Until a picture exists, the row links to Profile.
+- Then the name from the profile, always shown. Location, portfolio, and LinkedIn follow. Each can be **Show** or **Hidden** when the profile has a value. A hidden field is muted. Hidden fields are not shown to recruiters. An empty location links to Profile. An empty portfolio or LinkedIn opens a dialog that saves the URL on the profile.
 
 Nothing here blocks Continue.
 
@@ -129,7 +127,7 @@ Nothing here blocks Continue.
 
 - A **primary CV** from your library (up to five, the same library as on Profile). **Manage library** uploads or deletes without leaving the page.
 - A **tailored PDF** for this application only.
-- **Download name for recruiters**, once a CV is selected: the original file name, or a generated `CV-{slug}.pdf`. The section stays hidden until then.
+- Once a CV is selected, the form says recruiters download it as the generated `CV-{slug}.pdf`. New and edited saves store that generated name. Older applications keep their previous download-name choice until the next save.
 
 On create, the source choices stay locked for a moment while the library loads, so a slow load cannot overwrite your choice.
 

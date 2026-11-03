@@ -1,6 +1,7 @@
 "use client";
 
 import { ADMIN_FIELDSET_CLASS } from "@/components/admin/admin-chrome";
+import { ApplicationFormFieldRow } from "@/components/forms/ApplicationFormSinglePageLayout";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
 import FileUpload from "@/components/forms/FileUpload";
@@ -40,8 +41,6 @@ interface CvSourceFieldProps {
   onConfirmSwitchToPrimary: () => void;
   onCancelSwitchToPrimary: () => void;
 
-  useOriginalCvFilename: boolean;
-  onUseOriginalCvFilenameChange: (use: boolean) => void;
   slug: string;
   /** True while tailored CV is uploading on Save (F8-051 / F8-055). */
   uploading?: boolean;
@@ -57,7 +56,7 @@ interface CvSourceFieldProps {
 }
 
 function choiceCardClass(selected: boolean, disabled = false): string {
-  return `flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm ring-1 ring-inset ${
+  return `flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm ring-1 ring-inset ${
     disabled
       ? "cursor-not-allowed opacity-60"
       : "cursor-pointer"
@@ -95,8 +94,6 @@ export default function CvSourceField({
   switchToPrimaryConfirmOpen,
   onConfirmSwitchToPrimary,
   onCancelSwitchToPrimary,
-  useOriginalCvFilename,
-  onUseOriginalCvFilenameChange,
   slug,
   uploading = false,
   preparing = false,
@@ -120,18 +117,7 @@ export default function CvSourceField({
         (isEdit &&
           currentType === "tailored" &&
           Boolean(currentUrl.trim() || currentFilename));
-  const pendingOrCurrentName =
-    pendingFile?.name ??
-    (mode === "primary"
-      ? (selectedPrimary?.filename ?? currentFilename)
-      : currentFilename);
   const generatedName = slug ? getCvDownloadFilename(slug) : "CV-Slug.pdf";
-  const downloadName =
-    useOriginalCvFilename !== false && pendingOrCurrentName
-      ? pendingOrCurrentName
-      : slug
-        ? getCvDownloadFilename(slug)
-        : "…";
 
   const libraryModal = canManageLibrary ? (
     <PrimaryCvLibraryModal
@@ -156,14 +142,9 @@ export default function CvSourceField({
   if (variant === "checklist") {
     return (
       <>
-        <fieldset>
-          <legend className="text-sm font-medium text-[var(--ink)]">
-            Choose one résumé
-          </legend>
-
-          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-sm text-[var(--muted)]">From your library</p>
-            {canManageLibrary ? (
+        <ApplicationFormFieldRow id="application-row-library" label="Library" align="top">
+          {canManageLibrary ? (
+            <div className="mb-1.5 flex justify-end">
               <button
                 type="button"
                 className={textButtonClass}
@@ -172,16 +153,16 @@ export default function CvSourceField({
               >
                 Manage library
               </button>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
           {lockCvSourceWhileLoading ? (
-            <p className="mt-2 text-sm text-[var(--muted)]" role="status">
+            <p className="text-sm text-[var(--muted)]" role="status">
               Loading your CV library…
             </p>
           ) : null}
 
-          <div className="mt-2 space-y-2">
+          <div className="space-y-1.5">
             {hasPrimaryCvs
               ? primaryCvs.map((cv) => {
                   const selected =
@@ -224,11 +205,19 @@ export default function CvSourceField({
                   </p>
                 ) : null}
           </div>
-
-          <p className="mt-4 text-sm text-[var(--muted)]">Only this application</p>
-          <label
-            className={`mt-2 ${choiceCardClass(mode === "tailored", sourceLocked)}`}
-          >
+          {mode === "primary" && hasCvSelection ? (
+            <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+              Recruiters download it as{" "}
+              <span className="text-[var(--ink)]">{generatedName}</span>.
+            </p>
+          ) : null}
+        </ApplicationFormFieldRow>
+        <ApplicationFormFieldRow
+          id="application-row-tailored"
+          label="This role"
+          align="top"
+        >
+          <label className={choiceCardClass(mode === "tailored", sourceLocked)}>
             <input
               type="radio"
               name="cvSourceChecklist"
@@ -242,7 +231,7 @@ export default function CvSourceField({
           </label>
 
           {mode === "tailored" ? (
-            <div className="mt-3">
+            <div className="mt-2">
               <FileUpload
                 pendingFile={pendingFile}
                 onPendingFileChange={onPendingFileChange}
@@ -256,32 +245,18 @@ export default function CvSourceField({
           ) : null}
 
           {error ? (
-            <p className="mt-3 text-sm text-[var(--status-danger-fg)]" role="alert">
+            <p className="mt-2 text-sm text-[var(--status-danger-fg)]" role="alert">
               {error}
             </p>
           ) : null}
 
-          {hasCvSelection ? (
-            <div className="mt-4">
-              <p className="text-sm leading-relaxed text-[var(--muted)]">
-                Recruiters download it as{" "}
-                <span className="text-[var(--ink)]">{downloadName}</span>.
-              </p>
-              <button
-                type="button"
-                className={`mt-2 ${textButtonClass}`}
-                disabled={disabled}
-                onClick={() =>
-                  onUseOriginalCvFilenameChange(useOriginalCvFilename === false)
-                }
-              >
-                {useOriginalCvFilename !== false
-                  ? "Use a generated name"
-                  : "Use the original file name"}
-              </button>
-            </div>
+          {mode === "tailored" && hasCvSelection ? (
+            <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+              Recruiters download it as{" "}
+              <span className="text-[var(--ink)]">{generatedName}</span>.
+            </p>
           ) : null}
-        </fieldset>
+        </ApplicationFormFieldRow>
         {switchConfirm}
         {libraryModal}
       </>
@@ -558,66 +533,10 @@ export default function CvSourceField({
       </div>
 
       {hasCvSelection ? (
-      <div className="space-y-3 border-t border-[var(--ink)]/10 pt-4">
-        <p className="text-sm font-medium text-[var(--ink)]">
-          Download name for recruiters
+        <p className="border-t border-[var(--ink)]/10 pt-4 text-sm text-[var(--muted)]">
+          Recruiters download it as{" "}
+          <span className="text-[var(--ink)]">{generatedName}</span>.
         </p>
-        <p className="text-sm text-[var(--muted)]">
-          Filename recruiters see when they download your CV.
-        </p>
-        <div className="flex flex-wrap gap-x-6 gap-y-3">
-          <label
-            className={`inline-flex items-center gap-2.5 ${
-              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-            }`}
-          >
-            <input
-              type="radio"
-              name="useOriginalCvFilename"
-              checked={useOriginalCvFilename !== false}
-              disabled={disabled}
-              onChange={() => onUseOriginalCvFilenameChange(true)}
-              className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
-            />
-            <span className="text-sm font-medium text-[var(--ink)]">
-              Original file name
-            </span>
-            {pendingOrCurrentName && (
-              <span className="text-xs text-[var(--muted)]">
-                ({pendingOrCurrentName})
-              </span>
-            )}
-          </label>
-          <label
-            className={`inline-flex items-center gap-2.5 ${
-              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-            }`}
-          >
-            <input
-              type="radio"
-              name="useOriginalCvFilename"
-              checked={useOriginalCvFilename === false}
-              disabled={disabled}
-              onChange={() => onUseOriginalCvFilenameChange(false)}
-              className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
-            />
-            <span className="text-sm font-medium text-[var(--ink)]">
-              Generated name
-            </span>
-            <span className="text-xs text-[var(--muted)]">
-              ({generatedName})
-            </span>
-          </label>
-        </div>
-        <p className="text-xs text-[var(--muted)]">
-          Downloadable file name:{" "}
-          {useOriginalCvFilename !== false && pendingOrCurrentName
-            ? pendingOrCurrentName
-            : slug
-              ? getCvDownloadFilename(slug)
-              : "…"}
-        </p>
-      </div>
       ) : null}
 
       {switchConfirm}

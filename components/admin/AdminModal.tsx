@@ -14,6 +14,7 @@ import {
   ADMIN_PANEL_CLASS,
   ADMIN_SECONDARY_CLASS,
 } from "@/components/admin/admin-chrome";
+import { CloseIcon } from "@/components/admin/icons";
 
 const AdminModalDismissContext = createContext<(() => void) | null>(null);
 
@@ -57,10 +58,14 @@ export type AdminModalProps = {
    * open (e.g. close a nested video first).
    */
   onCancel?: (event: SyntheticEvent<HTMLDialogElement>) => void;
+  /** Ignore Escape, the backdrop, and the default Close button. */
+  dismissDisabled?: boolean;
   /** Extra classes on the dialog panel. */
   panelClassName?: string;
   /** Replace the default Close footer. */
   footer?: ReactNode;
+  /** Close icon on the right of the title, with no footer button. */
+  headerClose?: boolean;
 };
 
 /**
@@ -80,8 +85,10 @@ export default function AdminModal({
   overlay,
   returnFocusRef,
   onCancel,
+  dismissDisabled = false,
   footer,
   panelClassName,
+  headerClose = false,
 }: AdminModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -99,6 +106,7 @@ export default function AdminModal({
     : "max-h-[min(90vh,40rem)]";
 
   const requestDismiss = () => {
+    if (dismissDisabled) return;
     const dialog = dialogRef.current;
     if (!dialog) {
       onClose();
@@ -158,7 +166,13 @@ export default function AdminModal({
       className={`${dialogLayoutClass} ${widthClassName}`}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
-      onCancel={onCancel}
+      onCancel={(event) => {
+        if (dismissDisabled) {
+          event.preventDefault();
+          return;
+        }
+        onCancel?.(event);
+      }}
       onPointerDown={(e) => {
         pointerDownOnBackdropRef.current = e.target === dialogRef.current;
       }}
@@ -167,7 +181,11 @@ export default function AdminModal({
         pointerDownOnBackdropRef.current = false;
         // Require press + release on the backdrop so a text-selection drag that
         // starts in the panel and ends on the backdrop does not dismiss.
-        if (startedOnBackdrop && e.target === dialogRef.current) {
+        if (
+          !dismissDisabled &&
+          startedOnBackdrop &&
+          e.target === dialogRef.current
+        ) {
           requestDismiss();
         }
       }}
@@ -177,14 +195,27 @@ export default function AdminModal({
           className={`flex ${panelMaxHeightClass} w-full flex-col overflow-hidden text-[var(--ink)] shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)] ${ADMIN_PANEL_CLASS} ${panelClassName ?? ""}`}
         >
           <header className="shrink-0 border-b border-[var(--ink)]/8 px-5 pb-4 pt-5 sm:px-6">
-            <h2
-              ref={titleRef}
-              id={titleId}
-              tabIndex={-1}
-              className="font-heading text-lg font-semibold tracking-[-0.02em] outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-            >
-              {title}
-            </h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2
+                ref={titleRef}
+                id={titleId}
+                tabIndex={-1}
+                className="min-w-0 font-heading text-lg font-semibold tracking-[-0.02em] outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+              >
+                {title}
+              </h2>
+              {headerClose ? (
+                <button
+                  type="button"
+                  onClick={requestDismiss}
+                  disabled={dismissDisabled}
+                  aria-label="Close"
+                  className="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[var(--ink)] hover:bg-[var(--ink)]/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <CloseIcon className="size-4" />
+                </button>
+              ) : null}
+            </div>
             {description ? (
               <div
                 id={descriptionId}
@@ -197,17 +228,20 @@ export default function AdminModal({
 
           <div className={bodyClassName}>{children}</div>
 
-          <footer className="relative z-10 flex shrink-0 justify-end border-t border-[var(--ink)]/8 bg-[var(--white)] px-5 py-3 sm:px-6">
-            {footer ?? (
-              <button
-                type="button"
-                onClick={requestDismiss}
-                className={ADMIN_SECONDARY_CLASS}
-              >
-                Close
-              </button>
-            )}
-          </footer>
+          {headerClose ? null : (
+            <footer className="relative z-10 flex shrink-0 justify-end border-t border-[var(--ink)]/8 bg-[var(--white)] px-5 py-3 sm:px-6">
+              {footer ?? (
+                <button
+                  type="button"
+                  onClick={requestDismiss}
+                  disabled={dismissDisabled}
+                  className={ADMIN_SECONDARY_CLASS}
+                >
+                  Close
+                </button>
+              )}
+            </footer>
+          )}
         </div>
         {overlay}
       </AdminModalDismissContext.Provider>

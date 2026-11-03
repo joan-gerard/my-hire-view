@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ApplicationForm, { type ApplicationFormInitialData } from '@/components/forms/ApplicationForm';
+import { profileWithSavedLink } from '@/components/forms/ProfileLinkDialog';
 import ApplicationFormPageHeader from '@/components/forms/ApplicationFormPageHeader';
 import AdminPageSkeleton from '@/components/admin/AdminPageSkeleton';
 import {
@@ -35,6 +36,7 @@ export default function EditApplicationWizardPage({
   const [publicId, setPublicId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [profileSettled, setProfileSettled] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -196,21 +198,23 @@ export default function EditApplicationWizardPage({
 
   // Normalize DB shape to form shape; candidate fields and slug order from application only
   const initialData: ApplicationFormInitialData = {
+  // Identity text comes from the live profile. Include flags come from
+  // whether this application currently stores a value (hidden means null).
+  const identity = profile ?? application;
+  const initialData: ApplicationFormInitialData = {
     company: application.company,
     role: application.role,
     slug: application.slug,
     cv_url: application.cv_url,
     video_url: application.video_url,
-    first_name: application.first_name ?? undefined,
-    last_name: application.last_name ?? undefined,
-    location: application.location ?? undefined,
-    portfolio_url: application.portfolio_url ?? undefined,
-    linkedin_url: application.linkedin_url ?? undefined,
+    first_name: identity.first_name ?? undefined,
+    last_name: identity.last_name ?? undefined,
+    location: identity.location ?? undefined,
+    portfolio_url: identity.portfolio_url ?? undefined,
+    linkedin_url: identity.linkedin_url ?? undefined,
     slugSegmentOrder: application.slug_segment_order ?? 'company_role',
     cv_filename: application.cv_filename ?? null,
-    use_original_cv_filename: application.use_original_cv_filename ?? true,
-    cvUrlExists: application.cv_exists,
-    show_profile_picture: application.show_profile_picture ?? false,
+    use_original_cv_filename: false,
     cv_type: application.cv_type ?? 'tailored',
     primary_cv_id: application.primary_cv_id ?? null,
   };
@@ -229,26 +233,27 @@ export default function EditApplicationWizardPage({
       profilePictureVersion={profile?.updated_at ?? null}
       onProfilePictureSaved={({ url, updated_at }) =>
         setProfile((prev) =>
-          prev
-            ? {
-                ...prev,
-                profile_picture_url: url,
-                updated_at: updated_at ?? prev.updated_at,
-              }
-            : {
-                user_id: application.user_id,
-                first_name: application.first_name,
-                last_name: application.last_name,
-                location: application.location,
-                portfolio_url: application.portfolio_url,
-                linkedin_url: application.linkedin_url,
-                updated_at: updated_at ?? new Date().toISOString(),
-                profile_picture_url: url,
-              },
-        )
-      }
-      publicId={publicId ?? undefined}
-      slugExcludeApplicationId={id}
+      initialInclude={{
+        first_name: true,
+        last_name: true,
+        location: Boolean(application.location?.trim()),
+        portfolio_url: Boolean(application.portfolio_url?.trim()),
+        linkedin_url: Boolean(application.linkedin_url?.trim()),
+      }}
+      onProfileLinkSaved={(field, url) => {
+        setProfile((prev) =>
+          profileWithSavedLink(prev, field, url, {
+            user_id: application.user_id,
+            public_id: publicId ?? undefined,
+            first_name: application.first_name,
+            last_name: application.last_name,
+            location: application.location,
+            portfolio_url: application.portfolio_url,
+            linkedin_url: application.linkedin_url,
+            profile_picture_url: application.profile_picture_url,
+          }),
+        );
+      }}
       submitLabel={
         application.status === "draft" ? "Save draft" : "Save application"
       }
@@ -266,11 +271,10 @@ export default function EditApplicationWizardPage({
         <p className={ADMIN_TIP_CLASS}>
           The candidate details below (name, location, links) are from when this
           application was saved, not from your current profile. Updating your
-          profile does not change those fields here. Your profile picture is
-          live: if this application shows it, recruiters see the current picture
-          from your profile.
-        </p>
-      ) : null}
+          Name, location, and links come from your profile. This page chooses
+          which of them this application shows. Saving copies the current
+          profile values onto this application. Your picture stays on your
+          profile; this page only chooses whether to show it.
       {presentation === "split" ? (
         form
       ) : (

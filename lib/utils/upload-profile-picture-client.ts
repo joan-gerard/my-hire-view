@@ -1,6 +1,6 @@
 /**
  * Shared client helper for profile-picture upload-on-save (F8).
- * Used by ProfileForm and ProfilePictureModal so error mapping stays in sync.
+ * Used by ProfileForm so error mapping stays in one place.
  */
 
 import {

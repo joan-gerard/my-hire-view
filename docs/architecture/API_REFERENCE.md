@@ -184,7 +184,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug`, `cv_url`, `video_url` (required); optional `status` (`"active"` \| `"draft"` \| `"archived"`, **default `"draft"`** — F16-050), `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugSegmentOrder` (`"company_role"` | `"role_company"` → stored as `slug_segment_order`, default `company_role`), `cv_filename`, `use_original_cv_filename` (default `true`), `show_profile_picture`
+- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug`, `cv_url`, `video_url` (required); optional `status` (`"active"` \| `"draft"` \| `"archived"`, **default `"draft"`** — F16-050), `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugSegmentOrder` (`"company_role"` | `"role_company"` → stored as `slug_segment_order`, default `company_role`), `cv_filename`, `use_original_cv_filename` (omitted body defaults to `true`; the form sends `false`), `show_profile_picture`
 - **Success:** `201` `{ data: Application }`
 - **Errors:** `400` schema validation / insert / primary CV missing; `401`; `409` slug taken (`validateSlugForApplication` or unique constraint) or tailored `cv_url` already used; `429`; `500` unexpected failures
 
@@ -600,7 +600,7 @@ Upload a unique avatar object at `{user_id}/{uuid}.{jpg|png|webp}` in the `profi
 - Unique path per upload; folder leftovers / previous object are cleaned on profile URL commit, not on upload.
 - Auth required (dedicated check → **401**); Storage / unexpected failures use `handleApiError` → **500** with a generic client message. Server logs include log-only `meta` (`userId`, file `size`, Storage `status` / `statusCode` as `storageStatus`).
 - Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8\*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
-- **Client Save UX (F8 / F9-052):** `ProfileForm` and `ProfilePictureModal` share `uploadProfilePictureFile` (30s timeout) + friendly error/warning mapping; Save shows **Uploading…** then **Saving…**. PUT `warnings` are mapped to plain copy (modal stays open until dismissed when a warning is present). `ProfilePictureModal` does not close on backdrop click. While upload/save is in flight, Escape is ignored until the request finishes or times out.
+- **Client Save UX (F8 / F9-052):** `ProfileForm` uses `uploadProfilePictureFile` (30s timeout) + friendly error/warning mapping; Save shows **Uploading…** then **Saving…**. PUT `warnings` are mapped to plain copy. While upload/save is in flight, Escape is ignored until the request finishes or times out. Pictures are changed on Profile, not on New or Edit.
 
 **Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 

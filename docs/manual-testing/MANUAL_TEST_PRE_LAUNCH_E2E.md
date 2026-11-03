@@ -293,44 +293,46 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Page chrome
 
-- [ ] Page title **New application**. The checklist and form are centered. One chapter is open; the others are a single line. A **This application** checklist shows the count, and clicking a row opens that chapter. **Save draft & preview** sits at the top and is greyed out until the application can be saved. There is no **Preview** button. `/admin/wizard` and `/demo/application-form` are gone
+- [ ] Page title **New application** and its description sit above the sections, no wider than `2xl`. Sections **Your link**, **About you**, **Résumé**, and **Pitch** are headings, each above its own card. Each entry has its title on the left and the control on the right; a description sits under the title when there is one. On a narrow screen the title sits above the control. **Your link** lists Company, Role, How the link reads, Link ending, and Shareable link on separate rows. Shareable link is a full-width tinted result, with its title above the field. **Cancel** and **Save draft & preview** sit at the bottom. Save is greyed out until the application can be saved, and a line above the buttons names what is still missing. There is no **Preview** button and no chapter checklist. `/admin/wizard` and `/demo/application-form` are gone
 - [ ] If location, links, and picture are still empty: nudge to complete profile; arrow goes to Profile
 - [ ] After profile has location/link/picture, nudge is gone
 - [ ] Form skeleton/pulse while profile loads; then the form
 
-### About you (create checklist)
+### About you (create)
 
-- [ ] Prefills first/last name from profile; location and URLs if set
-- [ ] **Profile picture** uses **Show picture** / **Hide picture** cards; the thumbnail appears only when showing
-- [ ] **Manage picture** / **Add profile picture** sits under those choices and opens the modal (JPEG/PNG/WebP, preview, Save, Cancel, type/size errors)
-- [ ] **Hide picture** hides the thumbnail and keeps **Manage picture**; no avatar on `/view` even if the account still has a picture
-- [ ] First and last name sit side by side; then location, **Portfolio**, and **LinkedIn**. Each field is **Show** / **Hidden**; **Hidden** mutes the field and blocks editing
+- [ ] Name comes from the profile and is always shown. There is no name editor and no Show / Hidden for the name. **Edit on Profile** goes to `/admin/profile`
+- [ ] With no picture: **Add a picture on your profile** links to Profile. There are no Show / Hide cards
+- [ ] With a picture: **Show picture** / **Hide picture** cards; the thumbnail appears only when showing
+- [ ] **Hide picture** hides the thumbnail; no avatar on `/view` even if the account still has a picture
+- [ ] Location, **Portfolio**, and **LinkedIn** show the profile value with **Show** / **Hidden** when that value exists. **Hidden** mutes the value. There is no always-visible text or URL field
+- [ ] An empty location links to Profile. **Add portfolio** and **Add LinkedIn** open a dialog. A valid http(s) URL saves onto the profile, closes the dialog, and shows the value with **Show** selected. An invalid URL stays in the dialog with an error. Cancel leaves the profile unchanged
 - [ ] There is no collapsible **Info shown to recruiters** block and no `(N/5)` count on create
-- [ ] Toggle **off** a field → it will not appear on `/view` (verify later)
-- [ ] Toggle **on** a field but leave it blank → stored/shown as empty (no placeholder junk)
-- [ ] Edit a value here (e.g. location) → **does not** change Profile
-- [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
+- [ ] Toggle **Hidden** on location, portfolio, or LinkedIn → it will not appear on `/view` (verify later)
+- [ ] Changing the value is not possible here. Profile is unchanged until you edit it there
+- [ ] Adding a picture on Profile ticks the checklist **photo** step. New Application only links there
 
-### Info shown to recruiters (edit)
+### About you (edit)
 
-- [ ] Picture block is above **Info shown to recruiters**. Each field is **Show** / **Hidden**, label above the value; **Hidden** mutes the field and blocks editing
-- [ ] Count e.g. `(N/5)` for included fields; collapse / expand remembered (`localStorage`)
-- [ ] **Profile picture:** Yes/No hidden until a picture exists; **Add profile picture** / **Manage picture** beside the large thumbnail
-- [ ] After adding a picture, Yes/No appears; **Yes** shows the thumbnail and the avatar on `/view` after publish
-- [ ] **No** hides the thumbnail and keeps **Manage picture**
+- [ ] The form waits until the profile request finishes, then shows profile name, location, and links
+- [ ] A field the saved application left empty starts **Hidden** even when the profile now has a value. The next save writes that value only if you choose **Show**
+- [ ] **Profile picture:** Yes/No appears only when a picture exists. **No** hides the thumbnail
+- [ ] With no picture, the row links to Profile. There is no Add / Manage picture control
+- [ ] Name is always shown and is not editable. Saving copies the current profile name onto the application
 
-### Résumé (create checklist)
+### Résumé (create)
 
-- [ ] **Choose one résumé** lists library files as cards under **From your library**, then **A PDF just for this role**
-- [ ] **Manage library** sits beside the library heading and opens the same library as Profile
+- [ ] **Library** lists saved files as cards. **This role** is **A PDF just for this role**
+- [ ] **Manage library** sits above the library cards and opens the same library as Profile
 - [ ] Selecting a library card sets that primary CV; tailored shows **Choose a PDF**
-- [ ] Once a file is chosen, the line says **Recruiters download it as…** with **Use a generated name** / **Use the original file name**
-- [ ] There is no separate **Download name for recruiters** heading block on create
+- [ ] Once a file is chosen, the line says **Recruiters download it as…** and names the generated `CV-{slug}.pdf`. There is no original-filename toggle
+- [ ] There is no separate **Download name for recruiters** heading block on create or edit
 
 ### Create Role, preview, and edit notes
 
-- [ ] **Edit link** reveals **Order in the link** (**Company, then role** / **Role, then company**) and **Link ending**. There is no segment-order explanation, no examples, and no Public id preview. **Use the suggested link** appears after the ending is edited, and hides again if the ending matches the suggestion. The checklist footer shows `/view/{publicId}/{slug}`
-- [ ] With company and role filled, the Role line says **Checking...** in grey italic while the ending is checked, **Add a link ending** when it is empty, **Fix the link ending** when it is invalid, **Link already used** when another of your applications has it, and **Couldn't check the link** when the check fails. A ready link shows the company and role
+- [ ] **How the link reads**, **Link ending**, and **Shareable link** are separate rows. **How the link reads** is a custom dropdown (not the browser menu): **Company + Role** is selected, and **Role + Company** is the other choice. An info icon beside the title opens a dialog: choose whether the company or the role comes first. The sentence is not shown under the title. The dialog has a close icon on the right of **How the link reads**, and no Close button. There is no **Order in the link** label, no examples, and no Public id preview
+- [ ] **Link ending** is its own row. An info icon beside the title opens a dialog: pre-filled for you, edit it if you like, and each ending must be unique. The sentence is not under the title. The dialog closes from an icon on the right of **Link ending**, and has no Close button. **Use the suggested link** appears after the ending is edited, and hides again if the ending matches the suggestion. **Checking...** and link problems stay on this row
+- [ ] **Shareable link** is a full-width tinted row. The title and a note sit above a read-only field with the not-allowed cursor. From `sm` up it shows the full URL, wrapped so the ending is visible. Below that it shows `/view/{publicId}/{slug}`. A copy-icon button (no “Copy” text) copies the full URL. When the link is not ready, the icon is inactive
+- [ ] With company and role filled, the share link says **Checking...** in grey italic while the ending is checked. An empty, invalid, already used, or failed check shows there. A ready link shows the ending in the path
 - [ ] On edit, **Review & save** summary starts open and can be collapsed; groups match the steps (Role, About you, CV, Video) with stacked labels and status chips (**Hidden** / **Empty** / **Shown** / **None** / **Available** / **Missing** / **Ready**); About you lists profile picture before the recruiter fields
 - [ ] On edit, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form, save, or count a view. Create has no preview dialog
 
@@ -354,7 +356,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Save while the slug row still says **checking** is blocked (“wait until the slug has finished updating”)
 - [ ] Save while slug is **unavailable** is blocked; no row is created
 
-### CV (shared rules; create uses the checklist cards above)
+### CV (shared rules; create uses the résumé cards above)
 
 - [ ] While library is loading (create only), primary / tailored choices are **disabled**
 - [ ] If the library request is slow/blocked, choices unlock within ~**12s** so a tailored CV can still be chosen
@@ -369,7 +371,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Empty library: primary disabled until you upload via Manage library; tailored still works
 - [ ] Restore a browser draft whose primary was **deleted** meanwhile: stale id is not saveable; falls back to another primary or tailored
 - [ ] Failed Save then retry **the same** tailored file does not upload a second R2 object (idempotency); changing the file does
-- [ ] Download-name control: original filename vs generated `CV-{Slug}.pdf` — verify later on `/view` Download. Edit keeps the **Download name for recruiters** block
+- [ ] After save, `/view` Download uses the generated `CV-{Slug}.pdf`. An older application keeps its previous download name until the next edit save
 
 ### YouTube
 
@@ -378,7 +380,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Valid `youtube.com/embed/…` accepted
 - [ ] Valid Shorts URL accepted
 - [ ] Invalid URL (Vimeo, example.com, garbage) → “Please enter a valid YouTube URL”; Save blocked
-- [ ] Empty video is **not** allowed — Save stays blocked. On create, the checklist **Pitch** row says **Still needed**, and there is no **Required before saving** line beside **Save draft & preview**. On edit, that reason line names **YouTube intro**
+- [ ] Empty video is **not** allowed — Save stays blocked. On create, the line above **Save draft & preview** names **YouTube intro** while it is missing. On edit, that reason line names **YouTube intro**
 
 ### Local browser draft (create only)
 
