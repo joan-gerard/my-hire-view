@@ -53,3 +53,9 @@ Working notes: [APPLICATION_FORM_STEPS_F35.md](APPLICATION_FORM_STEPS_F35.md). I
 The long create page and the parked wizard were both still too much form at once. A demo beside them — one chapter open, the rest a single line, and a Getting started-style checklist for what is ready — is now the create page. Edit stays the scrolling bands. The wizard stays parked for comparison.
 
 Save, the browser draft, and the leave prompt did not change. The share link stays tucked behind Edit link so company and role are the first thing you see. Notes: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_WORKFLOW.md).
+
+---
+
+## 3 November 2026
+
+The checklist won for create, so the comparison surfaces came down. `/admin/wizard` and the application-form demo are gone. Edit stays the scrolling page. The wizard layout code is still in the form, unused by a route.

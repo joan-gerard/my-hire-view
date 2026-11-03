@@ -20,7 +20,7 @@ Leaving create from the header or with the browser Back button still asks before
 
 Edit is one scrolling page of five bands: Role & share URL, About you, CV, Video, Review & save. From 1200px wide, each band is split in half. The left side is a step pill, the title, one sentence, and a few recommendations, and it stays in view while that band’s fields scroll. The right side is the fields on a paper panel. On Review, that panel is a white summary card: progress across four sections, then company, role, and the share link, with About you beside CV and Video. Required gaps are labeled Required and jump back to that step. Preview does not save. Save stays blocked for the same required pieces as create. The reason is one link beside the button and jumps to the first gap. A saved share link stays put when company or role change, until you edit the slug or choose Reset to suggested. Edit keeps its title, fixed under the admin header. Through 1199px, phone and tablet stack each band: pill, title, description, recommendations, then the fields.
 
-The previous wizard is parked at `/admin/wizard/new` and `/admin/wizard/edit/[id]` for comparison. The sections below describe that parked wizard (Continue, check marks, one step at a time).
+The comparison wizard routes and the form demo are gone. The sections below describe that earlier wizard (Continue, check marks, one step at a time).
 
 This is the behavior reference. The decision record is in [APPLICATION_FORM_STEPS_F35.md](../retrospectives/APPLICATION_FORM_STEPS_F35.md). Candidate-facing steps are in [USER_GUIDE.md](../engineering/USER_GUIDE.md).
 

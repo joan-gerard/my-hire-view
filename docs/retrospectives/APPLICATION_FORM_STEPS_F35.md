@@ -8,6 +8,8 @@
 
 **26 October 2026 — split page on the canonical URLs, wizard parked.** `/admin/new` and `/admin/edit/[id]` are one scrolling page: each step is a half-and-half band from 1200px (guidance on the left, fields on the right) and a stacked band through 1199px. The wizard lives at `/admin/wizard/new` and `/admin/wizard/edit/[id]` until one side wins. Delete the loser. Do not keep both.
 
+**3 November 2026 — wizard routes and the form demo removed.** Create is the checklist on `/admin/new`. Edit stays the scrolling page. `/admin/wizard/*` and `/demo/application-form` are gone. The notes below are the record of the wizard, not a live route.
+
 ---
 
 ## The wish
@@ -64,7 +66,7 @@ Per-step **Continue** uses the same readiness rules as Save (company/role + slug
 
 ## How to manual-test the wizard
 
-Run the parked wizard locally (`pnpm dev`) on `/admin/wizard/new` and `/admin/wizard/edit/[id]`. `/admin/new` and `/admin/edit/[id]` are the split page. There is no layout switch on either surface.
+The wizard routes were removed on 3 November 2026. Test create on `/admin/new` and edit on `/admin/edit/[id]`.
 
 Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) and [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](../manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md).
 

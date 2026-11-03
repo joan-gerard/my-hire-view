@@ -293,7 +293,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Page chrome
 
-- [ ] Page title **New application**. The checklist and form are centered. One chapter is open; the others are a single line. A **This application** checklist shows the count, and clicking a row opens that chapter. **Save draft & preview** sits at the top and is greyed out until the application can be saved. There is no **Preview** button. The parked wizard at `/admin/wizard/new` still shows **Create New Application**
+- [ ] Page title **New application**. The checklist and form are centered. One chapter is open; the others are a single line. A **This application** checklist shows the count, and clicking a row opens that chapter. **Save draft & preview** sits at the top and is greyed out until the application can be saved. There is no **Preview** button. `/admin/wizard` and `/demo/application-form` are gone
 - [ ] If location, links, and picture are still empty: nudge to complete profile; arrow goes to Profile
 - [ ] After profile has location/link/picture, nudge is gone
 - [ ] Form skeleton/pulse while profile loads; then the form
@@ -311,7 +311,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Edit a value here (e.g. location) → **does not** change Profile
 - [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
 
-### Info shown to recruiters (edit and wizard)
+### Info shown to recruiters (edit)
 
 - [ ] Picture block is above **Info shown to recruiters**. Each field is **Show** / **Hidden**, label above the value; **Hidden** mutes the field and blocks editing
 - [ ] Count e.g. `(N/5)` for included fields; collapse / expand remembered (`localStorage`)
@@ -358,7 +358,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 - [ ] While library is loading (create only), primary / tailored choices are **disabled**
 - [ ] If the library request is slow/blocked, choices unlock within ~**12s** so a tailored CV can still be chosen
-- [ ] With primaries in the library: create defaults to a library card; edit/wizard default to **Use a primary CV** with a dropdown
+- [ ] With primaries in the library: create defaults to a library card; edit defaults to **Use a primary CV** with a dropdown
 - [ ] **Manage library** opens the same library as Profile; upload/delete there updates the list
 - [ ] Uploading the first primary from the modal can switch create to primary (if you had not already chosen tailored)
 - [ ] If you already chose **tailored** before adding a primary, mode stays tailored
@@ -369,7 +369,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Empty library: primary disabled until you upload via Manage library; tailored still works
 - [ ] Restore a browser draft whose primary was **deleted** meanwhile: stale id is not saveable; falls back to another primary or tailored
 - [ ] Failed Save then retry **the same** tailored file does not upload a second R2 object (idempotency); changing the file does
-- [ ] Download-name control: original filename vs generated `CV-{Slug}.pdf` — verify later on `/view` Download. Edit/wizard keep the **Download name for recruiters** block
+- [ ] Download-name control: original filename vs generated `CV-{Slug}.pdf` — verify later on `/view` Download. Edit keeps the **Download name for recruiters** block
 
 ### YouTube
 
