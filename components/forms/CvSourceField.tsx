@@ -116,7 +116,7 @@ export default function CvSourceField({
         <div className="space-y-2">
           <p className="text-sm font-medium text-[var(--ink)]">Current</p>
           {currentUrl.trim() || currentFilename ? (
-            <div className="rounded-xl bg-[var(--paper)]/80 px-3 py-2.5">
+            <div className="rounded-xl bg-[var(--white)] px-3 py-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 {currentType && (
                   <span className="shrink-0 rounded border border-[var(--ink)]/15 px-1.5 py-0.5 text-xs text-[var(--muted)]">

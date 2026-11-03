@@ -6,6 +6,7 @@ import type {
   ApplicationFormData,
 } from "@/lib/types/application";
 import type { PrimaryCv } from "@/lib/types/primary-cv";
+import { roleChecklistSummary } from "@/lib/utils/role-checklist-summary";
 import {
   buildSlug,
   isCustomSlug,
@@ -39,6 +40,10 @@ import {
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
+import ApplicationFormChecklistLayout, {
+  type ChecklistChapter,
+  type ChecklistChapterId,
+} from "./ApplicationFormChecklistLayout";
 import ApplicationFormSplitLayout from "./ApplicationFormSplitLayout";
 import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
 import {
@@ -97,7 +102,7 @@ interface ApplicationFormProps {
   initialData?: ApplicationFormInitialData;
   onSubmit: (data: ApplicationFormData) => Promise<void>;
   loading?: boolean;
-  /** Primary submit button label (create uses “Save & Preview”; edit keeps “Save Application”). */
+  /** Primary submit button label. Create uses “Save draft & preview”. */
   submitLabel?: string;
   /** When provided, passed to FileUpload so user can re-check CV existence (edit page). */
   /** Resolves false when the saved CV is still missing from storage. */
@@ -129,10 +134,9 @@ interface ApplicationFormProps {
    */
   persistDraftKey?: string;
   /**
-   * `wizard` is the parked create/edit flow. `split` is the one-page band layout
-   * on `/admin/new` and `/admin/edit/[id]`.
+   * `checklist` is `/admin/new`. `split` is the edit page. `wizard` is parked.
    */
-  presentation?: "wizard" | "split";
+  presentation?: "wizard" | "split" | "checklist";
 }
 
 export default function ApplicationForm({
@@ -172,6 +176,8 @@ export default function ApplicationForm({
   /** Create wizard: furthest step unlocked via Continue (survives Back). */
   const [furthestStepId, setFurthestStepId] =
     useState<ApplicationFormStepId>("role");
+  /** Checklist create: slug order and ending stay behind Edit link. */
+  const [linkOpen, setLinkOpen] = useState(false);
 
   /** Load once per mount; ignore later key changes while the form is open. */
   const restoredDraftRef = useRef<CreateApplicationDraft | null | undefined>(
@@ -274,6 +280,14 @@ export default function ApplicationForm({
    * in auto mode (F27-101).
    */
   const [slugAutoReserveNonce, setSlugAutoReserveNonce] = useState(0);
+  /**
+   * A saved application keeps its slug when company or role change.
+   * Reset, segment order, or typing in the slug field releases it.
+   */
+  const [slugPinned, setSlugPinned] = useState(
+    () => isEdit && Boolean((initialData?.slug ?? "").trim()),
+  );
+  const [previewNonce, setPreviewNonce] = useState(0);
   const [reviewSummaryOpen, setReviewSummaryOpen] = useState(true);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
@@ -683,8 +697,12 @@ export default function ApplicationForm({
         ? `tailored:${cvPendingFile.name}:${cvPendingFile.size}:${cvPendingFile.lastModified}`
         : "";
   const hasVideo = Boolean(formData.video_url.trim());
+  const savedSlug = (initialData?.slug ?? "").trim();
+  const slugUnchangedFromSave =
+    slugPinned && hasSlug && formData.slug.trim() === savedSlug;
   const slugReady =
-    slugLiveStatus.kind === "available" && hasSlug;
+    hasSlug &&
+    (slugLiveStatus.kind === "available" || slugUnchangedFromSave);
   /**
    * Segment-order (and other auto) rechecks set status to "checking" while the
    * previous slug is still in the field. Treat that as still complete for the
@@ -749,30 +767,44 @@ export default function ApplicationForm({
         ? "Uploading…"
         : "Saving…";
 
-  const disabledReason = (() => {
-    if (canSubmit || formBusy) return null;
-    if (!hasCompany) return "Company name is required.";
-    if (!hasRole) return "Role is required.";
-    if (!hasUsableCv)
-      return cvMode === "primary"
-        ? "Select a primary CV, or upload a tailored CV."
-        : "Upload a CV file for this application.";
-    if (!hasVideo) return "YouTube URL is required.";
+  const saveBlockers = (() => {
+    if (canSubmit || formBusy) return [] as { name: string; note?: string; stepId: ApplicationFormStepId }[];
+    const items: { name: string; note?: string; stepId: ApplicationFormStepId }[] = [];
+    if (!hasCompany) items.push({ name: "Company", stepId: "role" });
+    if (!hasRole) items.push({ name: "Role", stepId: "role" });
     if (slugLiveStatus.kind === "checking") {
-      return "Please wait until the slug has finished updating.";
+      items.push({
+        name: "Share link",
+        note: "Share link is still being checked",
+        stepId: "role",
+      });
+    } else if (slugLiveStatus.kind === "invalid") {
+      items.push({
+        name: "Share link",
+        note: slugLiveStatus.message || "Share link is not valid",
+        stepId: "role",
+      });
+    } else if (slugLiveStatus.kind === "unavailable") {
+      items.push({
+        name: "Share link",
+        note: slugLiveStatus.message || "Share link is taken",
+        stepId: "role",
+      });
+    } else if (!hasSlug || !slugReady) {
+      items.push({ name: "Share link", stepId: "role" });
     }
-    if (slugLiveStatus.kind === "invalid") {
-      return slugLiveStatus.message || "Fix the slug before saving.";
-    }
-    if (slugLiveStatus.kind === "unavailable") {
-      return (
-        slugLiveStatus.message ||
-        "This slug is not available. Change it before saving."
-      );
-    }
-    if (!hasSlug) return "Slug is required.";
-    return "Fill in all required fields to save.";
+    if (!hasUsableCv) items.push({ name: "Résumé", stepId: "materials" });
+    if (!hasVideo) items.push({ name: "YouTube intro", stepId: "video" });
+    return items;
   })();
+
+  const disabledReason = (() => {
+    if (saveBlockers.length === 0) return null;
+    const phrases = saveBlockers.map((item) => item.note ?? item.name);
+    return `Required before saving: ${phrases.join(", ")}`;
+  })();
+
+  const firstBlockedStep = saveBlockers[0]?.stepId ?? null;
 
   /** Drop slug field errors when inputs that affect slug change so live status can show success again. */
   useEffect(() => {
@@ -791,6 +823,7 @@ export default function ApplicationForm({
   const handleSlugSegmentOrderChange = (next: SlugSegmentOrder) => {
     setSlugSegmentOrder(next);
     setSlugManuallyEdited(false);
+    setSlugPinned(false);
   };
 
   /**
@@ -799,16 +832,32 @@ export default function ApplicationForm({
    */
   const handleResetSlugToSuggested = () => {
     setSlugManuallyEdited(false);
+    setSlugPinned(false);
     setSlugAutoReserveNonce((n) => n + 1);
   };
 
-  /** Create or edit: auto mode uses POST /api/slug (not local-only buildSlug). */
+  /** Typing the suggested ending again leaves manual mode. */
+  const handleSlugFieldChange = (nextSlug: string) => {
+    setFormData((prev) => ({ ...prev, slug: nextSlug }));
+    setSlugManuallyEdited(
+      isCustomSlug(
+        nextSlug,
+        formData.company,
+        formData.role,
+        slugSegmentOrder,
+      ),
+    );
+    setSlugPinned(false);
+  };
+
+  /** Create, or an edit whose slug was released: auto mode uses POST /api/slug. */
   const shouldAutoReserveSlug =
+    !slugPinned &&
     !slugManuallyEdited &&
     (resolveSlugOnCreate || Boolean(slugExcludeApplicationId));
 
   useEffect(() => {
-    if (shouldAutoReserveSlug) {
+    if (slugPinned || shouldAutoReserveSlug) {
       return;
     }
     if (!slugManuallyEdited && formData.company && formData.role) {
@@ -825,6 +874,7 @@ export default function ApplicationForm({
     slugSegmentOrder,
     slugManuallyEdited,
     shouldAutoReserveSlug,
+    slugPinned,
   ]);
 
   /**
@@ -1020,13 +1070,17 @@ export default function ApplicationForm({
     if (presentation === "split") {
       setErrorScroll({ stepId: step, nonce: Date.now() });
     }
+    if (presentation === "checklist" && nextErrors.slug) {
+      setLinkOpen(true);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Wizard: implicit Enter from an earlier step must not save. The split
     // page keeps Save on Review, but every field is on the page, so Enter may save.
-    if (presentation !== "split" && currentStepId !== "review") return;
+    // Checklist blocks Enter in inputs separately, and Save stays available.
+    if (presentation === "wizard" && currentStepId !== "review") return;
     if (formBusy || isSubmittingRef.current || !canSubmit) return;
     isSubmittingRef.current = true;
     setErrors({});
@@ -1052,7 +1106,7 @@ export default function ApplicationForm({
         }
       }
       if (!formData.video_url.trim())
-        newErrors.video_url = "YouTube URL is required";
+        newErrors.video_url = "YouTube intro is required";
 
       if (Object.keys(newErrors).length > 0) {
         revealFormErrors(newErrors);
@@ -1320,7 +1374,7 @@ export default function ApplicationForm({
         }
         return null;
       case "video":
-        if (!hasVideo) return "YouTube URL is required.";
+        if (!hasVideo) return "YouTube intro is required.";
         return null;
       case "review":
         return null;
@@ -1375,10 +1429,7 @@ export default function ApplicationForm({
         <Input
           id="application-slug"
           value={formData.slug}
-          onChange={(e) => {
-            setFormData((prev) => ({ ...prev, slug: e.target.value }));
-            setSlugManuallyEdited(true);
-          }}
+          onChange={(e) => handleSlugFieldChange(e.target.value)}
           error={errors.slug}
           placeholder="auto-generated-slug"
           required
@@ -1418,6 +1469,111 @@ export default function ApplicationForm({
           </p>
         )}
       <ShareUrlPreview publicId={publicId} slug={formData.slug} />
+    </div>
+  );
+
+  const checklistRoleStep = (
+    <div className="space-y-5">
+      <Input
+        label="Company"
+        value={formData.company}
+        onChange={(e) =>
+          setFormData((prev) => ({ ...prev, company: e.target.value }))
+        }
+        error={errors.company}
+        required
+        autoComplete="organization"
+      />
+      <Input
+        label="Role"
+        value={formData.role}
+        onChange={(e) =>
+          setFormData((prev) => ({ ...prev, role: e.target.value }))
+        }
+        error={errors.role}
+        required
+        autoComplete="organization-title"
+      />
+      <div className="rounded-xl bg-[var(--pink)] px-4 py-3.5">
+        <p className="text-sm font-medium text-[var(--ink)]">Share link</p>
+        <p className="mt-1 text-sm leading-relaxed break-words">
+          <span className="text-[var(--muted)]">/view/{publicId?.trim() || "…"}/</span>
+          <span>{formData.slug.trim() || "…"}</span>
+        </p>
+        <button
+          type="button"
+          className="mt-2 rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+          onClick={() => setLinkOpen((open) => !open)}
+        >
+          {linkOpen ? "Hide link options" : "Edit link"}
+        </button>
+        {linkOpen ? (
+          <div className="mt-4 space-y-4">
+            <fieldset>
+              <legend className="text-sm font-medium text-[var(--ink)]">
+                Order in the link
+              </legend>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {(
+                  [
+                    ["company_role", "Company, then role"],
+                    ["role_company", "Role, then company"],
+                  ] as const
+                ).map(([order, label]) => (
+                  <label
+                    key={order}
+                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm ring-1 ring-inset ${
+                      slugSegmentOrder === order
+                        ? "bg-[var(--paper)] text-[var(--ink)] ring-[var(--ink)]"
+                        : "bg-[var(--white)] text-[var(--ink)] ring-[var(--ink)]/15 hover:bg-[var(--paper)]/70"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="checklist-slug-segment-order"
+                      value={order}
+                      checked={slugSegmentOrder === order}
+                      onChange={() => handleSlugSegmentOrderChange(order)}
+                      className="size-4 shrink-0 accent-[var(--ink)]"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <Input
+              id="application-slug"
+              label="Link ending"
+              value={formData.slug}
+              onChange={(e) => handleSlugFieldChange(e.target.value)}
+              error={errors.slug}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            {(slugLiveStatus.kind === "invalid" ||
+              slugLiveStatus.kind === "unavailable") &&
+              !errors.slug && (
+                <p
+                  className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
+                  role="alert"
+                >
+                  <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                  <span>{slugLiveStatus.message}</span>
+                </p>
+              )}
+            {slugManuallyEdited ? (
+              <button
+                type="button"
+                onClick={handleResetSlugToSuggested}
+                disabled={!hasCompany || !hasRole || formBusy}
+                className="rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+              >
+                Use the suggested link
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 
@@ -1684,6 +1840,37 @@ export default function ApplicationForm({
     );
   })();
 
+  const jumpToStep = (stepId: ApplicationFormStepId) => {
+    setCurrentStepId(stepId);
+    if (presentation === "split") {
+      setErrorScroll({ stepId, nonce: Date.now() });
+    }
+  };
+
+  const reviewPreview = (
+    <ApplicationReviewPreview
+      company={formData.company.trim()}
+      role={formData.role.trim()}
+      firstName={include.first_name ? formData.first_name : null}
+      lastName={include.last_name ? formData.last_name : null}
+      location={include.location ? formData.location : null}
+      portfolioUrl={include.portfolio_url ? formData.portfolio_url : null}
+      linkedinUrl={include.linkedin_url ? formData.linkedin_url : null}
+      profilePictureUrl={profilePictureUrl}
+      profilePictureVersion={profilePictureVersion}
+      showProfilePicture={hasProfilePicture && showProfilePicture}
+      cvUrl={formData.cv_url}
+      cvPendingFile={cvPendingFile}
+      cvFilename={formData.cv_filename}
+      useOriginalCvFilename={formData.use_original_cv_filename ?? true}
+      slug={formData.slug}
+      videoUrl={formData.video_url}
+      label={presentation === "wizard" ? "Show preview" : "Preview"}
+      openSignal={previewNonce}
+      hint={presentation === "wizard" ? undefined : "Does not save."}
+    />
+  );
+
   const reviewStep = (
     <>
       <ApplicationReviewSummary
@@ -1699,25 +1886,19 @@ export default function ApplicationForm({
         showProfilePicture={showProfilePicture}
         cvLabel={reviewCvLabel}
         hasVideo={hasVideo}
-      />
-      <ApplicationReviewPreview
-        company={formData.company.trim()}
-        role={formData.role.trim()}
-        firstName={include.first_name ? formData.first_name : null}
-        lastName={include.last_name ? formData.last_name : null}
-        location={include.location ? formData.location : null}
-        portfolioUrl={include.portfolio_url ? formData.portfolio_url : null}
-        linkedinUrl={include.linkedin_url ? formData.linkedin_url : null}
-        profilePictureUrl={profilePictureUrl}
-        profilePictureVersion={profilePictureVersion}
-        showProfilePicture={hasProfilePicture && showProfilePicture}
-        cvUrl={formData.cv_url}
-        cvPendingFile={cvPendingFile}
-        cvFilename={formData.cv_filename}
-        useOriginalCvFilename={formData.use_original_cv_filename ?? true}
-        slug={formData.slug}
         videoUrl={formData.video_url}
+        slugState={slugLiveStatus}
+        publicId={publicId}
+        profilePictureUrl={profilePictureUrl}
+        variant={presentation === "split" ? "split" : "wizard"}
+        savedSlug={savedSlug}
+        profilePictureVersion={profilePictureVersion}
+        onJumpToStep={jumpToStep}
+        onPreview={
+          presentation === "split" ? () => setPreviewNonce((n) => n + 1) : undefined
+        }
       />
+      {presentation === "wizard" ? reviewPreview : null}
     </>
   );
 
@@ -1735,8 +1916,20 @@ export default function ApplicationForm({
       loadingLabel={saveLoadingLabel}
       submitLabel={submitLabel}
       canSubmit={canSubmit}
+      dimWhenBlocked={presentation === "checklist"}
       disabledReason={disabledReason}
+      onBlocked={() => {
+        if (firstBlockedStep) jumpToStep(firstBlockedStep);
+      }}
     />
+  );
+
+  /** Split Review puts Preview beside Save in the card footer. */
+  const splitReviewActions = (
+    <>
+      {reviewPreview}
+      {formActions}
+    </>
   );
 
   const leaveDialog =
@@ -1752,17 +1945,106 @@ export default function ApplicationForm({
       />
     ) : null;
 
+  const checklistOpenId: ChecklistChapterId =
+    currentStepId === "role" ||
+    currentStepId === "candidate" ||
+    currentStepId === "materials" ||
+    currentStepId === "video"
+      ? currentStepId
+      : "video";
+
+  const roleSummary = roleChecklistSummary({
+    company: formData.company,
+    role: formData.role,
+    slug: formData.slug,
+    roleReady: stepReady("role"),
+    slugStatus: slugLiveStatus,
+  });
+
+  const aboutYouParts = [
+    hasProfilePicture && showProfilePicture ? "Picture" : "",
+    [
+      include.first_name ? formData.first_name?.trim() : "",
+      include.last_name ? formData.last_name?.trim() : "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+    include.location ? formData.location?.trim() : "",
+    include.portfolio_url && formData.portfolio_url?.trim() ? "Portfolio" : "",
+    include.linkedin_url && formData.linkedin_url?.trim() ? "LinkedIn" : "",
+  ].filter(Boolean);
+
+  const checklistChapters: ChecklistChapter[] = [
+    {
+      id: "role",
+      title: "Role",
+      description: "Company, role, and the link recruiters open.",
+      summary: roleSummary.text,
+      summaryPending: roleSummary.pending,
+      summaryProgress: roleSummary.progress,
+      tone: stepReady("role") ? "done" : "pending",
+      content: checklistRoleStep,
+    },
+    {
+      id: "candidate",
+      title: "About you",
+      description: "Choose what this page shows about you. None of this is required.",
+      summary: aboutYouParts.length > 0 ? aboutYouParts.join(", ") : "Optional",
+      summaryPending: false,
+      tone: aboutYouParts.length > 0 ? "done" : "optional",
+      content: candidateStep,
+    },
+    {
+      id: "materials",
+      title: "Résumé",
+      description: "A résumé from your library, or a PDF only for this role.",
+      summary: reviewCvLabel || "Choose a file",
+      summaryPending: !cvCountsForProgress,
+      tone: cvCountsForProgress ? "done" : "pending",
+      content: materialsStep,
+    },
+    {
+      id: "video",
+      title: "Pitch",
+      description: "A YouTube video they can watch on the page.",
+      summary: hasVideo ? "YouTube link added" : "Still needed",
+      summaryPending: !hasVideo,
+      tone: stepReady("video") ? "done" : "pending",
+      content: videoStep,
+    },
+  ];
+
   return (
     <form
       onSubmit={handleSubmit}
-      className={presentation === "split" ? undefined : "space-y-4 sm:space-y-6"}
+      onKeyDown={
+        presentation === "checklist"
+          ? (event) => {
+              if (
+                event.key === "Enter" &&
+                event.target instanceof HTMLInputElement
+              ) {
+                event.preventDefault();
+              }
+            }
+          : undefined
+      }
+      className={presentation === "wizard" ? "space-y-4 sm:space-y-6" : undefined}
     >
-      {presentation === "split" ? (
+      {presentation === "checklist" ? (
+        <ApplicationFormChecklistLayout
+          chapters={checklistChapters}
+          openId={checklistOpenId}
+          onOpen={setCurrentStepId}
+          sharePath={`/view/${publicId?.trim() || "…"}/${formData.slug.trim() || "…"}`}
+          actions={formActions}
+        />
+      ) : presentation === "split" ? (
         <ApplicationFormSplitLayout
           mode={isEdit ? "edit" : "create"}
           stepContents={stepContents}
           errorScroll={errorScroll}
-          actions={formActions}
+          actions={splitReviewActions}
         />
       ) : (
         <ApplicationFormWizardLayout

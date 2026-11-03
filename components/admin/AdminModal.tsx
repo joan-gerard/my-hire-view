@@ -57,6 +57,8 @@ export type AdminModalProps = {
    * open (e.g. close a nested video first).
    */
   onCancel?: (event: SyntheticEvent<HTMLDialogElement>) => void;
+  /** Extra classes on the dialog panel. */
+  panelClassName?: string;
   /** Replace the default Close footer. */
   footer?: ReactNode;
 };
@@ -79,6 +81,7 @@ export default function AdminModal({
   returnFocusRef,
   onCancel,
   footer,
+  panelClassName,
 }: AdminModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -171,7 +174,7 @@ export default function AdminModal({
     >
       <AdminModalDismissContext.Provider value={requestDismiss}>
         <div
-          className={`flex ${panelMaxHeightClass} w-full flex-col overflow-hidden text-[var(--ink)] shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)] ${ADMIN_PANEL_CLASS}`}
+          className={`flex ${panelMaxHeightClass} w-full flex-col overflow-hidden text-[var(--ink)] shadow-[0_12px_40px_-16px_rgba(11,11,12,0.28)] ${ADMIN_PANEL_CLASS} ${panelClassName ?? ""}`}
         >
           <header className="shrink-0 border-b border-[var(--ink)]/8 px-5 pb-4 pt-5 sm:px-6">
             <h2

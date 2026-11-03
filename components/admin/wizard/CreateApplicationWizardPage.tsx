@@ -2,7 +2,7 @@
 
 /**
  * Create application. Default presentation is the parked wizard.
- * `/admin/new` passes `presentation="split"`.
+ * `/admin/new` passes `presentation="checklist"`.
  */
 
 import ApplicationForm from "@/components/forms/ApplicationForm";
@@ -28,8 +28,8 @@ import { useEffect, useRef, useState } from "react";
 export default function CreateApplicationWizardPage({
   presentation = "wizard",
 }: {
-  /** Parked wizard, or the one-page split layout on `/admin/new`. */
-  presentation?: "wizard" | "split";
+  /** Parked wizard, the edit split page, or the checklist on `/admin/new`. */
+  presentation?: "wizard" | "split" | "checklist";
 }) {
   const router = useRouter();
   const isSubmittingRef = useRef(false);
@@ -259,7 +259,7 @@ export default function CreateApplicationWizardPage({
       initialData={initialData}
       onSubmit={handleSubmit}
       loading={loading}
-      submitLabel="Save & Preview"
+      submitLabel="Save draft & preview"
       profilePictureUrl={profile?.profile_picture_url ?? null}
       profilePictureVersion={profile?.updated_at ?? null}
       onProfilePictureSaved={({ url, updated_at }) =>
@@ -292,7 +292,13 @@ export default function CreateApplicationWizardPage({
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div
+      className={
+        presentation === "checklist"
+          ? "mx-auto w-full max-w-6xl space-y-4 sm:space-y-6"
+          : "space-y-4 sm:space-y-6"
+      }
+    >
       {presentation === "wizard" ? (
         <ApplicationFormPageHeader title="Create New Application" />
       ) : null}
@@ -313,10 +319,10 @@ export default function CreateApplicationWizardPage({
           </Link>
         </p>
       )}
-      {presentation === "split" ? (
-        form
-      ) : (
+      {presentation === "wizard" ? (
         <div className={ADMIN_FORM_SHELL_CLASS}>{form}</div>
+      ) : (
+        form
       )}
     </div>
   );

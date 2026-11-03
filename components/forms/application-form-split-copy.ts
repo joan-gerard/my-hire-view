@@ -28,16 +28,16 @@ const RECOMMENDATIONS: Record<
       "A short intro is enough.",
     ],
     review: [
-      "Save stores a draft. It does not publish the link.",
-      "Show preview opens the page recruiters will see.",
-      "Fix anything marked missing before you save.",
+      "Save draft & preview stores a draft. It does not publish the link.",
+      "Preview opens the page recruiters will see. It does not save.",
+      "Company, role, résumé, share link, and YouTube intro are required before that save.",
     ],
   },
   edit: {
     role: [
       "Name the company the way a recruiter would search for it.",
-      "Changing the company or role can change the share link.",
-      "A link you already shared keeps working only if the slug stays the same.",
+      "Changing the company or role keeps the share link you already saved.",
+      "Reset to suggested builds a new link. Saving then replaces the old one.",
     ],
     candidate: [
       "Name, location, and links are from when this application was saved.",
@@ -56,8 +56,8 @@ const RECOMMENDATIONS: Record<
     ],
     review: [
       "Save updates this application and returns you to the dashboard.",
-      "Show preview opens the page recruiters will see.",
-      "Fix anything marked missing before you save.",
+      "Preview opens the page recruiters will see. It does not save.",
+      "Company, role, résumé, share link, and YouTube intro are required before that save.",
     ],
   },
 };

@@ -125,7 +125,7 @@ export default function ApplicationFormSplitLayout({
                   {stepContents[step.id]}
                 </div>
                 {step.id === "review" ? (
-                  <div className="mt-8 border-t border-[var(--ink)]/10 pt-6">
+                  <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ink)]/10 pt-6">
                     {actions}
                   </div>
                 ) : null}

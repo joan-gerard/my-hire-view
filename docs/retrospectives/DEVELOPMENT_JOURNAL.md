@@ -45,3 +45,11 @@ The layout experiment ends on one shell. Create and edit both use the wizard: le
 We looked at keeping sections for edit, or swapping by viewport, and left both out. Edit already opens every step, so “change the CV” does not need a second interaction model. One responsive wizard is easier to explain and to test than two forms that share a brain.
 
 Working notes: [APPLICATION_FORM_STEPS_F35.md](APPLICATION_FORM_STEPS_F35.md). Incomplete server drafts (`F40`) and publish-from-review (`F41`) stay separate.
+
+---
+
+## 2 November 2026
+
+The long create page and the parked wizard were both still too much form at once. A demo beside them — one chapter open, the rest a single line, and a Getting started-style checklist for what is ready — is now the create page. Edit stays the scrolling bands. The wizard stays parked for comparison.
+
+Save, the browser draft, and the leave prompt did not change. The share link stays tucked behind Edit link so company and role are the first thing you see. Notes: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_WORKFLOW.md).

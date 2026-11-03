@@ -220,6 +220,9 @@ export default function EditApplicationWizardPage({
       }
       publicId={publicId ?? undefined}
       slugExcludeApplicationId={id}
+      submitLabel={
+        application.status === "draft" ? "Save draft" : "Save application"
+      }
       presentation={presentation}
     />
   );

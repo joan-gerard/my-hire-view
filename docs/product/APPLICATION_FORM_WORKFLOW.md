@@ -1,16 +1,30 @@
 # Application form workflow
 
-Create is `/admin/new`. Edit is `/admin/edit/[id]`. Both are one scrolling page of five bands: Role & share URL, About you, CV, Video, Review & save. The same fields, draft, CV, and save behavior sit under that page. Save stays on the Review band.
+Create is `/admin/new`. Edit is `/admin/edit/[id]`. They share the same fields, browser draft, CV, and save rules. A saved application still needs a company, a role, an available share link, a résumé, and a YouTube intro.
 
-From 1200px wide, each band is split in half. The left side is a step pill, the title, one sentence, and a few recommendations, and it stays in view while that band’s fields scroll. The right side is the fields on a paper panel. Create has no page title and no jump cards. Edit keeps its title, fixed under the admin header. Through 1199px, phone and tablet stack each band: pill, title, description, recommendations, then the fields.
+## Create
 
-The previous wizard is parked at `/admin/wizard/new` and `/admin/wizard/edit/[id]` for comparison. Delete whichever flow loses. The sections below describe that parked wizard (Continue, check marks, one step at a time).
+`/admin/new` keeps one chapter open: **Role**, **About you**, **Résumé**, **Pitch**. The others stay as a single line you can reopen. The checklist and chapters sit in a centered column. From 1100px wide, a checklist titled **This application** stays beside the chapters, under the admin header. It shows how many parts are ready, a bar, and a row for each chapter. A lime check means that part is ready. **About you** is optional: a dashed circle and **Optional** when nothing is shown, and it still counts. Clicking a row opens that chapter. **Next** moves to the next chapter without waiting for the current one to be finished. Below 1100px the checklist sits above the chapters.
+
+**Save draft & preview** stays at the top. It stays greyed out until company, role, the share link, a résumé, and a YouTube intro are ready. The checklist names those gaps. Pressing Enter in a field does not save.
+
+**Role** shows company and role. The share link is taken from those two. While both names are filled, the closed Role line says what the link is doing. **Checking...** is grey and italic while the ending is checked. The gaps stay pink: **Add a link ending**, **Fix the link ending**, **Link already used**, or **Couldn't check the link**. A ready link shows the company and role. **Edit link** opens **Order in the link** (**Company, then role** or **Role, then company**) and **Link ending**. **Use the suggested link** appears after the ending is changed. The checklist ends with `/view/{publicId}/{slug}`.
+
+Leaving create from the header or with the browser Back button still asks before discarding the browser draft. A successful save clears that draft. A failed save keeps it.
+
+## Edit
+
+Edit is one scrolling page of five bands: Role & share URL, About you, CV, Video, Review & save. From 1200px wide, each band is split in half. The left side is a step pill, the title, one sentence, and a few recommendations, and it stays in view while that band’s fields scroll. The right side is the fields on a paper panel. On Review, that panel is a white summary card: progress across four sections, then company, role, and the share link, with About you beside CV and Video. Required gaps are labeled Required and jump back to that step. Preview does not save. Save stays blocked for the same required pieces as create. The reason is one link beside the button and jumps to the first gap. A saved share link stays put when company or role change, until you edit the slug or choose Reset to suggested. Edit keeps its title, fixed under the admin header. Through 1199px, phone and tablet stack each band: pill, title, description, recommendations, then the fields.
+
+The previous wizard is parked at `/admin/wizard/new` and `/admin/wizard/edit/[id]` for comparison. The sections below describe that parked wizard (Continue, check marks, one step at a time).
 
 This is the behavior reference. The decision record is in [APPLICATION_FORM_STEPS_F35.md](../retrospectives/APPLICATION_FORM_STEPS_F35.md). Candidate-facing steps are in [USER_GUIDE.md](../engineering/USER_GUIDE.md).
 
 ---
 
 ## The journey in one pass
+
+This is the parked wizard, not the create page.
 
 1. **Role & share URL** — who the application is for, and the link recruiters will use.
 2. **About you** — which profile details appear on that link. Nothing here is required.
@@ -50,7 +64,7 @@ Continue does two things: it opens the next step, and it remembers how far you h
 
 About you has no required fields, so passing it is enough for its check.
 
-**Save & Preview** saves a **draft**. Recruiters cannot open it yet. If your account has a Public id, you land on your own preview of the share link. If it does not, you land on the dashboard and can open **Preview** from the card once the id exists. Publish is a separate action, on the preview banner or the dashboard card.
+**Save draft & preview** saves a **draft**. Recruiters cannot open it yet. If your account has a Public id, you land on your own preview of the share link. If it does not, you land on the dashboard and can open **Preview** from the card once the id exists. Publish is a separate action, on the preview banner or the dashboard card.
 
 The browser Back button or another admin link asks you to confirm. Confirming throws away the browser draft so the next New Application starts empty. A successful save clears that draft too. A failed save keeps it. The draft remembers what you typed for about a week, in this browser, for this account. It does not remember a tailored PDF you had selected — choose the file again.
 
@@ -141,7 +155,7 @@ On create, the source choices stay locked for a moment while the library loads, 
 
 **You see**
 
-- A **Summary**, open at first, that you can collapse. It is grouped like the steps: Role (company and role as the lead line, then share slug with an Available / Not ready / Missing chip), About you (picture Shown / Hidden / None first, then each field’s value or a Hidden / Empty chip), CV (filename or Missing), and Video (Ready or Missing).
+- A **Summary**, open at first, that you can collapse. It is grouped like the steps: Role (company and role as the lead line, then the share link with the domain in gray and the slug in the normal text color, and a check after the link when it is available), About you (picture Shown / Hidden / None first, then each field’s value or a Hidden / Empty chip), CV (filename or Missing), and Video (Ready or Missing).
 - **Show preview** opens the recruiter page in a dialog: header, CV (including a tailored file you have chosen but not uploaded yet), and video. **Watch Video Pitch** plays here. Closing the dialog, Escape, or the backdrop returns you to the form. This does not count a view and does not leave the form. If the video is open, Escape closes the video first.
 - **Save & Preview** on create, or **Save Application** on edit.
 
@@ -176,11 +190,11 @@ A tailored PDF is uploaded as part of save. The button can read **Preparing…**
 
 ## After save
 
-|                | Create                                                                    | Edit                                                 |
-| -------------- | ------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Button         | **Save & Preview**                                                        | **Save Application**                                 |
-| What is stored | A draft                                                                   | The same status it already had                       |
-| Where you go   | Owner preview of the share link, or the dashboard if Public id is missing | Dashboard                                            |
-| Who can see it | Only you, until you publish                                               | Unchanged: drafts stay private, live links stay live |
+|                | Create                                                                    | Edit                                                                           |
+| -------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Button         | **Save draft & preview**                                                  | **Save draft** while it is still a draft; **Save application** once it is live |
+| What is stored | A draft                                                                   | The same status it already had                                                 |
+| Where you go   | Owner preview of the share link, or the dashboard if Public id is missing | Dashboard                                                                      |
+| Who can see it | Only you, until you publish                                               | Unchanged: drafts stay private, live links stay live                           |
 
 Publishing from the review step, and saving a draft that is still missing required fields, are not part of this flow. Those are `F41-127` and `F40-124`.

@@ -293,7 +293,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Page chrome
 
-- [ ] No page title. The first band is Role & share URL (the parked wizard at `/admin/wizard/new` still shows **Create New Application**)
+- [ ] Page title **New application**. The checklist and form are centered. One chapter is open; the others are a single line. A **This application** checklist shows the count, and clicking a row opens that chapter. **Save draft & preview** sits at the top and is greyed out until the application can be saved. There is no **Preview** button. The parked wizard at `/admin/wizard/new` still shows **Create New Application**
 - [ ] If location, links, and picture are still empty: nudge to complete profile; arrow goes to Profile
 - [ ] After profile has location/link/picture, nudge is gone
 - [ ] Form skeleton/pulse while profile loads; then the form
@@ -311,8 +311,10 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] After adding a picture from this page, Yes/No appears; **Yes** shows the thumbnail and the avatar on `/view` after publish
 - [ ] **No** hides the thumbnail and keeps **Manage picture**; no avatar on `/view` even if the account still has a picture
 - [ ] **Download name for recruiters** is hidden until a primary CV is selected or a tailored PDF is chosen
-- [ ] **Review & save** summary starts open and can be collapsed; groups match the steps (Role, About you, CV, Video) with stacked labels and status chips (**Hidden** / **Empty** / **Shown** / **None** / **Available** / **Missing** / **Ready**); About you lists profile picture before the recruiter fields
-- [ ] **Show preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form or count a view
+- [ ] **Edit link** reveals **Order in the link** (**Company, then role** / **Role, then company**) and **Link ending**. There is no segment-order explanation, no examples, and no Public id preview. **Use the suggested link** appears after the ending is edited, and hides again if the ending matches the suggestion. The checklist footer shows `/view/{publicId}/{slug}`
+- [ ] With company and role filled, the Role line says **Checking...** in grey italic while the ending is checked, **Add a link ending** when it is empty, **Fix the link ending** when it is invalid, **Link already used** when another of your applications has it, and **Couldn't check the link** when the check fails. A ready link shows the company and role
+- [ ] On edit, **Review & save** summary starts open and can be collapsed; groups match the steps (Role, About you, CV, Video) with stacked labels and status chips (**Hidden** / **Empty** / **Shown** / **None** / **Available** / **Missing** / **Ready**); About you lists profile picture before the recruiter fields
+- [ ] On edit, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form, save, or count a view. Create has no preview dialog
 - [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
 
 ### Company, role, slug, URL segment order
@@ -359,7 +361,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Valid `youtube.com/embed/…` accepted
 - [ ] Valid Shorts URL accepted
 - [ ] Invalid URL (Vimeo, example.com, garbage) → “Please enter a valid YouTube URL”; Save blocked
-- [ ] Empty video is **not** allowed — Save stays blocked with “YouTube URL is required” (create and edit)
+- [ ] Empty video is **not** allowed — Save stays blocked. On create, the checklist **Pitch** row says **Still needed**, and there is no **Required before saving** line beside **Save draft & preview**. On edit, that reason line names **YouTube intro**
 
 ### Local browser draft (create only)
 
@@ -374,12 +376,12 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Manual slug edits **are** protected by the leave dialog; auto slug updates from typing company/role alone are **not**
 - [ ] Opening `/admin/new` as the first history entry, then confirming Back, still leaves create (falls back to dashboard if needed)
 - [ ] Leave a fully empty new form idle: no stale draft on a later visit
-- [ ] Successful **Save & Preview** clears the browser draft; a **failed** save keeps it
+- [ ] Successful **Save draft & preview** clears the browser draft; a **failed** save keeps it
 - [ ] Account B on the same browser does **not** see Account A’s create draft
 
 ### Save & Preview
 
-- [ ] Submit label is **Save & Preview** (not Save Application)
+- [ ] Submit label is **Save draft & preview**
 - [ ] Double-click submit does not create two rows
 - [ ] Save with the network offline (DevTools) shows an error; **no** application row; browser draft **kept**
 - [ ] Session expired mid-form (optional: delete cookies then Save): 401 surfaces in the form/alert; no half-created app; tailored file is not “lost” into an orphan row
