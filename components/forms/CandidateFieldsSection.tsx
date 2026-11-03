@@ -20,6 +20,11 @@ export interface CandidateFieldsSectionProps {
   include: Record<CandidateFieldKey, boolean>;
   onValueChange: (field: CandidateFieldKey, value: string) => void;
   onIncludeChange: (field: CandidateFieldKey, included: boolean) => void;
+  /**
+   * `checklist` matches the create About you demo: flat fields, short labels,
+   * first and last name side by side.
+   */
+  variant?: 'default' | 'checklist';
 }
 
 export const RECRUITER_INFO_FIELDS: {
@@ -32,6 +37,18 @@ export const RECRUITER_INFO_FIELDS: {
   { key: 'location', label: 'Location', type: 'text' },
   { key: 'portfolio_url', label: 'Portfolio URL', type: 'url' },
   { key: 'linkedin_url', label: 'LinkedIn URL', type: 'url' },
+];
+
+const CHECKLIST_FIELDS: {
+  key: CandidateFieldKey;
+  label: string;
+  type: 'text' | 'url';
+}[] = [
+  { key: 'first_name', label: 'First name', type: 'text' },
+  { key: 'last_name', label: 'Last name', type: 'text' },
+  { key: 'location', label: 'Location', type: 'text' },
+  { key: 'portfolio_url', label: 'Portfolio', type: 'url' },
+  { key: 'linkedin_url', label: 'LinkedIn', type: 'url' },
 ];
 
 const TOTAL_FIELDS = RECRUITER_INFO_FIELDS.length;
@@ -51,6 +68,7 @@ export default function CandidateFieldsSection({
   include,
   onValueChange,
   onIncludeChange,
+  variant = 'default',
 }: CandidateFieldsSectionProps) {
   const [expanded, setExpanded] = useState(getStoredExpanded);
 
@@ -65,6 +83,39 @@ export default function CandidateFieldsSection({
       return next;
     });
   }, []);
+
+  if (variant === 'checklist') {
+    return (
+      <div className="space-y-5">
+        <div className="grid gap-5 sm:grid-cols-2">
+          {CHECKLIST_FIELDS.slice(0, 2).map(({ key, label, type }) => (
+            <CandidateFieldRow
+              key={key}
+              id={`include-${key}`}
+              label={label}
+              type={type}
+              value={values[key] ?? ''}
+              included={include[key] ?? false}
+              onValueChange={(v) => onValueChange(key, v)}
+              onIncludedChange={(v) => onIncludeChange(key, v)}
+            />
+          ))}
+        </div>
+        {CHECKLIST_FIELDS.slice(2).map(({ key, label, type }) => (
+          <CandidateFieldRow
+            key={key}
+            id={`include-${key}`}
+            label={label}
+            type={type}
+            value={values[key] ?? ''}
+            included={include[key] ?? false}
+            onValueChange={(v) => onValueChange(key, v)}
+            onIncludedChange={(v) => onIncludeChange(key, v)}
+          />
+        ))}
+      </div>
+    );
+  }
 
   const includedCount = RECRUITER_INFO_FIELDS.filter(({ key }) => include[key]).length;
 

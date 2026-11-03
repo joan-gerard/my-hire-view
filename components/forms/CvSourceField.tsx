@@ -49,7 +49,27 @@ interface CvSourceFieldProps {
   preparing?: boolean;
   /** Disable file choose/remove for the full Save lifecycle (not only upload). */
   disabled?: boolean;
+  /**
+   * `checklist` matches the create Résumé demo: library cards, short tailored
+   * choice, and a one-line download name.
+   */
+  variant?: "default" | "checklist";
 }
+
+function choiceCardClass(selected: boolean, disabled = false): string {
+  return `flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm ring-1 ring-inset ${
+    disabled
+      ? "cursor-not-allowed opacity-60"
+      : "cursor-pointer"
+  } ${
+    selected
+      ? "bg-[var(--paper)] text-[var(--ink)] ring-[var(--ink)]"
+      : "bg-[var(--white)] text-[var(--ink)] ring-[var(--ink)]/15 hover:bg-[var(--paper)]/70"
+  }`;
+}
+
+const textButtonClass =
+  "rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline";
 
 /**
  * Single CV section: current summary (edit), change source (radios), download name.
@@ -81,6 +101,7 @@ export default function CvSourceField({
   uploading = false,
   preparing = false,
   disabled = false,
+  variant = "default",
 }: CvSourceFieldProps) {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const [checkingCv, setCheckingCv] = useState(false);
@@ -90,6 +111,7 @@ export default function CvSourceField({
   const canManageLibrary = typeof onPrimaryLibraryChange === "function";
   /** Create-only lock while library loads (F15-049); edit keeps saved cv_type. */
   const lockCvSourceWhileLoading = !isEdit && primaryCvsLoading;
+  const sourceLocked = disabled || lockCvSourceWhileLoading;
 
   const hasCvSelection =
     mode === "primary"
@@ -104,6 +126,167 @@ export default function CvSourceField({
       ? (selectedPrimary?.filename ?? currentFilename)
       : currentFilename);
   const generatedName = slug ? getCvDownloadFilename(slug) : "CV-Slug.pdf";
+  const downloadName =
+    useOriginalCvFilename !== false && pendingOrCurrentName
+      ? pendingOrCurrentName
+      : slug
+        ? getCvDownloadFilename(slug)
+        : "…";
+
+  const libraryModal = canManageLibrary ? (
+    <PrimaryCvLibraryModal
+      open={libraryModalOpen}
+      onClose={() => setLibraryModalOpen(false)}
+      onLibraryChange={onPrimaryLibraryChange!}
+    />
+  ) : null;
+
+  const switchConfirm = (
+    <ConfirmDialog
+      open={switchToPrimaryConfirmOpen}
+      title="Replace tailored CV with a primary CV?"
+      message="Saving with a primary CV will remove this application’s tailored PDF from storage. Your profile primary library is unchanged."
+      confirmLabel="Choose a primary CV"
+      cancelLabel="Keep tailored CV"
+      onConfirm={onConfirmSwitchToPrimary}
+      onCancel={onCancelSwitchToPrimary}
+    />
+  );
+
+  if (variant === "checklist") {
+    return (
+      <>
+        <fieldset>
+          <legend className="text-sm font-medium text-[var(--ink)]">
+            Choose one résumé
+          </legend>
+
+          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-sm text-[var(--muted)]">From your library</p>
+            {canManageLibrary ? (
+              <button
+                type="button"
+                className={textButtonClass}
+                disabled={disabled}
+                onClick={() => setLibraryModalOpen(true)}
+              >
+                Manage library
+              </button>
+            ) : null}
+          </div>
+
+          {lockCvSourceWhileLoading ? (
+            <p className="mt-2 text-sm text-[var(--muted)]" role="status">
+              Loading your CV library…
+            </p>
+          ) : null}
+
+          <div className="mt-2 space-y-2">
+            {hasPrimaryCvs
+              ? primaryCvs.map((cv) => {
+                  const selected =
+                    mode === "primary" && selectedPrimaryId === cv.id;
+                  const label = cv.label?.trim() || cv.filename;
+                  return (
+                    <label
+                      key={cv.id}
+                      className={choiceCardClass(selected, sourceLocked)}
+                    >
+                      <input
+                        type="radio"
+                        name="cvSourceChecklist"
+                        value={cv.id}
+                        checked={selected}
+                        disabled={sourceLocked}
+                        onChange={() => onSelectPrimary(cv.id)}
+                        className="size-4 shrink-0 accent-[var(--ink)]"
+                      />
+                      <span className="min-w-0 flex-1 truncate">{label}</span>
+                    </label>
+                  );
+                })
+              : !primaryCvsLoading ? (
+                  <p className="text-sm text-[var(--muted)]">
+                    No primary CVs yet.
+                    {canManageLibrary ? (
+                      <>
+                        {" "}
+                        <button
+                          type="button"
+                          className={textButtonClass}
+                          disabled={disabled}
+                          onClick={() => setLibraryModalOpen(true)}
+                        >
+                          Upload one to your library
+                        </button>
+                      </>
+                    ) : null}
+                  </p>
+                ) : null}
+          </div>
+
+          <p className="mt-4 text-sm text-[var(--muted)]">Only this application</p>
+          <label
+            className={`mt-2 ${choiceCardClass(mode === "tailored", sourceLocked)}`}
+          >
+            <input
+              type="radio"
+              name="cvSourceChecklist"
+              value="tailored"
+              checked={mode === "tailored"}
+              disabled={sourceLocked}
+              onChange={() => onSwitchToTailored()}
+              className="size-4 shrink-0 accent-[var(--ink)]"
+            />
+            A PDF just for this role
+          </label>
+
+          {mode === "tailored" ? (
+            <div className="mt-3">
+              <FileUpload
+                pendingFile={pendingFile}
+                onPendingFileChange={onPendingFileChange}
+                hideLabel
+                chooseLabel="Choose a PDF"
+                uploading={uploading}
+                preparing={preparing}
+                disabled={disabled}
+              />
+            </div>
+          ) : null}
+
+          {error ? (
+            <p className="mt-3 text-sm text-[var(--status-danger-fg)]" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          {hasCvSelection ? (
+            <div className="mt-4">
+              <p className="text-sm leading-relaxed text-[var(--muted)]">
+                Recruiters download it as{" "}
+                <span className="text-[var(--ink)]">{downloadName}</span>.
+              </p>
+              <button
+                type="button"
+                className={`mt-2 ${textButtonClass}`}
+                disabled={disabled}
+                onClick={() =>
+                  onUseOriginalCvFilenameChange(useOriginalCvFilename === false)
+                }
+              >
+                {useOriginalCvFilename !== false
+                  ? "Use a generated name"
+                  : "Use the original file name"}
+              </button>
+            </div>
+          ) : null}
+        </fieldset>
+        {switchConfirm}
+        {libraryModal}
+      </>
+    );
+  }
 
   return (
     <fieldset className={`space-y-4 sm:space-y-5 ${ADMIN_FIELDSET_CLASS}`}>
@@ -116,7 +299,7 @@ export default function CvSourceField({
         <div className="space-y-2">
           <p className="text-sm font-medium text-[var(--ink)]">Current</p>
           {currentUrl.trim() || currentFilename ? (
-            <div className="rounded-xl bg-[var(--paper)]/80 px-3 py-2.5">
+            <div className="rounded-xl bg-[var(--white)] px-3 py-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 {currentType && (
                   <span className="shrink-0 rounded border border-[var(--ink)]/15 px-1.5 py-0.5 text-xs text-[var(--muted)]">
@@ -207,6 +390,7 @@ export default function CvSourceField({
               type="button"
               variant="secondary"
               onClick={() => setLibraryModalOpen(true)}
+              disabled={disabled}
             >
               Manage library
             </Button>
@@ -230,7 +414,7 @@ export default function CvSourceField({
           )}
           <label
             className={`flex items-start gap-2.5 ${
-              lockCvSourceWhileLoading
+              sourceLocked
                 ? "cursor-not-allowed opacity-60"
                 : "cursor-pointer"
             }`}
@@ -240,7 +424,7 @@ export default function CvSourceField({
               name="cvSource"
               className="mt-1 h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
               checked={mode === "primary"}
-              disabled={lockCvSourceWhileLoading || !hasPrimaryCvs}
+              disabled={sourceLocked || !hasPrimaryCvs}
               onChange={() => onSwitchToPrimary()}
             />
             <span className="min-w-0 flex-1">
@@ -260,7 +444,8 @@ export default function CvSourceField({
                       <button
                         type="button"
                         onClick={() => setLibraryModalOpen(true)}
-                        className="font-medium text-[var(--ink)] hover:opacity-80"
+                        disabled={disabled}
+                        className="font-medium text-[var(--ink)] hover:opacity-80 disabled:opacity-50"
                       >
                         Upload one to your library
                       </button>
@@ -283,8 +468,9 @@ export default function CvSourceField({
                     Choose from your library
                   </label>
                   <select
-                    className="w-full rounded-xl border-0 bg-[var(--white)] px-3 py-2 text-sm text-[var(--ink)] shadow-sm outline-none ring-1 ring-inset ring-[var(--ink)]/15 focus:ring-2 focus:ring-inset focus:ring-[var(--ink)]"
+                    className="w-full rounded-xl border-0 bg-[var(--white)] px-3 py-2 text-sm text-[var(--ink)] shadow-sm outline-none ring-1 ring-inset ring-[var(--ink)]/15 focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
                     value={selectedPrimaryId ?? ""}
+                    disabled={disabled}
                     onChange={(e) => onSelectPrimary(e.target.value)}
                   >
                     <option value="" disabled>
@@ -315,6 +501,7 @@ export default function CvSourceField({
                   type="button"
                   variant="secondary"
                   onClick={() => setLibraryModalOpen(true)}
+                  disabled={disabled}
                 >
                   Upload primary CV
                 </Button>
@@ -324,7 +511,7 @@ export default function CvSourceField({
 
           <label
             className={`flex items-start gap-2.5 ${
-              lockCvSourceWhileLoading
+              sourceLocked
                 ? "cursor-not-allowed opacity-60"
                 : "cursor-pointer"
             }`}
@@ -334,7 +521,7 @@ export default function CvSourceField({
               name="cvSource"
               className="mt-1 h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
               checked={mode === "tailored"}
-              disabled={lockCvSourceWhileLoading}
+              disabled={sourceLocked}
               onChange={() => onSwitchToTailored()}
             />
             <span className="min-w-0 flex-1">
@@ -379,11 +566,16 @@ export default function CvSourceField({
           Filename recruiters see when they download your CV.
         </p>
         <div className="flex flex-wrap gap-x-6 gap-y-3">
-          <label className="inline-flex cursor-pointer items-center gap-2.5">
+          <label
+            className={`inline-flex items-center gap-2.5 ${
+              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+            }`}
+          >
             <input
               type="radio"
               name="useOriginalCvFilename"
               checked={useOriginalCvFilename !== false}
+              disabled={disabled}
               onChange={() => onUseOriginalCvFilenameChange(true)}
               className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
             />
@@ -396,11 +588,16 @@ export default function CvSourceField({
               </span>
             )}
           </label>
-          <label className="inline-flex cursor-pointer items-center gap-2.5">
+          <label
+            className={`inline-flex items-center gap-2.5 ${
+              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+            }`}
+          >
             <input
               type="radio"
               name="useOriginalCvFilename"
               checked={useOriginalCvFilename === false}
+              disabled={disabled}
               onChange={() => onUseOriginalCvFilenameChange(false)}
               className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
             />
@@ -423,23 +620,8 @@ export default function CvSourceField({
       </div>
       ) : null}
 
-      <ConfirmDialog
-        open={switchToPrimaryConfirmOpen}
-        title="Replace tailored CV with a primary CV?"
-        message="Saving with a primary CV will remove this application’s tailored PDF from storage. Your profile primary library is unchanged."
-        confirmLabel="Choose a primary CV"
-        cancelLabel="Keep tailored CV"
-        onConfirm={onConfirmSwitchToPrimary}
-        onCancel={onCancelSwitchToPrimary}
-      />
-
-      {canManageLibrary && (
-        <PrimaryCvLibraryModal
-          open={libraryModalOpen}
-          onClose={() => setLibraryModalOpen(false)}
-          onLibraryChange={onPrimaryLibraryChange!}
-        />
-      )}
+      {switchConfirm}
+      {libraryModal}
     </fieldset>
   );
 }

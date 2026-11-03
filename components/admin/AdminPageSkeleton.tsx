@@ -23,23 +23,26 @@ export default function AdminPageSkeleton({
   if (variant === 'dashboard') {
     return (
       <div
-        className={`${ADMIN_MAIN_MIN_CLASS} space-y-6`}
+        className={ADMIN_MAIN_MIN_CLASS}
         role="status"
         aria-busy="true"
         aria-live="polite"
       >
         <span className="sr-only">Loading applications</span>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-end gap-2 sm:gap-3">
-            <div className="space-y-3">
-              <div className="h-4 w-40 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.05]" />
-              <div className="h-10 w-56 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.08]" />
+        {/* Match AdminDashboard sticky toolbar (AdminMain uses pt-0 on /admin). */}
+        <div className="-mx-4 px-4 pt-8 pb-6 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-end gap-2 sm:gap-3">
+              <div className="space-y-3">
+                <div className="h-4 w-40 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+                <div className="h-10 w-56 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.08]" />
+              </div>
+              <div className="h-9 w-9 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.06]" />
             </div>
-            <div className="h-9 w-9 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.06]" />
+            <div className="size-11 motion-safe:animate-pulse rounded-full bg-[var(--ink)]/[0.08]" />
           </div>
-          <div className="size-11 motion-safe:animate-pulse rounded-full bg-[var(--ink)]/[0.08]" />
         </div>
-        <div className="grid min-h-[calc(100svh-72px-4rem-5.5rem)] gap-8 lg:grid-cols-[minmax(0,1fr)_17.5rem] xl:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="grid min-h-[calc(100svh-102px-4rem-5.5rem)] gap-8 lg:grid-cols-[minmax(0,1fr)_17.5rem] xl:grid-cols-[minmax(0,1fr)_19rem]">
           <div className="min-w-0 space-y-6">
             {[0, 1].map((group) => (
               <div key={group} className="space-y-4">
@@ -142,7 +145,7 @@ export default function AdminPageSkeleton({
         <div className="h-16 motion-safe:animate-pulse rounded-xl border border-[var(--ink)]/10 bg-[var(--white)]" />
       ) : null}
       <div
-        className={`${ADMIN_FORM_SHELL_CLASS} min-h-[calc(100svh-72px-4rem-6rem)]`}
+        className={`${ADMIN_FORM_SHELL_CLASS} min-h-[calc(100svh-102px-4rem-6rem)]`}
       >
         <div className="space-y-4 sm:space-y-5">
           <div className="h-24 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />

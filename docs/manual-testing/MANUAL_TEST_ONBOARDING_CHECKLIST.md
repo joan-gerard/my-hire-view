@@ -18,6 +18,7 @@ Data flow (Mermaid): [DATA_FLOW_ONBOARDING_CHECKLIST.md](../architecture/DATA_FL
 - [ ] Getting started header shows only the title plus a lime **N/6** or **Done** pill (no subtitle); expanded body shows progress bar and the six steps
 - [ ] On small screens, Summary + Getting started appear below the applications list
 - [ ] On desktop (`lg+`), with the page still at the top and both panels expanded, wheel/trackpad over the right rail scrolls **only that column** (no visible scrollbar). Summary's last row (Archived hint and the card's bottom edge) and the Getting started footer (Skip all / Dismiss, without a clipped extra line) are reachable inside the rail. The applications list does not move
+- [ ] After scrolling the applications list, the greeting / **Applications** title / legend / **+** row stays under the admin header; the right rail sticks just below that toolbar (not under the header alone)
 
 ## Steps
 

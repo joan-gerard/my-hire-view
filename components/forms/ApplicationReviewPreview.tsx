@@ -6,7 +6,7 @@ import ApplicationPageHeader from "@/components/public/ApplicationPageHeader";
 import PDFViewer from "@/components/pdf/PDFViewer";
 import VideoModal from "@/components/view/VideoModal";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 
 export interface ApplicationReviewPreviewProps {
   company: string;
@@ -26,6 +26,14 @@ export interface ApplicationReviewPreviewProps {
   useOriginalCvFilename?: boolean;
   slug?: string;
   videoUrl?: string | null;
+  /** Visible button label. */
+  label?: string;
+  /** Shown under the button. Split review uses this so the preview action is not hover-only. */
+  hint?: string;
+  /** Bump to open the dialog from somewhere else, such as the résumé row. */
+  openSignal?: number;
+  /** Control that requested `openSignal`. Focus returns here on close. */
+  externalReturnRef?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -50,12 +58,24 @@ export default function ApplicationReviewPreview({
   useOriginalCvFilename = true,
   slug,
   videoUrl,
+  label = "Show preview",
+  hint,
+  openSignal = 0,
+  externalReturnRef,
 }: ApplicationReviewPreviewProps) {
   const [open, setOpen] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
   const [pendingCvUrl, setPendingCvUrl] = useState<string | null>(null);
   const openButtonRef = useRef<HTMLButtonElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const dialogId = useId();
+
+  useEffect(() => {
+    if (!openSignal) return;
+    returnFocusRef.current =
+      externalReturnRef?.current ?? openButtonRef.current;
+    setOpen(true);
+  }, [openSignal, externalReturnRef]);
 
   useEffect(() => {
     if (!cvPendingFile) {
@@ -82,10 +102,17 @@ export default function ApplicationReviewPreview({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={dialogId}
-        onClick={() => setOpen(true)}
+        title="Opens a preview. This does not save."
+        onClick={() => {
+          returnFocusRef.current = openButtonRef.current;
+          setOpen(true);
+        }}
       >
-        Show preview
+        {label}
       </button>
+      {hint ? (
+        <p className="mt-1 text-sm font-medium text-[var(--ink)]">{hint}</p>
+      ) : null}
       <AdminModal
         id={dialogId}
         open={open}
@@ -98,7 +125,7 @@ export default function ApplicationReviewPreview({
         widthClassName="w-[min(100vw-2rem,64rem)]"
         layout="viewport"
         bodyClassName="min-h-0 flex-1 overflow-y-auto"
-        returnFocusRef={openButtonRef}
+        returnFocusRef={returnFocusRef}
         onCancel={(event) => {
           if (!videoOpen) return;
           event.preventDefault();

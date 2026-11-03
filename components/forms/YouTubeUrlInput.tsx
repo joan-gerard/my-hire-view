@@ -30,7 +30,7 @@ export default function YouTubeUrlInput({
 
   return (
     <Input
-      label="YouTube Video URL"
+      label="YouTube intro *"
       type="url"
       value={value}
       onChange={handleChange}

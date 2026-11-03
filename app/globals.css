@@ -151,3 +151,49 @@ h6 {
 #marketing-nav-link {
   font-family: var(--font-switzer), system-ui, sans-serif;
 }
+
+/*
+ * Split create/edit fields. At 1920px: labels 18px/500, input and
+ * placeholder text 16px / 400. Labels step down below that. Typed text
+ * stays 16px so fields do not shrink on a phone.
+ */
+.application-split-fields :is(label, legend) {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.application-split-fields label :is(.text-base.font-medium) {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.application-split-fields :is(input, textarea, select) {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5rem;
+}
+
+.application-split-fields :is(input, textarea)::placeholder {
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.application-split-fields input[type="file"]::file-selector-button {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5rem;
+}
+
+@media (min-width: 1200px) {
+  .application-split-fields :is(label, legend) {
+    font-size: 1.0625rem;
+  }
+}
+
+@media (min-width: 1920px) {
+  .application-split-fields :is(label, legend) {
+    font-size: 1.125rem;
+  }
+}

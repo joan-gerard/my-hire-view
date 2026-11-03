@@ -32,14 +32,19 @@ function resolveOffset(options: SmoothScrollOptions): number {
   return options.offset ?? stickyHeaderOffset();
 }
 
+/** Latest call wins, so a second scroll does not fight the one already running. */
+let activeScrollId = 0;
+
 /**
  * Smoothly scrolls the window to the given element over a configurable duration.
  * Uses requestAnimationFrame and ease-in-out sine easing (gradual start AND end).
+ * A wheel or touch from the user cancels the animation.
  */
 export function smoothScrollToElement(
   element: HTMLElement,
   options: SmoothScrollOptions = {},
 ): void {
+  const scrollId = ++activeScrollId;
   const duration = options.duration ?? 1400;
   const offset = resolveOffset(options);
 
@@ -48,7 +53,27 @@ export function smoothScrollToElement(
   const distance = targetY - startY;
   const startTime = performance.now();
 
+  const cancel = () => {
+    if (scrollId === activeScrollId) activeScrollId += 1;
+  };
+  const onUserScroll = () => {
+    cancel();
+    cleanup();
+  };
+  function cleanup(): void {
+    window.removeEventListener("wheel", onUserScroll);
+    window.removeEventListener("touchstart", onUserScroll);
+  }
+
+  window.addEventListener("wheel", onUserScroll, { passive: true });
+  window.addEventListener("touchstart", onUserScroll, { passive: true });
+
   function step(currentTime: number): void {
+    if (scrollId !== activeScrollId) {
+      cleanup();
+      return;
+    }
+
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
     const eased = easeInOutSine(progress);
@@ -56,7 +81,9 @@ export function smoothScrollToElement(
 
     if (progress < 1) {
       requestAnimationFrame(step);
+      return;
     }
+    cleanup();
   }
 
   requestAnimationFrame(step);
@@ -84,6 +111,7 @@ export function scrollToHash(
   const updateHistory = options.updateHistory ?? true;
 
   if (reduceMotion) {
+    activeScrollId += 1;
     const top =
       element.getBoundingClientRect().top +
       (window.scrollY ?? window.pageYOffset) -

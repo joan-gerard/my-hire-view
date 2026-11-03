@@ -6,6 +6,10 @@
 
 **Wizard on create and on edit.** The collapsible-sections shell, the title-row Sections / Wizard switch, `?formStyle=`, and the form-style env vars are gone. Create still unlocks steps through Continue; edit still lets every step be opened. Route hybrid, viewport hybrid, and a Profile layout preference stay rejected — the notes below are the record of why, not open work.
 
+**26 October 2026 — split page on the canonical URLs, wizard parked.** `/admin/new` and `/admin/edit/[id]` are one scrolling page: each step is a half-and-half band from 1200px (guidance on the left, fields on the right) and a stacked band through 1199px. The wizard lives at `/admin/wizard/new` and `/admin/wizard/edit/[id]` until one side wins. Delete the loser. Do not keep both.
+
+**3 November 2026 — wizard routes and the form demo removed.** Create is the checklist on `/admin/new`. Edit stays the scrolling page. `/admin/wizard/*` and `/demo/application-form` are gone. The notes below are the record of the wizard, not a live route.
+
 ---
 
 ## The wish
@@ -62,7 +66,7 @@ Per-step **Continue** uses the same readiness rules as Save (company/role + slug
 
 ## How to manual-test the wizard
 
-Run locally (`pnpm dev`) on `/admin/new` and `/admin/edit/[id]`. There is no layout switch.
+The wizard routes were removed on 3 November 2026. Test create on `/admin/new` and edit on `/admin/edit/[id]`.
 
 Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](../manual-testing/MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) and [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](../manual-testing/MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md).
 
@@ -70,8 +74,8 @@ Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_
 
 | Surface                 | Save control         | Must pass                                      |
 | ----------------------- | -------------------- | ---------------------------------------------- |
-| Create `/admin/new`     | **Save & Preview**   | Draft leave, CV, slug, save → preview          |
-| Edit `/admin/edit/[id]` | **Save Application** | CV, slug, save → dashboard (no Save & Preview) |
+| Create `/admin/new`        | **Save draft & preview** | Draft leave, CV, slug, save → preview          |
+| Edit `/admin/edit/[id]`    | **Save draft** or **Save application** | CV, slug, save → dashboard |
 
 - [ ] Create
 - [ ] Edit
