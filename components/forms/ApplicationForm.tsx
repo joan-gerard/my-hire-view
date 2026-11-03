@@ -288,6 +288,7 @@ export default function ApplicationForm({
     () => isEdit && Boolean((initialData?.slug ?? "").trim()),
   );
   const [previewNonce, setPreviewNonce] = useState(0);
+  const resumePreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [reviewSummaryOpen, setReviewSummaryOpen] = useState(true);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
@@ -1895,6 +1896,7 @@ export default function ApplicationForm({
       label={presentation === "wizard" ? "Show preview" : "Preview"}
       openSignal={previewNonce}
       hint={presentation === "wizard" ? undefined : "Does not save."}
+      externalReturnRef={resumePreviewTriggerRef}
     />
   );
 
@@ -1922,7 +1924,12 @@ export default function ApplicationForm({
         profilePictureVersion={profilePictureVersion}
         onJumpToStep={jumpToStep}
         onPreview={
-          presentation === "split" ? () => setPreviewNonce((n) => n + 1) : undefined
+          presentation === "split"
+            ? (trigger) => {
+                resumePreviewTriggerRef.current = trigger;
+                setPreviewNonce((n) => n + 1);
+              }
+            : undefined
         }
       />
       {presentation === "wizard" ? reviewPreview : null}

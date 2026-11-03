@@ -193,7 +193,7 @@ export default function ApplicationFormChecklistLayout({
                     id={`application-chapter-${chapter.id}`}
                     type="button"
                     aria-expanded={open}
-                    aria-controls={panelId}
+                    aria-controls={open ? panelId : undefined}
                     onClick={() => onOpen(chapter.id)}
                     className="flex w-full flex-col items-start gap-0.5 px-5 py-4 text-left outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--ink)] sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
                   >

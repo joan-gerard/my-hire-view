@@ -2,6 +2,7 @@
 
 import { ADMIN_HEADER_INSET_CLASS } from "@/components/admin/admin-chrome";
 import { createClient } from "@/lib/supabase/client";
+import ArrowCtaButton from "@/components/ui/ArrowCtaButton";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef } from "react";
@@ -62,17 +63,11 @@ export default function AdminHeader() {
       className="sticky top-0 z-50 border-b border-[var(--ink)]/10 bg-[var(--white)]/95 backdrop-blur-sm"
     >
       <div
-        className={`relative py-4 min-[720px]:min-h-[102px] min-[720px]:py-[30px] ${ADMIN_HEADER_INSET_CLASS}`}
+        className={`relative flex flex-col py-4 min-[720px]:min-h-[102px] min-[720px]:justify-center min-[720px]:py-[30px] ${ADMIN_HEADER_INSET_CLASS}`}
       >
         <div className="flex items-center justify-between gap-4">
           <LogoBlack />
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className={`cursor-pointer ${ADMIN_NAV_PILL_CLASS} ${ADMIN_NAV_PILL_INACTIVE_CLASS}`}
-          >
-            Sign Out
-          </button>
+          <ArrowCtaButton label="Sign Out" onClick={handleSignOut} />
         </div>
         <nav
           aria-label="Admin"

@@ -5,7 +5,7 @@
  * `/admin/edit/[id]` passes `presentation="split"`.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ApplicationForm, { type ApplicationFormInitialData } from '@/components/forms/ApplicationForm';
 import ApplicationFormPageHeader from '@/components/forms/ApplicationFormPageHeader';
@@ -28,6 +28,8 @@ export default function EditApplicationWizardPage({
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const idRef = useRef(id);
+  idRef.current = id;
   const [application, setApplication] = useState<Application | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [publicId, setPublicId] = useState<string | null>(null);
@@ -35,8 +37,37 @@ export default function EditApplicationWizardPage({
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
-    fetchApplication();
-  }, [id]);
+    let cancelled = false;
+
+    async function loadApplication() {
+      try {
+        setFetching(true);
+        const response = await fetch(`/api/applications/by-id/${id}`);
+        if (cancelled) return;
+        if (!response.ok) {
+          if (response.status === 404) {
+            router.push('/admin');
+            return;
+          }
+          throw new Error('Failed to fetch application');
+        }
+        const { data } = await response.json();
+        if (cancelled) return;
+        setApplication(data);
+      } catch (err) {
+        if (cancelled) return;
+        alert(err instanceof Error ? err.message : 'Failed to fetch application');
+        router.push('/admin');
+      } finally {
+        if (!cancelled) setFetching(false);
+      }
+    }
+
+    loadApplication();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,37 +98,21 @@ export default function EditApplicationWizardPage({
     };
   }, []);
 
-  const fetchApplication = async () => {
-    try {
-      setFetching(true);
-      const response = await fetch(`/api/applications/by-id/${id}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          router.push('/admin');
-          return;
-        }
-        throw new Error('Failed to fetch application');
-      }
-      const { data } = await response.json();
-      setApplication(data);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to fetch application');
-      router.push('/admin');
-    } finally {
-      setFetching(false);
-    }
-  };
-
   /**
    * Re-check whether the saved CV is still in storage, without a full-page load.
    * Returns false when the file is still missing so the form can say so.
+   * A response for a previous id is ignored after the route changes.
    */
   const refetchCvCheck = async (): Promise<boolean> => {
-    const response = await fetch(`/api/applications/by-id/${id}`);
+    const requestedId = idRef.current;
+    const response = await fetch(`/api/applications/by-id/${requestedId}`);
     if (!response.ok) {
       throw new Error("Could not check the CV.");
     }
     const { data } = await response.json();
+    if (idRef.current !== requestedId) {
+      return data?.cv_exists !== false;
+    }
     setApplication(data);
     return data?.cv_exists !== false;
   };
@@ -165,6 +180,7 @@ export default function EditApplicationWizardPage({
       router.push('/admin');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update application');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -205,7 +221,11 @@ export default function EditApplicationWizardPage({
       onSubmit={handleSubmit}
       loading={loading}
       onRetryCvCheck={refetchCvCheck}
-      profilePictureUrl={profile?.profile_picture_url ?? null}
+      profilePictureUrl={
+        profile
+          ? (profile.profile_picture_url ?? null)
+          : (application.profile_picture_url ?? null)
+      }
       profilePictureVersion={profile?.updated_at ?? null}
       onProfilePictureSaved={({ url, updated_at }) =>
         setProfile((prev) =>
@@ -215,7 +235,16 @@ export default function EditApplicationWizardPage({
                 profile_picture_url: url,
                 updated_at: updated_at ?? prev.updated_at,
               }
-            : prev,
+            : {
+                user_id: application.user_id,
+                first_name: application.first_name,
+                last_name: application.last_name,
+                location: application.location,
+                portfolio_url: application.portfolio_url,
+                linkedin_url: application.linkedin_url,
+                updated_at: updated_at ?? new Date().toISOString(),
+                profile_picture_url: url,
+              },
         )
       }
       publicId={publicId ?? undefined}

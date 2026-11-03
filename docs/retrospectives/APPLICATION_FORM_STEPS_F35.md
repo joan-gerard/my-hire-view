@@ -74,8 +74,8 @@ Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_
 
 | Surface                 | Save control         | Must pass                                      |
 | ----------------------- | -------------------- | ---------------------------------------------- |
-| Create `/admin/wizard/new`     | **Save & Preview**   | Draft leave, CV, slug, save → preview          |
-| Edit `/admin/wizard/edit/[id]` | **Save Application** | CV, slug, save → dashboard (no Save & Preview) |
+| Create `/admin/new`        | **Save draft & preview** | Draft leave, CV, slug, save → preview          |
+| Edit `/admin/edit/[id]`    | **Save draft** or **Save application** | CV, slug, save → dashboard |
 
 - [ ] Create
 - [ ] Edit

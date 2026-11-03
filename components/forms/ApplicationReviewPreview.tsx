@@ -6,7 +6,7 @@ import ApplicationPageHeader from "@/components/public/ApplicationPageHeader";
 import PDFViewer from "@/components/pdf/PDFViewer";
 import VideoModal from "@/components/view/VideoModal";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 
 export interface ApplicationReviewPreviewProps {
   company: string;
@@ -32,6 +32,8 @@ export interface ApplicationReviewPreviewProps {
   hint?: string;
   /** Bump to open the dialog from somewhere else, such as the résumé row. */
   openSignal?: number;
+  /** Control that requested `openSignal`. Focus returns here on close. */
+  externalReturnRef?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -59,17 +61,21 @@ export default function ApplicationReviewPreview({
   label = "Show preview",
   hint,
   openSignal = 0,
+  externalReturnRef,
 }: ApplicationReviewPreviewProps) {
   const [open, setOpen] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
   const [pendingCvUrl, setPendingCvUrl] = useState<string | null>(null);
   const openButtonRef = useRef<HTMLButtonElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const dialogId = useId();
 
   useEffect(() => {
     if (!openSignal) return;
+    returnFocusRef.current =
+      externalReturnRef?.current ?? openButtonRef.current;
     setOpen(true);
-  }, [openSignal]);
+  }, [openSignal, externalReturnRef]);
 
   useEffect(() => {
     if (!cvPendingFile) {
@@ -97,7 +103,10 @@ export default function ApplicationReviewPreview({
         aria-expanded={open}
         aria-controls={dialogId}
         title="Opens a preview. This does not save."
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          returnFocusRef.current = openButtonRef.current;
+          setOpen(true);
+        }}
       >
         {label}
       </button>
@@ -116,7 +125,7 @@ export default function ApplicationReviewPreview({
         widthClassName="w-[min(100vw-2rem,64rem)]"
         layout="viewport"
         bodyClassName="min-h-0 flex-1 overflow-y-auto"
-        returnFocusRef={openButtonRef}
+        returnFocusRef={returnFocusRef}
         onCancel={(event) => {
           if (!videoOpen) return;
           event.preventDefault();

@@ -111,6 +111,7 @@ export default function CvSourceField({
   const canManageLibrary = typeof onPrimaryLibraryChange === "function";
   /** Create-only lock while library loads (F15-049); edit keeps saved cv_type. */
   const lockCvSourceWhileLoading = !isEdit && primaryCvsLoading;
+  const sourceLocked = disabled || lockCvSourceWhileLoading;
 
   const hasCvSelection =
     mode === "primary"
@@ -166,6 +167,7 @@ export default function CvSourceField({
               <button
                 type="button"
                 className={textButtonClass}
+                disabled={disabled}
                 onClick={() => setLibraryModalOpen(true)}
               >
                 Manage library
@@ -188,17 +190,14 @@ export default function CvSourceField({
                   return (
                     <label
                       key={cv.id}
-                      className={choiceCardClass(
-                        selected,
-                        lockCvSourceWhileLoading,
-                      )}
+                      className={choiceCardClass(selected, sourceLocked)}
                     >
                       <input
                         type="radio"
                         name="cvSourceChecklist"
                         value={cv.id}
                         checked={selected}
-                        disabled={lockCvSourceWhileLoading}
+                        disabled={sourceLocked}
                         onChange={() => onSelectPrimary(cv.id)}
                         className="size-4 shrink-0 accent-[var(--ink)]"
                       />
@@ -215,6 +214,7 @@ export default function CvSourceField({
                         <button
                           type="button"
                           className={textButtonClass}
+                          disabled={disabled}
                           onClick={() => setLibraryModalOpen(true)}
                         >
                           Upload one to your library
@@ -227,17 +227,14 @@ export default function CvSourceField({
 
           <p className="mt-4 text-sm text-[var(--muted)]">Only this application</p>
           <label
-            className={`mt-2 ${choiceCardClass(
-              mode === "tailored",
-              lockCvSourceWhileLoading,
-            )}`}
+            className={`mt-2 ${choiceCardClass(mode === "tailored", sourceLocked)}`}
           >
             <input
               type="radio"
               name="cvSourceChecklist"
               value="tailored"
               checked={mode === "tailored"}
-              disabled={lockCvSourceWhileLoading}
+              disabled={sourceLocked}
               onChange={() => onSwitchToTailored()}
               className="size-4 shrink-0 accent-[var(--ink)]"
             />
@@ -273,6 +270,7 @@ export default function CvSourceField({
               <button
                 type="button"
                 className={`mt-2 ${textButtonClass}`}
+                disabled={disabled}
                 onClick={() =>
                   onUseOriginalCvFilenameChange(useOriginalCvFilename === false)
                 }
@@ -392,6 +390,7 @@ export default function CvSourceField({
               type="button"
               variant="secondary"
               onClick={() => setLibraryModalOpen(true)}
+              disabled={disabled}
             >
               Manage library
             </Button>
@@ -415,7 +414,7 @@ export default function CvSourceField({
           )}
           <label
             className={`flex items-start gap-2.5 ${
-              lockCvSourceWhileLoading
+              sourceLocked
                 ? "cursor-not-allowed opacity-60"
                 : "cursor-pointer"
             }`}
@@ -425,7 +424,7 @@ export default function CvSourceField({
               name="cvSource"
               className="mt-1 h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
               checked={mode === "primary"}
-              disabled={lockCvSourceWhileLoading || !hasPrimaryCvs}
+              disabled={sourceLocked || !hasPrimaryCvs}
               onChange={() => onSwitchToPrimary()}
             />
             <span className="min-w-0 flex-1">
@@ -445,7 +444,8 @@ export default function CvSourceField({
                       <button
                         type="button"
                         onClick={() => setLibraryModalOpen(true)}
-                        className="font-medium text-[var(--ink)] hover:opacity-80"
+                        disabled={disabled}
+                        className="font-medium text-[var(--ink)] hover:opacity-80 disabled:opacity-50"
                       >
                         Upload one to your library
                       </button>
@@ -468,8 +468,9 @@ export default function CvSourceField({
                     Choose from your library
                   </label>
                   <select
-                    className="w-full rounded-xl border-0 bg-[var(--white)] px-3 py-2 text-sm text-[var(--ink)] shadow-sm outline-none ring-1 ring-inset ring-[var(--ink)]/15 focus:ring-2 focus:ring-inset focus:ring-[var(--ink)]"
+                    className="w-full rounded-xl border-0 bg-[var(--white)] px-3 py-2 text-sm text-[var(--ink)] shadow-sm outline-none ring-1 ring-inset ring-[var(--ink)]/15 focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
                     value={selectedPrimaryId ?? ""}
+                    disabled={disabled}
                     onChange={(e) => onSelectPrimary(e.target.value)}
                   >
                     <option value="" disabled>
@@ -500,6 +501,7 @@ export default function CvSourceField({
                   type="button"
                   variant="secondary"
                   onClick={() => setLibraryModalOpen(true)}
+                  disabled={disabled}
                 >
                   Upload primary CV
                 </Button>
@@ -509,7 +511,7 @@ export default function CvSourceField({
 
           <label
             className={`flex items-start gap-2.5 ${
-              lockCvSourceWhileLoading
+              sourceLocked
                 ? "cursor-not-allowed opacity-60"
                 : "cursor-pointer"
             }`}
@@ -519,7 +521,7 @@ export default function CvSourceField({
               name="cvSource"
               className="mt-1 h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
               checked={mode === "tailored"}
-              disabled={lockCvSourceWhileLoading}
+              disabled={sourceLocked}
               onChange={() => onSwitchToTailored()}
             />
             <span className="min-w-0 flex-1">
@@ -564,11 +566,16 @@ export default function CvSourceField({
           Filename recruiters see when they download your CV.
         </p>
         <div className="flex flex-wrap gap-x-6 gap-y-3">
-          <label className="inline-flex cursor-pointer items-center gap-2.5">
+          <label
+            className={`inline-flex items-center gap-2.5 ${
+              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+            }`}
+          >
             <input
               type="radio"
               name="useOriginalCvFilename"
               checked={useOriginalCvFilename !== false}
+              disabled={disabled}
               onChange={() => onUseOriginalCvFilenameChange(true)}
               className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
             />
@@ -581,11 +588,16 @@ export default function CvSourceField({
               </span>
             )}
           </label>
-          <label className="inline-flex cursor-pointer items-center gap-2.5">
+          <label
+            className={`inline-flex items-center gap-2.5 ${
+              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+            }`}
+          >
             <input
               type="radio"
               name="useOriginalCvFilename"
               checked={useOriginalCvFilename === false}
+              disabled={disabled}
               onChange={() => onUseOriginalCvFilenameChange(false)}
               className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
             />

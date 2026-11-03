@@ -48,7 +48,7 @@ export interface ApplicationReviewSummaryProps {
    */
   variant?: "wizard" | "split";
   onJumpToStep?: (stepId: ApplicationFormStepId) => void;
-  onPreview?: () => void;
+  onPreview?: (trigger: HTMLButtonElement) => void;
 }
 
 function StatusChip({
@@ -291,8 +291,10 @@ export default function ApplicationReviewSummary({
   const slugTrim = slug.trim();
   const savedSlugTrim = (savedSlug ?? "").trim();
   const roleHero =
-    companyTrim && roleTrim
-      ? `${displayName(companyTrim)} · ${displayName(roleTrim)}`
+    companyTrim || roleTrim
+      ? `${companyTrim ? displayName(companyTrim) : "—"} · ${
+          roleTrim ? displayName(roleTrim) : "—"
+        }`
       : null;
   const jump = (stepId: ApplicationFormStepId) => onJumpToStep?.(stepId);
   const pictureSrc = cacheBustProfilePictureUrl(
@@ -382,7 +384,9 @@ export default function ApplicationReviewSummary({
         ? "Checking"
         : slugState.kind === "unavailable"
           ? "Taken"
-          : "Required"}
+          : slugState.kind === "invalid"
+            ? "Not valid"
+            : "Required"}
     </StatusChip>
   ) : (
     <span
@@ -487,7 +491,7 @@ export default function ApplicationReviewSummary({
             {onPreview ? (
               <button
                 type="button"
-                onClick={onPreview}
+                onClick={(event) => onPreview?.(event.currentTarget)}
                 className="mt-1 cursor-pointer text-sm font-semibold text-[var(--ink)] underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
               >
                 Preview

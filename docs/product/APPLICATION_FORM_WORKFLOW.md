@@ -1,6 +1,6 @@
 # Application form workflow
 
-Create is `/admin/new`. Edit is `/admin/edit/[id]`. They share the same fields, browser draft, CV, and save rules. A saved application still needs a company, a role, an available share link, a résumé, and a YouTube intro.
+Create is `/admin/new`. Edit is `/admin/edit/[id]`. They share the same fields, CV, and save rules. Only create keeps a browser draft. A saved application still needs a company, a role, an available share link, a résumé, and a YouTube intro.
 
 ## Create
 
