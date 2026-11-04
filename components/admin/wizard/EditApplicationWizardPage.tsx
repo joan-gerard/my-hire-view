@@ -92,6 +92,8 @@ export default function EditApplicationWizardPage({
         }
       } catch {
         // ignore
+      } finally {
+        if (!cancelled) setProfileSettled(true);
       }
     }
     loadProfile();
@@ -188,7 +190,7 @@ export default function EditApplicationWizardPage({
     }
   };
 
-  if (fetching) {
+  if (fetching || !profileSettled) {
     return <AdminPageSkeleton variant="form" showTip />;
   }
 
@@ -196,8 +198,6 @@ export default function EditApplicationWizardPage({
     return null;
   }
 
-  // Normalize DB shape to form shape; candidate fields and slug order from application only
-  const initialData: ApplicationFormInitialData = {
   // Identity text comes from the live profile. Include flags come from
   // whether this application currently stores a value (hidden means null).
   const identity = profile ?? application;
@@ -215,6 +215,8 @@ export default function EditApplicationWizardPage({
     slugSegmentOrder: application.slug_segment_order ?? 'company_role',
     cv_filename: application.cv_filename ?? null,
     use_original_cv_filename: false,
+    cvUrlExists: application.cv_exists,
+    show_profile_picture: application.show_profile_picture ?? false,
     cv_type: application.cv_type ?? 'tailored',
     primary_cv_id: application.primary_cv_id ?? null,
   };
@@ -231,8 +233,6 @@ export default function EditApplicationWizardPage({
           : (application.profile_picture_url ?? null)
       }
       profilePictureVersion={profile?.updated_at ?? null}
-      onProfilePictureSaved={({ url, updated_at }) =>
-        setProfile((prev) =>
       initialInclude={{
         first_name: true,
         last_name: true,
@@ -254,6 +254,8 @@ export default function EditApplicationWizardPage({
           }),
         );
       }}
+      publicId={publicId ?? undefined}
+      slugExcludeApplicationId={id}
       submitLabel={
         application.status === "draft" ? "Save draft" : "Save application"
       }
@@ -269,12 +271,12 @@ export default function EditApplicationWizardPage({
       />
       {presentation === "wizard" ? (
         <p className={ADMIN_TIP_CLASS}>
-          The candidate details below (name, location, links) are from when this
-          application was saved, not from your current profile. Updating your
           Name, location, and links come from your profile. This page chooses
           which of them this application shows. Saving copies the current
           profile values onto this application. Your picture stays on your
           profile; this page only chooses whether to show it.
+        </p>
+      ) : null}
       {presentation === "split" ? (
         form
       ) : (
