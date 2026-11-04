@@ -12,7 +12,7 @@ The create/edit form has been a long scroll for a while — company, role, candi
 
 Once both shells existed, the day shifted to shaking them down — saving too early from the middle of the form, focus and keyboard rough edges, sections that felt too rigid. The fixes are logged in the F35 retrospective; the lesson for later is that trying both patterns only helps if the shared form stays boring and we find the sharp edges before picking a winner.
 
-Along the way we talked through forks we are *not* shipping yet. Letting candidates pick wizard vs sections in Profile feels like a last resort — only if people ask after launch. Wizard on create and sections on edit is more interesting, because create and edit are different jobs. Splitting by viewport (mobile wizard / desktop sections) is a useful test lens but a shaky default, especially stacked with other hybrids. Stances are in the F35 doc so we do not re-litigate them cold.
+Along the way we talked through forks we are _not_ shipping yet. Letting candidates pick wizard vs sections in Profile feels like a last resort — only if people ask after launch. Wizard on create and sections on edit is more interesting, because create and edit are different jobs. Splitting by viewport (mobile wizard / desktop sections) is a useful test lens but a shaky default, especially stacked with other hybrids. Stances are in the F35 doc so we do not re-litigate them cold.
 
 Late in the day: should people save a real draft on the server even when required fields are empty, while still blocking go-live until everything is complete? Right instinct — browser drafts are not dashboard applications, and Publish today is basically a status flip — but the wrong change to land inside F35. Form layout and Save/publish rules are different risks. Parked as F40 ([INCOMPLETE_DRAFT_SAVES.md](../product/INCOMPLETE_DRAFT_SAVES.md)) for after we pick a layout. A leave-dialog “save draft and leave” idea is mostly a wording trap: the browser draft already keeps work; the missing choice would be leave-but-keep versus discard, and that stays out of F40 for now.
 
@@ -67,3 +67,13 @@ The same pass cut the identity editors. A name, a location, a portfolio, and a L
 A missing portfolio or LinkedIn should not send someone away from a half-finished application. Those two open a small dialog, save onto the profile, and come back as Show / Hidden. Location still sends you to Profile. The profile remains the only copy of the URL.
 
 Link order and the ending no longer hide behind a toggle. They stay on the share-link row, and the read-only URL with the copy button sits under them.
+
+---
+
+## 4 November 2026
+
+About you kept shifting under our feet, so the day is worth keeping as one thread.
+
+We started from the trim: identity lives on the profile; create only chooses what this page shows. Empty portfolio and LinkedIn briefly used a dialog so people did not have to leave a half-finished application. Location followed. Then the dialogs felt wrong next to Your link — so name, location, portfolio, and LinkedIn became dense fields like Company and Role, with a show switch under each optional value. The picture stayed a preview. Saving the application writes those text fields to the profile first, then snapshots what this page shows. Soft warnings catch a LinkedIn URL in portfolio and the reverse.
+
+That write-through raised the honesty problem. Editable account fields make people think the profile already changed. We debated a dedicated About you Save (section or per row) versus one form Save. Dedicated Save would match “update my account now,” but it splits the form into two commit models and invites partial profile saves before an application exists. We chose one Save: the bottom create or edit button. Transparency has to carry the timing. The About you note now says those details update the profile when you save this application — not if you cancel or leave — and that this page only chooses what recruiters see. Edit and the split recommendations say the same. Revisit a section Save only if people still edit About you and leave without saving. Inventory and calls: [CREATE_FORM_FIELD_TRIM.md](../product/CREATE_FORM_FIELD_TRIM.md).

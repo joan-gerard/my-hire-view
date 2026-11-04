@@ -13,9 +13,9 @@ const RECOMMENDATIONS: Record<
       "Leave your name out of the URL when you want a shorter link.",
     ],
     candidate: [
-      "These details are saved on this application.",
-      "Updating your profile later does not change them here.",
-      "Your picture stays live. Recruiters see the current one from your profile.",
+      "These details update your profile when you save this application.",
+      "They are not saved if you cancel or leave.",
+      "This page only chooses which ones recruiters see. Your picture stays on your profile.",
     ],
     materials: [
       "A primary CV is reused across applications.",
@@ -40,9 +40,9 @@ const RECOMMENDATIONS: Record<
       "Reset to suggested builds a new link. Saving then replaces the old one.",
     ],
     candidate: [
-      "Name, location, and links are from when this application was saved.",
-      "Updating your profile does not change them here.",
-      "Your picture stays live if this application shows it.",
+      "Saving updates your profile, then copies what you show onto this application.",
+      "Changes here are not saved if you cancel or leave.",
+      "This page only chooses which ones recruiters see. Your picture stays on your profile.",
     ],
     materials: [
       "A primary CV is reused across applications.",

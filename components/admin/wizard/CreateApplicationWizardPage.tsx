@@ -6,7 +6,7 @@
  */
 
 import ApplicationForm from "@/components/forms/ApplicationForm";
-import { profileWithSavedLink } from "@/components/forms/ProfileLinkDialog";
+import { profileWithSavedIdentity } from "@/lib/utils/profile-with-saved-identity";
 import ApplicationFormPageHeader from "@/components/forms/ApplicationFormPageHeader";
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
 import {
@@ -263,9 +263,9 @@ export default function CreateApplicationWizardPage({
       submitLabel="Save draft & preview"
       profilePictureUrl={profile?.profile_picture_url ?? null}
       profilePictureVersion={profile?.updated_at ?? null}
-      onProfileLinkSaved={(field, url) => {
+      onProfileIdentitySaved={(identity) => {
         setProfile((prev) =>
-          profileWithSavedLink(prev, field, url, {
+          profileWithSavedIdentity(prev, identity, {
             user_id: authUserId ?? undefined,
             public_id: publicId ?? undefined,
             first_name: metaNames?.first_name ?? null,

@@ -16,6 +16,10 @@ import {
     PROFILE_URL_MAX_LENGTH,
 } from "@/lib/types/profile";
 import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
+import {
+  linkedInUrlFieldWarning,
+  portfolioUrlFieldWarning,
+} from "@/lib/utils/profile-link-url";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { mapProfileSaveWarnings } from "@/lib/utils/upload-form-messages";
 import { uploadProfilePictureFile } from "@/lib/utils/upload-profile-picture-client";
@@ -485,8 +489,11 @@ export default function ProfileForm({
                 maxLength={PROFILE_LOCATION_MAX_LENGTH}
               />
               <Input
+                id="profile-portfolio-url"
                 label="Portfolio URL"
-                type="url"
+                type="text"
+                inputMode="url"
+                autoComplete="url"
                 value={formData.portfolio_url}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -496,10 +503,16 @@ export default function ProfileForm({
                 }
                 placeholder="https://..."
                 maxLength={PROFILE_URL_MAX_LENGTH}
+                warning={
+                  portfolioUrlFieldWarning(formData.portfolio_url) ?? undefined
+                }
               />
               <Input
+                id="profile-linkedin-url"
                 label="LinkedIn URL"
-                type="url"
+                type="text"
+                inputMode="url"
+                autoComplete="url"
                 value={formData.linkedin_url}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -509,6 +522,9 @@ export default function ProfileForm({
                 }
                 placeholder="https://linkedin.com/in/..."
                 maxLength={PROFILE_URL_MAX_LENGTH}
+                warning={
+                  linkedInUrlFieldWarning(formData.linkedin_url) ?? undefined
+                }
               />
             </div>
           </div>

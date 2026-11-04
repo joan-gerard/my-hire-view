@@ -32,7 +32,7 @@ Requires `SUPABASE_SERVICE_ROLE_KEY` in the server env (signup profile insert).
 
 - [ ] Open `/admin/new` with no picture: **Add a picture on your profile** goes to `/admin/profile`. There is no upload on the application form
 - [ ] On Profile, choose JPEG/PNG/WebP, preview, **Save profile**
-- [ ] Return to New Application: **Show picture** / **Hide picture** appear and the thumbnail shows when Show is selected
+- [ ] Return to New Application: the thumbnail shows with a right-aligned show switch under it; the switch starts on
 - [ ] Save the application with the picture shown; public view shows the avatar
 - [ ] Remove the picture on Profile; New and Edit link back to Profile and do not offer Show / Hide
 

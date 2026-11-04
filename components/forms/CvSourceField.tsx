@@ -1,7 +1,11 @@
 "use client";
 
 import { ADMIN_FIELDSET_CLASS } from "@/components/admin/admin-chrome";
-import { ApplicationFormFieldRow } from "@/components/forms/ApplicationFormSinglePageLayout";
+import {
+  ApplicationFormFieldRow,
+  FIELD_IDLE_TIP,
+  FIELD_READY_TIP,
+} from "@/components/forms/ApplicationFormSinglePageLayout";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
 import FileUpload from "@/components/forms/FileUpload";
@@ -142,7 +146,13 @@ export default function CvSourceField({
   if (variant === "checklist") {
     return (
       <>
-        <ApplicationFormFieldRow id="application-row-library" label="Library" align="top">
+        <ApplicationFormFieldRow
+          id="application-row-library"
+          label="Library"
+          tip={mode === "primary" ? FIELD_READY_TIP : FIELD_IDLE_TIP}
+          tipTone={mode === "primary" ? "ready" : "idle"}
+          align="top"
+        >
           {canManageLibrary ? (
             <div className="mb-1.5 flex justify-end">
               <button
@@ -215,6 +225,8 @@ export default function CvSourceField({
         <ApplicationFormFieldRow
           id="application-row-tailored"
           label="This role"
+          tip={mode === "tailored" ? FIELD_READY_TIP : FIELD_IDLE_TIP}
+          tipTone={mode === "tailored" ? "ready" : "idle"}
           align="top"
         >
           <label className={choiceCardClass(mode === "tailored", sourceLocked)}>

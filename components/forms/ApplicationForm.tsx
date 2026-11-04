@@ -41,6 +41,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
 import ApplicationFormSinglePageLayout, {
   ApplicationFormFieldRow,
+  FIELD_IDLE_TIP,
+  FIELD_READY_TIP,
+  PROFILE_EMPTY_TIP,
+  PROFILE_INITIAL_DATA_TIP,
 } from "./ApplicationFormSinglePageLayout";
 import ApplicationFormSplitLayout from "./ApplicationFormSplitLayout";
 import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
@@ -52,7 +56,6 @@ import {
 import CandidateFieldsSection, {
   type CandidateFieldKey,
 } from "./CandidateFieldsSection";
-import type { ProfileLinkField } from "./ProfileLinkDialog";
 import ApplicationReviewPreview from "./ApplicationReviewPreview";
 import ApplicationReviewSummary from "./ApplicationReviewSummary";
 import CvSourceField from "./CvSourceField";
@@ -67,7 +70,13 @@ import AdminTooltip from "@/components/admin/AdminTooltip";
 import { CopyIcon } from "@/components/admin/icons";
 import SlugOrderDropdown from "./SlugOrderDropdown";
 import { copyToClipboard } from "@/lib/utils/clipboard";
+import type { ProfileIdentityFields } from "@/lib/utils/profile-with-saved-identity";
 import { getApplicationUrl, getBaseUrl } from "@/lib/utils/url";
+import { validateYouTubeUrl } from "@/lib/utils/youtube";
+import {
+  formatProfileUpdateZodError,
+  profileUpdateSchema,
+} from "@/lib/validation/profile";
 import { FiAlertCircle, FiCheck, FiRefreshCw } from "react-icons/fi";
 
 function hasValue(v: string | null | undefined): boolean {
@@ -85,6 +94,33 @@ function checklistErrorTarget(
   }
   if (errors.slug) {
     return { rowId: "application-row-ending", inputId: "application-slug" };
+  }
+  if (errors.first_name) {
+    return {
+      rowId: "application-row-first_name",
+      inputId: "application-first-name",
+    };
+  }
+  if (errors.last_name) {
+    return {
+      rowId: "application-row-last_name",
+      inputId: "application-last-name",
+    };
+  }
+  if (errors.location) {
+    return { rowId: "application-row-location", inputId: "application-location" };
+  }
+  if (errors.portfolio_url) {
+    return {
+      rowId: "application-row-portfolio_url",
+      inputId: "application-portfolio_url",
+    };
+  }
+  if (errors.linkedin_url) {
+    return {
+      rowId: "application-row-linkedin_url",
+      inputId: "application-linkedin_url",
+    };
   }
   if (errors.cv_url || errors.cv_filename) {
     return { rowId: "application-row-resume" };
@@ -166,10 +202,10 @@ interface ApplicationFormProps {
    */
   initialInclude?: Partial<Record<CandidateFieldKey, boolean>>;
   /**
-   * Portfolio or LinkedIn was saved onto the profile from this form.
-   * Parents refresh their profile copy so nudges stay in sync.
+   * Identity fields were written back to the profile before this application
+   * saved. Parents refresh their profile copy so nudges stay in sync.
    */
-  onProfileLinkSaved?: (field: ProfileLinkField, url: string) => void;
+  onProfileIdentitySaved?: (identity: ProfileIdentityFields) => void;
   /** Opaque public id for share URL preview (from profile or auth metadata). */
   publicId?: string;
   /**
@@ -203,7 +239,7 @@ export default function ApplicationForm({
   profilePictureUrl,
   profilePictureVersion,
   initialInclude,
-  onProfileLinkSaved,
+  onProfileIdentitySaved,
   publicId,
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
@@ -295,6 +331,17 @@ export default function ApplicationForm({
     cv_type: restoredDraft?.cvMode ?? initialData?.cv_type,
     primary_cv_id:
       restoredDraft?.selectedPrimaryId ?? initialData?.primary_cv_id ?? null,
+  });
+
+  /** Identity last known on the profile — write-through tip hides until a field differs. */
+  const [savedIdentity, setSavedIdentity] = useState<
+    Record<CandidateFieldKey, string>
+  >({
+    first_name: initialData?.first_name ?? "",
+    last_name: initialData?.last_name ?? "",
+    location: initialData?.location ?? "",
+    portfolio_url: initialData?.portfolio_url ?? "",
+    linkedin_url: initialData?.linkedin_url ?? "",
   });
 
   const [include, setInclude] = useState<Record<CandidateFieldKey, boolean>>(
@@ -763,6 +810,7 @@ export default function ApplicationForm({
         ? `tailored:${cvPendingFile.name}:${cvPendingFile.size}:${cvPendingFile.lastModified}`
         : "";
   const hasVideo = Boolean(formData.video_url.trim());
+  const hasValidVideo = validateYouTubeUrl(formData.video_url.trim());
   const savedSlug = (initialData?.slug ?? "").trim();
   const slugUnchangedFromSave =
     slugPinned && hasSlug && formData.slug.trim() === savedSlug;
@@ -820,8 +868,17 @@ export default function ApplicationForm({
     hasVideo &&
     slugHoldsStepComplete;
 
+  const hasFirstName = Boolean(formData.first_name?.trim());
+  const hasLastName = Boolean(formData.last_name?.trim());
+
   const requiredReady =
-    hasCompany && hasRole && hasUsableCv && hasVideo && slugReady;
+    hasCompany &&
+    hasRole &&
+    hasFirstName &&
+    hasLastName &&
+    hasUsableCv &&
+    hasVideo &&
+    slugReady;
 
   const formBusy =
     loading || submitPhase !== "idle" || cvPendingDigesting;
@@ -858,6 +915,12 @@ export default function ApplicationForm({
       });
     } else if (!hasSlug || !slugReady) {
       items.push({ name: "Shareable link", stepId: "role" });
+    }
+    if (!hasFirstName) {
+      items.push({ name: "First name", stepId: "candidate" });
+    }
+    if (!hasLastName) {
+      items.push({ name: "Last name", stepId: "candidate" });
     }
     if (!hasUsableCv) items.push({ name: "Résumé", stepId: "materials" });
     if (!hasVideo) items.push({ name: "YouTube intro", stepId: "video" });
@@ -1180,6 +1243,29 @@ export default function ApplicationForm({
       if (!formData.video_url.trim())
         newErrors.video_url = "YouTube intro is required";
 
+      const firstName = formData.first_name?.trim() ?? "";
+      const lastName = formData.last_name?.trim() ?? "";
+      if (!firstName) newErrors.first_name = "First name is required";
+      if (!lastName) newErrors.last_name = "Last name is required";
+
+      const profileParsed = profileUpdateSchema.safeParse({
+        first_name: firstName || null,
+        last_name: lastName || null,
+        location: formData.location?.trim() || null,
+        portfolio_url: formData.portfolio_url?.trim() || null,
+        linkedin_url: formData.linkedin_url?.trim() || null,
+      });
+      if (!profileParsed.success) {
+        const message = formatProfileUpdateZodError(profileParsed.error);
+        const lower = message.toLowerCase();
+        if (lower.includes("first name")) newErrors.first_name = message;
+        else if (lower.includes("last name")) newErrors.last_name = message;
+        else if (lower.includes("portfolio")) newErrors.portfolio_url = message;
+        else if (lower.includes("linkedin")) newErrors.linkedin_url = message;
+        else if (lower.includes("location")) newErrors.location = message;
+        else newErrors.first_name = message;
+      }
+
       if (Object.keys(newErrors).length > 0) {
         revealFormErrors(newErrors);
         return;
@@ -1234,6 +1320,65 @@ export default function ApplicationForm({
           setSlugLiveStatus({ kind: "unavailable", message: slugErr });
           return;
         }
+      }
+
+      // Keep the profile as the source of truth for About you fields.
+      const identitySaved: ProfileIdentityFields = {
+        first_name: firstName,
+        last_name: lastName,
+        location: formData.location?.trim() ?? "",
+        portfolio_url: formData.portfolio_url?.trim() ?? "",
+        linkedin_url: formData.linkedin_url?.trim() ?? "",
+      };
+      try {
+        const profileRes = await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            first_name: identitySaved.first_name,
+            last_name: identitySaved.last_name,
+            location: identitySaved.location || null,
+            portfolio_url: identitySaved.portfolio_url || null,
+            linkedin_url: identitySaved.linkedin_url || null,
+          }),
+        });
+        const profileJson = (await profileRes.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        if (!profileRes.ok) {
+          const message =
+            profileJson.error ?? "Could not save your profile details.";
+          const lower = message.toLowerCase();
+          if (lower.includes("first name")) {
+            revealFormErrors({ first_name: message });
+          } else if (lower.includes("last name")) {
+            revealFormErrors({ last_name: message });
+          } else if (lower.includes("portfolio")) {
+            revealFormErrors({ portfolio_url: message });
+          } else if (lower.includes("linkedin")) {
+            revealFormErrors({ linkedin_url: message });
+          } else if (lower.includes("location")) {
+            revealFormErrors({ location: message });
+          } else {
+            revealFormErrors({ first_name: message });
+          }
+          return;
+        }
+        setSavedIdentity({
+          first_name: identitySaved.first_name,
+          last_name: identitySaved.last_name,
+          location: identitySaved.location,
+          portfolio_url: identitySaved.portfolio_url,
+          linkedin_url: identitySaved.linkedin_url,
+        });
+        onProfileIdentitySaved?.(identitySaved);
+      } catch {
+        revealFormErrors({
+          first_name:
+            "Could not save your profile details. Check your connection and try again.",
+        });
+        return;
       }
 
       let cvUrl = formData.cv_url.trim();
@@ -1380,17 +1525,38 @@ export default function ApplicationForm({
     linkedin_url: formData.linkedin_url ?? "",
   };
 
-  const handleProfileLinkSaved = (field: ProfileLinkField, url: string) => {
-    setFormData((prev) => ({ ...prev, [field]: url }));
-    setInclude((prev) => ({ ...prev, [field]: true }));
-    onProfileLinkSaved?.(field, url);
-  };
-
   const handleCandidateIncludeChange = (
     field: CandidateFieldKey,
     included: boolean,
   ) => {
     setInclude((prev) => ({ ...prev, [field]: included }));
+  };
+
+  const handleCandidateValueChange = (
+    field: CandidateFieldKey,
+    value: string,
+  ) => {
+    const wasEmpty = !(formData[field]?.trim());
+    const nowEmpty = !value.trim();
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (
+      field === "location" ||
+      field === "portfolio_url" ||
+      field === "linkedin_url"
+    ) {
+      if (wasEmpty && !nowEmpty) {
+        setInclude((prev) => ({ ...prev, [field]: true }));
+      } else if (!wasEmpty && nowEmpty) {
+        setInclude((prev) => ({ ...prev, [field]: false }));
+      }
+    }
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
   };
 
   const stepReady = (id: ApplicationFormStepId): boolean => {
@@ -1658,6 +1824,10 @@ export default function ApplicationForm({
         <ApplicationFormFieldRow
           id="application-row-picture"
           label="Picture"
+          tip={
+            hasProfilePicture ? PROFILE_INITIAL_DATA_TIP : PROFILE_EMPTY_TIP
+          }
+          tipTone={hasProfilePicture ? "ready" : "idle"}
           align="top"
         >
           <ProfilePictureField
@@ -1677,9 +1847,17 @@ export default function ApplicationForm({
         <CandidateFieldsSection
           layout="rows"
           values={candidateValues}
+          savedValues={savedIdentity}
           include={include}
           onIncludeChange={handleCandidateIncludeChange}
-          onProfileLinkSaved={handleProfileLinkSaved}
+          onValueChange={handleCandidateValueChange}
+          errors={{
+            first_name: errors.first_name,
+            last_name: errors.last_name,
+            location: errors.location,
+            portfolio_url: errors.portfolio_url,
+            linkedin_url: errors.linkedin_url,
+          }}
         />
       </>
     ) : (
@@ -1697,9 +1875,17 @@ export default function ApplicationForm({
         />
         <CandidateFieldsSection
           values={candidateValues}
+          savedValues={savedIdentity}
           include={include}
           onIncludeChange={handleCandidateIncludeChange}
-          onProfileLinkSaved={handleProfileLinkSaved}
+          onValueChange={handleCandidateValueChange}
+          errors={{
+            first_name: errors.first_name,
+            last_name: errors.last_name,
+            location: errors.location,
+            portfolio_url: errors.portfolio_url,
+            linkedin_url: errors.linkedin_url,
+          }}
         />
       </>
     );
@@ -2064,14 +2250,27 @@ export default function ApplicationForm({
           ? { rowId: "application-row-role", inputId: "application-role" }
           : item.name === "Shareable link"
             ? { rowId: "application-row-ending", inputId: "application-slug" }
-            : item.stepId === "materials"
-              ? { rowId: "application-row-resume" }
-              : item.stepId === "video"
+            : item.name === "First name"
+              ? {
+                  rowId: "application-row-first_name",
+                  inputId: "application-first-name",
+                }
+              : item.name === "Last name"
                 ? {
-                    rowId: "application-row-pitch",
-                    inputId: "application-video",
+                    rowId: "application-row-last_name",
+                    inputId: "application-last-name",
                   }
-                : { rowId: "application-row-company", inputId: "application-company" };
+                : item.stepId === "materials"
+                  ? { rowId: "application-row-resume" }
+                  : item.stepId === "video"
+                    ? {
+                        rowId: "application-row-pitch",
+                        inputId: "application-video",
+                      }
+                    : {
+                        rowId: "application-row-company",
+                        inputId: "application-company",
+                      };
     window.setTimeout(
       () => focusApplicationRow(target.rowId, target.inputId),
       0,
@@ -2115,6 +2314,8 @@ export default function ApplicationForm({
               label: "Company",
               labelFor: "application-company",
               align: "field",
+              tip: hasCompany ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+              tipTone: hasCompany ? "ready" : "idle",
               children: (
                 <Input
                   id="application-company"
@@ -2138,6 +2339,8 @@ export default function ApplicationForm({
               label: "Role",
               labelFor: "application-role",
               align: "field",
+              tip: hasRole ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+              tipTone: hasRole ? "ready" : "idle",
               children: (
                 <Input
                   id="application-role"
@@ -2175,6 +2378,8 @@ export default function ApplicationForm({
               labelFor: "application-slug",
               align: "field",
               info: "Pre-filled for you. Edit it if you like. Each ending must be unique.",
+              tip: slugReady ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+              tipTone: slugReady ? "ready" : "idle",
               children: linkEndingControl,
             },
             {
@@ -2190,6 +2395,8 @@ export default function ApplicationForm({
               id: "application-section-about",
               label: "About you",
               optional: true,
+              description:
+                "These details update your profile when you save this application — not if you cancel or leave. This page only chooses which ones recruiters see.",
             },
             {
               type: "block",
@@ -2218,6 +2425,8 @@ export default function ApplicationForm({
               labelFor: "application-video",
               align: "field",
               hint: "A YouTube video they can watch on the page.",
+              tip: hasValidVideo ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+              tipTone: hasValidVideo ? "ready" : "idle",
               children: (
                 <YouTubeUrlInput
                   id="application-video"

@@ -1,11 +1,25 @@
 'use client';
 
-import { ApplicationFormFieldRow } from '@/components/forms/ApplicationFormSinglePageLayout';
-import ProfileLinkDialog, {
-  type ProfileLinkField,
-} from '@/components/forms/ProfileLinkDialog';
-import Link from 'next/link';
-import { useRef, useState } from 'react';
+import AdminTooltip from '@/components/admin/AdminTooltip';
+import { EyeIcon, EyeOffIcon } from '@/components/admin/icons';
+import {
+  ApplicationFormFieldRow,
+  FieldLabelTip,
+  PROFILE_EMPTY_TIP,
+  PROFILE_INITIAL_DATA_TIP,
+  PROFILE_WRITE_THROUGH_TIP,
+  type FieldLabelTipTone,
+} from '@/components/forms/ApplicationFormSinglePageLayout';
+import Input from '@/components/ui/Input';
+import {
+  PROFILE_LOCATION_MAX_LENGTH,
+  PROFILE_NAME_MAX_LENGTH,
+  PROFILE_URL_MAX_LENGTH,
+} from '@/lib/types/profile';
+import {
+  linkedInUrlFieldWarning,
+  portfolioUrlFieldWarning,
+} from '@/lib/utils/profile-link-url';
 
 export type CandidateFieldKey =
   | 'first_name'
@@ -16,15 +30,49 @@ export type CandidateFieldKey =
 
 export interface CandidateFieldsSectionProps {
   values: Record<CandidateFieldKey, string>;
+  /**
+   * Last identity written to the profile (or loaded into the form).
+   * The write-through tip shows only when a field differs from this.
+   */
+  savedValues: Record<CandidateFieldKey, string>;
   include: Record<CandidateFieldKey, boolean>;
   onIncludeChange: (field: CandidateFieldKey, included: boolean) => void;
-  /** Portfolio and LinkedIn added here are saved on the profile. */
-  onProfileLinkSaved?: (field: ProfileLinkField, url: string) => void;
+  onValueChange: (field: CandidateFieldKey, value: string) => void;
+  errors?: Partial<Record<CandidateFieldKey, string>>;
   /**
-   * `rows` puts each label on the left and the value on the right.
+   * `rows` puts each label on the left and the control on the right.
    * Used on the one-page create form.
    */
   layout?: 'stack' | 'rows';
+}
+
+function identityFieldPending(
+  values: Record<CandidateFieldKey, string>,
+  savedValues: Record<CandidateFieldKey, string>,
+  field: CandidateFieldKey,
+): boolean {
+  return (values[field] ?? '').trim() !== (savedValues[field] ?? '').trim();
+}
+
+/**
+ * Green = unchanged prefilled profile data.
+ * Yellow = edited, awaiting save.
+ * Grey = still empty.
+ */
+function identityFieldTip(
+  values: Record<CandidateFieldKey, string>,
+  savedValues: Record<CandidateFieldKey, string>,
+  field: CandidateFieldKey,
+): { tip: string; tone: FieldLabelTipTone } {
+  const saved = (savedValues[field] ?? '').trim();
+  const pending = identityFieldPending(values, savedValues, field);
+  if (pending) {
+    return { tip: PROFILE_WRITE_THROUGH_TIP, tone: 'draft' };
+  }
+  if (saved) {
+    return { tip: PROFILE_INITIAL_DATA_TIP, tone: 'ready' };
+  }
+  return { tip: PROFILE_EMPTY_TIP, tone: 'idle' };
 }
 
 export const RECRUITER_INFO_FIELDS: {
@@ -42,219 +90,300 @@ export const RECRUITER_INFO_FIELDS: {
 const SHARE_FIELDS: {
   key: Extract<CandidateFieldKey, 'location' | 'portfolio_url' | 'linkedin_url'>;
   label: string;
-  emptyLabel: string;
-  /** Empty state opens a profile-save dialog instead of leaving the form. */
-  dialog?: ProfileLinkField;
+  /** Always `text` so we use our under-field warnings, not the browser URL bubble. */
+  inputType: 'text';
+  inputMode?: 'text' | 'url';
+  placeholder: string;
+  maxLength: number;
+  autoComplete: string;
 }[] = [
-  { key: 'location', label: 'Location', emptyLabel: 'location' },
+  {
+    key: 'location',
+    label: 'Location',
+    inputType: 'text',
+    placeholder: 'City, country',
+    maxLength: PROFILE_LOCATION_MAX_LENGTH,
+    autoComplete: 'address-level2',
+  },
   {
     key: 'portfolio_url',
     label: 'Portfolio',
-    emptyLabel: 'portfolio',
-    dialog: 'portfolio_url',
+    inputType: 'text',
+    inputMode: 'url',
+    placeholder: 'https://yoursite.com',
+    maxLength: PROFILE_URL_MAX_LENGTH,
+    autoComplete: 'url',
   },
   {
     key: 'linkedin_url',
     label: 'LinkedIn',
-    emptyLabel: 'LinkedIn',
-    dialog: 'linkedin_url',
+    inputType: 'text',
+    inputMode: 'url',
+    placeholder: 'https://www.linkedin.com/in/…',
+    maxLength: PROFILE_URL_MAX_LENGTH,
+    autoComplete: 'url',
   },
 ];
 
-const choiceClass = (selected: boolean) =>
-  selected
-    ? 'rounded-full bg-[var(--ink)] px-3 py-1 text-xs font-semibold text-[var(--white)]'
-    : 'rounded-full px-3 py-1 text-xs font-semibold text-[var(--muted)]';
+const visibilityToggleClass =
+  'inline-flex size-7 items-center justify-center rounded-lg border border-[var(--ink)]/15 bg-[var(--white)] shadow-sm focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]';
 
-const profileLinkClass =
-  'rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]';
+function shareWarning(
+  key: (typeof SHARE_FIELDS)[number]['key'],
+  value: string,
+): string | undefined {
+  if (key === 'portfolio_url') {
+    return portfolioUrlFieldWarning(value) ?? undefined;
+  }
+  if (key === 'linkedin_url') {
+    return linkedInUrlFieldWarning(value) ?? undefined;
+  }
+  return undefined;
+}
 
-function ShareFieldBody({
+function ShareFieldControl({
+  fieldKey,
   label,
-  emptyLabel,
+  inputId,
+  inputType,
+  inputMode = 'text',
+  placeholder,
+  maxLength,
+  autoComplete,
   value,
   included,
-  dialog,
-  showLabel,
-  canSaveLink,
+  error,
+  showOuterLabel,
+  showWriteThroughTip,
+  writeThroughTip = PROFILE_WRITE_THROUGH_TIP,
+  writeThroughTipTone = 'draft',
+  onValueChange,
   onIncludeChange,
-  onOpenDialog,
 }: {
+  fieldKey: (typeof SHARE_FIELDS)[number]['key'];
   label: string;
-  emptyLabel: string;
+  inputId: string;
+  inputType: 'text';
+  inputMode?: 'text' | 'url';
+  placeholder: string;
+  maxLength: number;
+  autoComplete: string;
   value: string;
   included: boolean;
-  dialog?: ProfileLinkField;
-  showLabel: boolean;
-  canSaveLink: boolean;
+  error?: string;
+  showOuterLabel: boolean;
+  showWriteThroughTip: boolean;
+  writeThroughTip?: string;
+  writeThroughTipTone?: FieldLabelTipTone;
+  onValueChange: (value: string) => void;
   onIncludeChange: (included: boolean) => void;
-  onOpenDialog: (trigger: HTMLButtonElement) => void;
 }) {
-  const switchButton = value ? (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={included}
-      aria-label={`Show ${label} to recruiters`}
-      onClick={() => onIncludeChange(!included)}
-      className="inline-flex rounded-full border border-[var(--ink)]/12 bg-[var(--white)] p-0.5 outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)] focus-visible:ring-offset-2"
-    >
-      <span className={choiceClass(included)}>Show</span>
-      <span className={choiceClass(!included)}>Hidden</span>
-    </button>
-  ) : null;
-  const empty = dialog && canSaveLink ? (
-    <button
-      type="button"
-      className={`cursor-pointer ${profileLinkClass}`}
-      aria-haspopup="dialog"
-      onClick={(event) => onOpenDialog(event.currentTarget)}
-    >
-      Add {emptyLabel}
-    </button>
-  ) : (
-    <Link href="/admin/profile" className={profileLinkClass}>
-      Add {emptyLabel} on your profile
-    </Link>
-  );
-  const valueNode = value ? (
-    <p
-      className={`text-sm break-all ${
-        included ? 'text-[var(--ink)]' : 'text-[var(--muted)]'
-      }`}
-    >
-      {value}
-    </p>
-  ) : (
-    <p className="text-sm text-[var(--muted)]">{empty}</p>
-  );
-
-  if (!showLabel) {
-    return switchButton ? (
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {valueNode}
-        {switchButton}
-      </div>
-    ) : (
-      valueNode
-    );
-  }
+  const trimmed = value.trim();
+  const warning = error ? undefined : shareWarning(fieldKey, value);
+  const showToggle = Boolean(trimmed);
+  const tooltipLabel = included
+    ? `Hide ${label} from recruiters`
+    : `Show ${label} to recruiters`;
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-medium text-[var(--ink)]">{label}</p>
-        {switchButton}
-      </div>
-      <div className="mt-0.5">{valueNode}</div>
-    </div>
+    <Input
+      id={inputId}
+      dense
+      label={showOuterLabel ? label : undefined}
+      labelEnd={
+        showOuterLabel && showWriteThroughTip ? (
+          <FieldLabelTip tip={writeThroughTip} tone={writeThroughTipTone} />
+        ) : undefined
+      }
+      type={inputType}
+      inputMode={inputMode}
+      autoComplete={autoComplete}
+      placeholder={placeholder}
+      maxLength={maxLength}
+      value={value}
+      error={error}
+      warning={warning}
+      onChange={(event) => onValueChange(event.target.value)}
+      endAdornment={
+        showToggle ? (
+          <AdminTooltip label={tooltipLabel} side="top">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={included}
+              aria-label={tooltipLabel}
+              onClick={() => onIncludeChange(!included)}
+              className={`${visibilityToggleClass} cursor-pointer text-[var(--ink)] hover:bg-[var(--paper)]`}
+            >
+              {included ? (
+                <EyeIcon className="h-4 w-4" />
+              ) : (
+                <EyeOffIcon className="h-4 w-4" />
+              )}
+            </button>
+          </AdminTooltip>
+        ) : undefined
+      }
+    />
   );
 }
 
 /**
  * Profile-owned identity for an application.
  * Names are always shown. Location, portfolio, and LinkedIn can be hidden
- * on this page; their text is edited on Profile.
+ * on this page. Edits sync back to the profile when the application is saved.
  */
 export default function CandidateFieldsSection({
   values,
+  savedValues,
   include,
   onIncludeChange,
-  onProfileLinkSaved,
+  onValueChange,
+  errors,
   layout = 'stack',
 }: CandidateFieldsSectionProps) {
-  const [linkDialog, setLinkDialog] = useState<ProfileLinkField | null>(null);
-  const linkTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const name = [values.first_name?.trim(), values.last_name?.trim()]
-    .filter(Boolean)
-    .join(' ');
+  const tipFor = (field: CandidateFieldKey) =>
+    identityFieldTip(values, savedValues, field);
 
-  const nameBody = (
-    <>
-      {name ? (
-        <p className="text-sm text-[var(--ink)]">{name}</p>
-      ) : (
-        <p className="text-sm text-[var(--muted)]">No name yet.</p>
-      )}
-      <p className="mt-0.5 text-sm text-[var(--muted)]">
-        From your profile, and always shown.{' '}
-        <Link href="/admin/profile" className={profileLinkClass}>
-          Edit on Profile
-        </Link>
-      </p>
-    </>
-  );
+  const firstNameTip = tipFor('first_name');
+  const lastNameTip = tipFor('last_name');
 
   if (layout === 'rows') {
     return (
       <>
-        <ApplicationFormFieldRow id="application-row-name" label="Name" align="top">
-          {nameBody}
+        <ApplicationFormFieldRow
+          id="application-row-first_name"
+          label="First name"
+          labelFor="application-first-name"
+          tip={firstNameTip.tip}
+          tipTone={firstNameTip.tone}
+          align="field"
+        >
+          <Input
+            id="application-first-name"
+            dense
+            required
+            autoComplete="given-name"
+            maxLength={PROFILE_NAME_MAX_LENGTH}
+            value={values.first_name}
+            error={errors?.first_name}
+            onChange={(event) =>
+              onValueChange('first_name', event.target.value)
+            }
+          />
         </ApplicationFormFieldRow>
-        {SHARE_FIELDS.map(({ key, label, emptyLabel, dialog }) => (
-          <ApplicationFormFieldRow
-            key={key}
-            id={`application-row-${key}`}
-            label={label}
-            align="top"
-          >
-            <ShareFieldBody
-              label={label}
-              emptyLabel={emptyLabel}
-              value={values[key]?.trim() ?? ''}
-              included={include[key] ?? false}
-              dialog={dialog}
-              showLabel={false}
-              canSaveLink={Boolean(onProfileLinkSaved)}
-              onIncludeChange={(included) => onIncludeChange(key, included)}
-              onOpenDialog={(trigger) => {
-                linkTriggerRef.current = trigger;
-                if (dialog) setLinkDialog(dialog);
-              }}
+        <ApplicationFormFieldRow
+          id="application-row-last_name"
+          label="Last name"
+          labelFor="application-last-name"
+          tip={lastNameTip.tip}
+          tipTone={lastNameTip.tone}
+          align="field"
+        >
+          <Input
+            id="application-last-name"
+            dense
+            required
+            autoComplete="family-name"
+            maxLength={PROFILE_NAME_MAX_LENGTH}
+            value={values.last_name}
+            error={errors?.last_name}
+            onChange={(event) => onValueChange('last_name', event.target.value)}
+          />
+        </ApplicationFormFieldRow>
+        {SHARE_FIELDS.map((field) => {
+          const tip = tipFor(field.key);
+          return (
+            <ApplicationFormFieldRow
+              key={field.key}
+              id={`application-row-${field.key}`}
+              label={field.label}
+              labelFor={`application-${field.key}`}
+              tip={tip.tip}
+              tipTone={tip.tone}
+              align="field"
+            >
+            <ShareFieldControl
+              fieldKey={field.key}
+              label={field.label}
+              inputId={`application-${field.key}`}
+              inputType={field.inputType}
+              inputMode={field.inputMode}
+              placeholder={field.placeholder}
+              maxLength={field.maxLength}
+              autoComplete={field.autoComplete}
+              value={values[field.key] ?? ''}
+              included={include[field.key] ?? false}
+              error={errors?.[field.key]}
+              showOuterLabel={false}
+              showWriteThroughTip={false}
+              onValueChange={(value) => onValueChange(field.key, value)}
+              onIncludeChange={(included) =>
+                onIncludeChange(field.key, included)
+              }
             />
-          </ApplicationFormFieldRow>
-        ))}
-        <ProfileLinkDialog
-          open={linkDialog !== null}
-          field={linkDialog}
-          returnFocusRef={linkTriggerRef}
-          onClose={() => setLinkDialog(null)}
-          onSaved={(field, url) => onProfileLinkSaved?.(field, url)}
-        />
+            </ApplicationFormFieldRow>
+          );
+        })}
       </>
     );
   }
 
   return (
     <div className="space-y-3">
-      <div>
-        <p className="text-sm font-medium text-[var(--ink)]">Name</p>
-        <div className="mt-0.5">{nameBody}</div>
-      </div>
-      {SHARE_FIELDS.map(({ key, label, emptyLabel, dialog }) => (
-        <ShareFieldBody
-          key={key}
-          label={label}
-          emptyLabel={emptyLabel}
-          value={values[key]?.trim() ?? ''}
-          included={include[key] ?? false}
-          dialog={dialog}
-          showLabel
-          canSaveLink={Boolean(onProfileLinkSaved)}
-          onIncludeChange={(included) => onIncludeChange(key, included)}
-          onOpenDialog={(trigger) => {
-            linkTriggerRef.current = trigger;
-            if (dialog) setLinkDialog(dialog);
-          }}
-        />
-      ))}
-      <ProfileLinkDialog
-        open={linkDialog !== null}
-        field={linkDialog}
-        returnFocusRef={linkTriggerRef}
-        onClose={() => setLinkDialog(null)}
-        onSaved={(field, url) => onProfileLinkSaved?.(field, url)}
+      <Input
+        id="application-first-name"
+        dense
+        label="First name"
+        labelEnd={
+          <FieldLabelTip tip={firstNameTip.tip} tone={firstNameTip.tone} />
+        }
+        required
+        autoComplete="given-name"
+        maxLength={PROFILE_NAME_MAX_LENGTH}
+        value={values.first_name}
+        error={errors?.first_name}
+        onChange={(event) => onValueChange('first_name', event.target.value)}
       />
+      <Input
+        id="application-last-name"
+        dense
+        label="Last name"
+        labelEnd={
+          <FieldLabelTip tip={lastNameTip.tip} tone={lastNameTip.tone} />
+        }
+        required
+        autoComplete="family-name"
+        maxLength={PROFILE_NAME_MAX_LENGTH}
+        value={values.last_name}
+        error={errors?.last_name}
+        onChange={(event) => onValueChange('last_name', event.target.value)}
+      />
+      {SHARE_FIELDS.map((field) => {
+        const tip = tipFor(field.key);
+        return (
+          <ShareFieldControl
+            key={field.key}
+            fieldKey={field.key}
+            label={field.label}
+            inputId={`application-${field.key}`}
+            inputType={field.inputType}
+            inputMode={field.inputMode}
+            placeholder={field.placeholder}
+            maxLength={field.maxLength}
+            autoComplete={field.autoComplete}
+            value={values[field.key] ?? ''}
+            included={include[field.key] ?? false}
+            error={errors?.[field.key]}
+            showOuterLabel
+            showWriteThroughTip
+            writeThroughTip={tip.tip}
+            writeThroughTipTone={tip.tone}
+            onValueChange={(value) => onValueChange(field.key, value)}
+            onIncludeChange={(included) => onIncludeChange(field.key, included)}
+          />
+        );
+      })}
     </div>
   );
 }

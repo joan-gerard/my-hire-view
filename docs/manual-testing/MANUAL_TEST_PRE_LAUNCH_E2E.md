@@ -230,11 +230,12 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 ### Profile details (Profile tab)
 
 - [ ] First and last name prefilled from signup
-- [ ] Save disabled until something changes; disabled reason if names are empty (“First name and last name are required”) or “No changes to save”
+- [ ] First name and last name labels show a required `*`; Save disabled until something changes; disabled reason if names are empty (“First name and last name are required”) or “No changes to save”
 - [ ] Clearing a name to spaces-only cannot save
 - [ ] Names at **100** chars save; the field does not accept more (or API rejects)
 - [ ] Location at **200** chars; over-long location rejected
 - [ ] Save location, portfolio URL, LinkedIn URL
+- [ ] Portfolio field: paste a LinkedIn URL → soft warning; LinkedIn field: paste a non-LinkedIn URL → soft warning; both still save
 - [ ] `http://` and `https://` URLs accepted; `javascript:`, `ftp://`, and bare `not-a-url` rejected
 - [ ] Leading/trailing spaces on URLs are trimmed, not stored as-is
 - [ ] Changing name updates the account name used in Name-in-URL suggestions
@@ -300,24 +301,32 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### About you (create)
 
-- [ ] Name comes from the profile and is always shown. There is no name editor and no Show / Hidden for the name. **Edit on Profile** goes to `/admin/profile`
+- [ ] Under **About you**: note that these details update your profile when you save this application — not if you cancel or leave — and this page only chooses which ones recruiters see. No separate Save for the section
+- [ ] **First name** and **Last name** are dense required fields (with `*`), always included on the page; there is no show switch for the name
+- [ ] **Your link:** Company, Role, and Link ending show a grey status dot until valid, then green
+- [ ] **About you** text fields: green “From your profile” while unchanged prefilled data; grey when empty; yellow write-through tip after edit; reverting to the loaded value restores green
+- [ ] **Picture** shows green when a profile photo exists, grey when not; toggling show/hide does not turn it yellow
+- [ ] **Résumé:** chosen **Library** or **This role** is green; the other is grey
+- [ ] **Pitch:** YouTube is grey until a valid URL is entered, then green
 - [ ] With no picture: **Add a picture on your profile** links to Profile. There are no Show / Hide cards
-- [ ] With a picture: **Show picture** / **Hide picture** cards; the thumbnail appears only when showing
-- [ ] **Hide picture** hides the thumbnail; no avatar on `/view` even if the account still has a picture
-- [ ] Location, **Portfolio**, and **LinkedIn** show the profile value with **Show** / **Hidden** when that value exists. **Hidden** mutes the value. There is no always-visible text or URL field
-- [ ] An empty location links to Profile. **Add portfolio** and **Add LinkedIn** open a dialog. A valid http(s) URL saves onto the profile, closes the dialog, and shows the value with **Show** selected. An invalid URL stays in the dialog with an error. Cancel leaves the profile unchanged
+- [ ] With a picture: thumbnail always visible; a right-aligned switch under it turns show on/off; off lowers the thumbnail opacity
+- [ ] Without a picture: initials (or avatar icon) show, plus a link to Profile; no show switch
+- [ ] Switch off: no avatar on `/view` even if the account still has a picture
+- [ ] Location, **Portfolio**, and **LinkedIn** are dense fields like Company. When non-empty, an eye button sits inside the field (like Copy on Shareable link); open eye = show, crossed eye = hide
+- [ ] Typing into an empty location/portfolio/LinkedIn shows the eye on; clearing the field removes the eye control
+- [ ] Portfolio / LinkedIn use under-field soft warnings (not the browser URL bubble): LinkedIn mix-ups, and “Enter a valid URL starting with https://…” for incomplete URLs; invalid URLs still block save with a field error
 - [ ] There is no collapsible **Info shown to recruiters** block and no `(N/5)` count on create
-- [ ] Toggle **Hidden** on location, portfolio, or LinkedIn → it will not appear on `/view` (verify later)
-- [ ] Changing the value is not possible here. Profile is unchanged until you edit it there
-- [ ] Adding a picture on Profile ticks the checklist **photo** step. New Application only links there
+- [ ] Hide (crossed eye) on location, portfolio, or LinkedIn → it will not appear on `/view` (verify later)
+- [ ] Saving the application updates the profile with the About you text fields, then snapshots shown fields onto the application
+- [ ] Adding a picture on Profile ticks the checklist **photo** step. New Application only links there for the picture
 
 ### About you (edit)
 
-- [ ] The form waits until the profile request finishes, then shows profile name, location, and links
-- [ ] A field the saved application left empty starts **Hidden** even when the profile now has a value. The next save writes that value only if you choose **Show**
-- [ ] **Profile picture:** Yes/No appears only when a picture exists. **No** hides the thumbnail
+- [ ] The form waits until the profile request finishes, then shows profile name, location, and links in the same dense fields as create
+- [ ] A field the saved application left empty starts with the eye crossed (hidden) even when the profile now has a value. The next save writes that value only if you show it
+- [ ] **Profile picture:** show switch under the preview when a picture exists; off dims the thumbnail
 - [ ] With no picture, the row links to Profile. There is no Add / Manage picture control
-- [ ] Name is always shown and is not editable. Saving copies the current profile name onto the application
+- [ ] Names are editable dense fields. Saving updates the profile, then copies the current values onto the application
 
 ### Résumé (create)
 

@@ -80,7 +80,8 @@ export const APPLICATION_FORM_STEPS: readonly ApplicationFormStepDef[] = [
     id: "candidate",
     title: "About you",
     shortLabel: "You",
-    description: "What recruiters see about you on this application.",
+    description:
+      "These details update your profile when you save this application — not if you cancel or leave. This page only chooses which ones recruiters see.",
   },
   {
     id: "materials",
