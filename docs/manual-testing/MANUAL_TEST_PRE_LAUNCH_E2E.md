@@ -303,7 +303,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 - [ ] Under **About you**: note that these details update your profile when you save this application — not if you cancel or leave — and this page only chooses which ones recruiters see. No separate Save for the section
 - [ ] **First name** and **Last name** are dense required fields (with `*`), always included on the page; there is no show switch for the name
-- [ ] **Your link:** Company, Role, and Link ending show a grey status dot until valid, then green
+- [ ] **Your link:** Company, Role, and Link ending show a grey status dot before the label until valid, then green. **How the link reads** always shows a green status dot
 - [ ] **About you** text fields: green “From your profile” while unchanged prefilled data; grey when empty; yellow write-through tip after edit; reverting to the loaded value restores green
 - [ ] **Picture** shows green when a profile photo exists, grey when not; toggling show/hide does not turn it yellow
 - [ ] **Résumé:** chosen **Library** or **This role** is green; the other is grey

@@ -190,7 +190,7 @@ function ShareFieldControl({
       id={inputId}
       dense
       label={showOuterLabel ? label : undefined}
-      labelEnd={
+      labelStart={
         showOuterLabel && showWriteThroughTip ? (
           <FieldLabelTip tip={writeThroughTip} tone={writeThroughTipTone} />
         ) : undefined
@@ -335,7 +335,7 @@ export default function CandidateFieldsSection({
         id="application-first-name"
         dense
         label="First name"
-        labelEnd={
+        labelStart={
           <FieldLabelTip tip={firstNameTip.tip} tone={firstNameTip.tone} />
         }
         required
@@ -349,7 +349,7 @@ export default function CandidateFieldsSection({
         id="application-last-name"
         dense
         label="Last name"
-        labelEnd={
+        labelStart={
           <FieldLabelTip tip={lastNameTip.tip} tone={lastNameTip.tone} />
         }
         required

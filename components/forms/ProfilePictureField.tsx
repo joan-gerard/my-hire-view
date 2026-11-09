@@ -133,13 +133,13 @@ export default function ProfilePictureField({
               : "text-base font-semibold leading-[18px] text-[var(--ink)]"
           }
         >
-          Profile picture
           <FieldLabelTip
             tip={
               hasProfilePicture ? PROFILE_INITIAL_DATA_TIP : PROFILE_EMPTY_TIP
             }
             tone={hasProfilePicture ? "ready" : "idle"}
           />
+          Profile picture
         </legend>
       )}
       {hideLegend || !hasProfilePicture ? null : (

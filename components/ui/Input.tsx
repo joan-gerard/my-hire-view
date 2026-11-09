@@ -9,8 +9,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   dense?: boolean;
   /** Control pinned inside the field on the right (e.g. show/hide). */
   endAdornment?: ReactNode;
-  /** Icon or control shown beside the label (e.g. profile write-through tip). */
-  labelEnd?: ReactNode;
+  /** Icon or control shown before the label (e.g. status tip). */
+  labelStart?: ReactNode;
 }
 
 export default function Input({
@@ -19,7 +19,7 @@ export default function Input({
   warning,
   dense = false,
   endAdornment,
-  labelEnd,
+  labelStart,
   className = '',
   id,
   required,
@@ -42,6 +42,7 @@ export default function Input({
           htmlFor={id}
           className="text-sm font-medium leading-[18px] text-[var(--ink)]"
         >
+          {labelStart}
           {label}
           {required ? (
             <span className="text-[var(--status-danger-fg)]" aria-hidden="true">
@@ -49,7 +50,6 @@ export default function Input({
               *
             </span>
           ) : null}
-          {labelEnd}
         </label>
       )}
       <div className={`${label ? "mt-1 " : ""}relative`}>

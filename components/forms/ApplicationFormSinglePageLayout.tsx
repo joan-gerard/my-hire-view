@@ -32,7 +32,7 @@ const labelChromeButtonClass =
 export type FieldLabelTipTone = "draft" | "ready" | "idle";
 
 /**
- * Status marker beside a field label (tooltip).
+ * Status marker before a field label (tooltip).
  * Lives in the label’s text flow with `align-text-bottom` so the dot lines
  * up with the bottom of the letters (not the flex line box).
  */
@@ -51,7 +51,7 @@ export function FieldLabelTip({
         : "bg-[var(--status-dot-draft)]";
 
   return (
-    <span className="ml-1 inline-block align-text-bottom pb-px leading-none">
+    <span className="mr-1 inline-block align-text-bottom pb-px leading-none">
       <AdminTooltip label={tip} side="top">
         <button
           type="button"
@@ -87,7 +87,7 @@ export type ApplicationFormPageRow =
       hint?: string;
       /** Opens in a dialog from an icon beside the title. */
       info?: string;
-      /** Status tip beside the label. */
+      /** Status tip before the label. */
       tip?: string;
       tipTone?: FieldLabelTipTone;
       className?: string;
@@ -153,7 +153,7 @@ export function ApplicationFormFieldRow({
   hint?: string;
   /** Opens in a dialog from an icon beside the title. */
   info?: string;
-  /** Status tip beside the title. */
+  /** Status tip before the title. */
   tip?: string;
   /** Green ready / yellow draft / grey idle. */
   tipTone?: FieldLabelTipTone;
@@ -167,13 +167,13 @@ export function ApplicationFormFieldRow({
   const tipMark = tip ? <FieldLabelTip tip={tip} tone={tipTone} /> : null;
   const title = labelFor ? (
     <label htmlFor={labelFor} className={FIELD_TITLE}>
-      {label}
       {tipMark}
+      {label}
     </label>
   ) : (
     <p className={FIELD_TITLE}>
-      {label}
       {tipMark}
+      {label}
     </p>
   );
   const copy = (

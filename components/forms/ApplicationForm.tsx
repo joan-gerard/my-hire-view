@@ -2361,6 +2361,8 @@ export default function ApplicationForm({
               label: "How the link reads",
               align: "field",
               info: "Choose whether the company or the role comes first.",
+              tip: FIELD_READY_TIP,
+              tipTone: "ready",
               className: "relative z-10",
               children: (
                 <SlugOrderDropdown
