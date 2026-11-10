@@ -13,6 +13,7 @@ This guide describes what you can do with MyHireView as a **candidate** (job see
 - **Sign up:** On the home page, use “Get Started” or go to **Sign up**. Enter your first name, last name, email, password, and confirm password. Confirm your email if your Supabase project requires it. Your name is stored on your account and a profile record is created with that name (you can add location, links, and a picture later).
 - **Sign in:** Use **Sign in** and enter your email and password. After signing in, you are taken to your **Dashboard** (`/admin`).
 - **Getting started checklist:** On the dashboard (`/admin`), a **Getting started** panel in the right rail guides new accounts until you: create your profile (name), add location or a link (LinkedIn or portfolio), add a profile photo, upload a primary CV, create your first application, and **publish** so you can share the link. Steps tick off as you complete them (no refresh needed) and stay checked in this browser for your account (Public id, or user id before a profile exists) even if you later remove the data that completed them. You can **Skip** individual steps or **Skip all**, and minimize it to a compact control (prefs are remembered per account in this browser). When everything is done or skipped, **Skip all** becomes **Dismiss** — use that to hide the panel. Recreating an account starts the checklist fresh.
+
 ### Account settings (Profile)
 
 From the header, open **Profile** (`/admin/profile`). The page title is **Account settings** with tabs:
@@ -96,9 +97,9 @@ If the application was **archived** or **deleted** (or the link is invalid / mis
 
 ## Summary
 
-| Who       | What they can do |
-| --------- | ----------------- |
+| Who           | What they can do                                                                                                                                                                                                        |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Candidate** | Sign up, sign in, edit profile (name, location, portfolio, LinkedIn), create applications (company, role, CV, video, candidate toggles), edit or archive or delete applications, copy shareable links, see view counts. |
-| **Recruiter** | Open shareable link (no login), see candidate name/location/portfolio/LinkedIn when shared, view CV and video pitch. |
+| **Recruiter** | Open shareable link (no login), see candidate name/location/portfolio/LinkedIn when shared, view CV and video pitch.                                                                                                    |
 
 For setup and technical details, see [README.md](../../README.md), [ARCHITECTURE.md](../architecture/ARCHITECTURE.md), and [API_REFERENCE.md](../architecture/API_REFERENCE.md).

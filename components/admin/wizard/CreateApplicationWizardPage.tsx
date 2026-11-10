@@ -5,15 +5,14 @@
  * `/admin/new` passes `presentation="checklist"` (one page).
  */
 
-import ApplicationForm from "@/components/forms/ApplicationForm";
-import { profileWithSavedIdentity } from "@/lib/utils/profile-with-saved-identity";
-import ApplicationFormPageHeader from "@/components/forms/ApplicationFormPageHeader";
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
 import {
-  ADMIN_FORM_SHELL_CLASS,
-  ADMIN_TIP_CLASS,
+    ADMIN_FORM_SHELL_CLASS,
+    ADMIN_TIP_CLASS,
 } from "@/components/admin/admin-chrome";
 import { ArrowRightIcon } from "@/components/admin/icons";
+import ApplicationForm from "@/components/forms/ApplicationForm";
+import ApplicationFormPageHeader from "@/components/forms/ApplicationFormPageHeader";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +20,7 @@ import type { ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
 import { createApplicationDraftStorageKey } from "@/lib/utils/create-application-draft";
 import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
+import { profileWithSavedIdentity } from "@/lib/utils/profile-with-saved-identity";
 import { validateSlugFormat } from "@/lib/utils/slug-generate";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

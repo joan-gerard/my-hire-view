@@ -1,14 +1,14 @@
 import {
-  ADMIN_MAIN_MIN_CLASS,
-  ADMIN_FORM_SHELL_CLASS,
-  ADMIN_PANEL_CLASS,
-} from '@/components/admin/admin-chrome';
+    ADMIN_FORM_SHELL_CLASS,
+    ADMIN_MAIN_MIN_CLASS,
+    ADMIN_PANEL_CLASS,
+} from "@/components/admin/admin-chrome";
 
 export type AdminPageSkeletonVariant =
-  | 'dashboard'
-  | 'form'
-  | 'create'
-  | 'profile';
+  | "dashboard"
+  | "form"
+  | "create"
+  | "profile";
 
 type AdminPageSkeletonProps = {
   variant: AdminPageSkeletonVariant;
@@ -24,7 +24,7 @@ export default function AdminPageSkeleton({
   variant,
   showTip = false,
 }: AdminPageSkeletonProps) {
-  if (variant === 'dashboard') {
+  if (variant === "dashboard") {
     return (
       <div
         className={ADMIN_MAIN_MIN_CLASS}
@@ -84,14 +84,16 @@ export default function AdminPageSkeleton({
                 </div>
               ))}
             </div>
-            <div className={`${ADMIN_PANEL_CLASS} h-56 motion-safe:animate-pulse bg-[var(--ink)]/[0.03]`} />
+            <div
+              className={`${ADMIN_PANEL_CLASS} h-56 motion-safe:animate-pulse bg-[var(--ink)]/[0.03]`}
+            />
           </aside>
         </div>
       </div>
     );
   }
 
-  if (variant === 'profile') {
+  if (variant === "profile") {
     return (
       <div
         className={`${ADMIN_MAIN_MIN_CLASS} space-y-6`}
@@ -135,7 +137,7 @@ export default function AdminPageSkeleton({
     );
   }
 
-  if (variant === 'create') {
+  if (variant === "create") {
     return (
       <div
         className="mx-auto w-full max-w-2xl"

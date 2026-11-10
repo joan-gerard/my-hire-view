@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useState, type ReactNode } from "react";
 import AdminModal from "@/components/admin/AdminModal";
 import AdminTooltip from "@/components/admin/AdminTooltip";
 import { QuestionIcon } from "@/components/admin/icons";
+import Link from "next/link";
+import { useState, type ReactNode } from "react";
 
 /** Green tip: field still shows the profile value loaded into the form. */
 export const PROFILE_INITIAL_DATA_TIP = "From your profile";
@@ -122,8 +122,7 @@ interface ApplicationFormSinglePageLayoutProps {
  * 18px line box matches the text metrics in Chrome (text-sm’s default /
  * leading-5 20px line box sat 2px taller and lifted the glyphs off the tip).
  */
-const FIELD_TITLE =
-  "text-sm font-normal leading-[18px] text-[var(--ink)]";
+const FIELD_TITLE = "text-sm font-normal leading-[18px] text-[var(--ink)]";
 const FIELD_DESC = "mt-0.5 text-sm font-normal leading-5 text-[var(--muted)]";
 
 const fieldRowClass =

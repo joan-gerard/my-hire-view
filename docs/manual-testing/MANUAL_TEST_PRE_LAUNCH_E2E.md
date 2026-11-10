@@ -41,17 +41,17 @@ Work ticket: [Backlog.md](../product/Backlog.md) `F32-115`. Product copy: [USER_
 
 Create these as you go so later sections have the right mix. Reuse the same primary CV unless a step says otherwise. Short company/role names are fine.
 
-| #   | Company / role (example)                    | Status by the end          | Notes                                                                                                                         |
-| --- | ------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Acme / Software Engineer                    | **active**, viewed         | Full: all candidate fields on, picture shown, primary CV, YouTube, segment order **company-role**                             |
-| 2   | Globex / Product Manager                    | **active**, never viewed   | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required**                                      |
-| 3   | Initech / Designer                          | **draft**                  | Tailored CV; segment order **company-role**; custom slug                                                                      |
-| 4   | Umbrella / Data Analyst                     | **archived**               | Publish first, then archive; segment order **role-company**                                                                   |
-| 5   | Soylent / QA Engineer                       | **active**                 | Same **primary CV** as #1 (reuse)                                                                                             |
-| 6   | MissingCvCo / Intern                        | **active**, **CV missing** | Point at a primary, then delete that primary from the library                                                                 |
-| 7   | Café Müller / Senior Engineer               | **active**                 | Accents / unicode in company; slug must strip special chars (`cafe-muller-…`)                                                 |
-| 8   | (very long company + role, ~200 chars each) | **draft**                  | Hits **128-char slug clamp** (no trailing hyphen)                                                                             |
-| 9+  | PageFill-01 …                               | whatever                   | Extra rows so the dashboard has **more than 20** applications (page size is 20)                                               |
+| #   | Company / role (example)                    | Status by the end          | Notes                                                                                             |
+| --- | ------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
+| 1   | Acme / Software Engineer                    | **active**, viewed         | Full: all candidate fields on, picture shown, primary CV, YouTube, segment order **company-role** |
+| 2   | Globex / Product Manager                    | **active**, never viewed   | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required**          |
+| 3   | Initech / Designer                          | **draft**                  | Tailored CV; segment order **company-role**; custom slug                                          |
+| 4   | Umbrella / Data Analyst                     | **archived**               | Publish first, then archive; segment order **role-company**                                       |
+| 5   | Soylent / QA Engineer                       | **active**                 | Same **primary CV** as #1 (reuse)                                                                 |
+| 6   | MissingCvCo / Intern                        | **active**, **CV missing** | Point at a primary, then delete that primary from the library                                     |
+| 7   | Café Müller / Senior Engineer               | **active**                 | Accents / unicode in company; slug must strip special chars (`cafe-muller-…`)                     |
+| 8   | (very long company + role, ~200 chars each) | **draft**                  | Hits **128-char slug clamp** (no trailing hyphen)                                                 |
+| 9+  | PageFill-01 …                               | whatever                   | Extra rows so the dashboard has **more than 20** applications (page size is 20)                   |
 
 ---
 
