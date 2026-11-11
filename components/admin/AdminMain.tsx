@@ -24,15 +24,18 @@ export default function AdminMain({
   const pathname = usePathname();
   const wide = usesHeaderWidth(pathname);
   const dashboard = isDashboard(pathname);
+  const createStudio = pathname === "/admin/new";
 
   return (
     <main
       className={
-        wide
-          ? `py-8 ${ADMIN_HEADER_INSET_CLASS}`
-          : dashboard
-            ? `${ADMIN_SHELL_CLASS} pt-0 pb-8`
-            : `${ADMIN_SHELL_CLASS} py-8`
+        createStudio
+          ? ADMIN_HEADER_INSET_CLASS
+          : wide
+            ? `py-8 ${ADMIN_HEADER_INSET_CLASS}`
+            : dashboard
+              ? `${ADMIN_SHELL_CLASS} pt-0 pb-8`
+              : `${ADMIN_SHELL_CLASS} py-8`
       }
     >
       {children}

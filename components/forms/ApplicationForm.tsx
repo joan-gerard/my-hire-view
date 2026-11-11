@@ -6,7 +6,7 @@ import type {
   ApplicationFormData,
 } from "@/lib/types/application";
 import type { PrimaryCv } from "@/lib/types/primary-cv";
-import { roleChecklistSummary } from "@/lib/utils/role-checklist-summary";
+import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
 import {
   buildSlug,
   isCustomSlug,
@@ -38,12 +38,9 @@ import {
   leaveRelevantDraftSnapshot,
 } from "@/lib/utils/leave-confirm";
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
-import ApplicationFormChecklistLayout, {
-  type ChecklistChapter,
-  type ChecklistChapterId,
-} from "./ApplicationFormChecklistLayout";
+import NewApplicationStudio from "./new-application/NewApplicationStudio";
 import ApplicationFormSplitLayout from "./ApplicationFormSplitLayout";
 import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
 import {
@@ -137,6 +134,8 @@ interface ApplicationFormProps {
    * `checklist` is `/admin/new`. `split` is the edit page. `wizard` is parked.
    */
   presentation?: "wizard" | "split" | "checklist";
+  /** Create page only: short profile hint under About you. */
+  profileNudge?: ReactNode;
 }
 
 export default function ApplicationForm({
@@ -153,6 +152,7 @@ export default function ApplicationForm({
   resolveSlugOnCreate = false,
   persistDraftKey,
   presentation = "wizard",
+  profileNudge,
 }: ApplicationFormProps) {
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
@@ -176,9 +176,6 @@ export default function ApplicationForm({
   /** Create wizard: furthest step unlocked via Continue (survives Back). */
   const [furthestStepId, setFurthestStepId] =
     useState<ApplicationFormStepId>("role");
-  /** Checklist create: slug order and ending stay behind Edit link. */
-  const [linkOpen, setLinkOpen] = useState(false);
-
   /** Load once per mount; ignore later key changes while the form is open. */
   const restoredDraftRef = useRef<CreateApplicationDraft | null | undefined>(
     undefined,
@@ -1071,9 +1068,6 @@ export default function ApplicationForm({
     if (presentation === "split") {
       setErrorScroll({ stepId: step, nonce: Date.now() });
     }
-    if (presentation === "checklist" && nextErrors.slug) {
-      setLinkOpen(true);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -1473,157 +1467,28 @@ export default function ApplicationForm({
     </div>
   );
 
-  const checklistRoleStep = (
-    <div className="space-y-5">
-      <Input
-        label="Company"
-        value={formData.company}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, company: e.target.value }))
-        }
-        error={errors.company}
-        required
-        autoComplete="organization"
+  const candidateStep = (
+    <>
+      <ProfilePictureField
+        profilePictureUrl={profilePictureUrl}
+        profilePictureVersion={profilePictureVersion}
+        firstName={formData.first_name}
+        lastName={formData.last_name}
+        onProfilePictureSaved={onProfilePictureSaved}
+        showProfilePicture={showProfilePicture}
+        onShowProfilePictureChange={(next) => {
+          showProfilePictureUserChosenRef.current = true;
+          setShowProfilePicture(next);
+        }}
       />
-      <Input
-        label="Role"
-        value={formData.role}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, role: e.target.value }))
-        }
-        error={errors.role}
-        required
-        autoComplete="organization-title"
+      <CandidateFieldsSection
+        values={candidateValues}
+        include={include}
+        onValueChange={handleCandidateValueChange}
+        onIncludeChange={handleCandidateIncludeChange}
       />
-      <div className="rounded-xl bg-[var(--pink)] px-4 py-3.5">
-        <p className="text-sm font-medium text-[var(--ink)]">Share link</p>
-        <p className="mt-1 text-sm leading-relaxed break-words">
-          <span className="text-[var(--muted)]">/view/{publicId?.trim() || "…"}/</span>
-          <span>{formData.slug.trim() || "…"}</span>
-        </p>
-        <button
-          type="button"
-          className="mt-2 rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-          onClick={() => setLinkOpen((open) => !open)}
-        >
-          {linkOpen ? "Hide link options" : "Edit link"}
-        </button>
-        {linkOpen ? (
-          <div className="mt-4 space-y-4">
-            <fieldset>
-              <legend className="text-sm font-medium text-[var(--ink)]">
-                Order in the link
-              </legend>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {(
-                  [
-                    ["company_role", "Company, then role"],
-                    ["role_company", "Role, then company"],
-                  ] as const
-                ).map(([order, label]) => (
-                  <label
-                    key={order}
-                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm ring-1 ring-inset ${
-                      slugSegmentOrder === order
-                        ? "bg-[var(--paper)] text-[var(--ink)] ring-[var(--ink)]"
-                        : "bg-[var(--white)] text-[var(--ink)] ring-[var(--ink)]/15 hover:bg-[var(--paper)]/70"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="checklist-slug-segment-order"
-                      value={order}
-                      checked={slugSegmentOrder === order}
-                      onChange={() => handleSlugSegmentOrderChange(order)}
-                      className="size-4 shrink-0 accent-[var(--ink)]"
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <Input
-              id="application-slug"
-              label="Link ending"
-              value={formData.slug}
-              onChange={(e) => handleSlugFieldChange(e.target.value)}
-              error={errors.slug}
-              autoComplete="off"
-              spellCheck={false}
-            />
-            {(slugLiveStatus.kind === "invalid" ||
-              slugLiveStatus.kind === "unavailable") &&
-              !errors.slug && (
-                <p
-                  className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
-                  role="alert"
-                >
-                  <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                  <span>{slugLiveStatus.message}</span>
-                </p>
-              )}
-            {slugManuallyEdited ? (
-              <button
-                type="button"
-                onClick={handleResetSlugToSuggested}
-                disabled={!hasCompany || !hasRole || formBusy}
-                className="rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
-              >
-                Use the suggested link
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    </div>
+    </>
   );
-
-  const candidateStep =
-    presentation === "checklist" ? (
-      <div className="space-y-5">
-        <ProfilePictureField
-          variant="checklist"
-          profilePictureUrl={profilePictureUrl}
-          profilePictureVersion={profilePictureVersion}
-          firstName={formData.first_name}
-          lastName={formData.last_name}
-          onProfilePictureSaved={onProfilePictureSaved}
-          showProfilePicture={showProfilePicture}
-          onShowProfilePictureChange={(next) => {
-            showProfilePictureUserChosenRef.current = true;
-            setShowProfilePicture(next);
-          }}
-        />
-        <CandidateFieldsSection
-          variant="checklist"
-          values={candidateValues}
-          include={include}
-          onValueChange={handleCandidateValueChange}
-          onIncludeChange={handleCandidateIncludeChange}
-        />
-      </div>
-    ) : (
-      <>
-        <ProfilePictureField
-          profilePictureUrl={profilePictureUrl}
-          profilePictureVersion={profilePictureVersion}
-          firstName={formData.first_name}
-          lastName={formData.last_name}
-          onProfilePictureSaved={onProfilePictureSaved}
-          showProfilePicture={showProfilePicture}
-          onShowProfilePictureChange={(next) => {
-            showProfilePictureUserChosenRef.current = true;
-            setShowProfilePicture(next);
-          }}
-        />
-        <CandidateFieldsSection
-          values={candidateValues}
-          include={include}
-          onValueChange={handleCandidateValueChange}
-          onIncludeChange={handleCandidateIncludeChange}
-        />
-      </>
-    );
 
   const materialsStep = (
     <>
@@ -1868,6 +1733,12 @@ export default function ApplicationForm({
     );
   })();
 
+  const snapshotCvName = reviewCvLabel
+    ? formData.use_original_cv_filename !== false
+      ? reviewCvLabel
+      : getCvDownloadFilename(formData.slug)
+    : null;
+
   const jumpToStep = (stepId: ApplicationFormStepId) => {
     setCurrentStepId(stepId);
     if (presentation === "split") {
@@ -1979,75 +1850,6 @@ export default function ApplicationForm({
       />
     ) : null;
 
-  const checklistOpenId: ChecklistChapterId =
-    currentStepId === "role" ||
-    currentStepId === "candidate" ||
-    currentStepId === "materials" ||
-    currentStepId === "video"
-      ? currentStepId
-      : "video";
-
-  const roleSummary = roleChecklistSummary({
-    company: formData.company,
-    role: formData.role,
-    slug: formData.slug,
-    roleReady: stepReady("role"),
-    slugStatus: slugLiveStatus,
-  });
-
-  const aboutYouParts = [
-    hasProfilePicture && showProfilePicture ? "Picture" : "",
-    [
-      include.first_name ? formData.first_name?.trim() : "",
-      include.last_name ? formData.last_name?.trim() : "",
-    ]
-      .filter(Boolean)
-      .join(" "),
-    include.location ? formData.location?.trim() : "",
-    include.portfolio_url && formData.portfolio_url?.trim() ? "Portfolio" : "",
-    include.linkedin_url && formData.linkedin_url?.trim() ? "LinkedIn" : "",
-  ].filter(Boolean);
-
-  const checklistChapters: ChecklistChapter[] = [
-    {
-      id: "role",
-      title: "Role",
-      description: "Company, role, and the link recruiters open.",
-      summary: roleSummary.text,
-      summaryPending: roleSummary.pending,
-      summaryProgress: roleSummary.progress,
-      tone: stepReady("role") ? "done" : "pending",
-      content: checklistRoleStep,
-    },
-    {
-      id: "candidate",
-      title: "About you",
-      description: "Choose what this page shows about you. None of this is required.",
-      summary: aboutYouParts.length > 0 ? aboutYouParts.join(", ") : "Optional",
-      summaryPending: false,
-      tone: aboutYouParts.length > 0 ? "done" : "optional",
-      content: candidateStep,
-    },
-    {
-      id: "materials",
-      title: "Résumé",
-      description: "A résumé from your library, or a PDF only for this role.",
-      summary: reviewCvLabel || "Choose a file",
-      summaryPending: !cvCountsForProgress,
-      tone: cvCountsForProgress ? "done" : "pending",
-      content: materialsStep,
-    },
-    {
-      id: "video",
-      title: "Pitch",
-      description: "A YouTube video they can watch on the page.",
-      summary: hasVideo ? "YouTube link added" : "Still needed",
-      summaryPending: !hasVideo,
-      tone: stepReady("video") ? "done" : "pending",
-      content: videoStep,
-    },
-  ];
-
   return (
     <form
       onSubmit={handleSubmit}
@@ -2066,12 +1868,51 @@ export default function ApplicationForm({
       className={presentation === "wizard" ? "space-y-4 sm:space-y-6" : undefined}
     >
       {presentation === "checklist" ? (
-        <ApplicationFormChecklistLayout
-          chapters={checklistChapters}
-          openId={checklistOpenId}
-          onOpen={setCurrentStepId}
-          sharePath={`/view/${publicId?.trim() || "…"}/${formData.slug.trim() || "…"}`}
-          actions={formActions}
+        <NewApplicationStudio
+          company={formData.company}
+          role={formData.role}
+          slug={formData.slug}
+          publicId={publicId}
+          slugSegmentOrder={slugSegmentOrder}
+          slugManuallyEdited={slugManuallyEdited}
+          slugStatus={slugLiveStatus}
+          companyError={errors.company}
+          roleError={errors.role}
+          slugError={errors.slug}
+          onCompanyChange={(value) =>
+            setFormData((prev) => ({ ...prev, company: value }))
+          }
+          onRoleChange={(value) =>
+            setFormData((prev) => ({ ...prev, role: value }))
+          }
+          onSlugChange={handleSlugFieldChange}
+          onSlugSegmentOrderChange={handleSlugSegmentOrderChange}
+          onUseSuggestedSlug={handleResetSlugToSuggested}
+          candidateValues={candidateValues}
+          include={include}
+          onCandidateValueChange={handleCandidateValueChange}
+          onCandidateIncludeChange={handleCandidateIncludeChange}
+          profilePictureUrl={profilePictureUrl}
+          profilePictureVersion={profilePictureVersion}
+          showProfilePicture={showProfilePicture}
+          onShowProfilePictureChange={(next) => {
+            showProfilePictureUserChosenRef.current = true;
+            setShowProfilePicture(next);
+          }}
+          onProfilePictureSaved={onProfilePictureSaved}
+          videoUrl={formData.video_url}
+          videoError={errors.video_url}
+          onVideoUrlChange={(url) =>
+            setFormData((prev) => ({ ...prev, video_url: url }))
+          }
+          cvSection={materialsStep}
+          snapshotCvName={snapshotCvName}
+          blockers={saveBlockers}
+          canSubmit={canSubmit}
+          busy={formBusy}
+          loadingLabel={saveLoadingLabel}
+          submitLabel={submitLabel}
+          profileNudge={profileNudge}
         />
       ) : presentation === "split" ? (
         <ApplicationFormSplitLayout

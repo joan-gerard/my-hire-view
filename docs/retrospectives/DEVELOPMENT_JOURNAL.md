@@ -59,3 +59,11 @@ Save, the browser draft, and the leave prompt did not change. The share link sta
 ## 3 November 2026
 
 The checklist won for create, so the comparison surfaces came down. `/admin/wizard` and the application-form demo are gone. Edit stays the scrolling page. The wizard layout code is still in the form, unused by a route.
+
+---
+
+## 11 November 2026
+
+The chapter checklist on create was still a form you walked. A single-page demo — headline, link, about you, CV, a pitch block, and a snapshot of the page a recruiter would open — is now `/admin/new`. Save, the browser draft, the leave prompt, the slug rules, and the CV library did not change. Edit stays the scrolling bands.
+
+Recording a pitch in the app is drawn (teleprompter, shape, the record button) and does not capture anything. A YouTube link is still what the page can save. The picture dialog is still the real photo upload; the other profile fields on this page stay on the application. Notes: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_WORKFLOW.md).

@@ -50,8 +50,8 @@ interface CvSourceFieldProps {
   /** Disable file choose/remove for the full Save lifecycle (not only upload). */
   disabled?: boolean;
   /**
-   * `checklist` matches the create Résumé demo: library cards, short tailored
-   * choice, and a one-line download name.
+   * `checklist` is the create page: one selected file, library switch, and a
+   * tailored PDF for this role.
    */
   variant?: "default" | "checklist";
 }
@@ -154,95 +154,102 @@ export default function CvSourceField({
   );
 
   if (variant === "checklist") {
+    const selectedPrimaryName =
+      selectedPrimary?.label?.trim() || selectedPrimary?.filename || pendingOrCurrentName;
     return (
       <>
         <fieldset>
-          <legend className="text-sm font-medium text-[var(--ink)]">
-            Choose one résumé
-          </legend>
+          <legend className="sr-only">Résumé</legend>
+          {lockCvSourceWhileLoading ? (
+            <p className="nas-status" role="status">
+              Loading your CV library…
+            </p>
+          ) : null}
 
-          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-sm text-[var(--muted)]">From your library</p>
+          {hasCvSelection ? (
+            <div className="nas-cv">
+              <div className="nas-pdf">PDF</div>
+              <div>
+                <p className="nas-cv-file">{selectedPrimaryName}</p>
+                <p className="nas-cv-sent">
+                  {preparing
+                    ? "Preparing file…"
+                    : uploading
+                      ? "Uploading…"
+                      : (
+                        <>
+                          Sent as <b>{downloadName}</b>
+                        </>
+                      )}
+                </p>
+              </div>
+              <div className="nas-ok" aria-hidden>
+                ✓
+              </div>
+            </div>
+          ) : !lockCvSourceWhileLoading ? (
+            <div className="nas-up">
+              {hasPrimaryCvs
+                ? "Choose a résumé from your library, or a PDF for this role."
+                : "No résumé in your library yet. Upload one, or use a PDF for this role."}
+            </div>
+          ) : null}
+
+          {mode === "primary" && hasPrimaryCvs && (primaryCvs.length > 1 || !hasCvSelection) ? (
+            <div className="nas-crow">
+              <span className="nas-lbl">Library</span>
+              <div className="nas-chips">
+                {primaryCvs.map((cv) => {
+                  const selected = selectedPrimaryId === cv.id;
+                  const label = cv.label?.trim() || cv.filename;
+                  return (
+                    <button
+                      key={cv.id}
+                      type="button"
+                      className={selected ? "nas-chip" : "nas-chip is-quiet"}
+                      disabled={sourceLocked}
+                      onClick={() => onSelectPrimary(cv.id)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          <p className="nas-cv-actions">
+            {mode !== "tailored" ? (
+              <button
+                type="button"
+                disabled={sourceLocked}
+                onClick={() => onSwitchToTailored()}
+              >
+                Use a tailored PDF for this role
+              </button>
+            ) : null}
+            {mode === "tailored" && hasPrimaryCvs ? (
+              <button
+                type="button"
+                disabled={sourceLocked}
+                onClick={() => onSwitchToPrimary()}
+              >
+                Use a library CV
+              </button>
+            ) : null}
             {canManageLibrary ? (
               <button
                 type="button"
-                className={textButtonClass}
                 disabled={disabled}
                 onClick={() => setLibraryModalOpen(true)}
               >
                 Manage library
               </button>
             ) : null}
-          </div>
-
-          {lockCvSourceWhileLoading ? (
-            <p className="mt-2 text-sm text-[var(--muted)]" role="status">
-              Loading your CV library…
-            </p>
-          ) : null}
-
-          <div className="mt-2 space-y-2">
-            {hasPrimaryCvs
-              ? primaryCvs.map((cv) => {
-                  const selected =
-                    mode === "primary" && selectedPrimaryId === cv.id;
-                  const label = cv.label?.trim() || cv.filename;
-                  return (
-                    <label
-                      key={cv.id}
-                      className={choiceCardClass(selected, sourceLocked)}
-                    >
-                      <input
-                        type="radio"
-                        name="cvSourceChecklist"
-                        value={cv.id}
-                        checked={selected}
-                        disabled={sourceLocked}
-                        onChange={() => onSelectPrimary(cv.id)}
-                        className="size-4 shrink-0 accent-[var(--ink)]"
-                      />
-                      <span className="min-w-0 flex-1 truncate">{label}</span>
-                    </label>
-                  );
-                })
-              : !primaryCvsLoading ? (
-                  <p className="text-sm text-[var(--muted)]">
-                    No primary CVs yet.
-                    {canManageLibrary ? (
-                      <>
-                        {" "}
-                        <button
-                          type="button"
-                          className={textButtonClass}
-                          disabled={disabled}
-                          onClick={() => setLibraryModalOpen(true)}
-                        >
-                          Upload one to your library
-                        </button>
-                      </>
-                    ) : null}
-                  </p>
-                ) : null}
-          </div>
-
-          <p className="mt-4 text-sm text-[var(--muted)]">Only this application</p>
-          <label
-            className={`mt-2 ${choiceCardClass(mode === "tailored", sourceLocked)}`}
-          >
-            <input
-              type="radio"
-              name="cvSourceChecklist"
-              value="tailored"
-              checked={mode === "tailored"}
-              disabled={sourceLocked}
-              onChange={() => onSwitchToTailored()}
-              className="size-4 shrink-0 accent-[var(--ink)]"
-            />
-            A PDF just for this role
-          </label>
+          </p>
 
           {mode === "tailored" ? (
-            <div className="mt-3">
+            <div className="nas-tailored">
               <FileUpload
                 pendingFile={pendingFile}
                 onPendingFileChange={onPendingFileChange}
@@ -256,30 +263,24 @@ export default function CvSourceField({
           ) : null}
 
           {error ? (
-            <p className="mt-3 text-sm text-[var(--status-danger-fg)]" role="alert">
+            <p className="nas-err" role="alert">
               {error}
             </p>
           ) : null}
 
           {hasCvSelection ? (
-            <div className="mt-4">
-              <p className="text-sm leading-relaxed text-[var(--muted)]">
-                Recruiters download it as{" "}
-                <span className="text-[var(--ink)]">{downloadName}</span>.
-              </p>
-              <button
-                type="button"
-                className={`mt-2 ${textButtonClass}`}
-                disabled={disabled}
-                onClick={() =>
-                  onUseOriginalCvFilenameChange(useOriginalCvFilename === false)
-                }
-              >
-                {useOriginalCvFilename !== false
-                  ? "Use a generated name"
-                  : "Use the original file name"}
-              </button>
-            </div>
+            <button
+              type="button"
+              className="nas-textbtn"
+              disabled={disabled}
+              onClick={() =>
+                onUseOriginalCvFilenameChange(useOriginalCvFilename === false)
+              }
+            >
+              {useOriginalCvFilename !== false
+                ? "Use a generated name"
+                : "Use the original file name"}
+            </button>
           ) : null}
         </fieldset>
         {switchConfirm}

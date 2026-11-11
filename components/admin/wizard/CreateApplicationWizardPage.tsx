@@ -2,7 +2,7 @@
 
 /**
  * Create application. Default presentation is the parked wizard.
- * `/admin/new` passes `presentation="checklist"`.
+ * `/admin/new` passes `presentation="checklist"` (studio layout).
  */
 
 import ApplicationForm from "@/components/forms/ApplicationForm";
@@ -288,21 +288,25 @@ export default function CreateApplicationWizardPage({
       resolveSlugOnCreate
       persistDraftKey={draftStorageKey ?? undefined}
       presentation={presentation}
+      profileNudge={
+        presentation === "checklist" && showProfileNudge ? (
+          <>
+            {hasSavedProfile
+              ? "Add location, links, or a picture on your profile to prefill the next application. "
+              : "Complete your profile to prefill location, links, and a picture. Your signup name is used here until then. "}
+            <Link href="/admin/profile">Go to profile</Link>
+          </>
+        ) : undefined
+      }
     />
   );
 
   return (
-    <div
-      className={
-        presentation === "checklist"
-          ? "mx-auto w-full max-w-6xl space-y-4 sm:space-y-6"
-          : "space-y-4 sm:space-y-6"
-      }
-    >
+    <div className={presentation === "checklist" ? undefined : "space-y-4 sm:space-y-6"}>
       {presentation === "wizard" ? (
         <ApplicationFormPageHeader title="Create New Application" />
       ) : null}
-      {showProfileNudge && (
+      {showProfileNudge && presentation !== "checklist" && (
         <p className={`flex items-start gap-2 ${ADMIN_TIP_CLASS}`}>
           <span className="min-w-0 flex-1">
             {hasSavedProfile

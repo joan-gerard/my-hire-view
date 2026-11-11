@@ -4,15 +4,17 @@ Create is `/admin/new`. Edit is `/admin/edit/[id]`. They share the same fields, 
 
 ## Create
 
-`/admin/new` keeps one chapter open: **Role**, **About you**, **Résumé**, **Pitch**. The others stay as a single line you can reopen. The checklist and chapters sit in a centered column. From 1100px wide, a checklist titled **This application** stays beside the chapters, under the admin header. It shows how many parts are ready, a bar, and a row for each chapter. A lime check means that part is ready. **About you** is optional: a dashed circle and **Optional** when nothing is shown, and it still counts. Clicking a row opens that chapter. **Next** moves to the next chapter without waiting for the current one to be finished. Below 1100px the checklist sits above the chapters.
+`/admin/new` is one scrolling page. The headline is **Make {company} notice you.** Company and role sit under **Link**, with the live share ending and **Copy**. **Customize ending** offers **Company + Role**, **Role + Company**, and **Custom**. **Use the suggested link** appears after the ending is changed. **Checking…** shows while the ending is checked. A bad ending stays in magenta under the link.
 
-**Save draft & preview** stays at the top. It stays greyed out until company, role, the share link, a résumé, and a YouTube intro are ready. The checklist names those gaps. Pressing Enter in a field does not save.
+**About you** is optional. It shows the photo or initials, the name, and the location. **Edit profile** changes the name, location, LinkedIn, and portfolio for this application only. A photo still opens the existing picture dialog and is saved on the profile. **Show on page** chips turn first name, last name, photo, location, portfolio, and LinkedIn on or off. **+ Add** opens the dialog, or the picture dialog when there is no photo.
 
-**Role** shows company and role. The share link is taken from those two. While both names are filled, the closed Role line says what the link is doing. **Checking...** is grey and italic while the ending is checked. The gaps stay pink: **Add a link ending**, **Fix the link ending**, **Link already used**, or **Couldn't check the link**. A ready link shows the company and role. **Edit link** opens **Order in the link** (**Company, then role** or **Role, then company**) and **Link ending**. **Use the suggested link** appears after the ending is changed. The checklist ends with `/view/{publicId}/{slug}`.
+**CV** shows the selected file and the name recruiters download. More than one library file can be switched from a chip row. **Use a tailored PDF for this role** opens the file picker. **Manage library** is the same library as Profile. **Use a generated name** / **Use the original file name** still switches the download name.
 
-**About you** starts with **Profile picture**: short copy, **Show picture** / **Hide picture** cards, and **Manage picture** or **Add profile picture** under those choices. First and last name sit side by side, then location, **Portfolio**, and **LinkedIn**, each with **Show** / **Hidden**. There is no collapsible **Info shown to recruiters** block on create.
+**Video pitch** can show **Record in app** or **Use YouTube**. Recording opens a teleprompter dialog and does not capture or save a video. A YouTube link is still required before save. A ready link shows as **Your pitch · ready**.
 
-**Résumé** uses **Choose one résumé**: library files as cards under **From your library**, then **A PDF just for this role**. **Manage library** sits beside the library heading. Once a file is chosen, the download line says **Recruiters download it as…**, with a toggle for the original or generated name.
+A **Snapshot** sits beside the form from 961px wide, and below it on a narrower screen. It previews the name, the included links, the pitch, and the résumé name. It does not save.
+
+**Save draft & preview** sits in a bar at the bottom with **Cancel** and a line that names what is still missing. It stays unavailable until company, role, the share link, a résumé, and a YouTube intro are ready. Pressing Enter in a field does not save. **Cancel** returns to the dashboard and still asks before discarding a browser draft.
 
 Leaving create from the header or with the browser Back button still asks before discarding the browser draft. A successful save clears that draft. A failed save keeps it.
 

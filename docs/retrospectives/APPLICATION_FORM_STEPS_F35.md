@@ -8,7 +8,9 @@
 
 **26 October 2026 — split page on the canonical URLs, wizard parked.** `/admin/new` and `/admin/edit/[id]` are one scrolling page: each step is a half-and-half band from 1200px (guidance on the left, fields on the right) and a stacked band through 1199px. The wizard lives at `/admin/wizard/new` and `/admin/wizard/edit/[id]` until one side wins. Delete the loser. Do not keep both.
 
-**3 November 2026 — wizard routes and the form demo removed.** Create is the checklist on `/admin/new`. Edit stays the scrolling page. `/admin/wizard/*` and `/demo/application-form` are gone. The notes below are the record of the wizard, not a live route.
+**3 November 2026 — wizard routes and the form demo removed.** Create was the checklist on `/admin/new`. Edit stays the scrolling page. `/admin/wizard/*` and `/demo/application-form` are gone. The notes below are the record of the wizard, not a live route.
+
+**11 November 2026 — create is the single-page studio.** `/admin/new` follows the new-application demo (link, about you, CV, pitch, snapshot). The checklist layout is gone. Current behavior: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_WORKFLOW.md).
 
 ---
 
