@@ -19,7 +19,7 @@ export function notchLayout(density = "default") {
   const pad = compact ? 12 : 16;
   const btn = compact ? 32 : 44;
   const gap = compact ? 6 : 8;
-  const corner = compact ? pad + 14 : pad + 22;
+  const corner = compact ? 14 : 18;
   return {
     pad,
     btn,
