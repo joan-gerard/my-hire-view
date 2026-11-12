@@ -122,13 +122,23 @@ const NAV = [
   { href: "/demo#team", label: "Team" },
   { href: "/demo#pricing", label: "Pricing" },
   { href: "/demo/care-log", label: "Care log" },
+  { href: "/demo/admin", label: "Admin demo" },
 ] as const;
 
-export function SprigHeader({ current }: { current?: "home" | "care-log" }) {
+type SprigCurrent = "home" | "care-log" | "admin";
+
+function isNavCurrent(href: string, current?: SprigCurrent): boolean {
+  if (href === "/demo/care-log" && current === "care-log") return true;
+  if (href === "/demo/admin" && current === "admin") return true;
+  return false;
+}
+
+export function SprigHeader({ current }: { current?: SprigCurrent }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuOpenRef = useRef(menuOpen);
   const headerRef = useHideHeaderOnScroll(menuOpenRef);
-  const joinHref = current === "care-log" ? "/demo#join" : "#join";
+  const joinHref =
+    current === "care-log" || current === "admin" ? "/demo#join" : "#join";
 
   useEffect(() => {
     menuOpenRef.current = menuOpen;
@@ -150,8 +160,7 @@ export function SprigHeader({ current }: { current?: "home" | "care-log" }) {
         </Link>
         <nav className="sg-nav" aria-label="Primary">
           {NAV.map((item) => {
-            const isCurrent =
-              item.href === "/demo/care-log" && current === "care-log";
+            const isCurrent = isNavCurrent(item.href, current);
             return (
               <Link
                 key={item.href}
@@ -183,8 +192,7 @@ export function SprigHeader({ current }: { current?: "home" | "care-log" }) {
       {menuOpen ? (
         <div className="sg-drawer sg-wrap">
           {NAV.map((item) => {
-            const isCurrent =
-              item.href === "/demo/care-log" && current === "care-log";
+            const isCurrent = isNavCurrent(item.href, current);
             return (
               <Link
                 key={item.href}
@@ -225,6 +233,7 @@ export function SprigFooter() {
             <p className="sg-footer-label">Pages</p>
             <Link href="/demo">Home</Link>
             <Link href="/demo/care-log">Care log</Link>
+            <Link href="/demo/admin">Admin demo</Link>
             <Link href="/demo#pricing">Pricing</Link>
           </div>
           <div>
@@ -240,13 +249,26 @@ export function SprigFooter() {
 
 export function SprigShell({
   current,
+  wide = false,
+  className,
   children,
 }: {
-  current?: "home" | "care-log";
+  current?: SprigCurrent;
+  /** Widen header, main, and footer wraps to 1440px. */
+  wide?: boolean;
+  className?: string;
   children: ReactNode;
 }) {
+  const classes = [
+    "sg-landing",
+    wide ? "sg-landing--wide" : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className="sg-landing" id="top">
+    <div className={classes} id="top">
       <SprigHeader current={current} />
       <main>{children}</main>
       <SprigFooter />
