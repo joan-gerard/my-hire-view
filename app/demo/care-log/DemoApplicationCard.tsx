@@ -1,17 +1,6 @@
 "use client";
 
 import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type RefObject,
-} from "react";
-import { copyToClipboard } from "@/lib/utils/clipboard";
-import { getApplicationStatusDisplay } from "@/lib/utils/application-status-display";
-import { notchLayout, notchPath } from "./NotchedCard";
-import {
   ArchiveIcon,
   ChartIcon,
   CheckIcon,
@@ -19,9 +8,23 @@ import {
   CopyIcon,
   EllipsisIcon,
   ExternalLinkIcon,
+  PaperPlaneIcon,
   PencilIcon,
+  SparklineIcon,
   TrashIcon,
 } from "@/components/admin/icons";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { getApplicationStatusDisplay } from "@/lib/utils/application-status-display";
+import { copyToClipboard } from "@/lib/utils/clipboard";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from "react";
+import { notchLayout, notchPath } from "./NotchedCard";
 
 /**
  * Demo-only reimagining of the admin `ApplicationCard`.
@@ -57,6 +60,8 @@ export interface DemoApplication {
   lastViewedLabel: string | null;
   /** Relative recency for Recently viewed, e.g. Viewed 2h ago. */
   viewedAgoLabel?: string | null;
+  /** Fresh enough for a Recently viewed "new" dot (not a status check). */
+  isFreshView?: boolean;
   /** Live-card footer pill, e.g. 12 views · 2h ago. */
   viewsPillLabel?: string | null;
   /** Share-path slug shown after a leading slash. */
@@ -120,7 +125,12 @@ function BackIcon({ className }: { className?: string }) {
 }
 
 const WARNING_ICON = (
-  <svg className="sg-appcard__badge-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+  <svg
+    className="sg-appcard__badge-icon"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+    aria-hidden
+  >
     <path
       fillRule="evenodd"
       d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.518 11.594c.75 1.335-.213 2.982-1.742 2.982H3.48c-1.53 0-2.493-1.647-1.743-2.982L8.257 3.1zM11 14a1 1 0 10-2 0 1 1 0 002 0zm-1-2a1 1 0 01-1-1V8a1 1 0 112 0v3a1 1 0 01-1 1z"
@@ -159,6 +169,7 @@ export default function DemoApplicationCard({
   onActivate,
   onPublish,
   onRestore,
+  onDelete,
 }: {
   application: DemoApplication;
   layout?: DemoCardLayout;
@@ -172,6 +183,7 @@ export default function DemoApplicationCard({
   onActivate?: () => void;
   onPublish?: (id: string) => void;
   onRestore?: (id: string) => void;
+  onDelete?: (id: string) => void | Promise<void>;
 }) {
   if (layout === "list") {
     return (
@@ -181,6 +193,7 @@ export default function DemoApplicationCard({
         onActivate={onActivate}
         onPublish={onPublish}
         onRestore={onRestore}
+        onDelete={onDelete}
       />
     );
   }
@@ -192,6 +205,7 @@ export default function DemoApplicationCard({
       onActivate={onActivate}
       onPublish={onPublish}
       onRestore={onRestore}
+      onDelete={onDelete}
     />
   );
 }
@@ -207,6 +221,7 @@ function DemoApplicationGridCard({
   onActivate,
   onPublish,
   onRestore,
+  onDelete,
 }: {
   application: DemoApplication;
   density?: DemoCardDensity;
@@ -214,12 +229,15 @@ function DemoApplicationGridCard({
   onActivate?: () => void;
   onPublish?: (id: string) => void;
   onRestore?: (id: string) => void;
+  onDelete?: (id: string) => void | Promise<void>;
 }) {
   const ref = useRef<HTMLElement>(null);
   const { w, h } = useElementSize(ref);
   const compact = density === "compact";
   const [copied, setCopied] = useState(false);
   const [view, setView] = useState<CardView>("front");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isDraft = application.status === "draft";
   const isArchived = application.status === "archived";
@@ -229,17 +247,49 @@ function DemoApplicationGridCard({
   const StatusGlyph = status.glyph;
   const shape = notchLayout(density);
   const path =
-    w > 0 && h > 0 ? notchPath(w, h, shape.notchW, shape.notchH, shape.radii) : "";
+    w > 0 && h > 0
+      ? notchPath(w, h, shape.notchW, shape.notchH, shape.radii)
+      : "";
 
   function selectView(next: CardView) {
     onActivate?.();
     setView((current) => (current === next ? "front" : next));
   }
 
+  function closePanel() {
+    setView("front");
+  }
+
   // Only one expanded face across cards — collapse when another card activates.
   useEffect(() => {
     if (onActivate && !isActive) setView("front");
   }, [isActive, onActivate]);
+
+  // Escape closes Insights/Manage (unless a confirm dialog is open).
+  useEffect(() => {
+    if (view === "front" || deleteOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closePanel();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [view, deleteOpen]);
+
+  // Click outside the card closes the open panel.
+  useEffect(() => {
+    if (view === "front" || deleteOpen) return;
+    function onPointerDown(event: MouseEvent) {
+      const target = event.target as Node | null;
+      if (target && ref.current && !ref.current.contains(target)) {
+        closePanel();
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [view, deleteOpen]);
 
   async function handleCopyLink() {
     if (!canCopyLink) return;
@@ -250,7 +300,19 @@ function DemoApplicationGridCard({
     }
   }
 
-  /** Green active fill only while Insights or Manage is open. */
+  async function handleConfirmDelete() {
+    if (!onDelete) return;
+    try {
+      setDeleting(true);
+      await onDelete(application.id);
+      setDeleteOpen(false);
+      closePanel();
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  /** Neutral active fill only while Insights or Manage is open. */
   const showActiveSurface = view === "insights" || view === "manage";
 
   return (
@@ -285,7 +347,11 @@ function DemoApplicationGridCard({
           aria-label="Insights"
           aria-pressed={view === "insights"}
         >
-          <ChartIcon className="sg-appcard__tray-icon" />
+          {compact ? (
+            <SparklineIcon className="sg-appcard__tray-icon" />
+          ) : (
+            <ChartIcon className="sg-appcard__tray-icon" />
+          )}
         </button>
         <button
           type="button"
@@ -320,20 +386,42 @@ function DemoApplicationGridCard({
         {view === "insights" ? (
           <GridInsightsFace
             application={application}
-            onBack={() => setView("front")}
+            canCopyLink={canCopyLink}
+            copied={copied}
+            onCopyLink={handleCopyLink}
+            onBack={closePanel}
           />
         ) : null}
         {view === "manage" ? (
           <GridManageFace
+            application={application}
             isDraft={isDraft}
             isArchived={isArchived}
+            compact={compact}
             canCopyLink={canCopyLink}
             copied={copied}
             onCopyLink={handleCopyLink}
-            onBack={() => setView("front")}
+            onPublish={() => onPublish?.(application.id)}
+            onRestore={() => onRestore?.(application.id)}
+            onRequestDelete={() => setDeleteOpen(true)}
+            onBack={closePanel}
           />
         ) : null}
       </div>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete this application?"
+        message="This permanently removes the application and its share link. This cannot be undone."
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        confirming={deleting}
+        confirmLoadingLabel="Deleting…"
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
+        onCancel={() => setDeleteOpen(false)}
+      />
     </article>
   );
 }
@@ -368,8 +456,7 @@ function GridFrontFace({
   const isArchived = application.status === "archived";
   const canViewPage = Boolean(application.shareUrl);
   const showBadges =
-    !compact &&
-    (application.cvMissing || application.profilePictureMissing);
+    !compact && (application.cvMissing || application.profilePictureMissing);
   function handleLifecycle() {
     onActivate?.();
     if (isDraft) {
@@ -399,14 +486,27 @@ function GridFrontFace({
   return (
     <>
       <header className="sg-appcard__head sg-appcard__head--badge">
-        <span
-          className="sg-appcard__status-pill"
-          role="img"
-          aria-label={status.label}
-          title={statusTooltip(status)}
-        >
-          <StatusGlyph className="sg-appcard__status-pill-icon" />
-        </span>
+        {compact ? (
+          application.isFreshView ? (
+            <span
+              className="sg-appcard__fresh-dot"
+              role="img"
+              aria-label="New activity"
+              title="New activity"
+            />
+          ) : (
+            <span className="sg-appcard__fresh-dot is-muted" aria-hidden />
+          )
+        ) : (
+          <span
+            className="sg-appcard__status-pill"
+            role="img"
+            aria-label={status.label}
+            title={statusTooltip(status)}
+          >
+            <StatusGlyph className="sg-appcard__status-pill-icon" />
+          </span>
+        )}
       </header>
 
       <div className="sg-appcard__body">
@@ -422,7 +522,9 @@ function GridFrontFace({
             <span className="sg-appcard__link-mark" aria-hidden>
               /
             </span>
-            <span className="sg-appcard__link-slug">{application.linkEnding}</span>
+            <span className="sg-appcard__link-slug">
+              {application.linkEnding}
+            </span>
           </p>
         ) : null}
       </div>
@@ -553,11 +655,74 @@ function FaceBackButton({ onBack }: { onBack: () => void }) {
 
 function GridInsightsFace({
   application,
+  canCopyLink,
+  copied,
+  onCopyLink,
   onBack,
 }: {
   application: DemoApplication;
+  canCopyLink: boolean;
+  copied: boolean;
+  onCopyLink: () => void;
   onBack: () => void;
 }) {
+  const isDraft = application.status === "draft";
+  const hasNoEngagement =
+    application.viewCount === 0 && application.downloadCount === 0;
+
+  if (isDraft) {
+    return (
+      <div className="sg-appcard__face">
+        <FaceBackButton onBack={onBack} />
+        <div className="sg-appcard__face-panel">
+          <div className="sg-appcard__insight-empty is-solo">
+            <p className="sg-appcard__insight-empty-copy">
+              No views yet. Publish your application and share your link to get
+              started.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasNoEngagement) {
+    return (
+      <div className="sg-appcard__face">
+        <FaceBackButton onBack={onBack} />
+        <div className="sg-appcard__face-panel">
+          <dl
+            className="sg-appcard__insight-grid is-created-only"
+            aria-label="Insights"
+          >
+            <div className="sg-appcard__insight-tile is-meta">
+              <dt>Created</dt>
+              <dd>{application.createdLabel}</dd>
+            </div>
+          </dl>
+          <div className="sg-appcard__insight-empty">
+            <p className="sg-appcard__insight-empty-copy">
+              No views yet. Share your link to get started.
+            </p>
+            <button
+              type="button"
+              className="sg-appcard__insight-empty-action"
+              onClick={onCopyLink}
+              disabled={!canCopyLink}
+            >
+              {copied ? (
+                <CheckIcon className="sg-appcard__lifecycle-icon" />
+              ) : (
+                <CopyIcon className="sg-appcard__lifecycle-icon" />
+              )}
+              {copied ? "Copied" : "Copy link"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="sg-appcard__face">
       <FaceBackButton onBack={onBack} />
@@ -587,25 +752,51 @@ function GridInsightsFace({
 }
 
 function GridManageFace({
+  application,
   isDraft,
   isArchived,
+  compact = false,
   canCopyLink,
   copied,
   onCopyLink,
+  onPublish,
+  onRestore,
+  onRequestDelete,
   onBack,
 }: {
+  application: DemoApplication;
   isDraft: boolean;
   isArchived: boolean;
+  /** Recently viewed: Copy/View already live on the front face. */
+  compact?: boolean;
   canCopyLink: boolean;
   copied: boolean;
   onCopyLink: () => void;
+  onPublish: () => void;
+  onRestore: () => void;
+  onRequestDelete: () => void;
   onBack: () => void;
 }) {
   const lifecycle = isDraft
-    ? { label: "Publish", glyph: CheckIcon }
+    ? {
+        label: "Publish",
+        glyph: PaperPlaneIcon,
+        primary: true,
+        onClick: onPublish,
+      }
     : isArchived
-      ? { label: "Restore", glyph: ArchiveIcon }
-      : { label: "Archive", glyph: ArchiveIcon };
+      ? {
+          label: "Restore",
+          glyph: ArchiveIcon,
+          primary: true,
+          onClick: onRestore,
+        }
+      : {
+          label: "Archive",
+          glyph: ArchiveIcon,
+          primary: false,
+          onClick: undefined,
+        };
   const LifecycleGlyph = lifecycle.glyph;
 
   return (
@@ -615,44 +806,78 @@ function GridManageFace({
       <div className="sg-appcard__face-panel">
         <div className="sg-appcard__manage-grid" aria-label="Manage">
           <div
-            className="sg-appcard__manage-row"
+            className={`sg-appcard__manage-row${compact ? " is-pair" : ""}`}
             role="group"
             aria-label="Primary actions"
           >
-            <button type="button" className="sg-appcard__manage-chip">
+            <a
+              href={`/admin/edit/${application.id}`}
+              className="sg-appcard__manage-chip"
+            >
               <PencilIcon className="sg-appcard__manage-icon" />
-              Edit
-            </button>
-            <button type="button" className="sg-appcard__manage-chip">
-              <LifecycleGlyph className="sg-appcard__manage-icon" />
-              {lifecycle.label}
-            </button>
+              <span className="sg-appcard__manage-label">Edit</span>
+            </a>
             <button
               type="button"
-              className="sg-appcard__manage-chip"
-              onClick={onCopyLink}
-              disabled={!canCopyLink}
+              className={`sg-appcard__manage-chip${lifecycle.primary ? " is-primary" : ""}`}
+              onClick={lifecycle.onClick}
             >
-              {copied ? (
-                <CheckIcon className="sg-appcard__manage-icon" />
-              ) : (
-                <CopyIcon className="sg-appcard__manage-icon" />
-              )}
-              {copied ? "Copied" : "Copy link"}
+              <LifecycleGlyph className="sg-appcard__manage-icon" />
+              <span className="sg-appcard__manage-label">{lifecycle.label}</span>
             </button>
+            {!compact ? (
+              <button
+                type="button"
+                className="sg-appcard__manage-chip"
+                onClick={onCopyLink}
+                disabled={!canCopyLink}
+              >
+                {copied ? (
+                  <CheckIcon className="sg-appcard__manage-icon" />
+                ) : (
+                  <CopyIcon className="sg-appcard__manage-icon" />
+                )}
+                <span className="sg-appcard__manage-label">
+                  {copied ? "Copied" : "Copy link"}
+                </span>
+              </button>
+            ) : null}
           </div>
+          {!compact ? (
+            <div
+              className="sg-appcard__manage-row is-single"
+              role="group"
+              aria-label="Open page"
+            >
+              <a
+                href={application.shareUrl || undefined}
+                className="sg-appcard__manage-chip"
+                target={application.shareUrl ? "_blank" : undefined}
+                rel={application.shareUrl ? "noopener noreferrer" : undefined}
+                aria-disabled={!application.shareUrl}
+                onClick={(event) => {
+                  if (!application.shareUrl) event.preventDefault();
+                }}
+              >
+                <ExternalLinkIcon className="sg-appcard__manage-icon" />
+                <span className="sg-appcard__manage-label">
+                  {isDraft ? "Preview" : "View"}
+                </span>
+              </a>
+            </div>
+          ) : null}
           <div
-            className="sg-appcard__manage-row is-split"
+            className="sg-appcard__manage-row is-danger-row"
             role="group"
-            aria-label="Share and delete"
+            aria-label="Danger zone"
           >
-            <button type="button" className="sg-appcard__manage-chip">
-              <ExternalLinkIcon className="sg-appcard__manage-icon" />
-              {isDraft ? "Preview" : "View"}
-            </button>
-            <button type="button" className="sg-appcard__manage-chip is-danger">
+            <button
+              type="button"
+              className="sg-appcard__manage-chip is-danger"
+              onClick={onRequestDelete}
+            >
               <TrashIcon className="sg-appcard__manage-icon" />
-              Delete
+              <span className="sg-appcard__manage-label">Delete</span>
             </button>
           </div>
         </div>
@@ -671,16 +896,20 @@ function DemoApplicationListRow({
   onActivate,
   onPublish,
   onRestore,
+  onDelete,
 }: {
   application: DemoApplication;
   isActive?: boolean;
   onActivate?: () => void;
   onPublish?: (id: string) => void;
   onRestore?: (id: string) => void;
+  onDelete?: (id: string) => void | Promise<void>;
 }) {
   const [copied, setCopied] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   function activate() {
@@ -865,7 +1094,11 @@ function DemoApplicationListRow({
             onClick={() => {
               activate();
               if (!application.shareUrl) return;
-              window.open(application.shareUrl, "_blank", "noopener,noreferrer");
+              window.open(
+                application.shareUrl,
+                "_blank",
+                "noopener,noreferrer",
+              );
             }}
             disabled={!application.shareUrl}
             aria-label={isDraft ? "Preview page" : "Open page"}
@@ -897,7 +1130,11 @@ function DemoApplicationListRow({
             </button>
             {menuOpen ? (
               <div className="sg-approw__menu-list" role="menu">
-                <button type="button" role="menuitem" onClick={() => setMenuOpen(false)}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => setMenuOpen(false)}
+                >
                   <PencilIcon className="sg-approw__menu-icon" /> Edit
                 </button>
                 {isDraft ? (
@@ -923,7 +1160,11 @@ function DemoApplicationListRow({
                     <ArchiveIcon className="sg-approw__menu-icon" /> Restore
                   </button>
                 ) : (
-                  <button type="button" role="menuitem" onClick={() => setMenuOpen(false)}>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => setMenuOpen(false)}
+                  >
                     <ArchiveIcon className="sg-approw__menu-icon" /> Archive
                   </button>
                 )}
@@ -931,7 +1172,10 @@ function DemoApplicationListRow({
                   type="button"
                   role="menuitem"
                   className="is-danger"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setDeleteOpen(true);
+                  }}
                 >
                   <TrashIcon className="sg-approw__menu-icon" /> Delete
                 </button>
@@ -940,6 +1184,29 @@ function DemoApplicationListRow({
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete this application?"
+        message="This permanently removes the application and its share link. This cannot be undone."
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        confirming={deleting}
+        confirmLoadingLabel="Deleting…"
+        onConfirm={() => {
+          void (async () => {
+            if (!onDelete) return;
+            try {
+              setDeleting(true);
+              await onDelete(application.id);
+              setDeleteOpen(false);
+            } finally {
+              setDeleting(false);
+            }
+          })();
+        }}
+        onCancel={() => setDeleteOpen(false)}
+      />
     </article>
   );
 }

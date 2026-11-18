@@ -17,7 +17,8 @@ import { useEffect, useRef, useState } from "react";
 export function notchLayout(density = "default") {
   const compact = density === "compact";
   const pad = compact ? 12 : 16;
-  const btn = compact ? 32 : 44;
+  /* Compact stays near the 40px touch target used by strip scroll handles. */
+  const btn = compact ? 40 : 44;
   const gap = compact ? 6 : 8;
   const corner = compact ? 14 : 18;
   return {

@@ -71,6 +71,23 @@ export function ChartIcon({ className }: IconProps) {
   );
 }
 
+/** Two-bar sparkline — clearer than ChartIcon in compact notch buttons. */
+export function SparklineIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2.25}
+      aria-hidden
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 18V11" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 18V6" />
+    </svg>
+  );
+}
+
 export function ChevronDownIcon({ className }: IconProps) {
   return (
     <svg
@@ -213,6 +230,25 @@ export function PencilIcon({ className }: IconProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+      />
+    </svg>
+  );
+}
+
+export function PaperPlaneIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
       />
     </svg>
   );

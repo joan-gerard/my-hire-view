@@ -1,36 +1,37 @@
 "use client";
 
-import Link from "next/link";
 import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+    DemoApplicationsSkeleton,
+    DemoRecentViewsSkeleton,
+} from "@/app/demo/admin/demo-admin-skeletons";
+import DemoApplicationCard, {
+    type DemoCardLayout,
+} from "@/app/demo/care-log/DemoApplicationCard";
+import { mapApplicationToDemo } from "@/app/demo/map-application-to-demo";
+import { SprigShell } from "@/app/demo/sprig-shared";
 import { useApplicationStatusCounts } from "@/hooks/useApplicationStatusCounts";
 import {
+  deleteApplication,
   fetchApplications,
   publishApplication,
   restoreApplication,
 } from "@/lib/api/applications";
 import {
-  APPLICATION_LIST_DEFAULT_LIMIT,
-  APPLICATION_LIST_MAX_LIMIT,
-  type ApplicationListItem,
-  type ApplicationStatus,
+    APPLICATION_LIST_DEFAULT_LIMIT,
+    APPLICATION_LIST_MAX_LIMIT,
+    type ApplicationListItem,
+    type ApplicationStatus,
 } from "@/lib/types/application";
-import DemoApplicationCard, {
-  type DemoCardLayout,
-} from "@/app/demo/care-log/DemoApplicationCard";
+import Link from "next/link";
 import {
-  DemoApplicationsSkeleton,
-  DemoRecentViewsSkeleton,
-} from "@/app/demo/admin/demo-admin-skeletons";
-import { mapApplicationToDemo } from "@/app/demo/map-application-to-demo";
-import { SprigShell } from "@/app/demo/sprig-shared";
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+    type ReactNode,
+} from "react";
 
 type AppsStatusFilter = "all" | ApplicationStatus;
 
@@ -194,7 +195,12 @@ function LatestViewsStrip({
 
 function GridIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
       <rect x="3" y="3" width="8" height="8" rx="1.5" />
       <rect x="13" y="3" width="8" height="8" rx="1.5" />
       <rect x="3" y="13" width="8" height="8" rx="1.5" />
@@ -205,7 +211,12 @@ function GridIcon({ className }: { className?: string }) {
 
 function ListIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
       <rect x="3" y="4" width="18" height="4" rx="1.5" />
       <rect x="3" y="10" width="18" height="4" rx="1.5" />
       <rect x="3" y="16" width="18" height="4" rx="1.5" />
@@ -230,12 +241,11 @@ function PlusIcon({ className }: { className?: string }) {
  * Last 10 recently viewed applications, newest view first.
  * Archived rows are excluded — this strip is about live recruiter activity.
  */
-function getLatestViews(applications: ApplicationListItem[]): ApplicationListItem[] {
+function getLatestViews(
+  applications: ApplicationListItem[],
+): ApplicationListItem[] {
   return [...applications]
-    .filter(
-      (app) =>
-        Boolean(app.last_viewed_at) && app.status !== "archived",
-    )
+    .filter((app) => Boolean(app.last_viewed_at) && app.status !== "archived")
     .sort(
       (a, b) =>
         Date.parse(b.last_viewed_at ?? "") - Date.parse(a.last_viewed_at ?? ""),
@@ -310,9 +320,7 @@ export function DemoAdminPage() {
       } catch (err) {
         if (!cancelled) {
           setAppsError(
-            err instanceof Error
-              ? err.message
-              : "Failed to load applications",
+            err instanceof Error ? err.message : "Failed to load applications",
           );
         }
       } finally {
@@ -358,6 +366,24 @@ export function DemoAdminPage() {
         setAppsError(
           err instanceof Error ? err.message : "Failed to restore application",
         );
+      }
+    },
+    [refetchCounts],
+  );
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        setAppsError(null);
+        await deleteApplication(id);
+        setActiveId((current) => (current === id ? null : current));
+        setAppsRefreshKey((key) => key + 1);
+        void refetchCounts();
+      } catch (err) {
+        setAppsError(
+          err instanceof Error ? err.message : "Failed to delete application",
+        );
+        throw err;
       }
     },
     [refetchCounts],
@@ -679,6 +705,7 @@ export function DemoAdminPage() {
                       onActivate={() => setActiveId(application.id)}
                       onPublish={handlePublish}
                       onRestore={handleRestore}
+                      onDelete={handleDelete}
                     />
                   ))}
                 </div>
@@ -694,9 +721,7 @@ export function DemoAdminPage() {
                       <button
                         type="button"
                         onClick={() =>
-                          setAppsOffset((prev) =>
-                            Math.max(0, prev - appsLimit),
-                          )
+                          setAppsOffset((prev) => Math.max(0, prev - appsLimit))
                         }
                         disabled={!hasPrevAppsPage || appsLoading}
                       >

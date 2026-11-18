@@ -81,7 +81,9 @@
 .sg-landing--admin {
   --admin-card: #232323;
   --admin-card-apps: #2e2e2e;
-  --admin-card-active: #1e4d36;
+  /* Neutral elevated panel — green reserved for status + tray accent. */
+  --admin-card-active: #333333;
+  --admin-panel-accent: #9efc65;
   --admin-tray-border: #424242;
   --admin-tray-border-hover: #575757;
   --admin-tray-border-compact: #363636;
@@ -173,8 +175,8 @@
 }
 
 .sg-landing a.sg-dash__new:hover {
-  background: var(--admin-card-active);
-  color: var(--white);
+  background: var(--admin-panel-accent);
+  color: var(--ink);
 }
 
 .sg-dash__new-icon {
@@ -622,8 +624,9 @@
 }
 
 .sg-appcard--compact .sg-appcard__tray-icon {
-  width: 14px;
-  height: 14px;
+  width: 17px;
+  height: 17px;
+  stroke-width: 2;
 }
 
 .sg-appcard--compact .sg-appcard__face {
@@ -663,15 +666,18 @@
 }
 
 .sg-appcard--compact .sg-appcard__manage-chip {
-  padding: 8px 6px;
-  border-radius: 12px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  padding: 4px;
+  border-radius: 10px;
   font-size: 10px;
-  gap: 4px;
+  gap: 2px;
 }
 
 .sg-appcard--compact .sg-appcard__manage-icon {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 
 .sg-landing--admin .sg-appcards-inner {
@@ -755,27 +761,51 @@
 
 .sg-landing--admin .sg-appcard--grid.is-active .sg-appcard__insight-tile,
 .sg-landing--admin .sg-appcard--grid.is-active .sg-appcard__manage-chip {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.1);
   color: var(--white);
 }
 
 .sg-landing--admin .sg-appcard--grid.is-active .sg-appcard__manage-chip:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.16);
   color: var(--white);
 }
 
 .sg-landing--admin
   .sg-appcard--grid.is-active
+  .sg-appcard__manage-chip.is-primary {
+  background: var(--white);
+  color: var(--ink);
+}
+
+.sg-landing--admin
+  .sg-appcard--grid.is-active
+  .sg-appcard__manage-chip.is-primary:hover {
+  background: var(--admin-panel-accent);
+  color: var(--ink);
+}
+
+.sg-landing--admin
+  .sg-appcard--grid.is-active
   .sg-appcard__manage-chip.is-danger {
-  color: #ffb4c0;
+  background: rgba(220, 38, 38, 0.16);
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fecaca;
+}
+
+.sg-landing--admin
+  .sg-appcard--grid.is-active
+  .sg-appcard__manage-chip.is-danger:hover {
+  background: rgba(220, 38, 38, 0.28);
+  border-color: #f87171;
+  color: #fee2e2;
 }
 
 .sg-landing--admin .sg-appcard--grid .sg-appcard__insight-tile dt {
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .sg-landing--admin .sg-appcard--grid.is-active .sg-appcard__insight-tile dt {
-  color: rgba(255, 255, 255, 0.68);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 /* Idle tray rings: Apps #424242→#575757, Latest Views #363636→#4A4A4A. */
@@ -809,15 +839,15 @@
 }
 
 .sg-landing--admin .sg-appcard--grid.is-active .sg-appcard__tray-btn.is-active {
-  background: var(--white);
-  border-color: var(--white);
-  color: var(--admin-card-active);
+  background: var(--admin-panel-accent);
+  border-color: var(--admin-panel-accent);
+  color: var(--ink);
 }
 
 .sg-landing--admin
   .sg-appcard--grid.is-active
   .sg-appcard__tray-btn.is-active:hover {
-  border-color: var(--white);
+  border-color: var(--admin-panel-accent);
 }
 
 .sg-landing--admin .sg-approw__status {
@@ -2193,6 +2223,10 @@
   border-radius: 50%;
 }
 
+.sg-skel-card.is-compact .sg-skel-card__icons {
+  gap: 6px;
+}
+
 .sg-skel-row {
   display: flex;
   flex-wrap: wrap;
@@ -2302,8 +2336,8 @@
 
 .sg-landing a.sg-dash-empty__action:hover,
 .sg-dash-empty__action:hover {
-  background: var(--admin-card-active);
-  color: var(--white);
+  background: var(--admin-panel-accent);
+  color: var(--ink);
 }
 
 .sg-landing a.sg-dash-empty__action.is-secondary,
@@ -2652,7 +2686,7 @@
   flex-direction: column;
   gap: 10px;
   min-height: 0;
-  animation: sg-card-swap 0.26s ease both;
+  animation: sg-card-swap 0.18s ease both;
 }
 
 /* Identity row — status badge clears the notch; company/role live in the body. */
@@ -2745,13 +2779,15 @@
 }
 
 .sg-appcard__badge.is-warning {
-  border: 1px solid color-mix(in srgb, var(--status-warning-fg) 30%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--status-warning-fg) 30%, transparent);
   background: var(--status-warning-bg);
   color: var(--status-warning-fg);
 }
 
 .sg-appcard__badge.is-info {
-  border: 1px solid color-mix(in srgb, var(--status-dot-active) 50%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--status-dot-active) 50%, transparent);
   background: var(--status-wash-active);
   color: var(--ink);
 }
@@ -2834,7 +2870,9 @@
   color: var(--white);
 }
 
-.sg-landing--admin .sg-appcard--grid .sg-appcard__icon-btn:hover:not(:disabled) {
+.sg-landing--admin
+  .sg-appcard--grid
+  .sg-appcard__icon-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.18);
 }
 
@@ -2844,7 +2882,9 @@
   color: var(--white);
 }
 
-.sg-landing--admin .sg-appcard--grid.is-active .sg-appcard__icon-btn:hover:not(:disabled) {
+.sg-landing--admin
+  .sg-appcard--grid.is-active
+  .sg-appcard__icon-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.22);
 }
 
@@ -2958,15 +2998,15 @@
 
 .sg-landing--admin
   .sg-appcard--grid
-  .sg-appcard__lifecycle:hover:not(.is-plain):not(.is-stats):not(.is-secondary) {
-  background: var(--admin-card-active);
-  border-color: var(--admin-card-active);
-  color: var(--white);
+  .sg-appcard__lifecycle:hover:not(.is-plain):not(.is-stats):not(
+    .is-secondary
+  ) {
+  background: var(--admin-panel-accent);
+  border-color: var(--admin-panel-accent);
+  color: var(--ink);
 }
 
-.sg-landing--admin
-  .sg-appcard--grid
-  .sg-appcard__lifecycle.is-secondary:hover {
+.sg-landing--admin .sg-appcard--grid .sg-appcard__lifecycle.is-secondary:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: var(--admin-tray-border-hover);
   color: var(--white);
@@ -2975,7 +3015,7 @@
 .sg-landing--admin .sg-appcard--grid.is-active .sg-appcard__lifecycle {
   background: var(--white);
   border-color: var(--white);
-  color: var(--admin-card-active);
+  color: var(--ink);
 }
 
 .sg-landing--admin .sg-appcard--grid.is-active .sg-appcard__lifecycle.is-plain {
@@ -3008,10 +3048,12 @@
 
 .sg-landing--admin
   .sg-appcard--grid.is-active
-  .sg-appcard__lifecycle:hover:not(.is-plain):not(.is-stats):not(.is-secondary) {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(255, 255, 255, 0.92);
-  color: var(--admin-card-active);
+  .sg-appcard__lifecycle:hover:not(.is-plain):not(.is-stats):not(
+    .is-secondary
+  ) {
+  background: var(--admin-panel-accent);
+  border-color: var(--admin-panel-accent);
+  color: var(--ink);
 }
 
 .sg-landing--admin
@@ -3051,12 +3093,34 @@
   height: 16px;
 }
 
+/* Recently viewed — activity marker instead of a redundant status check. */
+.sg-appcard__fresh-dot {
+  width: 12px;
+  height: 12px;
+  margin: 10px 0 0 10px;
+  border-radius: 50%;
+  background: var(--admin-panel-accent, var(--status-dot-viewed));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--admin-panel-accent, var(--status-dot-viewed)) 22%, transparent);
+  flex-shrink: 0;
+}
+
+.sg-appcard__fresh-dot.is-muted {
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: none;
+}
+
+.sg-appcard--compact .sg-appcard__fresh-dot {
+  margin: 6px 0 0 6px;
+  width: 10px;
+  height: 10px;
+}
+
 /* —— Alternate faces (Insights / Manage) —— */
 .sg-appcard__face {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   min-height: 0;
 }
 
@@ -3114,6 +3178,12 @@
   min-height: 0;
 }
 
+.sg-appcard__insight-grid.is-created-only {
+  flex: 0 0 auto;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+}
+
 .sg-appcard__insight-tile {
   display: flex;
   flex-direction: column;
@@ -3127,11 +3197,71 @@
 
 .sg-appcard__insight-tile dt {
   margin: 0;
-  color: rgba(11, 11, 12, 0.58);
-  font-size: 11px;
+  color: rgba(11, 11, 12, 0.7);
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1.2;
+}
+
+.sg-appcard__insight-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 12px;
+  margin-top: 2px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sg-appcard__insight-empty.is-solo {
+  flex: 1;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+  padding: 16px 18px;
+  text-align: center;
+}
+
+.sg-appcard__insight-empty-copy {
+  margin: 0;
+  flex: 1 1 12rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.sg-appcard__insight-empty.is-solo .sg-appcard__insight-empty-copy {
+  flex: 0 1 auto;
+  max-width: 18rem;
+}
+
+.sg-appcard__insight-empty-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 100px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sg-appcard__insight-empty-action:hover:not(:disabled) {
+  background: var(--admin-panel-accent, var(--lime));
+}
+
+.sg-appcard__insight-empty-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .sg-appcard__insight-tile dd {
@@ -3156,49 +3286,68 @@
 }
 
 /*
- * Manage — two even rows:
- * primary actions (3) then share / delete (2 equal).
+ * Manage — equal-height chips stacked from the top so Delete stays inside
+ * the notched card (overflow:hidden + aspect-ratio).
  */
 .sg-appcard__manage-grid {
-  flex: 1;
-  display: grid;
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
   min-height: 0;
 }
 
 .sg-appcard__manage-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  min-height: 0;
+  gap: 6px;
+  flex: 0 0 auto;
 }
 
-.sg-appcard__manage-row.is-split {
+.sg-appcard__manage-row.is-single {
+  grid-template-columns: 1fr;
+}
+
+.sg-appcard__manage-row.is-pair {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.sg-appcard__manage-row.is-danger-row {
+  grid-template-columns: 1fr;
+  margin-top: 2px;
+}
+
+.sg-landing a.sg-appcard__manage-chip,
 .sg-appcard__manage-chip {
+  box-sizing: border-box;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
-  min-height: 0;
-  padding: 10px 8px;
-  border: 0;
-  border-radius: 16px;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  padding: 6px 4px;
+  border: 1px solid transparent;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.45);
   color: var(--ink);
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1.1;
+  text-align: center;
+  text-decoration: none;
   cursor: pointer;
 }
 
+.sg-landing a.sg-appcard__manage-chip:hover,
 .sg-appcard__manage-chip:hover {
   background: var(--white);
+  color: var(--ink);
 }
 
 .sg-appcard__manage-chip:focus-visible {
@@ -3206,19 +3355,43 @@
   outline-offset: 2px;
 }
 
-.sg-appcard__manage-chip:disabled {
+.sg-appcard__manage-chip:disabled,
+.sg-appcard__manage-chip[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.45;
+  pointer-events: none;
+}
+
+.sg-appcard__manage-chip.is-primary {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9);
 }
 
 .sg-appcard__manage-chip.is-danger {
-  color: var(--pink-text);
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.35);
+  color: #b91c1c;
+}
+
+.sg-appcard__manage-chip.is-danger:hover {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: rgba(220, 38, 38, 0.5);
+  color: #991b1b;
 }
 
 .sg-appcard__manage-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
+}
+
+.sg-appcard__manage-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* —— List layout: admin-like rows (no face tabs) —— */
@@ -3496,7 +3669,7 @@
 @keyframes sg-card-swap {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;

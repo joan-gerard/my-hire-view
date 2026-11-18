@@ -1,9 +1,40 @@
-import { describe, expect, it } from "vitest";
 import {
+  formatDemoCreatedLabel,
+  formatDemoLastViewedLabel,
   formatDemoLinkEnding,
   formatDemoViewedAgoLabel,
   formatDemoViewsPillLabel,
+  isDemoFreshView,
 } from "@/app/demo/map-application-to-demo";
+import { describe, expect, it } from "vitest";
+
+describe("formatDemoCreatedLabel", () => {
+  it("uses an unambiguous day month year format", () => {
+    expect(formatDemoCreatedLabel("2026-11-04T10:00:00")).toBe("4 Nov 2026");
+  });
+});
+
+describe("formatDemoLastViewedLabel", () => {
+  it("includes an unambiguous date plus time", () => {
+    expect(formatDemoLastViewedLabel("2026-11-04T14:20:00")).toBe(
+      "4 Nov 2026, 14:20",
+    );
+  });
+});
+
+describe("isDemoFreshView", () => {
+  const now = new Date("2026-11-12T15:00:00");
+
+  it("marks recent views as fresh within the window", () => {
+    expect(isDemoFreshView("2026-11-12T13:00:00", now, 3)).toBe(true);
+    expect(isDemoFreshView("2026-11-10T15:00:00", now, 3)).toBe(true);
+  });
+
+  it("marks older views as not fresh", () => {
+    expect(isDemoFreshView("2026-11-08T15:00:00", now, 3)).toBe(false);
+    expect(isDemoFreshView(null, now)).toBe(false);
+  });
+});
 
 describe("formatDemoLinkEnding", () => {
   it("formats the share path ending from a slug", () => {

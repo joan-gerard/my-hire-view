@@ -1,29 +1,49 @@
+import type { DemoApplication } from "@/app/demo/care-log/DemoApplicationCard";
 import type { ApplicationListItem } from "@/lib/types/application";
 import { getApplicationUrl } from "@/lib/utils/url";
-import type { DemoApplication } from "@/app/demo/care-log/DemoApplicationCard";
 
 function pad2(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-/** Matches the care-log placeholder dates: 28.03.2023 */
+/** Unambiguous date for Insights tiles, e.g. 4 Nov 2026. */
 export function formatDemoCreatedLabel(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";
-  return `${pad2(date.getDate())}.${pad2(date.getMonth() + 1)}.${date.getFullYear()}`;
+  const month = date.toLocaleString("en-GB", { month: "short" });
+  return `${date.getDate()} ${month} ${date.getFullYear()}`;
 }
 
-/** Matches the care-log placeholder last-viewed labels: 2 Apr, 14:20 */
+/** Last-viewed stamp for Insights, e.g. 4 Nov 2026, 14:20. */
 export function formatDemoLastViewedLabel(iso: string | null): string | null {
   if (!iso) return null;
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return null;
   const month = date.toLocaleString("en-GB", { month: "short" });
-  return `${date.getDate()} ${month}, ${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+  return `${date.getDate()} ${month} ${date.getFullYear()}, ${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+/**
+ * True when last viewed within `withinDays` (default 3) — used for the
+ * Recently viewed "new" dot instead of a redundant green check.
+ */
+export function isDemoFreshView(
+  iso: string | null,
+  now: Date = new Date(),
+  withinDays = 3,
+): boolean {
+  if (!iso) return false;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return false;
+  const diffMs = now.getTime() - date.getTime();
+  if (diffMs < 0) return true;
+  return diffMs <= withinDays * 86_400_000;
 }
 
 /** Share-path slug shown on cards after a leading slash. */
-export function formatDemoLinkEnding(slug: string | null | undefined): string | null {
+export function formatDemoLinkEnding(
+  slug: string | null | undefined,
+): string | null {
   const trimmed = slug?.trim();
   if (!trimmed) return null;
   return trimmed;
@@ -73,7 +93,9 @@ export function formatDemoViewsPillLabel(
   lastViewedAt: string | null,
   now: Date = new Date(),
 ): string {
-  const safeCount = Number.isFinite(viewCount) ? Math.max(0, Math.floor(viewCount)) : 0;
+  const safeCount = Number.isFinite(viewCount)
+    ? Math.max(0, Math.floor(viewCount))
+    : 0;
   if (safeCount === 0) return "not viewed yet";
   const viewsLabel = safeCount === 1 ? "1 view" : `${safeCount} views`;
   const relative = formatDemoRelativeAgo(lastViewedAt, now);
@@ -95,6 +117,7 @@ export function mapApplicationToDemo(
     downloadCount: application.download_count,
     lastViewedLabel: formatDemoLastViewedLabel(application.last_viewed_at),
     viewedAgoLabel: formatDemoViewedAgoLabel(application.last_viewed_at),
+    isFreshView: isDemoFreshView(application.last_viewed_at),
     viewsPillLabel: formatDemoViewsPillLabel(
       application.view_count,
       application.last_viewed_at,
