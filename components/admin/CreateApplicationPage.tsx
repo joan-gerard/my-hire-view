@@ -1,18 +1,13 @@
 "use client";
 
 /**
- * Create application. Default presentation is the parked wizard.
- * `/admin/new` passes `presentation="checklist"` (one page).
+ * Create application — one-page form on `/admin/new`.
  */
 
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
-import {
-    ADMIN_FORM_SHELL_CLASS,
-    ADMIN_TIP_CLASS,
-} from "@/components/admin/admin-chrome";
+import { ADMIN_TIP_CLASS } from "@/components/admin/admin-chrome";
 import { ArrowRightIcon } from "@/components/admin/icons";
 import ApplicationForm from "@/components/forms/ApplicationForm";
-import ApplicationFormPageHeader from "@/components/forms/ApplicationFormPageHeader";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
@@ -26,12 +21,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export default function CreateApplicationWizardPage({
-  presentation = "wizard",
-}: {
-  /** Parked wizard, the edit split page, or the one-page form on `/admin/new`. */
-  presentation?: "wizard" | "split" | "checklist";
-}) {
+export default function CreateApplicationPage() {
   const router = useRouter();
   const isSubmittingRef = useRef(false);
   const [loading, setLoading] = useState(false);
@@ -255,42 +245,8 @@ export default function CreateApplicationWizardPage({
     return <AdminPageSkeleton variant="create" />;
   }
 
-  const form = (
-    <ApplicationForm
-      initialData={initialData}
-      onSubmit={handleSubmit}
-      loading={loading}
-      submitLabel="Save draft & preview"
-      profilePictureUrl={profile?.profile_picture_url ?? null}
-      profilePictureVersion={profile?.updated_at ?? null}
-      onProfileIdentitySaved={(identity) => {
-        setProfile((prev) =>
-          profileWithSavedIdentity(prev, identity, {
-            user_id: authUserId ?? undefined,
-            public_id: publicId ?? undefined,
-            first_name: metaNames?.first_name ?? null,
-            last_name: metaNames?.last_name ?? null,
-          }),
-        );
-      }}
-      publicId={publicId ?? undefined}
-      resolveSlugOnCreate
-      persistDraftKey={draftStorageKey ?? undefined}
-      presentation={presentation}
-    />
-  );
-
   return (
-    <div
-      className={
-        presentation === "checklist"
-          ? "mx-auto w-full max-w-2xl space-y-4"
-          : "space-y-4 sm:space-y-6"
-      }
-    >
-      {presentation === "wizard" ? (
-        <ApplicationFormPageHeader title="Create New Application" />
-      ) : null}
+    <div className="mx-auto w-full max-w-2xl space-y-4">
       {showProfileNudge && (
         <p className={`flex items-start gap-2 ${ADMIN_TIP_CLASS}`}>
           <span className="min-w-0 flex-1">
@@ -308,11 +264,28 @@ export default function CreateApplicationWizardPage({
           </Link>
         </p>
       )}
-      {presentation === "wizard" ? (
-        <div className={ADMIN_FORM_SHELL_CLASS}>{form}</div>
-      ) : (
-        form
-      )}
+      <ApplicationForm
+        initialData={initialData}
+        onSubmit={handleSubmit}
+        loading={loading}
+        submitLabel="Save draft & preview"
+        profilePictureUrl={profile?.profile_picture_url ?? null}
+        profilePictureVersion={profile?.updated_at ?? null}
+        onProfileIdentitySaved={(identity) => {
+          setProfile((prev) =>
+            profileWithSavedIdentity(prev, identity, {
+              user_id: authUserId ?? undefined,
+              public_id: publicId ?? undefined,
+              first_name: metaNames?.first_name ?? null,
+              last_name: metaNames?.last_name ?? null,
+            }),
+          );
+        }}
+        publicId={publicId ?? undefined}
+        resolveSlugOnCreate
+        persistDraftKey={draftStorageKey ?? undefined}
+        presentation="single"
+      />
     </div>
   );
 }

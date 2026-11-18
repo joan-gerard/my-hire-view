@@ -1,15 +1,10 @@
 "use client";
 
 /**
- * Edit application. Default presentation is the parked wizard.
- * `/admin/edit/[id]` passes `presentation="split"`.
+ * Edit application — scrolling split layout on `/admin/edit/[id]`.
  */
 
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
-import {
-  ADMIN_FORM_SHELL_CLASS,
-  ADMIN_TIP_CLASS,
-} from "@/components/admin/admin-chrome";
 import ApplicationForm, {
   type ApplicationFormInitialData,
 } from "@/components/forms/ApplicationForm";
@@ -22,12 +17,7 @@ import { profileWithSavedIdentity } from "@/lib/utils/profile-with-saved-identit
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export default function EditApplicationWizardPage({
-  presentation = "wizard",
-}: {
-  /** Parked wizard, or the one-page split layout on `/admin/edit/[id]`. */
-  presentation?: "wizard" | "split";
-}) {
+export default function EditApplicationPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
@@ -229,69 +219,48 @@ export default function EditApplicationWizardPage({
     primary_cv_id: application.primary_cv_id ?? null,
   };
 
-  const form = (
-    <ApplicationForm
-      initialData={initialData}
-      onSubmit={handleSubmit}
-      loading={loading}
-      onRetryCvCheck={refetchCvCheck}
-      profilePictureUrl={
-        profile
-          ? (profile.profile_picture_url ?? null)
-          : (application.profile_picture_url ?? null)
-      }
-      profilePictureVersion={profile?.updated_at ?? null}
-      initialInclude={{
-        first_name: true,
-        last_name: true,
-        location: Boolean(application.location?.trim()),
-        portfolio_url: Boolean(application.portfolio_url?.trim()),
-        linkedin_url: Boolean(application.linkedin_url?.trim()),
-      }}
-      onProfileIdentitySaved={(identity) => {
-        setProfile((prev) =>
-          profileWithSavedIdentity(prev, identity, {
-            user_id: application.user_id,
-            public_id: publicId ?? undefined,
-            first_name: application.first_name,
-            last_name: application.last_name,
-            location: application.location,
-            portfolio_url: application.portfolio_url,
-            linkedin_url: application.linkedin_url,
-            profile_picture_url: application.profile_picture_url,
-          }),
-        );
-      }}
-      publicId={publicId ?? undefined}
-      slugExcludeApplicationId={id}
-      submitLabel={
-        application.status === "draft" ? "Save draft" : "Save application"
-      }
-      presentation={presentation}
-    />
-  );
-
   return (
     <div className="space-y-4 sm:space-y-6">
-      <ApplicationFormPageHeader
-        sticky={presentation === "split"}
-        title={
-          presentation === "split" ? "Edit application" : "Edit Application"
+      <ApplicationFormPageHeader sticky title="Edit application" />
+      <ApplicationForm
+        initialData={initialData}
+        onSubmit={handleSubmit}
+        loading={loading}
+        onRetryCvCheck={refetchCvCheck}
+        profilePictureUrl={
+          profile
+            ? (profile.profile_picture_url ?? null)
+            : (application.profile_picture_url ?? null)
         }
+        profilePictureVersion={profile?.updated_at ?? null}
+        initialInclude={{
+          first_name: true,
+          last_name: true,
+          location: Boolean(application.location?.trim()),
+          portfolio_url: Boolean(application.portfolio_url?.trim()),
+          linkedin_url: Boolean(application.linkedin_url?.trim()),
+        }}
+        onProfileIdentitySaved={(identity) => {
+          setProfile((prev) =>
+            profileWithSavedIdentity(prev, identity, {
+              user_id: application.user_id,
+              public_id: publicId ?? undefined,
+              first_name: application.first_name,
+              last_name: application.last_name,
+              location: application.location,
+              portfolio_url: application.portfolio_url,
+              linkedin_url: application.linkedin_url,
+              profile_picture_url: application.profile_picture_url,
+            }),
+          );
+        }}
+        publicId={publicId ?? undefined}
+        slugExcludeApplicationId={id}
+        submitLabel={
+          application.status === "draft" ? "Save draft" : "Save application"
+        }
+        presentation="split"
       />
-      {presentation === "wizard" ? (
-        <p className={ADMIN_TIP_CLASS}>
-          These details update your profile when you save this application — not
-          if you cancel or leave. This page only chooses which ones recruiters
-          see. Your picture stays on your profile; this page only chooses
-          whether to show it.
-        </p>
-      ) : null}
-      {presentation === "split" ? (
-        form
-      ) : (
-        <div className={ADMIN_FORM_SHELL_CLASS}>{form}</div>
-      )}
     </div>
   );
 }

@@ -23,7 +23,7 @@ export interface ProfilePictureFieldProps {
   onShowProfilePictureChange: (show: boolean) => void;
   /**
    * `checklist` matches the dense one-page create row.
-   * `default` keeps the edit/wizard fieldset chrome.
+   * `default` keeps the edit fieldset chrome.
    * A missing picture links to Profile instead of uploading here.
    */
   variant?: "default" | "checklist";

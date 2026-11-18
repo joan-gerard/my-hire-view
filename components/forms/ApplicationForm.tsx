@@ -47,10 +47,8 @@ import ApplicationFormSinglePageLayout, {
   PROFILE_INITIAL_DATA_TIP,
 } from "./ApplicationFormSinglePageLayout";
 import ApplicationFormSplitLayout from "./ApplicationFormSplitLayout";
-import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
 import {
   applicationFormStepForErrors,
-  applicationFormStepIndex,
   type ApplicationFormStepId,
 } from "./application-form-steps";
 import CandidateFieldsSection, {
@@ -224,10 +222,10 @@ interface ApplicationFormProps {
    */
   persistDraftKey?: string;
   /**
-   * `checklist` is the one-page form on `/admin/new`.
-   * `split` is the edit page. `wizard` is parked.
+   * `single` is the one-page form on `/admin/new`.
+   * `split` is the scrolling edit page.
    */
-  presentation?: "wizard" | "split" | "checklist";
+  presentation?: "single" | "split";
 }
 
 export default function ApplicationForm({
@@ -244,30 +242,16 @@ export default function ApplicationForm({
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
   persistDraftKey,
-  presentation = "wizard",
+  presentation = "single",
 }: ApplicationFormProps) {
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
-  const [currentStepId, setCurrentStepId] =
-    useState<ApplicationFormStepId>("role");
   /** Bumps when a failed save should scroll the split layout to that band. */
   const [errorScroll, setErrorScroll] = useState<{
     stepId: ApplicationFormStepId;
     nonce: number;
   } | null>(null);
-  /**
-   * Edit of a missing CV file: the replacement does not count as done until
-   * Continue. Stores the choice that was confirmed, so a later swap waits again.
-   */
-  const [confirmedMissingCvKey, setConfirmedMissingCvKey] = useState<
-    string | null
-  >(null);
-  /** Review tick after a successful save. Navigation usually leaves before it shows. */
-  const [reviewSaved, setReviewSaved] = useState(false);
-  /** Create wizard: furthest step unlocked via Continue (survives Back). */
-  const [furthestStepId, setFurthestStepId] =
-    useState<ApplicationFormStepId>("role");
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   /** Load once per mount; ignore later key changes while the form is open. */
@@ -401,7 +385,6 @@ export default function ApplicationForm({
   );
   const [previewNonce, setPreviewNonce] = useState(0);
   const resumePreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const [reviewSummaryOpen, setReviewSummaryOpen] = useState(true);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
   /** True while SHA-256 digest of the pending CV is in flight. */
@@ -801,14 +784,6 @@ export default function ApplicationForm({
         selectedPrimaryId === (initialData.primary_cv_id ?? null)
       : cvMode === "tailored");
   const hasUsableCv = hasCv && !stillUsingMissingSavedCv;
-  const cvChoiceKey =
-    cvMode === "primary"
-      ? selectedPrimaryId
-        ? `primary:${selectedPrimaryId}`
-        : ""
-      : cvPendingFile
-        ? `tailored:${cvPendingFile.name}:${cvPendingFile.size}:${cvPendingFile.lastModified}`
-        : "";
   const hasVideo = Boolean(formData.video_url.trim());
   const hasValidVideo = validateYouTubeUrl(formData.video_url.trim());
   const savedSlug = (initialData?.slug ?? "").trim();
@@ -817,56 +792,6 @@ export default function ApplicationForm({
   const slugReady =
     hasSlug &&
     (slugLiveStatus.kind === "available" || slugUnchangedFromSave);
-  /**
-   * Segment-order (and other auto) rechecks set status to "checking" while the
-   * previous slug is still in the field. Treat that as still complete for the
-   * progress bar so the check does not flicker off and back on.
-   * Save / Continue stay blocked until the new check is "available".
-   */
-  const slugHoldsStepComplete =
-    hasSlug &&
-    (slugReady || slugLiveStatus.kind === "checking");
-  /**
-   * Edit (and a restored draft) already know the primary CV id, but the library
-   * list starts empty. Keep the CV and Review ticks while that list loads.
-   * Continue / Save still use `hasCv`, so they wait until the id is confirmed
-   * or cleared if that primary was deleted.
-   */
-  const cvHoldsStepComplete =
-    hasCv ||
-    (!savedCvFileMissing &&
-      primaryCvsLoading &&
-      cvMode === "primary" &&
-      Boolean(selectedPrimaryId));
-  /**
-   * A missing saved file stays unchecked after a new primary or tailored file
-   * is chosen. Continue on the CV step is what marks that choice done.
-   */
-  const cvCountsForProgress = savedCvFileMissing
-    ? hasUsableCv &&
-      cvChoiceKey !== "" &&
-      confirmedMissingCvKey === cvChoiceKey
-    : cvHoldsStepComplete;
-  /**
-   * Review is not a Continue checkpoint. It is green on edit only when the
-   * saved application already had every required field, and after a successful
-   * save. Fixing a missing CV must not light it early.
-   */
-  const savedReviewWasComplete =
-    isEdit &&
-    Boolean(initialData?.company?.trim()) &&
-    Boolean(initialData?.role?.trim()) &&
-    Boolean(initialData?.slug?.trim()) &&
-    Boolean(initialData?.video_url?.trim()) &&
-    initialData?.cvUrlExists !== false &&
-    Boolean(initialData?.cv_url?.trim());
-  const reviewCountsForProgress =
-    (savedReviewWasComplete || reviewSaved) &&
-    hasCompany &&
-    hasRole &&
-    (savedCvFileMissing ? hasUsableCv : cvHoldsStepComplete) &&
-    hasVideo &&
-    slugHoldsStepComplete;
 
   const hasFirstName = Boolean(formData.first_name?.trim());
   const hasLastName = Boolean(formData.last_name?.trim());
@@ -1188,34 +1113,30 @@ export default function ApplicationForm({
     runManualSlugValidate,
   ]);
 
-  /** Surface field errors on the step that still mounts those inputs. */
+  /** Surface field errors on the step / row that owns those inputs. */
   const revealFormErrors = (
     nextErrors: Partial<Record<keyof ApplicationFormData, string>>,
   ) => {
     setErrors(nextErrors);
-    const step = applicationFormStepForErrors(nextErrors);
-    if (!step) return;
-    setCurrentStepId(step);
     if (presentation === "split") {
-      setErrorScroll({ stepId: step, nonce: Date.now() });
-    }
-    if (presentation === "checklist") {
-      const target = checklistErrorTarget(nextErrors);
-      if (target) {
-        window.setTimeout(
-          () => focusApplicationRow(target.rowId, target.inputId),
-          0,
-        );
+      const step = applicationFormStepForErrors(nextErrors);
+      if (step) {
+        setErrorScroll({ stepId: step, nonce: Date.now() });
       }
+      return;
+    }
+    const target = checklistErrorTarget(nextErrors);
+    if (target) {
+      window.setTimeout(
+        () => focusApplicationRow(target.rowId, target.inputId),
+        0,
+      );
     }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Wizard: implicit Enter from an earlier step must not save. The split
-    // page keeps Save on Review, but every field is on the page, so Enter may save.
-    // Checklist blocks Enter in inputs separately, and Save stays available.
-    if (presentation === "wizard" && currentStepId !== "review") return;
+    // Single-page create blocks Enter in inputs separately. Split may save on Enter.
     if (formBusy || isSubmittingRef.current || !canSubmit) return;
     isSubmittingRef.current = true;
     setErrors({});
@@ -1498,7 +1419,6 @@ export default function ApplicationForm({
       }
       try {
         await onSubmit(payload);
-        setReviewSaved(true);
         if (persistDraftKey) {
           clearCreateApplicationDraft(persistDraftKey);
         }
@@ -1556,65 +1476,6 @@ export default function ApplicationForm({
         delete next[field];
         return next;
       });
-    }
-  };
-
-  const stepReady = (id: ApplicationFormStepId): boolean => {
-    switch (id) {
-      case "role":
-        return hasCompany && hasRole && slugHoldsStepComplete;
-      case "candidate":
-        return true;
-      case "materials":
-        return cvCountsForProgress;
-      case "video":
-        return hasVideo;
-      case "review":
-        return reviewCountsForProgress;
-      default:
-        return false;
-    }
-  };
-
-  const continueBlockedReasonFor = (
-    id: ApplicationFormStepId,
-  ): string | null => {
-    if (formBusy) return "Please wait until the current action finishes.";
-    switch (id) {
-      case "role":
-        if (!hasCompany) return "Company name is required.";
-        if (!hasRole) return "Role is required.";
-        if (slugLiveStatus.kind === "checking") {
-          return "Please wait until the slug has finished updating.";
-        }
-        if (slugLiveStatus.kind === "invalid") {
-          return slugLiveStatus.message || "Fix the slug before continuing.";
-        }
-        if (slugLiveStatus.kind === "unavailable") {
-          return (
-            slugLiveStatus.message ||
-            "This slug is not available. Change it before continuing."
-          );
-        }
-        if (!hasSlug) return "Slug is required.";
-        if (!slugReady) return "Wait until the slug is available.";
-        return null;
-      case "candidate":
-        return null;
-      case "materials":
-        if (!hasUsableCv) {
-          return cvMode === "primary"
-            ? "Select a primary CV, or upload a tailored CV."
-            : "Upload a CV file for this application.";
-        }
-        return null;
-      case "video":
-        if (!hasVideo) return "YouTube intro is required.";
-        return null;
-      case "review":
-        return null;
-      default:
-        return null;
     }
   };
 
@@ -1819,7 +1680,7 @@ export default function ApplicationForm({
   );
 
   const candidateStep =
-    presentation === "checklist" ? (
+    presentation === "single" ? (
       <>
         <ApplicationFormFieldRow
           id="application-row-picture"
@@ -1893,7 +1754,7 @@ export default function ApplicationForm({
   const materialsStep = (
     <>
       <CvSourceField
-        variant={presentation === "checklist" ? "checklist" : "default"}
+        variant={presentation === "single" ? "checklist" : "default"}
         isEdit={isEdit}
         currentFilename={initialData?.cv_filename ?? null}
         currentType={initialData?.cv_type ?? null}
@@ -2130,7 +1991,6 @@ export default function ApplicationForm({
   })();
 
   const jumpToStep = (stepId: ApplicationFormStepId) => {
-    setCurrentStepId(stepId);
     if (presentation === "split") {
       setErrorScroll({ stepId, nonce: Date.now() });
     }
@@ -2154,47 +2014,37 @@ export default function ApplicationForm({
       useOriginalCvFilename={false}
       slug={formData.slug}
       videoUrl={formData.video_url}
-      label={presentation === "wizard" ? "Show preview" : "Preview"}
+      label="Preview"
       openSignal={previewNonce}
-      hint={presentation === "wizard" ? undefined : "Does not save."}
+      hint="Does not save."
       externalReturnRef={resumePreviewTriggerRef}
     />
   );
 
   const reviewStep = (
-    <>
-      <ApplicationReviewSummary
-        open={reviewSummaryOpen}
-        onOpenChange={setReviewSummaryOpen}
-        company={formData.company}
-        role={formData.role}
-        slug={formData.slug}
-        slugReady={slugReady}
-        fieldValues={candidateValues}
-        include={include}
-        hasProfilePicture={hasProfilePicture}
-        showProfilePicture={showProfilePicture}
-        cvLabel={reviewCvLabel}
-        hasVideo={hasVideo}
-        videoUrl={formData.video_url}
-        slugState={slugLiveStatus}
-        publicId={publicId}
-        profilePictureUrl={profilePictureUrl}
-        variant={presentation === "split" ? "split" : "wizard"}
-        savedSlug={savedSlug}
-        profilePictureVersion={profilePictureVersion}
-        onJumpToStep={jumpToStep}
-        onPreview={
-          presentation === "split"
-            ? (trigger) => {
-                resumePreviewTriggerRef.current = trigger;
-                setPreviewNonce((n) => n + 1);
-              }
-            : undefined
-        }
-      />
-      {presentation === "wizard" ? reviewPreview : null}
-    </>
+    <ApplicationReviewSummary
+      company={formData.company}
+      role={formData.role}
+      slug={formData.slug}
+      slugReady={slugReady}
+      fieldValues={candidateValues}
+      include={include}
+      hasProfilePicture={hasProfilePicture}
+      showProfilePicture={showProfilePicture}
+      cvLabel={reviewCvLabel}
+      hasVideo={hasVideo}
+      videoUrl={formData.video_url}
+      slugState={slugLiveStatus}
+      publicId={publicId}
+      profilePictureUrl={profilePictureUrl}
+      savedSlug={savedSlug}
+      profilePictureVersion={profilePictureVersion}
+      onJumpToStep={jumpToStep}
+      onPreview={(trigger) => {
+        resumePreviewTriggerRef.current = trigger;
+        setPreviewNonce((n) => n + 1);
+      }}
+    />
   );
 
   const stepContents = {
@@ -2204,41 +2054,6 @@ export default function ApplicationForm({
     video: videoStep,
     review: reviewStep,
   };
-
-  const formActions = (
-    <ApplicationFormActions
-      loading={formBusy}
-      loadingLabel={saveLoadingLabel}
-      submitLabel={submitLabel}
-      canSubmit={canSubmit}
-      dimWhenBlocked={presentation === "checklist"}
-      disabledReason={disabledReason}
-      onBlocked={() => {
-        if (firstBlockedStep) jumpToStep(firstBlockedStep);
-      }}
-    />
-  );
-
-  /** Split Review puts Preview beside Save in the card footer. */
-  const splitReviewActions = (
-    <>
-      {reviewPreview}
-      {formActions}
-    </>
-  );
-
-  const leaveDialog =
-    persistDraftKey ? (
-      <ConfirmDialog
-        open={leaveConfirmOpen}
-        title="Want to leave this page?"
-        message="Leaving this page will discard this draft. Are you sure?"
-        confirmLabel="Yes, I'm sure"
-        cancelLabel="No, stay on this page"
-        onConfirm={onConfirmLeave}
-        onCancel={onCancelLeave}
-      />
-    ) : null;
 
   const focusFirstGap = () => {
     const item = saveBlockers[0];
@@ -2277,11 +2092,50 @@ export default function ApplicationForm({
     );
   };
 
+  const formActions = (
+    <ApplicationFormActions
+      loading={formBusy}
+      loadingLabel={saveLoadingLabel}
+      submitLabel={submitLabel}
+      canSubmit={canSubmit}
+      dimWhenBlocked={presentation === "single"}
+      disabledReason={disabledReason}
+      onBlocked={() => {
+        if (presentation === "single") {
+          focusFirstGap();
+          return;
+        }
+        if (firstBlockedStep) jumpToStep(firstBlockedStep);
+      }}
+    />
+  );
+
+  /** Split Review puts Preview beside Save in the card footer. */
+  const splitReviewActions = (
+    <>
+      {reviewPreview}
+      {formActions}
+    </>
+  );
+
+  const leaveDialog =
+    persistDraftKey ? (
+      <ConfirmDialog
+        open={leaveConfirmOpen}
+        title="Want to leave this page?"
+        message="Leaving this page will discard this draft. Are you sure?"
+        confirmLabel="Yes, I'm sure"
+        cancelLabel="No, stay on this page"
+        onConfirm={onConfirmLeave}
+        onCancel={onCancelLeave}
+      />
+    ) : null;
+
   return (
     <form
       onSubmit={handleSubmit}
       onKeyDown={
-        presentation === "checklist"
+        presentation === "single"
           ? (event) => {
               if (
                 event.key === "Enter" &&
@@ -2292,9 +2146,8 @@ export default function ApplicationForm({
             }
           : undefined
       }
-      className={presentation === "wizard" ? "space-y-4 sm:space-y-6" : undefined}
     >
-      {presentation === "checklist" ? (
+      {presentation === "single" ? (
         <ApplicationFormSinglePageLayout
           title="New application"
           description="This role gets its own page and share link. Save a draft when the required pieces are ready, then preview it."
@@ -2445,37 +2298,12 @@ export default function ApplicationForm({
             },
           ]}
         />
-      ) : presentation === "split" ? (
+      ) : (
         <ApplicationFormSplitLayout
           mode={isEdit ? "edit" : "create"}
           stepContents={stepContents}
           errorScroll={errorScroll}
           actions={splitReviewActions}
-        />
-      ) : (
-        <ApplicationFormWizardLayout
-          stepContents={stepContents}
-          currentStepId={currentStepId}
-          furthestStepId={furthestStepId}
-          allowAllSteps={isEdit}
-          onStepChange={(id) => {
-            setCurrentStepId(id);
-            if (
-              !isEdit &&
-              applicationFormStepIndex(id) >
-                applicationFormStepIndex(furthestStepId)
-            ) {
-              setFurthestStepId(id);
-            }
-          }}
-          onContinue={(fromId) => {
-            if (fromId === "materials" && hasUsableCv && cvChoiceKey) {
-              setConfirmedMissingCvKey(cvChoiceKey);
-            }
-          }}
-          continueBlockedReason={continueBlockedReasonFor(currentStepId)}
-          stepReady={stepReady}
-          actions={formActions}
         />
       )}
 

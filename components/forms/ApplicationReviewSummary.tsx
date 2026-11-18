@@ -1,6 +1,5 @@
 "use client";
 
-import { ChevronDownIcon, ChevronUpIcon } from "@/components/admin/icons";
 import {
   RECRUITER_INFO_FIELDS,
   type CandidateFieldKey,
@@ -22,8 +21,6 @@ export type ReviewSlugState =
   | { kind: "unavailable"; message: string };
 
 export interface ApplicationReviewSummaryProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   company: string;
   role: string;
   slug: string;
@@ -42,11 +39,6 @@ export interface ApplicationReviewSummaryProps {
   cvLabel: string | null;
   hasVideo: boolean;
   videoUrl?: string | null;
-  /**
-   * `wizard` — collapsible nested panel (parked wizard).
-   * `split` — always open, fills the paper form card.
-   */
-  variant?: "wizard" | "split";
   onJumpToStep?: (stepId: ApplicationFormStepId) => void;
   onPreview?: (trigger: HTMLButtonElement) => void;
 }
@@ -153,19 +145,15 @@ function shareUrlParts(
 }
 
 function SummaryGroup({
-  step,
   title,
   complete,
   children,
-  split,
   onEdit,
   actionLabel = "Edit",
 }: {
-  step: number;
   title: string;
   complete?: boolean;
   children: ReactNode;
-  split?: boolean;
   onEdit?: () => void;
   actionLabel?: string;
 }) {
@@ -173,39 +161,26 @@ function SummaryGroup({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          {split && complete ? (
+          {complete ? (
             <span
               className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--lime)] text-[var(--ink)]"
               aria-hidden
             >
               <FiCheck className="size-3.5" strokeWidth={2.75} />
             </span>
-          ) : split ? (
+          ) : (
             <span
               className="size-7 shrink-0 rounded-full border-2 border-[var(--ink)] bg-[var(--white)]"
               aria-hidden
             />
-          ) : (
-            <span
-              className="flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--ink)]/15 bg-[var(--white)] text-[0.65rem] font-semibold text-[var(--ink)]"
-              aria-hidden
-            >
-              {step}
-            </span>
           )}
-          <h4
-            className={
-              split
-                ? "font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]"
-                : "font-heading text-sm font-semibold tracking-[-0.02em] text-[var(--ink)]"
-            }
-          >
+          <h4 className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]">
             {title}
-            {split && complete ? <span className="sr-only">, complete</span> : null}
-            {split && !complete ? <span className="sr-only">, not finished</span> : null}
+            {complete ? <span className="sr-only">, complete</span> : null}
+            {!complete ? <span className="sr-only">, not finished</span> : null}
           </h4>
         </div>
-        {split && onEdit ? (
+        {onEdit ? (
           <button
             type="button"
             onClick={onEdit}
@@ -215,9 +190,7 @@ function SummaryGroup({
           </button>
         ) : null}
       </div>
-      <dl className={split ? "space-y-3" : "space-y-3 pl-[2.125rem]"}>
-        {children}
-      </dl>
+      <dl className="space-y-3">{children}</dl>
     </div>
   );
 }
@@ -225,27 +198,14 @@ function SummaryGroup({
 function SummaryRow({
   label,
   children,
-  split,
 }: {
   label: string;
   children: ReactNode;
-  split?: boolean;
 }) {
-  if (split) {
-    return (
-      <div className="grid min-w-0 grid-cols-[7.5rem_minmax(0,1fr)] items-start gap-x-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
-        <dt className="text-sm font-semibold text-[var(--ink)]">{label}</dt>
-        <dd className="min-w-0 text-sm font-medium text-[var(--ink)]">
-          {children}
-        </dd>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-w-0">
+    <div className="grid min-w-0 grid-cols-[7.5rem_minmax(0,1fr)] items-start gap-x-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
       <dt className="text-sm font-semibold text-[var(--ink)]">{label}</dt>
-      <dd className="mt-1 min-w-0 text-sm font-medium text-[var(--ink)]">
+      <dd className="min-w-0 text-sm font-medium text-[var(--ink)]">
         {children}
       </dd>
     </div>
@@ -263,8 +223,6 @@ function recruiterFieldDisplay(
 }
 
 export default function ApplicationReviewSummary({
-  open,
-  onOpenChange,
   company,
   role,
   slug,
@@ -281,21 +239,13 @@ export default function ApplicationReviewSummary({
   cvLabel,
   hasVideo,
   videoUrl,
-  variant = "wizard",
   onJumpToStep,
   onPreview,
 }: ApplicationReviewSummaryProps) {
-  const split = variant === "split";
   const companyTrim = company.trim();
   const roleTrim = role.trim();
   const slugTrim = slug.trim();
   const savedSlugTrim = (savedSlug ?? "").trim();
-  const roleHero =
-    companyTrim || roleTrim
-      ? `${companyTrim ? displayName(companyTrim) : "—"} · ${
-          roleTrim ? displayName(roleTrim) : "—"
-        }`
-      : null;
   const jump = (stepId: ApplicationFormStepId) => onJumpToStep?.(stepId);
   const pictureSrc = cacheBustProfilePictureUrl(
     profilePictureUrl,
@@ -342,7 +292,7 @@ export default function ApplicationReviewSummary({
   const videoId = videoUrl ? extractVideoId(videoUrl) : null;
 
   const pictureRow = (
-    <SummaryRow label="Profile picture" split={split}>
+    <SummaryRow label="Profile picture">
       {pictureShown && pictureSrc ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -405,7 +355,7 @@ export default function ApplicationReviewSummary({
   );
 
   const slugRow = (
-    <SummaryRow label="Share link" split={split}>
+    <SummaryRow label="Share link">
       {share || slugTrim ? (
         <div className="min-w-0">
           <div className="break-all text-sm leading-relaxed">
@@ -436,10 +386,8 @@ export default function ApplicationReviewSummary({
 
   const aboutGroup = (
     <SummaryGroup
-      step={2}
       title="About you"
       complete={aboutComplete}
-      split={split}
       actionLabel={aboutHasContent ? "Edit" : "Add details"}
       onEdit={onJumpToStep ? () => jump("candidate") : undefined}
     >
@@ -447,7 +395,7 @@ export default function ApplicationReviewSummary({
       {RECRUITER_INFO_FIELDS.map(({ key, label }) => {
         const display = recruiterFieldDisplay(include[key], fieldValues[key] ?? "");
         return (
-          <SummaryRow key={key} label={label} split={split}>
+          <SummaryRow key={key} label={label}>
             {display.kind === "value" ? (
               <span className="break-all">{display.text}</span>
             ) : display.kind === "hidden" ? (
@@ -472,14 +420,12 @@ export default function ApplicationReviewSummary({
 
   const cvGroup = (
     <SummaryGroup
-      step={3}
       title="CV"
       complete={cvComplete}
-      split={split}
       actionLabel={cvLabel ? "Edit" : "Add résumé"}
       onEdit={onJumpToStep ? () => jump("materials") : undefined}
     >
-      <SummaryRow label="Résumé" split={split}>
+      <SummaryRow label="Résumé">
         {cvLabel ? (
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2">
@@ -507,14 +453,12 @@ export default function ApplicationReviewSummary({
 
   const videoGroup = (
     <SummaryGroup
-      step={4}
       title="Video"
       complete={videoComplete}
-      split={split}
       actionLabel={hasVideo ? "Edit" : "Add video"}
       onEdit={onJumpToStep ? () => jump("video") : undefined}
     >
-      <SummaryRow label="YouTube intro" split={split}>
+      <SummaryRow label="YouTube intro">
         {hasVideo && videoId ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -531,148 +475,43 @@ export default function ApplicationReviewSummary({
     </SummaryGroup>
   );
 
-  if (split) {
-    return (
-      <section aria-labelledby="application-review-summary-heading">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3
-            id="application-review-summary-heading"
-            className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]"
-          >
-            Summary
-          </h3>
-          <p className="text-sm font-semibold text-[var(--ink)]">
-            {completeCount} of 4 complete
-          </p>
-        </div>
-
-        <div className="mt-5 rounded-2xl bg-[var(--white)] p-5 sm:p-6">
-          <SummaryGroup
-            step={1}
-            title="Role & share URL"
-            complete={roleComplete}
-            split
-            actionLabel={roleHasContent ? "Edit" : "Add role"}
-            onEdit={onJumpToStep ? () => jump("role") : undefined}
-          >
-              <SummaryRow label="Company" split>
-                {companyTrim ? (
-                  displayName(companyTrim)
-                ) : (
-                  requiredChip("role")
-                )}
-              </SummaryRow>
-              <SummaryRow label="Role" split>
-                {roleTrim ? displayName(roleTrim) : requiredChip("role")}
-              </SummaryRow>
-              {slugRow}
-            </SummaryGroup>
-
-          <div className="mt-6 grid grid-cols-1 gap-8 border-t border-[var(--ink)]/10 pt-6 sm:grid-cols-2 sm:gap-x-10">
-            {aboutGroup}
-            <div className="space-y-8">
-              {cvGroup}
-              {videoGroup}
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section className="rounded-xl bg-[var(--paper)]/60">
-      <div className="flex items-center justify-between gap-3 px-4 py-3.5">
-        <h3 className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]">
+    <section aria-labelledby="application-review-summary-heading">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3
+          id="application-review-summary-heading"
+          className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]"
+        >
           Summary
         </h3>
-        <button
-          type="button"
-          onClick={() => onOpenChange(!open)}
-          className="inline-flex shrink-0 cursor-pointer rounded p-1 text-[var(--ink)] hover:bg-[var(--ink)]/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-          aria-expanded={open}
-          aria-controls="application-review-summary"
-          aria-label={open ? "Hide application summary" : "Show application summary"}
-          title={open ? "Hide summary" : "Show summary"}
-        >
-          {open ? (
-            <ChevronUpIcon className="h-5 w-5" />
-          ) : (
-            <ChevronDownIcon className="h-5 w-5" />
-          )}
-        </button>
+        <p className="text-sm font-semibold text-[var(--ink)]">
+          {completeCount} of 4 complete
+        </p>
       </div>
 
-      <div
-        id="application-review-summary"
-        hidden={!open}
-        className="space-y-5 border-t border-[var(--ink)]/10 px-4 py-4"
-      >
-        <SummaryGroup step={1} title="Role & share URL">
-          <div className="min-w-0">
-            <dt className="sr-only">Company and role</dt>
-            <dd className="font-heading text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">
-              {roleHero ?? "Not added"}
-            </dd>
-          </div>
+      <div className="mt-5 rounded-2xl bg-[var(--white)] p-5 sm:p-6">
+        <SummaryGroup
+          title="Role & share URL"
+          complete={roleComplete}
+          actionLabel={roleHasContent ? "Edit" : "Add role"}
+          onEdit={onJumpToStep ? () => jump("role") : undefined}
+        >
+          <SummaryRow label="Company">
+            {companyTrim ? displayName(companyTrim) : requiredChip("role")}
+          </SummaryRow>
+          <SummaryRow label="Role">
+            {roleTrim ? displayName(roleTrim) : requiredChip("role")}
+          </SummaryRow>
           {slugRow}
         </SummaryGroup>
 
-        <div className="border-t border-[var(--ink)]/10" role="separator" />
-
-        <SummaryGroup step={2} title="About you">
-          {pictureRow}
-          {RECRUITER_INFO_FIELDS.map(({ key, label }) => {
-            const display = recruiterFieldDisplay(include[key], fieldValues[key] ?? "");
-            return (
-              <SummaryRow key={key} label={label}>
-                {display.kind === "value" ? (
-                  <span className="break-all">{display.text}</span>
-                ) : display.kind === "hidden" ? (
-                  <span className="flex min-w-0 flex-col items-start gap-1.5">
-                    <span className="min-w-0 break-all">{display.text}</span>
-                    <StatusChip tone="neutral" icon="hidden">
-                      Hidden from recruiters
-                    </StatusChip>
-                  </span>
-                ) : (
-                  notAdded("candidate")
-                )}
-              </SummaryRow>
-            );
-          })}
-        </SummaryGroup>
-
-        <div className="border-t border-[var(--ink)]/10" role="separator" />
-
-        <SummaryGroup step={3} title="CV">
-          <SummaryRow label="Résumé">
-            {cvLabel ? (
-              <span className="break-words">{cvLabel}</span>
-            ) : (
-              <StatusChip tone="warn" icon="warn">Required</StatusChip>
-            )}
-          </SummaryRow>
-        </SummaryGroup>
-
-        <div className="border-t border-[var(--ink)]/10" role="separator" />
-
-        <SummaryGroup step={4} title="Video">
-          <SummaryRow label="YouTube intro">
-            {hasVideo && videoId ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={`https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`}
-                alt="YouTube intro"
-                className="h-12 w-20 rounded-md object-cover"
-              />
-            ) : hasVideo ? (
-              <span className="break-all">{videoUrl}</span>
-            ) : (
-              <StatusChip tone="warn" icon="warn">Required</StatusChip>
-            )}
-          </SummaryRow>
-        </SummaryGroup>
+        <div className="mt-6 grid grid-cols-1 gap-8 border-t border-[var(--ink)]/10 pt-6 sm:grid-cols-2 sm:gap-x-10">
+          {aboutGroup}
+          <div className="space-y-8">
+            {cvGroup}
+            {videoGroup}
+          </div>
+        </div>
       </div>
     </section>
   );
