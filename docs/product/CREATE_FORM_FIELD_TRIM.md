@@ -35,30 +35,30 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 
 ## About you
 
-Product model today: values are a **snapshot on the application**. Each field can be edited for this role, and each has **Show / Hidden** so recruiters may not see it even if a value exists. The picture is profile-owned; the application only chooses show vs hide.
+**Shipped model:** values come from the **profile** (read-only on create/edit). The application only chooses **show / hide** and stores a **snapshot** of what this page shows. Change identity on **Profile** (**Edit profile**). Soft URL warnings live on Profile, not here.
 
-| Control                           | What it does today                           | Call         | Feedback                                                                                                                                                 |
+| Control                           | What it does                                 | Call         | Feedback                                                                                                                                                 |
 | --------------------------------- | -------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Profile picture — show switch** | Whether this page shows the profile photo.   | **Keep**     | Legitimate per-application choice (e.g. hide photo for one employer). Compact switch under the preview; off dims the photo instead of removing it.       |
-| **Add / Manage picture**          | Opens the profile picture modal from create. | **Simplify** | Convenient, but it mixes “this application” with “my account.” Prefer: if no picture, one link to Profile; if there is a picture, only Show / Hide here. |
-| **First name** (value)            | Dense field on create/edit; required.        | **Simplify** | Profile-owned quick edit. Same control as Company/Role. Saving the application writes to the profile first; not a per-role override.                     |
+| **Add / Manage picture**          | Opens the profile picture modal from create. | **Simplify** | Done: if no picture, link to Profile; if there is a picture, only Show / Hide here.                                                                     |
+| **First name** (value)            | Read-only from profile; required to publish. | **Keep**     | Edit on Profile. Always shown when present.                                                                                                              |
 | **First name — Show / Hidden**    | Can omit first name from `/view`.            | **Remove**   | A candidate page with no first name is odd and easy to set by accident. If the value exists, show it.                                                    |
-| **Last name** (value)             | Dense field on create/edit; required.        | **Simplify** | Same as first name: profile-owned quick edit on create/edit.                                                                                             |
-| **Last name — Show / Hidden**     | Can omit last name from `/view`.             | **Remove**   | Same as first name. Hiding surname alone is a rare privacy case; not worth a toggle on every create.                                                     |
-| **Location** (value)              | Dense field on create/edit.                  | **Simplify** | Profile-owned quick edit; switch under the field when non-empty.                                                                                         |
-| **Location — Show / Hidden**      | Omit location on this page.                  | **Keep**     | In-field eye / eye-off toggle when the value is non-empty (same placement idea as the shareable-link copy button).                                       |
-| **Portfolio** (URL field)         | Dense URL field on create/edit.              | **Simplify** | Profile-owned quick edit + in-field eye toggle when non-empty. Soft warning if the URL looks like LinkedIn.                                              |
+| **Last name** (value)             | Read-only from profile; required to publish. | **Keep**     | Same as first name.                                                                                                                                      |
+| **Last name — Show / Hidden**     | Can omit last name from `/view`.             | **Remove**   | Same as first name.                                                                                                                                      |
+| **Location** (value)              | Read-only from profile.                      | **Keep**     | Empty points to Profile.                                                                                                                                 |
+| **Location — Show / Hidden**      | Omit location on this page.                  | **Keep**     | In-field eye / eye-off when non-empty.                                                                                                                   |
+| **Portfolio** (URL field)         | Read-only from profile.                      | **Keep**     | Empty points to Profile; URL soft warnings stay on Profile.                                                                                              |
 | **Portfolio — Show / Hidden**     | Omit portfolio on this page.                 | **Keep**     | In-field eye toggle; same pattern as location.                                                                                                           |
-| **LinkedIn** (URL field)          | Dense URL field on create/edit.              | **Simplify** | Profile-owned quick edit + in-field eye toggle when non-empty. Soft warning if the URL does not look like LinkedIn.                                      |
+| **LinkedIn** (URL field)          | Read-only from profile (before Portfolio).   | **Keep**     | Empty points to Profile; URL soft warnings stay on Profile.                                                                                              |
 | **LinkedIn — Show / Hidden**      | Omit LinkedIn on this page.                  | **Keep**     | In-field eye toggle; same pattern as location.                                                                                                           |
 
-### About you — proposed shape (if we trim)
+### About you — shipped shape
 
 1. Picture: show switch (plus “Add on Profile” when missing).
-2. First / last name: dense required fields; always shown; saved to the profile on application save.
-3. Location / portfolio / LinkedIn: dense fields + in-field eye toggle when non-empty; saved to the profile on application save; application only stores shown values.
+2. First / last name: read-only; always shown when present; required to publish.
+3. Location / LinkedIn / Portfolio: read-only + in-field eye when non-empty; application only stores shown values.
+4. **Edit profile** in the section; saving the application does not PUT the profile.
 
-That keeps one source of truth (profile) while letting create/edit fix typos without a separate dialog.
 
 ---
 

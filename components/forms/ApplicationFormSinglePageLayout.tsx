@@ -9,10 +9,6 @@ import { useState, type ReactNode } from "react";
 /** Green tip: field still shows the profile value loaded into the form. */
 export const PROFILE_INITIAL_DATA_TIP = "From your profile";
 
-/** Yellow tip: field changed; write-through runs when the application is saved. */
-export const PROFILE_WRITE_THROUGH_TIP =
-  "Updates your profile when you save this application";
-
 /** Grey tip: About you field has no value yet. */
 export const PROFILE_EMPTY_TIP = "Not filled yet";
 
@@ -27,7 +23,7 @@ const labelChromeButtonClass =
 
 /**
  * Status dot beside a field label.
- * `ready` green, `draft` yellow (unsaved About you edits), `idle` grey.
+ * `ready` green, `draft` yellow, `idle` grey.
  */
 export type FieldLabelTipTone = "draft" | "ready" | "idle";
 

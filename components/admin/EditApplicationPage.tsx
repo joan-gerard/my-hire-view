@@ -12,7 +12,6 @@ import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
 import type { Application, ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
-import { profileWithSavedIdentity } from "@/lib/utils/profile-with-saved-identity";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -272,20 +271,6 @@ export default function EditApplicationPage() {
           location: Boolean(application.location?.trim()),
           portfolio_url: Boolean(application.portfolio_url?.trim()),
           linkedin_url: Boolean(application.linkedin_url?.trim()),
-        }}
-        onProfileIdentitySaved={(identity) => {
-          setProfile((prev) =>
-            profileWithSavedIdentity(prev, identity, {
-              user_id: application.user_id,
-              public_id: publicId ?? undefined,
-              first_name: application.first_name,
-              last_name: application.last_name,
-              location: application.location,
-              portfolio_url: application.portfolio_url,
-              linkedin_url: application.linkedin_url,
-              profile_picture_url: application.profile_picture_url,
-            }),
-          );
         }}
         publicId={publicId ?? undefined}
         slugExcludeApplicationId={id}

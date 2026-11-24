@@ -65,14 +65,9 @@ import AdminTooltip from "@/components/admin/AdminTooltip";
 import { CopyIcon } from "@/components/admin/icons";
 import SlugOrderDropdown from "./SlugOrderDropdown";
 import { copyToClipboard } from "@/lib/utils/clipboard";
-import type { ProfileIdentityFields } from "@/lib/utils/profile-with-saved-identity";
 import type { SlugSegmentOrder } from "@/lib/utils/slug-generate";
 import { getApplicationUrl, getBaseUrl } from "@/lib/utils/url";
 import { validateYouTubeUrl } from "@/lib/utils/youtube";
-import {
-  formatProfileUpdateZodError,
-  profileUpdateSchema,
-} from "@/lib/validation/profile";
 import { FiAlertCircle } from "react-icons/fi";
 
 function hasValue(v: string | null | undefined): boolean {
@@ -199,11 +194,6 @@ interface ApplicationFormProps {
    * hidden location stays hidden even when the live profile has a value.
    */
   initialInclude?: Partial<Record<CandidateFieldKey, boolean>>;
-  /**
-   * Identity fields were written back to the profile before this application
-   * saved. Parents refresh their profile copy so nudges stay in sync.
-   */
-  onProfileIdentitySaved?: (identity: ProfileIdentityFields) => void;
   /** Opaque public id for share URL preview (from profile or auth metadata). */
   publicId?: string;
   /**
@@ -232,7 +222,6 @@ export default function ApplicationForm({
   profilePictureUrl,
   profilePictureVersion,
   initialInclude,
-  onProfileIdentitySaved,
   publicId,
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
@@ -309,17 +298,6 @@ export default function ApplicationForm({
     cv_type: restoredDraft?.cvMode ?? initialData?.cv_type,
     primary_cv_id:
       restoredDraft?.selectedPrimaryId ?? initialData?.primary_cv_id ?? null,
-  });
-
-  /** Identity last known on the profile — write-through tip hides until a field differs. */
-  const [savedIdentity, setSavedIdentity] = useState<
-    Record<CandidateFieldKey, string>
-  >({
-    first_name: initialData?.first_name ?? "",
-    last_name: initialData?.last_name ?? "",
-    location: initialData?.location ?? "",
-    portfolio_url: initialData?.portfolio_url ?? "",
-    linkedin_url: initialData?.linkedin_url ?? "",
   });
 
   const [include, setInclude] = useState<Record<CandidateFieldKey, boolean>>(
@@ -1223,24 +1201,6 @@ export default function ApplicationForm({
         newErrors.video_url = "Enter a valid YouTube URL";
       }
 
-      const profileParsed = profileUpdateSchema.safeParse({
-        first_name: firstName || null,
-        last_name: lastName || null,
-        location: formData.location?.trim() || null,
-        portfolio_url: formData.portfolio_url?.trim() || null,
-        linkedin_url: formData.linkedin_url?.trim() || null,
-      });
-      if (!profileParsed.success) {
-        const message = formatProfileUpdateZodError(profileParsed.error);
-        const lower = message.toLowerCase();
-        if (lower.includes("first name")) newErrors.first_name = message;
-        else if (lower.includes("last name")) newErrors.last_name = message;
-        else if (lower.includes("portfolio")) newErrors.portfolio_url = message;
-        else if (lower.includes("linkedin")) newErrors.linkedin_url = message;
-        else if (lower.includes("location")) newErrors.location = message;
-        else newErrors.first_name = message;
-      }
-
       if (Object.keys(newErrors).length > 0) {
         revealFormErrors(newErrors);
         return;
@@ -1297,65 +1257,8 @@ export default function ApplicationForm({
         }
       }
 
-      // Keep the profile as the source of truth for About you fields.
-      const identitySaved: ProfileIdentityFields = {
-        first_name: firstName,
-        last_name: lastName,
-        location: formData.location?.trim() ?? "",
-        portfolio_url: formData.portfolio_url?.trim() ?? "",
-        linkedin_url: formData.linkedin_url?.trim() ?? "",
-      };
-      try {
-        const profileRes = await fetch("/api/profile", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            first_name: identitySaved.first_name,
-            last_name: identitySaved.last_name,
-            location: identitySaved.location || null,
-            portfolio_url: identitySaved.portfolio_url || null,
-            linkedin_url: identitySaved.linkedin_url || null,
-          }),
-        });
-        const profileJson = (await profileRes.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        if (!profileRes.ok) {
-          const message =
-            profileJson.error ?? "Could not save your profile details.";
-          const lower = message.toLowerCase();
-          if (lower.includes("first name")) {
-            revealFormErrors({ first_name: message });
-          } else if (lower.includes("last name")) {
-            revealFormErrors({ last_name: message });
-          } else if (lower.includes("portfolio")) {
-            revealFormErrors({ portfolio_url: message });
-          } else if (lower.includes("linkedin")) {
-            revealFormErrors({ linkedin_url: message });
-          } else if (lower.includes("location")) {
-            revealFormErrors({ location: message });
-          } else {
-            revealFormErrors({ first_name: message });
-          }
-          return;
-        }
-        setSavedIdentity({
-          first_name: identitySaved.first_name,
-          last_name: identitySaved.last_name,
-          location: identitySaved.location,
-          portfolio_url: identitySaved.portfolio_url,
-          linkedin_url: identitySaved.linkedin_url,
-        });
-        onProfileIdentitySaved?.(identitySaved);
-      } catch {
-        revealFormErrors({
-          first_name:
-            "Could not save your profile details. Check your connection and try again.",
-        });
-        return;
-      }
-
+      // About you values come from the profile (read-only here). Snapshot
+      // shown fields onto the application; edit identity on /admin/profile.
       let cvUrl = formData.cv_url?.trim() ?? "";
       let cvFilename = formData.cv_filename ?? null;
       let primaryCvId: string | null = null;
@@ -1579,33 +1482,6 @@ export default function ApplicationForm({
     setInclude((prev) => ({ ...prev, [field]: included }));
   };
 
-  const handleCandidateValueChange = (
-    field: CandidateFieldKey,
-    value: string,
-  ) => {
-    const wasEmpty = !(formData[field]?.trim());
-    const nowEmpty = !value.trim();
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (
-      field === "location" ||
-      field === "portfolio_url" ||
-      field === "linkedin_url"
-    ) {
-      if (wasEmpty && !nowEmpty) {
-        setInclude((prev) => ({ ...prev, [field]: true }));
-      } else if (!wasEmpty && nowEmpty) {
-        setInclude((prev) => ({ ...prev, [field]: false }));
-      }
-    }
-    if (errors[field]) {
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      });
-    }
-  };
-
   const trimmedPublicId = publicId?.trim() || "";
   const trimmedSlug = formData.slug.trim();
   const shareLinkPath = `/view/${trimmedPublicId || "…"}/${trimmedSlug || "…"}`;
@@ -1743,17 +1619,8 @@ export default function ApplicationForm({
       <CandidateFieldsSection
         layout="rows"
         values={candidateValues}
-        savedValues={savedIdentity}
         include={include}
         onIncludeChange={handleCandidateIncludeChange}
-        onValueChange={handleCandidateValueChange}
-        errors={{
-          first_name: errors.first_name,
-          last_name: errors.last_name,
-          location: errors.location,
-          portfolio_url: errors.portfolio_url,
-          linkedin_url: errors.linkedin_url,
-        }}
       />
     </>
   );
@@ -2170,7 +2037,7 @@ export default function ApplicationForm({
               label: "About you",
               optional: true,
               description:
-                "These details update your profile when you save this application — not if you cancel or leave. This page only chooses which ones recruiters see.",
+                "From your profile. Choose what recruiters see on this page. Change details on Profile.",
             },
             {
               type: "block",

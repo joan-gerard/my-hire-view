@@ -48,17 +48,16 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 
 ---
 
-## 3. Create — About you (profile write-through)
+## 3. Create — About you (read-only + show/hide)
 
-- [ ] Note under the section: these details update your profile when you save this application — not if you cancel or leave — and this page only chooses what recruiters see. No separate About you Save
+- [ ] Note under the section: from your profile; this page only chooses what recruiters see; change details on Profile
+- [ ] **Edit profile** link in the section opens `/admin/profile`
 - [ ] **Picture:** preview always shown (photo or initials). With a photo: show switch under the preview (off dims it). Without: link to Profile; no show switch
-- [ ] Picture tip is green when a photo exists, grey when not; toggling show/hide does **not** turn it yellow
-- [ ] **First name** / **Last name** are dense required fields; always shown on the page; no eye toggle
-- [ ] **Location**, **LinkedIn**, **Portfolio** are dense fields (LinkedIn before Portfolio); eye / eye-off appears inside the field when non-empty (open = show, crossed = hide); clearing removes the eye
-- [ ] Prefills: green “From your profile” while unchanged; grey when empty; yellow after edit awaiting save; reverting restores green
-- [ ] Soft warnings (not the browser URL bubble): portfolio that looks like LinkedIn, LinkedIn that does not, incomplete `https://…` URLs; invalid URLs still block save with a field error
-- [ ] Cancel or leave **without** Save: profile text on `/admin/profile` is unchanged
-- [ ] After a successful create save: Profile shows the About you text you entered; `/view` shows only fields that were shown (hidden location/link stay off the public page); names always appear
+- [ ] Picture tip is green when a photo exists, grey when not
+- [ ] **First name** / **Last name** are read-only; always shown when present; no eye toggle; empty says add on Profile
+- [ ] **Location**, **LinkedIn**, **Portfolio** are read-only (LinkedIn before Portfolio); eye / eye-off when non-empty (open = show, crossed = hide); empty points to Profile
+- [ ] Tips: green “From your profile” when a value exists; grey when empty (no yellow write-through tip)
+- [ ] Saving the application does **not** change Profile text; `/view` shows only fields that were shown; names always appear when present
 
 ---
 
@@ -101,10 +100,10 @@ For leave-confirm, draft restore, and CV-mode edges, use [MANUAL_TEST_CREATE_APP
 
 ## 7. Edit — About you and materials
 
-- [ ] Form waits until the profile request finishes, then shows live profile name / location / links in the same dense fields as create
-- [ ] Note / recommendations: details update the profile on save — not if you cancel or leave; this page chooses what recruiters see
-- [ ] A field the saved application left empty starts hidden (eye crossed) even when the profile now has a value; the next save writes it only if you show it
-- [ ] Names are editable; saving writes profile first, then snapshots onto the application
+- [ ] Form waits until the profile request finishes, then shows live profile name / location / links as read-only values (same as create)
+- [ ] Note: from your profile; this page chooses what recruiters see; **Edit profile** for changes
+- [ ] A field the saved application left empty starts hidden (eye crossed) even when the profile now has a value; the next save includes it only if you show it
+- [ ] Names are read-only; saving does **not** PUT the profile — it only snapshots shown fields onto the application
 - [ ] Changing Profile alone does **not** change a previously saved application’s public text until you edit and save here
 - [ ] Profile picture: live from the profile; show switch when a picture exists; off dims the preview; missing picture links to Profile (no upload on the form)
 - [ ] Changing the profile picture on Profile **does** show on `/view` when this app has show-picture on (no re-save needed for the image file)

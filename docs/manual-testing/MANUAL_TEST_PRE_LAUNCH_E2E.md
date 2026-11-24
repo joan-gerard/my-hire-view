@@ -10,7 +10,7 @@ Work ticket: [Backlog.md](../product/Backlog.md) `F32-115`. Product copy: [USER_
 
 - [MANUAL_TEST_PROFILE_CREATE_ON_PUT.md](MANUAL_TEST_PROFILE_CREATE_ON_PUT.md) — signup → profiles row, picture from New/Edit
 - [MANUAL_TEST_ONBOARDING_CHECKLIST.md](MANUAL_TEST_ONBOARDING_CHECKLIST.md) — Getting started prefs, skip/dismiss, no extra GETs
-- [MANUAL_TEST_CREATE_AND_EDIT_APPLICATION.md](MANUAL_TEST_CREATE_AND_EDIT_APPLICATION.md) — one-page create + edit smoke (layout, write-through, save)
+- [MANUAL_TEST_CREATE_AND_EDIT_APPLICATION.md](MANUAL_TEST_CREATE_AND_EDIT_APPLICATION.md) — one-page create + edit smoke (layout, About you show/hide, save)
 - [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) — local create draft + CV radios while library loads
 - [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md) — Save & Preview → owner banner → Publish
 - [MANUAL_TEST_APPLICATION_STATUS_LEGEND.md](MANUAL_TEST_APPLICATION_STATUS_LEGEND.md) — status legend modal
@@ -302,10 +302,10 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### About you (create)
 
-- [ ] Under **About you**: note that these details update your profile when you save this application — not if you cancel or leave — and this page only chooses which ones recruiters see. No separate Save for the section
-- [ ] **First name** and **Last name** are dense required fields (with `*`), always included on the page; there is no show switch for the name
+- [ ] Under **About you**: note that values come from your profile; this page only chooses which ones recruiters see; change details on Profile. **Edit profile** link in the section
+- [ ] **First name** and **Last name** are read-only; always included when present; there is no show switch for the name; empty says add on Profile
 - [ ] **Your link:** Company, Role, and Link ending show a grey status dot before the label until valid, then green. **How the link reads** always shows a green status dot
-- [ ] **About you** text fields: green “From your profile” while unchanged prefilled data; grey when empty; yellow write-through tip after edit; reverting to the loaded value restores green
+- [ ] **About you** text fields are read-only: green “From your profile” when a value exists; grey when empty; no yellow write-through tip
 - [ ] **Picture** shows green when a profile photo exists, grey when not; toggling show/hide does not turn it yellow
 - [ ] **Résumé:** chosen **Library** or **This role** is green; the other is grey
 - [ ] **Pitch:** YouTube is grey until a valid URL is entered, then green
@@ -313,21 +313,21 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] With a picture: thumbnail always visible; a right-aligned switch under it turns show on/off; off lowers the thumbnail opacity
 - [ ] Without a picture: initials (or avatar icon) show, plus a link to Profile; no show switch
 - [ ] Switch off: no avatar on `/view` even if the account still has a picture
-- [ ] Location, **LinkedIn**, and **Portfolio** are dense fields like Company (LinkedIn before Portfolio). When non-empty, an eye button sits inside the field (like Copy on Shareable link); open eye = show, crossed eye = hide
-- [ ] Typing into an empty location/portfolio/LinkedIn shows the eye on; clearing the field removes the eye control
-- [ ] Portfolio / LinkedIn use under-field soft warnings (not the browser URL bubble): LinkedIn mix-ups, and “Enter a valid URL starting with https://…” for incomplete URLs; invalid URLs still block save with a field error
+- [ ] Location, **LinkedIn**, and **Portfolio** are read-only (LinkedIn before Portfolio). When non-empty, an eye button sits inside the field; open eye = show, crossed eye = hide; empty fields link to Profile
+- [ ] There is no typing into About you location/link fields on this form (read-only)
+- [ ] Soft URL warnings for portfolio/LinkedIn are not shown on About you (those fields are not editable here)
 - [ ] There is no collapsible **Info shown to recruiters** block and no `(N/5)` count on create
 - [ ] Hide (crossed eye) on location, portfolio, or LinkedIn → it will not appear on `/view` (verify later)
-- [ ] Saving the application updates the profile with the About you text fields, then snapshots shown fields onto the application
+- [ ] Saving the application does **not** update the profile; it only snapshots shown fields onto the application
 - [ ] Adding a picture on Profile ticks the checklist **photo** step. New Application only links there for the picture
 
 ### About you (edit)
 
-- [ ] The form waits until the profile request finishes, then shows profile name, location, and links in the same dense fields as create
-- [ ] A field the saved application left empty starts with the eye crossed (hidden) even when the profile now has a value. The next save writes that value only if you show it
+- [ ] The form waits until the profile request finishes, then shows profile name, location, and links as read-only values (same as create), plus **Edit profile**
+- [ ] A field the saved application left empty starts with the eye crossed (hidden) even when the profile now has a value. The next save includes that value only if you show it
 - [ ] **Profile picture:** show switch under the preview when a picture exists; off dims the thumbnail
 - [ ] With no picture, the row links to Profile. There is no Add / Manage picture control
-- [ ] Names are editable dense fields. Saving updates the profile, then copies the current values onto the application
+- [ ] Names are read-only. Saving does not update the profile; it only snapshots shown fields onto the application
 
 ### Résumé (create)
 

@@ -14,7 +14,6 @@ import type { ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
 import { createApplicationDraftStorageKey } from "@/lib/utils/create-application-draft";
 import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
-import { profileWithSavedIdentity } from "@/lib/utils/profile-with-saved-identity";
 import { validateSlugFormat } from "@/lib/utils/slug-generate";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -288,16 +287,6 @@ export default function CreateApplicationPage() {
         submitLabel="Save Draft"
         profilePictureUrl={profile?.profile_picture_url ?? null}
         profilePictureVersion={profile?.updated_at ?? null}
-        onProfileIdentitySaved={(identity) => {
-          setProfile((prev) =>
-            profileWithSavedIdentity(prev, identity, {
-              user_id: authUserId ?? undefined,
-              public_id: publicId ?? undefined,
-              first_name: metaNames?.first_name ?? null,
-              last_name: metaNames?.last_name ?? null,
-            }),
-          );
-        }}
         publicId={publicId ?? undefined}
         resolveSlugOnCreate
         persistDraftKey={draftStorageKey ?? undefined}
