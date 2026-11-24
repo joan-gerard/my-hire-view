@@ -22,7 +22,7 @@ Related: local browser form draft (F15) is separate — [MANUAL_TEST_CREATE_APP_
 ## Dashboard draft card
 
 - [ ] Create another draft and return to `/admin` without publishing
-- [ ] Incomplete draft: **Finish to publish** (tooltip lists missing fields) instead of Publish; copy-link disabled; **Preview** still opens the share URL with the banner
+- [ ] Incomplete draft: orange **Draft (incomplete)** status; no Publish button; copy-link disabled; **Preview** still opens the share URL with the banner
 - [ ] Complete draft: labeled **Publish**; **More options** includes Publish; Edit and Delete still work
 - [ ] Publish from the card → active; copy-link icon enabled
 

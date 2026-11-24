@@ -3,6 +3,7 @@
 import { ApplicationStatusIconBadge } from "@/components/admin/ApplicationStatusIcon";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
+import type { ApplicationStatusVisualKey } from "@/lib/utils/application-status-display";
 import {
   DEFAULT_STATUS_INDICATOR_STYLE,
   normalizeProfilePublicIdForPrefs,
@@ -13,12 +14,13 @@ import {
 } from "@/lib/utils/status-indicator-preference";
 import { useEffect, useId, useState } from "react";
 
-const PREVIEW_VISUALS = [
-  "draft",
+const PREVIEW_VISUALS: readonly ApplicationStatusVisualKey[] = [
+  "draft_incomplete",
+  "draft_complete",
   "active_unviewed",
   "active_viewed",
   "archived",
-] as const;
+];
 
 const OPTIONS: {
   value: StatusIndicatorStyle;
@@ -29,7 +31,7 @@ const OPTIONS: {
     value: "colorful",
     title: "Colorful dots",
     description:
-      "Bright gold, sky, lime, and grey dots. Default look; lower contrast on white.",
+      "Bright orange, gold, sky, lime, and grey dots. Default look; lower contrast on white.",
   },
   {
     value: "high_contrast",

@@ -437,7 +437,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 ### Status legend
 
 - [ ] Button opens modal **Status icons & draft actions**
-- [ ] Lists Draft, Active (not viewed yet), Active (viewed), Archived, CV missing, Picture missing — icons match cards
+- [ ] Lists Draft (incomplete), Draft (complete), Active (not viewed yet), Active (viewed), Archived, CV missing, Picture missing — icons match cards
 - [ ] Explains **Publish**, **Preview**, **Publish to share**
 - [ ] Close via Close, Escape, or backdrop; focus returns; heading focused on open
 - [ ] Body scroll locked while open
@@ -450,7 +450,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 **Draft**
 
 - [ ] Amber clock icon
-- [ ] Incomplete draft (missing résumé / YouTube / names): **Finish to publish** on the card (and chip by the title); tooltip lists what is required; opens edit — **no** Publish button
+- [ ] Incomplete draft (missing résumé / YouTube / names): orange **Draft (incomplete)** status marker; **no** Publish button (edit via ⋯ or opening the card’s edit action)
 - [ ] Complete draft: labeled **Publish** button on the card
 - [ ] Copy-link icon is disabled; tooltip explains publish-before-share or finish-required-fields (not an enabled Copy link)
 - [ ] External-link icon tooltip is **Preview**; opens the share URL with the banner
@@ -559,7 +559,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 
 - [ ] Publish from **draft banner** → banner gone; page is the live public view; dashboard card becomes active; Copy Link enabled
 - [ ] Publish from **card button** and from **3-dot** both work (only when the draft is complete)
-- [ ] Incomplete draft card shows **Finish to publish** instead of Publish; tooltip names missing fields
+- [ ] Incomplete draft card shows orange status (not gold) and no Publish button; complete draft shows gold + Publish
 - [ ] Publishing twice (button mash / two tabs) does not error; stays active once
 - [ ] Archive only for **active** apps → public URL unavailable for everyone (including owner)
 - [ ] Restore → live again with the **same slug, CV, video**, and **insights counts preserved**

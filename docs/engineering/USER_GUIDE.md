@@ -37,7 +37,7 @@ At **Dashboard** (`/admin`) you can:
 - **Search** by company, role, or slug from that rail field (hidden until the first application; kept while a search is in flight or has no matches).
 - **Create** a new application via the lime **+** button (tooltip: Create new application), or **New Application** in the admin header.
 - On each card, **Copy link**, **View insights**, and **View application** (or **Preview** for drafts) are icon-only buttons — hover or focus shows an instant custom tooltip. **Copy link** copies the shareable URL after the application is published; **View insights** opens view count, CV downloads, creation date, and last viewed; **View application** opens the live page in a new tab.
-- Use **More options** (⋯; tooltip on hover/focus) on each card to **Edit**, **Archive** (or **Restore** if archived), **Publish** (complete drafts), or **Delete**. A draft card shows **Publish** only when every required field is filled; otherwise it shows **Finish to publish** (with a tooltip naming what is missing) that opens the edit form.
+- Use **More options** (⋯; tooltip on hover/focus) on each card to **Edit**, **Archive** (or **Restore** if archived), **Publish** (complete drafts), or **Delete**. Draft cards use two status colors: orange for incomplete, gold for ready to publish. **Publish** appears only when every required field is filled.
 
 ### Creating an application
 

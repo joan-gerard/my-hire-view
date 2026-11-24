@@ -1,35 +1,34 @@
 "use client";
 
-import type { ApplicationListItem } from "@/lib/types/application";
 import {
-  formatPublishBlockersError,
-  getListItemPublishBlockers,
-} from "@/lib/validation/application";
-import { getApplicationUrl } from "@/lib/utils/url";
-import { copyToClipboard } from "@/lib/utils/clipboard";
-import { formatApplicationTime } from "@/lib/utils/group-applications-by-day";
-import Link from "next/link";
-import { useState } from "react";
+    ADMIN_ICON_DISABLED_CLASS,
+    ADMIN_ICON_SECONDARY_CLASS,
+    ADMIN_PRIMARY_CLASS,
+} from "@/components/admin/admin-chrome";
+import AdminTooltip from "@/components/admin/AdminTooltip";
 import ApplicationCardDropdown from "@/components/admin/ApplicationCardDropdown";
 import ApplicationCardInsights from "@/components/admin/ApplicationCardInsights";
-import AdminTooltip from "@/components/admin/AdminTooltip";
 import {
-  ApplicationStatusIcon,
-  MissingCvBadge,
-  MissingProfilePictureBadge,
+    ApplicationStatusIcon,
+    MissingCvBadge,
+    MissingProfilePictureBadge,
 } from "@/components/admin/ApplicationStatusIcon";
 import {
-  ChartIcon,
-  CheckIcon,
-  CopyIcon,
-  ExternalLinkIcon,
+    ChartIcon,
+    CheckIcon,
+    CopyIcon,
+    ExternalLinkIcon,
 } from "@/components/admin/icons";
+import type { ApplicationListItem } from "@/lib/types/application";
+import { copyToClipboard } from "@/lib/utils/clipboard";
+import { formatApplicationTime } from "@/lib/utils/group-applications-by-day";
+import { getApplicationUrl } from "@/lib/utils/url";
 import {
-  ADMIN_ICON_DISABLED_CLASS,
-  ADMIN_ICON_SECONDARY_CLASS,
-  ADMIN_PRIMARY_CLASS,
-  ADMIN_SECONDARY_CLASS,
-} from "@/components/admin/admin-chrome";
+    formatPublishBlockersError,
+    getListItemPublishBlockers,
+} from "@/lib/validation/application";
+import Link from "next/link";
+import { useState } from "react";
 
 interface ApplicationCardProps {
   application: ApplicationListItem;
@@ -68,13 +67,12 @@ export default function ApplicationCard({
     [application.company.trim(), application.role.trim()]
       .filter(Boolean)
       .join(" - ") || "Untitled application";
-  const editHref = `/admin/edit/${application.id}`;
 
   const copyUnavailableLabel = isDraft
     ? canPublish
       ? "Publish this application before sharing the link"
-      : publishBlockedReason ??
-        "Finish required fields before publishing and sharing"
+      : (publishBlockedReason ??
+        "Finish required fields before publishing and sharing")
     : isArchived
       ? "Restore this application before sharing the link"
       : "Complete your profile to get a share link";
@@ -109,6 +107,7 @@ export default function ApplicationCard({
             <ApplicationStatusIcon
               status={application.status}
               viewCount={application.view_count}
+              publishReady={canPublish}
             />
           </div>
 
@@ -121,17 +120,6 @@ export default function ApplicationCard({
               {application.profile_picture_missing === true && (
                 <MissingProfilePictureBadge />
               )}
-              {isDraft && publishBlockedReason ? (
-                <AdminTooltip label={publishBlockedReason}>
-                  <Link
-                    href={editHref}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--status-warning-fg)]/40 bg-[var(--status-warning-bg)] px-2 py-0.5 text-xs font-medium text-[var(--status-warning-fg)] hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-                    aria-label={publishBlockedReason}
-                  >
-                    Finish to publish
-                  </Link>
-                </AdminTooltip>
-              ) : null}
             </div>
           </div>
 
@@ -148,12 +136,6 @@ export default function ApplicationCard({
                   <CheckIcon className="h-4 w-4" />
                   Publish
                 </button>
-              </AdminTooltip>
-            ) : isDraft && publishBlockedReason ? (
-              <AdminTooltip label={publishBlockedReason}>
-                <Link href={editHref} className={ADMIN_SECONDARY_CLASS}>
-                  Finish to publish
-                </Link>
               </AdminTooltip>
             ) : null}
 

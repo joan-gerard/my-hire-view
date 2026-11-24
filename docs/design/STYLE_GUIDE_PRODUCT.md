@@ -80,11 +80,12 @@ Account preference (Account settings → **Preferences**): colorful dots (defaul
 
 | Token                   | Hex                 | Role                              |
 | ----------------------- | ------------------- | --------------------------------- |
-| `--status-dot-draft`    | `#fcdc65`           | Colorful draft                    |
-| `--status-dot-active`   | `#6ed4fc`           | Colorful active (not viewed)      |
-| `--status-dot-viewed`   | `#9efc65`           | Colorful active (viewed)          |
-| `--status-dot-archived` | `#c5c9c9`           | Colorful archived                 |
-| `--status-wash-*`       | (see `globals.css`) | High-contrast washes under glyphs |
+| `--status-dot-draft-incomplete` | `#f0a060`     | Colorful draft (incomplete)       |
+| `--status-dot-draft`            | `#fcdc65`     | Colorful draft (complete)         |
+| `--status-dot-active`           | `#6ed4fc`     | Colorful active (not viewed)      |
+| `--status-dot-viewed`           | `#9efc65`     | Colorful active (viewed)          |
+| `--status-dot-archived`         | `#c5c9c9`     | Colorful archived                 |
+| `--status-wash-*`               | (see `globals.css`) | High-contrast washes under glyphs |
 
 Do **not** reintroduce teal as a brand accent. Red stays for destructive only.
 
