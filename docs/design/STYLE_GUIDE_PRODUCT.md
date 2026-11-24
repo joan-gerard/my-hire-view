@@ -76,11 +76,11 @@ On dark chrome, focus may use `--lime`. Body secondary on dark may use `--mist`.
 
 ### Dashboard status markers
 
-Account preference (Account settings → **Preferences**): colorful dots (default) or high-contrast wash + ink glyphs. The badge shell sizes to the glyph — compact for dots, 36px for the wash circle — so card layout does not reserve icon space when using dots.
+Account preference (Account settings → **Preferences**): colorful dots (default) or high-contrast wash + ink glyphs. Each status keeps a distinct shape (pencil / document / clock / check / archive); incomplete vs complete draft also use different washes. The badge shell sizes to the glyph — compact for dots, 36px for the wash circle — so card layout does not reserve icon space when using dots.
 
 | Token                   | Hex                 | Role                              |
 | ----------------------- | ------------------- | --------------------------------- |
-| `--status-dot-draft-incomplete` | `#f0a060`     | Colorful draft (incomplete)       |
+| `--status-dot-draft-incomplete` | `#ffd08a`     | Colorful draft (incomplete)       |
 | `--status-dot-draft`            | `#fcdc65`     | Colorful draft (complete)         |
 | `--status-dot-active`           | `#6ed4fc`     | Colorful active (not viewed)      |
 | `--status-dot-viewed`           | `#9efc65`     | Colorful active (viewed)          |

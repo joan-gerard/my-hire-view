@@ -15,6 +15,7 @@ import {
   ArchiveIcon,
   CheckIcon,
   ClockIcon,
+  DocumentIcon,
   PencilIcon,
 } from "@/components/admin/icons";
 import { useStatusIndicatorStyle } from "@/hooks/useStatusIndicatorStyle";
@@ -61,16 +62,20 @@ const STATUS_WASH_CLASS: Record<ApplicationStatusVisualKey, string> = {
 };
 
 function StatusGlyph({ visual }: { visual: ApplicationStatusVisualKey }) {
+  // Ink on wash — bright status-dot tints fail contrast on light badges.
   const iconClass = "h-5 w-5 text-[var(--ink)]";
   if (visual === "archived") {
     return <ArchiveIcon className={iconClass} />;
   }
-  if (visual === "active_viewed" || visual === "draft_complete") {
-    // Complete draft shares the check glyph; wash color separates it from viewed.
+  if (visual === "active_viewed") {
     return <CheckIcon className={iconClass} />;
   }
+  if (visual === "draft_complete") {
+    // Document, not check — keep complete draft distinct from Active (viewed).
+    return <DocumentIcon className={iconClass} />;
+  }
   if (visual === "draft_incomplete") {
-    // Distinct from active_unviewed clock so high-contrast mode is not color-only.
+    // Distinct from active_unviewed clock so shape is not color-only.
     return <PencilIcon className={iconClass} />;
   }
   return <ClockIcon className={iconClass} />;

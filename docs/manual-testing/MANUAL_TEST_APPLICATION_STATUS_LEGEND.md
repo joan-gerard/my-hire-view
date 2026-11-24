@@ -33,7 +33,7 @@ Related: draft/preview/publish flow — [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.m
 
 ### High contrast icons (Account settings → Preferences)
 
-- [ ] Incomplete draft: peach wash + pencil; complete draft: gold wash + check; Active unviewed: sky wash + clock; Viewed: lime wash + check; Archived: mist wash + archive
+- [ ] Incomplete draft: orange wash matching the colorful incomplete dot + ink pencil; complete draft: gold wash + ink document (not the viewed check); Active unviewed: sky wash + ink clock; Viewed: lime wash + ink check; Archived: mist wash + ink archive
 - [ ] Preference survives refresh; dashboard and legend update after changing it on Preferences
 - [ ] Changing the preference in another tab updates this tab without reload
 - [ ] A second account in the same browser keeps its own style (does not overwrite the first)

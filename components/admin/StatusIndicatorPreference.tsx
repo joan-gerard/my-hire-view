@@ -37,7 +37,7 @@ const OPTIONS: {
     value: "high_contrast",
     title: "High contrast icons",
     description:
-      "Soft tinted badges with distinct ink icons. Easier to tell apart; meets stronger contrast guidance.",
+      "Soft tinted badges with distinct ink icons (pencil, document, clock, check, archive). Easier to tell apart; stronger contrast on white.",
   },
 ];
 

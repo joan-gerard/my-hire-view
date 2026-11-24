@@ -162,7 +162,7 @@ Dashboard status markers offer two styles via one account-scoped browser prefere
 
 | Token | Hex | Role |
 | ----- | --- | ---- |
-| `--status-dot-draft-incomplete` | `#f0a060` | Colorful draft (incomplete) |
+| `--status-dot-draft-incomplete` | `#ffd08a` | Colorful draft (incomplete) |
 | `--status-dot-draft` | `#fcdc65` | Colorful draft (complete) |
 | `--status-dot-active` | `#6ed4fc` | Colorful active (not viewed) |
 | `--status-dot-viewed` | `#9efc65` | Colorful active (viewed) |
