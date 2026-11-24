@@ -9,6 +9,7 @@ import type { PrimaryCv } from "@/lib/types/primary-cv";
 import {
   buildSlug,
   isCustomSlug,
+  shouldOpenLinkCustomize,
   SLUG_SEGMENT_ORDER_DEFAULT,
   validateSlugFormat,
 } from "@/lib/utils/slug-generate";
@@ -49,6 +50,7 @@ import ApplicationFormSinglePageLayout, {
   FIELD_READY_TIP,
   PROFILE_EMPTY_TIP,
   PROFILE_INITIAL_DATA_TIP,
+  type ApplicationFormPageRow,
 } from "./ApplicationFormSinglePageLayout";
 import {
   applicationFormStepForErrors,
@@ -366,6 +368,26 @@ export default function ApplicationForm({
       initialData?.slugSegmentOrder ?? SLUG_SEGMENT_ORDER_DEFAULT,
     );
   });
+  /**
+   * Advanced link controls (order + ending) stay collapsed unless the link is
+   * already customized, the user opens Customize link, or a link error appears.
+   */
+  const [linkCustomizeOpen, setLinkCustomizeOpen] = useState(() =>
+    shouldOpenLinkCustomize({
+      slugManuallyEdited: restoredDraft
+        ? restoredDraft.slugManuallyEdited
+        : isCustomSlug(
+            initialData?.slug ?? "",
+            initialData?.company ?? "",
+            initialData?.role ?? "",
+            initialData?.slugSegmentOrder ?? SLUG_SEGMENT_ORDER_DEFAULT,
+          ),
+      slugSegmentOrder:
+        restoredDraft?.slugSegmentOrder ??
+        initialData?.slugSegmentOrder ??
+        SLUG_SEGMENT_ORDER_DEFAULT,
+    }),
+  );
   const slugManuallyEditedRef = useRef(false);
   slugManuallyEditedRef.current = slugManuallyEdited;
   /**
@@ -1192,12 +1214,14 @@ export default function ApplicationForm({
   const revealFormErrors = (
     nextErrors: Partial<Record<keyof ApplicationFormData, string>>,
   ) => {
+    const needsLinkCustomize = Boolean(nextErrors.slug);
+    if (needsLinkCustomize) setLinkCustomizeOpen(true);
     setErrors(nextErrors);
     const target = checklistErrorTarget(nextErrors);
     if (target) {
       window.setTimeout(
         () => focusApplicationRow(target.rowId, target.inputId),
-        0,
+        needsLinkCustomize ? 50 : 0,
       );
     }
   };
@@ -1601,6 +1625,20 @@ export default function ApplicationForm({
   const shareLinkCopyClass =
     "inline-flex size-7 items-center justify-center rounded-lg border border-[var(--ink)]/15 bg-[var(--white)] shadow-sm focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
 
+  const linkCustomizeHasError = Boolean(
+    errors.slug ||
+      slugLiveStatus.kind === "invalid" ||
+      slugLiveStatus.kind === "unavailable",
+  );
+  const linkCustomizeLabel = linkCustomizeOpen
+    ? "Hide link options"
+    : "Customize link";
+  const linkCustomizeErrorMessage =
+    errors.slug ||
+    (slugLiveStatus.kind === "invalid" || slugLiveStatus.kind === "unavailable"
+      ? slugLiveStatus.message
+      : null);
+
   const linkEndingControl = (
     <div className="space-y-3">
       <Input
@@ -1645,7 +1683,8 @@ export default function ApplicationForm({
   );
 
   const shareLinkControl = (
-    <div className="relative">
+    <div className="space-y-3">
+      <div className="relative">
         <div
           id="application-share-link"
           role="textbox"
@@ -1657,7 +1696,37 @@ export default function ApplicationForm({
           <span className="hidden sm:inline">{shareLinkFull}</span>
         </div>
         <div className="absolute inset-y-0 right-1.5 flex items-center">
-          {shareableUrl ? (
+          {slugLiveStatus.kind === "checking" ? (
+            <span
+              role="status"
+              className={`${shareLinkCopyClass} text-[var(--muted)]`}
+              aria-label="Checking link availability"
+            >
+              <span
+                className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin"
+                aria-hidden
+              />
+            </span>
+          ) : linkCustomizeHasError ? (
+            <AdminTooltip
+              label={
+                linkCustomizeErrorMessage?.trim() ||
+                "Link needs attention"
+              }
+              side="top"
+            >
+              <span
+                role="img"
+                className={`${shareLinkCopyClass} text-[var(--status-danger-fg)]`}
+                aria-label={
+                  linkCustomizeErrorMessage?.trim() ||
+                  "Link needs attention"
+                }
+              >
+                <FiAlertCircle className="h-4 w-4" aria-hidden />
+              </span>
+            </AdminTooltip>
+          ) : shareableUrl ? (
             <AdminTooltip
               label={shareLinkCopied ? "Copied!" : "Copy link"}
               side="top"
@@ -1683,6 +1752,33 @@ export default function ApplicationForm({
             </AdminTooltip>
           )}
         </div>
+      </div>
+      <button
+        type="button"
+        aria-expanded={linkCustomizeOpen}
+        aria-controls={
+          linkCustomizeOpen ? "application-row-slug-order" : undefined
+        }
+        aria-label={
+          linkCustomizeHasError
+            ? `${linkCustomizeLabel}. Link needs attention${
+                linkCustomizeErrorMessage
+                  ? `: ${linkCustomizeErrorMessage}`
+                  : ""
+              }`
+            : linkCustomizeLabel
+        }
+        onClick={() => setLinkCustomizeOpen((open) => !open)}
+        className="inline-flex items-center gap-1.5 rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+      >
+        {linkCustomizeLabel}
+        {linkCustomizeHasError ? (
+          <FiAlertCircle
+            className="size-3.5 shrink-0 text-[var(--status-danger-fg)]"
+            aria-hidden
+          />
+        ) : null}
+      </button>
     </div>
   );
 
@@ -1948,12 +2044,14 @@ export default function ApplicationForm({
   const focusFirstGap = () => {
     const item = saveBlockers[0];
     if (!item) return;
+    const needsLinkCustomize = item.name === "Your application link";
+    if (needsLinkCustomize) setLinkCustomizeOpen(true);
     const target =
       item.name === "Company"
         ? { rowId: "application-row-company", inputId: "application-company" }
         : item.name === "Role"
           ? { rowId: "application-row-role", inputId: "application-role" }
-          : item.name === "Your application link"
+          : needsLinkCustomize
             ? { rowId: "application-row-ending", inputId: "application-slug" }
             : item.name === "First name"
               ? {
@@ -1978,7 +2076,7 @@ export default function ApplicationForm({
                       };
     window.setTimeout(
       () => focusApplicationRow(target.rowId, target.inputId),
-      0,
+      needsLinkCustomize ? 50 : 0,
     );
   };
 
@@ -2076,157 +2174,164 @@ export default function ApplicationForm({
           actions={formActions}
           blockedReason={disabledReason}
           onBlockedReason={focusFirstGap}
-          rows={[
-            {
-              type: "section",
-              id: "application-section-link",
-              label: "Your link",
-            },
-            {
-              type: "field",
-              id: "application-row-company",
-              label: "Company",
-              labelFor: "application-company",
-              align: "field",
-              required: true,
-              tip: hasCompany ? FIELD_READY_TIP : FIELD_IDLE_TIP,
-              tipTone: hasCompany ? "ready" : "idle",
-              children: (
-                <Input
-                  id="application-company"
-                  dense
-                  value={formData.company}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      company: e.target.value,
-                    }))
-                  }
-                  error={errors.company}
-                  required
-                  autoComplete="organization"
-                />
-              ),
-            },
-            {
-              type: "field",
-              id: "application-row-role",
-              label: "Role",
-              labelFor: "application-role",
-              align: "field",
-              required: true,
-              tip: hasRole ? FIELD_READY_TIP : FIELD_IDLE_TIP,
-              tipTone: hasRole ? "ready" : "idle",
-              children: (
-                <Input
-                  id="application-role"
-                  dense
-                  value={formData.role}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, role: e.target.value }))
-                  }
-                  error={errors.role}
-                  required
-                  autoComplete="organization-title"
-                />
-              ),
-            },
-            {
-              type: "field",
-              id: "application-row-slug-order",
-              label: "How the link reads",
-              align: "field",
-              info: "Choose whether the company or the role comes first.",
-              tip: FIELD_READY_TIP,
-              tipTone: "ready",
-              className: "relative z-10",
-              children: (
-                <SlugOrderDropdown
-                  id="application-slug-order"
-                  fieldLabel="How the link reads"
-                  value={slugSegmentOrder}
-                  onChange={handleSlugSegmentOrderChange}
-                />
-              ),
-            },
-            {
-              type: "field",
-              id: "application-row-ending",
-              label: "Link ending",
-              labelFor: "application-slug",
-              align: "field",
-              required: true,
-              info: "Pre-filled for you. Edit it if you like. Each ending must be unique.",
-              tip: slugReady ? FIELD_READY_TIP : FIELD_IDLE_TIP,
-              tipTone: slugReady ? "ready" : "idle",
-              children: linkEndingControl,
-            },
-            {
-              type: "field",
-              id: "application-row-share",
-              label: "Your application link",
-              layout: "result",
-              hint: "The link you will send, built from the choices above.",
-              children: shareLinkControl,
-            },
-            {
-              type: "section",
-              id: "application-section-about",
-              label: "About you",
-              description: (
-                <>
-                  From your profile. First and last name are required to
-                  publish. Choose what else recruiters see on this page.{" "}
-                  <EditProfileLink />
-                </>
-              ),
-            },
-            {
-              type: "block",
-              id: "application-row-about",
-              children: candidateStep,
-            },
-            {
-              type: "section",
-              id: "application-section-resume",
-              label: "Your Résumé",
-              required: true,
-            },
-            {
-              type: "block",
-              id: "application-row-resume",
-              children: materialsStep,
-            },
-            {
-              type: "section",
-              id: "application-section-pitch",
-              label: "Your Pitch",
-            },
-            {
-              type: "field",
-              id: "application-row-pitch",
-              label: "YouTube",
-              labelFor: "application-video",
-              align: "field",
-              required: true,
-              hint: "A YouTube video they can watch on the page.",
-              tip: hasValidVideo ? FIELD_READY_TIP : FIELD_IDLE_TIP,
-              tipTone: hasValidVideo ? "ready" : "idle",
-              children: (
-                <YouTubeUrlInput
-                  id="application-video"
-                  hideLabel
-                  dense
-                  placeholder="https://www.youtube.com/watch?v=…"
-                  value={formData.video_url}
-                  onChange={(url) =>
-                    setFormData((prev) => ({ ...prev, video_url: url }))
-                  }
-                  error={errors.video_url}
-                />
-              ),
-            },
-          ]}
+          rows={(
+            [
+              {
+                type: "section",
+                id: "application-section-link",
+                label: "Your link",
+              },
+              {
+                type: "field",
+                id: "application-row-company",
+                label: "Company",
+                labelFor: "application-company",
+                align: "field",
+                required: true,
+                tip: hasCompany ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+                tipTone: hasCompany ? "ready" : "idle",
+                children: (
+                  <Input
+                    id="application-company"
+                    dense
+                    value={formData.company}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        company: e.target.value,
+                      }))
+                    }
+                    error={errors.company}
+                    required
+                    autoComplete="organization"
+                  />
+                ),
+              },
+              {
+                type: "field",
+                id: "application-row-role",
+                label: "Role",
+                labelFor: "application-role",
+                align: "field",
+                required: true,
+                tip: hasRole ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+                tipTone: hasRole ? "ready" : "idle",
+                children: (
+                  <Input
+                    id="application-role"
+                    dense
+                    value={formData.role}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, role: e.target.value }))
+                    }
+                    error={errors.role}
+                    required
+                    autoComplete="organization-title"
+                  />
+                ),
+              },
+              {
+                type: "field",
+                id: "application-row-share",
+                label: "Your application link",
+                layout: "result",
+                hint: linkCustomizeOpen
+                  ? "The link you will send, built from the choices above."
+                  : "The link you will send. It updates as you type company and role.",
+                children: shareLinkControl,
+              },
+              ...(linkCustomizeOpen
+                ? ([
+                    {
+                      type: "field",
+                      id: "application-row-slug-order",
+                      label: "How the link reads",
+                      align: "field",
+                      info: "Choose whether the company or the role comes first.",
+                      tip: FIELD_READY_TIP,
+                      tipTone: "ready",
+                      className: "relative z-10",
+                      children: (
+                        <SlugOrderDropdown
+                          id="application-slug-order"
+                          fieldLabel="How the link reads"
+                          value={slugSegmentOrder}
+                          onChange={handleSlugSegmentOrderChange}
+                        />
+                      ),
+                    },
+                    {
+                      type: "field",
+                      id: "application-row-ending",
+                      label: "Link ending",
+                      labelFor: "application-slug",
+                      align: "field",
+                      info: "Pre-filled for you. Edit it if you like. Each ending must be unique.",
+                      tip: slugReady ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+                      tipTone: slugReady ? "ready" : "idle",
+                      children: linkEndingControl,
+                    },
+                  ] satisfies ApplicationFormPageRow[])
+                : []),
+              {
+                type: "section",
+                id: "application-section-about",
+                label: "About you",
+                description: (
+                  <>
+                    From your profile. First and last name are required to
+                    publish. Choose what else recruiters see on this page.{" "}
+                    <EditProfileLink />
+                  </>
+                ),
+              },
+              {
+                type: "block",
+                id: "application-row-about",
+                children: candidateStep,
+              },
+              {
+                type: "section",
+                id: "application-section-resume",
+                label: "Your Résumé",
+                required: true,
+              },
+              {
+                type: "block",
+                id: "application-row-resume",
+                children: materialsStep,
+              },
+              {
+                type: "section",
+                id: "application-section-pitch",
+                label: "Your Pitch",
+              },
+              {
+                type: "field",
+                id: "application-row-pitch",
+                label: "YouTube",
+                labelFor: "application-video",
+                align: "field",
+                required: true,
+                hint: "A YouTube video they can watch on the page.",
+                tip: hasValidVideo ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+                tipTone: hasValidVideo ? "ready" : "idle",
+                children: (
+                  <YouTubeUrlInput
+                    id="application-video"
+                    hideLabel
+                    dense
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    value={formData.video_url}
+                    onChange={(url) =>
+                      setFormData((prev) => ({ ...prev, video_url: url }))
+                    }
+                    error={errors.video_url}
+                  />
+                ),
+              },
+            ] satisfies ApplicationFormPageRow[]
+          )}
         />
 
       {leaveDialog}
