@@ -54,10 +54,10 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 
 ### About you — shipped shape
 
-1. Picture: show switch (plus “Add on Profile” when missing).
-2. First / last name: read-only; always shown when present; required to publish.
-3. Location / LinkedIn / Portfolio: read-only + in-field eye when non-empty; application only stores shown values.
-4. **Edit profile** in the section; saving the application does not PUT the profile.
+1. **Edit profile** inline under the About you title; saving the application does not PUT the profile.
+2. First / last name: read-only; always shown when present; required to publish (before Picture); slightly stronger field fill than show/hide rows.
+3. Picture: show switch (plus “Add on Profile” when missing).
+4. Location / LinkedIn / Portfolio: read-only + in-field eye when non-empty; application only stores shown values.
 
 
 ---

@@ -302,8 +302,9 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### About you (create)
 
-- [ ] Under **About you**: note that values come from your profile; this page only chooses which ones recruiters see; change details on Profile. **Edit profile** link in the section
-- [ ] **First name** and **Last name** are read-only; always included when present; there is no show switch for the name; empty says add on Profile
+- [ ] Under **About you**: note that values come from your profile; this page only chooses which ones recruiters see; **Edit profile** is inline in that note (not alone in the card)
+- [ ] Order: **First name**, **Last name**, **Picture**, then Location / LinkedIn / Portfolio
+- [ ] **First name** and **Last name** are read-only; always included when present; there is no show switch for the name; empty says add on Profile; name fields have a slightly stronger fill than show/hide fields
 - [ ] **Your link:** Company, Role, and Link ending show a grey status dot before the label until valid, then green. **How the link reads** always shows a green status dot
 - [ ] **About you** text fields are read-only: green “From your profile” when a value exists; grey when empty; no yellow write-through tip
 - [ ] **Picture** shows green when a profile photo exists, grey when not; toggling show/hide does not turn it yellow
@@ -396,7 +397,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Fill fields → refresh → values restore (about **7 days** max; scoped to this signed-in user)
 - [ ] Personal-only edits (e.g. location) also restore
 - [ ] Tailored **file** is not restored; re-select the PDF
-- [ ] Dashboard / Profile / Back with progress → confirm “Leaving this page will discard this draft…”
+- [ ] Dashboard / Profile / Cancel / Edit profile / Back with progress → confirm “Leaving this page will discard unsaved changes…”; without progress, those exits do not confirm. Incomplete company/role → hint to add them; ready draft → in-dialog **Save Draft** then continues to the intended page
 - [ ] **No, stay** keeps the form; **Yes, I'm sure** leaves and **clears** the draft — next New Application is empty
 - [ ] After confirming leave, Back does **not** return to a filled `/admin/new`
 - [ ] Untouched form (prefills only) does **not** prompt on leave

@@ -113,6 +113,30 @@ describe("leaveRelevantDraftSnapshot", () => {
       }),
     ).toBe(true);
   });
+
+  it("ignores read-only About you identity text", () => {
+    const baseline = leaveRelevantDraftSnapshot(blank);
+    expect(
+      hasLeaveRelevantDraftChanges(baseline, {
+        ...blank,
+        first_name: "Other",
+        last_name: "Name",
+        location: "Paris",
+        portfolio_url: "https://example.com",
+        linkedin_url: "https://linkedin.com/in/x",
+      }),
+    ).toBe(false);
+  });
+
+  it("detects About you show/hide include changes", () => {
+    const baseline = leaveRelevantDraftSnapshot(blank);
+    expect(
+      hasLeaveRelevantDraftChanges(baseline, {
+        ...blank,
+        include: { ...blank.include, location: true },
+      }),
+    ).toBe(true);
+  });
 });
 
 describe("isLeaveGuardHistoryState", () => {

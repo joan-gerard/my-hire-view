@@ -55,6 +55,7 @@ import {
   type ApplicationFormStepId,
 } from "./application-form-steps";
 import CandidateFieldsSection, {
+  EditProfileLink,
   type CandidateFieldKey,
 } from "./CandidateFieldsSection";
 import CvSourceField from "./CvSourceField";
@@ -175,9 +176,20 @@ type SlugLiveStatus =
   | { kind: "invalid"; message: string }
   | { kind: "unavailable"; message: string };
 
+export type ApplicationSubmitOptions = {
+  /**
+   * Create only: when false, persist the draft without navigating away
+   * (leave-confirm Save Draft). Defaults to true.
+   */
+  navigate?: boolean;
+};
+
 interface ApplicationFormProps {
   initialData?: ApplicationFormInitialData;
-  onSubmit: (data: ApplicationFormData) => Promise<void>;
+  onSubmit: (
+    data: ApplicationFormData,
+    options?: ApplicationSubmitOptions,
+  ) => Promise<{ id?: string } | void>;
   loading?: boolean;
   /** Primary submit button label. Create uses “Save Draft”. */
   submitLabel?: string;
@@ -231,6 +243,10 @@ export default function ApplicationForm({
   const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  /** Leave-confirm Save Draft button: idle or saving (then leave to pending). */
+  const [leaveDialogSave, setLeaveDialogSave] = useState<"idle" | "saving">(
+    "idle",
+  );
 
   /** Load once per mount; ignore later key changes while the form is open. */
   const restoredDraftRef = useRef<CreateApplicationDraft | null | undefined>(
@@ -255,10 +271,8 @@ export default function ApplicationForm({
   );
   /** After a successful create, ignore further draft writes (F15-045). */
   const skipDraftSaveRef = useRef(false);
-  /** Disarm leave confirm after discard or successful save. */
-  const [leaveGuardArmed, setLeaveGuardArmed] = useState(
-    Boolean(persistDraftKey),
-  );
+  /** Disarm leave confirm after discard or successful navigating save. */
+  const [leaveGuardArmed, setLeaveGuardArmed] = useState(true);
   /** Edit: baseline of last saved values — Save stays off until something changes. */
   const editBaselineRef = useRef<string | null>(null);
   /** True when mount restored a non-blank draft (cleared once the form is blank again). */
@@ -741,22 +755,36 @@ export default function ApplicationForm({
           leaveBaselineRef.current,
           draftSnapshot,
         )));
-  const leaveConfirmEnabled =
-    Boolean(persistDraftKey) && leaveGuardArmed && hasCreateProgress;
+  const hasEditProgress =
+    isEdit &&
+    editBaselineRef.current != null &&
+    hasApplicationFormDirtyChanges(
+      editBaselineRef.current,
+      editDirtyInput,
+    );
+  const hasLeaveProgress = hasCreateProgress || hasEditProgress;
+  const leaveConfirmEnabled = leaveGuardArmed && hasLeaveProgress;
 
-  const discardCreateDraft = () => {
-    if (!persistDraftKey) return;
-    skipDraftSaveRef.current = true;
+  const discardOnLeave = () => {
+    if (persistDraftKey) {
+      skipDraftSaveRef.current = true;
+      clearCreateApplicationDraft(persistDraftKey);
+    }
     setLeaveGuardArmed(false);
-    clearCreateApplicationDraft(persistDraftKey);
+    setLeaveDialogSave("idle");
   };
 
   const {
     open: leaveConfirmOpen,
     onConfirm: onConfirmLeave,
-    onCancel: onCancelLeave,
+    onCancel: onCancelLeaveFromHook,
     disarmForNavigation,
-  } = useLeaveConfirm(leaveConfirmEnabled, discardCreateDraft);
+  } = useLeaveConfirm(leaveConfirmEnabled, discardOnLeave);
+
+  useEffect(() => {
+    if (leaveConfirmOpen) return;
+    setLeaveDialogSave("idle");
+  }, [leaveConfirmOpen]);
 
   const hasCompany = Boolean(formData.company.trim());
   const hasRole = Boolean(formData.role.trim());
@@ -1153,11 +1181,21 @@ export default function ApplicationForm({
     }
   };
 
-  const runSubmit = async (intent: "save" | "publish") => {
+  const runSubmit = async (
+    intent: "save" | "publish",
+    options?: { fromLeaveDialog?: boolean },
+  ) => {
+    const fromLeaveDialog = options?.fromLeaveDialog === true;
     // Single-page create blocks Enter in inputs separately.
-    if (formBusy || isSubmittingRef.current) return;
-    if (intent === "save" && !canSubmit) return;
+    if (isSubmittingRef.current) return;
+    if (!fromLeaveDialog && formBusy) return;
+    if (intent === "save" && !fromLeaveDialog && !canSubmit) return;
     if (intent === "publish" && !canPublish) return;
+    if (fromLeaveDialog && intent === "save") {
+      if (!requiredReady || leaveDialogSave === "saving") return;
+      if (isEdit && !hasUnsavedEditChanges) return;
+      setLeaveDialogSave("saving");
+    }
     isSubmittingRef.current = true;
     setSubmitIntent(intent);
     setErrors({});
@@ -1165,6 +1203,8 @@ export default function ApplicationForm({
 
     const mustBeComplete =
       requiresPublishCompleteSet || intent === "publish";
+    /** Tracks leave-dialog save so early returns still reset the button. */
+    let leaveSaveCompleted = false;
 
     try {
       const newErrors: Partial<Record<keyof ApplicationFormData, string>> = {};
@@ -1384,18 +1424,32 @@ export default function ApplicationForm({
       };
       // Disarm leave-confirm before parent navigates. Clearing the history
       // sentinel after router.push can race and cancel the redirect (F16).
-      if (persistDraftKey) {
+      // Leave-dialog save keeps the dialog open and does not navigate yet.
+      if (persistDraftKey && !fromLeaveDialog) {
         skipDraftSaveRef.current = true;
         setLeaveGuardArmed(false);
         await disarmForNavigation();
       }
       try {
-        await onSubmit(payload);
+        await onSubmit(
+          payload,
+          fromLeaveDialog ? { navigate: false } : undefined,
+        );
         if (persistDraftKey) {
           clearCreateApplicationDraft(persistDraftKey);
+          skipDraftSaveRef.current = true;
+          leaveBaselineRef.current = leaveRelevantDraftSnapshot({
+            ...draftSnapshot,
+            company: payload.company,
+            role: payload.role,
+            slug: payload.slug,
+            video_url: payload.video_url,
+          });
+          hadRestoredDraftRef.current = false;
         }
-        // Publish navigates away (view/dashboard). Draft/live save on edit stays put.
-        if (isEdit && intent === "save") {
+        // Publish navigates away (view/dashboard). Draft/live save on edit stays put
+        // unless this save came from the leave dialog (then continue to pending).
+        if (isEdit && intent === "save" && !fromLeaveDialog) {
           // Stay on edit: clear pending upload and realign the dirty baseline
           // so Save turns off until the next change.
           clearPendingCvSelection();
@@ -1446,8 +1500,13 @@ export default function ApplicationForm({
             hasPendingCvFile: false,
           });
         }
+        if (fromLeaveDialog) {
+          leaveSaveCompleted = true;
+          // Continue to Cancel / Dashboard / Profile / Back — not stay on the form.
+          onConfirmLeave();
+        }
       } catch {
-        if (persistDraftKey) {
+        if (persistDraftKey && !fromLeaveDialog) {
           skipDraftSaveRef.current = false;
           setLeaveGuardArmed(true);
         }
@@ -1456,6 +1515,9 @@ export default function ApplicationForm({
     } catch {
       // Validation / upload errors above — parent or field UI already informed.
     } finally {
+      if (fromLeaveDialog && !leaveSaveCompleted) {
+        setLeaveDialogSave("idle");
+      }
       isSubmittingRef.current = false;
       setSubmitPhase("idle");
       setSubmitIntent(null);
@@ -1594,35 +1656,35 @@ export default function ApplicationForm({
   );
 
   const candidateStep = (
-    <>
-      <ApplicationFormFieldRow
-        id="application-row-picture"
-        label="Picture"
-        tip={hasProfilePicture ? PROFILE_INITIAL_DATA_TIP : PROFILE_EMPTY_TIP}
-        tipTone={hasProfilePicture ? "ready" : "idle"}
-        align="top"
-      >
-        <ProfilePictureField
-          variant="checklist"
-          hideLegend
-          profilePictureUrl={profilePictureUrl}
-          profilePictureVersion={profilePictureVersion}
-          firstName={formData.first_name}
-          lastName={formData.last_name}
-          showProfilePicture={showProfilePicture}
-          onShowProfilePictureChange={(next) => {
-            showProfilePictureUserChosenRef.current = true;
-            setShowProfilePicture(next);
-          }}
-        />
-      </ApplicationFormFieldRow>
-      <CandidateFieldsSection
-        layout="rows"
-        values={candidateValues}
-        include={include}
-        onIncludeChange={handleCandidateIncludeChange}
-      />
-    </>
+    <CandidateFieldsSection
+      layout="rows"
+      values={candidateValues}
+      include={include}
+      onIncludeChange={handleCandidateIncludeChange}
+      afterNames={
+        <ApplicationFormFieldRow
+          id="application-row-picture"
+          label="Picture"
+          tip={hasProfilePicture ? PROFILE_INITIAL_DATA_TIP : PROFILE_EMPTY_TIP}
+          tipTone={hasProfilePicture ? "ready" : "idle"}
+          align="top"
+        >
+          <ProfilePictureField
+            variant="checklist"
+            hideLegend
+            profilePictureUrl={profilePictureUrl}
+            profilePictureVersion={profilePictureVersion}
+            firstName={formData.first_name}
+            lastName={formData.last_name}
+            showProfilePicture={showProfilePicture}
+            onShowProfilePictureChange={(next) => {
+              showProfilePictureUserChosenRef.current = true;
+              setShowProfilePicture(next);
+            }}
+          />
+        </ApplicationFormFieldRow>
+      }
+    />
   );
 
   const materialsStep = (
@@ -1905,18 +1967,58 @@ export default function ApplicationForm({
     />
   );
 
-  const leaveDialog =
-    persistDraftKey ? (
-      <ConfirmDialog
-        open={leaveConfirmOpen}
-        title="Want to leave this page?"
-        message="Leaving this page will discard this draft. Are you sure?"
-        confirmLabel="Yes, I'm sure"
-        cancelLabel="No, stay on this page"
-        onConfirm={onConfirmLeave}
-        onCancel={onCancelLeave}
-      />
-    ) : null;
+  const leaveSaveLabel = requiresPublishCompleteSet
+    ? "Save application"
+    : "Save Draft";
+  const canSaveFromLeaveDialog =
+    requiredReady &&
+    leaveDialogSave !== "saving" &&
+    (!isEdit || hasUnsavedEditChanges);
+  const leaveDialogMessage = (
+    <>
+      <p>Leaving this page will discard unsaved changes. Are you sure?</p>
+      {!hasCompany || !hasRole ? (
+        <p>
+          Add a company and role first if you want to save a draft before
+          leaving.
+        </p>
+      ) : !requiredReady ? (
+        <p>
+          {requiresPublishCompleteSet
+            ? "Finish the required fields first if you want to save before leaving."
+            : "Wait until the share link is ready, then you can save a draft here."}
+        </p>
+      ) : null}
+    </>
+  );
+
+  const handleLeaveDialogStay = () => {
+    onCancelLeaveFromHook();
+    setLeaveDialogSave("idle");
+  };
+
+  const handleLeaveDialogSave = () => {
+    void runSubmit("save", { fromLeaveDialog: true });
+  };
+
+  const leaveDialog = (
+    <ConfirmDialog
+      open={leaveConfirmOpen}
+      title="Want to leave this page?"
+      message={leaveDialogMessage}
+      confirmLabel="Yes, I'm sure"
+      cancelLabel="No, stay on this page"
+      midActionLabel={
+        hasCompany && hasRole ? leaveSaveLabel : undefined
+      }
+      midActionLoading={leaveDialogSave === "saving"}
+      midActionLoadingLabel="Saving…"
+      midActionDisabled={!canSaveFromLeaveDialog}
+      onMidAction={handleLeaveDialogSave}
+      onConfirm={onConfirmLeave}
+      onCancel={handleLeaveDialogStay}
+    />
+  );
 
   return (
     <form
@@ -2036,8 +2138,12 @@ export default function ApplicationForm({
               id: "application-section-about",
               label: "About you",
               optional: true,
-              description:
-                "From your profile. Choose what recruiters see on this page. Change details on Profile.",
+              description: (
+                <>
+                  From your profile. Choose what recruiters see on this page.{" "}
+                  <EditProfileLink />
+                </>
+              ),
             },
             {
               type: "block",

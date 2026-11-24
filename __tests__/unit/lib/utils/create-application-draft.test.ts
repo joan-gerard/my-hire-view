@@ -274,7 +274,38 @@ describe("isCreateApplicationDraftBlank", () => {
     ).toBe(true);
   });
 
-  it("keeps drafts with personal-only progress or explicit CV choice", () => {
+  it("ignores profile-prefilled About you text as blank", () => {
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "Ada",
+        last_name: "Lovelace",
+        location: "London",
+        portfolio_url: "https://example.com",
+        linkedin_url: "https://linkedin.com/in/ada",
+        include: {
+          first_name: true,
+          last_name: true,
+          location: true,
+          portfolio_url: true,
+          linkedin_url: true,
+        },
+        slugSegmentOrder: "company_role",
+        slugManuallyEdited: false,
+        showProfilePicture: true,
+        showProfilePictureUserChosen: false,
+        cvMode: "primary",
+        cvModeUserChosen: false,
+        selectedPrimaryId: null,
+        use_original_cv_filename: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps a draft when About you show/hide differs from the default", () => {
     expect(
       isCreateApplicationDraftBlank({
         company: "",
@@ -283,7 +314,7 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "Ada",
         last_name: "",
-        location: "",
+        location: "London",
         portfolio_url: "",
         linkedin_url: "",
         include: {
@@ -303,7 +334,9 @@ describe("isCreateApplicationDraftBlank", () => {
         use_original_cv_filename: false,
       }),
     ).toBe(false);
+  });
 
+  it("keeps drafts with explicit CV choice", () => {
     expect(
       isCreateApplicationDraftBlank({
         company: "",
@@ -480,6 +513,36 @@ describe("load/save/clearCreateApplicationDraft", () => {
     const key = createApplicationDraftStorageKey("user-2");
     expect(key).not.toBeNull();
     const storage = memoryStorage({ [key!]: "{not-json" });
+    expect(loadCreateApplicationDraft(key!, storage)).toBeNull();
+    expect(storage.getItem(key!)).toBeNull();
+  });
+
+  it("removes profile-only drafts on load so leave confirm stays quiet", () => {
+    const key = createApplicationDraftStorageKey("user-3");
+    expect(key).not.toBeNull();
+    const profileOnly = sampleDraft({
+      company: "",
+      role: "",
+      slug: "",
+      video_url: "",
+      first_name: "Ada",
+      last_name: "Lovelace",
+      location: "London",
+      portfolio_url: "",
+      linkedin_url: "",
+      include: {
+        first_name: true,
+        last_name: true,
+        location: true,
+        portfolio_url: false,
+        linkedin_url: false,
+      },
+      selectedPrimaryId: null,
+      cvModeUserChosen: false,
+    });
+    const storage = memoryStorage({
+      [key!]: JSON.stringify(profileOnly),
+    });
     expect(loadCreateApplicationDraft(key!, storage)).toBeNull();
     expect(storage.getItem(key!)).toBeNull();
   });

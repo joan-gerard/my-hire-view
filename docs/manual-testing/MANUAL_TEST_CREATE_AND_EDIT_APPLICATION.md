@@ -51,10 +51,11 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 ## 3. Create — About you (read-only + show/hide)
 
 - [ ] Note under the section: from your profile; this page only chooses what recruiters see; change details on Profile
-- [ ] **Edit profile** link in the section opens `/admin/profile`
+- [ ] **Edit profile** sits in the About you note under the section title (not alone at the top of the card) and opens `/admin/profile`
+- [ ] Order: **First name**, **Last name**, **Picture**, then Location / LinkedIn / Portfolio
+- [ ] **First name** / **Last name** are display-only (not focusable inputs); always shown when present; no eye toggle; empty says add on Profile; name fields use a slightly stronger fill than the show/hide fields below
 - [ ] **Picture:** preview always shown (photo or initials). With a photo: show switch under the preview (off dims it). Without: link to Profile; no show switch
 - [ ] Picture tip is green when a photo exists, grey when not
-- [ ] **First name** / **Last name** are read-only; always shown when present; no eye toggle; empty says add on Profile
 - [ ] **Location**, **LinkedIn**, **Portfolio** are read-only (LinkedIn before Portfolio); eye / eye-off when non-empty (open = show, crossed = hide); empty points to Profile
 - [ ] Tips: green “From your profile” when a value exists; grey when empty (no yellow write-through tip)
 - [ ] Saving the application does **not** change Profile text; `/view` shows only fields that were shown; names always appear when present

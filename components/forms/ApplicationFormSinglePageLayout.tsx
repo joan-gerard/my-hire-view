@@ -65,8 +65,8 @@ export type ApplicationFormPageRow =
       id: string;
       label: string;
       optional?: boolean;
-      /** Short note under the section title. */
-      description?: string;
+      /** Short note under the section title (plain text or inline links). */
+      description?: ReactNode;
     }
   | {
       type: "field";

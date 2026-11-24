@@ -80,9 +80,13 @@ export default function CreateApplicationPage() {
     };
   }, []);
 
-  const handleSubmit = async (data: ApplicationFormData) => {
+  const handleSubmit = async (
+    data: ApplicationFormData,
+    options?: { navigate?: boolean },
+  ): Promise<{ id?: string } | void> => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
+    const shouldNavigate = options?.navigate !== false;
     try {
       setLoading(true);
 
@@ -202,12 +206,19 @@ export default function CreateApplicationPage() {
       const sharePublicId = responsePublicId || publicId;
 
       if (publishNow) {
+        if (!shouldNavigate) {
+          return createdId ? { id: createdId } : undefined;
+        }
         if (sharePublicId && createdSlug) {
           router.push(`/view/${sharePublicId}/${createdSlug}`);
         } else {
           router.push("/admin");
         }
         return;
+      }
+
+      if (!shouldNavigate) {
+        return createdId ? { id: createdId } : undefined;
       }
 
       if (createdId) {

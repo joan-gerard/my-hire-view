@@ -8,8 +8,8 @@ import {
   PROFILE_EMPTY_TIP,
   PROFILE_INITIAL_DATA_TIP,
 } from "@/components/forms/ApplicationFormSinglePageLayout";
-import Input from "@/components/ui/Input";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 export type CandidateFieldKey =
   | "first_name"
@@ -27,6 +27,8 @@ export interface CandidateFieldsSectionProps {
    * Used on the one-page create/edit form.
    */
   layout?: "stack" | "rows";
+  /** Rendered after names and before location / links (e.g. Picture). */
+  afterNames?: ReactNode;
 }
 
 export const RECRUITER_INFO_FIELDS: {
@@ -56,13 +58,19 @@ const visibilityToggleClass =
 const profileLinkClass =
   "font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-2 hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
 
-function EditProfileLink({ className = "" }: { className?: string }) {
+export function EditProfileLink({ className = "" }: { className?: string }) {
   return (
     <Link href="/admin/profile" className={`${profileLinkClass} ${className}`}>
       Edit profile
     </Link>
   );
 }
+
+/** Slightly stronger fill than other dense About you fields (always shown). */
+const alwaysShownValueClass = "bg-[var(--ink)]/[0.07] ring-[var(--ink)]/20";
+
+const displayValueClass =
+  "relative block w-full rounded-xl border-0 px-3.5 py-1.5 text-sm leading-6 ring-1 ring-inset sm:text-sm sm:leading-6";
 
 function ReadOnlyValue({
   id,
@@ -71,6 +79,7 @@ function ReadOnlyValue({
   included,
   showOuterLabel,
   canToggle,
+  alwaysShown = false,
   onIncludeChange,
 }: {
   id: string;
@@ -79,6 +88,8 @@ function ReadOnlyValue({
   included: boolean;
   showOuterLabel: boolean;
   canToggle: boolean;
+  /** Stronger field fill for values that cannot be hidden on this page. */
+  alwaysShown?: boolean;
   onIncludeChange?: (included: boolean) => void;
 }) {
   const trimmed = value.trim();
@@ -87,6 +98,7 @@ function ReadOnlyValue({
   const tooltipLabel = included
     ? `Hide ${label} for this application`
     : `Show ${label} for this application`;
+  const showToggle = canToggle && Boolean(onIncludeChange);
 
   if (empty) {
     return (
@@ -96,7 +108,13 @@ function ReadOnlyValue({
             {label}
           </p>
         ) : null}
-        <p className="text-sm text-[var(--muted)]">
+        <p
+          className={`text-sm text-[var(--muted)] ${
+            alwaysShown
+              ? `${displayValueClass} ${alwaysShownValueClass}`
+              : ""
+          }`}
+        >
           Not set on your profile.{" "}
           <EditProfileLink />
         </p>
@@ -105,53 +123,65 @@ function ReadOnlyValue({
   }
 
   return (
-    <Input
-      id={id}
-      dense
-      label={showOuterLabel ? label : undefined}
-      type="text"
-      readOnly
-      value={trimmed}
-      omitted={omitted}
-      aria-label={label}
-      endAdornment={
-        canToggle && onIncludeChange ? (
-          <AdminTooltip label={tooltipLabel} side="top">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={included}
-              aria-label={tooltipLabel}
-              onClick={() => onIncludeChange(!included)}
-              className={`${visibilityToggleClass} cursor-pointer ${
-                included
-                  ? "text-[var(--ink)] hover:bg-[var(--paper)]"
-                  : "border-[var(--status-warning-fg)]/30 bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)] hover:brightness-95"
-              }`}
-            >
-              {included ? (
-                <EyeIcon className="h-4 w-4" />
-              ) : (
-                <EyeOffIcon className="h-4 w-4" />
-              )}
-            </button>
-          </AdminTooltip>
-        ) : undefined
-      }
-    />
+    <div className={showOuterLabel ? "space-y-1" : undefined}>
+      {showOuterLabel ? (
+        <p className="text-sm font-medium leading-[18px] text-[var(--ink)]">
+          {label}
+        </p>
+      ) : null}
+      <div
+        id={id}
+        className={`${displayValueClass} ${showToggle ? "pr-12" : ""} ${
+          omitted
+            ? "bg-[var(--paper)] text-[var(--muted)] ring-[var(--ink)]/10 line-through decoration-[var(--muted)]/70"
+            : alwaysShown
+              ? `${alwaysShownValueClass} text-[var(--ink)]`
+              : "bg-[var(--ink)]/[0.02] text-[var(--ink)] ring-[var(--ink)]/15"
+        } cursor-default select-text`}
+        aria-label={label}
+      >
+        {trimmed}
+        {showToggle && onIncludeChange ? (
+          <div className="absolute inset-y-0 right-1.5 flex items-center">
+            <AdminTooltip label={tooltipLabel} side="top">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={included}
+                aria-label={tooltipLabel}
+                onClick={() => onIncludeChange(!included)}
+                className={`${visibilityToggleClass} cursor-pointer ${
+                  included
+                    ? "text-[var(--ink)] hover:bg-[var(--paper)]"
+                    : "border-[var(--status-warning-fg)]/30 bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)] hover:brightness-95"
+                }`}
+              >
+                {included ? (
+                  <EyeIcon className="h-4 w-4" />
+                ) : (
+                  <EyeOffIcon className="h-4 w-4" />
+                )}
+              </button>
+            </AdminTooltip>
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
 /**
  * Profile-owned identity for an application (read-only on create/edit).
- * Names are always shown when present. Location, LinkedIn, and Portfolio can
- * be hidden on this page. Change values on Profile.
+ * Names first (always shown when present), then optional `afterNames`
+ * (e.g. Picture), then Location / LinkedIn / Portfolio with show/hide.
+ * Change values on Profile.
  */
 export default function CandidateFieldsSection({
   values,
   include,
   onIncludeChange,
   layout = "stack",
+  afterNames,
 }: CandidateFieldsSectionProps) {
   const tipFor = (field: CandidateFieldKey) => {
     const hasValue = Boolean((values[field] ?? "").trim());
@@ -163,16 +193,9 @@ export default function CandidateFieldsSection({
   const firstNameTip = tipFor("first_name");
   const lastNameTip = tipFor("last_name");
 
-  const editProfileRow = (
-    <div className="flex justify-end">
-      <EditProfileLink className="text-sm" />
-    </div>
-  );
-
   if (layout === "rows") {
     return (
       <>
-        {editProfileRow}
         <ApplicationFormFieldRow
           id="application-row-first_name"
           label="First name"
@@ -188,6 +211,7 @@ export default function CandidateFieldsSection({
             included
             showOuterLabel={false}
             canToggle={false}
+            alwaysShown
           />
         </ApplicationFormFieldRow>
         <ApplicationFormFieldRow
@@ -205,8 +229,10 @@ export default function CandidateFieldsSection({
             included
             showOuterLabel={false}
             canToggle={false}
+            alwaysShown
           />
         </ApplicationFormFieldRow>
+        {afterNames}
         {SHARE_FIELDS.map((field) => {
           const tip = tipFor(field.key);
           return (
@@ -239,7 +265,6 @@ export default function CandidateFieldsSection({
 
   return (
     <div className="space-y-3">
-      {editProfileRow}
       <div className="space-y-1">
         <p className="flex items-center gap-1.5 text-sm font-medium leading-[18px] text-[var(--ink)]">
           <FieldLabelTip tip={firstNameTip.tip} tone={firstNameTip.tone} />
@@ -252,6 +277,7 @@ export default function CandidateFieldsSection({
           included
           showOuterLabel={false}
           canToggle={false}
+          alwaysShown
         />
       </div>
       <div className="space-y-1">
@@ -266,8 +292,10 @@ export default function CandidateFieldsSection({
           included
           showOuterLabel={false}
           canToggle={false}
+          alwaysShown
         />
       </div>
+      {afterNames}
       {SHARE_FIELDS.map((field) => {
         const tip = tipFor(field.key);
         return (

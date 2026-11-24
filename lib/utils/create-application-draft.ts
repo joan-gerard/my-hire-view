@@ -259,8 +259,10 @@ export function parseCreateApplicationDraft(
 
 /**
  * True when there is nothing worth restoring (avoid writing empty noise).
- * Includes candidate fields / include toggles / picture + filename prefs so
- * personal-only progress is not discarded (F15-045 review).
+ * About you identity text is profile-owned and read-only on create, so
+ * prefilled name/location/links alone are not progress. User-changed
+ * include / picture / CV / role fields still count (aligned with leave
+ * confirm).
  */
 export function isCreateApplicationDraftBlank(
   draft: CreateApplicationDraftInput,
@@ -275,15 +277,10 @@ export function isCreateApplicationDraftBlank(
     draft.slugSegmentOrder === "company_role" &&
     draft.use_original_cv_filename === false;
 
-  const noPersonalProgress =
-    !draft.first_name.trim() &&
-    !draft.last_name.trim() &&
-    !draft.location.trim() &&
-    !draft.portfolio_url.trim() &&
-    !draft.linkedin_url.trim() &&
-    includeMatchesDefault(draft);
+  // Names/links values are ignored; only show/hide include deltas count.
+  const noAboutYouProgress = includeMatchesDefault(draft);
 
-  return noCoreProgress && noPersonalProgress;
+  return noCoreProgress && noAboutYouProgress;
 }
 
 export function loadCreateApplicationDraft(
@@ -298,6 +295,11 @@ export function loadCreateApplicationDraft(
     const parsed: unknown = JSON.parse(raw);
     const draft = parseCreateApplicationDraft(parsed, nowMs);
     if (!draft) {
+      storage.removeItem(storageKey);
+      return null;
+    }
+    // Drop profile-only / empty leftovers so leave confirm does not arm on open.
+    if (isCreateApplicationDraftBlank(draft)) {
       storage.removeItem(storageKey);
       return null;
     }
