@@ -17,7 +17,7 @@ interface PDFViewerProps {
   slug?: string;
   /** Original uploaded CV filename. Used for download when useOriginalCvFilename is true. */
   cvFilename?: string | null;
-  /** When true (default), download uses cvFilename; when false, uses generated name CV-{Slug}.pdf. */
+  /** When true (default), download uses cvFilename; when false, uses generated `{Name}-{Slug}.pdf`. */
   useOriginalCvFilename?: boolean;
 }
 

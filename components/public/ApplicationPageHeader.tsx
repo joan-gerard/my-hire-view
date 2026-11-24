@@ -7,7 +7,7 @@ import {
 } from "@/components/admin/admin-chrome";
 import ExternalLinkButton from "@/components/ui/ExternalLinkButton";
 import { LogoBlack } from "@/components/ui/Logo";
-import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
+import { getCvDownloadFilenameOrFallback } from "@/lib/utils/cv-filename";
 import { useState } from "react";
 import { BriefcaseIcon, BuildingIcon, LinkedInIcon } from "../admin/icons";
 
@@ -30,7 +30,7 @@ interface ApplicationPageHeaderProps {
   slug?: string;
   /** Original uploaded CV filename. Used for download when useOriginalCvFilename is true. */
   cvFilename?: string | null;
-  /** When true (default), download uses cvFilename; when false, uses generated name CV-{Slug}.pdf. */
+  /** When true (default), download uses cvFilename; when false, uses generated `{Name}-{Slug}.pdf`. */
   useOriginalCvFilename?: boolean;
 }
 
@@ -99,7 +99,11 @@ export default function ApplicationPageHeader({
       link.download =
         useOriginalCvFilename && cvFilename
           ? cvFilename
-          : getCvDownloadFilename(slug ?? undefined);
+          : getCvDownloadFilenameOrFallback({
+              slug: slug ?? undefined,
+              firstName,
+              lastName,
+            });
       link.rel = "noopener noreferrer";
       document.body.appendChild(link);
       link.click();

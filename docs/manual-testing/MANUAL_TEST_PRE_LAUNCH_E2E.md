@@ -334,7 +334,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 - [ ] **Library** shows the selected primary only (or empty copy); **Manage** opens the library modal with bordered rows (radio + usage count + ⋯ View/Delete) plus upload. **This role** has **Choose a PDF** / **Manage** (no radio card)
 - [ ] Selecting a radio in the library modal sets that primary on the form; tailored **Choose a PDF** opens its own modal
-- [ ] Once a file is chosen, a bottom **Recruiters download it as** row names the generated `CV-{slug}.pdf`; **Original name** switches to the PDF filename
+- [ ] Once a file is chosen, a bottom **Recruiters download it as** row names the generated `{First}-{Last}-{Slug}.pdf` (muted `First-Last` / `Company-Role` placeholders until real values exist); **Original name** switches to the PDF filename
 - [ ] There is no separate **Download name for recruiters** heading block on create or edit
 
 ### Create Role, preview, and edit notes
@@ -381,7 +381,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Empty library: primary disabled until you upload via Manage library; tailored still works
 - [ ] Restore a browser draft whose primary was **deleted** meanwhile: stale id is not saveable; falls back to another primary or tailored
 - [ ] Failed Save then retry **the same** tailored file does not upload a second R2 object (idempotency); changing the file does
-- [ ] After save, `/view` Download uses the generated `CV-{Slug}.pdf`. An older application keeps its previous download name until the next edit save
+- [ ] After save, `/view` Download uses the generated `{First}-{Last}-{Slug}.pdf`. An older application keeps its previous download name until the next edit save
 
 ### YouTube
 
@@ -588,7 +588,7 @@ Use incognito / signed-out (and owner, where noted).
 - [ ] Opening/closing the video modal does **not** increment Views
 - [ ] PDF viewer loads all pages (multi-page PDF if you have one)
 - [ ] **View CV** / open-in-tab works
-- [ ] **Download CV** downloads; filename is original **or** `CV-{Slug}.pdf` per the toggle
+- [ ] **Download CV** downloads; filename is original **or** `{First}-{Last}-{Slug}.pdf` per the toggle
 - [ ] Download failure (block the PDF URL once) does not crash the page
 - [ ] Compact footer: MyHireView, Terms, Privacy, Cookies, © — present for owners and recruiters
 - [ ] Page is `noindex` / does not invite indexing (optional: view source / head)

@@ -128,7 +128,7 @@ Nothing here blocks Continue.
 
 - A **primary CV** from your library (up to five, the same library as on Profile). **Manage library** uploads or deletes without leaving the page.
 - A **tailored PDF** for this application only.
-- Once a CV is selected, the form shows **Recruiters download it as** with the generated `CV-{slug}.pdf` by default. **Original name** stores `use_original_cv_filename` so the download keeps the PDF’s filename instead.
+- Once a CV is selected, the form shows **Recruiters download it as** with the generated `{First}-{Last}-{Slug}.pdf` by default (e.g. `Joan-Gerard-Spotify-Software-Engineer.pdf`). Missing parts use muted placeholders (`First-Last`, `Company-Role`) so the preview always shows the full pattern. **Original name** stores `use_original_cv_filename` so the download keeps the PDF’s filename instead.
 
 On create, the source choices stay locked for a moment while the library loads, so a slow load cannot overwrite your choice.
 

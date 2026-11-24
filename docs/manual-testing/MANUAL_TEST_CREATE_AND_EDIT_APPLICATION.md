@@ -66,7 +66,7 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 
 - [ ] **Library** shows the selected primary (or empty copy) with **Manage**; **This role** has **Choose a PDF** / **Manage**
 - [ ] Chosen source tip is green; the other is grey
-- [ ] Once a file is chosen: a bottom **Recruiters download it as** row (like Shareable link) shows generated `CV-{slug}.pdf`; **Original name** switch uses the PDF filename instead
+- [ ] Once a file is chosen: a bottom **Recruiters download it as** row (like Shareable link) shows generated `{First}-{Last}-{Slug}.pdf` (muted `First-Last` / `Company-Role` placeholders until real values exist); **Original name** switch uses the PDF filename instead
 - [ ] While the library is loading, library / tailored choices stay disabled (create only); unlock within ~12s if the request hangs
 - [ ] **YouTube** tip is grey until a valid URL, then green; empty YouTube does **not** block draft Save; invalid URL still blocks Save if entered
 - [ ] Draft save with only company + role (+ auto link) opens that draft’s edit page; owner preview of a draft without résumé still shows a placeholder; Publish without the full set fails with a clear required list

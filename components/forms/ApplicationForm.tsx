@@ -1898,6 +1898,8 @@ export default function ApplicationForm({
         }}
         onCancelSwitchToPrimary={() => setSwitchToPrimaryConfirmOpen(false)}
         slug={formData.slug}
+        firstName={formData.first_name}
+        lastName={formData.last_name}
         useOriginalCvFilename={formData.use_original_cv_filename ?? false}
         onUseOriginalCvFilenameChange={(useOriginal) => {
           setFormData((prev) => ({

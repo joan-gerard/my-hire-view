@@ -71,8 +71,8 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 | **Manage library**                                    | Opens the primary CV modal.                    | **Keep**               | Needed so create does not dead-end when the library is empty.                                                                                     |
 | **A PDF just for this role**                          | Tailored upload for this application.          | **Keep**               | Core differentiator vs a single static CV.                                                                                                        |
 | **Choose a PDF** (file picker)                        | Selects the tailored file.                     | **Keep**               | Required when tailored is chosen.                                                                                                                 |
-| **Recruiters download it as…**                        | Shows download filename at the bottom of Résumé (result row). | **Keep** | Same pattern as Shareable link; default is the generated `CV-{slug}.pdf`. |
-| **Original name** switch                              | Switches `CV-{slug}.pdf` vs original filename.                | **Keep** | Compact switch on the download-name row; default off (generated).         |
+| **Recruiters download it as…**                        | Shows download filename at the bottom of Résumé (result row). | **Keep** | Same pattern as Shareable link; default is `{First}-{Last}-{Slug}.pdf`. Missing parts use muted `First-Last` / `Company-Role` placeholders. |
+| **Original name** switch                              | Switches generated name vs original filename.                 | **Keep** | Compact switch on the download-name row; default off (generated).         |
 
 ---
 

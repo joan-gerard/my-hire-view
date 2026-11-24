@@ -11,7 +11,7 @@ import Button from "@/components/ui/Button";
 import Switch from "@/components/ui/Switch";
 import PrimaryCvLibraryModal from "@/components/forms/PrimaryCvLibraryModal";
 import TailoredCvModal from "@/components/forms/TailoredCvModal";
-import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
+import { getCvDownloadFilenamePreview } from "@/lib/utils/cv-filename";
 import type { ApplicationCvType } from "@/lib/types/application";
 import type { PrimaryCv } from "@/lib/types/primary-cv";
 import { useRef, useState } from "react";
@@ -47,6 +47,9 @@ interface CvSourceFieldProps {
   onCancelSwitchToPrimary: () => void;
 
   slug: string;
+  /** Candidate names for the generated download filename preview. */
+  firstName?: string | null;
+  lastName?: string | null;
   /** When true, recruiters download with the original PDF name. */
   useOriginalCvFilename?: boolean;
   onUseOriginalCvFilenameChange?: (useOriginal: boolean) => void;
@@ -88,6 +91,8 @@ export default function CvSourceField({
   onConfirmSwitchToPrimary,
   onCancelSwitchToPrimary,
   slug,
+  firstName,
+  lastName,
   useOriginalCvFilename = false,
   onUseOriginalCvFilenameChange,
   uploading = false,
@@ -115,20 +120,31 @@ export default function CvSourceField({
     mode === "primary"
       ? Boolean(selectedPrimaryId)
       : Boolean(pendingFile) || hasSavedTailored;
-  const generatedName = slug ? getCvDownloadFilename(slug) : "CV-Slug.pdf";
+  const generatedPreview = getCvDownloadFilenamePreview({
+    slug,
+    firstName,
+    lastName,
+  });
   const originalName =
     mode === "primary"
       ? selectedPrimary?.filename?.trim() || null
       : pendingFile?.name?.trim() ||
         (hasSavedTailored ? currentFilename?.trim() || null : null);
-  const downloadName =
-    useOriginalCvFilename && originalName ? originalName : generatedName;
+  const usingOriginal = Boolean(useOriginalCvFilename && originalName);
+  const downloadName = usingOriginal
+    ? originalName!
+    : generatedPreview.filename;
+  const downloadNameLooksIncomplete = !usingOriginal && !generatedPreview.isComplete;
   const canUseOriginalName = Boolean(originalName);
   const downloadNameControl = hasCvSelection ? (
     <div className="flex items-center gap-3">
       <div
         id="application-cv-download-name"
-        className="min-w-0 flex-1 break-all rounded-xl border-0 bg-[var(--white)] px-3.5 py-1.5 text-[var(--ink)] ring-1 ring-inset ring-[var(--ink)]/15 sm:text-sm sm:leading-6"
+        className={`min-w-0 flex-1 break-all rounded-xl border-0 bg-[var(--white)] px-3.5 py-1.5 ring-1 ring-inset ring-[var(--ink)]/15 sm:text-sm sm:leading-6 ${
+          downloadNameLooksIncomplete
+            ? "text-[var(--muted)]"
+            : "text-[var(--ink)]"
+        }`}
         aria-live="polite"
       >
         {downloadName}
