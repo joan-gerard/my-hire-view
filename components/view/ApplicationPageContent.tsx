@@ -36,7 +36,16 @@ export default function ApplicationPageContent({
       {trackViews ? <ViewTracker publicId={publicId} slug={slug} /> : null}
       <div className="space-y-12">
         <section className={`${ADMIN_PANEL_CLASS} overflow-hidden`}>
-          {application.cv_exists === false ? (
+          {!application.cv_url?.trim() ? (
+            <div className="px-6 py-16 text-center sm:px-8">
+              <p className="text-base font-medium text-[var(--ink)]">
+                Résumé not added yet
+              </p>
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                Add a CV on the application form before you publish.
+              </p>
+            </div>
+          ) : application.cv_exists === false ? (
             <CvUnavailableWithRetry onRetry={refetchApplication} />
           ) : (
             <PDFViewer

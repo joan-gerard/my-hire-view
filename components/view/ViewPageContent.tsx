@@ -104,7 +104,11 @@ export default function ViewPageContent({
         portfolioUrl={application.portfolio_url}
         linkedinUrl={application.linkedin_url}
         profileImageUrl={application.profile_picture_url?.trim() || undefined}
-        onWatchVideo={() => setIsVideoModalOpen(true)}
+        onWatchVideo={
+          application.video_url?.trim()
+            ? () => setIsVideoModalOpen(true)
+            : undefined
+        }
         cvUrl={application.cv_url}
         publicId={publicId}
         slug={slug}

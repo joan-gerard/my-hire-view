@@ -31,7 +31,8 @@ export interface Application {
   slug: string;
   company: string;
   role: string;
-  cv_url: string;
+  /** Null while a draft has no résumé yet (F40). */
+  cv_url: string | null;
   video_url: string;
   created_at: string;
   updated_at: string;
@@ -234,7 +235,7 @@ export function toPublicApplicationResponse(
 
 /**
  * Fields returned by `GET /api/applications` for the admin dashboard list.
- * Omits candidate/CV/video/profile fields that the list UI does not use.
+ * Includes the F40 publish-completeness fields so draft cards can gate Publish.
  */
 export type ApplicationListItem = Pick<
   Application,
@@ -249,6 +250,11 @@ export type ApplicationListItem = Pick<
   | "created_at"
   | "last_viewed_at"
   | "cv_url"
+  | "video_url"
+  | "first_name"
+  | "last_name"
+  | "cv_type"
+  | "primary_cv_id"
 > & {
   /**
    * Opaque candidate id for public share URLs. Null when neither a profiles row
@@ -258,7 +264,7 @@ export type ApplicationListItem = Pick<
   /**
    * True when `cv_url` is an R2 object that exists, or when existence was not
    * checked (URL outside our R2 public base). False only when HeadObject
-   * confirms missing.
+   * confirms missing. Also false when there is no `cv_url` yet.
    */
   cv_exists: boolean;
   /**
@@ -270,8 +276,7 @@ export type ApplicationListItem = Pick<
 
 /** Supabase `.select()` projection for `ApplicationListItem` (before attaching public_id / cv_exists). */
 export const APPLICATION_LIST_SELECT =
-  "id, slug, company, role, status, archived_at, view_count, download_count, created_at, last_viewed_at, cv_url, show_profile_picture" as const;
-
+  "id, slug, company, role, status, archived_at, view_count, download_count, created_at, last_viewed_at, cv_url, video_url, first_name, last_name, cv_type, primary_cv_id, show_profile_picture" as const;
 /** Default page size for `GET /api/applications`. */
 export const APPLICATION_LIST_DEFAULT_LIMIT = 20;
 
@@ -307,7 +312,8 @@ export interface ApplicationFormData {
   company: string;
   role: string;
   slug: string;
-  cv_url: string;
+  /** Null while a draft has no résumé yet (F40). */
+  cv_url: string | null;
   video_url: string;
   /** Candidate fields shown to recruiters; null = do not show. Set from form toggles. */
   first_name?: string | null;
@@ -332,13 +338,19 @@ export interface ApplicationFormData {
   cv_type?: ApplicationCvType;
   /** When cv_type is primary, the selected library id. */
   primary_cv_id?: string | null;
+  /**
+   * Set by ApplicationForm when the user chooses Publish.
+   * Create/edit parents send this as the API status (draft save omits or sends draft).
+   */
+  status?: ApplicationStatus;
 }
 
 export interface ApplicationCreateInput {
   company: string;
   role: string;
   slug: string;
-  cv_url: string;
+  /** Null while a draft has no résumé yet (F40). */
+  cv_url: string | null;
   video_url: string;
   first_name?: string | null;
   last_name?: string | null;
@@ -360,7 +372,7 @@ export interface ApplicationUpdateInput {
   company?: string;
   role?: string;
   slug?: string;
-  cv_url?: string;
+  cv_url?: string | null;
   video_url?: string;
   status?: ApplicationStatus;
   first_name?: string | null;

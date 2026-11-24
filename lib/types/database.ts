@@ -7,7 +7,7 @@ export interface Database {
           slug: string;
           company: string;
           role: string;
-          cv_url: string;
+          cv_url: string | null;
           video_url: string;
           created_at: string;
           updated_at: string;
@@ -35,7 +35,7 @@ export interface Database {
           slug: string;
           company: string;
           role: string;
-          cv_url: string;
+          cv_url?: string | null;
           video_url: string;
           created_at?: string;
           updated_at?: string;
@@ -62,7 +62,7 @@ export interface Database {
           slug?: string;
           company?: string;
           role?: string;
-          cv_url?: string;
+          cv_url?: string | null;
           video_url?: string;
           created_at?: string;
           updated_at?: string;

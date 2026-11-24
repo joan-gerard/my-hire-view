@@ -62,7 +62,7 @@ describe("leaveRelevantDraftSnapshot", () => {
     cvMode: "primary" as ApplicationCvType,
     cvModeUserChosen: false,
     selectedPrimaryId: "cv-1",
-    use_original_cv_filename: true,
+    use_original_cv_filename: false,
   };
 
   it("ignores auto slug and automatic primary selection", () => {

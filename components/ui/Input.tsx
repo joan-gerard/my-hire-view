@@ -11,6 +11,11 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   endAdornment?: ReactNode;
   /** Icon or control shown before the label (e.g. status tip). */
   labelStart?: ReactNode;
+  /**
+   * Visually marks the value as omitted from the public page (dimmed field).
+   * Does not disable editing.
+   */
+  omitted?: boolean;
 }
 
 export default function Input({
@@ -20,6 +25,7 @@ export default function Input({
   dense = false,
   endAdornment,
   labelStart,
+  omitted = false,
   className = '',
   id,
   required,
@@ -58,7 +64,13 @@ export default function Input({
           required={required}
           className={`block w-full rounded-xl border-0 px-3.5 ${
             endAdornment ? "pr-12" : ""
-          } ${dense ? "bg-[var(--ink)]/[0.02] py-1.5" : "bg-[var(--white)] py-2.5 shadow-sm"} text-[var(--ink)] ring-1 ring-inset ring-[var(--ink)]/15 placeholder:text-[var(--muted)] outline-hidden focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:bg-[var(--paper)] disabled:text-[var(--muted)] disabled:ring-[var(--ink)]/10 sm:text-sm sm:leading-6 ${
+          } ${
+            omitted
+              ? "bg-[var(--paper)] py-1.5 text-[var(--muted)] ring-1 ring-inset ring-[var(--ink)]/10 line-through decoration-[var(--muted)]/70"
+              : dense
+                ? "bg-[var(--ink)]/[0.02] py-1.5 text-[var(--ink)] ring-1 ring-inset ring-[var(--ink)]/15"
+                : "bg-[var(--white)] py-2.5 text-[var(--ink)] shadow-sm ring-1 ring-inset ring-[var(--ink)]/15"
+          } placeholder:text-[var(--muted)] outline-hidden focus:ring-2 focus:ring-inset focus:ring-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:bg-[var(--paper)] disabled:text-[var(--muted)] disabled:ring-[var(--ink)]/10 sm:text-sm sm:leading-6 ${
             error ? 'ring-[var(--status-danger-fg)]/40' : ''
           } ${className}`}
           {...props}

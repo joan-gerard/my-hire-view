@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { ADMIN_SECONDARY_CLASS } from '@/components/admin/admin-chrome';
 
 interface FileUploadProps {
   /** Saved CV URL (from server). Shown when no pending file is selected. */
@@ -107,6 +108,11 @@ export default function FileUpload({
     }
   };
 
+  const openPicker = () => {
+    if (selectionLocked) return;
+    fileInputRef.current?.click();
+  };
+
   const openPreview = () => {
     dialogRef.current?.showModal();
   };
@@ -118,31 +124,51 @@ export default function FileUpload({
   const showPending = !!pendingFile;
   const showSaved = !showPending && !!value;
   const canPreview = showPending && previewUrl;
+  const statusLabel = showPending
+    ? pendingFile!.name
+    : showSaved
+      ? "Using the saved PDF for this role"
+      : "No file chosen";
 
   return (
     <div>
       {!hideLabel && (
-        <label className="block text-sm font-medium text-[var(--ink)]">
+        <p className="block text-sm font-medium text-[var(--ink)]">
           {chooseLabel}
-        </label>
+        </p>
       )}
       <div className={hideLabel ? "flex flex-col gap-2" : "mt-1 flex flex-col gap-2"}>
-        <div className="flex items-center gap-4">
-            <input
+        <div className="flex flex-wrap items-center gap-3">
+          <input
             ref={fileInputRef}
             type="file"
             accept="application/pdf"
             onChange={handleFileChange}
             aria-label={chooseLabel}
             disabled={selectionLocked}
-            className="block w-full cursor-pointer text-sm text-[var(--muted)] file:mr-4 file:cursor-pointer file:rounded-xl file:border file:border-[var(--ink)]/12 file:bg-[var(--white)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--ink)] hover:file:bg-[var(--ink)]/[0.04] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:file:bg-[var(--white)] disabled:file:cursor-not-allowed"
+            className="sr-only"
+            tabIndex={-1}
           />
+          <button
+            type="button"
+            onClick={openPicker}
+            disabled={selectionLocked}
+            className={ADMIN_SECONDARY_CLASS}
+          >
+            {chooseLabel}
+          </button>
+          <span
+            className="min-w-0 truncate text-sm text-[var(--muted)]"
+            aria-live="polite"
+          >
+            {statusLabel}
+          </span>
           {showPending && (
             <button
               type="button"
               onClick={handleClearPending}
               disabled={selectionLocked}
-              className="text-sm text-[var(--muted)] hover:text-[var(--ink)] underline disabled:opacity-50"
+              className="text-sm text-[var(--muted)] underline hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
             >
               Remove selection
             </button>

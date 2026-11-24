@@ -1,14 +1,13 @@
 "use client";
 
 /**
- * Edit application — scrolling split layout on `/admin/edit/[id]`.
+ * Edit application — same one-page form layout as `/admin/new`.
  */
 
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
 import ApplicationForm, {
   type ApplicationFormInitialData,
 } from "@/components/forms/ApplicationForm";
-import ApplicationFormPageHeader from "@/components/forms/ApplicationFormPageHeader";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
 import type { Application, ApplicationFormData } from "@/lib/types/application";
@@ -159,6 +158,7 @@ export default function EditApplicationPage() {
 
       const { slugManuallyEdited, ...dataForApi } = data;
       void slugManuallyEdited;
+      const publishNow = data.status === "active";
 
       const response = await fetch("/api/applications", {
         method: "PUT",
@@ -169,6 +169,7 @@ export default function EditApplicationPage() {
           id,
           ...dataForApi,
           slug,
+          ...(publishNow ? { status: "active" } : {}),
         }),
       });
 
@@ -177,7 +178,39 @@ export default function EditApplicationPage() {
         throw new Error(error || "Failed to update application");
       }
 
-      router.push("/admin");
+      const json: { data?: Application } = await response
+        .json()
+        .catch(() => ({}));
+
+      if (publishNow) {
+        const shareSlug =
+          (typeof json.data?.slug === "string" && json.data.slug.trim()) ||
+          slug;
+        if (publicId && shareSlug) {
+          router.push(`/view/${publicId}/${shareSlug}`);
+        } else {
+          router.push("/admin");
+        }
+        return;
+      }
+
+      if (json.data) {
+        setApplication((prev) => {
+          if (!prev) return json.data!;
+          const next = json.data!;
+          const cvUrlChanged = (next.cv_url ?? "") !== (prev.cv_url ?? "");
+          return {
+            ...prev,
+            ...next,
+            // PUT returns the row without cv_exists; keep or infer from URL change.
+            cv_exists: next.cv_url
+              ? cvUrlChanged
+                ? true
+                : prev.cv_exists
+              : undefined,
+          };
+        });
+      }
     } catch (err) {
       alert(
         err instanceof Error ? err.message : "Failed to update application",
@@ -189,7 +222,7 @@ export default function EditApplicationPage() {
   };
 
   if (fetching || !profileSettled) {
-    return <AdminPageSkeleton variant="form" showTip />;
+    return <AdminPageSkeleton variant="create" />;
   }
 
   if (!application) {
@@ -217,11 +250,11 @@ export default function EditApplicationPage() {
     show_profile_picture: application.show_profile_picture ?? false,
     cv_type: application.cv_type ?? "tailored",
     primary_cv_id: application.primary_cv_id ?? null,
+    status: application.status,
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <ApplicationFormPageHeader sticky title="Edit application" />
+    <div className="mx-auto w-full max-w-2xl">
       <ApplicationForm
         initialData={initialData}
         onSubmit={handleSubmit}
@@ -257,9 +290,8 @@ export default function EditApplicationPage() {
         publicId={publicId ?? undefined}
         slugExcludeApplicationId={id}
         submitLabel={
-          application.status === "draft" ? "Save draft" : "Save application"
+          application.status === "draft" ? "Save Draft" : "Save application"
         }
-        presentation="split"
       />
     </div>
   );

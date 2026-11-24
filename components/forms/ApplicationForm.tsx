@@ -33,6 +33,10 @@ import {
   type CreateApplicationDraft,
 } from "@/lib/utils/create-application-draft";
 import {
+  applicationFormDirtySnapshot,
+  hasApplicationFormDirtyChanges,
+} from "@/lib/utils/application-form-dirty";
+import {
   hasLeaveRelevantDraftChanges,
   leaveRelevantDraftSnapshot,
 } from "@/lib/utils/leave-confirm";
@@ -46,7 +50,6 @@ import ApplicationFormSinglePageLayout, {
   PROFILE_EMPTY_TIP,
   PROFILE_INITIAL_DATA_TIP,
 } from "./ApplicationFormSinglePageLayout";
-import ApplicationFormSplitLayout from "./ApplicationFormSplitLayout";
 import {
   applicationFormStepForErrors,
   type ApplicationFormStepId,
@@ -54,14 +57,8 @@ import {
 import CandidateFieldsSection, {
   type CandidateFieldKey,
 } from "./CandidateFieldsSection";
-import ApplicationReviewPreview from "./ApplicationReviewPreview";
-import ApplicationReviewSummary from "./ApplicationReviewSummary";
 import CvSourceField from "./CvSourceField";
-import SlugSegmentOrderField, {
-  type SlugSegmentOrder,
-} from "./SlugSegmentOrderField";
 import ProfilePictureField from "./ProfilePictureField";
-import ShareUrlPreview from "./ShareUrlPreview";
 import YouTubeUrlInput from "./YouTubeUrlInput";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import AdminTooltip from "@/components/admin/AdminTooltip";
@@ -69,13 +66,14 @@ import { CopyIcon } from "@/components/admin/icons";
 import SlugOrderDropdown from "./SlugOrderDropdown";
 import { copyToClipboard } from "@/lib/utils/clipboard";
 import type { ProfileIdentityFields } from "@/lib/utils/profile-with-saved-identity";
+import type { SlugSegmentOrder } from "@/lib/utils/slug-generate";
 import { getApplicationUrl, getBaseUrl } from "@/lib/utils/url";
 import { validateYouTubeUrl } from "@/lib/utils/youtube";
 import {
   formatProfileUpdateZodError,
   profileUpdateSchema,
 } from "@/lib/validation/profile";
-import { FiAlertCircle, FiCheck, FiRefreshCw } from "react-icons/fi";
+import { FiAlertCircle } from "react-icons/fi";
 
 function hasValue(v: string | null | undefined): boolean {
   return v != null && String(v).trim() !== "";
@@ -108,16 +106,16 @@ function checklistErrorTarget(
   if (errors.location) {
     return { rowId: "application-row-location", inputId: "application-location" };
   }
-  if (errors.portfolio_url) {
-    return {
-      rowId: "application-row-portfolio_url",
-      inputId: "application-portfolio_url",
-    };
-  }
   if (errors.linkedin_url) {
     return {
       rowId: "application-row-linkedin_url",
       inputId: "application-linkedin_url",
+    };
+  }
+  if (errors.portfolio_url) {
+    return {
+      rowId: "application-row-portfolio_url",
+      inputId: "application-portfolio_url",
     };
   }
   if (errors.cv_url || errors.cv_filename) {
@@ -166,6 +164,8 @@ function defaultInclude(
 
 /** initialData can include application row fields used to seed form state. */
 export type ApplicationFormInitialData = Partial<ApplicationFormData> & {
+  /** Saved application status — active edits keep the full publish-ready gate. */
+  status?: "active" | "draft" | "archived";
   cvUrlExists?: boolean;
   /** Stored preference: show profile picture on this application. */
   show_profile_picture?: boolean;
@@ -184,7 +184,7 @@ interface ApplicationFormProps {
   initialData?: ApplicationFormInitialData;
   onSubmit: (data: ApplicationFormData) => Promise<void>;
   loading?: boolean;
-  /** Primary submit button label. Create uses “Save draft & preview”. */
+  /** Primary submit button label. Create uses “Save Draft”. */
   submitLabel?: string;
   /** When provided, passed to FileUpload so user can re-check CV existence (edit page). */
   /** Resolves false when the saved CV is still missing from storage. */
@@ -221,11 +221,6 @@ interface ApplicationFormProps {
    * key and restore on mount (F15-045). Cleared after a successful submit.
    */
   persistDraftKey?: string;
-  /**
-   * `single` is the one-page form on `/admin/new`.
-   * `split` is the scrolling edit page.
-   */
-  presentation?: "single" | "split";
 }
 
 export default function ApplicationForm({
@@ -242,16 +237,10 @@ export default function ApplicationForm({
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
   persistDraftKey,
-  presentation = "single",
 }: ApplicationFormProps) {
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
-  /** Bumps when a failed save should scroll the split layout to that band. */
-  const [errorScroll, setErrorScroll] = useState<{
-    stepId: ApplicationFormStepId;
-    nonce: number;
-  } | null>(null);
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   /** Load once per mount; ignore later key changes while the form is open. */
@@ -281,6 +270,8 @@ export default function ApplicationForm({
   const [leaveGuardArmed, setLeaveGuardArmed] = useState(
     Boolean(persistDraftKey),
   );
+  /** Edit: baseline of last saved values — Save stays off until something changes. */
+  const editBaselineRef = useRef<string | null>(null);
   /** True when mount restored a non-blank draft (cleared once the form is blank again). */
   const hadRestoredDraftRef = useRef(
     Boolean(restoredDraft && !isCreateApplicationDraftBlank(restoredDraft)),
@@ -311,7 +302,10 @@ export default function ApplicationForm({
     portfolio_url: initialData?.portfolio_url ?? "",
     linkedin_url: initialData?.linkedin_url ?? "",
     cv_filename: initialData?.cv_filename ?? null,
-    use_original_cv_filename: false,
+    use_original_cv_filename:
+      restoredDraft?.use_original_cv_filename ??
+      initialData?.use_original_cv_filename ??
+      false,
     cv_type: restoredDraft?.cvMode ?? initialData?.cv_type,
     primary_cv_id:
       restoredDraft?.selectedPrimaryId ?? initialData?.primary_cv_id ?? null,
@@ -383,8 +377,6 @@ export default function ApplicationForm({
   const [slugPinned, setSlugPinned] = useState(
     () => isEdit && Boolean((initialData?.slug ?? "").trim()),
   );
-  const [previewNonce, setPreviewNonce] = useState(0);
-  const resumePreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
   /** True while SHA-256 digest of the pending CV is in flight. */
@@ -395,6 +387,10 @@ export default function ApplicationForm({
    */
   const [submitPhase, setSubmitPhase] = useState<"idle" | "uploading" | "saving">(
     "idle",
+  );
+  /** Which footer action is in flight — drives Save vs Publish busy labels. */
+  const [submitIntent, setSubmitIntent] = useState<"save" | "publish" | null>(
+    null,
   );
   const isSubmittingRef = useRef(false);
   const uploadedPendingFileRef = useRef<{
@@ -664,7 +660,7 @@ export default function ApplicationForm({
         cvMode,
         cvModeUserChosen: cvModeUserChosenRef.current,
         selectedPrimaryId,
-        use_original_cv_filename: false,
+        use_original_cv_filename: formData.use_original_cv_filename ?? false,
       });
     }, 400);
     return () => window.clearTimeout(timer);
@@ -707,10 +703,35 @@ export default function ApplicationForm({
     cvMode,
     cvModeUserChosen: cvModeUserChosenRef.current,
     selectedPrimaryId,
-    use_original_cv_filename: false,
+    use_original_cv_filename: formData.use_original_cv_filename ?? false,
+  };
+  const editDirtyInput = {
+    company: formData.company,
+    role: formData.role,
+    slug: formData.slug,
+    video_url: formData.video_url,
+    first_name: formData.first_name ?? "",
+    last_name: formData.last_name ?? "",
+    location: formData.location ?? "",
+    portfolio_url: formData.portfolio_url ?? "",
+    linkedin_url: formData.linkedin_url ?? "",
+    includeLocation: include.location,
+    includePortfolio: include.portfolio_url,
+    includeLinkedin: include.linkedin_url,
+    slugSegmentOrder,
+    showProfilePicture,
+    cvMode,
+    selectedPrimaryId,
+    cv_url: formData.cv_url ?? "",
+    cv_filename: formData.cv_filename ?? null,
+    use_original_cv_filename: formData.use_original_cv_filename ?? false,
+    hasPendingCvFile: Boolean(cvPendingFile),
   };
   if (persistDraftKey && leaveBaselineRef.current === null) {
     leaveBaselineRef.current = leaveRelevantDraftSnapshot(draftSnapshot);
+  }
+  if (isEdit && editBaselineRef.current === null) {
+    editBaselineRef.current = applicationFormDirtySnapshot(editDirtyInput);
   }
   if (
     hadRestoredDraftRef.current &&
@@ -784,7 +805,6 @@ export default function ApplicationForm({
         selectedPrimaryId === (initialData.primary_cv_id ?? null)
       : cvMode === "tailored");
   const hasUsableCv = hasCv && !stillUsingMissingSavedCv;
-  const hasVideo = Boolean(formData.video_url.trim());
   const hasValidVideo = validateYouTubeUrl(formData.video_url.trim());
   const savedSlug = (initialData?.slug ?? "").trim();
   const slugUnchangedFromSave =
@@ -796,18 +816,37 @@ export default function ApplicationForm({
   const hasFirstName = Boolean(formData.first_name?.trim());
   const hasLastName = Boolean(formData.last_name?.trim());
 
-  const requiredReady =
-    hasCompany &&
-    hasRole &&
+  /**
+   * F40: draft create/edit only needs company, role, and a ready share link
+   * (auto-filled from company + role). Live apps keep the full publish set.
+   */
+  const requiresPublishCompleteSet =
+    isEdit && initialData?.status === "active";
+
+  const draftSaveReady = hasCompany && hasRole && slugReady;
+  const publishSaveReady =
+    draftSaveReady &&
     hasFirstName &&
     hasLastName &&
     hasUsableCv &&
-    hasVideo &&
-    slugReady;
+    hasValidVideo;
+  const requiredReady = requiresPublishCompleteSet
+    ? publishSaveReady
+    : draftSaveReady;
 
   const formBusy =
     loading || submitPhase !== "idle" || cvPendingDigesting;
-  const canSubmit = requiredReady && !formBusy;
+  const hasUnsavedEditChanges =
+    !isEdit ||
+    (editBaselineRef.current != null &&
+      hasApplicationFormDirtyChanges(
+        editBaselineRef.current,
+        editDirtyInput,
+      ));
+  const canSubmit = requiredReady && !formBusy && hasUnsavedEditChanges;
+  /** Create or draft edit: Publish appears once the full go-live set is ready. */
+  const showPublish = !requiresPublishCompleteSet && publishSaveReady;
+  const canPublish = showPublish && !formBusy;
   const saveLoadingLabel =
     cvPendingDigesting
       ? "Preparing…"
@@ -841,24 +880,33 @@ export default function ApplicationForm({
     } else if (!hasSlug || !slugReady) {
       items.push({ name: "Shareable link", stepId: "role" });
     }
-    if (!hasFirstName) {
-      items.push({ name: "First name", stepId: "candidate" });
+    if (requiresPublishCompleteSet) {
+      if (!hasFirstName) {
+        items.push({ name: "First name", stepId: "candidate" });
+      }
+      if (!hasLastName) {
+        items.push({ name: "Last name", stepId: "candidate" });
+      }
+      if (!hasUsableCv) items.push({ name: "Résumé", stepId: "materials" });
+      if (!hasValidVideo) items.push({ name: "YouTube intro", stepId: "video" });
     }
-    if (!hasLastName) {
-      items.push({ name: "Last name", stepId: "candidate" });
-    }
-    if (!hasUsableCv) items.push({ name: "Résumé", stepId: "materials" });
-    if (!hasVideo) items.push({ name: "YouTube intro", stepId: "video" });
     return items;
   })();
 
   const disabledReason = (() => {
-    if (saveBlockers.length === 0) return null;
-    const phrases = saveBlockers.map((item) => item.note ?? item.name);
-    return `Required before saving: ${phrases.join(", ")}`;
+    if (formBusy) return null;
+    if (saveBlockers.length > 0) {
+      const phrases = saveBlockers.map((item) => item.note ?? item.name);
+      const prefix = requiresPublishCompleteSet
+        ? "Required before saving"
+        : "Required before saving draft";
+      return `${prefix}: ${phrases.join(", ")}`;
+    }
+    if (isEdit && !hasUnsavedEditChanges) {
+      return "No changes to save.";
+    }
+    return null;
   })();
-
-  const firstBlockedStep = saveBlockers[0]?.stepId ?? null;
 
   /** Drop slug field errors when inputs that affect slug change so live status can show success again. */
   useEffect(() => {
@@ -1118,13 +1166,6 @@ export default function ApplicationForm({
     nextErrors: Partial<Record<keyof ApplicationFormData, string>>,
   ) => {
     setErrors(nextErrors);
-    if (presentation === "split") {
-      const step = applicationFormStepForErrors(nextErrors);
-      if (step) {
-        setErrorScroll({ stepId: step, nonce: Date.now() });
-      }
-      return;
-    }
     const target = checklistErrorTarget(nextErrors);
     if (target) {
       window.setTimeout(
@@ -1134,13 +1175,18 @@ export default function ApplicationForm({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Single-page create blocks Enter in inputs separately. Split may save on Enter.
-    if (formBusy || isSubmittingRef.current || !canSubmit) return;
+  const runSubmit = async (intent: "save" | "publish") => {
+    // Single-page create blocks Enter in inputs separately.
+    if (formBusy || isSubmittingRef.current) return;
+    if (intent === "save" && !canSubmit) return;
+    if (intent === "publish" && !canPublish) return;
     isSubmittingRef.current = true;
+    setSubmitIntent(intent);
     setErrors({});
     setSubmitPhase("saving");
+
+    const mustBeComplete =
+      requiresPublishCompleteSet || intent === "publish";
 
     try {
       const newErrors: Partial<Record<keyof ApplicationFormData, string>> = {};
@@ -1149,25 +1195,33 @@ export default function ApplicationForm({
       if (!formData.role.trim()) newErrors.role = "Role is required";
       const slugTrimmed = formData.slug.trim();
       if (!slugTrimmed) newErrors.slug = "Slug is required";
-      if (cvMode === "primary") {
-        if (!selectedPrimaryId) newErrors.cv_url = "Select a primary CV";
-      } else {
-        const hasTailoredCv =
-          cvPendingFile ||
-          (initialData?.cv_type === "tailored" &&
-            formData.cv_url &&
-            formData.cv_url.trim());
-        if (!hasTailoredCv) {
-          newErrors.cv_url = "Upload a CV file for this application";
-        }
-      }
-      if (!formData.video_url.trim())
-        newErrors.video_url = "YouTube intro is required";
 
       const firstName = formData.first_name?.trim() ?? "";
       const lastName = formData.last_name?.trim() ?? "";
-      if (!firstName) newErrors.first_name = "First name is required";
-      if (!lastName) newErrors.last_name = "Last name is required";
+
+      if (mustBeComplete) {
+        if (cvMode === "primary") {
+          if (!selectedPrimaryId) newErrors.cv_url = "Select a primary CV";
+        } else {
+          const hasTailoredCv =
+            cvPendingFile ||
+            (initialData?.cv_type === "tailored" &&
+              formData.cv_url &&
+              formData.cv_url.trim());
+          if (!hasTailoredCv) {
+            newErrors.cv_url = "Upload a CV file for this application";
+          }
+        }
+        if (!formData.video_url.trim())
+          newErrors.video_url = "YouTube intro is required";
+        else if (!hasValidVideo)
+          newErrors.video_url = "Enter a valid YouTube URL";
+        if (!firstName) newErrors.first_name = "First name is required";
+        if (!lastName) newErrors.last_name = "Last name is required";
+      } else if (formData.video_url.trim() && !hasValidVideo) {
+        // Draft: validate video format only when a URL was entered.
+        newErrors.video_url = "Enter a valid YouTube URL";
+      }
 
       const profileParsed = profileUpdateSchema.safeParse({
         first_name: firstName || null,
@@ -1302,19 +1356,27 @@ export default function ApplicationForm({
         return;
       }
 
-      let cvUrl = formData.cv_url.trim();
+      let cvUrl = formData.cv_url?.trim() ?? "";
       let cvFilename = formData.cv_filename ?? null;
       let primaryCvId: string | null = null;
 
       if (cvMode === "primary") {
-        const primary = primaryCvs.find((m) => m.id === selectedPrimaryId);
-        if (!primary) {
+        if (selectedPrimaryId) {
+          const primary = primaryCvs.find((m) => m.id === selectedPrimaryId);
+          if (!primary) {
+            revealFormErrors({ cv_url: "Select a primary CV" });
+            return;
+          }
+          cvUrl = primary.url;
+          cvFilename = primary.filename;
+          primaryCvId = primary.id;
+        } else if (mustBeComplete) {
           revealFormErrors({ cv_url: "Select a primary CV" });
           return;
+        } else {
+          cvUrl = "";
+          primaryCvId = null;
         }
-        cvUrl = primary.url;
-        cvFilename = primary.filename;
-        primaryCvId = primary.id;
       } else if (cvPendingFile) {
         const signature =
           cvPendingSignatureRef.current ??
@@ -1388,10 +1450,14 @@ export default function ApplicationForm({
 
       const includePicture = hasProfilePicture && showProfilePicture;
 
+      const resolvedCvType: ApplicationCvType =
+        cvMode === "primary" && primaryCvId ? "primary" : "tailored";
+
       const payload: ApplicationFormData = {
         ...formData,
         slug: slugTrimmed,
-        cv_url: cvUrl,
+        cv_url: cvUrl || null,
+        video_url: formData.video_url.trim(),
         first_name: formData.first_name?.trim() || null,
         last_name: formData.last_name?.trim() || null,
         location: include.location ? formData.location?.trim() || null : null,
@@ -1403,12 +1469,15 @@ export default function ApplicationForm({
           : null,
         slugSegmentOrder,
         cv_filename: cvFilename,
-        use_original_cv_filename: false,
+        use_original_cv_filename: formData.use_original_cv_filename ?? false,
         show_profile_picture: includePicture,
-        cv_type: cvMode,
+        // Draft without a selected primary must not send cv_type primary
+        // (API requires primary_cv_id in that case).
+        cv_type: resolvedCvType,
         primary_cv_id: primaryCvId,
         // Create and edit both need this so handlers keep a validated typed slug.
         slugManuallyEdited,
+        ...(intent === "publish" ? { status: "active" as const } : {}),
       };
       // Disarm leave-confirm before parent navigates. Clearing the history
       // sentinel after router.push can race and cancel the redirect (F16).
@@ -1422,6 +1491,58 @@ export default function ApplicationForm({
         if (persistDraftKey) {
           clearCreateApplicationDraft(persistDraftKey);
         }
+        // Publish navigates away (view/dashboard). Draft/live save on edit stays put.
+        if (isEdit && intent === "save") {
+          // Stay on edit: clear pending upload and realign the dirty baseline
+          // so Save turns off until the next change.
+          clearPendingCvSelection();
+          const nextCvMode: ApplicationCvType = resolvedCvType;
+          setCvMode(nextCvMode);
+          setSelectedPrimaryId(primaryCvId);
+          setShowProfilePicture(includePicture);
+          setSlugPinned(Boolean(payload.slug.trim()));
+          setFormData((prev) => ({
+            ...prev,
+            company: payload.company,
+            role: payload.role,
+            slug: payload.slug,
+            video_url: payload.video_url,
+            first_name: payload.first_name ?? "",
+            last_name: payload.last_name ?? "",
+            location: formData.location ?? "",
+            portfolio_url: formData.portfolio_url ?? "",
+            linkedin_url: formData.linkedin_url ?? "",
+            cv_url: payload.cv_url ?? "",
+            cv_filename: payload.cv_filename ?? null,
+            use_original_cv_filename:
+              payload.use_original_cv_filename ?? false,
+            cv_type: nextCvMode,
+            primary_cv_id: primaryCvId,
+          }));
+          editBaselineRef.current = applicationFormDirtySnapshot({
+            company: payload.company,
+            role: payload.role,
+            slug: payload.slug,
+            video_url: payload.video_url,
+            first_name: payload.first_name ?? "",
+            last_name: payload.last_name ?? "",
+            location: formData.location ?? "",
+            portfolio_url: formData.portfolio_url ?? "",
+            linkedin_url: formData.linkedin_url ?? "",
+            includeLocation: include.location,
+            includePortfolio: include.portfolio_url,
+            includeLinkedin: include.linkedin_url,
+            slugSegmentOrder,
+            showProfilePicture: includePicture,
+            cvMode: nextCvMode,
+            selectedPrimaryId: primaryCvId,
+            cv_url: payload.cv_url ?? "",
+            cv_filename: payload.cv_filename ?? null,
+            use_original_cv_filename:
+              payload.use_original_cv_filename ?? false,
+            hasPendingCvFile: false,
+          });
+        }
       } catch {
         if (persistDraftKey) {
           skipDraftSaveRef.current = false;
@@ -1434,7 +1555,13 @@ export default function ApplicationForm({
     } finally {
       isSubmittingRef.current = false;
       setSubmitPhase("idle");
+      setSubmitIntent(null);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await runSubmit("save");
   };
 
   const candidateValues: Record<CandidateFieldKey, string> = {
@@ -1478,95 +1605,6 @@ export default function ApplicationForm({
       });
     }
   };
-
-  const roleStep = (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
-        <Input
-          label="Company Name *"
-          value={formData.company}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, company: e.target.value }))
-          }
-          error={errors.company}
-          required
-        />
-        <Input
-          label="Role/Position *"
-          value={formData.role}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, role: e.target.value }))
-          }
-          error={errors.role}
-          required
-        />
-      </div>
-      <SlugSegmentOrderField
-        value={slugSegmentOrder}
-        onChange={handleSlugSegmentOrderChange}
-      />
-      <div>
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-          <label
-            htmlFor="application-slug"
-            className="block text-sm font-medium text-[var(--ink)]"
-          >
-            Slug *
-          </label>
-          <button
-            type="button"
-            onClick={handleResetSlugToSuggested}
-            disabled={!hasCompany || !hasRole || formBusy}
-            className="cursor-pointer text-sm font-medium text-[var(--ink)] hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
-          >
-            Reset to suggested
-          </button>
-        </div>
-        <Input
-          id="application-slug"
-          value={formData.slug}
-          onChange={(e) => handleSlugFieldChange(e.target.value)}
-          error={errors.slug}
-          placeholder="auto-generated-slug"
-          required
-        />
-      </div>
-      {slugLiveStatus.kind === "checking" && (
-        <p
-          className="flex items-center gap-1.5 text-xs text-[var(--muted)]"
-          role="status"
-        >
-          <FiRefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden />
-          Checking slug…
-        </p>
-      )}
-      {slugLiveStatus.kind === "available" && !errors.slug && (
-        <p
-          className="flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"
-          role="status"
-        >
-          <FiCheck
-            className="mt-0.5 size-3.5 shrink-0"
-            strokeWidth={2.5}
-            aria-hidden
-          />
-          <span>This slug is available.</span>
-        </p>
-      )}
-      {(slugLiveStatus.kind === "invalid" ||
-        slugLiveStatus.kind === "unavailable") &&
-        !errors.slug && (
-          <p
-            className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
-            role="alert"
-          >
-            <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-            <span>{slugLiveStatus.message}</span>
-          </p>
-        )}
-      <ShareUrlPreview publicId={publicId} slug={formData.slug} />
-    </div>
-  );
 
   const trimmedPublicId = publicId?.trim() || "";
   const trimmedSlug = formData.slug.trim();
@@ -1679,51 +1717,18 @@ export default function ApplicationForm({
     </div>
   );
 
-  const candidateStep =
-    presentation === "single" ? (
-      <>
-        <ApplicationFormFieldRow
-          id="application-row-picture"
-          label="Picture"
-          tip={
-            hasProfilePicture ? PROFILE_INITIAL_DATA_TIP : PROFILE_EMPTY_TIP
-          }
-          tipTone={hasProfilePicture ? "ready" : "idle"}
-          align="top"
-        >
-          <ProfilePictureField
-            variant="checklist"
-            hideLegend
-            profilePictureUrl={profilePictureUrl}
-            profilePictureVersion={profilePictureVersion}
-            firstName={formData.first_name}
-            lastName={formData.last_name}
-            showProfilePicture={showProfilePicture}
-            onShowProfilePictureChange={(next) => {
-              showProfilePictureUserChosenRef.current = true;
-              setShowProfilePicture(next);
-            }}
-          />
-        </ApplicationFormFieldRow>
-        <CandidateFieldsSection
-          layout="rows"
-          values={candidateValues}
-          savedValues={savedIdentity}
-          include={include}
-          onIncludeChange={handleCandidateIncludeChange}
-          onValueChange={handleCandidateValueChange}
-          errors={{
-            first_name: errors.first_name,
-            last_name: errors.last_name,
-            location: errors.location,
-            portfolio_url: errors.portfolio_url,
-            linkedin_url: errors.linkedin_url,
-          }}
-        />
-      </>
-    ) : (
-      <>
+  const candidateStep = (
+    <>
+      <ApplicationFormFieldRow
+        id="application-row-picture"
+        label="Picture"
+        tip={hasProfilePicture ? PROFILE_INITIAL_DATA_TIP : PROFILE_EMPTY_TIP}
+        tipTone={hasProfilePicture ? "ready" : "idle"}
+        align="top"
+      >
         <ProfilePictureField
+          variant="checklist"
+          hideLegend
           profilePictureUrl={profilePictureUrl}
           profilePictureVersion={profilePictureVersion}
           firstName={formData.first_name}
@@ -1734,27 +1739,29 @@ export default function ApplicationForm({
             setShowProfilePicture(next);
           }}
         />
-        <CandidateFieldsSection
-          values={candidateValues}
-          savedValues={savedIdentity}
-          include={include}
-          onIncludeChange={handleCandidateIncludeChange}
-          onValueChange={handleCandidateValueChange}
-          errors={{
-            first_name: errors.first_name,
-            last_name: errors.last_name,
-            location: errors.location,
-            portfolio_url: errors.portfolio_url,
-            linkedin_url: errors.linkedin_url,
-          }}
-        />
-      </>
-    );
+      </ApplicationFormFieldRow>
+      <CandidateFieldsSection
+        layout="rows"
+        values={candidateValues}
+        savedValues={savedIdentity}
+        include={include}
+        onIncludeChange={handleCandidateIncludeChange}
+        onValueChange={handleCandidateValueChange}
+        errors={{
+          first_name: errors.first_name,
+          last_name: errors.last_name,
+          location: errors.location,
+          portfolio_url: errors.portfolio_url,
+          linkedin_url: errors.linkedin_url,
+        }}
+      />
+    </>
+  );
 
   const materialsStep = (
     <>
       <CvSourceField
-        variant={presentation === "single" ? "checklist" : "default"}
+        variant="checklist"
         isEdit={isEdit}
         currentFilename={initialData?.cv_filename ?? null}
         currentType={initialData?.cv_type ?? null}
@@ -1962,98 +1969,19 @@ export default function ApplicationForm({
         }}
         onCancelSwitchToPrimary={() => setSwitchToPrimaryConfirmOpen(false)}
         slug={formData.slug}
+        useOriginalCvFilename={formData.use_original_cv_filename ?? false}
+        onUseOriginalCvFilenameChange={(useOriginal) => {
+          setFormData((prev) => ({
+            ...prev,
+            use_original_cv_filename: useOriginal,
+          }));
+        }}
         uploading={submitPhase === "uploading"}
         preparing={cvPendingDigesting}
         disabled={submitPhase !== "idle"}
       />
     </>
   );
-
-  const videoStep = (
-    <YouTubeUrlInput
-      value={formData.video_url}
-      onChange={(url) => setFormData((prev) => ({ ...prev, video_url: url }))}
-      error={errors.video_url}
-    />
-  );
-
-  const reviewCvLabel = (() => {
-    if (!hasCv) return null;
-    if (cvMode === "primary") {
-      const primaryName = primaryCvs.find(
-        (m) => m.id === selectedPrimaryId,
-      )?.filename;
-      return primaryName || "Primary CV selected";
-    }
-    return (
-      cvPendingFile?.name || formData.cv_filename || "Tailored CV ready"
-    );
-  })();
-
-  const jumpToStep = (stepId: ApplicationFormStepId) => {
-    if (presentation === "split") {
-      setErrorScroll({ stepId, nonce: Date.now() });
-    }
-  };
-
-  const reviewPreview = (
-    <ApplicationReviewPreview
-      company={formData.company.trim()}
-      role={formData.role.trim()}
-      firstName={formData.first_name}
-      lastName={formData.last_name}
-      location={include.location ? formData.location : null}
-      portfolioUrl={include.portfolio_url ? formData.portfolio_url : null}
-      linkedinUrl={include.linkedin_url ? formData.linkedin_url : null}
-      profilePictureUrl={profilePictureUrl}
-      profilePictureVersion={profilePictureVersion}
-      showProfilePicture={hasProfilePicture && showProfilePicture}
-      cvUrl={formData.cv_url}
-      cvPendingFile={cvPendingFile}
-      cvFilename={formData.cv_filename}
-      useOriginalCvFilename={false}
-      slug={formData.slug}
-      videoUrl={formData.video_url}
-      label="Preview"
-      openSignal={previewNonce}
-      hint="Does not save."
-      externalReturnRef={resumePreviewTriggerRef}
-    />
-  );
-
-  const reviewStep = (
-    <ApplicationReviewSummary
-      company={formData.company}
-      role={formData.role}
-      slug={formData.slug}
-      slugReady={slugReady}
-      fieldValues={candidateValues}
-      include={include}
-      hasProfilePicture={hasProfilePicture}
-      showProfilePicture={showProfilePicture}
-      cvLabel={reviewCvLabel}
-      hasVideo={hasVideo}
-      videoUrl={formData.video_url}
-      slugState={slugLiveStatus}
-      publicId={publicId}
-      profilePictureUrl={profilePictureUrl}
-      savedSlug={savedSlug}
-      profilePictureVersion={profilePictureVersion}
-      onJumpToStep={jumpToStep}
-      onPreview={(trigger) => {
-        resumePreviewTriggerRef.current = trigger;
-        setPreviewNonce((n) => n + 1);
-      }}
-    />
-  );
-
-  const stepContents = {
-    role: roleStep,
-    candidate: candidateStep,
-    materials: materialsStep,
-    video: videoStep,
-    review: reviewStep,
-  };
 
   const focusFirstGap = () => {
     const item = saveBlockers[0];
@@ -2094,28 +2022,20 @@ export default function ApplicationForm({
 
   const formActions = (
     <ApplicationFormActions
-      loading={formBusy}
+      loading={formBusy && submitIntent !== "publish"}
       loadingLabel={saveLoadingLabel}
       submitLabel={submitLabel}
       canSubmit={canSubmit}
-      dimWhenBlocked={presentation === "single"}
+      dimWhenBlocked
       disabledReason={disabledReason}
-      onBlocked={() => {
-        if (presentation === "single") {
-          focusFirstGap();
-          return;
-        }
-        if (firstBlockedStep) jumpToStep(firstBlockedStep);
+      onBlocked={focusFirstGap}
+      showPublish={showPublish}
+      canPublish={canPublish}
+      publishLoading={formBusy && submitIntent === "publish"}
+      onPublish={() => {
+        void runSubmit("publish");
       }}
     />
-  );
-
-  /** Split Review puts Preview beside Save in the card footer. */
-  const splitReviewActions = (
-    <>
-      {reviewPreview}
-      {formActions}
-    </>
   );
 
   const leaveDialog =
@@ -2134,23 +2054,22 @@ export default function ApplicationForm({
   return (
     <form
       onSubmit={handleSubmit}
-      onKeyDown={
-        presentation === "single"
-          ? (event) => {
-              if (
-                event.key === "Enter" &&
-                event.target instanceof HTMLInputElement
-              ) {
-                event.preventDefault();
-              }
-            }
-          : undefined
-      }
+      onKeyDown={(event) => {
+        if (
+          event.key === "Enter" &&
+          event.target instanceof HTMLInputElement
+        ) {
+          event.preventDefault();
+        }
+      }}
     >
-      {presentation === "single" ? (
-        <ApplicationFormSinglePageLayout
-          title="New application"
-          description="This role gets its own page and share link. Save a draft when the required pieces are ready, then preview it."
+      <ApplicationFormSinglePageLayout
+          title={isEdit ? "Edit application" : "New application"}
+          description={
+            isEdit
+              ? "Update this role’s page and share link. Save when the required pieces are ready."
+              : "This role gets its own page and share link. Save a draft when the required pieces are ready, then keep editing it."
+          }
           cancelHref="/admin"
           actions={formActions}
           blockedReason={disabledReason}
@@ -2298,14 +2217,6 @@ export default function ApplicationForm({
             },
           ]}
         />
-      ) : (
-        <ApplicationFormSplitLayout
-          mode={isEdit ? "edit" : "create"}
-          stepContents={stepContents}
-          errorScroll={errorScroll}
-          actions={splitReviewActions}
-        />
-      )}
 
       {leaveDialog}
     </form>

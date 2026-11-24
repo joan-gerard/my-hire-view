@@ -48,7 +48,7 @@ The switch was an **evaluation tool**, not a candidate-facing setting: a compact
 
 ## What we ship
 
-**Live (18 November 2026):** create = `ApplicationFormSinglePageLayout` on `/admin/new`; edit = `ApplicationFormSplitLayout` on `/admin/edit/[id]`. Shared field brain: `ApplicationForm`. Step ids in `application-form-steps.ts` still route errors and name edit bands.
+**Live (24 November 2026):** create **and** edit use `ApplicationFormSinglePageLayout` (`/admin/new`, `/admin/edit/[id]`). Shared field brain: `ApplicationForm`. The scrolling split-edit shell is removed. Step ids in `application-form-steps.ts` still help map save errors to rows.
 
 ### Step map (shared field order)
 
@@ -80,8 +80,9 @@ Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_
 
 | Surface                 | Save control         | Must pass                                      |
 | ----------------------- | -------------------- | ---------------------------------------------- |
-| Create `/admin/new`        | **Save draft & preview** | Draft leave, CV, slug, save → preview          |
-| Edit `/admin/edit/[id]`    | **Save draft** or **Save application** | CV, slug, save → dashboard |
+| Create `/admin/new`        | **Save Draft**; **Publish** when complete | Draft leave, CV, slug, save → edit; Publish → share page |
+| Edit `/admin/edit/[id]`    | **Save Draft** or **Save application**; **Publish** on drafts when complete | Save → stay on edit; Publish → share page |
+
 
 - [ ] Create
 - [ ] Edit

@@ -5,7 +5,6 @@
  */
 
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
-import { ADMIN_TIP_CLASS } from "@/components/admin/admin-chrome";
 import { ArrowRightIcon } from "@/components/admin/icons";
 import ApplicationForm from "@/components/forms/ApplicationForm";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
@@ -169,6 +168,7 @@ export default function CreateApplicationPage() {
 
       const { slugManuallyEdited, ...dataForApi } = data;
       void slugManuallyEdited;
+      const publishNow = data.status === "active";
 
       const response = await fetch("/api/applications", {
         method: "POST",
@@ -178,8 +178,8 @@ export default function CreateApplicationPage() {
         body: JSON.stringify({
           ...dataForApi,
           slug: finalSlug,
-          // F16-050: save as draft, then preview / publish on the share URL.
-          status: "draft",
+          // Save Draft → draft then edit. Publish → go live immediately.
+          status: publishNow ? "active" : "draft",
         }),
       });
 
@@ -190,15 +190,29 @@ export default function CreateApplicationPage() {
 
       notifyOnboardingChecklistChanged();
 
-      const json: { data?: { slug?: string }; public_id?: string } =
-        await response.json().catch(() => ({}));
+      const json: {
+        data?: { id?: string; slug?: string };
+        public_id?: string;
+      } = await response.json().catch(() => ({}));
+      const createdId =
+        typeof json.data?.id === "string" ? json.data.id.trim() : "";
       const createdSlug =
         typeof json.data?.slug === "string" ? json.data.slug.trim() : "";
       const responsePublicId =
         typeof json.public_id === "string" ? json.public_id.trim() : "";
       const sharePublicId = responsePublicId || publicId;
-      if (sharePublicId && createdSlug) {
-        router.push(`/view/${sharePublicId}/${createdSlug}`);
+
+      if (publishNow) {
+        if (sharePublicId && createdSlug) {
+          router.push(`/view/${sharePublicId}/${createdSlug}`);
+        } else {
+          router.push("/admin");
+        }
+        return;
+      }
+
+      if (createdId) {
+        router.push(`/admin/edit/${createdId}`);
       } else {
         router.push("/admin");
       }
@@ -248,7 +262,10 @@ export default function CreateApplicationPage() {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4">
       {showProfileNudge && (
-        <p className={`flex items-start gap-2 ${ADMIN_TIP_CLASS}`}>
+        <p
+          className="flex items-start gap-2 rounded-xl border border-[var(--ink)]/10 bg-[var(--status-wash-active)] px-4 py-3 text-sm text-[var(--ink)]"
+          role="status"
+        >
           <span className="min-w-0 flex-1">
             {hasSavedProfile
               ? "Add location, links, or a picture on your profile so this page can offer them."
@@ -256,7 +273,7 @@ export default function CreateApplicationPage() {
           </span>
           <Link
             href="/admin/profile"
-            className="mt-0.5 inline-flex shrink-0 cursor-pointer rounded-lg p-0.5 text-[var(--muted)] hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+            className="mt-0.5 inline-flex shrink-0 cursor-pointer rounded-lg p-0.5 text-[var(--ink)] hover:bg-[var(--ink)]/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
             aria-label="Go to profile"
             title="Go to profile"
           >
@@ -268,7 +285,7 @@ export default function CreateApplicationPage() {
         initialData={initialData}
         onSubmit={handleSubmit}
         loading={loading}
-        submitLabel="Save draft & preview"
+        submitLabel="Save Draft"
         profilePictureUrl={profile?.profile_picture_url ?? null}
         profilePictureVersion={profile?.updated_at ?? null}
         onProfileIdentitySaved={(identity) => {
@@ -284,7 +301,6 @@ export default function CreateApplicationPage() {
         publicId={publicId ?? undefined}
         resolveSlugOnCreate
         persistDraftKey={draftStorageKey ?? undefined}
-        presentation="single"
       />
     </div>
   );

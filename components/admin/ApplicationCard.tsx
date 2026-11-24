@@ -1,6 +1,10 @@
 "use client";
 
 import type { ApplicationListItem } from "@/lib/types/application";
+import {
+  formatPublishBlockersError,
+  getListItemPublishBlockers,
+} from "@/lib/validation/application";
 import { getApplicationUrl } from "@/lib/utils/url";
 import { copyToClipboard } from "@/lib/utils/clipboard";
 import { formatApplicationTime } from "@/lib/utils/group-applications-by-day";
@@ -24,6 +28,7 @@ import {
   ADMIN_ICON_DISABLED_CLASS,
   ADMIN_ICON_SECONDARY_CLASS,
   ADMIN_PRIMARY_CLASS,
+  ADMIN_SECONDARY_CLASS,
 } from "@/components/admin/admin-chrome";
 
 interface ApplicationCardProps {
@@ -49,15 +54,27 @@ export default function ApplicationCard({
     : null;
   const isArchived = application.status === "archived";
   const isDraft = application.status === "draft";
+  const publishBlockers = isDraft
+    ? getListItemPublishBlockers(application)
+    : [];
+  const canPublish = isDraft && publishBlockers.length === 0;
+  const publishBlockedReason =
+    publishBlockers.length > 0
+      ? formatPublishBlockersError(publishBlockers)
+      : null;
   const canCopyLink = canShare && !isDraft && !isArchived;
   const createdLabel = formatApplicationTime(application.created_at);
   const companyRole =
     [application.company.trim(), application.role.trim()]
       .filter(Boolean)
       .join(" - ") || "Untitled application";
+  const editHref = `/admin/edit/${application.id}`;
 
   const copyUnavailableLabel = isDraft
-    ? "Publish this application before sharing the link"
+    ? canPublish
+      ? "Publish this application before sharing the link"
+      : publishBlockedReason ??
+        "Finish required fields before publishing and sharing"
     : isArchived
       ? "Restore this application before sharing the link"
       : "Complete your profile to get a share link";
@@ -104,13 +121,24 @@ export default function ApplicationCard({
               {application.profile_picture_missing === true && (
                 <MissingProfilePictureBadge />
               )}
+              {isDraft && publishBlockedReason ? (
+                <AdminTooltip label={publishBlockedReason}>
+                  <Link
+                    href={editHref}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--status-warning-fg)]/40 bg-[var(--status-warning-bg)] px-2 py-0.5 text-xs font-medium text-[var(--status-warning-fg)] hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                    aria-label={publishBlockedReason}
+                  >
+                    Finish to publish
+                  </Link>
+                </AdminTooltip>
+              ) : null}
             </div>
           </div>
 
           <div
             className={`flex min-w-0 flex-wrap items-center justify-end gap-1.5 transition-opacity ${actionsVisibleClass}`}
           >
-            {isDraft && onPublish ? (
+            {canPublish && onPublish ? (
               <AdminTooltip label="Make this application live so recruiters can open the share link">
                 <button
                   type="button"
@@ -120,6 +148,12 @@ export default function ApplicationCard({
                   <CheckIcon className="h-4 w-4" />
                   Publish
                 </button>
+              </AdminTooltip>
+            ) : isDraft && publishBlockedReason ? (
+              <AdminTooltip label={publishBlockedReason}>
+                <Link href={editHref} className={ADMIN_SECONDARY_CLASS}>
+                  Finish to publish
+                </Link>
               </AdminTooltip>
             ) : null}
 
@@ -201,6 +235,7 @@ export default function ApplicationCard({
               applicationId={application.id}
               isArchived={isArchived}
               isDraft={isDraft}
+              canPublish={canPublish}
               onDelete={onDelete}
               onArchive={onArchive}
               onRestore={onRestore}

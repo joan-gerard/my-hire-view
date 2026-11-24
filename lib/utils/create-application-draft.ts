@@ -273,7 +273,7 @@ export function isCreateApplicationDraftBlank(
     !draft.showProfilePictureUserChosen &&
     !draft.slugManuallyEdited &&
     draft.slugSegmentOrder === "company_role" &&
-    draft.use_original_cv_filename === true;
+    draft.use_original_cv_filename === false;
 
   const noPersonalProgress =
     !draft.first_name.trim() &&

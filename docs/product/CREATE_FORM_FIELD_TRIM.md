@@ -71,8 +71,8 @@ That keeps one source of truth (profile) while letting create/edit fix typos wit
 | **Manage library**                                    | Opens the primary CV modal.                    | **Keep**               | Needed so create does not dead-end when the library is empty.                                                                                     |
 | **A PDF just for this role**                          | Tailored upload for this application.          | **Keep**               | Core differentiator vs a single static CV.                                                                                                        |
 | **Choose a PDF** (file picker)                        | Selects the tailored file.                     | **Keep**               | Required when tailored is chosen.                                                                                                                 |
-| **Recruiters download it as…**                        | Shows download filename.                       | **Simplify**           | Showing the name is fine. The next toggle is the question.                                                                                        |
-| **Use a generated name / Use the original file name** | Switches `CV-{slug}.pdf` vs original filename. | **Park** or **Remove** | Most candidates will not care. Default to a clean generated name; put the original-filename choice behind an advanced link or drop it for launch. |
+| **Recruiters download it as…**                        | Shows download filename at the bottom of Résumé (result row). | **Keep** | Same pattern as Shareable link; default is the generated `CV-{slug}.pdf`. |
+| **Original name** switch                              | Switches `CV-{slug}.pdf` vs original filename.                | **Keep** | Compact switch on the download-name row; default off (generated).         |
 
 ---
 
@@ -80,7 +80,7 @@ That keeps one source of truth (profile) while letting create/edit fix typos wit
 
 | Control         | What it does today           | Call     | Feedback                                                                    |
 | --------------- | ---------------------------- | -------- | --------------------------------------------------------------------------- |
-| **YouTube URL** | Required intro for the page. | **Keep** | Core. Required for save today; keep unless product changes the pitch model. |
+| **YouTube URL** | Intro for the page. | **Keep** | Required at **publish** / live save; optional on draft (`F40-124`). |
 
 ---
 
@@ -91,7 +91,7 @@ That keeps one source of truth (profile) while letting create/edit fix typos wit
 | **Title / description**  | Explains the page.                                | **Keep** | Shorten copy if needed; do not remove.                                       |
 | **Profile nudge**        | Tip when location/links/picture are empty.        | **Keep** | Points people to Profile, which supports the “own identity once” trim above. |
 | **Cancel**               | Back to dashboard (leave confirm if draft dirty). | **Keep** | Standard escape.                                                             |
-| **Save draft & preview** | Creates draft and opens preview when possible.    | **Keep** | Primary action.                                                              |
+| **Save Draft** | Creates draft and opens that draft’s edit page.    | **Keep** | Primary action.                                                              |
 | **Blocked reason line**  | Names missing required pieces.                    | **Keep** | Replaces the old checklist gaps.                                             |
 | **Enter does not save**  | Prevents accidental submit from inputs.           | **Keep** | Behavior, not a field. Keep.                                                 |
 | **Leave confirm**        | Discard browser draft on navigate away.           | **Keep** | Not a form field; keep the safety.                                           |

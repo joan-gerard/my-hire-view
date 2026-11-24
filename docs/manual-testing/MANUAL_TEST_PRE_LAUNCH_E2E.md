@@ -10,6 +10,7 @@ Work ticket: [Backlog.md](../product/Backlog.md) `F32-115`. Product copy: [USER_
 
 - [MANUAL_TEST_PROFILE_CREATE_ON_PUT.md](MANUAL_TEST_PROFILE_CREATE_ON_PUT.md) — signup → profiles row, picture from New/Edit
 - [MANUAL_TEST_ONBOARDING_CHECKLIST.md](MANUAL_TEST_ONBOARDING_CHECKLIST.md) — Getting started prefs, skip/dismiss, no extra GETs
+- [MANUAL_TEST_CREATE_AND_EDIT_APPLICATION.md](MANUAL_TEST_CREATE_AND_EDIT_APPLICATION.md) — one-page create + edit smoke (layout, write-through, save)
 - [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) — local create draft + CV radios while library loads
 - [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md) — Save & Preview → owner banner → Publish
 - [MANUAL_TEST_APPLICATION_STATUS_LEGEND.md](MANUAL_TEST_APPLICATION_STATUS_LEGEND.md) — status legend modal
@@ -294,7 +295,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Page chrome
 
-- [ ] Page title **New application** and its description sit above the sections, no wider than `2xl`. Sections **Your link**, **About you**, **Résumé**, and **Pitch** are headings, each above its own card. Each entry has its title on the left and the control on the right; a description sits under the title when there is one. On a narrow screen the title sits above the control. **Your link** lists Company, Role, How the link reads, Link ending, and Shareable link on separate rows. Shareable link is a full-width tinted result, with its title above the field. **Cancel** and **Save draft & preview** sit at the bottom. Save is greyed out until the application can be saved, and a line above the buttons names what is still missing. There is no **Preview** button and no chapter checklist. `/admin/wizard` and `/demo/application-form` are gone
+- [ ] Page title **New application** and its description sit above the sections, no wider than `2xl`. Sections **Your link**, **About you**, **Résumé**, and **Pitch** are headings, each above its own card. Each entry has its title on the left and the control on the right; a description sits under the title when there is one. On a narrow screen the title sits above the control. **Your link** lists Company, Role, How the link reads, Link ending, and Shareable link on separate rows. Shareable link is a full-width tinted result, with its title above the field. **Cancel** and **Save Draft** sit at the bottom. Save is greyed out until the application can be saved, and a line above the buttons names what is still missing. There is no **Preview** button and no chapter checklist. `/admin/wizard` and `/demo/application-form` are gone
 - [ ] If location, links, and picture are still empty: nudge to complete profile; arrow goes to Profile
 - [ ] After profile has location/link/picture, nudge is gone
 - [ ] Form skeleton/pulse while profile loads; then the form
@@ -312,7 +313,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] With a picture: thumbnail always visible; a right-aligned switch under it turns show on/off; off lowers the thumbnail opacity
 - [ ] Without a picture: initials (or avatar icon) show, plus a link to Profile; no show switch
 - [ ] Switch off: no avatar on `/view` even if the account still has a picture
-- [ ] Location, **Portfolio**, and **LinkedIn** are dense fields like Company. When non-empty, an eye button sits inside the field (like Copy on Shareable link); open eye = show, crossed eye = hide
+- [ ] Location, **LinkedIn**, and **Portfolio** are dense fields like Company (LinkedIn before Portfolio). When non-empty, an eye button sits inside the field (like Copy on Shareable link); open eye = show, crossed eye = hide
 - [ ] Typing into an empty location/portfolio/LinkedIn shows the eye on; clearing the field removes the eye control
 - [ ] Portfolio / LinkedIn use under-field soft warnings (not the browser URL bubble): LinkedIn mix-ups, and “Enter a valid URL starting with https://…” for incomplete URLs; invalid URLs still block save with a field error
 - [ ] There is no collapsible **Info shown to recruiters** block and no `(N/5)` count on create
@@ -330,10 +331,9 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Résumé (create)
 
-- [ ] **Library** lists saved files as cards. **This role** is **A PDF just for this role**
-- [ ] **Manage library** sits above the library cards and opens the same library as Profile
-- [ ] Selecting a library card sets that primary CV; tailored shows **Choose a PDF**
-- [ ] Once a file is chosen, the line says **Recruiters download it as…** and names the generated `CV-{slug}.pdf`. There is no original-filename toggle
+- [ ] **Library** shows the selected primary only (or empty copy); **Manage** opens the library modal with bordered rows (radio + usage count + ⋯ View/Delete) plus upload. **This role** has **Choose a PDF** / **Manage** (no radio card)
+- [ ] Selecting a radio in the library modal sets that primary on the form; tailored **Choose a PDF** opens its own modal
+- [ ] Once a file is chosen, a bottom **Recruiters download it as** row names the generated `CV-{slug}.pdf`; **Original name** switches to the PDF filename
 - [ ] There is no separate **Download name for recruiters** heading block on create or edit
 
 ### Create Role, preview, and edit notes
@@ -342,7 +342,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] **Link ending** is its own row. An info icon beside the title opens a dialog: pre-filled for you, edit it if you like, and each ending must be unique. The sentence is not under the title. The dialog closes from an icon on the right of **Link ending**, and has no Close button. **Use the suggested link** appears after the ending is edited, and hides again if the ending matches the suggestion. **Checking...** and link problems stay on this row
 - [ ] **Shareable link** is a full-width tinted row. The title and a note sit above a read-only field with the not-allowed cursor. From `sm` up it shows the full URL, wrapped so the ending is visible. Below that it shows `/view/{publicId}/{slug}`. A copy-icon button (no “Copy” text) copies the full URL. When the link is not ready, the icon is inactive
 - [ ] With company and role filled, the share link says **Checking...** in grey italic while the ending is checked. An empty, invalid, already used, or failed check shows there. A ready link shows the ending in the path
-- [ ] On edit, **Review & save** summary starts open and can be collapsed; groups match the steps (Role, About you, CV, Video) with stacked labels and status chips (**Hidden** / **Empty** / **Shown** / **None** / **Available** / **Missing** / **Ready**); About you lists profile picture before the recruiter fields
+- [ ] On edit, the page matches create’s one-page sections (**Your link**, **About you**, **Résumé**, **Pitch**) with title **Edit application** (no Review summary band)
 - [ ] On edit, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form, save, or count a view. Create has no preview dialog
 
 ### Company, role, slug, URL segment order
@@ -389,7 +389,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Valid `youtube.com/embed/…` accepted
 - [ ] Valid Shorts URL accepted
 - [ ] Invalid URL (Vimeo, example.com, garbage) → “Please enter a valid YouTube URL”; Save blocked
-- [ ] Empty video is **not** allowed — Save stays blocked. On create, the line above **Save draft & preview** names **YouTube intro** while it is missing. On edit, that reason line names **YouTube intro**
+- [ ] Empty video is allowed on **draft** save (F40); **Publish** (and saving a live app) still requires YouTube. The create blocked-reason line does not require **YouTube intro** for draft save
 
 ### Local browser draft (create only)
 
@@ -404,19 +404,18 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Manual slug edits **are** protected by the leave dialog; auto slug updates from typing company/role alone are **not**
 - [ ] Opening `/admin/new` as the first history entry, then confirming Back, still leaves create (falls back to dashboard if needed)
 - [ ] Leave a fully empty new form idle: no stale draft on a later visit
-- [ ] Successful **Save draft & preview** clears the browser draft; a **failed** save keeps it
+- [ ] Successful **Save Draft** clears the browser draft; a **failed** save keeps it
 - [ ] Account B on the same browser does **not** see Account A’s create draft
 
-### Save & Preview
+### Save Draft
 
-- [ ] Submit label is **Save draft & preview**
+- [ ] Submit label is **Save Draft**; **Publish** appears only when the full publish set is ready and goes to the live share page
 - [ ] Double-click submit does not create two rows
 - [ ] Save with the network offline (DevTools) shows an error; **no** application row; browser draft **kept**
 - [ ] Session expired mid-form (optional: delete cookies then Save): 401 surfaces in the form/alert; no half-created app; tailored file is not “lost” into an orphan row
-- [ ] Success → `/view/{publicId}/{slug}` with amber **Draft preview** banner (Edit / Publish / Dashboard). If Public id were missing, fallback is `/admin` + **Preview** on the card
+- [ ] Success → `/admin/edit/[id]` for the new draft (not the owner preview). Fallback is `/admin` if the create response has no id
 - [ ] Two `/admin/new` tabs: save in tab 1; tab 2 save with a **different** slug creates a second draft (or a clear collision error — not a 500 / silent overwrite)
-- [ ] Owner sees full page (CV, video, candidate fields) behind the banner
-- [ ] Same URL in incognito → **unavailable** empty state (recruiters cannot see drafts)
+- [ ] Opening the draft’s share link as owner still shows the amber **Draft preview** banner (Edit / Publish / Dashboard); same URL in incognito → **unavailable**
 - [ ] Owner draft preview does **not** increment Views
 
 Create applications **#1–#8** (and extras for pagination) using the matrix above. Publish #1, #2, #5, #7 now or in §12; leave #3 and #8 as drafts; publish then archive #4; use #6 for CV missing.
@@ -450,10 +449,11 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 **Draft**
 
 - [ ] Amber clock icon
-- [ ] Labeled **Publish** button on the card
-- [ ] Copy-link icon is disabled; tooltip explains publish-before-share (not an enabled Copy link)
+- [ ] Incomplete draft (missing résumé / YouTube / names): **Finish to publish** on the card (and chip by the title); tooltip lists what is required; opens edit — **no** Publish button
+- [ ] Complete draft: labeled **Publish** button on the card
+- [ ] Copy-link icon is disabled; tooltip explains publish-before-share or finish-required-fields (not an enabled Copy link)
 - [ ] External-link icon tooltip is **Preview**; opens the share URL with the banner
-- [ ] **More options** (⋯) tooltip; menu: Edit, Publish, Delete — **no Archive**
+- [ ] **More options** (⋯) tooltip; incomplete: Edit, Delete (no Publish); complete: Edit, Publish, Delete — **no Archive**
 
 **Active, 0 views**
 
@@ -529,27 +529,27 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 ## 11. Edit application (`/admin/edit/[id]`)
 
 - [ ] From 3-dot **Edit**
-- [ ] Snapshot notice: candidate text fields come from **this application**, not live profile; **picture is live**
-- [ ] Changing Profile name/location/links does **not** change this form until you edit and save here
+- [ ] One-page edit layout matches create (sections + `2xl` width); title **Edit application**; no wizard Continue / step rail / split bands
+- [ ] Form shows **live profile** name/location/links; a previously hidden field starts with the eye crossed; saving writes profile then snapshots shown fields
+- [ ] Changing Profile alone does **not** change a saved application’s public text until you edit and save here
 - [ ] Changing the profile picture **does** show on `/view` if this app has show-picture on (no need to re-save the app)
-- [ ] Submit label **Save Application**
+- [ ] Submit label **Save Draft** (draft) or **Save application** (active); Save disabled with **No changes to save.** until something changes; successful save stays on edit (not dashboard); draft with full set shows **Publish** → live share page
 - [ ] Save a **draft** → stays draft (not auto-published)
 - [ ] Save an **active** app → stays active
-- [ ] Company/role change updates auto slug unless you customized it; custom slug is kept on load
-- [ ] **Reset to suggested** after a custom slug
+- [ ] Company/role change does **not** rewrite a saved slug until Reset / suggested or a manual ending edit
+- [ ] **Reset to suggested** / Use suggested after a custom ending
 - [ ] Switch primary A → primary B → public PDF changes; library still has both
 - [ ] Switch primary → tailored (upload) → save → tailored PDF on `/view`; old primary remains in library
 - [ ] Switch tailored → primary → confirm that the tailored file will be deleted → after save, tailored R2 object is gone; public view uses the primary
 - [ ] **Cancel** that confirm → stays on tailored; tailored file still there after save
-- [ ] Toggle candidate fields and picture Yes/No; `/view` matches
-- [ ] Change/remove picture from the modal; Profile library/picture stays in sync
+- [ ] Toggle show/hide on location/links and picture; `/view` matches after save
+- [ ] Missing picture links to Profile (no upload modal on the edit form)
 - [ ] Invalid / foreign / Account B’s edit id → redirected to dashboard (no crash, no leak)
 - [ ] **Check again** on a missing CV shows **Checking…**, then either the warning clears or **Checked just now. The file is still not in storage.** A failed check says to try again. No full-page spinner
 - [ ] No leave-confirm browser draft on edit (create-only feature)
 - [ ] Edit radios stay **usable** while the primary library loads (saved source is not overwritten)
-- [ ] On edit, CV and Review ticks are green immediately for a saved primary CV; they drop only if that primary is gone after the library loads. Save stays unavailable until the library confirms it
-- [ ] On edit of a **missing** CV file, choosing another primary or a new tailored PDF does not turn CV green until **Continue** on the CV step. Changing that choice again waits for Continue once more. Review stays unticked through that Continue
-- [ ] On edit of an application that already has company, role, slug, CV, and video, Review is green on open. Clearing a required field drops it. It does not turn green merely because an earlier step was continued
+- [ ] Save stays unavailable until a usable CV is confirmed (library still loading does not unlock a missing primary)
+- [ ] Review Summary stays open with complete counts; Required chips jump to the owning band; Preview does not save
 - [ ] Two tabs editing the **same** app: last save wins; no 500; reload shows one consistent row
 
 ---
@@ -557,7 +557,8 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 ## 12. Publish, archive, restore
 
 - [ ] Publish from **draft banner** → banner gone; page is the live public view; dashboard card becomes active; Copy Link enabled
-- [ ] Publish from **card button** and from **3-dot** both work
+- [ ] Publish from **card button** and from **3-dot** both work (only when the draft is complete)
+- [ ] Incomplete draft card shows **Finish to publish** instead of Publish; tooltip names missing fields
 - [ ] Publishing twice (button mash / two tabs) does not error; stays active once
 - [ ] Archive only for **active** apps → public URL unavailable for everyone (including owner)
 - [ ] Restore → live again with the **same slug, CV, video**, and **insights counts preserved**
@@ -580,7 +581,7 @@ Use incognito / signed-out (and owner, where noted).
 
 - [ ] MyHireView wordmark → home
 - [ ] Company and role
-- [ ] Candidate name, location, Portfolio and LinkedIn buttons only for **included** fields
+- [ ] Candidate name, location, LinkedIn and Portfolio buttons only for **included** fields (LinkedIn before Portfolio when both show)
 - [ ] Profile picture when show-picture is on
 - [ ] **Watch Video Pitch** opens the YouTube modal; video plays; close via X, backdrop, and **Escape**
 - [ ] Opening/closing the video modal does **not** increment Views

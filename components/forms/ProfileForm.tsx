@@ -489,25 +489,6 @@ export default function ProfileForm({
                 maxLength={PROFILE_LOCATION_MAX_LENGTH}
               />
               <Input
-                id="profile-portfolio-url"
-                label="Portfolio URL"
-                type="text"
-                inputMode="url"
-                autoComplete="url"
-                value={formData.portfolio_url}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    portfolio_url: e.target.value,
-                  }))
-                }
-                placeholder="https://..."
-                maxLength={PROFILE_URL_MAX_LENGTH}
-                warning={
-                  portfolioUrlFieldWarning(formData.portfolio_url) ?? undefined
-                }
-              />
-              <Input
                 id="profile-linkedin-url"
                 label="LinkedIn URL"
                 type="text"
@@ -526,35 +507,56 @@ export default function ProfileForm({
                   linkedInUrlFieldWarning(formData.linkedin_url) ?? undefined
                 }
               />
+              <Input
+                id="profile-portfolio-url"
+                label="Portfolio URL"
+                type="text"
+                inputMode="url"
+                autoComplete="url"
+                value={formData.portfolio_url}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    portfolio_url: e.target.value,
+                  }))
+                }
+                placeholder="https://..."
+                maxLength={PROFILE_URL_MAX_LENGTH}
+                warning={
+                  portfolioUrlFieldWarning(formData.portfolio_url) ?? undefined
+                }
+              />
             </div>
           </div>
 
-          <div
-            className="group relative inline-flex"
-            title={disabledReason ?? undefined}
-          >
-            <Button
-              type="submit"
-              variant="primary"
-              loading={loading}
-              loadingLabel={saveLoadingLabel}
-              disabled={!canSave}
-              className="min-h-11"
-              aria-describedby={
-                disabledReason ? "save-profile-disabled-reason" : undefined
-              }
+          <div className="mt-6 flex justify-end">
+            <div
+              className="group relative inline-flex"
+              title={disabledReason ?? undefined}
             >
-              Save profile
-            </Button>
-            {disabledReason && (
-              <span
-                id="save-profile-disabled-reason"
-                role="tooltip"
-                className="pointer-events-none absolute bottom-full left-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-xs text-[var(--white)] shadow-lg group-hover:block group-focus-within:block"
+              <Button
+                type="submit"
+                variant="primary"
+                loading={loading}
+                loadingLabel={saveLoadingLabel}
+                disabled={!canSave}
+                className="min-h-11"
+                aria-describedby={
+                  disabledReason ? "save-profile-disabled-reason" : undefined
+                }
               >
-                {disabledReason}
-              </span>
-            )}
+                Save profile
+              </Button>
+              {disabledReason && (
+                <span
+                  id="save-profile-disabled-reason"
+                  role="tooltip"
+                  className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-xs text-[var(--white)] shadow-lg group-hover:block group-focus-within:block"
+                >
+                  {disabledReason}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </section>

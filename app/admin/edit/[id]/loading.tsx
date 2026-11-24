@@ -1,5 +1,5 @@
-import AdminPageSkeleton from '@/components/admin/AdminPageSkeleton';
+import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
 
 export default function Loading() {
-  return <AdminPageSkeleton variant="form" showTip />;
+  return <AdminPageSkeleton variant="create" />;
 }

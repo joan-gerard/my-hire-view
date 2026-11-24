@@ -69,6 +69,11 @@ const LIST_ITEM = {
   created_at: "2026-07-01T12:00:00.000Z",
   last_viewed_at: null,
   cv_url: "https://r2.example.com/cv.pdf",
+  video_url: "https://youtube.com/watch?v=abc",
+  first_name: "Ada",
+  last_name: "Lovelace",
+  cv_type: "tailored",
+  primary_cv_id: null,
 };
 
 const DEFAULT_PROFILE = {

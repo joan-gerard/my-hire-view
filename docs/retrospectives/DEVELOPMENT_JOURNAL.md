@@ -83,3 +83,13 @@ That write-through raised the honesty problem. Editable account fields make peop
 ## 18 November 2026
 
 Came back to the create-form spike after a break and closed the layout fork. The one-page create form stays; edit keeps the scrolling bands. The parked wizard shell is gone from the codebase — no second presentation mode to maintain, and the page components left the `admin/wizard` folder for ordinary create/edit names. The F35 notes keep the experiment history; live behavior is [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_WORKFLOW.md).
+
+---
+
+## 24 November 2026
+
+Locked the incomplete-draft decision that had been parked as F40. Feedback was that drafts asked for too much — especially YouTube — before the first real save. The rule we kept: a **draft** can persist once company and role are in (the link ending and shareable link come along because they are auto-built from those). Résumé, pitch, and names wait for **publish** (and for saving an already-live app). Publish is no longer a bare status flip; the server lists what is still missing. Owner preview shows a résumé placeholder when none is attached yet. Details: [INCOMPLETE_DRAFT_SAVES.md](../product/INCOMPLETE_DRAFT_SAVES.md).
+
+Same day we locked the create layout onto edit. The scrolling split bands on `/admin/edit/[id]` are gone; edit uses the same one-page section cards as `/admin/new`. One form shell to maintain, and F35 is closed as shipped rather than “create one way, edit another.”
+
+Create’s primary action is now **Save Draft** only: it persists the draft and lands on that application’s edit page, not the owner preview. On edit, **Save Draft** stays off until something changes since the last save, and a successful save stays on the edit page instead of bouncing to the dashboard. When the full publish set is ready on create or a draft edit, **Publish** appears beside Save and goes live to the share page (F41 partial). Dashboard draft cards follow the same gate: **Publish** only when complete; otherwise **Finish to publish** names what is still missing and links to edit.

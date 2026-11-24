@@ -11,6 +11,13 @@ export interface PrimaryCvLibraryModalProps {
   onClose: () => void;
   /** Fired when the library list changes (load / upload / delete). */
   onLibraryChange: (items: PrimaryCv[]) => void;
+  /**
+   * Library already known on the form. Pass `[]` when empty so the modal does
+   * not flash Loading… before the refresh finishes.
+   */
+  initialItems?: PrimaryCv[];
+  selectedPrimaryId?: string | null;
+  onSelectPrimary?: (id: string) => void;
 }
 
 /**
@@ -21,6 +28,9 @@ export default function PrimaryCvLibraryModal({
   open,
   onClose,
   onLibraryChange,
+  initialItems,
+  selectedPrimaryId = null,
+  onSelectPrimary,
 }: PrimaryCvLibraryModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -75,12 +85,18 @@ export default function PrimaryCvLibraryModal({
           <p className="mt-1 text-sm text-[var(--muted)]">
             Upload up to {PRIMARY_CV_MAX_PER_USER} résumé PDFs to reuse across
             applications. Changes are saved to your library immediately.
+            {onSelectPrimary
+              ? " Select one for this application below."
+              : null}
           </p>
         </div>
 
         {open && (
           <PrimaryCvLibrarySection
             embedded
+            initialItems={initialItems}
+            selectedId={selectedPrimaryId}
+            onSelect={onSelectPrimary}
             onLibraryChange={onLibraryChange}
             onMutationBusyChange={setMutationBusy}
           />

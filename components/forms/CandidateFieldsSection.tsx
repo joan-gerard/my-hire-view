@@ -83,8 +83,8 @@ export const RECRUITER_INFO_FIELDS: {
   { key: 'first_name', label: 'First name', type: 'text' },
   { key: 'last_name', label: 'Last name', type: 'text' },
   { key: 'location', label: 'Location', type: 'text' },
-  { key: 'portfolio_url', label: 'Portfolio URL', type: 'url' },
   { key: 'linkedin_url', label: 'LinkedIn URL', type: 'url' },
+  { key: 'portfolio_url', label: 'Portfolio URL', type: 'url' },
 ];
 
 const SHARE_FIELDS: {
@@ -106,20 +106,20 @@ const SHARE_FIELDS: {
     autoComplete: 'address-level2',
   },
   {
-    key: 'portfolio_url',
-    label: 'Portfolio',
-    inputType: 'text',
-    inputMode: 'url',
-    placeholder: 'https://yoursite.com',
-    maxLength: PROFILE_URL_MAX_LENGTH,
-    autoComplete: 'url',
-  },
-  {
     key: 'linkedin_url',
     label: 'LinkedIn',
     inputType: 'text',
     inputMode: 'url',
     placeholder: 'https://www.linkedin.com/in/…',
+    maxLength: PROFILE_URL_MAX_LENGTH,
+    autoComplete: 'url',
+  },
+  {
+    key: 'portfolio_url',
+    label: 'Portfolio',
+    inputType: 'text',
+    inputMode: 'url',
+    placeholder: 'https://yoursite.com',
     maxLength: PROFILE_URL_MAX_LENGTH,
     autoComplete: 'url',
   },
@@ -181,9 +181,10 @@ function ShareFieldControl({
   const trimmed = value.trim();
   const warning = error ? undefined : shareWarning(fieldKey, value);
   const showToggle = Boolean(trimmed);
+  const omitted = showToggle && !included;
   const tooltipLabel = included
-    ? `Hide ${label} from recruiters`
-    : `Show ${label} to recruiters`;
+    ? `Hide ${label} for this application`
+    : `Show ${label} for this application`;
 
   return (
     <Input
@@ -203,6 +204,7 @@ function ShareFieldControl({
       value={value}
       error={error}
       warning={warning}
+      omitted={omitted}
       onChange={(event) => onValueChange(event.target.value)}
       endAdornment={
         showToggle ? (
@@ -213,7 +215,11 @@ function ShareFieldControl({
               aria-checked={included}
               aria-label={tooltipLabel}
               onClick={() => onIncludeChange(!included)}
-              className={`${visibilityToggleClass} cursor-pointer text-[var(--ink)] hover:bg-[var(--paper)]`}
+              className={`${visibilityToggleClass} cursor-pointer ${
+                included
+                  ? 'text-[var(--ink)] hover:bg-[var(--paper)]'
+                  : 'border-[var(--status-warning-fg)]/30 bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)] hover:brightness-95'
+              }`}
             >
               {included ? (
                 <EyeIcon className="h-4 w-4" />

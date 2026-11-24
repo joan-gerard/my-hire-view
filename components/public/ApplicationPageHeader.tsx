@@ -148,20 +148,20 @@ export default function ApplicationPageHeader({
             </h1>
             {hasLinks && (
               <div className="flex flex-wrap items-center gap-2">
-                {hasPortfolio && (
-                  <ExternalLinkButton
-                    href={portfolioUrl!.trim()}
-                    variant="portfolio"
-                  >
-                    Portfolio
-                  </ExternalLinkButton>
-                )}
                 {hasLinkedIn && (
                   <ExternalLinkButton
                     href={linkedinUrl!.trim()}
                     variant="linkedin"
                   >
                     <LinkedInIcon className="shrink-0" />
+                  </ExternalLinkButton>
+                )}
+                {hasPortfolio && (
+                  <ExternalLinkButton
+                    href={portfolioUrl!.trim()}
+                    variant="portfolio"
+                  >
+                    Portfolio
                   </ExternalLinkButton>
                 )}
               </div>

@@ -43,7 +43,7 @@ function sampleDraft(
     cvMode: "primary",
     cvModeUserChosen: false,
     selectedPrimaryId: "cv-1",
-    use_original_cv_filename: true,
+    use_original_cv_filename: false,
     ...overrides,
   };
 }
@@ -176,7 +176,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(true);
   });
@@ -207,7 +207,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(true);
   });
@@ -238,7 +238,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(false);
   });
@@ -269,7 +269,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: "cv-auto",
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(true);
   });
@@ -300,7 +300,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(false);
 
@@ -329,7 +329,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "tailored",
         cvModeUserChosen: true,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(false);
 
@@ -359,9 +359,40 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "tailored",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(true);
+  });
+
+  it("keeps a draft when original CV filename is explicitly chosen", () => {
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "",
+        last_name: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: false,
+          last_name: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugSegmentOrder: "company_role",
+        slugManuallyEdited: false,
+        showProfilePicture: true,
+        showProfilePictureUserChosen: false,
+        cvMode: "primary",
+        cvModeUserChosen: false,
+        selectedPrimaryId: null,
+        use_original_cv_filename: true,
+      }),
+    ).toBe(false);
   });
 
   it("keeps drafts with company", () => {
@@ -390,7 +421,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(false);
   });
@@ -434,7 +465,7 @@ describe("load/save/clearCreateApplicationDraft", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       },
       storage,
     );
