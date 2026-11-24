@@ -560,7 +560,7 @@ describe("PUT /api/applications", () => {
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toMatch(/Required before publishing/);
-    expect(json.error).toMatch(/Résumé/);
+    expect(json.error).toMatch(/Your Résumé/);
     expect(json.error).toMatch(/YouTube intro/);
   });
 

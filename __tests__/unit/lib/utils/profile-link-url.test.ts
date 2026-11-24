@@ -3,6 +3,7 @@ import {
   LINKEDIN_DOES_NOT_LOOK_LIKE_LINKEDIN_WARNING,
   PORTFOLIO_LOOKS_LIKE_LINKEDIN_WARNING,
   PROFILE_URL_FORMAT_WARNING,
+  canDefaultShowProfileUrl,
   linkedInUrlFieldWarning,
   looksLikeLinkedInUrl,
   portfolioUrlFieldWarning,
@@ -104,5 +105,37 @@ describe("profileLinkFieldWarning", () => {
       profileLinkFieldWarning("linkedin_url", "https://example.com"),
     ).toBe(LINKEDIN_DOES_NOT_LOOK_LIKE_LINKEDIN_WARNING);
     expect(profileLinkFieldWarning("location", "Paris")).toBeNull();
+  });
+});
+
+describe("canDefaultShowProfileUrl", () => {
+  it("is true only for complete valid field URLs", () => {
+    expect(
+      canDefaultShowProfileUrl(
+        "linkedin_url",
+        "https://www.linkedin.com/in/jane",
+      ),
+    ).toBe(true);
+    expect(canDefaultShowProfileUrl("portfolio_url", "https://jane.dev")).toBe(
+      true,
+    );
+  });
+
+  it("is false for empty, incomplete, invalid, or mixed-up URLs", () => {
+    expect(canDefaultShowProfileUrl("linkedin_url", "")).toBe(false);
+    expect(canDefaultShowProfileUrl("linkedin_url", "li")).toBe(false);
+    expect(
+      canDefaultShowProfileUrl("linkedin_url", "linkedin.com/in/jane"),
+    ).toBe(false);
+    expect(canDefaultShowProfileUrl("linkedin_url", "https://jane.dev")).toBe(
+      false,
+    );
+    expect(
+      canDefaultShowProfileUrl(
+        "portfolio_url",
+        "https://www.linkedin.com/in/jane",
+      ),
+    ).toBe(false);
+    expect(canDefaultShowProfileUrl("portfolio_url", "jane.dev")).toBe(false);
   });
 });

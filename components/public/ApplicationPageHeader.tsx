@@ -17,6 +17,8 @@ interface ApplicationPageHeaderProps {
   firstName?: string | null;
   lastName?: string | null;
   location?: string | null;
+  email?: string | null;
+  phone?: string | null;
   portfolioUrl?: string | null;
   linkedinUrl?: string | null;
   /** Profile picture URL when the candidate chose to show it. When null/empty, no avatar is shown. */
@@ -52,7 +54,7 @@ function nonEmpty(value: string | null | undefined): value is string {
 
 /**
  * Header for the public application page (/view/[publicId]/[slug]). Shows company, role,
- * and an optional candidate block (name, location, portfolio/LinkedIn) only
+ * and an optional candidate block (name, contact, portfolio/LinkedIn) only
  * when the candidate has provided that data. Layout stays balanced whether
  * optional fields are present or not.
  */
@@ -61,7 +63,9 @@ export default function ApplicationPageHeader({
   role,
   firstName,
   lastName,
-  location: _location,
+  location,
+  email,
+  phone,
   portfolioUrl,
   linkedinUrl,
   profileImageUrl,
@@ -76,6 +80,10 @@ export default function ApplicationPageHeader({
   const hasProfileImage =
     profileImageUrl != null && String(profileImageUrl).trim() !== "";
   const displayName = [firstName, lastName].filter(nonEmpty).join(" ").trim();
+  const hasLocation = nonEmpty(location);
+  const hasEmail = nonEmpty(email);
+  const hasPhone = nonEmpty(phone);
+  const hasContact = hasLocation || hasEmail || hasPhone;
   const hasPortfolio = nonEmpty(portfolioUrl);
   const hasLinkedIn = nonEmpty(linkedinUrl);
   const hasLinks = hasPortfolio || hasLinkedIn;
@@ -147,9 +155,36 @@ export default function ApplicationPageHeader({
           )}
 
           <div className="flex w-full flex-col justify-between gap-6 py-2">
-            <h1 className="font-heading text-xl font-semibold tracking-[-0.03em] text-[var(--ink)] sm:text-5xl">
-              {displayName}
-            </h1>
+            <div className="space-y-2">
+              <h1 className="font-heading text-xl font-semibold tracking-[-0.03em] text-[var(--ink)] sm:text-5xl">
+                {displayName}
+              </h1>
+              {hasContact ? (
+                <div className="flex flex-col gap-1 text-sm text-[var(--ink)]/80 sm:text-base">
+                  {hasLocation ? <p>{location!.trim()}</p> : null}
+                  {hasEmail ? (
+                    <p>
+                      <a
+                        href={`mailto:${email!.trim()}`}
+                        className="underline decoration-[var(--ink)]/25 underline-offset-2 hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                      >
+                        {email!.trim()}
+                      </a>
+                    </p>
+                  ) : null}
+                  {hasPhone ? (
+                    <p>
+                      <a
+                        href={`tel:${phone!.trim().replace(/[^\d+]/g, "")}`}
+                        className="underline decoration-[var(--ink)]/25 underline-offset-2 hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                      >
+                        {phone!.trim()}
+                      </a>
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
             {hasLinks && (
               <div className="flex flex-wrap items-center gap-2">
                 {hasLinkedIn && (

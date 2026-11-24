@@ -4,19 +4,24 @@ import {
     ADMIN_PANEL_CLASS,
     ADMIN_TIP_CLASS,
 } from "@/components/admin/admin-chrome";
-import { AvatarIcon } from "@/components/admin/icons";
+import AdminTooltip from "@/components/admin/AdminTooltip";
+import { AvatarIcon, QuestionIcon } from "@/components/admin/icons";
 import PublicIdAccountField from "@/components/admin/PublicIdAccountField";
 import ProfilePictureIconActions from "@/components/forms/ProfilePictureIconActions";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Switch from "@/components/ui/Switch";
 import type { Profile } from "@/lib/types/profile";
 import {
+    PROFILE_CONTACT_EMAIL_MAX_LENGTH,
     PROFILE_LOCATION_MAX_LENGTH,
     PROFILE_NAME_MAX_LENGTH,
+    PROFILE_PHONE_MAX_LENGTH,
     PROFILE_URL_MAX_LENGTH,
 } from "@/lib/types/profile";
 import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
 import {
+  canDefaultShowProfileUrl,
   linkedInUrlFieldWarning,
   portfolioUrlFieldWarning,
 } from "@/lib/utils/profile-link-url";
@@ -27,7 +32,38 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FiAlertTriangle } from "react-icons/fi";
 
+type DefaultShowKey =
+  | "default_show_email"
+  | "default_show_phone"
+  | "default_show_profile_picture"
+  | "default_show_location"
+  | "default_show_linkedin"
+  | "default_show_portfolio";
+
+const DEFAULT_SHOW_OPTIONS: { key: DefaultShowKey; label: string }[] = [
+  { key: "default_show_email", label: "Email" },
+  { key: "default_show_phone", label: "Phone" },
+  { key: "default_show_profile_picture", label: "Picture" },
+  { key: "default_show_location", label: "Location" },
+  { key: "default_show_linkedin", label: "LinkedIn" },
+  { key: "default_show_portfolio", label: "Portfolio" },
+];
+
+type DefaultShowAvailability = Record<DefaultShowKey, boolean>;
+
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+const EMAIL_DIFFERS_FROM_ACCOUNT_TIP =
+  "You can use a different email for applications. It does not change the email you sign in with.";
+
+function emailsMatch(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  const left = (a ?? "").trim().toLowerCase();
+  const right = (b ?? "").trim().toLowerCase();
+  return Boolean(left) && left === right;
+}
 
 export type ProfileFormAccountChrome = {
   email: string | null;
@@ -75,6 +111,16 @@ export default function ProfileForm({
     location: initialData?.location ?? "",
     portfolio_url: initialData?.portfolio_url ?? "",
     linkedin_url: initialData?.linkedin_url ?? "",
+    contact_email:
+      initialData?.contact_email?.trim() || accountChrome.email || "",
+    phone: initialData?.phone ?? "",
+    default_show_email: initialData?.default_show_email !== false,
+    default_show_phone: initialData?.default_show_phone !== false,
+    default_show_profile_picture:
+      initialData?.default_show_profile_picture !== false,
+    default_show_location: initialData?.default_show_location !== false,
+    default_show_linkedin: initialData?.default_show_linkedin !== false,
+    default_show_portfolio: initialData?.default_show_portfolio !== false,
   });
   /** File chosen locally; uploaded only on Save. */
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -130,8 +176,27 @@ export default function ProfileForm({
   const firstName = normalizeText(formData.first_name);
   const lastName = normalizeText(formData.last_name);
   const namesValid = Boolean(firstName && lastName);
+  const showAccountEmailTip = emailsMatch(
+    formData.contact_email,
+    accountChrome.email,
+  );
 
   const pictureDirty = Boolean(pendingFile) || pictureRemoved;
+
+  const defaultShowAvailability: DefaultShowAvailability = {
+    default_show_email: Boolean(normalizeText(formData.contact_email)),
+    default_show_phone: Boolean(normalizeText(formData.phone)),
+    default_show_profile_picture: hasProfilePicture,
+    default_show_location: Boolean(normalizeText(formData.location)),
+    default_show_linkedin: canDefaultShowProfileUrl(
+      "linkedin_url",
+      formData.linkedin_url,
+    ),
+    default_show_portfolio: canDefaultShowProfileUrl(
+      "portfolio_url",
+      formData.portfolio_url,
+    ),
+  };
 
   const isDirty =
     !hasExistingProfile ||
@@ -142,6 +207,22 @@ export default function ProfileForm({
       normalizeText(initialData?.portfolio_url) ||
     normalizeText(formData.linkedin_url) !==
       normalizeText(initialData?.linkedin_url) ||
+    normalizeText(formData.contact_email) !==
+      (normalizeText(initialData?.contact_email) ||
+        normalizeText(accountChrome.email)) ||
+    normalizeText(formData.phone) !== normalizeText(initialData?.phone) ||
+    formData.default_show_email !==
+      (initialData?.default_show_email !== false) ||
+    formData.default_show_phone !==
+      (initialData?.default_show_phone !== false) ||
+    formData.default_show_profile_picture !==
+      (initialData?.default_show_profile_picture !== false) ||
+    formData.default_show_location !==
+      (initialData?.default_show_location !== false) ||
+    formData.default_show_linkedin !==
+      (initialData?.default_show_linkedin !== false) ||
+    formData.default_show_portfolio !==
+      (initialData?.default_show_portfolio !== false) ||
     pictureDirty;
 
   const loading = submitPhase !== "idle";
@@ -219,12 +300,20 @@ export default function ProfileForm({
         }
       }
 
-      const body: Record<string, string | null> = {
+      const body: Record<string, string | boolean | null> = {
         first_name: firstName || null,
         last_name: lastName || null,
         location: normalizeText(formData.location) || null,
         portfolio_url: normalizeText(formData.portfolio_url) || null,
         linkedin_url: normalizeText(formData.linkedin_url) || null,
+        contact_email: normalizeText(formData.contact_email) || null,
+        phone: normalizeText(formData.phone) || null,
+        default_show_email: formData.default_show_email,
+        default_show_phone: formData.default_show_phone,
+        default_show_profile_picture: formData.default_show_profile_picture,
+        default_show_location: formData.default_show_location,
+        default_show_linkedin: formData.default_show_linkedin,
+        default_show_portfolio: formData.default_show_portfolio,
       };
       if (profilePictureUrl !== undefined) {
         body.profile_picture_url = profilePictureUrl;
@@ -436,12 +525,13 @@ export default function ProfileForm({
             </h3>
             <p className="mt-1 text-sm text-[var(--muted)]">
               This info is used when you create or update applications so
-              recruiters see your name and links.
+              recruiters see your name, contact details, and links.
             </p>
             {!hasExistingProfile && (
               <p className={`mt-3 ${ADMIN_TIP_CLASS}`}>
                 Your name is prefilled from signup. Save your profile to finish
-                creating your profile record (location, links, and picture).
+                creating your profile record (contact, location, links, and
+                picture).
               </p>
             )}
             <div className="mt-5 space-y-4">
@@ -475,6 +565,62 @@ export default function ProfileForm({
                   maxLength={PROFILE_NAME_MAX_LENGTH}
                 />
               </div>
+
+              <div>
+                <div className="flex items-center gap-1">
+                  <label
+                    htmlFor="profile-contact-email"
+                    className="text-sm font-medium leading-[18px] text-[var(--ink)]"
+                  >
+                    Email
+                  </label>
+                  {showAccountEmailTip ? (
+                    <AdminTooltip
+                      label={EMAIL_DIFFERS_FROM_ACCOUNT_TIP}
+                      side="top"
+                    >
+                      <button
+                        type="button"
+                        className="inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-[var(--muted)] hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                        aria-label={EMAIL_DIFFERS_FROM_ACCOUNT_TIP}
+                      >
+                        <QuestionIcon className="size-4" />
+                      </button>
+                    </AdminTooltip>
+                  ) : null}
+                </div>
+                <div className="mt-1">
+                  <Input
+                    id="profile-contact-email"
+                    type="email"
+                    autoComplete="email"
+                    value={formData.contact_email}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        contact_email: e.target.value,
+                      }))
+                    }
+                    placeholder="you@example.com"
+                    maxLength={PROFILE_CONTACT_EMAIL_MAX_LENGTH}
+                  />
+                </div>
+              </div>
+              <Input
+                id="profile-phone"
+                label="Phone"
+                type="tel"
+                autoComplete="tel"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    phone: e.target.value,
+                  }))
+                }
+                placeholder="e.g. +44 7700 900123"
+                maxLength={PROFILE_PHONE_MAX_LENGTH}
+              />
               <Input
                 label="Location"
                 type="text"
@@ -527,6 +673,50 @@ export default function ProfileForm({
                 }
               />
             </div>
+          </div>
+
+          <div className="border-t border-[var(--ink)]/8 pt-5">
+            <h3 className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]">
+              Shown by default on new applications
+            </h3>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              These preferences apply when you create a new application. You can
+              still show or hide each field on that application.
+            </p>
+            <ul className="mt-4 space-y-3">
+              {DEFAULT_SHOW_OPTIONS.map((option) => {
+                const hasValue = defaultShowAvailability[option.key];
+                return (
+                  <li
+                    key={option.key}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <span
+                      className={`text-sm ${
+                        hasValue ? "text-[var(--ink)]" : "text-[var(--muted)]"
+                      }`}
+                    >
+                      {option.label}
+                    </span>
+                    <Switch
+                      checked={hasValue && formData[option.key]}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          [option.key]: checked,
+                        }))
+                      }
+                      disabled={loading || !hasValue}
+                      aria-label={
+                        hasValue
+                          ? `Show ${option.label} by default on new applications`
+                          : `Add ${option.label} above before setting a default`
+                      }
+                    />
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
           <div className="mt-6 flex justify-end">

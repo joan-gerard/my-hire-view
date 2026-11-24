@@ -3,8 +3,10 @@ import {
   validateSlugFormat,
 } from "@/lib/utils/slug-generate";
 import {
+  PROFILE_CONTACT_EMAIL_MAX_LENGTH,
   PROFILE_LOCATION_MAX_LENGTH,
   PROFILE_NAME_MAX_LENGTH,
+  PROFILE_PHONE_MAX_LENGTH,
   PROFILE_URL_MAX_LENGTH,
 } from "@/lib/validation/profile";
 import { z } from "zod";
@@ -27,6 +29,8 @@ const FIELD_LABELS: Record<string, string> = {
   location: "Location",
   portfolio_url: "Portfolio URL",
   linkedin_url: "LinkedIn URL",
+  email: "Email",
+  phone: "Phone",
   slugSegmentOrder: "URL segment order",
   cv_filename: "CV filename",
   use_original_cv_filename: "Use original CV filename",
@@ -90,6 +94,24 @@ function optionalNullableHttpUrl(label: string) {
   );
 }
 
+/** Empty / whitespace become null; otherwise a trimmed email. */
+function optionalNullableEmail(label: string) {
+  return z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return value;
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    },
+    z
+      .email({ error: `${label}: Please enter a valid email` })
+      .max(PROFILE_CONTACT_EMAIL_MAX_LENGTH, {
+        error: `${label} must be at most ${PROFILE_CONTACT_EMAIL_MAX_LENGTH} characters`,
+      })
+      .nullable()
+      .optional(),
+  );
+}
+
 const requiredSlugSchema = z.preprocess(
   (value) => {
     if (typeof value !== "string") return value;
@@ -139,6 +161,11 @@ const candidateFields = {
   ),
   portfolio_url: optionalNullableHttpUrl(FIELD_LABELS.portfolio_url),
   linkedin_url: optionalNullableHttpUrl(FIELD_LABELS.linkedin_url),
+  email: optionalNullableEmail(FIELD_LABELS.email),
+  phone: optionalNullableString(
+    PROFILE_PHONE_MAX_LENGTH,
+    FIELD_LABELS.phone,
+  ),
   slugSegmentOrder: z
     .enum(SLUG_SEGMENT_ORDER_VALUES, {
       error: "URL segment order must be company_role or role_company",
@@ -311,18 +338,18 @@ export function getApplicationPublishBlockers(
   if (!app.role?.trim()) blockers.push("Role");
   const slug = app.slug?.trim() ?? "";
   if (!slug) {
-    blockers.push("Shareable link");
+    blockers.push("Your application link");
   } else {
     const format = validateSlugFormat(slug);
-    if (!format.ok) blockers.push("Shareable link");
+    if (!format.ok) blockers.push("Your application link");
   }
   if (!app.first_name?.trim()) blockers.push("First name");
   if (!app.last_name?.trim()) blockers.push("Last name");
   const cvType = app.cv_type === "primary" ? "primary" : "tailored";
   if (cvType === "primary") {
-    if (!app.primary_cv_id || !app.cv_url?.trim()) blockers.push("Résumé");
+    if (!app.primary_cv_id || !app.cv_url?.trim()) blockers.push("Your Résumé");
   } else if (!app.cv_url?.trim()) {
-    blockers.push("Résumé");
+    blockers.push("Your Résumé");
   }
   if (!app.video_url?.trim()) blockers.push("YouTube intro");
   return blockers;

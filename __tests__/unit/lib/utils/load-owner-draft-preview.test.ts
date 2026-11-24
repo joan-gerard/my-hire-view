@@ -101,6 +101,8 @@ describe("buildOwnerDraftPreview", () => {
         location: "Stockholm",
         portfolio_url: "https://jane.dev",
         linkedin_url: "https://linkedin.com/in/jane",
+        email: null,
+        phone: null,
         profile_picture_url: "https://r2.example.com/avatar.jpg",
         cv_url: "https://r2.example.com/cv.pdf",
         cv_filename: "Jane-CV.pdf",

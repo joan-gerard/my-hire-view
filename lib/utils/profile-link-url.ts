@@ -89,3 +89,22 @@ export function profileLinkFieldWarning(
   if (field === "linkedin_url") return linkedInUrlFieldWarning(value);
   return null;
 }
+
+/**
+ * True when a profile link is complete enough to show by default on new
+ * applications: non-empty, valid http(s) URL, and no soft field warning.
+ */
+export function canDefaultShowProfileUrl(
+  field: "portfolio_url" | "linkedin_url",
+  value: string,
+): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (profileLinkFieldWarning(field, trimmed)) return false;
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}

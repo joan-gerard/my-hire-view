@@ -23,6 +23,7 @@ import {
   isOwnedTailoredCvUrl,
   toCanonicalCvPublicUrl,
 } from "@/lib/utils/cv-storage";
+import { resolveApplicationContactEmail } from "@/lib/utils/profile-contact";
 import {
   SLUG_COLLISION_USER_MESSAGE,
   validateSlugForApplication,
@@ -175,18 +176,29 @@ export async function GET(request: NextRequest) {
 async function getProfileSnapshot(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
+  accountEmail: string | null | undefined,
 ) {
   const { data } = await supabase
     .from("profiles")
-    .select("first_name, last_name, location, portfolio_url, linkedin_url")
+    .select(
+      "first_name, last_name, location, portfolio_url, linkedin_url, contact_email, phone",
+    )
     .eq("user_id", userId)
     .single();
+
+  const email = resolveApplicationContactEmail(
+    { contact_email: data?.contact_email },
+    accountEmail,
+  );
+
   return {
     first_name: data?.first_name ?? null,
     last_name: data?.last_name ?? null,
     location: data?.location ?? null,
     portfolio_url: data?.portfolio_url ?? null,
     linkedin_url: data?.linkedin_url ?? null,
+    email,
+    phone: data?.phone?.trim() || null,
   };
 }
 
@@ -359,7 +371,11 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
     const ensuredPublicId = await ensureProfilePublicId(supabase, user);
-    const snapshot = await getProfileSnapshot(supabase, user.id);
+    const snapshot = await getProfileSnapshot(
+      supabase,
+      user.id,
+      user.email,
+    );
 
     const candidateFields = {
       first_name:
@@ -375,6 +391,8 @@ export async function POST(request: NextRequest) {
         body.linkedin_url !== undefined
           ? body.linkedin_url
           : snapshot.linkedin_url,
+      email: body.email !== undefined ? body.email : snapshot.email,
+      phone: body.phone !== undefined ? body.phone : snapshot.phone,
     };
 
     const showProfilePicture = body.show_profile_picture === true;
@@ -537,6 +555,8 @@ export async function PUT(request: NextRequest) {
     if (body.first_name !== undefined) updatePayload.first_name = body.first_name;
     if (body.last_name !== undefined) updatePayload.last_name = body.last_name;
     if (body.location !== undefined) updatePayload.location = body.location;
+    if (body.email !== undefined) updatePayload.email = body.email;
+    if (body.phone !== undefined) updatePayload.phone = body.phone;
     if (body.portfolio_url !== undefined) {
       updatePayload.portfolio_url = body.portfolio_url;
     }

@@ -54,6 +54,8 @@ INSERT INTO "public"."applications" (
   "location",
   "portfolio_url",
   "linkedin_url",
+  "email",
+  "phone",
   "slug_segment_order",
   "download_count",
   "last_viewed_at",
@@ -89,6 +91,8 @@ SELECT
       )
     ELSE NULL
   END,
+  NULL,
+  NULL,
   NULL,
   NULL,
   NULL,
@@ -208,6 +212,8 @@ ON CONFLICT (user_id, slug) DO UPDATE SET
   location = EXCLUDED.location,
   portfolio_url = EXCLUDED.portfolio_url,
   linkedin_url = EXCLUDED.linkedin_url,
+  email = EXCLUDED.email,
+  phone = EXCLUDED.phone,
   slug_segment_order = EXCLUDED.slug_segment_order,
   download_count = EXCLUDED.download_count,
   last_viewed_at = EXCLUDED.last_viewed_at,

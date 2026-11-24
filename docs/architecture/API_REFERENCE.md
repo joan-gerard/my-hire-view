@@ -193,7 +193,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug` (required for draft); `cv_url` optional/`null`, `video_url` optional/`""` on draft; optional `status` (`"active"` \| `"draft"` \| `"archived"`, **default `"draft"`** — F16-050). Creating as `"active"` must pass the publish completeness gate (names, résumé, YouTube). Also: `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugSegmentOrder` (`"company_role"` | `"role_company"` → stored as `slug_segment_order`, default `company_role`), `cv_filename`, `use_original_cv_filename` (omitted body defaults to `true`; the form defaults to `false` and sends `true` when Original name is on), `show_profile_picture`
+- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug` (required for draft); `cv_url` optional/`null`, `video_url` optional/`""` on draft; optional `status` (`"active"` \| `"draft"` \| `"archived"`, **default `"draft"`** — F16-050). Creating as `"active"` must pass the publish completeness gate (names, résumé, YouTube). Also: `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `email`, `phone`, `slugSegmentOrder` (`"company_role"` | `"role_company"` → stored as `slug_segment_order`, default `company_role`), `cv_filename`, `use_original_cv_filename` (omitted body defaults to `true`; the form defaults to `false` and sends `true` when Original name is on), `show_profile_picture`
 - **Success:** `201` `{ data: Application }`
 - **Errors:** `400` schema validation / insert / primary CV missing; `401`; `409` slug taken (`validateSlugForApplication` or unique constraint) or tailored `cv_url` already used; `429`; `500` unexpected failures
 
@@ -222,7 +222,7 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ApplicationUpdateInput`, Zod `applicationUpdateSchema`): `id` (UUID, required) plus optional partial fields (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields, `slugSegmentOrder`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Unexpected keys → **400**. Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
+- **Body** (`ApplicationUpdateInput`, Zod `applicationUpdateSchema`): `id` (UUID, required) plus optional partial fields (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields including `email` / `phone`, `slugSegmentOrder`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Unexpected keys → **400**. Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
 - **Success:** `200` `{ data: Application }`
 - **Errors:** `400` schema / insert-style validation / primary CV missing; `401`; `404` if missing or not owned; `409` slug collision or tailored `cv_url` already used; `429`; `500` unexpected failures
 
@@ -416,7 +416,7 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` — omit picture field to leave unchanged; `null` to clear. Unexpected keys → **400**. Max lengths: names **100**, location **200**, URLs **2048**. Non-null picture URL must be on the configured Supabase origin (`NEXT_PUBLIC_SUPABASE_URL`) under the caller’s Storage folder.
+- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url`, `contact_email`, `phone`, and `default_show_*` booleans (`email`, `phone`, `profile_picture`, `location`, `linkedin`, `portfolio`) — omit picture field to leave unchanged; `null` to clear nullable strings. Unexpected keys → **400**. Max lengths: names **100**, location **200**, phone **40**, contact email **254**, URLs **2048**. Non-null picture URL must be on the configured Supabase origin (`NEXT_PUBLIC_SUPABASE_URL`) under the caller’s Storage folder.
 - **Success:** `200` `{ data: Profile }` optionally with `warnings: string[]` (e.g. Storage delete or metadata sync failed)
 - **Errors:** `400` schema / unowned picture URL / missing names / over-long introduced names / upsert error; `401`; `429`; `500`
 

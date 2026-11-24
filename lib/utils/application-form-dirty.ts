@@ -15,6 +15,10 @@ export type ApplicationFormDirtyInput = {
   location: string;
   portfolio_url: string;
   linkedin_url: string;
+  email: string;
+  phone: string;
+  includeEmail: boolean;
+  includePhone: boolean;
   includeLocation: boolean;
   includePortfolio: boolean;
   includeLinkedin: boolean;
@@ -49,6 +53,10 @@ export function applicationFormDirtySnapshot(
     location: norm(input.location),
     portfolio_url: norm(input.portfolio_url),
     linkedin_url: norm(input.linkedin_url),
+    email: norm(input.email),
+    phone: norm(input.phone),
+    includeEmail: input.includeEmail,
+    includePhone: input.includePhone,
     includeLocation: input.includeLocation,
     includePortfolio: input.includePortfolio,
     includeLinkedin: input.includeLinkedin,

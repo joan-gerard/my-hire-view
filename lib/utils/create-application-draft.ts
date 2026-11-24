@@ -12,7 +12,7 @@ import {
   type SlugSegmentOrder,
 } from "@/lib/utils/slug-generate";
 
-export const CREATE_APPLICATION_DRAFT_VERSION = 2 as const;
+export const CREATE_APPLICATION_DRAFT_VERSION = 3 as const;
 
 /** Drop drafts older than this so stale PII does not linger indefinitely. */
 export const CREATE_APPLICATION_DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -23,6 +23,8 @@ const STORAGE_PREFIX = "myhireview:create-application-draft:";
 export type CreateApplicationDraftFieldKey =
   | "first_name"
   | "last_name"
+  | "email"
+  | "phone"
   | "location"
   | "portfolio_url"
   | "linkedin_url";
@@ -41,6 +43,8 @@ export type CreateApplicationDraft = {
   video_url: string;
   first_name: string;
   last_name: string;
+  email: string;
+  phone: string;
   location: string;
   portfolio_url: string;
   linkedin_url: string;
@@ -94,28 +98,53 @@ function isDraftFieldKey(key: string): key is CreateApplicationDraftFieldKey {
   return (
     key === "first_name" ||
     key === "last_name" ||
+    key === "email" ||
+    key === "phone" ||
     key === "location" ||
     key === "portfolio_url" ||
     key === "linkedin_url"
   );
 }
 
-function parseInclude(raw: unknown): CreateApplicationDraftInclude | null {
+const LEGACY_DRAFT_FIELD_KEYS = new Set([
+  "first_name",
+  "last_name",
+  "location",
+  "portfolio_url",
+  "linkedin_url",
+]);
+
+function parseInclude(
+  raw: unknown,
+  version: number,
+): CreateApplicationDraftInclude | null {
   if (!raw || typeof raw !== "object") return null;
   const obj = raw as Record<string, unknown>;
   const include: CreateApplicationDraftInclude = {
     first_name: false,
     last_name: false,
+    email: false,
+    phone: false,
     location: false,
     portfolio_url: false,
     linkedin_url: false,
   };
+
   for (const key of Object.keys(include) as CreateApplicationDraftFieldKey[]) {
-    if (typeof obj[key] !== "boolean") return null;
-    include[key] = obj[key];
+    if (typeof obj[key] === "boolean") {
+      include[key] = obj[key];
+      continue;
+    }
+    // v1/v2 drafts omit email/phone — default hidden until user sets them.
+    if (version < 3 && (key === "email" || key === "phone")) {
+      include[key] = false;
+      continue;
+    }
+    return null;
   }
-  // Reject unexpected keys so we do not silently accept corrupt payloads.
+
   for (const key of Object.keys(obj)) {
+    if (version < 3 && LEGACY_DRAFT_FIELD_KEYS.has(key)) continue;
     if (!isDraftFieldKey(key)) return null;
   }
   return include;
@@ -125,16 +154,14 @@ function isCvMode(value: unknown): value is ApplicationCvType {
   return value === "primary" || value === "tailored";
 }
 
-
 function defaultIncludeFromValues(
-  draft: Pick<
-    CreateApplicationDraftInput,
-    CreateApplicationDraftFieldKey
-  >,
+  draft: Pick<CreateApplicationDraftInput, CreateApplicationDraftFieldKey>,
 ): CreateApplicationDraftInclude {
   return {
     first_name: draft.first_name.trim() !== "",
     last_name: draft.last_name.trim() !== "",
+    email: draft.email.trim() !== "",
+    phone: draft.phone.trim() !== "",
     location: draft.location.trim() !== "",
     portfolio_url: draft.portfolio_url.trim() !== "",
     linkedin_url: draft.linkedin_url.trim() !== "",
@@ -156,8 +183,12 @@ export function parseCreateApplicationDraft(
   if (!raw || typeof raw !== "object") return null;
   const obj = raw as Record<string, unknown>;
   const version = obj.v;
-  // Accept v1 (pre-flag) and migrate; require current fields on v2+.
-  if (version !== 1 && version !== CREATE_APPLICATION_DRAFT_VERSION) {
+  // Accept v1/v2 and migrate; require current fields on v3+.
+  if (
+    version !== 1 &&
+    version !== 2 &&
+    version !== CREATE_APPLICATION_DRAFT_VERSION
+  ) {
     return null;
   }
   if (typeof obj.savedAt !== "string") return null;
@@ -166,7 +197,7 @@ export function parseCreateApplicationDraft(
   if (nowMs - savedAtMs > CREATE_APPLICATION_DRAFT_MAX_AGE_MS) return null;
   if (nowMs < savedAtMs - 60_000) return null; // clock skew / future junk
 
-  const include = parseInclude(obj.include);
+  const include = parseInclude(obj.include, version);
   if (!include) return null;
 
   const str = (key: string): string | null =>
@@ -181,6 +212,10 @@ export function parseCreateApplicationDraft(
   const location = str("location");
   const portfolio_url = str("portfolio_url");
   const linkedin_url = str("linkedin_url");
+  const email =
+    str("email") ?? (version < 3 ? "" : null);
+  const phone =
+    str("phone") ?? (version < 3 ? "" : null);
   if (
     company === null ||
     role === null ||
@@ -190,7 +225,9 @@ export function parseCreateApplicationDraft(
     last_name === null ||
     location === null ||
     portfolio_url === null ||
-    linkedin_url === null
+    linkedin_url === null ||
+    email === null ||
+    phone === null
   ) {
     return null;
   }
@@ -218,7 +255,7 @@ export function parseCreateApplicationDraft(
   }
 
   let cvModeUserChosen: boolean;
-  if (version === CREATE_APPLICATION_DRAFT_VERSION) {
+  if (version >= 2) {
     if (typeof obj.cvModeUserChosen !== "boolean") return null;
     cvModeUserChosen = obj.cvModeUserChosen;
   } else {
@@ -242,6 +279,8 @@ export function parseCreateApplicationDraft(
     video_url,
     first_name,
     last_name,
+    email,
+    phone,
     location,
     portfolio_url,
     linkedin_url,
@@ -334,6 +373,8 @@ export function saveCreateApplicationDraft(
       video_url: draft.video_url,
       first_name: draft.first_name,
       last_name: draft.last_name,
+      email: draft.email,
+      phone: draft.phone,
       location: draft.location,
       portfolio_url: draft.portfolio_url,
       linkedin_url: draft.linkedin_url,

@@ -22,6 +22,19 @@ const labelChromeButtonClass =
   "inline-flex shrink-0 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
 
 /**
+ * Red asterisk for required field / section labels.
+ * Matches `Input` so create/edit and profile mark required the same way.
+ */
+export function RequiredFieldMark() {
+  return (
+    <span className="text-[var(--status-danger-fg)]" aria-hidden="true">
+      {" "}
+      *
+    </span>
+  );
+}
+
+/**
  * Status dot beside a field label.
  * `ready` green, `draft` yellow, `idle` grey.
  */
@@ -65,6 +78,8 @@ export type ApplicationFormPageRow =
       id: string;
       label: string;
       optional?: boolean;
+      /** Red asterisk after the section title (e.g. résumé before publish). */
+      required?: boolean;
       /** Short note under the section title (plain text or inline links). */
       description?: ReactNode;
     }
@@ -86,6 +101,8 @@ export type ApplicationFormPageRow =
       /** Status tip before the label. */
       tip?: string;
       tipTone?: FieldLabelTipTone;
+      /** Red asterisk after the label for required fields. */
+      required?: boolean;
       className?: string;
       /**
        * `split` puts the title on the left and the control on the right.
@@ -136,6 +153,7 @@ export function ApplicationFormFieldRow({
   info,
   tip,
   tipTone = "draft",
+  required = false,
   className = "",
   layout = "split",
   children,
@@ -152,6 +170,8 @@ export function ApplicationFormFieldRow({
   tip?: string;
   /** Green ready / yellow draft / grey idle. */
   tipTone?: FieldLabelTipTone;
+  /** Red asterisk after the label. */
+  required?: boolean;
   /** Extra classes on the row, such as a stacking order for an open menu. */
   className?: string;
   /** `result` stacks the title above a full-width control. */
@@ -160,15 +180,18 @@ export function ApplicationFormFieldRow({
 }) {
   const [infoOpen, setInfoOpen] = useState(false);
   const tipMark = tip ? <FieldLabelTip tip={tip} tone={tipTone} /> : null;
+  const requiredMark = required ? <RequiredFieldMark /> : null;
   const title = labelFor ? (
     <label htmlFor={labelFor} className={FIELD_TITLE}>
       {tipMark}
       {label}
+      {requiredMark}
     </label>
   ) : (
     <p className={FIELD_TITLE}>
       {tipMark}
       {label}
+      {requiredMark}
     </p>
   );
   const copy = (
@@ -281,6 +304,7 @@ export default function ApplicationFormSinglePageLayout({
                 className="scroll-mt-[calc(var(--admin-header-height,72px)+0.75rem)] text-xl font-semibold tracking-[-0.02em] text-[var(--ink)]"
               >
                 {group.section.label}
+                {group.section.required ? <RequiredFieldMark /> : null}
                 {group.section.optional ? (
                   <span className="ml-2 text-sm font-normal text-[var(--muted)]">
                     (optional)
@@ -315,6 +339,7 @@ export default function ApplicationFormSinglePageLayout({
                   info={row.info}
                   tip={row.tip}
                   tipTone={row.tipTone}
+                  required={row.required}
                   className={row.className}
                   layout={row.type === "field" ? row.layout : undefined}
                 >

@@ -7,6 +7,7 @@ import {
   FieldLabelTip,
   PROFILE_EMPTY_TIP,
   PROFILE_INITIAL_DATA_TIP,
+  RequiredFieldMark,
 } from "@/components/forms/ApplicationFormSinglePageLayout";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -14,6 +15,8 @@ import type { ReactNode } from "react";
 export type CandidateFieldKey =
   | "first_name"
   | "last_name"
+  | "email"
+  | "phone"
   | "location"
   | "portfolio_url"
   | "linkedin_url";
@@ -34,19 +37,26 @@ export interface CandidateFieldsSectionProps {
 export const RECRUITER_INFO_FIELDS: {
   key: CandidateFieldKey;
   label: string;
-  type: "text" | "url";
+  type: "text" | "url" | "email" | "tel";
 }[] = [
   { key: "first_name", label: "First name", type: "text" },
   { key: "last_name", label: "Last name", type: "text" },
+  { key: "email", label: "Email", type: "email" },
+  { key: "phone", label: "Phone", type: "tel" },
   { key: "location", label: "Location", type: "text" },
   { key: "linkedin_url", label: "LinkedIn URL", type: "url" },
   { key: "portfolio_url", label: "Portfolio URL", type: "url" },
 ];
 
 const SHARE_FIELDS: {
-  key: Extract<CandidateFieldKey, "location" | "portfolio_url" | "linkedin_url">;
+  key: Extract<
+    CandidateFieldKey,
+    "email" | "phone" | "location" | "portfolio_url" | "linkedin_url"
+  >;
   label: string;
 }[] = [
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Phone" },
   { key: "location", label: "Location" },
   { key: "linkedin_url", label: "LinkedIn" },
   { key: "portfolio_url", label: "Portfolio" },
@@ -173,8 +183,8 @@ function ReadOnlyValue({
 /**
  * Profile-owned identity for an application (read-only on create/edit).
  * Names first (always shown when present), then optional `afterNames`
- * (e.g. Picture), then Location / LinkedIn / Portfolio with show/hide.
- * Change values on Profile.
+ * (e.g. Picture), then Email / Phone / Location / LinkedIn / Portfolio
+ * with show/hide. Change values on Profile.
  */
 export default function CandidateFieldsSection({
   values,
@@ -203,6 +213,7 @@ export default function CandidateFieldsSection({
           tip={firstNameTip.tip}
           tipTone={firstNameTip.tone}
           align="field"
+          required
         >
           <ReadOnlyValue
             id="application-first-name"
@@ -221,6 +232,7 @@ export default function CandidateFieldsSection({
           tip={lastNameTip.tip}
           tipTone={lastNameTip.tone}
           align="field"
+          required
         >
           <ReadOnlyValue
             id="application-last-name"
@@ -269,6 +281,7 @@ export default function CandidateFieldsSection({
         <p className="flex items-center gap-1.5 text-sm font-medium leading-[18px] text-[var(--ink)]">
           <FieldLabelTip tip={firstNameTip.tip} tone={firstNameTip.tone} />
           First name
+          <RequiredFieldMark />
         </p>
         <ReadOnlyValue
           id="application-first-name"
@@ -284,6 +297,7 @@ export default function CandidateFieldsSection({
         <p className="flex items-center gap-1.5 text-sm font-medium leading-[18px] text-[var(--ink)]">
           <FieldLabelTip tip={lastNameTip.tip} tone={lastNameTip.tone} />
           Last name
+          <RequiredFieldMark />
         </p>
         <ReadOnlyValue
           id="application-last-name"

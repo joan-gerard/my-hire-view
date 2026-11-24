@@ -101,6 +101,8 @@ export default function ViewPageContent({
         firstName={application.first_name}
         lastName={application.last_name}
         location={application.location}
+        email={application.email}
+        phone={application.phone}
         portfolioUrl={application.portfolio_url}
         linkedinUrl={application.linkedin_url}
         profileImageUrl={application.profile_picture_url?.trim() || undefined}

@@ -9,6 +9,16 @@ export const PROFILE_LOCATION_MAX_LENGTH = 200;
 /** Max length for portfolio / LinkedIn / profile picture URLs. */
 export const PROFILE_URL_MAX_LENGTH = 2048;
 
+/** Max length for optional phone numbers on profile / applications. */
+export const PROFILE_PHONE_MAX_LENGTH = 40;
+
+/**
+ * Max length for contact / application email (RFC 5321 practical max).
+ * Kept here (not imported from auth) to avoid a profile ↔ auth cycle —
+ * auth already imports PROFILE_NAME_MAX_LENGTH from this module.
+ */
+export const PROFILE_CONTACT_EMAIL_MAX_LENGTH = 254;
+
 const FIELD_LABELS: Record<string, string> = {
   first_name: "First name",
   last_name: "Last name",
@@ -16,6 +26,14 @@ const FIELD_LABELS: Record<string, string> = {
   portfolio_url: "Portfolio URL",
   linkedin_url: "LinkedIn URL",
   profile_picture_url: "Profile picture URL",
+  contact_email: "Email",
+  phone: "Phone",
+  default_show_email: "Show email by default",
+  default_show_phone: "Show phone by default",
+  default_show_profile_picture: "Show picture by default",
+  default_show_location: "Show location by default",
+  default_show_linkedin: "Show LinkedIn by default",
+  default_show_portfolio: "Show portfolio by default",
 };
 
 function optionalNullableString(max: number, label: string) {
@@ -38,6 +56,24 @@ function optionalNullableHttpUrl(label: string) {
       .httpUrl({ error: `${label}: Please enter a valid URL` })
       .max(PROFILE_URL_MAX_LENGTH, {
         error: `${label} must be at most ${PROFILE_URL_MAX_LENGTH} characters`,
+      })
+      .nullable()
+      .optional(),
+  );
+}
+
+/** Empty / whitespace become null; otherwise a trimmed email. */
+function optionalNullableEmail(label: string) {
+  return z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return value;
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    },
+    z
+      .email({ error: `${label}: Please enter a valid email` })
+      .max(PROFILE_CONTACT_EMAIL_MAX_LENGTH, {
+        error: `${label} must be at most ${PROFILE_CONTACT_EMAIL_MAX_LENGTH} characters`,
       })
       .nullable()
       .optional(),
@@ -67,6 +103,17 @@ export const profileUpdateSchema = z
     profile_picture_url: optionalNullableHttpUrl(
       FIELD_LABELS.profile_picture_url,
     ),
+    contact_email: optionalNullableEmail(FIELD_LABELS.contact_email),
+    phone: optionalNullableString(
+      PROFILE_PHONE_MAX_LENGTH,
+      FIELD_LABELS.phone,
+    ),
+    default_show_email: z.boolean().optional(),
+    default_show_phone: z.boolean().optional(),
+    default_show_profile_picture: z.boolean().optional(),
+    default_show_location: z.boolean().optional(),
+    default_show_linkedin: z.boolean().optional(),
+    default_show_portfolio: z.boolean().optional(),
   })
   .strict();
 

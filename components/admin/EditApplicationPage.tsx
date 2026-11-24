@@ -12,6 +12,7 @@ import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
 import type { Application, ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
+import { resolveApplicationContactEmail } from "@/lib/utils/profile-contact";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -24,6 +25,7 @@ export default function EditApplicationPage() {
   const [application, setApplication] = useState<Application | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [publicId, setPublicId] = useState<string | null>(null);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [profileSettled, setProfileSettled] = useState(false);
@@ -67,6 +69,14 @@ export default function EditApplicationPage() {
     let cancelled = false;
     async function loadProfile() {
       try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!cancelled && user?.email) {
+          setAccountEmail(user.email);
+        }
+
         const res = await fetch("/api/profile", { credentials: "include" });
         const json = await res.json().catch(() => ({}));
         if (!cancelled && json.data) {
@@ -76,10 +86,6 @@ export default function EditApplicationPage() {
           }
           return;
         }
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
         if (!cancelled && user) {
           const pid = publicIdFromUserMetadata(user);
           if (pid) setPublicId(pid);
@@ -231,6 +237,11 @@ export default function EditApplicationPage() {
   // Identity text comes from the live profile. Include flags come from
   // whether this application currently stores a value (hidden means null).
   const identity = profile ?? application;
+  const resolvedEmail =
+    resolveApplicationContactEmail(profile, accountEmail) ??
+    application.email ??
+    "";
+  const resolvedPhone = profile?.phone ?? application.phone ?? "";
   const initialData: ApplicationFormInitialData = {
     company: application.company,
     role: application.role,
@@ -239,6 +250,8 @@ export default function EditApplicationPage() {
     video_url: application.video_url,
     first_name: identity.first_name ?? undefined,
     last_name: identity.last_name ?? undefined,
+    email: resolvedEmail,
+    phone: resolvedPhone,
     location: identity.location ?? undefined,
     portfolio_url: identity.portfolio_url ?? undefined,
     linkedin_url: identity.linkedin_url ?? undefined,
@@ -268,6 +281,8 @@ export default function EditApplicationPage() {
         initialInclude={{
           first_name: true,
           last_name: true,
+          email: Boolean(application.email?.trim()),
+          phone: Boolean(application.phone?.trim()),
           location: Boolean(application.location?.trim()),
           portfolio_url: Boolean(application.portfolio_url?.trim()),
           linkedin_url: Boolean(application.linkedin_url?.trim()),

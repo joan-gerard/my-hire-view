@@ -152,6 +152,8 @@ function defaultInclude(
   return {
     first_name: true,
     last_name: true,
+    email: hasValue(initialData?.email),
+    phone: hasValue(initialData?.phone),
     location: hasValue(initialData?.location),
     portfolio_url: hasValue(initialData?.portfolio_url),
     linkedin_url: hasValue(initialData?.linkedin_url),
@@ -301,6 +303,8 @@ export default function ApplicationForm({
     video_url: restoredDraft?.video_url || initialData?.video_url || "",
     first_name: initialData?.first_name ?? "",
     last_name: initialData?.last_name ?? "",
+    email: initialData?.email ?? "",
+    phone: initialData?.phone ?? "",
     location: initialData?.location ?? "",
     portfolio_url: initialData?.portfolio_url ?? "",
     linkedin_url: initialData?.linkedin_url ?? "",
@@ -318,16 +322,23 @@ export default function ApplicationForm({
     () => {
       const fallback = defaultInclude(initialData);
       const base = restoredDraft?.include ?? fallback;
+      const fromDraft = Boolean(restoredDraft?.include);
       return {
         first_name: true,
         last_name: true,
-        location: restoredDraft?.include
+        email: fromDraft
+          ? base.email
+          : (initialInclude?.email ?? fallback.email),
+        phone: fromDraft
+          ? base.phone
+          : (initialInclude?.phone ?? fallback.phone),
+        location: fromDraft
           ? base.location
           : (initialInclude?.location ?? fallback.location),
-        portfolio_url: restoredDraft?.include
+        portfolio_url: fromDraft
           ? base.portfolio_url
           : (initialInclude?.portfolio_url ?? fallback.portfolio_url),
-        linkedin_url: restoredDraft?.include
+        linkedin_url: fromDraft
           ? base.linkedin_url
           : (initialInclude?.linkedin_url ?? fallback.linkedin_url),
       };
@@ -641,6 +652,8 @@ export default function ApplicationForm({
         video_url: formData.video_url,
         first_name: formData.first_name ?? "",
         last_name: formData.last_name ?? "",
+        email: formData.email ?? "",
+        phone: formData.phone ?? "",
         location: formData.location ?? "",
         portfolio_url: formData.portfolio_url ?? "",
         linkedin_url: formData.linkedin_url ?? "",
@@ -664,6 +677,8 @@ export default function ApplicationForm({
     formData.video_url,
     formData.first_name,
     formData.last_name,
+    formData.email,
+    formData.phone,
     formData.location,
     formData.portfolio_url,
     formData.linkedin_url,
@@ -684,6 +699,8 @@ export default function ApplicationForm({
     video_url: formData.video_url,
     first_name: formData.first_name ?? "",
     last_name: formData.last_name ?? "",
+    email: formData.email ?? "",
+    phone: formData.phone ?? "",
     location: formData.location ?? "",
     portfolio_url: formData.portfolio_url ?? "",
     linkedin_url: formData.linkedin_url ?? "",
@@ -707,6 +724,10 @@ export default function ApplicationForm({
     location: formData.location ?? "",
     portfolio_url: formData.portfolio_url ?? "",
     linkedin_url: formData.linkedin_url ?? "",
+    email: formData.email ?? "",
+    phone: formData.phone ?? "",
+    includeEmail: include.email,
+    includePhone: include.phone,
     includeLocation: include.location,
     includePortfolio: include.portfolio_url,
     includeLinkedin: include.linkedin_url,
@@ -867,24 +888,24 @@ export default function ApplicationForm({
     if (!hasRole) items.push({ name: "Role", stepId: "role" });
     if (slugLiveStatus.kind === "checking") {
       items.push({
-        name: "Shareable link",
-        note: "Shareable link is still being checked",
+        name: "Your application link",
+        note: "Your application link is still being checked",
         stepId: "role",
       });
     } else if (slugLiveStatus.kind === "invalid") {
       items.push({
-        name: "Shareable link",
-        note: slugLiveStatus.message || "Shareable link is not valid",
+        name: "Your application link",
+        note: slugLiveStatus.message || "Your application link is not valid",
         stepId: "role",
       });
     } else if (slugLiveStatus.kind === "unavailable") {
       items.push({
-        name: "Shareable link",
-        note: slugLiveStatus.message || "Shareable link is taken",
+        name: "Your application link",
+        note: slugLiveStatus.message || "Your application link is taken",
         stepId: "role",
       });
     } else if (!hasSlug || !slugReady) {
-      items.push({ name: "Shareable link", stepId: "role" });
+      items.push({ name: "Your application link", stepId: "role" });
     }
     if (requiresPublishCompleteSet) {
       if (!hasFirstName) {
@@ -893,7 +914,7 @@ export default function ApplicationForm({
       if (!hasLastName) {
         items.push({ name: "Last name", stepId: "candidate" });
       }
-      if (!hasUsableCv) items.push({ name: "Résumé", stepId: "materials" });
+      if (!hasUsableCv) items.push({ name: "Your Résumé", stepId: "materials" });
       if (!hasValidVideo) items.push({ name: "YouTube intro", stepId: "video" });
     }
     return items;
@@ -1403,6 +1424,8 @@ export default function ApplicationForm({
         video_url: formData.video_url.trim(),
         first_name: formData.first_name?.trim() || null,
         last_name: formData.last_name?.trim() || null,
+        email: include.email ? formData.email?.trim() || null : null,
+        phone: include.phone ? formData.phone?.trim() || null : null,
         location: include.location ? formData.location?.trim() || null : null,
         portfolio_url: include.portfolio_url
           ? formData.portfolio_url?.trim() || null
@@ -1466,6 +1489,8 @@ export default function ApplicationForm({
             video_url: payload.video_url,
             first_name: payload.first_name ?? "",
             last_name: payload.last_name ?? "",
+            email: formData.email ?? "",
+            phone: formData.phone ?? "",
             location: formData.location ?? "",
             portfolio_url: formData.portfolio_url ?? "",
             linkedin_url: formData.linkedin_url ?? "",
@@ -1483,9 +1508,13 @@ export default function ApplicationForm({
             video_url: payload.video_url,
             first_name: payload.first_name ?? "",
             last_name: payload.last_name ?? "",
+            email: formData.email ?? "",
+            phone: formData.phone ?? "",
             location: formData.location ?? "",
             portfolio_url: formData.portfolio_url ?? "",
             linkedin_url: formData.linkedin_url ?? "",
+            includeEmail: include.email,
+            includePhone: include.phone,
             includeLocation: include.location,
             includePortfolio: include.portfolio_url,
             includeLinkedin: include.linkedin_url,
@@ -1532,6 +1561,8 @@ export default function ApplicationForm({
   const candidateValues: Record<CandidateFieldKey, string> = {
     first_name: formData.first_name ?? "",
     last_name: formData.last_name ?? "",
+    email: formData.email ?? "",
+    phone: formData.phone ?? "",
     location: formData.location ?? "",
     portfolio_url: formData.portfolio_url ?? "",
     linkedin_url: formData.linkedin_url ?? "",
@@ -1619,7 +1650,7 @@ export default function ApplicationForm({
           id="application-share-link"
           role="textbox"
           aria-readonly="true"
-          aria-label="Shareable link"
+          aria-label="Your application link"
           className="block w-full cursor-not-allowed break-all rounded-xl border-0 bg-[var(--white)] py-1.5 pr-12 pl-3.5 text-[var(--ink)] ring-1 ring-inset ring-[var(--ink)]/15 sm:text-sm sm:leading-6"
         >
           <span className="sm:hidden">{shareLinkPath}</span>
@@ -1922,7 +1953,7 @@ export default function ApplicationForm({
         ? { rowId: "application-row-company", inputId: "application-company" }
         : item.name === "Role"
           ? { rowId: "application-row-role", inputId: "application-role" }
-          : item.name === "Shareable link"
+          : item.name === "Your application link"
             ? { rowId: "application-row-ending", inputId: "application-slug" }
             : item.name === "First name"
               ? {
@@ -2057,6 +2088,7 @@ export default function ApplicationForm({
               label: "Company",
               labelFor: "application-company",
               align: "field",
+              required: true,
               tip: hasCompany ? FIELD_READY_TIP : FIELD_IDLE_TIP,
               tipTone: hasCompany ? "ready" : "idle",
               children: (
@@ -2082,6 +2114,7 @@ export default function ApplicationForm({
               label: "Role",
               labelFor: "application-role",
               align: "field",
+              required: true,
               tip: hasRole ? FIELD_READY_TIP : FIELD_IDLE_TIP,
               tipTone: hasRole ? "ready" : "idle",
               children: (
@@ -2122,6 +2155,7 @@ export default function ApplicationForm({
               label: "Link ending",
               labelFor: "application-slug",
               align: "field",
+              required: true,
               info: "Pre-filled for you. Edit it if you like. Each ending must be unique.",
               tip: slugReady ? FIELD_READY_TIP : FIELD_IDLE_TIP,
               tipTone: slugReady ? "ready" : "idle",
@@ -2130,7 +2164,7 @@ export default function ApplicationForm({
             {
               type: "field",
               id: "application-row-share",
-              label: "Shareable link",
+              label: "Your application link",
               layout: "result",
               hint: "The link you will send, built from the choices above.",
               children: shareLinkControl,
@@ -2139,10 +2173,10 @@ export default function ApplicationForm({
               type: "section",
               id: "application-section-about",
               label: "About you",
-              optional: true,
               description: (
                 <>
-                  From your profile. Choose what recruiters see on this page.{" "}
+                  From your profile. First and last name are required to
+                  publish. Choose what else recruiters see on this page.{" "}
                   <EditProfileLink />
                 </>
               ),
@@ -2155,7 +2189,8 @@ export default function ApplicationForm({
             {
               type: "section",
               id: "application-section-resume",
-              label: "Résumé",
+              label: "Your Résumé",
+              required: true,
             },
             {
               type: "block",
@@ -2165,7 +2200,7 @@ export default function ApplicationForm({
             {
               type: "section",
               id: "application-section-pitch",
-              label: "Pitch",
+              label: "Your Pitch",
             },
             {
               type: "field",
@@ -2173,6 +2208,7 @@ export default function ApplicationForm({
               label: "YouTube",
               labelFor: "application-video",
               align: "field",
+              required: true,
               hint: "A YouTube video they can watch on the page.",
               tip: hasValidVideo ? FIELD_READY_TIP : FIELD_IDLE_TIP,
               tipTone: hasValidVideo ? "ready" : "idle",

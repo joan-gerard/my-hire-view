@@ -51,6 +51,10 @@ export interface Application {
   location: string | null;
   portfolio_url: string | null;
   linkedin_url: string | null;
+  /** Snapshot of contact email for recruiters; null = hidden. Omitted before migration 031. */
+  email?: string | null;
+  /** Snapshot of phone for recruiters; null = hidden. Omitted before migration 031. */
+  phone?: string | null;
   /** Order of company vs role in auto-derived slugs. */
   slug_segment_order: "company_role" | "role_company";
   /** Original filename of the uploaded CV (e.g. My Resume.pdf). Used for download when use_original_cv_filename is true. Omitted before migration 011. */
@@ -90,6 +94,8 @@ export type PublicApplication = Pick<
   | "location"
   | "portfolio_url"
   | "linkedin_url"
+  | "email"
+  | "phone"
   | "cv_url"
   | "video_url"
 > & {
@@ -169,6 +175,8 @@ function mapApplicationToPublicDto(
     location: application.location,
     portfolio_url: application.portfolio_url,
     linkedin_url: application.linkedin_url,
+    email: application.email ?? null,
+    phone: application.phone ?? null,
     profile_picture_url: application.profile_picture_url ?? null,
     cv_url: application.cv_url,
     video_url: application.video_url,
@@ -321,6 +329,8 @@ export interface ApplicationFormData {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
+  email?: string | null;
+  phone?: string | null;
   /** Company/role order in auto-derived slug. Stored as slug_segment_order. */
   slugSegmentOrder?: "company_role" | "role_company";
   /** Original CV filename (set when file selected or from server). Used for download when use_original_cv_filename is true. */
@@ -357,6 +367,8 @@ export interface ApplicationCreateInput {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
+  email?: string | null;
+  phone?: string | null;
   slugSegmentOrder?: "company_role" | "role_company";
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;
@@ -380,6 +392,8 @@ export interface ApplicationUpdateInput {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
+  email?: string | null;
+  phone?: string | null;
   slugSegmentOrder?: "company_role" | "role_company";
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;

@@ -26,12 +26,16 @@ function sampleDraft(
     video_url: "https://youtu.be/abc",
     first_name: "Ada",
     last_name: "Lovelace",
+    email: "",
+    phone: "",
     location: "",
     portfolio_url: "",
     linkedin_url: "",
     include: {
       first_name: true,
       last_name: true,
+      email: false,
+      phone: false,
       location: false,
       portfolio_url: false,
       linkedin_url: false,
@@ -102,7 +106,7 @@ describe("parseCreateApplicationDraft", () => {
     };
     delete (v1Tailored as { cvModeUserChosen?: boolean }).cvModeUserChosen;
     const tailored = parseCreateApplicationDraft(v1Tailored);
-    expect(tailored?.v).toBe(2);
+    expect(tailored?.v).toBe(CREATE_APPLICATION_DRAFT_VERSION);
     expect(tailored?.cvModeUserChosen).toBe(true);
 
     const v1Primary = {
@@ -122,8 +126,30 @@ describe("parseCreateApplicationDraft", () => {
     };
     delete (v1 as { slugSegmentOrder?: string }).slugSegmentOrder;
     const parsed = parseCreateApplicationDraft(v1);
-    expect(parsed?.v).toBe(2);
+    expect(parsed?.v).toBe(CREATE_APPLICATION_DRAFT_VERSION);
     expect(parsed?.slugSegmentOrder).toBe("company_role");
+  });
+
+  it("migrates v2 drafts without email/phone to empty contact fields", () => {
+    const { email: _e, phone: _p, ...rest } = sampleDraft();
+    const v2Include = {
+      first_name: true,
+      last_name: true,
+      location: false,
+      portfolio_url: false,
+      linkedin_url: false,
+    };
+    const v2 = {
+      ...rest,
+      v: 2 as const,
+      include: v2Include,
+    };
+    const parsed = parseCreateApplicationDraft(v2);
+    expect(parsed?.v).toBe(CREATE_APPLICATION_DRAFT_VERSION);
+    expect(parsed?.email).toBe("");
+    expect(parsed?.phone).toBe("");
+    expect(parsed?.include.email).toBe(false);
+    expect(parsed?.include.phone).toBe(false);
   });
 
   it("rejects wrong version, corrupt include, expired, and future-dated drafts", () => {
@@ -159,12 +185,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -190,12 +220,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -221,12 +255,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -252,12 +290,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -283,12 +325,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "Ada",
         last_name: "Lovelace",
+        email: "",
+        phone: "",
         location: "London",
         portfolio_url: "https://example.com",
         linkedin_url: "https://linkedin.com/in/ada",
         include: {
           first_name: true,
           last_name: true,
+          email: false,
+          phone: false,
           location: true,
           portfolio_url: true,
           linkedin_url: true,
@@ -314,12 +360,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "Ada",
         last_name: "",
+        email: "",
+        phone: "",
         location: "London",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: true,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -345,12 +395,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -375,12 +429,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -406,12 +464,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -437,12 +499,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -481,12 +547,16 @@ describe("load/save/clearCreateApplicationDraft", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,

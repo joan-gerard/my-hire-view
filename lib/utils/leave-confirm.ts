@@ -55,6 +55,8 @@ export function leaveRelevantDraftSnapshot(
     role: draft.role,
     video_url: draft.video_url,
     include: {
+      email: draft.include.email,
+      phone: draft.include.phone,
       location: draft.include.location,
       portfolio_url: draft.include.portfolio_url,
       linkedin_url: draft.include.linkedin_url,

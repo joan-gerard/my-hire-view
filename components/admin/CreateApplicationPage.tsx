@@ -14,6 +14,10 @@ import type { ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
 import { createApplicationDraftStorageKey } from "@/lib/utils/create-application-draft";
 import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
+import {
+  hasContactValue,
+  resolveApplicationContactEmail,
+} from "@/lib/utils/profile-contact";
 import { validateSlugFormat } from "@/lib/utils/slug-generate";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,6 +35,7 @@ export default function CreateApplicationPage() {
   const [publicId, setPublicId] = useState<string | null>(null);
   /** Stable auth id for draft scoping — never a shared fallback (F15-045). */
   const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
@@ -44,6 +49,9 @@ export default function CreateApplicationPage() {
         if (cancelled) return;
         if (user?.id) {
           setAuthUserId(user.id);
+        }
+        if (user?.email) {
+          setAccountEmail(user.email);
         }
 
         const res = await fetch("/api/profile", { credentials: "include" });
@@ -241,17 +249,26 @@ export default function CreateApplicationPage() {
   };
 
   const hasSavedProfile = Boolean(profile);
+  const resolvedEmail = resolveApplicationContactEmail(profile, accountEmail);
   const profileNeedsOptionalFields =
     hasSavedProfile &&
     !profile?.location?.trim() &&
     !profile?.portfolio_url?.trim() &&
     !profile?.linkedin_url?.trim() &&
-    !profile?.profile_picture_url?.trim();
+    !profile?.profile_picture_url?.trim() &&
+    !resolvedEmail &&
+    !profile?.phone?.trim();
   const showProfileNudge =
     !profileLoading && (!hasSavedProfile || profileNeedsOptionalFields);
   const draftStorageKey = authUserId
     ? createApplicationDraftStorageKey(authUserId)
     : null;
+  const locationValue = profile?.location ?? "";
+  const portfolioValue = profile?.portfolio_url ?? "";
+  const linkedinValue = profile?.linkedin_url ?? "";
+  const phoneValue = profile?.phone ?? "";
+  const emailValue = resolvedEmail ?? "";
+  const hasPicture = Boolean(profile?.profile_picture_url?.trim());
   const initialData: Partial<ApplicationFormData> = {
     company: "",
     role: "",
@@ -260,9 +277,13 @@ export default function CreateApplicationPage() {
     video_url: "",
     first_name: profile?.first_name ?? metaNames?.first_name ?? "",
     last_name: profile?.last_name ?? metaNames?.last_name ?? "",
-    location: profile?.location ?? "",
-    portfolio_url: profile?.portfolio_url ?? "",
-    linkedin_url: profile?.linkedin_url ?? "",
+    email: emailValue,
+    phone: phoneValue,
+    location: locationValue,
+    portfolio_url: portfolioValue,
+    linkedin_url: linkedinValue,
+    show_profile_picture:
+      profile?.default_show_profile_picture !== false && hasPicture,
   };
 
   if (profileLoading) {
@@ -298,6 +319,25 @@ export default function CreateApplicationPage() {
         submitLabel="Save Draft"
         profilePictureUrl={profile?.profile_picture_url ?? null}
         profilePictureVersion={profile?.updated_at ?? null}
+        initialInclude={{
+          first_name: true,
+          last_name: true,
+          email:
+            profile?.default_show_email !== false &&
+            hasContactValue(emailValue),
+          phone:
+            profile?.default_show_phone !== false &&
+            hasContactValue(phoneValue),
+          location:
+            profile?.default_show_location !== false &&
+            hasContactValue(locationValue),
+          linkedin_url:
+            profile?.default_show_linkedin !== false &&
+            hasContactValue(linkedinValue),
+          portfolio_url:
+            profile?.default_show_portfolio !== false &&
+            hasContactValue(portfolioValue),
+        }}
         publicId={publicId ?? undefined}
         resolveSlugOnCreate
         persistDraftKey={draftStorageKey ?? undefined}

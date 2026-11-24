@@ -173,6 +173,38 @@ export async function PUT(request: NextRequest) {
           ? (body.linkedin_url ?? null)
           : (existing?.linkedin_url ?? null),
       profile_picture_url: newPictureUrl,
+      contact_email:
+        body.contact_email !== undefined
+          ? (body.contact_email ?? null)
+          : (existing?.contact_email ?? null),
+      phone:
+        body.phone !== undefined
+          ? (body.phone ?? null)
+          : (existing?.phone ?? null),
+      default_show_email:
+        body.default_show_email !== undefined
+          ? body.default_show_email
+          : (existing?.default_show_email ?? true),
+      default_show_phone:
+        body.default_show_phone !== undefined
+          ? body.default_show_phone
+          : (existing?.default_show_phone ?? true),
+      default_show_profile_picture:
+        body.default_show_profile_picture !== undefined
+          ? body.default_show_profile_picture
+          : (existing?.default_show_profile_picture ?? true),
+      default_show_location:
+        body.default_show_location !== undefined
+          ? body.default_show_location
+          : (existing?.default_show_location ?? true),
+      default_show_linkedin:
+        body.default_show_linkedin !== undefined
+          ? body.default_show_linkedin
+          : (existing?.default_show_linkedin ?? true),
+      default_show_portfolio:
+        body.default_show_portfolio !== undefined
+          ? body.default_show_portfolio
+          : (existing?.default_show_portfolio ?? true),
     };
 
     const firstName =

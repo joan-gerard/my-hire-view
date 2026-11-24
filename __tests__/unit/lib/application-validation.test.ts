@@ -315,12 +315,12 @@ describe("getApplicationPublishBlockers", () => {
         cv_type: "tailored",
         primary_cv_id: null,
       }),
-    ).toEqual(["First name", "Last name", "Résumé", "YouTube intro"]);
+    ).toEqual(["First name", "Last name", "Your Résumé", "YouTube intro"]);
   });
 
   it("formats a publish error message", () => {
-    expect(formatPublishBlockersError(["Résumé", "YouTube intro"])).toBe(
-      "Required before publishing: Résumé, YouTube intro",
+    expect(formatPublishBlockersError(["Your Résumé", "YouTube intro"])).toBe(
+      "Required before publishing: Your Résumé, YouTube intro",
     );
   });
 
@@ -330,6 +330,6 @@ describe("getApplicationPublishBlockers", () => {
         ...complete,
         cv_exists: false,
       }),
-    ).toEqual(["Résumé"]);
+    ).toEqual(["Your Résumé"]);
   });
 });

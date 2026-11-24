@@ -24,7 +24,7 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 | --------------------------- | ------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Company**                 | Required text. Seeds the share link.                                                  | **Keep**   | Core. No debate.                                                                                                                                                               |
 | **Role**                    | Required text. Seeds the share link.                                                  | **Keep**   | Core. No debate.                                                                                                                                                               |
-| **Shareable link**          | Read-only full URL from `sm` up; path only on a narrow screen. Full-width result row. | **Keep**   | Candidates need to see the URL they will share, including the ending.                                                                                                          |
+| **Your application link**   | Read-only full URL from `sm` up; path only on a narrow screen. Full-width result row. | **Keep**   | Candidates need to see the URL they will share, including the ending.                                                                                                          |
 | **Checking… / link errors** | Live status while the ending is checked.                                              | **Keep**   | Required for trust when the ending is auto-built.                                                                                                                              |
 | **Edit link**               | Was a toggle for order and ending.                                                    | **Remove** | Reversed the same day: order and ending stay visible on the share-link row.                                                                                                    |
 | **How the link reads**      | Custom dropdown: **Company + Role** or **Role + Company**.                            | **Keep**   | An info icon beside the title opens that explanation in a dialog. **Company + Role** is the default. Revisit after username-in-URL work if the path already brands the person. |
@@ -51,13 +51,17 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 | **Portfolio — Show / Hidden**     | Omit portfolio on this page.                 | **Keep**     | In-field eye toggle; same pattern as location.                                                                                                           |
 | **LinkedIn** (URL field)          | Read-only from profile (before Portfolio).   | **Keep**     | Empty points to Profile; URL soft warnings stay on Profile.                                                                                              |
 | **LinkedIn — Show / Hidden**      | Omit LinkedIn on this page.                  | **Keep**     | In-field eye toggle; same pattern as location.                                                                                                           |
+| **Email** (value)                 | Read-only from profile (editable on Profile). | **Keep**    | Profile email is prefilled from the account email; empty points to Profile.                                                                              |
+| **Email — Show / Hidden**         | Omit email on this page.                     | **Keep**     | In-field eye; create defaults from profile `default_show_email`.                                                                                         |
+| **Phone** (value)                 | Read-only from profile.                      | **Keep**     | Empty points to Profile.                                                                                                                                 |
+| **Phone — Show / Hidden**         | Omit phone on this page.                     | **Keep**     | In-field eye; create defaults from profile `default_show_phone`.                                                                                         |
 
 ### About you — shipped shape
 
 1. **Edit profile** inline under the About you title; saving the application does not PUT the profile.
 2. First / last name: read-only; always shown when present; required to publish (before Picture); slightly stronger field fill than show/hide rows.
 3. Picture: show switch (plus “Add on Profile” when missing).
-4. Location / LinkedIn / Portfolio: read-only + in-field eye when non-empty; application only stores shown values.
+4. Email / Phone / Location / LinkedIn / Portfolio: read-only + in-field eye when non-empty; application only stores shown values. Profile sets default show prefs for new applications.
 
 
 ---
@@ -71,7 +75,7 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 | **Manage library**                                    | Opens the primary CV modal.                    | **Keep**               | Needed so create does not dead-end when the library is empty.                                                                                     |
 | **A PDF just for this role**                          | Tailored upload for this application.          | **Keep**               | Core differentiator vs a single static CV.                                                                                                        |
 | **Choose a PDF** (file picker)                        | Selects the tailored file.                     | **Keep**               | Required when tailored is chosen.                                                                                                                 |
-| **Recruiters download it as…**                        | Shows download filename at the bottom of Résumé (result row). | **Keep** | Same pattern as Shareable link; default is `{First}-{Last}-{Slug}.pdf`. Missing parts use muted `First-Last` / `Company-Role` placeholders. |
+| **Recruiters download it as…**                        | Shows download filename at the bottom of Your Résumé (result row). | **Keep** | Same pattern as Your application link; default is `{First}-{Last}-{Slug}.pdf`. Missing parts use muted `First-Last` / `Company-Role` placeholders. |
 | **Original name** switch                              | Switches generated name vs original filename.                 | **Keep** | Compact switch on the download-name row; default off (generated).         |
 
 ---

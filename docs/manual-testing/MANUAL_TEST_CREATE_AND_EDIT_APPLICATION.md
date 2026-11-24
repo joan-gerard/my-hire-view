@@ -24,7 +24,8 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 ## 1. Create — page chrome (`/admin/new`)
 
 - [ ] Title **New application** and a short description sit above the form; content is no wider than `2xl`
-- [ ] Sections are **Your link**, **About you** (optional), **Résumé**, and **Pitch** — each a heading above its own card
+- [ ] Sections are **Your link**, **About you**, **Your Résumé**, and **Your Pitch** — each a heading above its own card
+- [ ] Required fields show a red asterisk: Company, Role, Link ending, First name, Last name, Your Résumé (section), YouTube
 - [ ] Inside a card, label is on the left and control on the right; on a narrow screen the label sits above the control
 - [ ] **Cancel** and **Save Draft** sit at the bottom; **Publish** appears only when the full publish set is ready
 - [ ] Save stays greyed out until company, role, and share link are ready (résumé / YouTube / names are not required for draft); a line above the buttons names what is missing
@@ -37,12 +38,12 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 
 ## 2. Create — Your link
 
-- [ ] Rows: **Company**, **Role**, **How the link reads**, **Link ending**, **Shareable link**
+- [ ] Rows: **Company**, **Role**, **How the link reads**, **Link ending**, **Your application link**
 - [ ] Status dots sit **before** the labels: Company / Role / Link ending grey until valid, then green; **How the link reads** is always green
 - [ ] **How the link reads** is a custom dropdown: **Company + Role** (default) or **Role + Company**; info icon opens a dialog (close from the title icon, no Close button)
 - [ ] **Link ending** is pre-filled; info icon explains uniqueness; **Use the suggested link** appears after a manual edit and hides when the ending matches the suggestion again
 - [ ] **Checking…** (grey italic) while the ending is checked; empty / invalid / taken / failed states show on that row
-- [ ] **Shareable link** is a full-width tinted result: full URL from `sm` up (wrapping so the ending stays visible); path-only on a narrow screen; copy icon copies the full URL when ready
+- [ ] **Your application link** is a full-width tinted result: full URL from `sm` up (wrapping so the ending stays visible); path-only on a narrow screen; copy icon copies the full URL when ready
 - [ ] Changing company/role rebuilds the ending in auto mode; a manual ending is kept until Reset / Use suggested
 - [ ] Save while still checking, or while unavailable, is blocked — no application row created
 
@@ -66,7 +67,7 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 
 - [ ] **Library** shows the selected primary (or empty copy) with **Manage**; **This role** has **Choose a PDF** / **Manage**
 - [ ] Chosen source tip is green; the other is grey
-- [ ] Once a file is chosen: a bottom **Recruiters download it as** row (like Shareable link) shows generated `{First}-{Last}-{Slug}.pdf` (muted `First-Last` / `Company-Role` placeholders until real values exist); **Original name** switch uses the PDF filename instead
+- [ ] Once a file is chosen: a bottom **Recruiters download it as** row (like Your application link) shows generated `{First}-{Last}-{Slug}.pdf` (muted `First-Last` / `Company-Role` placeholders until real values exist); **Original name** switch uses the PDF filename instead
 - [ ] While the library is loading, library / tailored choices stay disabled (create only); unlock within ~12s if the request hangs
 - [ ] **YouTube** tip is grey until a valid URL, then green; empty YouTube does **not** block draft Save; invalid URL still blocks Save if entered
 - [ ] Draft save with only company + role (+ auto link) opens that draft’s edit page; owner preview of a draft without résumé still shows a placeholder; Publish without the full set fails with a clear required list
@@ -89,7 +90,7 @@ For leave-confirm, draft restore, and CV-mode edges, use [MANUAL_TEST_CREATE_APP
 
 - [ ] Open from the dashboard ⋯ **Edit**
 - [ ] Loading skeleton matches `/admin/new` (one-page form shell)
-- [ ] Same one-page layout as create: title **Edit application**, sections **Your link**, **About you**, **Résumé**, **Pitch**, no wider than `2xl`
+- [ ] Same one-page layout as create: title **Edit application**, sections **Your link**, **About you**, **Your Résumé**, **Your Pitch**, no wider than `2xl`
 - [ ] No sticky split-edit header, no five-band guidance panels, no Review summary step
 - [ ] No wizard Continue / Back, no step rail, no leave-confirm browser draft (create-only)
 - [ ] Submit label is **Save Draft** for drafts and **Save application** for active apps
