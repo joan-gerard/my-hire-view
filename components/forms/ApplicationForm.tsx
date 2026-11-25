@@ -2338,6 +2338,8 @@ export default function ApplicationForm({
                     error={errors.company}
                     required
                     autoComplete="organization"
+                    placeholder="e.g. Spotify"
+                    autoFocus={!isEdit}
                   />
                 ),
               },
@@ -2361,6 +2363,7 @@ export default function ApplicationForm({
                     error={errors.role}
                     required
                     autoComplete="organization-title"
+                    placeholder="e.g. Software Engineer"
                   />
                 ),
               },

@@ -39,6 +39,7 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 ## 2. Create — Your link
 
 - [ ] Default rows: **Company**, **Role**, **Your application link**, then **Customize link** (order/ending hidden)
+- [ ] Create: Company is autofocused; placeholders **e.g. Spotify** / **e.g. Software Engineer**
 - [ ] Status dots sit **before** the labels: Company / Role grey until valid, then green; when Customize is open, Link ending grey until valid then green; **How the link reads** is always green
 - [ ] **Customize link** expands **How the link reads** and **Link ending**; label becomes **Hide link options**
 - [ ] **How the link reads** is a custom dropdown: **Company + Role** (default) or **Role + Company**; info icon opens a dialog (close from the title icon, no Close button)
