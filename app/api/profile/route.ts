@@ -17,6 +17,11 @@ import {
   tryAcquireUserProfilePictureSlot,
 } from "@/lib/rate-limit";
 import {
+  hasVisibleRecruiterContact,
+  RECRUITER_CONTACT_PROFILE_WARNING,
+  resolveApplicationContactEmail,
+} from "@/lib/utils/profile-contact";
+import {
   formatProfileUpdateZodError,
   PROFILE_NAME_MAX_LENGTH,
   profileUpdateSchema,
@@ -245,6 +250,26 @@ export async function PUT(request: NextRequest) {
     }
     merged.first_name = firstName;
     merged.last_name = lastName;
+
+    const effectiveContactEmail = resolveApplicationContactEmail(
+      { contact_email: merged.contact_email as string | null },
+      user.email,
+    );
+    if (
+      !hasVisibleRecruiterContact({
+        email: effectiveContactEmail,
+        phone: merged.phone as string | null,
+        linkedin_url: merged.linkedin_url as string | null,
+        showEmail: Boolean(merged.default_show_email),
+        showPhone: Boolean(merged.default_show_phone),
+        showLinkedin: Boolean(merged.default_show_linkedin),
+      })
+    ) {
+      return NextResponse.json(
+        { error: RECRUITER_CONTACT_PROFILE_WARNING },
+        { status: 400 },
+      );
+    }
 
     const { data, error } = await supabase
       .from("profiles")

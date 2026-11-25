@@ -327,7 +327,7 @@ View count and `last_viewed_at` are only updated when the viewer is not the appl
 
 ### 6.4 Profile and snapshot into applications
 
-- **Profile page:** User opens `/admin/profile`. Server fetches `profiles` row by `user_id` (no row yet is allowed). Client form (ProfileForm) shows first name, last name, email (prefilled from account email when unset), phone, location, portfolio URL, LinkedIn URL, and default-show toggles for new applications. On save, client PUTs to `/api/profile` with the edited fields; API validates URLs (http/https) and email and upserts the profile row.
+- **Profile page:** User opens `/admin/profile`. Server fetches `profiles` row by `user_id` (no row yet is allowed). Client form (ProfileForm) shows first name, last name, email (prefilled from account email when unset), phone, location, portfolio URL, LinkedIn URL, with Visible/Hidden next to picture and each optional detail for new-application defaults. On save, client PUTs to `/api/profile` with the edited fields; API validates URLs (http/https) and email and upserts the profile row.
 - **Profile API:** GET returns the current user’s profile row, creating one with nulls if missing. PUT accepts partial updates, merges with existing row, and upserts.
 - **Candidate fields on create (POST):** The form shows the profile. Names are always sent. Location, portfolio, and LinkedIn are sent when shown and sent as null when hidden or empty. The client does not edit those strings. If a field is omitted, the API falls back to a profile snapshot.
 - **Candidate fields on edit (PUT):** The form waits for the profile, then shows those live values. Show/hide for email, phone, location, portfolio, and LinkedIn starts from whether the saved application row currently has a value. The next save writes the current profile value, or null when hidden.
@@ -359,7 +359,7 @@ my-hire-view/
 ├── components/
 │   ├── admin/                  # AdminDashboardEmpty, AdminDashboardError, AdminPageSkeleton / AdminDashboardSkeleton, AdminHeader, ApplicationCard, SearchBar
 │   ├── auth/                   # SignOutButton
-│   ├── forms/                  # ApplicationForm, ApplicationFormSinglePageLayout, CandidateFieldsSection, ApplicationFormActions, ProfilePictureField, SlugOrderDropdown, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, TailoredCvModal, ProfileForm, YouTubeUrlInput
+│   ├── forms/                  # ApplicationForm, ApplicationFormSinglePageLayout, ApplicationFormPreviewDialog, CandidateFieldsSection, ApplicationFormActions, ProfilePictureField, SlugOrderDropdown, CvSourceField, FileUpload, PrimaryCvLibrarySection, PrimaryCvLibraryModal, PrimaryCvUsedByPreview, TailoredCvModal, ProfileForm, YouTubeUrlInput
 │   ├── pdf/                    # PDFViewer
 │   ├── public/                 # ApplicationPageHeader, CvUnavailableWithRetry, faq/constants (homepage FAQ copy), how-it-works/constants (step videos), pricing/constants (homepage #pricing tiers)
 │   ├── ui/                     # Button, Input, Textarea

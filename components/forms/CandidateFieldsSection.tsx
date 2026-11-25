@@ -31,6 +31,11 @@ export interface CandidateFieldsSectionProps {
   layout?: "stack" | "rows";
   /** Rendered after names and before location / links (e.g. Picture). */
   afterNames?: ReactNode;
+  /**
+   * Red asterisk on First / Last name. On create/draft, names are publish-only
+   * so leave this false; live edit needs them to save.
+   */
+  markNamesRequired?: boolean;
 }
 
 export const RECRUITER_INFO_FIELDS: {
@@ -174,6 +179,7 @@ export default function CandidateFieldsSection({
   onIncludeChange,
   layout = "stack",
   afterNames,
+  markNamesRequired = true,
 }: CandidateFieldsSectionProps) {
   const tipFor = (field: CandidateFieldKey) => {
     const hasValue = Boolean((values[field] ?? "").trim());
@@ -195,7 +201,7 @@ export default function CandidateFieldsSection({
           tip={firstNameTip.tip}
           tipTone={firstNameTip.tone}
           align="field"
-          required
+          required={markNamesRequired}
         >
           <ReadOnlyValue
             id="application-first-name"
@@ -214,7 +220,7 @@ export default function CandidateFieldsSection({
           tip={lastNameTip.tip}
           tipTone={lastNameTip.tone}
           align="field"
-          required
+          required={markNamesRequired}
         >
           <ReadOnlyValue
             id="application-last-name"
@@ -263,7 +269,7 @@ export default function CandidateFieldsSection({
         <p className="flex items-center gap-1.5 text-sm font-medium leading-[18px] text-[var(--ink)]">
           <FieldLabelTip tip={firstNameTip.tip} tone={firstNameTip.tone} />
           First name
-          <RequiredFieldMark />
+          {markNamesRequired ? <RequiredFieldMark /> : null}
         </p>
         <ReadOnlyValue
           id="application-first-name"
@@ -279,7 +285,7 @@ export default function CandidateFieldsSection({
         <p className="flex items-center gap-1.5 text-sm font-medium leading-[18px] text-[var(--ink)]">
           <FieldLabelTip tip={lastNameTip.tip} tone={lastNameTip.tone} />
           Last name
-          <RequiredFieldMark />
+          {markNamesRequired ? <RequiredFieldMark /> : null}
         </p>
         <ReadOnlyValue
           id="application-last-name"

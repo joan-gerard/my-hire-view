@@ -6,7 +6,7 @@
 export type UploadFormKind = "cv" | "profile-picture";
 
 const DEFAULT_400: Record<UploadFormKind, string> = {
-  cv: "That CV couldn’t be uploaded. Check it’s a PDF under 3MB and try again.",
+  cv: "That résumé couldn’t be uploaded. Check it’s a PDF under 3MB and try again.",
   "profile-picture":
     "That picture couldn’t be uploaded. Use a JPEG, PNG, or WebP up to 5 MB.",
 };
@@ -15,13 +15,13 @@ const DEFAULT_429 =
   "Too many uploads. Please wait a moment and try again.";
 
 const DEFAULT_500: Record<UploadFormKind, string> = {
-  cv: "We couldn’t upload your CV. Please try again in a moment.",
+  cv: "We couldn’t upload your résumé. Please try again in a moment.",
   "profile-picture":
     "We couldn’t upload your picture. Please try again in a moment.",
 };
 
 const NETWORK: Record<UploadFormKind, string> = {
-  cv: "Network error while uploading your CV. Check your connection and try again.",
+  cv: "Network error while uploading your résumé. Check your connection and try again.",
   "profile-picture":
     "Network error while uploading your picture. Check your connection and try again.",
 };

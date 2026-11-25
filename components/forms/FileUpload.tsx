@@ -12,7 +12,7 @@ interface FileUploadProps {
   /** When false, hide the View link (e.g. CV missing in storage). When true or undefined, show View if value is set. Missing-file retry lives on CvSourceField. */
   cvUrlExists?: boolean;
   error?: string;
-  /** Hide the top "CV (PDF)" label when nested in CvSourceField. */
+  /** Hide the top "Résumé (PDF)" label when nested in CvSourceField. */
   hideLabel?: boolean;
   /** Custom label for the file input affordance (accessibility / helper text). */
   chooseLabel?: string;
@@ -36,7 +36,7 @@ export default function FileUpload({
   cvUrlExists = true,
   error,
   hideLabel = false,
-  chooseLabel = "CV (PDF)",
+  chooseLabel = "Résumé (PDF)",
   uploading = false,
   preparing = false,
   disabled = false,
@@ -209,7 +209,7 @@ export default function FileUpload({
           >
             <div className="flex items-center justify-between border-b border-[var(--ink)]/10 px-4 py-2">
               <span className="text-sm font-medium text-[var(--ink)]">
-                CV preview
+                Résumé preview
               </span>
               <button
                 type="button"
@@ -223,7 +223,7 @@ export default function FileUpload({
             <div className="p-2">
               <iframe
                 src={previewUrl!}
-                title="CV preview"
+                title="Résumé preview"
                 className="h-[70vh] w-full rounded border border-[var(--ink)]/10"
               />
             </div>
@@ -232,7 +232,7 @@ export default function FileUpload({
 
         {showSaved && cvUrlExists && (
           <p className="text-sm text-[var(--muted)]">
-            CV uploaded:{' '}
+            Résumé uploaded:{' '}
             <a
               href={value}
               target="_blank"
@@ -248,10 +248,10 @@ export default function FileUpload({
             role="alert"
             className="rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--status-warning-fg)]"
           >
-            <p className="font-semibold">CV file not found in storage</p>
+            <p className="font-semibold">Résumé file not found in storage</p>
             <p className="mt-0.5 text-[var(--status-warning-fg)]">
               The file may have been removed from storage (e.g. Cloudflare R2).
-              Please upload a new CV below to replace it.
+              Please upload a new résumé below to replace it.
             </p>
           </div>
         )}

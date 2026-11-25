@@ -103,6 +103,9 @@ const EXISTING_APP = {
   video_url: "https://youtube.com/watch?v=old",
   first_name: "Joan",
   last_name: "Gerard",
+  email: "joan@example.com",
+  phone: null as string | null,
+  linkedin_url: null as string | null,
   primary_cv_id: null as string | null,
   status: "active",
 };
@@ -117,6 +120,9 @@ function ownershipRow(
     video_url: string;
     first_name: string | null;
     last_name: string | null;
+    email: string | null;
+    phone: string | null;
+    linkedin_url: string | null;
     cv_type: string;
     primary_cv_id: string | null;
     status: string;
@@ -131,6 +137,9 @@ function ownershipRow(
     video_url: EXISTING_APP.video_url,
     first_name: EXISTING_APP.first_name,
     last_name: EXISTING_APP.last_name,
+    email: EXISTING_APP.email,
+    phone: EXISTING_APP.phone,
+    linkedin_url: EXISTING_APP.linkedin_url,
     cv_type: "tailored",
     primary_cv_id: null as string | null,
     status: "active",
@@ -560,8 +569,34 @@ describe("PUT /api/applications", () => {
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toMatch(/Required before publishing/);
-    expect(json.error).toMatch(/Your Résumé/);
+    expect(json.error).toMatch(/Your résumé/);
     expect(json.error).toMatch(/YouTube intro/);
+  });
+
+  it("rejects live save when no visible recruiter contact remains", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([
+        ok(
+          ownershipRow({
+            email: null,
+            phone: null,
+            linkedin_url: null,
+          }),
+        ),
+      ]),
+    );
+
+    const response = await PUT(
+      makePutRequest({
+        id: APP_ID,
+        email: null,
+        phone: null,
+        linkedin_url: null,
+      }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/Contact method/);
   });
 
   it("sets status archived on archive", async () => {

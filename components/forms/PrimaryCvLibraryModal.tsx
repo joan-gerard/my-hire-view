@@ -21,7 +21,7 @@ export interface PrimaryCvLibraryModalProps {
 }
 
 /**
- * Modal to manage the primary CV library from application new/edit flows
+ * Modal to manage the résumé library from application new/edit flows
  * so users need not leave for /admin/profile.
  */
 export default function PrimaryCvLibraryModal({
@@ -80,7 +80,7 @@ export default function PrimaryCvLibraryModal({
             id={titleId}
             className="font-heading text-lg font-semibold tracking-[-0.02em]"
           >
-            Primary CV library
+            Résumé library
           </h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             Upload up to {PRIMARY_CV_MAX_PER_USER} résumé PDFs to reuse across

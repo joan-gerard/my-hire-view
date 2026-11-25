@@ -62,7 +62,8 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 2. **Repeat create / edit:** after the first **live (active)** application, About you collapses to one summary line (`Showing photo, name, portfolio`) with **Edit** to expand and **Hide details** to collapse again — when Preferences **Collapse About you after your first live application** is on (default). Drafts alone do not collapse it; turning the preference off keeps About you fully expanded.
 3. First / last name: read-only; always shown when present; required to publish (before Picture); slightly stronger field fill than show/hide rows.
 4. Picture: VisibilityToggle (Visible / Hidden) under the preview (plus “Add on Profile” when missing).
-5. Email / Phone / Location / LinkedIn / Portfolio: read-only + VisibilityToggle when non-empty; application only stores shown values. Profile sets default show prefs for new applications.
+5. Email / Phone / Location / LinkedIn / Portfolio: read-only + VisibilityToggle when non-empty; application only stores shown values. Profile places the same Visible/Hidden control next to each detail (and the picture) for new-application defaults.
+6. **Contact safety net:** at least one of email, phone, or LinkedIn must be filled and Visible before **Publish** / live Save (draft Save still allowed). A warning appears in About you when none are reachable. Profile save requires the same for new-application defaults.
 
 
 ---
@@ -71,12 +72,12 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 
 | Control                                               | What it does today                             | Call                   | Feedback                                                                                                                                          |
 | ----------------------------------------------------- | ---------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Résumé** (one source row)                           | Radios: Use library CV / Upload one for this role. | **Keep**           | Single row; hint that upload overrides library on this page only. Filename truncates with ellipsis + **Preview**.                                 |
-| **Use library CV**                                    | Pick a primary CV from the library.                | **Keep**           | Core product.                                                                                                                                     |
-| **Manage library**                                    | Opens the primary CV modal.                        | **Keep**           | Needed so create does not dead-end when the library is empty.                                                                                     |
-| **Upload one for this role**                          | Tailored upload for this application.              | **Keep**           | Core differentiator; copy makes the override explicit.                                                                                            |
+| **Résumé** (one source row)                           | Radios: Use library résumé / Upload one for this role. | **Keep**           | Single row; short “Choose one.” Filename truncates with ellipsis + **Preview**. Product copy: **résumé**, not CV. |
+| **Use library résumé**                                | Pick a résumé from the library.                    | **Keep**           | Create default (Free path), including when the library is empty — shows “No résumés…” + **Manage library**. |
+| **Manage library**                                    | Opens the résumé library modal.                    | **Keep**           | Needed so create does not dead-end when the library is empty.                                                                                     |
+| **Upload one for this role**                          | Tailored upload for this application (**Pro**).    | **Keep**           | **Pro** label (paid unlock per pricing). One helper: replaces the library résumé on this application only. |
 | **Choose a PDF** (file picker)                        | Selects the tailored file.                         | **Keep**           | Opens the PDF dialog; the tailored radio does not. Required before publish when tailored is chosen.                                              |
-| **Recruiters download it as…**                        | Shows download filename at the bottom of Your Résumé (result row). | **Keep** | Same pattern as Your application link; truncates with ellipsis. Default `{First}-{Last}-{Slug}.pdf` with muted placeholders. |
+| **Recruiters download it as…**                        | Shows download filename at the bottom of Your résumé (result row). | **Keep** | Same pattern as Your application link; truncates with ellipsis. Default `{First}-{Last}-{Slug}.pdf` with muted placeholders. |
 | **Original name** switch                              | Switches generated name vs original filename.      | **Keep**           | Compact switch on the download-name row; default off (generated).                                                                                 |
 
 ---

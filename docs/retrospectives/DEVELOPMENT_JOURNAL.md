@@ -99,3 +99,13 @@ Feedback that About you “says one thing and does another” landed: editable i
 Leave confirm now only fires when there is real progress, and covers Cancel, Edit profile, admin links, and Back on create and dirty edit. The dialog can save a draft when company, role, and the link are ready, then continues to the page you were heading to.
 
 Contact was the next honesty gap. The product promises recruiters a page they can act on, but About you only offered presence — name, location, links — not email or phone. Feedback asked for contact that is visible and controllable on the form. We kept the profile-owned pattern: email is a normal editable profile field (prefilled from the account email, changeable like a name), plus an optional phone. Default show/hide for email, phone, picture, location, LinkedIn, and portfolio lives on the profile so new applications start from a preference, not a guess. Create and edit still only choose what this page includes; `/view` shows what was snapshotted. Field inventory: [CREATE_FORM_FIELD_TRIM.md](../product/CREATE_FORM_FIELD_TRIM.md).
+
+---
+
+## 25 November 2026
+
+Closed the remaining F41 gap: Publish on a filled create/draft form went live without a way to see the page first (especially before the first save, when there is no share URL to open). **Preview** opens an in-form recruiter preview from current form values (optional Publish there). Footer **Publish** goes live directly — routing both buttons through preview confused people who expected Publish to publish. Dashboard / draft-banner Preview stays the saved-page path.
+
+Feedback then caught that asterisks and the footer only taught the draft bar — Publish hid until ready, so people never learned publishing needs a résumé and video. Asterisks on create/draft now mean save-required only (Company, Role). **Publish** stays visible but disabled with a **To publish, add…** line; the intro states both bars in plain language.
+
+Same session we started standardizing product language on **Résumé** instead of CV on the create/edit surface, with `F42-130` left for the rest of the app.

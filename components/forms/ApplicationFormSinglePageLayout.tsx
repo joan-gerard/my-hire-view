@@ -135,12 +135,19 @@ interface ApplicationFormSinglePageLayoutProps {
   actions: ReactNode;
   cancelHref: string;
   /**
-   * Prefix for the missing-fields line, e.g. "Required before saving".
+   * Prefix for the missing-fields line, e.g. "Required before saving draft".
    * Shown only when `blockedItems` is non-empty.
    */
   blockedPrefix?: string | null;
   /** Each item is a link that scrolls to its field. */
   blockedItems?: ApplicationFormBlockedItem[];
+  /**
+   * Prefix for publish gaps on create/draft, e.g. "To publish, add".
+   * Shown only when `publishItems` is non-empty.
+   */
+  publishPrefix?: string | null;
+  /** Missing publish pieces — each scrolls to its field. */
+  publishItems?: ApplicationFormBlockedItem[];
   /** Plain status when save is idle (e.g. "No changes to save.") — not a link. */
   blockedNote?: string | null;
 }
@@ -292,15 +299,19 @@ export default function ApplicationFormSinglePageLayout({
   cancelHref,
   blockedPrefix = null,
   blockedItems = [],
+  publishPrefix = null,
+  publishItems = [],
   blockedNote = null,
 }: ApplicationFormSinglePageLayoutProps) {
   const groups = groupRows(rows);
   const showBlockedItems = blockedItems.length > 0;
-  const showBlockedNote = !showBlockedItems && Boolean(blockedNote);
+  const showPublishItems = publishItems.length > 0;
+  const showBlockedNote =
+    !showBlockedItems && !showPublishItems && Boolean(blockedNote);
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      <div className="space-y-8 pb-28">
+      <div className="space-y-8 pb-36">
         <header>
           <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--ink)]">
             {title}
@@ -384,6 +395,26 @@ export default function ApplicationFormSinglePageLayout({
               >
                 {blockedPrefix ? `${blockedPrefix}: ` : null}
                 {blockedItems.map((item, index) => (
+                  <span key={item.id}>
+                    {index > 0 ? ", " : null}
+                    <button
+                      type="button"
+                      onClick={item.onActivate}
+                      className="cursor-pointer text-[var(--muted)] underline decoration-[var(--ink)]/25 underline-offset-2 hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                    >
+                      {item.label}
+                    </button>
+                  </span>
+                ))}
+              </p>
+            ) : null}
+            {showPublishItems ? (
+              <p
+                className="max-w-lg text-right text-sm leading-snug text-[var(--muted)]"
+                aria-live="polite"
+              >
+                {publishPrefix ? `${publishPrefix} ` : null}
+                {publishItems.map((item, index) => (
                   <span key={item.id}>
                     {index > 0 ? ", " : null}
                     <button

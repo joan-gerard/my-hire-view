@@ -181,7 +181,7 @@ export default function PrimaryCvLibrarySection({
         return false;
       }
       if (!res.ok) {
-        setError(json.error ?? "Failed to load primary CVs");
+        setError(json.error ?? "Failed to load résumé library");
         return false;
       }
       applyItems((json.data as PrimaryCv[]) ?? []);
@@ -193,7 +193,7 @@ export default function PrimaryCvLibrarySection({
       ) {
         return false;
       }
-      setError("Failed to load primary CVs");
+      setError("Failed to load résumé library");
       return false;
     } finally {
       if (
@@ -278,7 +278,7 @@ export default function PrimaryCvLibrarySection({
       const json = await res.json().catch(() => ({}));
       if (!mountedRef.current) return false;
       if (!res.ok) {
-        setError(json.error ?? "Failed to delete primary CV");
+        setError(json.error ?? "Failed to delete library résumé");
         return false;
       }
       const affected = Number(json.applications_affected ?? 0);
@@ -297,7 +297,7 @@ export default function PrimaryCvLibrarySection({
       return true;
     } catch {
       if (mountedRef.current) {
-        setError("Failed to delete primary CV");
+        setError("Failed to delete library résumé");
       }
       return false;
     } finally {
@@ -341,13 +341,13 @@ export default function PrimaryCvLibrarySection({
       {!embedded && (
         <>
           <h2 className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]">
-            Primary CVs
+            Résumé library
           </h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             Upload up to {PRIMARY_CV_MAX_PER_USER} résumé PDFs to reuse on new
-            applications. Deleting a primary CV removes it from storage;
-            applications that still pointed at it will show a missing-CV warning
-            on the dashboard.
+            applications. Deleting a library résumé removes it from storage;
+            applications that still pointed at it will show a missing-résumé
+            warning on the dashboard.
           </p>
         </>
       )}
@@ -371,7 +371,7 @@ export default function PrimaryCvLibrarySection({
         <p
           className={`${embedded && !error ? "mt-0" : "mt-4"} text-sm text-[var(--muted)]`}
         >
-          No primary CVs yet.
+          No library résumés yet.
         </p>
       ) : (
         <ul
@@ -511,11 +511,11 @@ export default function PrimaryCvLibrarySection({
             loading
               ? "Wait for the library to finish loading"
               : atLimit
-                ? `Limit of ${PRIMARY_CV_MAX_PER_USER} primary CVs reached`
+                ? `Limit of ${PRIMARY_CV_MAX_PER_USER} library résumés reached`
                 : undefined
           }
         >
-          {uploading ? "Uploading…" : "Upload primary CV"}
+          {uploading ? "Uploading…" : "Upload library résumé"}
         </Button>
         {atLimit && (
           <p className="mt-2 text-xs text-[var(--muted)]">
@@ -528,7 +528,7 @@ export default function PrimaryCvLibrarySection({
       {!embedded && (
         <ConfirmDialog
           open={pendingDelete !== null}
-          title="Delete primary CV?"
+          title="Delete library résumé?"
           message={deleteMessage}
           confirmLabel={deleteConfirmLabel}
           cancelLabel="Cancel"

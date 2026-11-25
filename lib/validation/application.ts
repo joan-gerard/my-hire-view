@@ -1,4 +1,8 @@
 import {
+  applicationHasVisibleRecruiterContact,
+  RECRUITER_CONTACT_BLOCKER_NAME,
+} from "@/lib/utils/profile-contact";
+import {
   SLUG_SEGMENT_ORDER_VALUES,
   validateSlugFormat,
 } from "@/lib/utils/slug-generate";
@@ -324,6 +328,10 @@ export type ApplicationCompletenessFields = {
   last_name?: string | null;
   cv_type?: string | null;
   primary_cv_id?: string | null;
+  /** Snapshot contact — null when Hidden / unset. */
+  email?: string | null;
+  phone?: string | null;
+  linkedin_url?: string | null;
 };
 
 /**
@@ -347,11 +355,20 @@ export function getApplicationPublishBlockers(
   if (!app.last_name?.trim()) blockers.push("Last name");
   const cvType = app.cv_type === "primary" ? "primary" : "tailored";
   if (cvType === "primary") {
-    if (!app.primary_cv_id || !app.cv_url?.trim()) blockers.push("Your Résumé");
+    if (!app.primary_cv_id || !app.cv_url?.trim()) blockers.push("Your résumé");
   } else if (!app.cv_url?.trim()) {
-    blockers.push("Your Résumé");
+    blockers.push("Your résumé");
   }
   if (!app.video_url?.trim()) blockers.push("YouTube intro");
+  if (
+    !applicationHasVisibleRecruiterContact({
+      email: app.email,
+      phone: app.phone,
+      linkedin_url: app.linkedin_url,
+    })
+  ) {
+    blockers.push(RECRUITER_CONTACT_BLOCKER_NAME);
+  }
   return blockers;
 }
 

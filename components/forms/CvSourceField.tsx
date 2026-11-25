@@ -86,7 +86,7 @@ interface CvSourceFieldProps {
   /** Disable file choose/remove for the full Save lifecycle (not only upload). */
   disabled?: boolean;
   /**
-   * `checklist` is one Résumé row: Use library CV / Upload one for this role,
+   * `checklist` is one Résumé row: Use library résumé / Upload one for this role,
    * plus the download-name result row.
    */
   variant?: "default" | "checklist";
@@ -285,10 +285,10 @@ export default function CvSourceField({
   const switchConfirm = (
     <ConfirmDialog
       open={switchToPrimaryConfirmOpen}
-      title="Replace tailored CV with a primary CV?"
-      message="Saving with a primary CV will remove this application’s tailored PDF from storage. Your profile primary library is unchanged."
-      confirmLabel="Choose a primary CV"
-      cancelLabel="Keep tailored CV"
+      title="Replace tailored résumé with a library résumé?"
+      message="Saving with a library résumé will remove this application’s tailored PDF from storage. Your profile résumé library is unchanged."
+      confirmLabel="Choose a library résumé"
+      cancelLabel="Keep tailored résumé"
       onConfirm={onConfirmSwitchToPrimary}
       onCancel={onCancelSwitchToPrimary}
     />
@@ -306,12 +306,12 @@ export default function CvSourceField({
           tip={hasCvSelection ? FIELD_READY_TIP : FIELD_IDLE_TIP}
           tipTone={hasCvSelection ? "ready" : "idle"}
           align="top"
-          hint="Choose one. An upload for this role replaces the library CV on this page only."
+          hint="Choose one."
         >
           <div className="space-y-3">
             {lockCvSourceWhileLoading ? (
               <p className="text-sm text-[var(--muted)]" role="status">
-                Loading your CV library…
+                Loading your résumé library…
               </p>
             ) : null}
 
@@ -326,43 +326,41 @@ export default function CvSourceField({
               />
               <span className="min-w-0 flex-1 space-y-2">
                 <span className="block text-sm font-medium text-[var(--ink)]">
-                  Use library CV
+                  Use library résumé
                 </span>
-                {mode === "primary" ? (
-                  lockCvSourceWhileLoading ? null : activeCvFilename ? (
-                    <div className="space-y-2">
-                      <CvFilenamePreview
-                        name={activeCvFilename}
-                        previewUrl={activeCvPreviewUrl}
-                      />
-                      {canManageLibrary ? (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          disabled={disabled}
-                          onClick={() => setLibraryModalOpen(true)}
-                        >
-                          Manage library
-                        </Button>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-sm text-[var(--muted)]">
-                        No résumés in your library yet.
-                      </p>
-                      {canManageLibrary ? (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          disabled={disabled}
-                          onClick={() => setLibraryModalOpen(true)}
-                        >
-                          Manage library
-                        </Button>
-                      ) : null}
-                    </div>
-                  )
+                {lockCvSourceWhileLoading ? null : !hasPrimaryCvs ? (
+                  <div className="space-y-2">
+                    <p className="text-sm leading-5 text-[var(--ink)]/80">
+                      No résumés in your library yet.
+                    </p>
+                    {canManageLibrary ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={disabled}
+                        onClick={() => setLibraryModalOpen(true)}
+                      >
+                        Manage library
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : mode === "primary" && activeCvFilename ? (
+                  <div className="space-y-2">
+                    <CvFilenamePreview
+                      name={activeCvFilename}
+                      previewUrl={activeCvPreviewUrl}
+                    />
+                    {canManageLibrary ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={disabled}
+                        onClick={() => setLibraryModalOpen(true)}
+                      >
+                        Manage library
+                      </Button>
+                    ) : null}
+                  </div>
                 ) : null}
               </span>
             </label>
@@ -377,11 +375,19 @@ export default function CvSourceField({
                 onChange={selectTailored}
               />
               <span className="min-w-0 flex-1 space-y-2">
-                <span className="block text-sm font-medium text-[var(--ink)]">
-                  Upload one for this role
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-[var(--ink)]">
+                    Upload one for this role
+                  </span>
+                  <span
+                    className="rounded-md bg-[var(--paper)] px-1.5 py-0.5 text-xs font-semibold tracking-wide text-[var(--ink)]"
+                    title="Pro plan — per-role uploads are a paid unlock"
+                  >
+                    Pro
+                  </span>
                 </span>
-                <span className="block text-xs text-[var(--muted)]">
-                  Overrides the library CV for this application only.
+                <span className="block text-sm leading-5 text-[var(--ink)]/80">
+                  Replaces the library résumé on this application only.
                 </span>
                 {mode === "tailored" ? tailoredPicker : null}
               </span>
@@ -402,7 +408,7 @@ export default function CvSourceField({
             id="application-row-download-as"
             label="Recruiters download it as"
             layout="result"
-            hint="Generated from your link ending by default. Turn on Original name to keep the PDF’s filename."
+            hint="Built from your name, company, and role. Turn on Original name to keep the PDF’s filename."
             tip={FIELD_READY_TIP}
             tipTone="ready"
           >
@@ -419,7 +425,7 @@ export default function CvSourceField({
   return (
     <fieldset className={`space-y-4 sm:space-y-5 ${ADMIN_FIELDSET_CLASS}`}>
       <legend className="text-base font-semibold text-[var(--ink)]">
-        CV
+        Résumé
       </legend>
 
       {/* Current (edit) */}
@@ -441,11 +447,11 @@ export default function CvSourceField({
                     rel="noopener noreferrer"
                     className="min-w-0 truncate text-sm font-medium text-[var(--ink)] hover:underline"
                   >
-                    {currentFilename?.trim() || "CV.pdf"}
+                    {currentFilename?.trim() || "Résumé.pdf"}
                   </a>
                 ) : (
                   <span className="min-w-0 truncate text-sm font-medium text-[var(--ink)]">
-                    {currentFilename?.trim() || "CV.pdf"}
+                    {currentFilename?.trim() || "Résumé.pdf"}
                   </span>
                 )}
               </div>
@@ -454,9 +460,9 @@ export default function CvSourceField({
                   role="alert"
                   className="mt-2 rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--status-warning-fg)]"
                 >
-                  <p className="font-semibold">CV file missing</p>
+                  <p className="font-semibold">Résumé file missing</p>
                   <p className="mt-0.5 text-[var(--status-warning-fg)]">
-                    The file is no longer in storage. Choose a primary CV or
+                    The file is no longer in storage. Choose a library résumé or
                     upload a new tailored PDF below.
                   </p>
                   {onRetryCvCheck && (
@@ -501,17 +507,17 @@ export default function CvSourceField({
             </div>
           ) : (
             <p className="text-sm text-[var(--muted)]">
-              No CV on this application yet.
+              No résumé on this application yet.
             </p>
           )}
         </div>
       )}
 
-      {/* Change CV */}
+      {/* Change résumé */}
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-medium text-[var(--ink)]">
-            {isEdit ? "Change CV" : "Choose a CV"}
+            {isEdit ? "Change résumé" : "Choose a résumé"}
           </p>
           {canManageLibrary && (
             <Button
@@ -526,8 +532,7 @@ export default function CvSourceField({
         </div>
         {!isEdit && (
           <p className="text-sm text-[var(--muted)]">
-            Prefer a primary CV from your library so you can reuse it across
-            applications.
+            Prefer a library résumé so you can reuse it across applications.
           </p>
         )}
 
@@ -537,7 +542,7 @@ export default function CvSourceField({
               saved cv_type, so locking there only blocks switching. */}
           {lockCvSourceWhileLoading && (
             <p className="text-xs text-[var(--muted)]" role="status">
-              Loading your CV library…
+              Loading your résumé library…
             </p>
           )}
           <label
@@ -558,14 +563,14 @@ export default function CvSourceField({
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-[var(--ink)]">
                 {isEdit && currentType === "tailored"
-                  ? "Replace with a primary CV"
+                  ? "Replace with a library résumé"
                   : isEdit && currentType === "primary"
-                    ? "Use a different primary CV"
-                    : "Use a primary CV"}
+                    ? "Use a different library résumé"
+                    : "Use a library résumé"}
               </span>
               {!hasPrimaryCvs && !primaryCvsLoading && (
                 <span className="mt-0.5 block text-xs text-[var(--muted)]">
-                  No primary CVs yet.
+                  No library résumés yet.
                   {canManageLibrary ? (
                     <>
                       {" "}
@@ -588,7 +593,7 @@ export default function CvSourceField({
             <div className="ml-6 space-y-2">
               {primaryCvsLoading ? (
                 <p className="text-sm text-[var(--muted)]">
-                  Loading primary CVs…
+                  Loading library résumés…
                 </p>
               ) : hasPrimaryCvs ? (
                 <>
@@ -627,7 +632,7 @@ export default function CvSourceField({
                   onClick={() => setLibraryModalOpen(true)}
                   disabled={disabled}
                 >
-                  Upload primary CV
+                  Upload library résumé
                 </Button>
               ) : null}
             </div>
@@ -650,11 +655,11 @@ export default function CvSourceField({
             />
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-[var(--ink)]">
-                Upload a different CV
+                Upload a different résumé
               </span>
               <span className="mt-0.5 block text-xs text-[var(--muted)]">
                 Tailored files are removed from storage when you delete this
-                application or switch back to a primary CV.
+                application or switch back to a library résumé.
               </span>
             </span>
           </label>
@@ -678,8 +683,8 @@ export default function CvSourceField({
               Recruiters download it as
             </p>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              Generated from your link ending by default. Turn on Original name
-              to keep the PDF’s filename.
+              Built from your name, company, and role. Turn on Original name to
+              keep the PDF’s filename.
             </p>
           </div>
           {downloadNameControl}

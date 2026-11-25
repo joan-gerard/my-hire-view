@@ -37,13 +37,15 @@ import {
   applicationFormDirtySnapshot,
   hasApplicationFormDirtyChanges,
 } from "@/lib/utils/application-form-dirty";
+import { buildApplicationFormPreview } from "@/lib/utils/application-form-preview";
 import {
   hasLeaveRelevantDraftChanges,
   leaveRelevantDraftSnapshot,
 } from "@/lib/utils/leave-confirm";
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
+import ApplicationFormPreviewDialog from "./ApplicationFormPreviewDialog";
 import ApplicationFormSinglePageLayout, {
   ApplicationFormFieldRow,
   FIELD_IDLE_TIP,
@@ -78,6 +80,12 @@ import {
   buildAboutYouSummary,
   shouldCollapseAboutYouByDefault,
 } from "@/lib/utils/about-you-summary";
+import {
+  hasVisibleRecruiterContact,
+  RECRUITER_CONTACT_APPLICATION_WARNING,
+  RECRUITER_CONTACT_BLOCKER_NAME,
+  RECRUITER_CONTACT_PUBLISH_NOTE,
+} from "@/lib/utils/profile-contact";
 import { FiAlertCircle } from "react-icons/fi";
 
 function hasValue(v: string | null | undefined): boolean {
@@ -430,6 +438,8 @@ export default function ApplicationForm({
   const [submitIntent, setSubmitIntent] = useState<"save" | "publish" | null>(
     null,
   );
+  /** In-form recruiter preview before Publish (F41-127). */
+  const [previewOpen, setPreviewOpen] = useState(false);
   const isSubmittingRef = useRef(false);
   const uploadedPendingFileRef = useRef<{
     signature: string;
@@ -548,14 +558,14 @@ export default function ApplicationForm({
         return;
       }
       setPrimaryCvsLoading(false);
-      // No list yet — unlock tailored upload when defaults would have applied.
+      // Keep library as the default (Free tier); user can still pick tailored.
       if (
         shouldApplyInitialCvModeDefault({
           hasSavedCvType: Boolean(initialData?.cv_type),
           userChoseCvMode: cvModeUserChosenRef.current,
         })
       ) {
-        setCvMode("tailored");
+        setCvMode("primary");
       }
     }, PRIMARY_CV_LOAD_TIMEOUT_MS);
 
@@ -598,7 +608,16 @@ export default function ApplicationForm({
               cv_type: "primary",
             }));
           } else {
-            setCvMode("tailored");
+            // Empty library: still default to primary (Free path); Manage library CTA shows.
+            setCvMode("primary");
+            setSelectedPrimaryId(null);
+            setFormData((prev) => ({
+              ...prev,
+              cv_url: "",
+              cv_filename: null,
+              primary_cv_id: null,
+              cv_type: "primary",
+            }));
           }
         } else if (!initialData?.cv_type) {
           // Draft / explicit choice: keep mode when possible; repair stale primary ids.
@@ -606,13 +625,12 @@ export default function ApplicationForm({
           if (cvModeRef.current === "primary") {
             if (list.length === 0) {
               setSelectedPrimaryId(null);
-              setCvMode("tailored");
               setFormData((prev) => ({
                 ...prev,
                 cv_url: "",
                 cv_filename: null,
                 primary_cv_id: null,
-                cv_type: "tailored",
+                cv_type: "primary",
               }));
             } else {
               const currentSelected = selectedPrimaryIdRef.current;
@@ -675,13 +693,12 @@ export default function ApplicationForm({
     if (list.length === 0) {
       setSelectedPrimaryId(null);
       if (cvMode === "primary") {
-        setCvMode("tailored");
         setFormData((prev) => ({
           ...prev,
           cv_url: "",
           cv_filename: null,
           primary_cv_id: null,
-          cv_type: "tailored",
+          cv_type: "primary",
         }));
       }
       return;
@@ -939,6 +956,14 @@ export default function ApplicationForm({
 
   const hasFirstName = Boolean(formData.first_name?.trim());
   const hasLastName = Boolean(formData.last_name?.trim());
+  const hasRecruiterContact = hasVisibleRecruiterContact({
+    email: formData.email,
+    phone: formData.phone,
+    linkedin_url: formData.linkedin_url,
+    showEmail: include.email,
+    showPhone: include.phone,
+    showLinkedin: include.linkedin_url,
+  });
 
   /**
    * F40: draft create/edit only needs company, role, and a ready share link
@@ -954,7 +979,8 @@ export default function ApplicationForm({
     hasFirstName &&
     hasLastName &&
     hasUsableCv &&
-    hasValidVideo;
+    hasValidVideo &&
+    hasRecruiterContact;
   const requiredReady = requiresPublishCompleteSet
     ? publishSaveReady
     : draftSaveReady;
@@ -969,9 +995,13 @@ export default function ApplicationForm({
         editDirtyInput,
       ));
   const canSubmit = requiredReady && !formBusy && hasUnsavedEditChanges;
-  /** Create or draft edit: Publish appears once the full go-live set is ready. */
-  const showPublish = !requiresPublishCompleteSet && publishSaveReady;
-  const canPublish = showPublish && !formBusy;
+  /**
+   * Create or draft edit: always show Publish (disabled until ready) so people
+   * learn publishing needs more than a draft. Live apps have no Publish here.
+   */
+  const showPublish = !requiresPublishCompleteSet;
+  const canPublish = showPublish && publishSaveReady && !formBusy;
+  const showPreview = canPublish;
   const saveLoadingLabel =
     cvPendingDigesting
       ? "Preparing…"
@@ -1012,7 +1042,14 @@ export default function ApplicationForm({
       if (!hasLastName) {
         items.push({ name: "Last name", stepId: "candidate" });
       }
-      if (!hasUsableCv) items.push({ name: "Your Résumé", stepId: "materials" });
+      if (!hasRecruiterContact) {
+        items.push({
+          name: RECRUITER_CONTACT_BLOCKER_NAME,
+          note: RECRUITER_CONTACT_PUBLISH_NOTE,
+          stepId: "candidate",
+        });
+      }
+      if (!hasUsableCv) items.push({ name: "Your résumé", stepId: "materials" });
       if (!hasValidVideo) items.push({ name: "YouTube intro", stepId: "video" });
     } else if (videoHardBlock) {
       items.push({
@@ -1033,10 +1070,56 @@ export default function ApplicationForm({
         ? "Required before saving"
         : "Required before saving draft"
       : null;
+
+  /**
+   * Publish-only gaps on create/draft (names, résumé, video). Company / role /
+   * link stay on the draft Save line so the two footers do not repeat.
+   */
+  const publishBlockers = (() => {
+    if (!showPublish || formBusy || publishSaveReady) {
+      return [] as { name: string; note?: string; stepId: ApplicationFormStepId }[];
+    }
+    const items: { name: string; note?: string; stepId: ApplicationFormStepId }[] =
+      [];
+    if (!hasFirstName) {
+      items.push({ name: "First name", note: "a first name", stepId: "candidate" });
+    }
+    if (!hasLastName) {
+      items.push({ name: "Last name", note: "a last name", stepId: "candidate" });
+    }
+    if (!hasRecruiterContact) {
+      items.push({
+        name: RECRUITER_CONTACT_BLOCKER_NAME,
+        note: RECRUITER_CONTACT_PUBLISH_NOTE,
+        stepId: "candidate",
+      });
+    }
+    if (!hasUsableCv) {
+      items.push({ name: "Your résumé", note: "a résumé", stepId: "materials" });
+    }
+    if (!hasValidVideo) {
+      items.push({
+        name: "YouTube intro",
+        note:
+          videoHardBlock && videoStatus.kind === "unavailable"
+            ? videoStatus.message || YOUTUBE_UNAVAILABLE_MESSAGE
+            : videoHardBlock
+              ? "a valid video"
+              : "a video",
+        stepId: "video",
+      });
+    }
+    return items;
+  })();
+
+  const publishPrefix =
+    !formBusy && publishBlockers.length > 0 ? "To publish, add" : null;
+
   /** Plain footer note when edit has nothing to save (not a clickable list). */
   const blockedNote =
     !formBusy &&
     saveBlockers.length === 0 &&
+    publishBlockers.length === 0 &&
     isEdit &&
     !hasUnsavedEditChanges
       ? "No changes to save."
@@ -1355,7 +1438,7 @@ export default function ApplicationForm({
 
       if (mustBeComplete) {
         if (cvMode === "primary") {
-          if (!selectedPrimaryId) newErrors.cv_url = "Select a primary CV";
+          if (!selectedPrimaryId) newErrors.cv_url = "Select a library résumé";
         } else {
           const hasTailoredCv =
             cvPendingFile ||
@@ -1363,7 +1446,7 @@ export default function ApplicationForm({
               formData.cv_url &&
               formData.cv_url.trim());
           if (!hasTailoredCv) {
-            newErrors.cv_url = "Upload a CV file for this application";
+            newErrors.cv_url = "Upload a résumé for this application";
           }
         }
         if (!formData.video_url.trim())
@@ -1455,14 +1538,14 @@ export default function ApplicationForm({
         if (selectedPrimaryId) {
           const primary = primaryCvs.find((m) => m.id === selectedPrimaryId);
           if (!primary) {
-            revealFormErrors({ cv_url: "Select a primary CV" });
+            revealFormErrors({ cv_url: "Select a library résumé" });
             return;
           }
           cvUrl = primary.url;
           cvFilename = primary.filename;
           primaryCvId = primary.id;
         } else if (mustBeComplete) {
-          revealFormErrors({ cv_url: "Select a primary CV" });
+          revealFormErrors({ cv_url: "Select a library résumé" });
           return;
         } else {
           cvUrl = "";
@@ -1923,35 +2006,54 @@ export default function ApplicationForm({
   );
 
   const candidateStep = (
-    <CandidateFieldsSection
-      layout="rows"
-      values={candidateValues}
-      include={include}
-      onIncludeChange={handleCandidateIncludeChange}
-      afterNames={
-        <ApplicationFormFieldRow
-          id="application-row-picture"
-          label="Picture"
-          tip={hasProfilePicture ? PROFILE_INITIAL_DATA_TIP : PROFILE_EMPTY_TIP}
-          tipTone={hasProfilePicture ? "ready" : "idle"}
-          align="top"
+    <>
+      {!hasRecruiterContact ? (
+        <div
+          id="application-contact-safety"
+          className="scroll-mt-[calc(var(--admin-header-height,72px)+0.75rem)] border-t border-[var(--ink)]/10 p-4 first:border-t-0"
         >
-          <ProfilePictureField
-            variant="checklist"
-            hideLegend
-            profilePictureUrl={profilePictureUrl}
-            profilePictureVersion={profilePictureVersion}
-            firstName={formData.first_name}
-            lastName={formData.last_name}
-            showProfilePicture={showProfilePicture}
-            onShowProfilePictureChange={(next) => {
-              showProfilePictureUserChosenRef.current = true;
-              setShowProfilePicture(next);
-            }}
-          />
-        </ApplicationFormFieldRow>
-      }
-    />
+          <p
+            role="status"
+            className="flex gap-2 rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--status-warning-fg)]"
+          >
+            <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            <span>{RECRUITER_CONTACT_APPLICATION_WARNING}</span>
+          </p>
+        </div>
+      ) : null}
+      <CandidateFieldsSection
+        layout="rows"
+        values={candidateValues}
+        include={include}
+        onIncludeChange={handleCandidateIncludeChange}
+        markNamesRequired={requiresPublishCompleteSet}
+        afterNames={
+          <ApplicationFormFieldRow
+            id="application-row-picture"
+            label="Picture"
+            tip={
+              hasProfilePicture ? PROFILE_INITIAL_DATA_TIP : PROFILE_EMPTY_TIP
+            }
+            tipTone={hasProfilePicture ? "ready" : "idle"}
+            align="top"
+          >
+            <ProfilePictureField
+              variant="checklist"
+              hideLegend
+              profilePictureUrl={profilePictureUrl}
+              profilePictureVersion={profilePictureVersion}
+              firstName={formData.first_name}
+              lastName={formData.last_name}
+              showProfilePicture={showProfilePicture}
+              onShowProfilePictureChange={(next) => {
+                showProfilePictureUserChosenRef.current = true;
+                setShowProfilePicture(next);
+              }}
+            />
+          </ApplicationFormFieldRow>
+        }
+      />
+    </>
   );
 
   const materialsStep = (
@@ -2187,7 +2289,9 @@ export default function ApplicationForm({
   }) => {
     const needsLinkCustomize = item.name === "Your application link";
     const needsAboutYou =
-      item.name === "First name" || item.name === "Last name";
+      item.name === "First name" ||
+      item.name === "Last name" ||
+      item.name === RECRUITER_CONTACT_BLOCKER_NAME;
     if (needsLinkCustomize) setLinkCustomizeOpen(true);
     if (needsAboutYou) setAboutYouExpanded(true);
     const target =
@@ -2207,17 +2311,19 @@ export default function ApplicationForm({
                     rowId: "application-row-last_name",
                     inputId: "application-last-name",
                   }
-                : item.stepId === "materials"
-                  ? { rowId: "application-row-resume" }
-                  : item.stepId === "video"
-                    ? {
-                        rowId: "application-row-pitch",
-                        inputId: "application-video",
-                      }
-                    : {
-                        rowId: "application-row-company",
-                        inputId: "application-company",
-                      };
+                : item.name === RECRUITER_CONTACT_BLOCKER_NAME
+                  ? { rowId: "application-contact-safety" }
+                  : item.stepId === "materials"
+                    ? { rowId: "application-row-resume" }
+                    : item.stepId === "video"
+                      ? {
+                          rowId: "application-row-pitch",
+                          inputId: "application-video",
+                        }
+                      : {
+                          rowId: "application-row-company",
+                          inputId: "application-company",
+                        };
     window.setTimeout(
       () => focusApplicationRow(target.rowId, target.inputId),
       needsLinkCustomize || needsAboutYou ? 50 : 0,
@@ -2236,6 +2342,106 @@ export default function ApplicationForm({
     onActivate: () => focusSaveBlocker(item),
   }));
 
+  const publishItems = publishBlockers.map((item) => ({
+    id: `publish-${item.name}`,
+    label: item.note ?? item.name,
+    onActivate: () => focusSaveBlocker(item),
+  }));
+
+  const openFormPreview = () => setPreviewOpen(true);
+
+  /** Object URL for a not-yet-uploaded tailored PDF while the preview is open. */
+  const [pendingPreviewObjectUrl, setPendingPreviewObjectUrl] = useState<
+    string | null
+  >(null);
+  useEffect(() => {
+    if (!previewOpen || !cvPendingFile) {
+      setPendingPreviewObjectUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
+    }
+    const url = URL.createObjectURL(cvPendingFile);
+    setPendingPreviewObjectUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [previewOpen, cvPendingFile]);
+
+  const previewApplication = useMemo(() => {
+    const visible = (key: CandidateFieldKey, value: string) =>
+      include[key] ? value : null;
+
+    let cvUrl: string | null = null;
+    let cvFilename: string | null = null;
+    let cvExists: boolean | undefined;
+
+    if (cvMode === "primary") {
+      const primary = primaryCvs.find((m) => m.id === selectedPrimaryId);
+      cvUrl = primary?.url?.trim() || null;
+      cvFilename = primary?.filename ?? null;
+      cvExists = cvUrl ? true : undefined;
+    } else if (cvPendingFile && pendingPreviewObjectUrl) {
+      cvUrl = pendingPreviewObjectUrl;
+      cvFilename = cvPendingFile.name;
+      cvExists = true;
+    } else {
+      cvUrl = formData.cv_url?.trim() || null;
+      cvFilename = formData.cv_filename ?? null;
+      if (stillUsingMissingSavedCv) {
+        cvExists = false;
+      } else if (cvUrl) {
+        cvExists = true;
+      }
+    }
+
+    return buildApplicationFormPreview({
+      company: formData.company,
+      role: formData.role,
+      first_name: formData.first_name ?? "",
+      last_name: formData.last_name ?? "",
+      location: visible("location", formData.location ?? ""),
+      email: visible("email", formData.email ?? ""),
+      phone: visible("phone", formData.phone ?? ""),
+      portfolio_url: visible("portfolio_url", formData.portfolio_url ?? ""),
+      linkedin_url: visible("linkedin_url", formData.linkedin_url ?? ""),
+      profile_picture_url:
+        hasProfilePicture && showProfilePicture
+          ? (profilePictureUrl ?? null)
+          : null,
+      cv_url: cvUrl,
+      cv_filename: cvFilename,
+      use_original_cv_filename: formData.use_original_cv_filename ?? false,
+      cv_exists: cvExists,
+      video_url: formData.video_url,
+    });
+  }, [
+    include,
+    cvMode,
+    primaryCvs,
+    selectedPrimaryId,
+    cvPendingFile,
+    pendingPreviewObjectUrl,
+    formData.company,
+    formData.role,
+    formData.first_name,
+    formData.last_name,
+    formData.location,
+    formData.email,
+    formData.phone,
+    formData.portfolio_url,
+    formData.linkedin_url,
+    formData.cv_url,
+    formData.cv_filename,
+    formData.use_original_cv_filename,
+    formData.video_url,
+    stillUsingMissingSavedCv,
+    hasProfilePicture,
+    showProfilePicture,
+    profilePictureUrl,
+  ]);
+
   const formActions = (
     <ApplicationFormActions
       loading={formBusy && submitIntent !== "publish"}
@@ -2246,8 +2452,10 @@ export default function ApplicationForm({
       disabledReason={disabledReason}
       onBlocked={focusFirstGap}
       showPublish={showPublish}
+      showPreview={showPreview}
       canPublish={canPublish}
       publishLoading={formBusy && submitIntent === "publish"}
+      onPreview={openFormPreview}
       onPublish={() => {
         void runSubmit("publish");
       }}
@@ -2322,14 +2530,16 @@ export default function ApplicationForm({
       <ApplicationFormSinglePageLayout
           title={isEdit ? "Edit application" : "New application"}
           description={
-            isEdit
-              ? "Update this role’s page and share link. Save when the required pieces are ready."
-              : "This role gets its own page and share link. Save a draft when the required pieces are ready, then keep editing it."
+            requiresPublishCompleteSet
+              ? "Update this role’s page and share link. Save when company, role, names, résumé, and video are ready."
+              : "Add a company and role to save a draft. Select a résumé and add a video to publish."
           }
           cancelHref="/admin"
           actions={formActions}
           blockedPrefix={blockedPrefix}
           blockedItems={blockedItems}
+          publishPrefix={publishPrefix}
+          publishItems={publishItems}
           blockedNote={blockedNote}
           rows={(
             [
@@ -2489,8 +2699,8 @@ export default function ApplicationForm({
               {
                 type: "section",
                 id: "application-section-resume",
-                label: "Your Résumé",
-                required: true,
+                label: "Your résumé",
+                required: requiresPublishCompleteSet,
               },
               {
                 type: "block",
@@ -2500,7 +2710,7 @@ export default function ApplicationForm({
               {
                 type: "section",
                 id: "application-section-pitch",
-                label: "Your Pitch",
+                label: "Your pitch",
               },
               {
                 type: "field",
@@ -2508,7 +2718,7 @@ export default function ApplicationForm({
                 label: "YouTube",
                 labelFor: "application-video",
                 align: "field",
-                required: true,
+                required: requiresPublishCompleteSet,
                 hint: "A YouTube video they can watch on the page.",
                 tip: hasValidVideo ? FIELD_READY_TIP : FIELD_IDLE_TIP,
                 tipTone: hasValidVideo ? "ready" : "idle",
@@ -2531,6 +2741,20 @@ export default function ApplicationForm({
             ] satisfies ApplicationFormPageRow[]
           )}
         />
+
+      <ApplicationFormPreviewDialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        application={previewApplication}
+        publicId={trimmedPublicId}
+        slug={trimmedSlug}
+        canPublish={canPublish}
+        publishLoading={formBusy && submitIntent === "publish"}
+        dismissDisabled={formBusy && submitIntent === "publish"}
+        onPublish={() => {
+          void runSubmit("publish");
+        }}
+      />
 
       {leaveDialog}
     </form>

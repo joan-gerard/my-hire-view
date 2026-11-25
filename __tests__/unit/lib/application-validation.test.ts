@@ -296,6 +296,9 @@ describe("getApplicationPublishBlockers", () => {
     last_name: "Gerard",
     cv_type: "tailored" as const,
     primary_cv_id: null,
+    email: "joan@example.com",
+    phone: null,
+    linkedin_url: null,
   };
 
   it("returns no blockers for a complete application", () => {
@@ -314,13 +317,33 @@ describe("getApplicationPublishBlockers", () => {
         last_name: null,
         cv_type: "tailored",
         primary_cv_id: null,
+        email: null,
+        phone: null,
+        linkedin_url: null,
       }),
-    ).toEqual(["First name", "Last name", "Your Résumé", "YouTube intro"]);
+    ).toEqual([
+      "First name",
+      "Last name",
+      "Your résumé",
+      "YouTube intro",
+      "Contact method",
+    ]);
+  });
+
+  it("blocks publish when email and phone are hidden and LinkedIn is unset", () => {
+    expect(
+      getApplicationPublishBlockers({
+        ...complete,
+        email: null,
+        phone: null,
+        linkedin_url: null,
+      }),
+    ).toEqual(["Contact method"]);
   });
 
   it("formats a publish error message", () => {
-    expect(formatPublishBlockersError(["Your Résumé", "YouTube intro"])).toBe(
-      "Required before publishing: Your Résumé, YouTube intro",
+    expect(formatPublishBlockersError(["Your résumé", "YouTube intro"])).toBe(
+      "Required before publishing: Your résumé, YouTube intro",
     );
   });
 
@@ -330,6 +353,6 @@ describe("getApplicationPublishBlockers", () => {
         ...complete,
         cv_exists: false,
       }),
-    ).toEqual(["Your Résumé"]);
+    ).toEqual(["Your résumé"]);
   });
 });

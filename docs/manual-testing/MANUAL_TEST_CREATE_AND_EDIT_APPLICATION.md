@@ -14,7 +14,7 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 ## Setup
 
 - [ ] Signed in with a profile that has first and last name
-- [ ] At least one primary CV in the library (and a second PDF for tailored)
+- [ ] At least one library résumé (and a second PDF for tailored)
 - [ ] Optional: a profile picture already uploaded
 - [ ] A valid YouTube watch URL and one invalid URL
 - [ ] Desktop (~1280px) and one narrow width (~375px)
@@ -24,13 +24,14 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 ## 1. Create — page chrome (`/admin/new`)
 
 - [ ] Title **New application** and a short description sit above the form; content is no wider than `2xl`
-- [ ] Sections are **Your link**, **About you**, **Your Résumé**, and **Your Pitch** — each a heading above its own card
-- [ ] Required fields show a red asterisk: Company, Role, First name, Last name, Your Résumé (section), YouTube
+- [ ] Sections are **Your link**, **About you**, **Your résumé**, and **Your pitch** — each a heading above its own card
+- [ ] Intro: company and role to save a draft; résumé and video to publish
+- [ ] Red asterisk only on Company and Role (save-required); Résumé / YouTube / names are not starred
 - [ ] Inside a card, label is on the left and control on the right; on a narrow screen the label sits above the control
-- [ ] **Cancel** and **Save Draft** stay fixed at the bottom while scrolling; **Publish** appears only when the full publish set is ready; missing required items are links that scroll to their fields
-- [ ] Save stays greyed out until company, role, and share link are ready (résumé / YouTube / names are not required for draft); a line above the buttons names what is missing
+- [ ] **Cancel** and **Save Draft** stay fixed at the bottom while scrolling; **Publish** is always visible (disabled until ready); **Preview** appears when the full publish set is ready
+- [ ] Save stays greyed out until company, role, and share link are ready; draft line names what is missing; **To publish, add…** lists first name, last name, a résumé, a video (each scrolls)
 - [ ] Pressing **Enter** in a text field does **not** save
-- [ ] There is no Preview button on create, no chapter checklist, and no wizard step rail
+- [ ] No chapter checklist and no wizard step rail
 - [ ] When location, portfolio, LinkedIn, and picture are all empty (or there is no profile yet): a tip above the form (light blue wash background) points to Profile with an arrow. After any one of those is filled, reopen `/admin/new` — the tip is gone
 - [ ] Form skeleton while profile loads, then the form
 
@@ -74,7 +75,8 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 
 ## 4. Create — Résumé and Pitch
 
-- [ ] One **File** row under Your Résumé with radios **Use library CV** / **Upload one for this role**; hint that upload overrides the library CV on this page only
+- [ ] One **File** row under Your résumé with radios **Use library résumé** / **Upload one for this role** (**Pro**); one helper that the upload replaces the library résumé on this application only (not repeated in the row hint)
+- [ ] Empty library: **No résumés in your library yet** + **Manage library** under the library option (visible even when tailored is selected)
 - [ ] Selected filename truncates with an ellipsis (does not wrap mid-extension) and shows a **Preview** link when a URL/file is available
 - [ ] Selecting **Upload one for this role** switches mode only (shows **No file chosen** / **Choose a PDF**); the PDF dialog opens only from **Choose a PDF** or **Manage**, not from the radio
 - [ ] **Manage library** / **Choose a PDF** (or **Manage**) open the existing modals
@@ -91,7 +93,7 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 ## 5. Create — save path (smoke)
 
 - [ ] Happy path: fill draft pieces → **Save Draft** → `/admin/edit/[id]` for the new draft
-- [ ] Fill the full publish set → **Publish** appears → Publish → `/view/{publicId}/{slug}` live (no draft banner)
+- [ ] Fill the full publish set → Publish enables and **Preview** appears → **Preview** opens the recruiter dialog; footer **Publish** goes live to `/view/{publicId}/{slug}` (no draft banner); Publish in the dialog also goes live
 - [ ] Owner draft preview does not increment Views; same URL in incognito is unavailable
 - [ ] Failed save (e.g. offline) keeps the browser draft; successful save clears it
 - [ ] Double-click submit does not create two rows
@@ -104,12 +106,12 @@ For leave-confirm, draft restore, and CV-mode edges, use [MANUAL_TEST_CREATE_APP
 
 - [ ] Open from the dashboard ⋯ **Edit**
 - [ ] Loading skeleton matches `/admin/new` (one-page form shell)
-- [ ] Same one-page layout as create: title **Edit application**, sections **Your link**, **About you**, **Your Résumé**, **Your Pitch**, no wider than `2xl`
+- [ ] Same one-page layout as create: title **Edit application**, sections **Your link**, **About you**, **Your résumé**, **Your pitch**, no wider than `2xl`
 - [ ] No sticky split-edit header, no five-band guidance panels, no Review summary step
 - [ ] No wizard Continue / Back, no step rail, no leave-confirm browser draft (create-only)
 - [ ] Submit label is **Save Draft** for drafts and **Save application** for active apps
 - [ ] With no edits since load/save, Save is disabled and the reason reads **No changes to save.**
-- [ ] Draft with full publish set: **Publish** is visible even when Save is off for no changes; live apps do not show Publish
+- [ ] Draft incomplete: **Publish** visible but disabled with **To publish, add…**; draft with full set: **Preview** + enabled **Publish** even when Save is off for no changes; footer **Publish** goes live; live apps do not show Preview/Publish; live edit stars the full save set
 - [ ] Draft edit: Save needs company + role + share link (same as create). Live edit: Save needs the full publish set; each blocked-reason item scrolls to its field
 - [ ] Cancel / Save bar stays fixed at the bottom while scrolling the form
 
@@ -125,9 +127,9 @@ For leave-confirm, draft restore, and CV-mode edges, use [MANUAL_TEST_CREATE_APP
 - [ ] Changing Profile alone does **not** change a previously saved application’s public text until you edit and save here
 - [ ] Profile picture: live from the profile; **Visible** / **Hidden** switch when a picture exists; Hidden dims the preview; missing picture links to Profile (no upload on the form)
 - [ ] Changing the profile picture on Profile **does** show on `/view` when this app has show-picture on (no re-save needed for the image file)
-- [ ] CV radios stay usable while the library loads; saved source is not overwritten by the fetch
+- [ ] Résumé radios stay usable while the library loads; saved source is not overwritten by the fetch
 - [ ] Switch primary ↔ tailored (with confirm when leaving a tailored file); `/view` matches after save
-- [ ] Missing CV: **Check again** shows Checking… then clears or says the file is still missing — no full-page spinner
+- [ ] Missing résumé: **Check again** shows Checking… then clears or says the file is still missing — no full-page spinner
 
 ---
 

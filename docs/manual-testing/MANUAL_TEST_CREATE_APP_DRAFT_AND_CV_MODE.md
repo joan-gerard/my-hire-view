@@ -4,25 +4,25 @@ Covers **F15-045** (local form draft) and **F15-049** (CV source while library l
 
 ## Setup
 
-- Signed in as a user with at least one **primary CV** in the library (for most CV checks).
+- Signed in as a user with at least one **library résumé** (for most résumé-source checks).
 - Optional: a second account on the same browser to confirm drafts are scoped by auth `user.id` (not a shared `local` key).
 
-## F15-049 — CV source while library loads
+## F15-049 — Résumé source while library loads
 
-- [ ] Open `/admin/new`. While “Loading your CV library…” is visible, both **Use a primary CV** and **Upload a different CV** radios are disabled (**create only**).
-- [ ] On **Edit**, radios stay usable while the library loads (saved CV source is not overwritten by the fetch).
-- [ ] After load finishes with primaries present, **Use a primary CV** is selected by default and a library CV is chosen.
-- [ ] Switch to **Upload one for this role** (or **Upload a different CV**), choose a PDF — mode must stay tailored after refresh (draft) and must not flip back when the library finishes loading.
-- [ ] With a library CV selected, switch to **Upload one for this role** without picking a PDF, fill company/role/slug, **Save draft** — succeeds (no “CV URL must be a tailored upload…”). Publish still requires a file.
-- [ ] With an empty primary library: after load, mode defaults to tailored. After uploading the first primary via the modal **without** having chosen tailored first, create can prefer primary. If you already chose tailored before adding a primary, mode stays tailored.
-- [ ] (Optional) Throttle / block `/api/profile/primary-cvs`: within ~12s radios unlock so a tailored CV can still be chosen.
+- [ ] Open `/admin/new`. While “Loading your résumé library…” is visible, both **Use library résumé** and **Upload one for this role** radios are disabled (**create only**).
+- [ ] On **Edit**, radios stay usable while the library loads (saved résumé source is not overwritten by the fetch).
+- [ ] After load finishes with library résumés present, **Use library résumé** is selected by default and a library file is chosen.
+- [ ] Switch to **Upload one for this role**, choose a PDF — mode must stay tailored after refresh (draft) and must not flip back when the library finishes loading.
+- [ ] With a library résumé selected, switch to **Upload one for this role** without picking a PDF, fill company/role/slug, **Save draft** — succeeds (no “CV URL must be a tailored upload…”). Publish still requires a file.
+- [ ] With an empty résumé library: after load, mode stays **Use library résumé** (Free default) with **No résumés in your library yet** and **Manage library**. After uploading the first library résumé via the modal **without** having chosen tailored first, create selects that library file. If you already chose tailored before adding a library résumé, mode stays tailored.
+- [ ] (Optional) Throttle / block `/api/profile/primary-cvs`: within ~12s radios unlock so a tailored résumé can still be chosen.
 
 ## F15-045 — Persist create draft
 
 - [ ] On `/admin/new`, edit only candidate fields (e.g. location) then refresh — those edits restore (personal-only progress is kept).
-- [ ] Fill **Company**, **Role**, **YouTube URL**, Name in URL, and CV mode / primary selection; refresh — fields restore. Profile prefills do not wipe restored values.
-- [ ] If draft restored **Upload a different CV**, re-choose the PDF (files are not stored in the draft).
-- [ ] Restore a draft whose primary CV was deleted meanwhile: Save is not ready with a stale id; mode falls back to tailored when the library is empty, or another primary when one remains.
+- [ ] Fill **Company**, **Role**, **YouTube URL**, link options, and résumé mode / library selection; refresh — fields restore. Profile prefills do not wipe restored values.
+- [ ] If draft restored **Upload one for this role**, re-choose the PDF (files are not stored in the draft).
+- [ ] Restore a draft whose library résumé was deleted meanwhile: Save is not ready with a stale id; mode stays library when the library is empty (no file selected), or another library résumé when one remains.
 - [ ] Fail Save (e.g. offline create / forced API error): draft remains. Succeed Save → `/admin/new` is clean afterward.
 - [ ] With no progress (including a form that only shows profile name/links), **Cancel** / **Dashboard** / **Edit profile** leave without a dialog; waiting on the page then leaving still does not confirm
 - [ ] With progress, **Cancel** / **Dashboard** / **Profile** / **Edit profile** / browser **Back**: confirm dialog (“Leaving this page will discard unsaved changes…”). If company or role is missing, the dialog suggests adding them to save a draft (no Save Draft button). If company and role are filled and the link is ready, **Save Draft** appears between No and Yes; while saving the dialog stays open; after success it closes and continues to the page you were heading to. **No, stay** keeps you on the form. **Yes, I'm sure** leaves without saving and clears the browser draft — reopening New Application is clean

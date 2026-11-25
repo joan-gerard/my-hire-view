@@ -30,10 +30,10 @@ describe("primary CV library constants", () => {
 describe("primary CV library cap helpers (F13-032)", () => {
   it("builds the user-facing at-capacity message", () => {
     expect(primaryCvLibraryCapMessage()).toBe(
-      "You can store up to 5 primary CVs. Delete one to upload another.",
+      "You can store up to 5 library résumés. Delete one to upload another.",
     );
     expect(primaryCvLibraryCapMessage(15)).toBe(
-      "You can store up to 15 primary CVs. Delete one to upload another.",
+      "You can store up to 15 library résumés. Delete one to upload another.",
     );
   });
 
@@ -63,16 +63,16 @@ describe("primary CV library cap helpers (F13-032)", () => {
 describe("primaryCvDeleteConfirmMessage", () => {
   it("asks for confirmation when no applications use the CV", () => {
     const message = primaryCvDeleteConfirmMessage(0);
-    expect(message).toContain("Delete this primary CV from your library?");
+    expect(message).toContain("Delete this library résumé?");
     expect(message).toContain("This cannot be undone.");
-    expect(message).not.toContain("CV missing");
+    expect(message).not.toContain("Résumé missing");
   });
 
   it("uses singular wording for one application", () => {
     const message = primaryCvDeleteConfirmMessage(1);
     expect(message.startsWith("1 application currently uses")).toBe(true);
     expect(message).toContain("That application will show");
-    expect(message).toContain("“CV missing”");
+    expect(message).toContain("“Résumé missing”");
     expect(message).toContain("This cannot be undone.");
   });
 
@@ -109,13 +109,13 @@ describe("primaryCvDeletedStillReferencedMessage", () => {
 
   it("uses singular wording for one application", () => {
     expect(primaryCvDeletedStillReferencedMessage(1)).toBe(
-      "Primary CV deleted. 1 application still referenced it and will show “CV missing” until updated.",
+      "Library résumé deleted. 1 application still referenced it and will show “Résumé missing” until updated.",
     );
   });
 
   it("uses plural wording for multiple applications", () => {
     expect(primaryCvDeletedStillReferencedMessage(2)).toBe(
-      "Primary CV deleted. 2 applications still referenced it and will show “CV missing” until updated.",
+      "Library résumé deleted. 2 applications still referenced it and will show “Résumé missing” until updated.",
     );
   });
 
@@ -149,7 +149,7 @@ describe("primaryCvPostDeleteStatusMessage", () => {
         refreshed: true,
       }),
     ).toBe(
-      "Primary CV deleted. 2 applications still referenced it and will show “CV missing” until updated.",
+      "Library résumé deleted. 2 applications still referenced it and will show “Résumé missing” until updated.",
     );
   });
 
@@ -160,7 +160,7 @@ describe("primaryCvPostDeleteStatusMessage", () => {
         refreshed: false,
       }),
     ).toBe(
-      "Primary CV deleted. 1 application still referenced it and will show “CV missing” until updated. The library list could not be refreshed — try again.",
+      "Library résumé deleted. 1 application still referenced it and will show “Résumé missing” until updated. The library list could not be refreshed — try again.",
     );
   });
 });

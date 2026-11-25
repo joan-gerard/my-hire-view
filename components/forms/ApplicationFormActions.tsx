@@ -22,14 +22,22 @@ interface ApplicationFormActionsProps {
   /** Called when a blocked Save or its reason is activated, so the page can move to the first problem. */
   onBlocked?: () => void;
   /**
-   * When true, show Publish next to Save (full publish set is ready on create
-   * or a draft edit).
+   * When true, show Publish next to Save on create/draft (even when disabled so
+   * people learn publishing needs more than a draft).
    */
   showPublish?: boolean;
-  /** Publish stays off while the form is busy. */
+  /**
+   * When true with `showPublish`, also show Preview (only once the publish set
+   * is ready).
+   */
+  showPreview?: boolean;
+  /** Opens the in-form recruiter preview (does not save or go live). */
+  onPreview?: () => void;
+  /** Publishes the application (create/draft → live). */
+  onPublish?: () => void;
+  /** Publish confirm stays off while the form is busy or incomplete. */
   canPublish?: boolean;
   publishLoading?: boolean;
-  onPublish?: () => void;
 }
 
 export default function ApplicationFormActions({
@@ -41,9 +49,11 @@ export default function ApplicationFormActions({
   onBlocked,
   dimWhenBlocked = false,
   showPublish = false,
+  showPreview = false,
+  onPreview,
+  onPublish,
   canPublish = false,
   publishLoading = false,
-  onPublish,
 }: ApplicationFormActionsProps) {
   const blocked = !canSubmit && !loading;
   const showReason = blocked && Boolean(disabledReason) && !dimWhenBlocked;
@@ -92,19 +102,35 @@ export default function ApplicationFormActions({
           ) : null}
         </div>
         {showPublish ? (
-          <Button
-            type="button"
-            variant="primary"
-            loading={publishLoading}
-            loadingLabel="Publishing…"
-            disabled={busy || !canPublish}
-            onClick={() => {
-              if (busy || !canPublish) return;
-              onPublish?.();
-            }}
-          >
-            Publish
-          </Button>
+          <>
+            {showPreview ? (
+              <Button
+                type="button"
+                variant="secondary"
+                shape="rounded"
+                disabled={busy || !canPublish}
+                onClick={() => {
+                  if (busy || !canPublish) return;
+                  onPreview?.();
+                }}
+              >
+                Preview
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="primary"
+              loading={publishLoading}
+              loadingLabel="Publishing…"
+              disabled={busy || !canPublish}
+              onClick={() => {
+                if (busy || !canPublish) return;
+                onPublish?.();
+              }}
+            >
+              Publish
+            </Button>
+          </>
         ) : null}
       </div>
     </div>

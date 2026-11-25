@@ -241,12 +241,14 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Leading/trailing spaces on URLs are trimmed, not stored as-is
 - [ ] Changing name updates the account name used in Name-in-URL suggestions
 - [ ] Empty location / URLs are allowed (stored as empty/null)
+- [ ] **Visible** / **Hidden** sits under Email, Phone, Location, LinkedIn, and Portfolio (and under the picture in the header); no separate “Shown by default” section
+- [ ] Toggle is disabled (reads Hidden) until that field has a value / picture; after filling, toggle works and Save persists the default for new applications
 - [ ] Completing **only LinkedIn** (no location, no portfolio) still satisfies the checklist “location or a link” step; same for portfolio-only or location-only
 - [ ] Success / saving labels: **Uploading…** then **Saving…** when a picture is included
 
 ### Profile picture (Profile tab — identity header only)
 
-- [ ] Avatar preview, Change picture / Remove picture (or Choose picture), and help copy live in the identity header — not a second picture block lower on the page
+- [ ] Avatar preview, Change picture / Remove picture (or Choose picture), Visible/Hidden default, and help copy live in the identity header — not a second picture block lower on the page
 - [ ] Choose JPEG → preview → Save → thumbnail persists after refresh
 - [ ] Replace with PNG (and WebP if you have one) → new image shows (cache-bust, not a stale JPEG)
 - [ ] **Remove** picture → Save → initials/placeholder in the header; applications that **show** the picture no longer display an avatar on `/view`
@@ -258,7 +260,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Primary CV library (CVs tab)
 
-- [ ] While **Loading…**, **Upload primary CV** is disabled
+- [ ] While **Loading…**, **Upload library résumé** is disabled
 - [ ] Empty library copy when none exist
 - [ ] Upload PDF → listed with filename; **View** opens the PDF
 - [ ] PDF whose filename has **spaces** or unicode still Views/downloads
@@ -296,7 +298,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Page chrome
 
-- [ ] Page title **New application** and its description sit above the sections, no wider than `2xl`. Sections **Your link**, **About you**, **Your Résumé**, and **Your Pitch** are headings, each above its own card. Each entry has its title on the left and the control on the right; a description sits under the title when there is one. On a narrow screen the title sits above the control. **Your link** defaults to Company, Role, Your application link, and **Customize link** (order/ending hidden until expanded). Your application link is a full-width tinted result under Company/Role. **Cancel** and **Save Draft** stay fixed at the bottom while scrolling. Save is greyed out until the application can be saved, and a line above the buttons names what is still missing (each item scrolls to its field). There is no **Preview** button and no chapter checklist. `/admin/wizard` and `/demo/application-form` are gone
+- [ ] Page title **New application** and its description sit above the sections, no wider than `2xl`. Sections **Your link**, **About you**, **Your résumé**, and **Your pitch** are headings, each above its own card. Each entry has its title on the left and the control on the right; a description sits under the title when there is one. On a narrow screen the title sits above the control. **Your link** defaults to Company, Role, Your application link, and **Customize link** (order/ending hidden until expanded). Your application link is a full-width tinted result under Company/Role. **Cancel** and **Save Draft** stay fixed at the bottom while scrolling. Save is greyed out until the application can be saved, and a line above the buttons names what is still missing (each item scrolls to its field). **Publish** is always visible on create (disabled with a **To publish, add…** line until ready); **Preview** appears when the full set is ready. Intro covers draft vs publish; asterisks mark save-required fields only. There is no chapter checklist. `/admin/wizard` and `/demo/application-form` are gone
 - [ ] If location, links, and picture are still empty: nudge to complete profile; arrow goes to Profile
 - [ ] After profile has location/link/picture, nudge is gone
 - [ ] Form skeleton/pulse while profile loads; then the form
@@ -310,7 +312,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] **Your link:** Company and Role show a grey status dot before the label until valid, then green. When **Customize link** is open, Link ending does the same and **How the link reads** always shows a green status dot
 - [ ] **About you** text fields are read-only: green “From your profile” when a value exists; grey when empty; no yellow write-through tip
 - [ ] **Picture** shows green when a profile photo exists, grey when not; toggling show/hide does not turn it yellow
-- [ ] **Résumé:** green once a library or role-specific CV is chosen; grey until then
+- [ ] **Résumé:** green once a library or role-specific résumé is chosen; grey until then
 - [ ] **Pitch:** YouTube is grey until a valid URL is entered, then green
 - [ ] With no picture: **Add a picture on your profile** links to Profile. There are no Show / Hide cards
 - [ ] With a picture: thumbnail always visible; a right-aligned switch under it turns show on/off; off lowers the thumbnail opacity
@@ -335,7 +337,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Résumé (create)
 
-- [ ] **Your Résumé** has one **File** row: **Use library CV** / **Upload one for this role**. Filenames truncate with ellipsis + **Preview**. **Manage library** opens the library modal (bordered rows, radio + usage count + ⋯ View/Delete, upload). Role upload uses **Choose a PDF** / **Manage**
+- [ ] **Your résumé** has one **File** row: **Use library résumé** / **Upload one for this role**. Filenames truncate with ellipsis + **Preview**. **Manage library** opens the **Résumé library** modal (bordered rows, radio + usage count + ⋯ View/Delete, upload). Role upload uses **Choose a PDF** / **Manage**
 - [ ] Selecting a radio in the library modal sets that primary on the form; **Upload one for this role** does not auto-open a dialog — tailored **Choose a PDF** / **Manage** opens its own modal
 - [ ] Once a file is chosen, a bottom **Recruiters download it as** row names the generated `{First}-{Last}-{Slug}.pdf` (muted `First-Last` / `Company-Role` placeholders until real values exist); **Original name** switches to the PDF filename
 - [ ] There is no separate **Download name for recruiters** heading block on create or edit
@@ -347,8 +349,8 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] **Your application link** is a full-width tinted row under Company/Role, with **Customize link** beneath the field. The title and a note sit above a read-only field with the not-allowed cursor. From `sm` up it shows the full URL, wrapped so the ending is visible. On create/draft, a broken-link icon replaces Copy once the URL looks ready (**Publish before sharing this link** or **Finish required fields before publishing and sharing**); on a live edit, Copy works when ready
 - [ ] With company and role filled, the result field end control shows a spinner while checking and a danger icon when invalid/taken. An invalid, already used, or failed check does not expand Customize by itself; **Checking...** / error copy appear on the ending row when Customize is open. A ready link shows the ending in the path
 - [ ] Edit with a custom ending or Role+Company order opens Customize by default
-- [ ] On edit, the page matches create’s one-page sections (**Your link**, **About you**, **Your Résumé**, **Your Pitch**) with title **Edit application** (no Review summary band)
-- [ ] On edit, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form, save, or count a view. Create has no preview dialog
+- [ ] On edit, the page matches create’s one-page sections (**Your link**, **About you**, **Your résumé**, **Your pitch**) with title **Edit application** (no Review summary band)
+- [ ] On create and draft edit, when the full set is ready, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, résumé including a not-yet-uploaded tailored file, Watch Video Pitch). Footer **Publish** goes live without requiring the dialog; Publish in the dialog also goes live. Close, Escape, and the backdrop return to the form without publishing. Preview does not leave the form, save, or count a view
 
 ### Company, role, slug, URL segment order
 
@@ -374,7 +376,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 - [ ] While library is loading (create only), primary / tailored choices are **disabled**
 - [ ] If the library request is slow/blocked, choices unlock within ~**12s** so a tailored CV can still be chosen
-- [ ] With primaries in the library: create defaults to a library card; edit defaults to **Use a primary CV** with a dropdown
+- [ ] With résumés in the library: create defaults to a library card; edit defaults to **Use a library résumé** with a dropdown
 - [ ] **Manage library** opens the same library as Profile; upload/delete there updates the list
 - [ ] Uploading the first primary from the modal can switch create to primary (if you had not already chosen tailored)
 - [ ] If you already chose **tailored** before adding a primary, mode stays tailored

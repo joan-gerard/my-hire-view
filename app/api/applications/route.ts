@@ -460,6 +460,9 @@ export async function POST(request: NextRequest) {
         last_name: candidateFields.last_name,
         cv_type: cvType,
         primary_cv_id: primaryCvId,
+        email: candidateFields.email,
+        phone: candidateFields.phone,
+        linkedin_url: candidateFields.linkedin_url,
       });
       if (blockers.length > 0) {
         return NextResponse.json(
@@ -576,7 +579,7 @@ export async function PUT(request: NextRequest) {
     const { data: existing } = await supabase
       .from("applications")
       .select(
-        "user_id, company, role, slug, cv_url, video_url, first_name, last_name, cv_type, primary_cv_id, status",
+        "user_id, company, role, slug, cv_url, video_url, first_name, last_name, email, phone, linkedin_url, cv_type, primary_cv_id, status",
       )
       .eq("id", id)
       .single();
@@ -734,6 +737,19 @@ export async function PUT(request: NextRequest) {
           undefined
             ? (updatePayload.primary_cv_id as string | null)
             : existing.primary_cv_id,
+        email:
+          (updatePayload.email as string | null | undefined) !== undefined
+            ? (updatePayload.email as string | null)
+            : (existing.email as string | null),
+        phone:
+          (updatePayload.phone as string | null | undefined) !== undefined
+            ? (updatePayload.phone as string | null)
+            : (existing.phone as string | null),
+        linkedin_url:
+          (updatePayload.linkedin_url as string | null | undefined) !==
+          undefined
+            ? (updatePayload.linkedin_url as string | null)
+            : (existing.linkedin_url as string | null),
       };
       const blockers = getApplicationPublishBlockers(merged);
       if (blockers.length > 0) {

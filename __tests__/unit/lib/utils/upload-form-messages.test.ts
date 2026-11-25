@@ -33,7 +33,7 @@ describe("messageForUploadFailure", () => {
       messageForUploadFailure("cv", 429, "Too many requests. Please try again later."),
     ).toBe("Too many uploads. Please wait a moment and try again.");
     expect(messageForUploadFailure("cv", 500, "internal detail")).toMatch(
-      /couldn’t upload your CV/i,
+      /couldn’t upload your résumé/i,
     );
     expect(
       messageForUploadFailure("profile-picture", 500, "leak"),

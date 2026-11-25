@@ -16,7 +16,7 @@ Open work and ticket details stay in the backlog; update this doc when those PRs
 | **4**  |     5 | F21, F29, F35, I2, J1 |
 | **5**  |     1 | E2                |
 
-**23 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped; **J4** + **J1** + **J5** from the competitive username decision). **Weighted average ≈ 2.61** — many 1–3 polish items; complexity concentrates in **E2**, then **F35 / F21 / F29 / I2 / J1**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group). **F40** (incomplete draft saves) and **F41** (create final-step preview + Publish / Save as draft) are planned after F35 — see [INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md) and backlog `F41-127`. **J5** (`J5-128`) replaces Name in URL with company/role slug order after **J1**.
+**23 open** (F9, F10, F11, F12, F13, F15, F16, F17, F18, F19, F20, F25, F26, F34 shipped; **J4** + **J1** + **J5** from the competitive username decision). **Weighted average ≈ 2.61** — many 1–3 polish items; complexity concentrates in **E2**, then **F35 / F21 / F29 / I2 / J1**. Counsel-reviewed legal copy remains as launch-gated ticket `F20-020` (not a separate open PR group). **F40** (incomplete draft saves) and **F41** (in-form Preview + Publish confirm) are shipped after F35 — see [INCOMPLETE_DRAFT_SAVES.md](INCOMPLETE_DRAFT_SAVES.md). **J5** (`J5-128`) replaces Name in URL with company/role slug order after **J1**.
 
 ---
 

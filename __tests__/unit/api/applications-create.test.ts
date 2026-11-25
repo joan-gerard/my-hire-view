@@ -86,7 +86,7 @@ import {
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
-const MOCK_USER = { id: "user-abc" };
+const MOCK_USER = { id: "user-abc", email: "jane@example.com" };
 
 const PROFILE_SNAPSHOT = {
   first_name: "Jane",
@@ -94,6 +94,8 @@ const PROFILE_SNAPSHOT = {
   location: "Stockholm",
   portfolio_url: "https://janedoe.dev",
   linkedin_url: null,
+  contact_email: "jane@example.com",
+  phone: null,
 };
 
 const BASE_APP_INPUT = {

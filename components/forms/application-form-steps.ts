@@ -85,9 +85,9 @@ export const APPLICATION_FORM_STEPS: readonly ApplicationFormStepDef[] = [
   },
   {
     id: "materials",
-    title: "CV",
-    shortLabel: "CV",
-    description: "Attach a primary or tailored CV for this role.",
+    title: "Résumé",
+    shortLabel: "Résumé",
+    description: "Attach a library or tailored résumé for this role.",
   },
   {
     id: "video",
