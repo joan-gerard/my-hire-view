@@ -28,6 +28,8 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 - [Slugs](#slugs)
   - [POST slug](#post-slug) — `POST /api/slug`
   - [POST slug validate](#post-slug-validate) — `POST /api/slug/validate`
+- [YouTube](#youtube)
+  - [GET YouTube preview](#get-youtube-preview) — `GET /api/youtube/preview`
 - [Uploads](#uploads)
   - [POST upload CV](#post-upload-cv) — `POST /api/upload`
   - [POST upload profile picture](#post-upload-profile-picture) — `POST /api/upload/profile-picture`
@@ -557,6 +559,26 @@ Check format and uniqueness of a proposed slug **for the current user** (used wh
 - Shared `validateSlugForApplication` covers format + uniqueness.
 - **200** + `{ ok: false, error }` is a deliberate UX contract for inline form feedback (invalid or taken slugs are not **4xx**).
 - Logs unexpected failures before returning **500**.
+
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
+
+---
+
+## YouTube
+
+### GET YouTube preview
+
+`GET /api/youtube/preview?url={youtubeUrl}`
+
+Auth-only helper for create/edit: resolves a YouTube URL to **title** + **thumbnail** via YouTube oEmbed, or reports that the video is private / not embeddable.
+
+**What works**
+
+- Requires auth; rate-limited (**30/min**, namespaced `youtube-preview`).
+- Accepts watch / youtu.be / embed / Shorts URLs (normalized to a watch URL for oEmbed).
+- **200** `{ data: { video_id, title, thumbnail_url } }` when oEmbed succeeds (public and unlisted).
+- **422** `{ error, code: "unavailable" }` when YouTube returns 401/403/404 (private or embedding disabled).
+- **400** for missing / non-YouTube URLs; **502** when oEmbed fails for other reasons; **401** / **429** as usual.
 
 **Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 

@@ -77,7 +77,9 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 - [ ] Chosen source tip is green; the other is grey
 - [ ] Once a file is chosen: a bottom **Recruiters download it as** row (like Your application link) shows generated `{First}-{Last}-{Slug}.pdf` (muted `First-Last` / `Company-Role` placeholders until real values exist); **Original name** switch uses the PDF filename instead
 - [ ] While the library is loading, library / tailored choices stay disabled (create only); unlock within ~12s if the request hangs
-- [ ] **YouTube** tip is grey until a valid URL, then green; empty YouTube does **not** block draft Save; invalid URL still blocks Save if entered
+- [ ] **YouTube** tip is grey until a usable (embeddable) URL is confirmed, then green; empty YouTube does **not** block draft Save; invalid URL still blocks Save if entered
+- [ ] Pasting a valid public/unlisted URL shows a playable full-width preview (thumbnail → play) + title; private / embedding-disabled shows an error; a one-line note says unlisted videos work
+- [ ] With a prior application that has a YouTube URL, **Reuse a video from an earlier application** fills the field
 - [ ] Draft save with only company + role (+ auto link) opens that draft’s edit page; owner preview of a draft without résumé still shows a placeholder; Publish without the full set fails with a clear required list
 
 ---

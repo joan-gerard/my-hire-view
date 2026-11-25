@@ -386,6 +386,9 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### YouTube
 
+- [ ] Valid URL shows full-width playable preview (click play) + title after check; tip turns green
+- [ ] Line under the field: unlisted videos work; private / non-embeddable → error (Save blocked while URL remains)
+- [ ] **Reuse a video from an earlier application** lists prior apps with videos and fills the URL
 - [ ] Valid `youtube.com/watch?v=…` accepted (extra query params like `&t=30` still work)
 - [ ] Valid `youtu.be/…` accepted
 - [ ] Valid `youtube.com/embed/…` accepted

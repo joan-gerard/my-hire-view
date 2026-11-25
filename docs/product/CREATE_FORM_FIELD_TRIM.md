@@ -84,7 +84,7 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 
 | Control         | What it does today           | Call     | Feedback                                                                    |
 | --------------- | ---------------------------- | -------- | --------------------------------------------------------------------------- |
-| **YouTube URL** | Intro for the page. | **Keep** | Required at **publish** / live save; optional on draft (`F40-124`). |
+| **YouTube URL** | Intro for the page. | **Keep** | Required at **publish** / live save; optional on draft (`F40-124`). After parse: full-width playable preview + title; error if private / not embeddable; note that unlisted works; reuse from earlier applications. |
 
 ---
 

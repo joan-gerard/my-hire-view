@@ -62,7 +62,9 @@ import CandidateFieldsSection, {
 } from "./CandidateFieldsSection";
 import CvSourceField from "./CvSourceField";
 import ProfilePictureField from "./ProfilePictureField";
-import YouTubeUrlInput from "./YouTubeUrlInput";
+import YouTubeUrlInput, {
+  type YouTubeFieldStatus,
+} from "./YouTubeUrlInput";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import AdminTooltip from "@/components/admin/AdminTooltip";
 import { BrokenLinkIcon, CopyIcon } from "@/components/admin/icons";
@@ -71,6 +73,7 @@ import { copyToClipboard } from "@/lib/utils/clipboard";
 import type { SlugSegmentOrder } from "@/lib/utils/slug-generate";
 import { getApplicationUrl, getBaseUrl } from "@/lib/utils/url";
 import { validateYouTubeUrl } from "@/lib/utils/youtube";
+import { YOUTUBE_UNAVAILABLE_MESSAGE } from "@/lib/utils/youtube-preview";
 import { FiAlertCircle } from "react-icons/fi";
 
 function hasValue(v: string | null | undefined): boolean {
@@ -462,6 +465,14 @@ export default function ApplicationForm({
   selectedPrimaryIdRef.current = selectedPrimaryId;
   const [switchToPrimaryConfirmOpen, setSwitchToPrimaryConfirmOpen] =
     useState(false);
+  /** YouTube URL format + oEmbed embeddability (private / blocked embeds fail). */
+  const [videoStatus, setVideoStatus] = useState<YouTubeFieldStatus>(() => {
+    const initial = (initialData?.video_url ?? "").trim();
+    if (!initial) return { kind: "empty" };
+    return validateYouTubeUrl(initial)
+      ? { kind: "checking" }
+      : { kind: "invalid_url" };
+  });
   /** Tracks whether the current edit still has an unsaved tailored file that would be abandoned. */
   const hadTailoredCvOnLoad =
     initialData?.cv_type === "tailored" && Boolean(initialData?.cv_url?.trim());
@@ -854,7 +865,16 @@ export default function ApplicationForm({
         selectedPrimaryId === (initialData.primary_cv_id ?? null)
       : cvMode === "tailored");
   const hasUsableCv = hasCv && !stillUsingMissingSavedCv;
-  const hasValidVideo = validateYouTubeUrl(formData.video_url.trim());
+  const hasValidVideo = videoStatus.kind === "ready";
+  const videoUrlEntered = Boolean(formData.video_url.trim());
+  /** Entered URL that failed format or oEmbed — blocks Save until fixed or cleared. */
+  const videoHardBlock =
+    videoUrlEntered &&
+    (videoStatus.kind === "invalid_url" ||
+      videoStatus.kind === "unavailable");
+  /** Still resolving oEmbed — Save may wait on submit. */
+  const videoStillChecking =
+    videoUrlEntered && videoStatus.kind === "checking";
   const savedSlug = (initialData?.slug ?? "").trim();
   const slugUnchangedFromSave =
     slugPinned && hasSlug && formData.slug.trim() === savedSlug;
@@ -872,7 +892,8 @@ export default function ApplicationForm({
   const requiresPublishCompleteSet =
     isEdit && initialData?.status === "active";
 
-  const draftSaveReady = hasCompany && hasRole && slugReady;
+  const draftSaveReady =
+    hasCompany && hasRole && slugReady && !videoHardBlock;
   const publishSaveReady =
     draftSaveReady &&
     hasFirstName &&
@@ -938,6 +959,15 @@ export default function ApplicationForm({
       }
       if (!hasUsableCv) items.push({ name: "Your Résumé", stepId: "materials" });
       if (!hasValidVideo) items.push({ name: "YouTube intro", stepId: "video" });
+    } else if (videoHardBlock) {
+      items.push({
+        name: "YouTube intro",
+        note:
+          videoStatus.kind === "unavailable"
+            ? videoStatus.message || YOUTUBE_UNAVAILABLE_MESSAGE
+            : "Enter a valid YouTube URL",
+        stepId: "video",
+      });
     }
     return items;
   })();
@@ -1277,13 +1307,25 @@ export default function ApplicationForm({
         }
         if (!formData.video_url.trim())
           newErrors.video_url = "YouTube intro is required";
+        else if (videoStatus.kind === "unavailable")
+          newErrors.video_url =
+            videoStatus.message || YOUTUBE_UNAVAILABLE_MESSAGE;
+        else if (videoStatus.kind === "checking")
+          newErrors.video_url = "Wait for the video check to finish";
         else if (!hasValidVideo)
           newErrors.video_url = "Enter a valid YouTube URL";
         if (!firstName) newErrors.first_name = "First name is required";
         if (!lastName) newErrors.last_name = "Last name is required";
-      } else if (formData.video_url.trim() && !hasValidVideo) {
-        // Draft: validate video format only when a URL was entered.
-        newErrors.video_url = "Enter a valid YouTube URL";
+      } else if (videoUrlEntered && (videoHardBlock || videoStillChecking)) {
+        // Draft: when a URL is entered, require a usable (embeddable) video.
+        if (videoStatus.kind === "unavailable") {
+          newErrors.video_url =
+            videoStatus.message || YOUTUBE_UNAVAILABLE_MESSAGE;
+        } else if (videoStatus.kind === "checking") {
+          newErrors.video_url = "Wait for the video check to finish";
+        } else {
+          newErrors.video_url = "Enter a valid YouTube URL";
+        }
       }
 
       if (Object.keys(newErrors).length > 0) {
@@ -2350,6 +2392,8 @@ export default function ApplicationForm({
                       setFormData((prev) => ({ ...prev, video_url: url }))
                     }
                     error={errors.video_url}
+                    excludeApplicationId={slugExcludeApplicationId}
+                    onStatusChange={setVideoStatus}
                   />
                 ),
               },

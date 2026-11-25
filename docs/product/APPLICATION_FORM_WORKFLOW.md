@@ -147,7 +147,7 @@ On create, the source choices stay locked for a moment while the library loads, 
 
 ### 4. Video
 
-**You enter** a YouTube URL. It is required.
+**You enter** a YouTube URL (or reuse one from an earlier application). After the URL parses, the form shows a full-width playable preview (thumbnail with play, then embed) and the title. Private videos and videos that block embedding show an error; unlisted videos work. It is required to publish.
 
 **The check**
 
