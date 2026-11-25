@@ -341,6 +341,7 @@ export default function CreateApplicationPage() {
         publicId={publicId ?? undefined}
         resolveSlugOnCreate
         persistDraftKey={draftStorageKey ?? undefined}
+        collapseAboutYou={profile?.collapse_about_you !== false}
       />
     </div>
   );

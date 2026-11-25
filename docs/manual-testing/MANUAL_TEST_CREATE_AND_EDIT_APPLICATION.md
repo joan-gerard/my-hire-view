@@ -56,9 +56,12 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 
 ## 3. Create — About you (read-only + show/hide)
 
-- [ ] Note under the section: from your profile; this page only chooses what recruiters see; change details on Profile
-- [ ] **Edit profile** sits in the About you note under the section title (not alone at the top of the card) and opens `/admin/profile`
-- [ ] Order: **First name**, **Last name**, **Picture**, then Location / LinkedIn / Portfolio
+- [ ] **No live apps yet** (including draft-only): About you is fully expanded on create and draft edit
+- [ ] **After at least one live app** (Profile collapse preference on, default): About you collapses to one line like **Showing photo, name, portfolio** with **Edit**; **Edit** expands; **Hide details** collapses again
+- [ ] Account settings → Preferences → turn off **Collapse About you after your first live application** → create/edit keep About you fully expanded even with live apps
+- [ ] When expanded: short note **Choose what this page shows from your profile**; **Edit profile** (and **Hide details** when collapse applies) sit on the right
+- [ ] **Edit profile** opens `/admin/profile`
+- [ ] Order when expanded: **First name**, **Last name**, **Picture**, then Location / LinkedIn / Portfolio
 - [ ] **First name** / **Last name** are display-only (not focusable inputs); always shown when present; no visibility toggle; empty says add on Profile; name fields use a slightly stronger fill than the show/hide fields below
 - [ ] **Picture:** preview always shown (photo or initials). With a photo: **Visible** / **Hidden** label + switch under the preview (Hidden dims it, neutral grey). Without: link to Profile; no visibility toggle
 - [ ] Picture tip is green when a photo exists, grey when not
@@ -112,6 +115,7 @@ For leave-confirm, draft restore, and CV-mode edges, use [MANUAL_TEST_CREATE_APP
 
 ## 7. Edit — About you and materials
 
+- [ ] If you already have a live app: About you starts collapsed on a one-line summary with **Edit**; expand to change visibility. Draft-only accounts stay expanded
 - [ ] Form waits until the profile request finishes, then shows live profile name / location / links as read-only values (same as create)
 - [ ] Note: from your profile; this page chooses what recruiters see; **Edit profile** for changes
 - [ ] A field the saved application left empty starts **Hidden** even when the profile now has a value; the next save includes it only if you set it to **Visible**

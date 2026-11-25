@@ -34,6 +34,7 @@ const FIELD_LABELS: Record<string, string> = {
   default_show_location: "Show location by default",
   default_show_linkedin: "Show LinkedIn by default",
   default_show_portfolio: "Show portfolio by default",
+  collapse_about_you: "Collapse About you on applications",
 };
 
 function optionalNullableString(max: number, label: string) {
@@ -114,6 +115,7 @@ export const profileUpdateSchema = z
     default_show_location: z.boolean().optional(),
     default_show_linkedin: z.boolean().optional(),
     default_show_portfolio: z.boolean().optional(),
+    collapse_about_you: z.boolean().optional(),
   })
   .strict();
 

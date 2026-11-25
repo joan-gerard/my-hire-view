@@ -292,6 +292,7 @@ export default function EditApplicationPage() {
         submitLabel={
           application.status === "draft" ? "Save Draft" : "Save application"
         }
+        collapseAboutYou={profile?.collapse_about_you !== false}
       />
     </div>
   );

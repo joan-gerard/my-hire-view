@@ -33,6 +33,11 @@ export interface Profile {
   default_show_linkedin?: boolean;
   /** Default include for portfolio on new applications. */
   default_show_portfolio?: boolean;
+  /**
+   * When true (default), About you on create/edit starts collapsed after the
+   * first live application. When false, About you stays fully expanded.
+   */
+  collapse_about_you?: boolean;
 }
 
 export type { ProfileUpdateInput } from "@/lib/validation/profile";

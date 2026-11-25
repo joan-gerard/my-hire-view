@@ -74,6 +74,10 @@ import type { SlugSegmentOrder } from "@/lib/utils/slug-generate";
 import { getApplicationUrl, getBaseUrl } from "@/lib/utils/url";
 import { validateYouTubeUrl } from "@/lib/utils/youtube";
 import { YOUTUBE_UNAVAILABLE_MESSAGE } from "@/lib/utils/youtube-preview";
+import {
+  buildAboutYouSummary,
+  shouldCollapseAboutYouByDefault,
+} from "@/lib/utils/about-you-summary";
 import { FiAlertCircle } from "react-icons/fi";
 
 function hasValue(v: string | null | undefined): boolean {
@@ -230,6 +234,11 @@ interface ApplicationFormProps {
    * key and restore on mount (F15-045). Cleared after a successful submit.
    */
   persistDraftKey?: string;
+  /**
+   * Profile preference: collapse About you after the first live application.
+   * Defaults to true when omitted.
+   */
+  collapseAboutYou?: boolean;
 }
 
 export default function ApplicationForm({
@@ -245,6 +254,7 @@ export default function ApplicationForm({
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
   persistDraftKey,
+  collapseAboutYou = true,
 }: ApplicationFormProps) {
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
@@ -473,9 +483,54 @@ export default function ApplicationForm({
       ? { kind: "checking" }
       : { kind: "invalid_url" };
   });
+  /**
+   * Live (active) apps for the account — About you collapses only after the
+   * first publish (drafts alone do not count).
+   */
+  const [liveApplicationCount, setLiveApplicationCount] = useState<
+    number | null
+  >(null);
+  const [aboutYouExpanded, setAboutYouExpanded] = useState(true);
+  const aboutYouExpandUserChosenRef = useRef(false);
   /** Tracks whether the current edit still has an unsaved tailored file that would be abandoned. */
   const hadTailoredCvOnLoad =
     initialData?.cv_type === "tailored" && Boolean(initialData?.cv_url?.trim());
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadLiveApplicationCount() {
+      try {
+        const res = await fetch("/api/applications/counts", {
+          credentials: "include",
+        });
+        if (!res.ok || cancelled) return;
+        const json = (await res.json().catch(() => ({}))) as {
+          data?: { active?: number };
+        };
+        const active =
+          typeof json.data?.active === "number" && json.data.active >= 0
+            ? json.data.active
+            : 0;
+        if (!cancelled) setLiveApplicationCount(active);
+      } catch {
+        if (!cancelled) setLiveApplicationCount(0);
+      }
+    }
+    void loadLiveApplicationCount();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (aboutYouExpandUserChosenRef.current) return;
+    setAboutYouExpanded(
+      !shouldCollapseAboutYouByDefault({
+        liveApplicationCount,
+        collapseAboutYou,
+      }),
+    );
+  }, [liveApplicationCount, collapseAboutYou]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1650,6 +1705,20 @@ export default function ApplicationForm({
     linkedin_url: formData.linkedin_url ?? "",
   };
 
+  const aboutYouSummary = buildAboutYouSummary({
+    hasProfilePicture,
+    showProfilePicture: hasProfilePicture && showProfilePicture,
+    firstName: formData.first_name ?? "",
+    lastName: formData.last_name ?? "",
+    values: candidateValues,
+    include,
+  });
+
+  const preferCollapsedAboutYou = shouldCollapseAboutYouByDefault({
+    liveApplicationCount,
+    collapseAboutYou,
+  });
+
   const handleCandidateIncludeChange = (
     field: CandidateFieldKey,
     included: boolean,
@@ -2342,18 +2411,54 @@ export default function ApplicationForm({
                 type: "section",
                 id: "application-section-about",
                 label: "About you",
-                description: (
-                  <>
-                    From your profile. First and last name are required to
-                    publish. Choose what else recruiters see on this page.{" "}
-                    <EditProfileLink />
-                  </>
-                ),
+                description: aboutYouExpanded ? (
+                  <div className="flex items-baseline justify-between gap-x-3 gap-y-1">
+                    <p className="min-w-0">
+                      Choose what this page shows from your profile.
+                    </p>
+                    <div className="ml-auto flex shrink-0 items-baseline gap-3">
+                      <EditProfileLink />
+                      {preferCollapsedAboutYou ? (
+                        <button
+                          type="button"
+                          className="font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-2 hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                          onClick={() => {
+                            aboutYouExpandUserChosenRef.current = true;
+                            setAboutYouExpanded(false);
+                          }}
+                        >
+                          Hide details
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : undefined,
               },
               {
                 type: "block",
                 id: "application-row-about",
-                children: candidateStep,
+                children: aboutYouExpanded ? (
+                  candidateStep
+                ) : (
+                  <div
+                    id="application-row-about-summary"
+                    className="flex scroll-mt-[calc(var(--admin-header-height,72px)+0.75rem)] items-baseline justify-between gap-x-3 gap-y-1 border-t border-[var(--ink)]/10 p-4 first:border-t-0"
+                  >
+                    <p className="min-w-0 text-sm text-[var(--ink)]">
+                      {aboutYouSummary}
+                    </p>
+                    <button
+                      type="button"
+                      className="ml-auto shrink-0 text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-2 hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                      onClick={() => {
+                        aboutYouExpandUserChosenRef.current = true;
+                        setAboutYouExpanded(true);
+                      }}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                ),
               },
               {
                 type: "section",

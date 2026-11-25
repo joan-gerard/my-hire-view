@@ -274,6 +274,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Preferences tab
 
+- [ ] **About you on applications** → **Collapse About you after your first live application** (default on); toggle saves without visiting Profile
 - [ ] **Status indicators** offers colorful dots vs high-contrast icons with live previews
 - [ ] Choice persists across refresh and updates dashboard / legend
 
@@ -302,7 +303,8 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### About you (create)
 
-- [ ] Under **About you**: note that values come from your profile; this page only chooses which ones recruiters see; **Edit profile** is inline in that note (not alone in the card)
+- [ ] No live apps yet: About you fully expanded. After ≥1 live app (collapse preference on): one-line summary (e.g. Showing photo, name, portfolio) + **Edit**; **Hide details** after expand. Preference off → always expanded
+- [ ] Under **About you** when expanded: short note to choose what this page shows from your profile; **Edit profile** / **Hide details** on the right
 - [ ] Order: **First name**, **Last name**, **Picture**, then Location / LinkedIn / Portfolio
 - [ ] **First name** and **Last name** are read-only; always included when present; there is no show switch for the name; empty says add on Profile; name fields have a slightly stronger fill than show/hide fields
 - [ ] **Your link:** Company and Role show a grey status dot before the label until valid, then green. When **Customize link** is open, Link ending does the same and **How the link reads** always shows a green status dot
@@ -324,7 +326,8 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### About you (edit)
 
-- [ ] The form waits until the profile request finishes, then shows profile name, location, and links as read-only values (same as create), plus **Edit profile**
+- [ ] With ≥1 live app: starts collapsed on a summary line with **Edit**; draft-only stays expanded
+- [ ] The form waits until the profile request finishes, then shows profile name, location, and links as read-only values when expanded (same as create), plus **Edit profile**
 - [ ] A field the saved application left empty starts **Hidden** even when the profile now has a value. The next save includes that value only if you set it to **Visible**
 - [ ] **Profile picture:** **Visible** / **Hidden** switch under the preview when a picture exists; Hidden dims the thumbnail
 - [ ] With no picture, the row links to Profile. There is no Add / Manage picture control

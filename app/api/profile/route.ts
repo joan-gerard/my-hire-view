@@ -205,6 +205,10 @@ export async function PUT(request: NextRequest) {
         body.default_show_portfolio !== undefined
           ? body.default_show_portfolio
           : (existing?.default_show_portfolio ?? true),
+      collapse_about_you:
+        body.collapse_about_you !== undefined
+          ? body.collapse_about_you
+          : (existing?.collapse_about_you ?? true),
     };
 
     const firstName =

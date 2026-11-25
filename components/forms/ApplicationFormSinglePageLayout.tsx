@@ -312,9 +312,9 @@ export default function ApplicationFormSinglePageLayout({
                 ) : null}
               </h2>
               {group.section.description ? (
-                <p className="text-sm font-normal leading-5 text-[var(--muted)]">
+                <div className="text-sm font-normal leading-5 text-[var(--muted)]">
                   {group.section.description}
-                </p>
+                </div>
               ) : null}
             </div>
           ) : null}

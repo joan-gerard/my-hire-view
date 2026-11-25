@@ -418,7 +418,7 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url`, `contact_email`, `phone`, and `default_show_*` booleans (`email`, `phone`, `profile_picture`, `location`, `linkedin`, `portfolio`) — omit picture field to leave unchanged; `null` to clear nullable strings. Unexpected keys → **400**. Max lengths: names **100**, location **200**, phone **40**, contact email **254**, URLs **2048**. Non-null picture URL must be on the configured Supabase origin (`NEXT_PUBLIC_SUPABASE_URL`) under the caller’s Storage folder.
+- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url`, `contact_email`, `phone`, `default_show_*` booleans (`email`, `phone`, `profile_picture`, `location`, `linkedin`, `portfolio`), and `collapse_about_you` (boolean; default **true** — collapse About you on applications after the first live app) — omit picture field to leave unchanged; `null` to clear nullable strings. Unexpected keys → **400**. Max lengths: names **100**, location **200**, phone **40**, contact email **254**, URLs **2048**. Non-null picture URL must be on the configured Supabase origin (`NEXT_PUBLIC_SUPABASE_URL`) under the caller’s Storage folder.
 - **Success:** `200` `{ data: Profile }` optionally with `warnings: string[]` (e.g. Storage delete or metadata sync failed)
 - **Errors:** `400` schema / unowned picture URL / missing names / over-long introduced names / upsert error; `401`; `429`; `500`
 

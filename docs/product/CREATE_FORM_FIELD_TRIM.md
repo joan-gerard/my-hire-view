@@ -58,10 +58,11 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 
 ### About you — shipped shape
 
-1. **Edit profile** inline under the About you title; saving the application does not PUT the profile.
-2. First / last name: read-only; always shown when present; required to publish (before Picture); slightly stronger field fill than show/hide rows.
-3. Picture: VisibilityToggle (Visible / Hidden) under the preview (plus “Add on Profile” when missing).
-4. Email / Phone / Location / LinkedIn / Portfolio: read-only + VisibilityToggle when non-empty; application only stores shown values. Profile sets default show prefs for new applications.
+1. Expanded header: short note (**Choose what this page shows from your profile**) with **Edit profile** (and **Hide details** when collapse applies) on the right; saving the application does not PUT the profile.
+2. **Repeat create / edit:** after the first **live (active)** application, About you collapses to one summary line (`Showing photo, name, portfolio`) with **Edit** to expand and **Hide details** to collapse again — when Preferences **Collapse About you after your first live application** is on (default). Drafts alone do not collapse it; turning the preference off keeps About you fully expanded.
+3. First / last name: read-only; always shown when present; required to publish (before Picture); slightly stronger field fill than show/hide rows.
+4. Picture: VisibilityToggle (Visible / Hidden) under the preview (plus “Add on Profile” when missing).
+5. Email / Phone / Location / LinkedIn / Portfolio: read-only + VisibilityToggle when non-empty; application only stores shown values. Profile sets default show prefs for new applications.
 
 
 ---
