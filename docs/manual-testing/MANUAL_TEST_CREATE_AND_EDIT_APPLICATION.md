@@ -27,7 +27,7 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 - [ ] Sections are **Your link**, **About you**, **Your Résumé**, and **Your Pitch** — each a heading above its own card
 - [ ] Required fields show a red asterisk: Company, Role, First name, Last name, Your Résumé (section), YouTube
 - [ ] Inside a card, label is on the left and control on the right; on a narrow screen the label sits above the control
-- [ ] **Cancel** and **Save Draft** sit at the bottom; **Publish** appears only when the full publish set is ready
+- [ ] **Cancel** and **Save Draft** stay fixed at the bottom while scrolling; **Publish** appears only when the full publish set is ready; missing required items are links that scroll to their fields
 - [ ] Save stays greyed out until company, role, and share link are ready (résumé / YouTube / names are not required for draft); a line above the buttons names what is missing
 - [ ] Pressing **Enter** in a text field does **not** save
 - [ ] There is no Preview button on create, no chapter checklist, and no wizard step rail
@@ -110,7 +110,8 @@ For leave-confirm, draft restore, and CV-mode edges, use [MANUAL_TEST_CREATE_APP
 - [ ] Submit label is **Save Draft** for drafts and **Save application** for active apps
 - [ ] With no edits since load/save, Save is disabled and the reason reads **No changes to save.**
 - [ ] Draft with full publish set: **Publish** is visible even when Save is off for no changes; live apps do not show Publish
-- [ ] Draft edit: Save needs company + role + share link (same as create). Live edit: Save needs the full publish set; blocked-reason line jumps to the first gap
+- [ ] Draft edit: Save needs company + role + share link (same as create). Live edit: Save needs the full publish set; each blocked-reason item scrolls to its field
+- [ ] Cancel / Save bar stays fixed at the bottom while scrolling the form
 
 ---
 

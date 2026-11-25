@@ -118,6 +118,15 @@ export type ApplicationFormPageRow =
       children: ReactNode;
     };
 
+export type ApplicationFormBlockedItem = {
+  /** Stable key for the list (field name). */
+  id: string;
+  /** Phrase shown in the footer (often the field name or a short note). */
+  label: string;
+  /** Scroll / focus the matching field. */
+  onActivate: () => void;
+};
+
 interface ApplicationFormSinglePageLayoutProps {
   title: string;
   description: string;
@@ -125,10 +134,15 @@ interface ApplicationFormSinglePageLayoutProps {
   /** Save control. */
   actions: ReactNode;
   cancelHref: string;
-  /** Why save is blocked, shown above the buttons. */
-  blockedReason?: string | null;
-  /** Moves focus to the first gap named by `blockedReason`. */
-  onBlockedReason?: () => void;
+  /**
+   * Prefix for the missing-fields line, e.g. "Required before saving".
+   * Shown only when `blockedItems` is non-empty.
+   */
+  blockedPrefix?: string | null;
+  /** Each item is a link that scrolls to its field. */
+  blockedItems?: ApplicationFormBlockedItem[];
+  /** Plain status when save is idle (e.g. "No changes to save.") — not a link. */
+  blockedNote?: string | null;
 }
 
 /**
@@ -276,99 +290,131 @@ export default function ApplicationFormSinglePageLayout({
   rows,
   actions,
   cancelHref,
-  blockedReason,
-  onBlockedReason,
+  blockedPrefix = null,
+  blockedItems = [],
+  blockedNote = null,
 }: ApplicationFormSinglePageLayoutProps) {
   const groups = groupRows(rows);
+  const showBlockedItems = blockedItems.length > 0;
+  const showBlockedNote = !showBlockedItems && Boolean(blockedNote);
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-8">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--ink)]">
-          {title}
-        </h1>
-        <p className="mt-1 text-base font-normal leading-6 text-[var(--muted)]">
-          {description}
-        </p>
-      </header>
+    <div className="mx-auto w-full max-w-2xl">
+      <div className="space-y-8 pb-28">
+        <header>
+          <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--ink)]">
+            {title}
+          </h1>
+          <p className="mt-1 text-base font-normal leading-6 text-[var(--muted)]">
+            {description}
+          </p>
+        </header>
 
-      {groups.map((group) => (
-        <section
-          key={group.section?.id ?? group.items[0]?.id ?? "fields"}
-          className="space-y-3"
-        >
-          {group.section ? (
-            <div className="space-y-1">
-              <h2
-                id={group.section.id}
-                className="scroll-mt-[calc(var(--admin-header-height,72px)+0.75rem)] text-xl font-semibold tracking-[-0.02em] text-[var(--ink)]"
-              >
-                {group.section.label}
-                {group.section.required ? <RequiredFieldMark /> : null}
-                {group.section.optional ? (
-                  <span className="ml-2 text-sm font-normal text-[var(--muted)]">
-                    (optional)
-                  </span>
+        {groups.map((group) => (
+          <section
+            key={group.section?.id ?? group.items[0]?.id ?? "fields"}
+            className="space-y-3"
+          >
+            {group.section ? (
+              <div className="space-y-1">
+                <h2
+                  id={group.section.id}
+                  className="scroll-mt-[calc(var(--admin-header-height,72px)+0.75rem)] text-xl font-semibold tracking-[-0.02em] text-[var(--ink)]"
+                >
+                  {group.section.label}
+                  {group.section.required ? <RequiredFieldMark /> : null}
+                  {group.section.optional ? (
+                    <span className="ml-2 text-sm font-normal text-[var(--muted)]">
+                      (optional)
+                    </span>
+                  ) : null}
+                </h2>
+                {group.section.description ? (
+                  <div className="text-sm font-normal leading-5 text-[var(--muted)]">
+                    {group.section.description}
+                  </div>
                 ) : null}
-              </h2>
-              {group.section.description ? (
-                <div className="text-sm font-normal leading-5 text-[var(--muted)]">
-                  {group.section.description}
-                </div>
-              ) : null}
+              </div>
+            ) : null}
+            <div className="overflow-hidden rounded-xl border border-[var(--ink)]/10 bg-[var(--white)]">
+              {group.items.map((row) =>
+                row.type === "block" ? (
+                  <div
+                    key={row.id}
+                    id={row.id}
+                    className="scroll-mt-[calc(var(--admin-header-height,72px)+0.75rem)]"
+                  >
+                    {row.children}
+                  </div>
+                ) : (
+                  <ApplicationFormFieldRow
+                    key={row.id}
+                    id={row.id}
+                    label={row.label}
+                    labelFor={row.labelFor}
+                    align={row.align}
+                    hint={row.hint}
+                    info={row.info}
+                    tip={row.tip}
+                    tipTone={row.tipTone}
+                    required={row.required}
+                    className={row.className}
+                    layout={row.type === "field" ? row.layout : undefined}
+                  >
+                    {row.children}
+                  </ApplicationFormFieldRow>
+                ),
+              )}
             </div>
-          ) : null}
-          <div className="overflow-hidden rounded-xl border border-[var(--ink)]/10 bg-[var(--white)]">
-            {group.items.map((row) =>
-              row.type === "block" ? (
-                <div
-                  key={row.id}
-                  id={row.id}
-                  className="scroll-mt-[calc(var(--admin-header-height,72px)+0.75rem)]"
-                >
-                  {row.children}
-                </div>
-              ) : (
-                <ApplicationFormFieldRow
-                  key={row.id}
-                  id={row.id}
-                  label={row.label}
-                  labelFor={row.labelFor}
-                  align={row.align}
-                  hint={row.hint}
-                  info={row.info}
-                  tip={row.tip}
-                  tipTone={row.tipTone}
-                  required={row.required}
-                  className={row.className}
-                  layout={row.type === "field" ? row.layout : undefined}
-                >
-                  {row.children}
-                </ApplicationFormFieldRow>
-              ),
-            )}
-          </div>
-        </section>
-      ))}
+          </section>
+        ))}
+      </div>
 
-      <div className="flex flex-col items-end gap-2">
-        {blockedReason ? (
-          <button
-            type="button"
-            onClick={onBlockedReason}
-            className="max-w-sm cursor-pointer text-right text-sm leading-snug text-[var(--muted)] underline decoration-[var(--ink)]/25 underline-offset-2 hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-          >
-            {blockedReason}
-          </button>
-        ) : null}
-        <div className="flex items-center justify-end gap-2">
-          <Link
-            href={cancelHref}
-            className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-[var(--ink)]/12 bg-[var(--white)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--ink)]/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-          >
-            Cancel
-          </Link>
-          {actions}
+      {/*
+        Fixed so Cancel / Save stay visible while scrolling the long form.
+        Horizontal inset matches AdminMain create/edit chrome.
+      */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
+        <div className="pointer-events-auto border-t border-[var(--ink)]/10 bg-[var(--white)]/95 px-4 py-3 backdrop-blur-sm min-[720px]:px-[30px]">
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-end gap-2">
+            {showBlockedItems ? (
+              <p
+                className="max-w-lg text-right text-sm leading-snug text-[var(--muted)]"
+                aria-live="polite"
+              >
+                {blockedPrefix ? `${blockedPrefix}: ` : null}
+                {blockedItems.map((item, index) => (
+                  <span key={item.id}>
+                    {index > 0 ? ", " : null}
+                    <button
+                      type="button"
+                      onClick={item.onActivate}
+                      className="cursor-pointer text-[var(--muted)] underline decoration-[var(--ink)]/25 underline-offset-2 hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                    >
+                      {item.label}
+                    </button>
+                  </span>
+                ))}
+              </p>
+            ) : null}
+            {showBlockedNote ? (
+              <p
+                className="max-w-sm text-right text-sm leading-snug text-[var(--muted)]"
+                aria-live="polite"
+              >
+                {blockedNote}
+              </p>
+            ) : null}
+            <div className="flex items-center justify-end gap-2">
+              <Link
+                href={cancelHref}
+                className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-[var(--ink)]/12 bg-[var(--white)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--ink)]/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+              >
+                Cancel
+              </Link>
+              {actions}
+            </div>
+          </div>
         </div>
       </div>
     </div>

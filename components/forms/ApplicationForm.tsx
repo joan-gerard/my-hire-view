@@ -1027,20 +1027,26 @@ export default function ApplicationForm({
     return items;
   })();
 
-  const disabledReason = (() => {
-    if (formBusy) return null;
-    if (saveBlockers.length > 0) {
-      const phrases = saveBlockers.map((item) => item.note ?? item.name);
-      const prefix = requiresPublishCompleteSet
+  const blockedPrefix =
+    !formBusy && saveBlockers.length > 0
+      ? requiresPublishCompleteSet
         ? "Required before saving"
-        : "Required before saving draft";
-      return `${prefix}: ${phrases.join(", ")}`;
-    }
-    if (isEdit && !hasUnsavedEditChanges) {
-      return "No changes to save.";
-    }
-    return null;
-  })();
+        : "Required before saving draft"
+      : null;
+  /** Plain footer note when edit has nothing to save (not a clickable list). */
+  const blockedNote =
+    !formBusy &&
+    saveBlockers.length === 0 &&
+    isEdit &&
+    !hasUnsavedEditChanges
+      ? "No changes to save."
+      : null;
+  /** Kept for ApplicationFormActions aria / tooltip when not dimmed. */
+  const disabledReason = blockedPrefix
+    ? `${blockedPrefix}: ${saveBlockers
+        .map((item) => item.note ?? item.name)
+        .join(", ")}`
+    : blockedNote;
 
   /** Drop slug field errors when inputs that affect slug change so live status can show success again. */
   useEffect(() => {
@@ -2175,11 +2181,15 @@ export default function ApplicationForm({
     </>
   );
 
-  const focusFirstGap = () => {
-    const item = saveBlockers[0];
-    if (!item) return;
+  const focusSaveBlocker = (item: {
+    name: string;
+    stepId: ApplicationFormStepId;
+  }) => {
     const needsLinkCustomize = item.name === "Your application link";
+    const needsAboutYou =
+      item.name === "First name" || item.name === "Last name";
     if (needsLinkCustomize) setLinkCustomizeOpen(true);
+    if (needsAboutYou) setAboutYouExpanded(true);
     const target =
       item.name === "Company"
         ? { rowId: "application-row-company", inputId: "application-company" }
@@ -2210,9 +2220,21 @@ export default function ApplicationForm({
                       };
     window.setTimeout(
       () => focusApplicationRow(target.rowId, target.inputId),
-      needsLinkCustomize ? 50 : 0,
+      needsLinkCustomize || needsAboutYou ? 50 : 0,
     );
   };
+
+  const focusFirstGap = () => {
+    const item = saveBlockers[0];
+    if (!item) return;
+    focusSaveBlocker(item);
+  };
+
+  const blockedItems = saveBlockers.map((item) => ({
+    id: item.name,
+    label: item.note ?? item.name,
+    onActivate: () => focusSaveBlocker(item),
+  }));
 
   const formActions = (
     <ApplicationFormActions
@@ -2306,8 +2328,9 @@ export default function ApplicationForm({
           }
           cancelHref="/admin"
           actions={formActions}
-          blockedReason={disabledReason}
-          onBlockedReason={focusFirstGap}
+          blockedPrefix={blockedPrefix}
+          blockedItems={blockedItems}
+          blockedNote={blockedNote}
           rows={(
             [
               {
