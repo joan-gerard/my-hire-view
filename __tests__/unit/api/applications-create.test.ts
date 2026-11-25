@@ -166,6 +166,46 @@ describe("POST /api/applications", () => {
     );
   });
 
+  it("allows draft create with cv_type tailored and no cv_url yet", async () => {
+    const newApp = {
+      id: "app-draft-no-cv",
+      company: "Volvo",
+      role: "Software Engineer",
+      slug: "volvo-software-engineer",
+      cv_url: null,
+      video_url: "",
+      user_id: MOCK_USER.id,
+      status: "draft",
+      cv_type: "tailored",
+    };
+    const insertChain = ok(newApp);
+    // Null tailored URL skips ownership / in-use checks → profile then insert.
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(PROFILE_SNAPSHOT), insertChain]),
+    );
+
+    const response = await POST(
+      makePostRequest({
+        company: "Volvo",
+        role: "Software Engineer",
+        slug: "volvo-software-engineer",
+        cv_url: null,
+        video_url: "",
+        cv_type: "tailored",
+      }),
+    );
+    expect(response.status).toBe(201);
+    expect(insertChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "draft",
+        cv_type: "tailored",
+        cv_url: null,
+        primary_cv_id: null,
+      }),
+    );
+    expect(mockIsOwnedTailoredCvUrl).not.toHaveBeenCalled();
+  });
+
   it("persists status active when the body explicitly requests it", async () => {
     const newApp = {
       id: "app-active",

@@ -146,7 +146,7 @@ Header **Sign Out** uses `ArrowCtaButton` — ink pill + white arrow disc + labe
 - Errors: `--status-danger-fg`; ring tint on the field.
 - Auth: `components/auth/auth-form-styles.ts` + Reslink-inspired shells (white card / split ink panel).
 - **Switch** (`components/ui/Switch.tsx`): compact `role="switch"` for on/off choices (e.g. show picture). Checked track is `--ink` with a lime thumb; unchecked is a light ink wash with a white thumb. Prefer under the related content, right-aligned, with an `aria-label`.
-- **In-field visibility toggle:** for location / portfolio / LinkedIn on the application form, use an eye / eye-off icon button inside the field (same placement family as the shareable-link copy control), not the lime Switch.
+- **Visibility toggle:** for picture / email / phone / location / LinkedIn / portfolio on the application form, use the shared **Visible** / **Hidden** label + Switch (neutral grey when Hidden — not warning pink).
 
 ### Status chips & dialogs
 

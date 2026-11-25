@@ -65,7 +65,7 @@ import ProfilePictureField from "./ProfilePictureField";
 import YouTubeUrlInput from "./YouTubeUrlInput";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import AdminTooltip from "@/components/admin/AdminTooltip";
-import { CopyIcon } from "@/components/admin/icons";
+import { BrokenLinkIcon, CopyIcon } from "@/components/admin/icons";
 import SlugOrderDropdown from "./SlugOrderDropdown";
 import { copyToClipboard } from "@/lib/utils/clipboard";
 import type { SlugSegmentOrder } from "@/lib/utils/slug-generate";
@@ -1434,6 +1434,22 @@ export default function ApplicationForm({
           setSubmitPhase("saving");
         }
         cvFilename = cvPendingFile.name;
+      } else {
+        // Tailored mode, no new file. Keep a saved tailored URL on edit; otherwise
+        // clear so a leftover primary-library URL is not sent as tailored (draft
+        // may select "Upload one for this role" before choosing a PDF).
+        const savedTailoredUrl =
+          isEdit && initialData?.cv_type === "tailored"
+            ? (initialData.cv_url ?? "").trim()
+            : "";
+        const currentUrl = formData.cv_url?.trim() ?? "";
+        if (savedTailoredUrl && currentUrl === savedTailoredUrl) {
+          cvUrl = savedTailoredUrl;
+          cvFilename = initialData?.cv_filename ?? cvFilename;
+        } else {
+          cvUrl = "";
+          cvFilename = null;
+        }
       }
 
       const includePicture = hasProfilePicture && showProfilePicture;
@@ -1607,14 +1623,21 @@ export default function ApplicationForm({
     trimmedPublicId && trimmedSlug
       ? getApplicationUrl(trimmedPublicId, trimmedSlug)
       : null;
+  /** Copy is a share action: only live apps. Create/draft still show the URL preview. */
+  const isLiveApplication = isEdit && initialData?.status === "active";
+  const canCopyShareLink = Boolean(shareableUrl) && isLiveApplication;
   const shareLinkCopyUnavailableLabel = !trimmedPublicId
     ? "Complete your profile to get a share link"
     : !trimmedSlug
       ? "Add a company and role to build the link"
-      : "Link is not ready to copy";
+      : !isLiveApplication && slugReady
+        ? publishSaveReady
+          ? "Publish before sharing this link"
+          : "Finish required fields before publishing and sharing"
+        : "Link is not ready to copy";
 
   const handleCopyShareLink = async () => {
-    if (!shareableUrl) return;
+    if (!shareableUrl || !canCopyShareLink) return;
     const success = await copyToClipboard(shareableUrl);
     if (success) {
       setShareLinkCopied(true);
@@ -1726,7 +1749,7 @@ export default function ApplicationForm({
                 <FiAlertCircle className="h-4 w-4" aria-hidden />
               </span>
             </AdminTooltip>
-          ) : shareableUrl ? (
+          ) : canCopyShareLink ? (
             <AdminTooltip
               label={shareLinkCopied ? "Copied!" : "Copy link"}
               side="top"
@@ -1747,7 +1770,7 @@ export default function ApplicationForm({
                 className={`${shareLinkCopyClass} text-[var(--muted)]`}
                 aria-label={shareLinkCopyUnavailableLabel}
               >
-                <CopyIcon className="h-4 w-4" aria-hidden />
+                <BrokenLinkIcon className="h-4 w-4" />
               </span>
             </AdminTooltip>
           )}

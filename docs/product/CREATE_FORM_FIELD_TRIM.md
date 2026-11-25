@@ -24,7 +24,7 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 | --------------------------- | ------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Company**                 | Required text. Seeds the share link.                                                  | **Keep**   | Core. No debate.                                                                                                                                                               |
 | **Role**                    | Required text. Seeds the share link.                                                  | **Keep**   | Core. No debate.                                                                                                                                                               |
-| **Your application link**   | Read-only full URL from `sm` up; path only on a narrow screen. Full-width result row under Company/Role. | **Keep**   | Candidates need to see the URL they will share, including the ending. Live-updates from company/role.                                                                 |
+| **Your application link**   | Read-only full URL from `sm` up; path only on a narrow screen. Full-width result row under Company/Role. | **Keep**   | URL always previews. Copy only when live; otherwise a broken-link icon with tip (**Publish before sharing** / **Finish required fields…**, or earlier missing-id/ending tips). |
 | **Checking… / link errors** | Live status while the ending is checked.                                              | **Keep**   | Result field end control: spinner while checking; danger icon when invalid/taken (replaces copy). Customize gets a trailing danger icon; invalid/taken does **not** auto-expand. Ending row shows Checking… / messages when open. |
 | **Customize link**          | Expands How the link reads + Link ending. Collapsed by default.                       | **Keep**   | Replaces the always-visible advanced rows. Opens by default when ending/order is already customized (edit or restored draft). Hide link options collapses again. Invalid/taken ending shows a danger icon after the label (label stays ink-colored). |
 | **How the link reads**      | Custom dropdown: **Company + Role** or **Role + Company**.                            | **Park**   | Behind Customize link. Info icon still explains the choice. **Company + Role** is the default.                                                                        |
@@ -39,29 +39,29 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 
 | Control                           | What it does                                 | Call         | Feedback                                                                                                                                                 |
 | --------------------------------- | -------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Profile picture — show switch** | Whether this page shows the profile photo.   | **Keep**     | Legitimate per-application choice (e.g. hide photo for one employer). Compact switch under the preview; off dims the photo instead of removing it.       |
+| **Profile picture — Visible/Hidden** | Whether this page shows the profile photo. | **Keep**     | Same VisibilityToggle as contact fields: **Visible** / **Hidden** label + switch under the preview; off dims the photo (neutral grey, not warning pink). |
 | **Add / Manage picture**          | Opens the profile picture modal from create. | **Simplify** | Done: if no picture, link to Profile; if there is a picture, only Show / Hide here.                                                                     |
 | **First name** (value)            | Read-only from profile; required to publish. | **Keep**     | Edit on Profile. Always shown when present.                                                                                                              |
 | **First name — Show / Hidden**    | Can omit first name from `/view`.            | **Remove**   | A candidate page with no first name is odd and easy to set by accident. If the value exists, show it.                                                    |
 | **Last name** (value)             | Read-only from profile; required to publish. | **Keep**     | Same as first name.                                                                                                                                      |
 | **Last name — Show / Hidden**     | Can omit last name from `/view`.             | **Remove**   | Same as first name.                                                                                                                                      |
 | **Location** (value)              | Read-only from profile.                      | **Keep**     | Empty points to Profile.                                                                                                                                 |
-| **Location — Show / Hidden**      | Omit location on this page.                  | **Keep**     | In-field eye / eye-off when non-empty.                                                                                                                   |
+| **Location — Visible / Hidden**   | Omit location on this page.                  | **Keep**     | VisibilityToggle under the value when non-empty (neutral grey when Hidden).                                                                              |
 | **Portfolio** (URL field)         | Read-only from profile.                      | **Keep**     | Empty points to Profile; URL soft warnings stay on Profile.                                                                                              |
-| **Portfolio — Show / Hidden**     | Omit portfolio on this page.                 | **Keep**     | In-field eye toggle; same pattern as location.                                                                                                           |
+| **Portfolio — Visible / Hidden**  | Omit portfolio on this page.                 | **Keep**     | Same VisibilityToggle as location.                                                                                                                       |
 | **LinkedIn** (URL field)          | Read-only from profile (before Portfolio).   | **Keep**     | Empty points to Profile; URL soft warnings stay on Profile.                                                                                              |
-| **LinkedIn — Show / Hidden**      | Omit LinkedIn on this page.                  | **Keep**     | In-field eye toggle; same pattern as location.                                                                                                           |
+| **LinkedIn — Visible / Hidden**   | Omit LinkedIn on this page.                  | **Keep**     | Same VisibilityToggle as location.                                                                                                                       |
 | **Email** (value)                 | Read-only from profile (editable on Profile). | **Keep**    | Profile email is prefilled from the account email; empty points to Profile.                                                                              |
-| **Email — Show / Hidden**         | Omit email on this page.                     | **Keep**     | In-field eye; create defaults from profile `default_show_email`.                                                                                         |
+| **Email — Visible / Hidden**      | Omit email on this page.                     | **Keep**     | VisibilityToggle; create defaults from profile `default_show_email`.                                                                                     |
 | **Phone** (value)                 | Read-only from profile.                      | **Keep**     | Empty points to Profile.                                                                                                                                 |
-| **Phone — Show / Hidden**         | Omit phone on this page.                     | **Keep**     | In-field eye; create defaults from profile `default_show_phone`.                                                                                         |
+| **Phone — Visible / Hidden**      | Omit phone on this page.                     | **Keep**     | VisibilityToggle; create defaults from profile `default_show_phone`.                                                                                     |
 
 ### About you — shipped shape
 
 1. **Edit profile** inline under the About you title; saving the application does not PUT the profile.
 2. First / last name: read-only; always shown when present; required to publish (before Picture); slightly stronger field fill than show/hide rows.
-3. Picture: show switch (plus “Add on Profile” when missing).
-4. Email / Phone / Location / LinkedIn / Portfolio: read-only + in-field eye when non-empty; application only stores shown values. Profile sets default show prefs for new applications.
+3. Picture: VisibilityToggle (Visible / Hidden) under the preview (plus “Add on Profile” when missing).
+4. Email / Phone / Location / LinkedIn / Portfolio: read-only + VisibilityToggle when non-empty; application only stores shown values. Profile sets default show prefs for new applications.
 
 
 ---
@@ -70,13 +70,13 @@ Each item is one thing the candidate can see or change: a field, a choice, a tog
 
 | Control                                               | What it does today                             | Call                   | Feedback                                                                                                                                          |
 | ----------------------------------------------------- | ---------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Choose one résumé** (heading)                       | Frames library vs tailored.                    | **Keep**               | Clear job for the section.                                                                                                                        |
-| **From your library** (list)                          | Pick a primary CV.                             | **Keep**               | Core product.                                                                                                                                     |
-| **Manage library**                                    | Opens the primary CV modal.                    | **Keep**               | Needed so create does not dead-end when the library is empty.                                                                                     |
-| **A PDF just for this role**                          | Tailored upload for this application.          | **Keep**               | Core differentiator vs a single static CV.                                                                                                        |
-| **Choose a PDF** (file picker)                        | Selects the tailored file.                     | **Keep**               | Required when tailored is chosen.                                                                                                                 |
-| **Recruiters download it as…**                        | Shows download filename at the bottom of Your Résumé (result row). | **Keep** | Same pattern as Your application link; default is `{First}-{Last}-{Slug}.pdf`. Missing parts use muted `First-Last` / `Company-Role` placeholders. |
-| **Original name** switch                              | Switches generated name vs original filename.                 | **Keep** | Compact switch on the download-name row; default off (generated).         |
+| **Résumé** (one source row)                           | Radios: Use library CV / Upload one for this role. | **Keep**           | Single row; hint that upload overrides library on this page only. Filename truncates with ellipsis + **Preview**.                                 |
+| **Use library CV**                                    | Pick a primary CV from the library.                | **Keep**           | Core product.                                                                                                                                     |
+| **Manage library**                                    | Opens the primary CV modal.                        | **Keep**           | Needed so create does not dead-end when the library is empty.                                                                                     |
+| **Upload one for this role**                          | Tailored upload for this application.              | **Keep**           | Core differentiator; copy makes the override explicit.                                                                                            |
+| **Choose a PDF** (file picker)                        | Selects the tailored file.                         | **Keep**           | Opens the PDF dialog; the tailored radio does not. Required before publish when tailored is chosen.                                              |
+| **Recruiters download it as…**                        | Shows download filename at the bottom of Your Résumé (result row). | **Keep** | Same pattern as Your application link; truncates with ellipsis. Default `{First}-{Last}-{Slug}.pdf` with muted placeholders. |
+| **Original name** switch                              | Switches generated name vs original filename.      | **Keep**           | Compact switch on the download-name row; default off (generated).                                                                                 |
 
 ---
 
@@ -124,7 +124,7 @@ Largest wins: **remove name Show/Hidden**, **stop re-entering LinkedIn (and like
 2. **Should location text stay overridable per role?** Closed for now: profile-owned dense field on create/edit; no per-role override. Revisit only if people need a different city per role.
 3. **Is “hide last name only” a real requirement?** If yes, it belongs in Profile or a rare privacy setting, not toggles on every application.
 4. **Edit page:** Apply the same name rule so create and edit do not teach two models.
-5. **Empty LinkedIn, portfolio, or location:** Dense fields on create/edit; saving the application writes them to the profile. The eye toggle appears once the field is non-empty.
+5. **Empty LinkedIn, portfolio, or location:** Dense fields on create/edit; saving the application writes them to the profile. The **Visible** / **Hidden** switch appears once the field is non-empty.
 
 ---
 

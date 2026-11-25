@@ -7,7 +7,7 @@ import {
   PROFILE_EMPTY_TIP,
   PROFILE_INITIAL_DATA_TIP,
 } from "@/components/forms/ApplicationFormSinglePageLayout";
-import Switch from "@/components/ui/Switch";
+import VisibilityToggle from "@/components/forms/VisibilityToggle";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import Link from "next/link";
 
@@ -170,10 +170,10 @@ export default function ProfilePictureField({
         </div>
       ) : (
         <div className="mt-2 flex justify-end">
-          <Switch
-            checked={showProfilePicture}
-            onCheckedChange={onShowProfilePictureChange}
-            aria-label="Show picture to recruiters"
+          <VisibilityToggle
+            visible={showProfilePicture}
+            onVisibleChange={onShowProfilePictureChange}
+            subjectLabel="Picture"
           />
         </div>
       )}

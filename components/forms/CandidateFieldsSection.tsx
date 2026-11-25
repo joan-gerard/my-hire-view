@@ -1,7 +1,5 @@
 "use client";
 
-import AdminTooltip from "@/components/admin/AdminTooltip";
-import { EyeIcon, EyeOffIcon } from "@/components/admin/icons";
 import {
   ApplicationFormFieldRow,
   FieldLabelTip,
@@ -9,6 +7,7 @@ import {
   PROFILE_INITIAL_DATA_TIP,
   RequiredFieldMark,
 } from "@/components/forms/ApplicationFormSinglePageLayout";
+import VisibilityToggle from "@/components/forms/VisibilityToggle";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -62,9 +61,6 @@ const SHARE_FIELDS: {
   { key: "portfolio_url", label: "Portfolio" },
 ];
 
-const visibilityToggleClass =
-  "inline-flex size-7 items-center justify-center rounded-lg border border-[var(--ink)]/15 bg-[var(--white)] shadow-sm focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
-
 const profileLinkClass =
   "font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-2 hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
 
@@ -105,9 +101,6 @@ function ReadOnlyValue({
   const trimmed = value.trim();
   const empty = !trimmed;
   const omitted = canToggle && !empty && !included;
-  const tooltipLabel = included
-    ? `Hide ${label} for this application`
-    : `Show ${label} for this application`;
   const showToggle = canToggle && Boolean(onIncludeChange);
 
   if (empty) {
@@ -133,7 +126,11 @@ function ReadOnlyValue({
   }
 
   return (
-    <div className={showOuterLabel ? "space-y-1" : undefined}>
+    <div
+      className={
+        showToggle ? "space-y-2" : showOuterLabel ? "space-y-1" : undefined
+      }
+    >
       {showOuterLabel ? (
         <p className="text-sm font-medium leading-[18px] text-[var(--ink)]">
           {label}
@@ -141,7 +138,7 @@ function ReadOnlyValue({
       ) : null}
       <div
         id={id}
-        className={`${displayValueClass} ${showToggle ? "pr-12" : ""} ${
+        className={`${displayValueClass} ${
           omitted
             ? "bg-[var(--paper)] text-[var(--muted)] ring-[var(--ink)]/10 line-through decoration-[var(--muted)]/70"
             : alwaysShown
@@ -151,31 +148,16 @@ function ReadOnlyValue({
         aria-label={label}
       >
         {trimmed}
-        {showToggle && onIncludeChange ? (
-          <div className="absolute inset-y-0 right-1.5 flex items-center">
-            <AdminTooltip label={tooltipLabel} side="top">
-              <button
-                type="button"
-                role="switch"
-                aria-checked={included}
-                aria-label={tooltipLabel}
-                onClick={() => onIncludeChange(!included)}
-                className={`${visibilityToggleClass} cursor-pointer ${
-                  included
-                    ? "text-[var(--ink)] hover:bg-[var(--paper)]"
-                    : "border-[var(--status-warning-fg)]/30 bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)] hover:brightness-95"
-                }`}
-              >
-                {included ? (
-                  <EyeIcon className="h-4 w-4" />
-                ) : (
-                  <EyeOffIcon className="h-4 w-4" />
-                )}
-              </button>
-            </AdminTooltip>
-          </div>
-        ) : null}
       </div>
+      {showToggle && onIncludeChange ? (
+        <div className="flex justify-end">
+          <VisibilityToggle
+            visible={included}
+            onVisibleChange={onIncludeChange}
+            subjectLabel={label}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

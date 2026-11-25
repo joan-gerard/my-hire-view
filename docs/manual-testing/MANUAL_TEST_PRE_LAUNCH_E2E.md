@@ -308,32 +308,32 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] **Your link:** Company and Role show a grey status dot before the label until valid, then green. When **Customize link** is open, Link ending does the same and **How the link reads** always shows a green status dot
 - [ ] **About you** text fields are read-only: green “From your profile” when a value exists; grey when empty; no yellow write-through tip
 - [ ] **Picture** shows green when a profile photo exists, grey when not; toggling show/hide does not turn it yellow
-- [ ] **Résumé:** chosen **Library** or **This role** is green; the other is grey
+- [ ] **Résumé:** green once a library or role-specific CV is chosen; grey until then
 - [ ] **Pitch:** YouTube is grey until a valid URL is entered, then green
 - [ ] With no picture: **Add a picture on your profile** links to Profile. There are no Show / Hide cards
 - [ ] With a picture: thumbnail always visible; a right-aligned switch under it turns show on/off; off lowers the thumbnail opacity
 - [ ] Without a picture: initials (or avatar icon) show, plus a link to Profile; no show switch
 - [ ] Switch off: no avatar on `/view` even if the account still has a picture
-- [ ] Location, **LinkedIn**, and **Portfolio** are read-only (LinkedIn before Portfolio). When non-empty, an eye button sits inside the field; open eye = show, crossed eye = hide; empty fields link to Profile
+- [ ] Email, Phone, Location, **LinkedIn**, and **Portfolio** are read-only (LinkedIn before Portfolio). When non-empty, a **Visible** / **Hidden** switch sits under the value (same as Picture; Hidden is neutral grey, not pink); empty fields link to Profile
 - [ ] There is no typing into About you location/link fields on this form (read-only)
 - [ ] Soft URL warnings for portfolio/LinkedIn are not shown on About you (those fields are not editable here)
 - [ ] There is no collapsible **Info shown to recruiters** block and no `(N/5)` count on create
-- [ ] Hide (crossed eye) on location, portfolio, or LinkedIn → it will not appear on `/view` (verify later)
+- [ ] Set location, portfolio, or LinkedIn to **Hidden** → it will not appear on `/view` (verify later)
 - [ ] Saving the application does **not** update the profile; it only snapshots shown fields onto the application
 - [ ] Adding a picture on Profile ticks the checklist **photo** step. New Application only links there for the picture
 
 ### About you (edit)
 
 - [ ] The form waits until the profile request finishes, then shows profile name, location, and links as read-only values (same as create), plus **Edit profile**
-- [ ] A field the saved application left empty starts with the eye crossed (hidden) even when the profile now has a value. The next save includes that value only if you show it
-- [ ] **Profile picture:** show switch under the preview when a picture exists; off dims the thumbnail
+- [ ] A field the saved application left empty starts **Hidden** even when the profile now has a value. The next save includes that value only if you set it to **Visible**
+- [ ] **Profile picture:** **Visible** / **Hidden** switch under the preview when a picture exists; Hidden dims the thumbnail
 - [ ] With no picture, the row links to Profile. There is no Add / Manage picture control
 - [ ] Names are read-only. Saving does not update the profile; it only snapshots shown fields onto the application
 
 ### Résumé (create)
 
-- [ ] **Library** shows the selected primary only (or empty copy); **Manage** opens the library modal with bordered rows (radio + usage count + ⋯ View/Delete) plus upload. **This role** has **Choose a PDF** / **Manage** (no radio card)
-- [ ] Selecting a radio in the library modal sets that primary on the form; tailored **Choose a PDF** opens its own modal
+- [ ] **Your Résumé** has one **File** row: **Use library CV** / **Upload one for this role**. Filenames truncate with ellipsis + **Preview**. **Manage library** opens the library modal (bordered rows, radio + usage count + ⋯ View/Delete, upload). Role upload uses **Choose a PDF** / **Manage**
+- [ ] Selecting a radio in the library modal sets that primary on the form; **Upload one for this role** does not auto-open a dialog — tailored **Choose a PDF** / **Manage** opens its own modal
 - [ ] Once a file is chosen, a bottom **Recruiters download it as** row names the generated `{First}-{Last}-{Slug}.pdf` (muted `First-Last` / `Company-Role` placeholders until real values exist); **Original name** switches to the PDF filename
 - [ ] There is no separate **Download name for recruiters** heading block on create or edit
 
@@ -341,8 +341,8 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 - [ ] Default **Your link** shows Company, Role, **Your application link**, and **Customize link**. Expanding Customize reveals **How the link reads** and **Link ending**. **How the link reads** is a custom dropdown (not the browser menu): **Company + Role** is selected, and **Role + Company** is the other choice. An info icon beside the title opens a dialog: choose whether the company or the role comes first. The sentence is not shown under the title. The dialog has a close icon on the right of **How the link reads**, and no Close button. There is no **Order in the link** label, no examples, and no Public id preview
 - [ ] **Link ending** (when Customize is open) is its own row. An info icon beside the title opens a dialog: pre-filled for you, edit it if you like, and each ending must be unique. The sentence is not under the title. The dialog closes from an icon on the right of **Link ending**, and has no Close button. **Use the suggested link** appears after the ending is edited, and hides again if the ending matches the suggestion. Link problems stay on this row when open; they do not auto-expand Customize
-- [ ] **Your application link** is a full-width tinted row under Company/Role, with **Customize link** beneath the field. The title and a note sit above a read-only field with the not-allowed cursor. From `sm` up it shows the full URL, wrapped so the ending is visible. A copy-icon button (no “Copy” text) copies the full URL. When the link is not ready, the icon is inactive
-- [ ] With company and role filled, the result field end control shows a spinner while checking and a danger icon when invalid/taken (Copy when ready). An invalid, already used, or failed check does not expand Customize by itself; **Checking...** / error copy appear on the ending row when Customize is open. A ready link shows the ending in the path
+- [ ] **Your application link** is a full-width tinted row under Company/Role, with **Customize link** beneath the field. The title and a note sit above a read-only field with the not-allowed cursor. From `sm` up it shows the full URL, wrapped so the ending is visible. On create/draft, a broken-link icon replaces Copy once the URL looks ready (**Publish before sharing this link** or **Finish required fields before publishing and sharing**); on a live edit, Copy works when ready
+- [ ] With company and role filled, the result field end control shows a spinner while checking and a danger icon when invalid/taken. An invalid, already used, or failed check does not expand Customize by itself; **Checking...** / error copy appear on the ending row when Customize is open. A ready link shows the ending in the path
 - [ ] Edit with a custom ending or Role+Company order opens Customize by default
 - [ ] On edit, the page matches create’s one-page sections (**Your link**, **About you**, **Your Résumé**, **Your Pitch**) with title **Edit application** (no Review summary band)
 - [ ] On edit, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form, save, or count a view. Create has no preview dialog
@@ -453,7 +453,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 - [ ] Amber clock icon
 - [ ] Incomplete draft (missing résumé / YouTube / names): orange **Draft (incomplete)** status marker; **no** Publish button (edit via ⋯ or opening the card’s edit action)
 - [ ] Complete draft: labeled **Publish** button on the card
-- [ ] Copy-link icon is disabled; tooltip explains publish-before-share or finish-required-fields (not an enabled Copy link)
+- [ ] Share control shows a broken-link icon (not Copy); tooltip explains publish-before-share or finish-required-fields
 - [ ] External-link icon tooltip is **Preview**; opens the share URL with the banner
 - [ ] **More options** (⋯) tooltip; incomplete: Edit, Delete (no Publish); complete: Edit, Publish, Delete — **no Archive**
 
@@ -532,7 +532,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 
 - [ ] From 3-dot **Edit**
 - [ ] One-page edit layout matches create (sections + `2xl` width); title **Edit application**; no wizard Continue / step rail / split bands
-- [ ] Form shows **live profile** name/location/links; a previously hidden field starts with the eye crossed; saving writes profile then snapshots shown fields
+- [ ] Form shows **live profile** name/location/links; a previously hidden field starts **Hidden**; saving writes profile then snapshots shown fields
 - [ ] Changing Profile alone does **not** change a saved application’s public text until you edit and save here
 - [ ] Changing the profile picture **does** show on `/view` if this app has show-picture on (no need to re-save the app)
 - [ ] Submit label **Save Draft** (draft) or **Save application** (active); Save disabled with **No changes to save.** until something changes; successful save stays on edit (not dashboard); draft with full set shows **Publish** → live share page

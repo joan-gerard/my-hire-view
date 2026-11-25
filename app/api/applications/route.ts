@@ -148,9 +148,9 @@ export async function GET(request: NextRequest) {
       return {
         ...listFields,
         public_id: publicId,
-        // No résumé yet → missing. Non-R2 / unchecked URLs → true so they are
-        // not flagged missing.
-        cv_exists: hasCvUrl ? (existence[i] ?? true) : false,
+        // Incomplete drafts may omit a résumé — that is not “CV missing”.
+        // Only report existence when a URL is set (non-R2 / unchecked → true).
+        ...(hasCvUrl ? { cv_exists: existence[i] ?? true } : {}),
         profile_picture_missing:
           show_profile_picture === true && !hasLiveProfilePicture,
       };

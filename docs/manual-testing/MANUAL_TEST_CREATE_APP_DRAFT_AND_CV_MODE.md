@@ -12,7 +12,8 @@ Covers **F15-045** (local form draft) and **F15-049** (CV source while library l
 - [ ] Open `/admin/new`. While “Loading your CV library…” is visible, both **Use a primary CV** and **Upload a different CV** radios are disabled (**create only**).
 - [ ] On **Edit**, radios stay usable while the library loads (saved CV source is not overwritten by the fetch).
 - [ ] After load finishes with primaries present, **Use a primary CV** is selected by default and a library CV is chosen.
-- [ ] Switch to **Upload a different CV**, choose a PDF — mode must stay tailored after refresh (draft) and must not flip back when the library finishes loading.
+- [ ] Switch to **Upload one for this role** (or **Upload a different CV**), choose a PDF — mode must stay tailored after refresh (draft) and must not flip back when the library finishes loading.
+- [ ] With a library CV selected, switch to **Upload one for this role** without picking a PDF, fill company/role/slug, **Save draft** — succeeds (no “CV URL must be a tailored upload…”). Publish still requires a file.
 - [ ] With an empty primary library: after load, mode defaults to tailored. After uploading the first primary via the modal **without** having chosen tailored first, create can prefer primary. If you already chose tailored before adding a primary, mode stays tailored.
 - [ ] (Optional) Throttle / block `/api/profile/primary-cvs`: within ~12s radios unlock so a tailored CV can still be chosen.
 

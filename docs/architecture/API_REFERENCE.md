@@ -123,7 +123,7 @@ List the authenticated user’s applications (newest first), paginated. Returns 
 | `data[].last_name`      | `string` \| `null`                      | Publish gate                                       |
 | `data[].cv_type`        | `"primary"` \| `"tailored"` \| omitted  | Publish gate with `primary_cv_id`                  |
 | `data[].primary_cv_id`  | `string` \| `null`                      | Publish gate when `cv_type` is primary             |
-| `data[].cv_exists`      | `boolean`                               | Dashboard “CV missing” badge when **false**. URLs outside our R2 public base default to **true** (unchecked). |
+| `data[].cv_exists`      | `boolean` (omitted if no `cv_url`)      | Dashboard “CV missing” badge when **false** (URL set but object gone). Omitted when the app has no résumé yet (incomplete draft). URLs outside our R2 public base default to **true** (unchecked). |
 | `data[].profile_picture_missing` | `boolean`                        | Dashboard “Picture missing” badge when **true** (`show_profile_picture` on the row but no live `profiles.profile_picture_url`). |
 | `data[].view_count`     | `number`                                | Status icon + insights                             |
 | `data[].download_count` | `number`                                | Insights                                           |

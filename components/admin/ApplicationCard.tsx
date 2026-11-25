@@ -16,6 +16,7 @@ import {
 import {
     ChartIcon,
     CheckIcon,
+    BrokenLinkIcon,
     CopyIcon,
     ExternalLinkIcon,
 } from "@/components/admin/icons";
@@ -163,7 +164,7 @@ export default function ApplicationCard({
                         : "Link unavailable"
                   }
                 >
-                  <CopyIcon className="h-4 w-4" aria-hidden />
+                  <BrokenLinkIcon className="h-4 w-4" />
                 </span>
               </AdminTooltip>
             )}

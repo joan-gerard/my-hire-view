@@ -53,6 +53,26 @@ export function CopyIcon({ className }: IconProps) {
   );
 }
 
+/** Shown instead of Copy when the share link is not ready to copy yet. */
+export function BrokenLinkIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244M19.5 4.5l-15 15"
+      />
+    </svg>
+  );
+}
+
 export function ChartIcon({ className }: IconProps) {
   return (
     <svg

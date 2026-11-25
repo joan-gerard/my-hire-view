@@ -153,6 +153,17 @@ describe("GET /api/applications", () => {
     expect(json.data[0].cv_exists).toBe(false);
   });
 
+  it("omits cv_exists when the application has no cv_url yet", async () => {
+    mockListClient(
+      okWithCount([{ ...LIST_ITEM, status: "draft", cv_url: null }], 1),
+    );
+
+    const response = await GET(makeGetRequest());
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.data[0]).not.toHaveProperty("cv_exists");
+  });
+
   it("sets profile_picture_missing:true when show is on and the profile has no picture", async () => {
     mockListClient(
       okWithCount([{ ...LIST_ITEM, show_profile_picture: true }], 1),

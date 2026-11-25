@@ -270,11 +270,11 @@ export type ApplicationListItem = Pick<
    */
   public_id: string | null;
   /**
-   * True when `cv_url` is an R2 object that exists, or when existence was not
-   * checked (URL outside our R2 public base). False only when HeadObject
-   * confirms missing. Also false when there is no `cv_url` yet.
+   * When `cv_url` is set: true if the R2 object exists (or the URL is outside
+   * our public base / unchecked), false only when HeadObject confirms missing.
+   * Omitted when there is no `cv_url` yet (incomplete draft — not “CV missing”).
    */
-  cv_exists: boolean;
+  cv_exists?: boolean;
   /**
    * True when this application is set to show the profile picture but the
    * account has no live `profiles.profile_picture_url` (dashboard badge).
