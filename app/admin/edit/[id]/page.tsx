@@ -1,5 +1,5 @@
-import EditApplicationWizardPage from "@/components/admin/wizard/EditApplicationWizardPage";
+import EditApplicationPage from "@/components/admin/EditApplicationPage";
 
-export default function EditApplicationPage() {
-  return <EditApplicationWizardPage presentation="split" />;
+export default function EditApplicationPageRoute() {
+  return <EditApplicationPage />;
 }

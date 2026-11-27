@@ -1,14 +1,46 @@
 "use client";
 
 import { ADMIN_FIELDSET_CLASS } from "@/components/admin/admin-chrome";
+import {
+  ApplicationFormFieldRow,
+  FIELD_IDLE_TIP,
+  FIELD_READY_TIP,
+} from "@/components/forms/ApplicationFormSinglePageLayout";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
-import FileUpload from "@/components/forms/FileUpload";
+import Switch from "@/components/ui/Switch";
 import PrimaryCvLibraryModal from "@/components/forms/PrimaryCvLibraryModal";
-import { getCvDownloadFilename } from "@/lib/utils/cv-filename";
+import TailoredCvModal from "@/components/forms/TailoredCvModal";
+import { getCvDownloadFilenamePreview } from "@/lib/utils/cv-filename";
 import type { ApplicationCvType } from "@/lib/types/application";
 import type { PrimaryCv } from "@/lib/types/primary-cv";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+function CvFilenamePreview({
+  name,
+  previewUrl,
+}: {
+  name: string;
+  previewUrl?: string | null;
+}) {
+  return (
+    <div className="flex min-w-0 items-baseline gap-2">
+      <span className="min-w-0 truncate text-sm text-[var(--ink)]" title={name}>
+        {name}
+      </span>
+      {previewUrl ? (
+        <a
+          href={previewUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-2 hover:decoration-[var(--ink)]"
+        >
+          Preview
+        </a>
+      ) : null}
+    </div>
+  );
+}
 
 interface CvSourceFieldProps {
   /** Create form vs edit form — controls the "Current" summary. */
@@ -40,9 +72,13 @@ interface CvSourceFieldProps {
   onConfirmSwitchToPrimary: () => void;
   onCancelSwitchToPrimary: () => void;
 
-  useOriginalCvFilename: boolean;
-  onUseOriginalCvFilenameChange: (use: boolean) => void;
   slug: string;
+  /** Candidate names for the generated download filename preview. */
+  firstName?: string | null;
+  lastName?: string | null;
+  /** When true, recruiters download with the original PDF name. */
+  useOriginalCvFilename?: boolean;
+  onUseOriginalCvFilenameChange?: (useOriginal: boolean) => void;
   /** True while tailored CV is uploading on Save (F8-051 / F8-055). */
   uploading?: boolean;
   /** True while the selected PDF content digest is still computing. */
@@ -50,26 +86,11 @@ interface CvSourceFieldProps {
   /** Disable file choose/remove for the full Save lifecycle (not only upload). */
   disabled?: boolean;
   /**
-   * `checklist` matches the create Résumé demo: library cards, short tailored
-   * choice, and a one-line download name.
+   * `checklist` is one Résumé row: Use library résumé / Upload one for this role,
+   * plus the download-name result row.
    */
   variant?: "default" | "checklist";
 }
-
-function choiceCardClass(selected: boolean, disabled = false): string {
-  return `flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm ring-1 ring-inset ${
-    disabled
-      ? "cursor-not-allowed opacity-60"
-      : "cursor-pointer"
-  } ${
-    selected
-      ? "bg-[var(--paper)] text-[var(--ink)] ring-[var(--ink)]"
-      : "bg-[var(--white)] text-[var(--ink)] ring-[var(--ink)]/15 hover:bg-[var(--paper)]/70"
-  }`;
-}
-
-const textButtonClass =
-  "rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline";
 
 /**
  * Single CV section: current summary (edit), change source (radios), download name.
@@ -95,17 +116,21 @@ export default function CvSourceField({
   switchToPrimaryConfirmOpen,
   onConfirmSwitchToPrimary,
   onCancelSwitchToPrimary,
-  useOriginalCvFilename,
-  onUseOriginalCvFilenameChange,
   slug,
+  firstName,
+  lastName,
+  useOriginalCvFilename = false,
+  onUseOriginalCvFilenameChange,
   uploading = false,
   preparing = false,
   disabled = false,
   variant = "default",
 }: CvSourceFieldProps) {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
+  const [tailoredModalOpen, setTailoredModalOpen] = useState(false);
   const [checkingCv, setCheckingCv] = useState(false);
   const [cvRecheckNote, setCvRecheckNote] = useState<string | null>(null);
+  const chooseTailoredTriggerRef = useRef<HTMLButtonElement>(null);
   const selectedPrimary = primaryCvs.find((cv) => cv.id === selectedPrimaryId);
   const hasPrimaryCvs = primaryCvs.length > 0;
   const canManageLibrary = typeof onPrimaryLibraryChange === "function";
@@ -113,177 +138,286 @@ export default function CvSourceField({
   const lockCvSourceWhileLoading = !isEdit && primaryCvsLoading;
   const sourceLocked = disabled || lockCvSourceWhileLoading;
 
+  const hasSavedTailored =
+    isEdit &&
+    currentType === "tailored" &&
+    Boolean(currentUrl.trim() || currentFilename);
   const hasCvSelection =
     mode === "primary"
       ? Boolean(selectedPrimaryId)
-      : Boolean(pendingFile) ||
-        (isEdit &&
-          currentType === "tailored" &&
-          Boolean(currentUrl.trim() || currentFilename));
-  const pendingOrCurrentName =
-    pendingFile?.name ??
-    (mode === "primary"
-      ? (selectedPrimary?.filename ?? currentFilename)
-      : currentFilename);
-  const generatedName = slug ? getCvDownloadFilename(slug) : "CV-Slug.pdf";
-  const downloadName =
-    useOriginalCvFilename !== false && pendingOrCurrentName
-      ? pendingOrCurrentName
-      : slug
-        ? getCvDownloadFilename(slug)
-        : "…";
+      : Boolean(pendingFile) || hasSavedTailored;
+  const generatedPreview = getCvDownloadFilenamePreview({
+    slug,
+    firstName,
+    lastName,
+  });
+  const originalName =
+    mode === "primary"
+      ? selectedPrimary?.filename?.trim() || null
+      : pendingFile?.name?.trim() ||
+        (hasSavedTailored ? currentFilename?.trim() || null : null);
+  const usingOriginal = Boolean(useOriginalCvFilename && originalName);
+  const downloadName = usingOriginal
+    ? originalName!
+    : generatedPreview.filename;
+  const downloadNameLooksIncomplete = !usingOriginal && !generatedPreview.isComplete;
+  const canUseOriginalName = Boolean(originalName);
+  const tailoredSummary =
+    pendingFile?.name ||
+    (hasSavedTailored ? currentFilename || "Saved PDF for this role" : null);
+  const pendingPreviewUrl = useMemo(() => {
+    if (!pendingFile) return null;
+    return URL.createObjectURL(pendingFile);
+  }, [pendingFile]);
+  useEffect(() => {
+    return () => {
+      if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
+    };
+  }, [pendingPreviewUrl]);
+
+  const activeCvPreviewUrl =
+    mode === "primary"
+      ? selectedPrimary?.url?.trim() || null
+      : pendingPreviewUrl ||
+        (hasSavedTailored && cvUrlExists !== false
+          ? currentUrl.trim() || null
+          : null);
+  const activeCvFilename =
+    mode === "primary"
+      ? selectedPrimary?.label?.trim() ||
+        selectedPrimary?.filename?.trim() ||
+        null
+      : tailoredSummary;
+
+  const downloadNameControl = hasCvSelection ? (
+    <div className="flex items-center gap-3">
+      <div
+        id="application-cv-download-name"
+        className={`min-w-0 flex-1 truncate rounded-xl border-0 bg-[var(--white)] px-3.5 py-1.5 ring-1 ring-inset ring-[var(--ink)]/15 sm:text-sm sm:leading-6 ${
+          downloadNameLooksIncomplete
+            ? "text-[var(--muted)]"
+            : "text-[var(--ink)]"
+        }`}
+        aria-live="polite"
+        title={downloadName}
+      >
+        {downloadName}
+      </div>
+      <label className="flex shrink-0 items-center gap-2 text-sm text-[var(--muted)]">
+        <span className="hidden sm:inline">Original name</span>
+        <Switch
+          checked={useOriginalCvFilename && canUseOriginalName}
+          disabled={disabled || !canUseOriginalName || !onUseOriginalCvFilenameChange}
+          onCheckedChange={(checked) =>
+            onUseOriginalCvFilenameChange?.(checked)
+          }
+          aria-label="Use original file name"
+        />
+      </label>
+    </div>
+  ) : null;
+
+  /** Radio only switches mode — the PDF dialog opens from Choose a PDF / Manage. */
+  const selectTailored = () => {
+    if (sourceLocked) return;
+    onSwitchToTailored();
+  };
+
+  const openTailoredPicker = () => {
+    if (sourceLocked) return;
+    if (mode !== "tailored") {
+      onSwitchToTailored();
+    }
+    setTailoredModalOpen(true);
+  };
 
   const libraryModal = canManageLibrary ? (
     <PrimaryCvLibraryModal
       open={libraryModalOpen}
       onClose={() => setLibraryModalOpen(false)}
       onLibraryChange={onPrimaryLibraryChange!}
+      initialItems={primaryCvsLoading ? undefined : primaryCvs}
+      selectedPrimaryId={mode === "primary" ? selectedPrimaryId : null}
+      onSelectPrimary={(id) => {
+        onSelectPrimary(id);
+      }}
     />
   ) : null;
+
+  const tailoredModal = (
+    <TailoredCvModal
+      open={tailoredModalOpen}
+      onClose={() => setTailoredModalOpen(false)}
+      pendingFile={pendingFile}
+      onPendingFileChange={onPendingFileChange}
+      savedUrl={hasSavedTailored ? currentUrl : undefined}
+      cvUrlExists={cvUrlExists}
+      uploading={uploading}
+      preparing={preparing}
+      disabled={disabled}
+      error={error}
+      returnFocusRef={chooseTailoredTriggerRef}
+    />
+  );
+
+  const tailoredPicker = (
+    <div className="space-y-2">
+      {mode === "tailored" && tailoredSummary ? (
+        <CvFilenamePreview
+          name={tailoredSummary}
+          previewUrl={activeCvPreviewUrl}
+        />
+      ) : mode === "tailored" ? (
+        <p className="text-sm text-[var(--muted)]">No file chosen</p>
+      ) : null}
+      <Button
+        ref={chooseTailoredTriggerRef}
+        type="button"
+        variant="secondary"
+        disabled={sourceLocked}
+        onClick={openTailoredPicker}
+      >
+        {mode === "tailored" && tailoredSummary ? "Manage" : "Choose a PDF"}
+      </Button>
+    </div>
+  );
 
   const switchConfirm = (
     <ConfirmDialog
       open={switchToPrimaryConfirmOpen}
-      title="Replace tailored CV with a primary CV?"
-      message="Saving with a primary CV will remove this application’s tailored PDF from storage. Your profile primary library is unchanged."
-      confirmLabel="Choose a primary CV"
-      cancelLabel="Keep tailored CV"
+      title="Replace tailored résumé with a library résumé?"
+      message="Saving with a library résumé will remove this application’s tailored PDF from storage. Your profile résumé library is unchanged."
+      confirmLabel="Choose a library résumé"
+      cancelLabel="Keep tailored résumé"
       onConfirm={onConfirmSwitchToPrimary}
       onCancel={onCancelSwitchToPrimary}
     />
   );
 
   if (variant === "checklist") {
+    const radioClass = `flex items-start gap-2.5 ${
+      sourceLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+    }`;
     return (
       <>
-        <fieldset>
-          <legend className="text-sm font-medium text-[var(--ink)]">
-            Choose one résumé
-          </legend>
+        <ApplicationFormFieldRow
+          id="application-row-cv"
+          label="File"
+          tip={hasCvSelection ? FIELD_READY_TIP : FIELD_IDLE_TIP}
+          tipTone={hasCvSelection ? "ready" : "idle"}
+          align="top"
+          hint="Choose one."
+        >
+          <div className="space-y-3">
+            {lockCvSourceWhileLoading ? (
+              <p className="text-sm text-[var(--muted)]" role="status">
+                Loading your résumé library…
+              </p>
+            ) : null}
 
-          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-sm text-[var(--muted)]">From your library</p>
-            {canManageLibrary ? (
-              <button
-                type="button"
-                className={textButtonClass}
-                disabled={disabled}
-                onClick={() => setLibraryModalOpen(true)}
+            <label className={radioClass}>
+              <input
+                type="radio"
+                name="application-cv-source"
+                className="mt-1 h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
+                checked={mode === "primary"}
+                disabled={sourceLocked || (!hasPrimaryCvs && !canManageLibrary)}
+                onChange={() => onSwitchToPrimary()}
+              />
+              <span className="min-w-0 flex-1 space-y-2">
+                <span className="block text-sm font-medium text-[var(--ink)]">
+                  Use library résumé
+                </span>
+                {lockCvSourceWhileLoading ? null : !hasPrimaryCvs ? (
+                  <div className="space-y-2">
+                    <p className="text-sm leading-5 text-[var(--ink)]/80">
+                      No résumés in your library yet.
+                    </p>
+                    {canManageLibrary ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={disabled}
+                        onClick={() => setLibraryModalOpen(true)}
+                      >
+                        Manage library
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : mode === "primary" && activeCvFilename ? (
+                  <div className="space-y-2">
+                    <CvFilenamePreview
+                      name={activeCvFilename}
+                      previewUrl={activeCvPreviewUrl}
+                    />
+                    {canManageLibrary ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={disabled}
+                        onClick={() => setLibraryModalOpen(true)}
+                      >
+                        Manage library
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </span>
+            </label>
+
+            <label className={radioClass}>
+              <input
+                type="radio"
+                name="application-cv-source"
+                className="mt-1 h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
+                checked={mode === "tailored"}
+                disabled={sourceLocked}
+                onChange={selectTailored}
+              />
+              <span className="min-w-0 flex-1 space-y-2">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-[var(--ink)]">
+                    Upload one for this role
+                  </span>
+                  <span
+                    className="rounded-md bg-[var(--paper)] px-1.5 py-0.5 text-xs font-semibold tracking-wide text-[var(--ink)]"
+                    title="Pro plan — per-role uploads are a paid unlock"
+                  >
+                    Pro
+                  </span>
+                </span>
+                <span className="block text-sm leading-5 text-[var(--ink)]/80">
+                  Replaces the library résumé on this application only.
+                </span>
+                {mode === "tailored" ? tailoredPicker : null}
+              </span>
+            </label>
+
+            {error ? (
+              <p
+                className="text-sm text-[var(--status-danger-fg)]"
+                role="alert"
               >
-                Manage library
-              </button>
+                {error}
+              </p>
             ) : null}
           </div>
-
-          {lockCvSourceWhileLoading ? (
-            <p className="mt-2 text-sm text-[var(--muted)]" role="status">
-              Loading your CV library…
-            </p>
-          ) : null}
-
-          <div className="mt-2 space-y-2">
-            {hasPrimaryCvs
-              ? primaryCvs.map((cv) => {
-                  const selected =
-                    mode === "primary" && selectedPrimaryId === cv.id;
-                  const label = cv.label?.trim() || cv.filename;
-                  return (
-                    <label
-                      key={cv.id}
-                      className={choiceCardClass(selected, sourceLocked)}
-                    >
-                      <input
-                        type="radio"
-                        name="cvSourceChecklist"
-                        value={cv.id}
-                        checked={selected}
-                        disabled={sourceLocked}
-                        onChange={() => onSelectPrimary(cv.id)}
-                        className="size-4 shrink-0 accent-[var(--ink)]"
-                      />
-                      <span className="min-w-0 flex-1 truncate">{label}</span>
-                    </label>
-                  );
-                })
-              : !primaryCvsLoading ? (
-                  <p className="text-sm text-[var(--muted)]">
-                    No primary CVs yet.
-                    {canManageLibrary ? (
-                      <>
-                        {" "}
-                        <button
-                          type="button"
-                          className={textButtonClass}
-                          disabled={disabled}
-                          onClick={() => setLibraryModalOpen(true)}
-                        >
-                          Upload one to your library
-                        </button>
-                      </>
-                    ) : null}
-                  </p>
-                ) : null}
-          </div>
-
-          <p className="mt-4 text-sm text-[var(--muted)]">Only this application</p>
-          <label
-            className={`mt-2 ${choiceCardClass(mode === "tailored", sourceLocked)}`}
+        </ApplicationFormFieldRow>
+        {hasCvSelection ? (
+          <ApplicationFormFieldRow
+            id="application-row-download-as"
+            label="Recruiters download it as"
+            layout="result"
+            hint="Built from your name, company, and role. Turn on Original name to keep the PDF’s filename."
+            tip={FIELD_READY_TIP}
+            tipTone="ready"
           >
-            <input
-              type="radio"
-              name="cvSourceChecklist"
-              value="tailored"
-              checked={mode === "tailored"}
-              disabled={sourceLocked}
-              onChange={() => onSwitchToTailored()}
-              className="size-4 shrink-0 accent-[var(--ink)]"
-            />
-            A PDF just for this role
-          </label>
-
-          {mode === "tailored" ? (
-            <div className="mt-3">
-              <FileUpload
-                pendingFile={pendingFile}
-                onPendingFileChange={onPendingFileChange}
-                hideLabel
-                chooseLabel="Choose a PDF"
-                uploading={uploading}
-                preparing={preparing}
-                disabled={disabled}
-              />
-            </div>
-          ) : null}
-
-          {error ? (
-            <p className="mt-3 text-sm text-[var(--status-danger-fg)]" role="alert">
-              {error}
-            </p>
-          ) : null}
-
-          {hasCvSelection ? (
-            <div className="mt-4">
-              <p className="text-sm leading-relaxed text-[var(--muted)]">
-                Recruiters download it as{" "}
-                <span className="text-[var(--ink)]">{downloadName}</span>.
-              </p>
-              <button
-                type="button"
-                className={`mt-2 ${textButtonClass}`}
-                disabled={disabled}
-                onClick={() =>
-                  onUseOriginalCvFilenameChange(useOriginalCvFilename === false)
-                }
-              >
-                {useOriginalCvFilename !== false
-                  ? "Use a generated name"
-                  : "Use the original file name"}
-              </button>
-            </div>
-          ) : null}
-        </fieldset>
+            {downloadNameControl}
+          </ApplicationFormFieldRow>
+        ) : null}
         {switchConfirm}
         {libraryModal}
+        {tailoredModal}
       </>
     );
   }
@@ -291,7 +425,7 @@ export default function CvSourceField({
   return (
     <fieldset className={`space-y-4 sm:space-y-5 ${ADMIN_FIELDSET_CLASS}`}>
       <legend className="text-base font-semibold text-[var(--ink)]">
-        CV
+        Résumé
       </legend>
 
       {/* Current (edit) */}
@@ -313,11 +447,11 @@ export default function CvSourceField({
                     rel="noopener noreferrer"
                     className="min-w-0 truncate text-sm font-medium text-[var(--ink)] hover:underline"
                   >
-                    {currentFilename?.trim() || "CV.pdf"}
+                    {currentFilename?.trim() || "Résumé.pdf"}
                   </a>
                 ) : (
                   <span className="min-w-0 truncate text-sm font-medium text-[var(--ink)]">
-                    {currentFilename?.trim() || "CV.pdf"}
+                    {currentFilename?.trim() || "Résumé.pdf"}
                   </span>
                 )}
               </div>
@@ -326,9 +460,9 @@ export default function CvSourceField({
                   role="alert"
                   className="mt-2 rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--status-warning-fg)]"
                 >
-                  <p className="font-semibold">CV file missing</p>
+                  <p className="font-semibold">Résumé file missing</p>
                   <p className="mt-0.5 text-[var(--status-warning-fg)]">
-                    The file is no longer in storage. Choose a primary CV or
+                    The file is no longer in storage. Choose a library résumé or
                     upload a new tailored PDF below.
                   </p>
                   {onRetryCvCheck && (
@@ -373,17 +507,17 @@ export default function CvSourceField({
             </div>
           ) : (
             <p className="text-sm text-[var(--muted)]">
-              No CV on this application yet.
+              No résumé on this application yet.
             </p>
           )}
         </div>
       )}
 
-      {/* Change CV */}
+      {/* Change résumé */}
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-medium text-[var(--ink)]">
-            {isEdit ? "Change CV" : "Choose a CV"}
+            {isEdit ? "Change résumé" : "Choose a résumé"}
           </p>
           {canManageLibrary && (
             <Button
@@ -392,14 +526,13 @@ export default function CvSourceField({
               onClick={() => setLibraryModalOpen(true)}
               disabled={disabled}
             >
-              Manage library
+              Manage
             </Button>
           )}
         </div>
         {!isEdit && (
           <p className="text-sm text-[var(--muted)]">
-            Prefer a primary CV from your library so you can reuse it across
-            applications.
+            Prefer a library résumé so you can reuse it across applications.
           </p>
         )}
 
@@ -409,7 +542,7 @@ export default function CvSourceField({
               saved cv_type, so locking there only blocks switching. */}
           {lockCvSourceWhileLoading && (
             <p className="text-xs text-[var(--muted)]" role="status">
-              Loading your CV library…
+              Loading your résumé library…
             </p>
           )}
           <label
@@ -430,14 +563,14 @@ export default function CvSourceField({
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-[var(--ink)]">
                 {isEdit && currentType === "tailored"
-                  ? "Replace with a primary CV"
+                  ? "Replace with a library résumé"
                   : isEdit && currentType === "primary"
-                    ? "Use a different primary CV"
-                    : "Use a primary CV"}
+                    ? "Use a different library résumé"
+                    : "Use a library résumé"}
               </span>
               {!hasPrimaryCvs && !primaryCvsLoading && (
                 <span className="mt-0.5 block text-xs text-[var(--muted)]">
-                  No primary CVs yet.
+                  No library résumés yet.
                   {canManageLibrary ? (
                     <>
                       {" "}
@@ -460,7 +593,7 @@ export default function CvSourceField({
             <div className="ml-6 space-y-2">
               {primaryCvsLoading ? (
                 <p className="text-sm text-[var(--muted)]">
-                  Loading primary CVs…
+                  Loading library résumés…
                 </p>
               ) : hasPrimaryCvs ? (
                 <>
@@ -483,17 +616,13 @@ export default function CvSourceField({
                     ))}
                   </select>
                   {selectedPrimary && (
-                    <p className="text-xs text-[var(--muted)]">
-                      {selectedPrimary.filename}{" "}
-                      <a
-                        href={selectedPrimary.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-[var(--ink)]"
-                      >
-                        View
-                      </a>
-                    </p>
+                    <CvFilenamePreview
+                      name={
+                        selectedPrimary.label?.trim() ||
+                        selectedPrimary.filename
+                      }
+                      previewUrl={selectedPrimary.url}
+                    />
                   )}
                 </>
               ) : canManageLibrary ? (
@@ -503,7 +632,7 @@ export default function CvSourceField({
                   onClick={() => setLibraryModalOpen(true)}
                   disabled={disabled}
                 >
-                  Upload primary CV
+                  Upload library résumé
                 </Button>
               ) : null}
             </div>
@@ -522,32 +651,22 @@ export default function CvSourceField({
               className="mt-1 h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
               checked={mode === "tailored"}
               disabled={sourceLocked}
-              onChange={() => onSwitchToTailored()}
+              onChange={selectTailored}
             />
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-[var(--ink)]">
-                Upload a different CV
+                Upload a different résumé
               </span>
               <span className="mt-0.5 block text-xs text-[var(--muted)]">
                 Tailored files are removed from storage when you delete this
-                application or switch back to a primary CV.
+                application or switch back to a library résumé.
               </span>
             </span>
           </label>
 
-          {mode === "tailored" && (
-            <div className="ml-6">
-              <FileUpload
-                pendingFile={pendingFile}
-                onPendingFileChange={onPendingFileChange}
-                hideLabel
-                chooseLabel="Choose PDF"
-                uploading={uploading}
-                preparing={preparing}
-                disabled={disabled}
-              />
-            </div>
-          )}
+          {mode === "tailored" ? (
+            <div className="ml-6">{tailoredPicker}</div>
+          ) : null}
         </div>
 
         {error && (
@@ -558,70 +677,23 @@ export default function CvSourceField({
       </div>
 
       {hasCvSelection ? (
-      <div className="space-y-3 border-t border-[var(--ink)]/10 pt-4">
-        <p className="text-sm font-medium text-[var(--ink)]">
-          Download name for recruiters
-        </p>
-        <p className="text-sm text-[var(--muted)]">
-          Filename recruiters see when they download your CV.
-        </p>
-        <div className="flex flex-wrap gap-x-6 gap-y-3">
-          <label
-            className={`inline-flex items-center gap-2.5 ${
-              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-            }`}
-          >
-            <input
-              type="radio"
-              name="useOriginalCvFilename"
-              checked={useOriginalCvFilename !== false}
-              disabled={disabled}
-              onChange={() => onUseOriginalCvFilenameChange(true)}
-              className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
-            />
-            <span className="text-sm font-medium text-[var(--ink)]">
-              Original file name
-            </span>
-            {pendingOrCurrentName && (
-              <span className="text-xs text-[var(--muted)]">
-                ({pendingOrCurrentName})
-              </span>
-            )}
-          </label>
-          <label
-            className={`inline-flex items-center gap-2.5 ${
-              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-            }`}
-          >
-            <input
-              type="radio"
-              name="useOriginalCvFilename"
-              checked={useOriginalCvFilename === false}
-              disabled={disabled}
-              onChange={() => onUseOriginalCvFilenameChange(false)}
-              className="h-4 w-4 border-[var(--ink)]/30 text-[var(--ink)] focus:ring-[var(--ink)]"
-            />
-            <span className="text-sm font-medium text-[var(--ink)]">
-              Generated name
-            </span>
-            <span className="text-xs text-[var(--muted)]">
-              ({generatedName})
-            </span>
-          </label>
+        <div className="space-y-3 border-t border-[var(--ink)]/10 pt-4">
+          <div>
+            <p className="text-sm font-medium text-[var(--ink)]">
+              Recruiters download it as
+            </p>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              Built from your name, company, and role. Turn on Original name to
+              keep the PDF’s filename.
+            </p>
+          </div>
+          {downloadNameControl}
         </div>
-        <p className="text-xs text-[var(--muted)]">
-          Downloadable file name:{" "}
-          {useOriginalCvFilename !== false && pendingOrCurrentName
-            ? pendingOrCurrentName
-            : slug
-              ? getCvDownloadFilename(slug)
-              : "…"}
-        </p>
-      </div>
       ) : null}
 
       {switchConfirm}
       {libraryModal}
+      {tailoredModal}
     </fieldset>
   );
 }

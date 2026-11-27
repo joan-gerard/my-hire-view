@@ -9,11 +9,20 @@ import {
 } from '@/lib/utils/application-status-display';
 
 describe('resolveApplicationStatusVisual', () => {
-  it('maps archived and draft regardless of view count', () => {
+  it('maps archived regardless of view count', () => {
     expect(resolveApplicationStatusVisual('archived', 0)).toBe('archived');
     expect(resolveApplicationStatusVisual('archived', 5)).toBe('archived');
-    expect(resolveApplicationStatusVisual('draft', 0)).toBe('draft');
-    expect(resolveApplicationStatusVisual('draft', 3)).toBe('draft');
+  });
+
+  it('maps draft by publish readiness', () => {
+    expect(resolveApplicationStatusVisual('draft', 0)).toBe('draft_incomplete');
+    expect(resolveApplicationStatusVisual('draft', 3)).toBe('draft_incomplete');
+    expect(
+      resolveApplicationStatusVisual('draft', 0, { publishReady: false }),
+    ).toBe('draft_incomplete');
+    expect(
+      resolveApplicationStatusVisual('draft', 0, { publishReady: true }),
+    ).toBe('draft_complete');
   });
 
   it('maps active by view count', () => {
@@ -25,8 +34,14 @@ describe('resolveApplicationStatusVisual', () => {
 describe('getApplicationStatusDisplay', () => {
   it('returns label and description for each visual', () => {
     expect(getApplicationStatusDisplay('draft', 0)).toMatchObject({
-      key: 'draft',
-      label: 'Draft',
+      key: 'draft_incomplete',
+      label: 'Draft (incomplete)',
+    });
+    expect(
+      getApplicationStatusDisplay('draft', 0, { publishReady: true }),
+    ).toMatchObject({
+      key: 'draft_complete',
+      label: 'Draft (complete)',
     });
     expect(getApplicationStatusDisplay('active', 0).key).toBe('active_unviewed');
     expect(getApplicationStatusDisplay('active', 2).key).toBe('active_viewed');
@@ -42,7 +57,14 @@ describe('getApplicationStatusDisplay', () => {
 
 describe('legend copy', () => {
   it('includes status, CV missing, and draft action rows', () => {
-    expect(APPLICATION_STATUS_LEGEND_ITEMS).toHaveLength(4);
+    expect(APPLICATION_STATUS_LEGEND_ITEMS).toHaveLength(5);
+    expect(APPLICATION_STATUS_LEGEND_ITEMS.map((item) => item.label)).toEqual([
+      'Draft (incomplete)',
+      'Draft (complete)',
+      'Active (not viewed yet)',
+      'Active (viewed)',
+      'Archived',
+    ]);
     expect(CV_MISSING_LEGEND.label).toBe('CV missing');
     expect(CV_MISSING_LEGEND.description).toContain('select or upload');
     expect(CV_MISSING_LEGEND.description).not.toContain('restore a primary CV');

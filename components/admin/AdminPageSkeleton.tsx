@@ -1,26 +1,21 @@
 import {
   ADMIN_MAIN_MIN_CLASS,
-  ADMIN_FORM_SHELL_CLASS,
   ADMIN_PANEL_CLASS,
-} from '@/components/admin/admin-chrome';
+} from "@/components/admin/admin-chrome";
 
-export type AdminPageSkeletonVariant = 'dashboard' | 'form' | 'profile';
+export type AdminPageSkeletonVariant = "dashboard" | "create" | "profile";
 
 type AdminPageSkeletonProps = {
   variant: AdminPageSkeletonVariant;
-  /** Optional tip bar skeleton (edit form). */
-  showTip?: boolean;
 };
 
 /**
  * Route / client loading shells for admin pages.
  * Tall enough to keep the document scrollbar stable during transitions.
+ * Create and edit share the `create` one-page form shell.
  */
-export default function AdminPageSkeleton({
-  variant,
-  showTip = false,
-}: AdminPageSkeletonProps) {
-  if (variant === 'dashboard') {
+export default function AdminPageSkeleton({ variant }: AdminPageSkeletonProps) {
+  if (variant === "dashboard") {
     return (
       <div
         className={ADMIN_MAIN_MIN_CLASS}
@@ -80,14 +75,16 @@ export default function AdminPageSkeleton({
                 </div>
               ))}
             </div>
-            <div className={`${ADMIN_PANEL_CLASS} h-56 motion-safe:animate-pulse bg-[var(--ink)]/[0.03]`} />
+            <div
+              className={`${ADMIN_PANEL_CLASS} h-56 motion-safe:animate-pulse bg-[var(--ink)]/[0.03]`}
+            />
           </aside>
         </div>
       </div>
     );
   }
 
-  if (variant === 'profile') {
+  if (variant === "profile") {
     return (
       <div
         className={`${ADMIN_MAIN_MIN_CLASS} space-y-6`}
@@ -131,29 +128,46 @@ export default function AdminPageSkeleton({
     );
   }
 
-  // form (create / edit)
+  // create + edit (one-page application form)
   return (
     <div
-      className={`${ADMIN_MAIN_MIN_CLASS} space-y-4 sm:space-y-6`}
+      className="mx-auto w-full max-w-2xl"
       role="status"
       aria-busy="true"
       aria-live="polite"
     >
       <span className="sr-only">Loading</span>
-      <div className="h-9 w-64 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.08]" />
-      {showTip ? (
-        <div className="h-16 motion-safe:animate-pulse rounded-xl border border-[var(--ink)]/10 bg-[var(--white)]" />
-      ) : null}
-      <div
-        className={`${ADMIN_FORM_SHELL_CLASS} min-h-[calc(100svh-102px-4rem-6rem)]`}
-      >
-        <div className="space-y-4 sm:space-y-5">
-          <div className="h-24 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
-          <div className="h-40 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
-          <div className="h-48 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
-          <div className="h-32 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
-          <div className="h-24 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.04]" />
+      <div className="space-y-2">
+        <div className="h-8 w-52 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.08]" />
+        <div className="h-5 w-full motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+        <div className="h-5 w-4/5 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.05]" />
+      </div>
+      <div className="mt-8 space-y-3">
+        <div className="h-6 w-28 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.08]" />
+        <div className="overflow-hidden rounded-xl border border-[var(--ink)]/10 bg-[var(--white)]">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="grid gap-2 border-t border-[var(--ink)]/10 p-4 first:border-t-0 sm:grid-cols-2"
+            >
+              <div className="h-4 w-24 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.06]" />
+              <div className="h-10 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.05]" />
+            </div>
+          ))}
         </div>
+      </div>
+      <div className="mt-8 space-y-3">
+        <div className="h-6 w-24 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.08]" />
+        <div className="overflow-hidden rounded-xl border border-[var(--ink)]/10 bg-[var(--white)]">
+          <div className="grid gap-2 p-4 sm:grid-cols-2">
+            <div className="h-4 w-16 motion-safe:animate-pulse rounded bg-[var(--ink)]/[0.06]" />
+            <div className="h-10 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.05]" />
+          </div>
+        </div>
+      </div>
+      <div className="mt-8 flex justify-end gap-2">
+        <div className="h-9 w-20 motion-safe:animate-pulse rounded-xl bg-[var(--ink)]/[0.05]" />
+        <div className="h-9 w-40 motion-safe:animate-pulse rounded-full bg-[var(--ink)]/[0.08]" />
       </div>
     </div>
   );

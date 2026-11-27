@@ -26,12 +26,16 @@ function sampleDraft(
     video_url: "https://youtu.be/abc",
     first_name: "Ada",
     last_name: "Lovelace",
+    email: "",
+    phone: "",
     location: "",
     portfolio_url: "",
     linkedin_url: "",
     include: {
       first_name: true,
       last_name: true,
+      email: false,
+      phone: false,
       location: false,
       portfolio_url: false,
       linkedin_url: false,
@@ -43,7 +47,7 @@ function sampleDraft(
     cvMode: "primary",
     cvModeUserChosen: false,
     selectedPrimaryId: "cv-1",
-    use_original_cv_filename: true,
+    use_original_cv_filename: false,
     ...overrides,
   };
 }
@@ -102,7 +106,7 @@ describe("parseCreateApplicationDraft", () => {
     };
     delete (v1Tailored as { cvModeUserChosen?: boolean }).cvModeUserChosen;
     const tailored = parseCreateApplicationDraft(v1Tailored);
-    expect(tailored?.v).toBe(2);
+    expect(tailored?.v).toBe(CREATE_APPLICATION_DRAFT_VERSION);
     expect(tailored?.cvModeUserChosen).toBe(true);
 
     const v1Primary = {
@@ -122,8 +126,30 @@ describe("parseCreateApplicationDraft", () => {
     };
     delete (v1 as { slugSegmentOrder?: string }).slugSegmentOrder;
     const parsed = parseCreateApplicationDraft(v1);
-    expect(parsed?.v).toBe(2);
+    expect(parsed?.v).toBe(CREATE_APPLICATION_DRAFT_VERSION);
     expect(parsed?.slugSegmentOrder).toBe("company_role");
+  });
+
+  it("migrates v2 drafts without email/phone to empty contact fields", () => {
+    const { email: _e, phone: _p, ...rest } = sampleDraft();
+    const v2Include = {
+      first_name: true,
+      last_name: true,
+      location: false,
+      portfolio_url: false,
+      linkedin_url: false,
+    };
+    const v2 = {
+      ...rest,
+      v: 2 as const,
+      include: v2Include,
+    };
+    const parsed = parseCreateApplicationDraft(v2);
+    expect(parsed?.v).toBe(CREATE_APPLICATION_DRAFT_VERSION);
+    expect(parsed?.email).toBe("");
+    expect(parsed?.phone).toBe("");
+    expect(parsed?.include.email).toBe(false);
+    expect(parsed?.include.phone).toBe(false);
   });
 
   it("rejects wrong version, corrupt include, expired, and future-dated drafts", () => {
@@ -159,12 +185,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -176,7 +206,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(true);
   });
@@ -190,12 +220,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -207,7 +241,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(true);
   });
@@ -221,12 +255,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -238,7 +276,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(false);
   });
@@ -252,12 +290,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -269,12 +311,47 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: "cv-auto",
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(true);
   });
 
-  it("keeps drafts with personal-only progress or explicit CV choice", () => {
+  it("ignores profile-prefilled About you text as blank", () => {
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "Ada",
+        last_name: "Lovelace",
+        email: "",
+        phone: "",
+        location: "London",
+        portfolio_url: "https://example.com",
+        linkedin_url: "https://linkedin.com/in/ada",
+        include: {
+          first_name: true,
+          last_name: true,
+          email: false,
+          phone: false,
+          location: true,
+          portfolio_url: true,
+          linkedin_url: true,
+        },
+        slugSegmentOrder: "company_role",
+        slugManuallyEdited: false,
+        showProfilePicture: true,
+        showProfilePictureUserChosen: false,
+        cvMode: "primary",
+        cvModeUserChosen: false,
+        selectedPrimaryId: null,
+        use_original_cv_filename: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps a draft when About you show/hide differs from the default", () => {
     expect(
       isCreateApplicationDraftBlank({
         company: "",
@@ -283,12 +360,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "Ada",
         last_name: "",
-        location: "",
+        email: "",
+        phone: "",
+        location: "London",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: true,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -300,10 +381,12 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(false);
+  });
 
+  it("keeps drafts with explicit CV choice", () => {
     expect(
       isCreateApplicationDraftBlank({
         company: "",
@@ -312,12 +395,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -329,7 +416,7 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "tailored",
         cvModeUserChosen: true,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(false);
 
@@ -342,12 +429,16 @@ describe("isCreateApplicationDraftBlank", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -359,26 +450,30 @@ describe("isCreateApplicationDraftBlank", () => {
         cvMode: "tailored",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       }),
     ).toBe(true);
   });
 
-  it("keeps drafts with company", () => {
+  it("keeps a draft when original CV filename is explicitly chosen", () => {
     expect(
       isCreateApplicationDraftBlank({
-        company: "Acme",
+        company: "",
         role: "",
         slug: "",
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -391,6 +486,41 @@ describe("isCreateApplicationDraftBlank", () => {
         cvModeUserChosen: false,
         selectedPrimaryId: null,
         use_original_cv_filename: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps drafts with company", () => {
+    expect(
+      isCreateApplicationDraftBlank({
+        company: "Acme",
+        role: "",
+        slug: "",
+        video_url: "",
+        first_name: "",
+        last_name: "",
+        email: "",
+        phone: "",
+        location: "",
+        portfolio_url: "",
+        linkedin_url: "",
+        include: {
+          first_name: false,
+          last_name: false,
+          email: false,
+          phone: false,
+          location: false,
+          portfolio_url: false,
+          linkedin_url: false,
+        },
+        slugSegmentOrder: "company_role",
+        slugManuallyEdited: false,
+        showProfilePicture: true,
+        showProfilePictureUserChosen: false,
+        cvMode: "primary",
+        cvModeUserChosen: false,
+        selectedPrimaryId: null,
+        use_original_cv_filename: false,
       }),
     ).toBe(false);
   });
@@ -417,12 +547,16 @@ describe("load/save/clearCreateApplicationDraft", () => {
         video_url: "",
         first_name: "",
         last_name: "",
+        email: "",
+        phone: "",
         location: "",
         portfolio_url: "",
         linkedin_url: "",
         include: {
           first_name: false,
           last_name: false,
+          email: false,
+          phone: false,
           location: false,
           portfolio_url: false,
           linkedin_url: false,
@@ -434,7 +568,7 @@ describe("load/save/clearCreateApplicationDraft", () => {
         cvMode: "primary",
         cvModeUserChosen: false,
         selectedPrimaryId: null,
-        use_original_cv_filename: true,
+        use_original_cv_filename: false,
       },
       storage,
     );
@@ -449,6 +583,36 @@ describe("load/save/clearCreateApplicationDraft", () => {
     const key = createApplicationDraftStorageKey("user-2");
     expect(key).not.toBeNull();
     const storage = memoryStorage({ [key!]: "{not-json" });
+    expect(loadCreateApplicationDraft(key!, storage)).toBeNull();
+    expect(storage.getItem(key!)).toBeNull();
+  });
+
+  it("removes profile-only drafts on load so leave confirm stays quiet", () => {
+    const key = createApplicationDraftStorageKey("user-3");
+    expect(key).not.toBeNull();
+    const profileOnly = sampleDraft({
+      company: "",
+      role: "",
+      slug: "",
+      video_url: "",
+      first_name: "Ada",
+      last_name: "Lovelace",
+      location: "London",
+      portfolio_url: "",
+      linkedin_url: "",
+      include: {
+        first_name: true,
+        last_name: true,
+        location: true,
+        portfolio_url: false,
+        linkedin_url: false,
+      },
+      selectedPrimaryId: null,
+      cvModeUserChosen: false,
+    });
+    const storage = memoryStorage({
+      [key!]: JSON.stringify(profileOnly),
+    });
     expect(loadCreateApplicationDraft(key!, storage)).toBeNull();
     expect(storage.getItem(key!)).toBeNull();
   });

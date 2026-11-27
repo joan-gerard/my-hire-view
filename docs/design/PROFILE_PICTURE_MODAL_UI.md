@@ -1,7 +1,9 @@
 # Profile picture dialog — UI breakdown
 
-Source: `components/forms/ProfilePictureModal.tsx` (shared `Button` from `components/ui/Button.tsx`).  
-Opened from New / Edit application via **Add profile picture** / **Manage picture** on `ProfilePictureField` (`usage="application"`). Pass `usage="account"` when reusing on Profile. Native `<dialog>` (`showModal`); nested `ConfirmDialog` only for discard.
+**Status:** Historical. The dialog was removed on 3 November 2026. Pictures are added and changed on Profile. New and Edit only choose whether an existing picture is shown.
+
+Source was `components/forms/ProfilePictureModal.tsx` (shared `Button` from `components/ui/Button.tsx`).  
+It opened from New / Edit application via **Add profile picture** / **Manage picture** on `ProfilePictureField`. Native `<dialog>` (`showModal`); nested `ConfirmDialog` only for discard.
 
 Tokens from `app/globals.css` (F34).
 

@@ -247,6 +247,16 @@ export const SLUG_VALIDATE_RATE_LIMIT: RateLimitOptions = {
   keyPrefix: "slug-validate",
 };
 
+/**
+ * GET /api/youtube/preview — debounced oEmbed checks from the create/edit form.
+ * Namespaced so typing does not burn the general API budget.
+ */
+export const YOUTUBE_PREVIEW_RATE_LIMIT: RateLimitOptions = {
+  limit: 30,
+  windowMs: 60_000,
+  keyPrefix: "youtube-preview",
+};
+
 /** CV PDF upload: stricter than general writes (per IP and per user). */
 export const CV_UPLOAD_RATE_LIMIT: RateLimitOptions = {
   limit: 10,

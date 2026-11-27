@@ -28,6 +28,8 @@ Each endpoint lists **What works** (practices already in place). Open follow-ups
 - [Slugs](#slugs)
   - [POST slug](#post-slug) — `POST /api/slug`
   - [POST slug validate](#post-slug-validate) — `POST /api/slug/validate`
+- [YouTube](#youtube)
+  - [GET YouTube preview](#get-youtube-preview) — `GET /api/youtube/preview`
 - [Uploads](#uploads)
   - [POST upload CV](#post-upload-cv) — `POST /api/upload`
   - [POST upload profile picture](#post-upload-profile-picture) — `POST /api/upload/profile-picture`
@@ -63,7 +65,7 @@ Cross-cutting already in place on many routes: schema validation at the boundary
 
 `GET /api/applications`
 
-List the authenticated user’s applications (newest first), paginated. Returns only the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) — not CV/video/candidate/profile columns. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`). `public_id` is resolved read-only: valid `profiles.public_id` if present; Auth `user_metadata` only when **no** profiles row exists (never falls back to Auth when the row’s id is invalid — that can be another user’s id). This endpoint does **not** create a profiles row. When unresolved, `public_id` is `null` and the dashboard disables share/view actions (avoids `/view//…` and cross-user links).
+List the authenticated user’s applications (newest first), paginated. Returns the fields the admin dashboard uses (search, card status, insights, archive/delete/edit links, share URLs) plus the F40 publish-completeness fields (`video_url`, names, `cv_type`, `primary_cv_id`) so draft cards can gate **Publish**. Each item includes `public_id` for building share links (`/view/{public_id}/{slug}`). `public_id` is resolved read-only: valid `profiles.public_id` if present; Auth `user_metadata` only when **no** profiles row exists (never falls back to Auth when the row’s id is invalid — that can be another user’s id). This endpoint does **not** create a profiles row. When unresolved, `public_id` is `null` and the dashboard disables share/view actions (avoids `/view//…` and cross-user links).
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
@@ -88,6 +90,11 @@ List the authenticated user’s applications (newest first), paginated. Returns 
       "status": "active",
       "archived_at": null,
       "cv_url": "https://pub.example/cvs/…",
+      "video_url": "https://youtube.com/watch?v=…",
+      "first_name": "Ada",
+      "last_name": "Lovelace",
+      "cv_type": "tailored",
+      "primary_cv_id": null,
       "cv_exists": true,
       "profile_picture_missing": false,
       "view_count": 12,
@@ -112,8 +119,16 @@ List the authenticated user’s applications (newest first), paginated. Returns 
 | `data[].role`           | `string`                                | Card title + search                                |
 | `data[].status`         | `"active"` \| `"draft"` \| `"archived"` | Card status                                        |
 | `data[].archived_at`    | `string` (ISO) \| `null`                | Set when archived; retention clock                 |
-| `data[].cv_url`         | `string`                                | Used for `cv_exists` check                         |
-| `data[].cv_exists`      | `boolean`                               | Dashboard “CV missing” badge when **false**. URLs outside our R2 public base default to **true** (unchecked). |
+| `data[].cv_url`         | `string` \| `null`                      | Used for `cv_exists` check + publish gate          |
+| `data[].video_url`      | `string`                                | Publish gate (YouTube intro)                       |
+| `data[].first_name`     | `string` \| `null`                      | Publish gate                                       |
+| `data[].last_name`      | `string` \| `null`                      | Publish gate                                       |
+| `data[].cv_type`        | `"primary"` \| `"tailored"` \| omitted  | Publish gate with `primary_cv_id`                  |
+| `data[].primary_cv_id`  | `string` \| `null`                      | Publish gate when `cv_type` is primary             |
+| `data[].email`          | `string` \| `null`                      | Publish gate (visible contact; null = hidden)     |
+| `data[].phone`          | `string` \| `null`                      | Publish gate (visible contact; null = hidden)     |
+| `data[].linkedin_url`   | `string` \| `null`                      | Publish gate (visible contact; null = hidden)     |
+| `data[].cv_exists`      | `boolean` (omitted if no `cv_url`)      | Dashboard “CV missing” badge when **false** (URL set but object gone). Omitted when the app has no résumé yet (incomplete draft). URLs outside our R2 public base default to **true** (unchecked). |
 | `data[].profile_picture_missing` | `boolean`                        | Dashboard “Picture missing” badge when **true** (`show_profile_picture` on the row but no live `profiles.profile_picture_url`). |
 | `data[].view_count`     | `number`                                | Status icon + insights                             |
 | `data[].download_count` | `number`                                | Insights                                           |
@@ -122,7 +137,6 @@ List the authenticated user’s applications (newest first), paginated. Returns 
 | `meta.limit`            | `number`                                | Echo of applied page size                          |
 | `meta.offset`           | `number`                                | Echo of applied offset                             |
 | `meta.total`            | `number`                                | Total matching rows (after `q`, before page slice) |
-
 TypeScript: `ApplicationListItem`, `ApplicationListResponse`, `APPLICATION_LIST_DEFAULT_LIMIT` / `APPLICATION_LIST_MAX_LIMIT` in `lib/types/application.ts` (projection: `APPLICATION_LIST_SELECT`).
 
 **What works**
@@ -184,7 +198,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug`, `cv_url`, `video_url` (required); optional `status` (`"active"` \| `"draft"` \| `"archived"`, **default `"draft"`** — F16-050), `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `slugSegmentOrder` (`"company_role"` | `"role_company"` → stored as `slug_segment_order`, default `company_role`), `cv_filename`, `use_original_cv_filename` (default `true`), `show_profile_picture`
+- **Body** (`ApplicationCreateInput`): `company`, `role`, `slug` (required for draft); `cv_url` optional/`null`, `video_url` optional/`""` on draft; optional `status` (`"active"` \| `"draft"` \| `"archived"`, **default `"draft"`** — F16-050). Creating as `"active"` must pass the publish completeness gate (names, résumé, YouTube). Also: `cv_type` (`"primary"` | `"tailored"`, default `"tailored"`), `primary_cv_id` (required when `cv_type` is `"primary"`), `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `email`, `phone`, `slugSegmentOrder` (`"company_role"` | `"role_company"` → stored as `slug_segment_order`, default `company_role`), `cv_filename`, `use_original_cv_filename` (omitted body defaults to `true`; the form defaults to `false` and sends `true` when Original name is on), `show_profile_picture`
 - **Success:** `201` `{ data: Application }`
 - **Errors:** `400` schema validation / insert / primary CV missing; `401`; `409` slug taken (`validateSlugForApplication` or unique constraint) or tailored `cv_url` already used; `429`; `500` unexpected failures
 
@@ -193,7 +207,7 @@ Create an application. Candidate fields fall back to the user’s profile when o
 - Auth required; inserts always set `user_id` from the session (not the client body).
 - Rate limited.
 - Dedicated `withAuth` → **401**; unexpected failures → **500** with server log (not mislabeled as unauthorized).
-- **Schema validation** (`applicationCreateSchema` in `lib/validation/application.ts`): required trimmed strings; http(s) URLs for `cv_url` / `video_url` / optional portfolio / LinkedIn; slug format via `validateSlugFormat`; enums/booleans; rejects unexpected keys; `primary_cv_id` UUID required when `cv_type` is `"primary"`. Invalid bodies return clear **400** `{ error }` before any insert.
+- **Schema validation** (`applicationCreateSchema` in `lib/validation/application.ts`): company / role / slug required; `cv_url` nullable; `video_url` may be empty; http(s) when URLs are present; slug format via `validateSlugFormat`; enums/booleans; rejects unexpected keys; `primary_cv_id` UUID required when `cv_type` is `"primary"`. Invalid bodies return clear **400** `{ error }` before any insert. Publish / active updates use `getApplicationPublishBlockers`.
 - Profile snapshot / fallback for candidate fields keeps recruiter data on the application row.
 - Avatar preference is a boolean only — no denormalized picture URL on the application row.
 - **Primary CV:** when `cv_type` is `"primary"`, `primary_cv_id` must reference a row in the caller’s `primary_cvs` library; `cv_url` is resolved from that library row (client may send the same URL for convenience). **DB backstop (B3-042):** trigger `applications_primary_cv_same_user` rejects inserts/updates where `primary_cv_id` is not owned by the same `user_id`; trigger `primary_cvs_user_id_immutable` rejects any change to `primary_cvs.user_id` (keeps the id-only FK with `ON DELETE SET NULL` — a composite FK cannot use `SET NULL` without also nulling `user_id`). Migration `027` also **quarantines** any pre-existing cross-user rows (null FK, `status = draft`, scrub `cv_url` to a per-row sentinel so tailored uniqueness from `026` is preserved) so public pages cannot keep serving a stolen PDF URL.
@@ -213,7 +227,7 @@ Update an application owned by the current user. Replacing a tailored `cv_url` d
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ApplicationUpdateInput`, Zod `applicationUpdateSchema`): `id` (UUID, required) plus optional partial fields (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields, `slugSegmentOrder`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Unexpected keys → **400**. Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
+- **Body** (`ApplicationUpdateInput`, Zod `applicationUpdateSchema`): `id` (UUID, required) plus optional partial fields (`company`, `role`, `slug`, `cv_url`, `video_url`, `status`, `cv_type`, `primary_cv_id`, candidate fields including `email` / `phone`, `slugSegmentOrder`, `cv_filename`, `use_original_cv_filename`, `show_profile_picture`). Unexpected keys → **400**. Setting `status` to `archived` sets `archived_at` (resets clock); `active`/`draft` clears `archived_at`.
 - **Success:** `200` `{ data: Application }`
 - **Errors:** `400` schema / insert-style validation / primary CV missing; `401`; `404` if missing or not owned; `409` slug collision or tailored `cv_url` already used; `429`; `500` unexpected failures
 
@@ -407,7 +421,7 @@ Upsert profile fields (row usually already exists from signup). Requires non-emp
 
 - **Auth:** Required
 - **Rate limit:** Default (60/min)
-- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url` — omit picture field to leave unchanged; `null` to clear. Unexpected keys → **400**. Max lengths: names **100**, location **200**, URLs **2048**. Non-null picture URL must be on the configured Supabase origin (`NEXT_PUBLIC_SUPABASE_URL`) under the caller’s Storage folder.
+- **Body** (`ProfileUpdateInput`, Zod `profileUpdateSchema`): Optional `first_name`, `last_name`, `location`, `portfolio_url`, `linkedin_url`, `profile_picture_url`, `contact_email`, `phone`, `default_show_*` booleans (`email`, `phone`, `profile_picture`, `location`, `linkedin`, `portfolio`), and `collapse_about_you` (boolean; default **true** — collapse About you on applications after the first live app) — omit picture field to leave unchanged; `null` to clear nullable strings. Unexpected keys → **400**. Max lengths: names **100**, location **200**, phone **40**, contact email **254**, URLs **2048**. Non-null picture URL must be on the configured Supabase origin (`NEXT_PUBLIC_SUPABASE_URL`) under the caller’s Storage folder.
 - **Success:** `200` `{ data: Profile }` optionally with `warnings: string[]` (e.g. Storage delete or metadata sync failed)
 - **Errors:** `400` schema / unowned picture URL / missing names / over-long introduced names / upsert error; `401`; `429`; `500`
 
@@ -553,6 +567,26 @@ Check format and uniqueness of a proposed slug **for the current user** (used wh
 
 ---
 
+## YouTube
+
+### GET YouTube preview
+
+`GET /api/youtube/preview?url={youtubeUrl}`
+
+Auth-only helper for create/edit: resolves a YouTube URL to **title** + **thumbnail** via YouTube oEmbed, or reports that the video is private / not embeddable.
+
+**What works**
+
+- Requires auth; rate-limited (**30/min**, namespaced `youtube-preview`).
+- Accepts watch / youtu.be / embed / Shorts URLs (normalized to a watch URL for oEmbed).
+- **200** `{ data: { video_id, title, thumbnail_url } }` when oEmbed succeeds (public and unlisted).
+- **422** `{ error, code: "unavailable" }` when YouTube returns 401/403/404 (private or embedding disabled).
+- **400** for missing / non-YouTube URLs; **502** when oEmbed fails for other reasons; **401** / **429** as usual.
+
+**Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
+
+---
+
 ## Uploads
 
 ### POST upload CV
@@ -600,7 +634,7 @@ Upload a unique avatar object at `{user_id}/{uuid}.{jpg|png|webp}` in the `profi
 - Unique path per upload; folder leftovers / previous object are cleaned on profile URL commit, not on upload.
 - Auth required (dedicated check → **401**); Storage / unexpected failures use `handleApiError` → **500** with a generic client message. Server logs include log-only `meta` (`userId`, file `size`, Storage `status` / `statusCode` as `storageStatus`).
 - Rate limited; JPEG/PNG/WebP MIME + magic-byte / light header checks (JPEG SOI, PNG IHDR, WebP VP8\*); **5 MB** cap. Object extension and `contentType` follow detected bytes, not the client MIME alone.
-- **Client Save UX (F8 / F9-052):** `ProfileForm` and `ProfilePictureModal` share `uploadProfilePictureFile` (30s timeout) + friendly error/warning mapping; Save shows **Uploading…** then **Saving…**. PUT `warnings` are mapped to plain copy (modal stays open until dismissed when a warning is present). `ProfilePictureModal` does not close on backdrop click. While upload/save is in flight, Escape is ignored until the request finishes or times out.
+- **Client Save UX (F8 / F9-052):** `ProfileForm` uses `uploadProfilePictureFile` (30s timeout) + friendly error/warning mapping; Save shows **Uploading…** then **Saving…**. PUT `warnings` are mapped to plain copy. While upload/save is in flight, Escape is ignored until the request finishes or times out. Pictures are changed on Profile, not on New or Edit.
 
 **Open work:** Tracked in [Backlog.md](../product/Backlog.md) — do not re-list here.
 

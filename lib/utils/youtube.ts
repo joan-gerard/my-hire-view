@@ -6,6 +6,8 @@
  * - youtube.com/shorts/VIDEO_ID (YouTube Shorts)
  */
 export function extractVideoId(url: string): string | null {
+  if (!url || typeof url !== "string") return null;
+
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^&\n?#\/]+)/,
     /youtube\.com\/watch\?.*v=([^&\n?#]+)/,

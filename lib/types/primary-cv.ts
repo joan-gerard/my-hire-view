@@ -49,7 +49,7 @@ export function primaryCvLibraryCapMessage(
   max: number = PRIMARY_CV_MAX_PER_USER,
 ): string {
   const n = Math.max(1, Math.floor(max));
-  return `You can store up to ${n} primary CVs. Delete one to upload another.`;
+  return `You can store up to ${n} library résumés. Delete one to upload another.`;
 }
 
 /**
@@ -85,12 +85,12 @@ export const PRIMARY_CV_DELETE_PREVIEW_LIMIT = 10;
 export function primaryCvDeleteConfirmMessage(applicationsCount: number): string {
   const n = Math.max(0, Math.floor(applicationsCount));
   if (n === 0) {
-    return "Delete this primary CV from your library? This cannot be undone.";
+    return "Delete this library résumé? This cannot be undone.";
   }
   if (n === 1) {
-    return "1 application currently uses this CV. Deleting it removes the file from storage. That application will show “CV missing” on the dashboard until you pick another CV. This cannot be undone.";
+    return "1 application currently uses this résumé. Deleting it removes the file from storage. That application will show “Résumé missing” on the dashboard until you pick another résumé. This cannot be undone.";
   }
-  return `${n} applications currently use this CV. Deleting it removes the file from storage. Those applications will show “CV missing” on the dashboard until you pick another CV. This cannot be undone.`;
+  return `${n} applications currently use this résumé. Deleting it removes the file from storage. Those applications will show “Résumé missing” on the dashboard until you pick another résumé. This cannot be undone.`;
 }
 
 /** Confirm button label — stronger wording when apps still reference the CV. */
@@ -108,7 +108,7 @@ export function primaryCvDeletedStillReferencedMessage(
 ): string | null {
   const n = Math.max(0, Math.floor(applicationsAffected));
   if (!Number.isFinite(n) || n <= 0) return null;
-  return `Primary CV deleted. ${n} application${n === 1 ? "" : "s"} still referenced it and will show “CV missing” until updated.`;
+  return `Library résumé deleted. ${n} application${n === 1 ? "" : "s"} still referenced it and will show “Résumé missing” until updated.`;
 }
 
 /**

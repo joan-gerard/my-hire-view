@@ -57,7 +57,7 @@ vi.mock("@/lib/utils/profile-picture-storage", async (importOriginal) => {
 import { GET, PUT } from "@/app/api/profile/route";
 import { ok, dbError, makeSupabaseClient } from "../../helpers/supabase-mock";
 
-const MOCK_USER = { id: "user-123" };
+const MOCK_USER = { id: "user-123", email: "jane@example.com" };
 const EXISTING_PROFILE = {
   user_id: "user-123",
   public_id: "k7x2m9ab",
@@ -67,6 +67,11 @@ const EXISTING_PROFILE = {
   portfolio_url: null,
   linkedin_url: null,
   profile_picture_url: null,
+  contact_email: "jane@example.com",
+  phone: null,
+  default_show_email: true,
+  default_show_phone: true,
+  default_show_linkedin: true,
 };
 
 function makeGetRequest(): NextRequest {
@@ -190,6 +195,7 @@ describe("PUT /api/profile", () => {
     mockWithAuth.mockResolvedValue(
       authOk({
         id: "user-123",
+        email: "jane@example.com",
         user_metadata: {
           first_name: "Old",
           last_name: "Name",
@@ -221,6 +227,7 @@ describe("PUT /api/profile", () => {
     mockWithAuth.mockResolvedValue(
       authOk({
         id: "user-123",
+        email: "jane@example.com",
         user_metadata: {
           first_name: "Jane",
           last_name: "Doe",
@@ -245,6 +252,7 @@ describe("PUT /api/profile", () => {
     mockWithAuth.mockResolvedValue(
       authOk({
         id: "user-123",
+        email: "jane@example.com",
         user_metadata: {
           first_name: "Stale",
           last_name: "Doe",
@@ -306,6 +314,7 @@ describe("PUT /api/profile", () => {
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
     mockWithAuth.mockResolvedValue(authOk({
       id: "user-123",
+      email: "jane@example.com",
       user_metadata: {
         first_name: "Jane",
         last_name: "Doe",
@@ -356,6 +365,7 @@ describe("PUT /api/profile", () => {
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
     mockWithAuth.mockResolvedValue(authOk({
       id: "user-123",
+      email: "jane@example.com",
       user_metadata: { public_id: "k7x2m9ab" },
     }));
     mockCreateClient.mockResolvedValue(
@@ -375,6 +385,7 @@ describe("PUT /api/profile", () => {
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
     mockWithAuth.mockResolvedValue(authOk({
       id: "user-123",
+      email: "jane@example.com",
       user_metadata: {
         first_name: "Jane",
         last_name: "Doe",
@@ -422,6 +433,7 @@ describe("PUT /api/profile", () => {
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
     mockWithAuth.mockResolvedValue(authOk({
       id: "user-123",
+      email: "jane@example.com",
       user_metadata: {
         first_name: "Jane",
         last_name: "Doe",
@@ -468,6 +480,7 @@ describe("PUT /api/profile", () => {
       "https://abc.supabase.co/storage/v1/object/public/profile-pictures/user-123/avatar.jpg";
     mockWithAuth.mockResolvedValue(authOk({
       id: "user-123",
+      email: "jane@example.com",
       user_metadata: {
         first_name: "A".repeat(101),
         last_name: "Doe",
@@ -624,6 +637,25 @@ describe("PUT /api/profile", () => {
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toContain("First name and last name");
+  });
+
+  it("returns 400 when defaults hide email and phone with LinkedIn unset", async () => {
+    mockCreateClient.mockResolvedValue(
+      makeSupabaseClient([ok(EXISTING_PROFILE)]),
+    );
+
+    const response = await PUT(
+      makePutRequest({
+        default_show_email: false,
+        default_show_phone: false,
+        default_show_linkedin: false,
+        linkedin_url: null,
+        phone: null,
+      }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/visible contact method/i);
   });
 
   it("returns 400 when the upsert fails", async () => {

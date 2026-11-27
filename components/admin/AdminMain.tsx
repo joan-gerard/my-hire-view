@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  ADMIN_HEADER_INSET_CLASS,
-  ADMIN_SHELL_CLASS,
+    ADMIN_HEADER_INSET_CLASS,
+    ADMIN_SHELL_CLASS,
 } from "@/components/admin/admin-chrome";
 import { usePathname } from "next/navigation";
 
@@ -16,11 +16,7 @@ function isDashboard(pathname: string): boolean {
 }
 
 /** Create and edit span the header. Other admin pages stay in the 1440 column. */
-export default function AdminMain({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminMain({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const wide = usesHeaderWidth(pathname);
   const dashboard = isDashboard(pathname);

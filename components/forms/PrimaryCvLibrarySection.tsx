@@ -2,7 +2,16 @@
 
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Button from "@/components/ui/Button";
-import { ADMIN_PANEL_CLASS } from "@/components/admin/admin-chrome";
+import {
+  ADMIN_ICON_SECONDARY_CLASS,
+  ADMIN_PANEL_CLASS,
+} from "@/components/admin/admin-chrome";
+import AdminTooltip from "@/components/admin/AdminTooltip";
+import {
+  EllipsisIcon,
+  ExternalLinkIcon,
+  TrashIcon,
+} from "@/components/admin/icons";
 import PrimaryCvUsedByPreview from "@/components/forms/PrimaryCvUsedByPreview";
 import type { PrimaryCv, PrimaryCvApplicationPreview } from "@/lib/types/primary-cv";
 import {
@@ -27,6 +36,15 @@ export type PrimaryCvLibrarySectionProps = {
    * Manage library uses this to block Escape / backdrop / Done until finished.
    */
   onMutationBusyChange?: (busy: boolean) => void;
+  /**
+   * Known library from the parent form. When set (including `[]`), skip the
+   * initial Loading… flash and still refresh in the background.
+   */
+  initialItems?: PrimaryCv[];
+  /** Currently selected primary for this application (Manage library modal). */
+  selectedId?: string | null;
+  /** Choose a primary for this application from the modal list. */
+  onSelect?: (id: string) => void;
 };
 
 type PendingDelete = {
@@ -35,6 +53,80 @@ type PendingDelete = {
   usedBy: PrimaryCvApplicationPreview[];
 };
 
+function PrimaryCvRowMenu({
+  url,
+  disabled,
+  onDelete,
+}: {
+  url: string;
+  disabled: boolean;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("click", handleClickOutside);
+    }
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [open]);
+
+  return (
+    <div className="relative shrink-0" ref={menuRef}>
+      <AdminTooltip label="More options">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setOpen((prev) => !prev)}
+          className={ADMIN_ICON_SECONDARY_CLASS}
+          aria-label="More options"
+          aria-expanded={open}
+          aria-haspopup="true"
+        >
+          <EllipsisIcon className="h-4 w-4" />
+        </button>
+      </AdminTooltip>
+      {open ? (
+        <div
+          className="absolute right-0 top-full z-50 mt-1 w-40 rounded-xl border border-[var(--ink)]/10 bg-[var(--white)] py-1 shadow-lg"
+          role="menu"
+        >
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--ink)] hover:bg-[var(--ink)]/[0.04]"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            <ExternalLinkIcon className="h-4 w-4" />
+            View
+          </a>
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--status-danger-fg)] hover:bg-[var(--status-danger-bg)] disabled:opacity-40"
+            role="menuitem"
+            disabled={disabled}
+            onClick={() => {
+              setOpen(false);
+              onDelete();
+            }}
+          >
+            <TrashIcon className="h-4 w-4" />
+            Delete
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /**
  * Upload and manage up to 5 primary CVs (profile page or application-form modal).
  */
@@ -42,6 +134,9 @@ export default function PrimaryCvLibrarySection({
   onLibraryChange,
   embedded = false,
   onMutationBusyChange,
+  initialItems,
+  selectedId = null,
+  onSelect,
 }: PrimaryCvLibrarySectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const onLibraryChangeRef = useRef(onLibraryChange);
@@ -54,8 +149,9 @@ export default function PrimaryCvLibrarySection({
   const loadGenerationRef = useRef(0);
   /** False after unmount — blocks mutation follow-up `load()` / parent callbacks. */
   const mountedRef = useRef(true);
-  const [items, setItems] = useState<PrimaryCv[]>([]);
-  const [loading, setLoading] = useState(true);
+  const seededFromParent = initialItems !== undefined;
+  const [items, setItems] = useState<PrimaryCv[]>(() => initialItems ?? []);
+  const [loading, setLoading] = useState(!seededFromParent);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(
@@ -85,7 +181,7 @@ export default function PrimaryCvLibrarySection({
         return false;
       }
       if (!res.ok) {
-        setError(json.error ?? "Failed to load primary CVs");
+        setError(json.error ?? "Failed to load résumé library");
         return false;
       }
       applyItems((json.data as PrimaryCv[]) ?? []);
@@ -97,7 +193,7 @@ export default function PrimaryCvLibrarySection({
       ) {
         return false;
       }
-      setError("Failed to load primary CVs");
+      setError("Failed to load résumé library");
       return false;
     } finally {
       if (
@@ -182,7 +278,7 @@ export default function PrimaryCvLibrarySection({
       const json = await res.json().catch(() => ({}));
       if (!mountedRef.current) return false;
       if (!res.ok) {
-        setError(json.error ?? "Failed to delete primary CV");
+        setError(json.error ?? "Failed to delete library résumé");
         return false;
       }
       const affected = Number(json.applications_affected ?? 0);
@@ -201,7 +297,7 @@ export default function PrimaryCvLibrarySection({
       return true;
     } catch {
       if (mountedRef.current) {
-        setError("Failed to delete primary CV");
+        setError("Failed to delete library résumé");
       }
       return false;
     } finally {
@@ -245,13 +341,13 @@ export default function PrimaryCvLibrarySection({
       {!embedded && (
         <>
           <h2 className="font-heading text-base font-semibold tracking-[-0.02em] text-[var(--ink)]">
-            Primary CVs
+            Résumé library
           </h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             Upload up to {PRIMARY_CV_MAX_PER_USER} résumé PDFs to reuse on new
-            applications. Deleting a primary CV removes it from storage;
-            applications that still pointed at it will show a missing-CV warning
-            on the dashboard.
+            applications. Deleting a library résumé removes it from storage;
+            applications that still pointed at it will show a missing-résumé
+            warning on the dashboard.
           </p>
         </>
       )}
@@ -271,99 +367,131 @@ export default function PrimaryCvLibrarySection({
         >
           Loading…
         </p>
+      ) : items.length === 0 ? (
+        <p
+          className={`${embedded && !error ? "mt-0" : "mt-4"} text-sm text-[var(--muted)]`}
+        >
+          No library résumés yet.
+        </p>
       ) : (
         <ul
-          className={`${embedded && !error ? "mt-0" : "mt-4"} divide-y divide-[var(--ink)]/8 ${embedded ? "" : "rounded-xl border border-[var(--ink)]/10"}`}
+          className={`${embedded && !error ? "mt-0" : "mt-4"} space-y-2`}
+          role={onSelect ? "radiogroup" : undefined}
+          aria-label={onSelect ? "Primary CVs for this application" : undefined}
         >
-          {items.length === 0 && (
-            <li className="px-3 py-3 text-sm text-[var(--muted)]">
-              No primary CVs yet. Upload one to reuse it on applications.
-            </li>
-          )}
-          {items.map((cv) => (
-            <li
-              key={cv.id}
-              className="flex flex-wrap items-center justify-between gap-2 px-3 py-3"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-[var(--ink)]">
-                  {cv.label?.trim() || cv.filename}
-                </p>
-                {cv.label?.trim() && (
-                  <p className="truncate text-xs text-[var(--muted)]">
-                    {cv.filename}
-                  </p>
-                )}
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <a
-                  href={cv.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-[var(--ink)] hover:opacity-80"
-                >
-                  View
-                </a>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={libraryBusy}
-                  onClick={() => requestDelete(cv)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+          {items.map((cv) => {
+            const title = cv.label?.trim() || cv.filename;
+            const selected = Boolean(onSelect) && selectedId === cv.id;
+            const confirmingThis =
+              embedded && pendingDelete?.cv.id === cv.id;
+            const rowClass = `flex min-h-11 items-center gap-2.5 rounded-xl border px-3 py-2 ${
+              confirmingThis
+                ? "border-[var(--status-warning-fg)]/30 bg-[var(--status-warning-bg)]"
+                : selected
+                  ? "border-[var(--ink)]/20 bg-[var(--paper)]"
+                  : "border-[var(--ink)]/10 bg-[var(--white)]"
+            }`;
+            const rowBusy = libraryBusy || pendingDelete !== null;
+            const applicationsCount = Math.max(0, cv.applications_count ?? 0);
+            const usageLabel =
+              applicationsCount === 1
+                ? "Used by 1 application"
+                : `Used by ${applicationsCount} applications`;
 
-      {embedded && pendingDelete && (
-        <div
-          className="mt-4 space-y-3 rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] p-3"
-          role="alertdialog"
-          aria-labelledby="primary-cv-delete-title"
-          aria-describedby="primary-cv-delete-desc"
-        >
-          <p
-            id="primary-cv-delete-title"
-            className="text-sm font-semibold text-[var(--status-warning-fg)]"
-          >
-            Delete primary CV?
-          </p>
-          <p
-            id="primary-cv-delete-desc"
-            className="text-sm text-[var(--status-warning-fg)]"
-          >
-            {deleteMessage}
-          </p>
-          {pendingDelete.applicationsCount > 0 ? (
-            <PrimaryCvUsedByPreview
-              applications={pendingDelete.usedBy}
-              totalCount={pendingDelete.applicationsCount}
-              tone="warning"
-            />
-          ) : null}
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={deleting}
-              onClick={() => setPendingDelete(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="danger"
-              loading={deleting}
-              loadingLabel="Deleting…"
-              onClick={() => void confirmDelete()}
-            >
-              {deleteConfirmLabel}
-            </Button>
-          </div>
-        </div>
+            return (
+              <li key={cv.id} className="space-y-2">
+                <div className={rowClass}>
+                  {onSelect ? (
+                    <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5">
+                      <input
+                        type="radio"
+                        name="primary-cv-library-select"
+                        value={cv.id}
+                        checked={selected}
+                        disabled={rowBusy}
+                        onChange={() => onSelect(cv.id)}
+                        className="size-4 shrink-0 accent-[var(--ink)]"
+                      />
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-[var(--ink)]">
+                          {title}
+                        </span>
+                        {cv.label?.trim() ? (
+                          <span className="block truncate text-xs text-[var(--muted)]">
+                            {cv.filename}
+                          </span>
+                        ) : null}
+                      </span>
+                    </label>
+                  ) : (
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-[var(--ink)]">
+                        {title}
+                      </p>
+                      {cv.label?.trim() ? (
+                        <p className="truncate text-xs text-[var(--muted)]">
+                          {cv.filename}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                  <span
+                    className="shrink-0 tabular-nums text-sm text-[var(--muted)]"
+                    title={usageLabel}
+                    aria-label={usageLabel}
+                  >
+                    {applicationsCount}
+                  </span>
+                  <PrimaryCvRowMenu
+                    url={cv.url}
+                    disabled={rowBusy}
+                    onDelete={() => requestDelete(cv)}
+                  />
+                </div>
+                {confirmingThis && pendingDelete ? (
+                  <div
+                    className="space-y-3 rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] p-3"
+                    role="alertdialog"
+                    aria-labelledby="primary-cv-delete-desc"
+                  >
+                    <p
+                      id="primary-cv-delete-desc"
+                      className="text-sm text-[var(--status-warning-fg)]"
+                    >
+                      {deleteMessage}
+                    </p>
+                    {pendingDelete.applicationsCount > 0 ? (
+                      <PrimaryCvUsedByPreview
+                        applications={pendingDelete.usedBy}
+                        totalCount={pendingDelete.applicationsCount}
+                        tone="warning"
+                      />
+                    ) : null}
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={deleting}
+                        onClick={() => setPendingDelete(null)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="danger"
+                        loading={deleting}
+                        loadingLabel="Deleting…"
+                        onClick={() => void confirmDelete()}
+                      >
+                        {deleteConfirmLabel}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       <div className="mt-4">
@@ -383,11 +511,11 @@ export default function PrimaryCvLibrarySection({
             loading
               ? "Wait for the library to finish loading"
               : atLimit
-                ? `Limit of ${PRIMARY_CV_MAX_PER_USER} primary CVs reached`
+                ? `Limit of ${PRIMARY_CV_MAX_PER_USER} library résumés reached`
                 : undefined
           }
         >
-          {uploading ? "Uploading…" : "Upload primary CV"}
+          {uploading ? "Uploading…" : "Upload library résumé"}
         </Button>
         {atLimit && (
           <p className="mt-2 text-xs text-[var(--muted)]">
@@ -400,7 +528,7 @@ export default function PrimaryCvLibrarySection({
       {!embedded && (
         <ConfirmDialog
           open={pendingDelete !== null}
-          title="Delete primary CV?"
+          title="Delete library résumé?"
           message={deleteMessage}
           confirmLabel={deleteConfirmLabel}
           cancelLabel="Cancel"

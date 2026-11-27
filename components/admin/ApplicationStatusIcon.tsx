@@ -15,6 +15,7 @@ import {
   ArchiveIcon,
   CheckIcon,
   ClockIcon,
+  DocumentIcon,
   PencilIcon,
 } from "@/components/admin/icons";
 import { useStatusIndicatorStyle } from "@/hooks/useStatusIndicatorStyle";
@@ -22,6 +23,11 @@ import { useStatusIndicatorStyle } from "@/hooks/useStatusIndicatorStyle";
 type ApplicationStatusIconProps = {
   status: ApplicationStatus;
   viewCount: number;
+  /**
+   * Draft only: when true, show the complete-draft status color.
+   * Incomplete drafts use a distinct orange marker.
+   */
+  publishReady?: boolean;
   /** Override preference (e.g. profile preview). */
   style?: StatusIndicatorStyle;
 };
@@ -40,20 +46,23 @@ type ApplicationStatusIconBadgeProps = {
 };
 
 const STATUS_DOT_CLASS: Record<ApplicationStatusVisualKey, string> = {
-  draft: "bg-[var(--status-dot-draft)]",
+  draft_incomplete: "bg-[var(--status-dot-draft-incomplete)]",
+  draft_complete: "bg-[var(--status-dot-draft)]",
   active_unviewed: "bg-[var(--status-dot-active)]",
   active_viewed: "bg-[var(--status-dot-viewed)]",
   archived: "bg-[var(--status-dot-archived)]",
 };
 
 const STATUS_WASH_CLASS: Record<ApplicationStatusVisualKey, string> = {
-  draft: "bg-[var(--status-wash-draft)]",
+  draft_incomplete: "bg-[var(--status-wash-draft-incomplete)]",
+  draft_complete: "bg-[var(--status-wash-draft)]",
   active_unviewed: "bg-[var(--status-wash-active)]",
   active_viewed: "bg-[var(--status-wash-viewed)]",
   archived: "bg-[var(--status-wash-archived)]",
 };
 
 function StatusGlyph({ visual }: { visual: ApplicationStatusVisualKey }) {
+  // Ink on wash — bright status-dot tints fail contrast on light badges.
   const iconClass = "h-5 w-5 text-[var(--ink)]";
   if (visual === "archived") {
     return <ArchiveIcon className={iconClass} />;
@@ -61,8 +70,12 @@ function StatusGlyph({ visual }: { visual: ApplicationStatusVisualKey }) {
   if (visual === "active_viewed") {
     return <CheckIcon className={iconClass} />;
   }
-  if (visual === "draft") {
-    // Distinct from active_unviewed clock so high-contrast mode is not color-only.
+  if (visual === "draft_complete") {
+    // Document, not check — keep complete draft distinct from Active (viewed).
+    return <DocumentIcon className={iconClass} />;
+  }
+  if (visual === "draft_incomplete") {
+    // Distinct from active_unviewed clock so shape is not color-only.
     return <PencilIcon className={iconClass} />;
   }
   return <ClockIcon className={iconClass} />;
@@ -164,9 +177,12 @@ export function ApplicationStatusIconBadge({
 export function ApplicationStatusIcon({
   status,
   viewCount,
+  publishReady = false,
   style,
 }: ApplicationStatusIconProps) {
-  const display = getApplicationStatusDisplay(status, viewCount);
+  const display = getApplicationStatusDisplay(status, viewCount, {
+    publishReady,
+  });
   return (
     <ApplicationStatusIconBadge
       visual={display.key}

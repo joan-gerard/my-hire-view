@@ -4,18 +4,32 @@ import {
     ADMIN_PANEL_CLASS,
     ADMIN_TIP_CLASS,
 } from "@/components/admin/admin-chrome";
-import { AvatarIcon } from "@/components/admin/icons";
+import AdminTooltip from "@/components/admin/AdminTooltip";
+import { AvatarIcon, QuestionIcon } from "@/components/admin/icons";
 import PublicIdAccountField from "@/components/admin/PublicIdAccountField";
 import ProfilePictureIconActions from "@/components/forms/ProfilePictureIconActions";
+import VisibilityToggle from "@/components/forms/VisibilityToggle";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import type { Profile } from "@/lib/types/profile";
 import {
+    PROFILE_CONTACT_EMAIL_MAX_LENGTH,
     PROFILE_LOCATION_MAX_LENGTH,
     PROFILE_NAME_MAX_LENGTH,
+    PROFILE_PHONE_MAX_LENGTH,
     PROFILE_URL_MAX_LENGTH,
 } from "@/lib/types/profile";
 import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
+import {
+  hasVisibleRecruiterContact,
+  RECRUITER_CONTACT_PROFILE_WARNING,
+  resolveApplicationContactEmail,
+} from "@/lib/utils/profile-contact";
+import {
+  canDefaultShowProfileUrl,
+  linkedInUrlFieldWarning,
+  portfolioUrlFieldWarning,
+} from "@/lib/utils/profile-link-url";
 import { cacheBustProfilePictureUrl } from "@/lib/utils/profile-picture-storage";
 import { mapProfileSaveWarnings } from "@/lib/utils/upload-form-messages";
 import { uploadProfilePictureFile } from "@/lib/utils/upload-profile-picture-client";
@@ -23,7 +37,55 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FiAlertTriangle } from "react-icons/fi";
 
+type DefaultShowKey =
+  | "default_show_email"
+  | "default_show_phone"
+  | "default_show_profile_picture"
+  | "default_show_location"
+  | "default_show_linkedin"
+  | "default_show_portfolio";
+
+type DefaultShowAvailability = Record<DefaultShowKey, boolean>;
+
+/** Default Visible/Hidden for new applications, under the matching profile field. */
+function ProfileDefaultShowToggle({
+  subjectLabel,
+  available,
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  subjectLabel: string;
+  available: boolean;
+  checked: boolean;
+  disabled: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex justify-end">
+      <VisibilityToggle
+        visible={available && checked}
+        onVisibleChange={onCheckedChange}
+        subjectLabel={`${subjectLabel} on new applications`}
+        disabled={disabled || !available}
+      />
+    </div>
+  );
+}
+
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+const EMAIL_DIFFERS_FROM_ACCOUNT_TIP =
+  "You can use a different email for applications. It does not change the email you sign in with.";
+
+function emailsMatch(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  const left = (a ?? "").trim().toLowerCase();
+  const right = (b ?? "").trim().toLowerCase();
+  return Boolean(left) && left === right;
+}
 
 export type ProfileFormAccountChrome = {
   email: string | null;
@@ -71,6 +133,16 @@ export default function ProfileForm({
     location: initialData?.location ?? "",
     portfolio_url: initialData?.portfolio_url ?? "",
     linkedin_url: initialData?.linkedin_url ?? "",
+    contact_email:
+      initialData?.contact_email?.trim() || accountChrome.email || "",
+    phone: initialData?.phone ?? "",
+    default_show_email: initialData?.default_show_email !== false,
+    default_show_phone: initialData?.default_show_phone !== false,
+    default_show_profile_picture:
+      initialData?.default_show_profile_picture !== false,
+    default_show_location: initialData?.default_show_location !== false,
+    default_show_linkedin: initialData?.default_show_linkedin !== false,
+    default_show_portfolio: initialData?.default_show_portfolio !== false,
   });
   /** File chosen locally; uploaded only on Save. */
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -126,8 +198,27 @@ export default function ProfileForm({
   const firstName = normalizeText(formData.first_name);
   const lastName = normalizeText(formData.last_name);
   const namesValid = Boolean(firstName && lastName);
+  const showAccountEmailTip = emailsMatch(
+    formData.contact_email,
+    accountChrome.email,
+  );
 
   const pictureDirty = Boolean(pendingFile) || pictureRemoved;
+
+  const defaultShowAvailability: DefaultShowAvailability = {
+    default_show_email: Boolean(normalizeText(formData.contact_email)),
+    default_show_phone: Boolean(normalizeText(formData.phone)),
+    default_show_profile_picture: hasProfilePicture,
+    default_show_location: Boolean(normalizeText(formData.location)),
+    default_show_linkedin: canDefaultShowProfileUrl(
+      "linkedin_url",
+      formData.linkedin_url,
+    ),
+    default_show_portfolio: canDefaultShowProfileUrl(
+      "portfolio_url",
+      formData.portfolio_url,
+    ),
+  };
 
   const isDirty =
     !hasExistingProfile ||
@@ -138,17 +229,47 @@ export default function ProfileForm({
       normalizeText(initialData?.portfolio_url) ||
     normalizeText(formData.linkedin_url) !==
       normalizeText(initialData?.linkedin_url) ||
+    normalizeText(formData.contact_email) !==
+      (normalizeText(initialData?.contact_email) ||
+        normalizeText(accountChrome.email)) ||
+    normalizeText(formData.phone) !== normalizeText(initialData?.phone) ||
+    formData.default_show_email !==
+      (initialData?.default_show_email !== false) ||
+    formData.default_show_phone !==
+      (initialData?.default_show_phone !== false) ||
+    formData.default_show_profile_picture !==
+      (initialData?.default_show_profile_picture !== false) ||
+    formData.default_show_location !==
+      (initialData?.default_show_location !== false) ||
+    formData.default_show_linkedin !==
+      (initialData?.default_show_linkedin !== false) ||
+    formData.default_show_portfolio !==
+      (initialData?.default_show_portfolio !== false) ||
     pictureDirty;
+
+  const hasRecruiterContactDefault = hasVisibleRecruiterContact({
+    email: resolveApplicationContactEmail(
+      { contact_email: formData.contact_email },
+      accountChrome.email,
+    ),
+    phone: formData.phone,
+    linkedin_url: formData.linkedin_url,
+    showEmail: formData.default_show_email,
+    showPhone: formData.default_show_phone,
+    showLinkedin: formData.default_show_linkedin,
+  });
 
   const loading = submitPhase !== "idle";
   const saveLoadingLabel =
     submitPhase === "uploading" ? "Uploading…" : "Saving…";
 
-  const canSave = namesValid && isDirty && !loading;
+  const canSave =
+    namesValid && isDirty && !loading && hasRecruiterContactDefault;
 
   const disabledReason = (() => {
     if (canSave || loading) return null;
     if (!namesValid) return "First name and last name are required.";
+    if (!hasRecruiterContactDefault) return RECRUITER_CONTACT_PROFILE_WARNING;
     if (!isDirty) return "No changes to save.";
     return null;
   })();
@@ -215,12 +336,20 @@ export default function ProfileForm({
         }
       }
 
-      const body: Record<string, string | null> = {
+      const body: Record<string, string | boolean | null> = {
         first_name: firstName || null,
         last_name: lastName || null,
         location: normalizeText(formData.location) || null,
         portfolio_url: normalizeText(formData.portfolio_url) || null,
         linkedin_url: normalizeText(formData.linkedin_url) || null,
+        contact_email: normalizeText(formData.contact_email) || null,
+        phone: normalizeText(formData.phone) || null,
+        default_show_email: formData.default_show_email,
+        default_show_phone: formData.default_show_phone,
+        default_show_profile_picture: formData.default_show_profile_picture,
+        default_show_location: formData.default_show_location,
+        default_show_linkedin: formData.default_show_linkedin,
+        default_show_portfolio: formData.default_show_portfolio,
       };
       if (profilePictureUrl !== undefined) {
         body.profile_picture_url = profilePictureUrl;
@@ -345,6 +474,18 @@ export default function ProfileForm({
                     Will be removed when you save
                   </p>
                 ) : null}
+                <ProfileDefaultShowToggle
+                  subjectLabel="Picture"
+                  available={defaultShowAvailability.default_show_profile_picture}
+                  checked={formData.default_show_profile_picture}
+                  disabled={loading}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      default_show_profile_picture: checked,
+                    }))
+                  }
+                />
               </div>
               <p className="text-xs text-[var(--muted)]">
                 JPEG, PNG or WebP, up to 5 MB.
@@ -368,8 +509,8 @@ export default function ProfileForm({
               <div className="space-y-1.5 pt-1">
                 <p className="text-sm text-[var(--muted)]">
                   One picture per account. The file is uploaded when you save.
-                  You can choose whether to show it on each application when
-                  creating or editing.
+                  Visible / Hidden under the picture sets the default on new
+                  applications; you can still change each application later.
                 </p>
                 {submitPhase === "uploading" && (
                   <p className="text-sm text-[var(--muted)]" role="status">
@@ -431,15 +572,30 @@ export default function ProfileForm({
               Profile details
             </h3>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              This info is used when you create or update applications so
-              recruiters see your name and links.
+              Used on your applications. Names are always shown. For the other
+              fields, Visible / Hidden sets the default on new applications —
+              you can still change each application later.
             </p>
             {!hasExistingProfile && (
               <p className={`mt-3 ${ADMIN_TIP_CLASS}`}>
                 Your name is prefilled from signup. Save your profile to finish
-                creating your profile record (location, links, and picture).
+                creating your profile record (contact, location, links, and
+                picture).
               </p>
             )}
+            {!hasRecruiterContactDefault ? (
+              <p
+                id="profile-contact-safety"
+                role="status"
+                className="mt-3 flex gap-2 rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--status-warning-fg)]"
+              >
+                <FiAlertTriangle
+                  className="mt-0.5 size-4 shrink-0"
+                  aria-hidden
+                />
+                <span>{RECRUITER_CONTACT_PROFILE_WARNING}</span>
+              </p>
+            ) : null}
             <div className="mt-5 space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
@@ -471,74 +627,212 @@ export default function ProfileForm({
                   maxLength={PROFILE_NAME_MAX_LENGTH}
                 />
               </div>
-              <Input
-                label="Location"
-                type="text"
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    location: e.target.value,
-                  }))
-                }
-                placeholder="e.g. London, UK"
-                maxLength={PROFILE_LOCATION_MAX_LENGTH}
-              />
-              <Input
-                label="Portfolio URL"
-                type="url"
-                value={formData.portfolio_url}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    portfolio_url: e.target.value,
-                  }))
-                }
-                placeholder="https://..."
-                maxLength={PROFILE_URL_MAX_LENGTH}
-              />
-              <Input
-                label="LinkedIn URL"
-                type="url"
-                value={formData.linkedin_url}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    linkedin_url: e.target.value,
-                  }))
-                }
-                placeholder="https://linkedin.com/in/..."
-                maxLength={PROFILE_URL_MAX_LENGTH}
-              />
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-1">
+                  <label
+                    htmlFor="profile-contact-email"
+                    className="text-sm font-medium leading-[18px] text-[var(--ink)]"
+                  >
+                    Email
+                  </label>
+                  {showAccountEmailTip ? (
+                    <AdminTooltip
+                      label={EMAIL_DIFFERS_FROM_ACCOUNT_TIP}
+                      side="top"
+                    >
+                      <button
+                        type="button"
+                        className="inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-[var(--muted)] hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                        aria-label={EMAIL_DIFFERS_FROM_ACCOUNT_TIP}
+                      >
+                        <QuestionIcon className="size-4" />
+                      </button>
+                    </AdminTooltip>
+                  ) : null}
+                </div>
+                <div className="mt-1">
+                  <Input
+                    id="profile-contact-email"
+                    type="email"
+                    autoComplete="email"
+                    value={formData.contact_email}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        contact_email: e.target.value,
+                      }))
+                    }
+                    placeholder="you@example.com"
+                    maxLength={PROFILE_CONTACT_EMAIL_MAX_LENGTH}
+                  />
+                </div>
+                <ProfileDefaultShowToggle
+                  subjectLabel="Email"
+                  available={defaultShowAvailability.default_show_email}
+                  checked={formData.default_show_email}
+                  disabled={loading}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      default_show_email: checked,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  id="profile-phone"
+                  label="Phone"
+                  type="tel"
+                  autoComplete="tel"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      phone: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. +44 7700 900123"
+                  maxLength={PROFILE_PHONE_MAX_LENGTH}
+                />
+                <ProfileDefaultShowToggle
+                  subjectLabel="Phone"
+                  available={defaultShowAvailability.default_show_phone}
+                  checked={formData.default_show_phone}
+                  disabled={loading}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      default_show_phone: checked,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  label="Location"
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      location: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. London, UK"
+                  maxLength={PROFILE_LOCATION_MAX_LENGTH}
+                />
+                <ProfileDefaultShowToggle
+                  subjectLabel="Location"
+                  available={defaultShowAvailability.default_show_location}
+                  checked={formData.default_show_location}
+                  disabled={loading}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      default_show_location: checked,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  id="profile-linkedin-url"
+                  label="LinkedIn URL"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="url"
+                  value={formData.linkedin_url}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      linkedin_url: e.target.value,
+                    }))
+                  }
+                  placeholder="https://linkedin.com/in/..."
+                  maxLength={PROFILE_URL_MAX_LENGTH}
+                  warning={
+                    linkedInUrlFieldWarning(formData.linkedin_url) ?? undefined
+                  }
+                />
+                <ProfileDefaultShowToggle
+                  subjectLabel="LinkedIn"
+                  available={defaultShowAvailability.default_show_linkedin}
+                  checked={formData.default_show_linkedin}
+                  disabled={loading}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      default_show_linkedin: checked,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  id="profile-portfolio-url"
+                  label="Portfolio URL"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="url"
+                  value={formData.portfolio_url}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      portfolio_url: e.target.value,
+                    }))
+                  }
+                  placeholder="https://..."
+                  maxLength={PROFILE_URL_MAX_LENGTH}
+                  warning={
+                    portfolioUrlFieldWarning(formData.portfolio_url) ?? undefined
+                  }
+                />
+                <ProfileDefaultShowToggle
+                  subjectLabel="Portfolio"
+                  available={defaultShowAvailability.default_show_portfolio}
+                  checked={formData.default_show_portfolio}
+                  disabled={loading}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      default_show_portfolio: checked,
+                    }))
+                  }
+                />
+              </div>
             </div>
           </div>
 
-          <div
-            className="group relative inline-flex"
-            title={disabledReason ?? undefined}
-          >
-            <Button
-              type="submit"
-              variant="primary"
-              loading={loading}
-              loadingLabel={saveLoadingLabel}
-              disabled={!canSave}
-              className="min-h-11"
-              aria-describedby={
-                disabledReason ? "save-profile-disabled-reason" : undefined
-              }
+          <div className="mt-6 flex justify-end">
+            <div
+              className="group relative inline-flex"
+              title={disabledReason ?? undefined}
             >
-              Save profile
-            </Button>
-            {disabledReason && (
-              <span
-                id="save-profile-disabled-reason"
-                role="tooltip"
-                className="pointer-events-none absolute bottom-full left-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-xs text-[var(--white)] shadow-lg group-hover:block group-focus-within:block"
+              <Button
+                type="submit"
+                variant="primary"
+                loading={loading}
+                loadingLabel={saveLoadingLabel}
+                disabled={!canSave}
+                className="min-h-11"
+                aria-describedby={
+                  disabledReason ? "save-profile-disabled-reason" : undefined
+                }
               >
-                {disabledReason}
-              </span>
-            )}
+                Save profile
+              </Button>
+              {disabledReason && (
+                <span
+                  id="save-profile-disabled-reason"
+                  role="tooltip"
+                  className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-xs text-[var(--white)] shadow-lg group-hover:block group-focus-within:block"
+                >
+                  {disabledReason}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </section>

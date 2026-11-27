@@ -9,6 +9,7 @@ import {
   AccountCvsPanel,
   AccountSettingsUsageProvider,
 } from "@/components/admin/account-settings/AccountSettingsUsage";
+import CollapseAboutYouPreference from "@/components/admin/CollapseAboutYouPreference";
 import StatusIndicatorPreference from "@/components/admin/StatusIndicatorPreference";
 import ProfileForm from "@/components/forms/ProfileForm";
 import type { Profile } from "@/lib/types/profile";
@@ -78,9 +79,16 @@ export default async function AccountSettingsView() {
   );
 
   const preferencesPanel = (
-    <section className={`${ADMIN_PANEL_CLASS} p-5 sm:p-6`}>
-      <StatusIndicatorPreference publicId={publicId} />
-    </section>
+    <div className="space-y-6">
+      <section className={`${ADMIN_PANEL_CLASS} p-5 sm:p-6`}>
+        <CollapseAboutYouPreference
+          initialCollapseAboutYou={initialData.collapse_about_you !== false}
+        />
+      </section>
+      <section className={`${ADMIN_PANEL_CLASS} p-5 sm:p-6`}>
+        <StatusIndicatorPreference publicId={publicId} />
+      </section>
+    </div>
   );
 
   return (

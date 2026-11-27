@@ -7,7 +7,7 @@ export interface Database {
           slug: string;
           company: string;
           role: string;
-          cv_url: string;
+          cv_url: string | null;
           video_url: string;
           created_at: string;
           updated_at: string;
@@ -23,6 +23,8 @@ export interface Database {
           location: string | null;
           portfolio_url: string | null;
           linkedin_url: string | null;
+          email: string | null;
+          phone: string | null;
           slug_segment_order: "company_role" | "role_company";
           cv_filename: string | null;
           use_original_cv_filename: boolean;
@@ -35,7 +37,7 @@ export interface Database {
           slug: string;
           company: string;
           role: string;
-          cv_url: string;
+          cv_url?: string | null;
           video_url: string;
           created_at?: string;
           updated_at?: string;
@@ -50,6 +52,8 @@ export interface Database {
           location?: string | null;
           portfolio_url?: string | null;
           linkedin_url?: string | null;
+          email?: string | null;
+          phone?: string | null;
           slug_segment_order?: "company_role" | "role_company";
           cv_filename?: string | null;
           use_original_cv_filename?: boolean;
@@ -62,7 +66,7 @@ export interface Database {
           slug?: string;
           company?: string;
           role?: string;
-          cv_url?: string;
+          cv_url?: string | null;
           video_url?: string;
           created_at?: string;
           updated_at?: string;
@@ -77,6 +81,8 @@ export interface Database {
           location?: string | null;
           portfolio_url?: string | null;
           linkedin_url?: string | null;
+          email?: string | null;
+          phone?: string | null;
           slug_segment_order?: "company_role" | "role_company";
           cv_filename?: string | null;
           use_original_cv_filename?: boolean;
@@ -119,6 +125,14 @@ export interface Database {
           linkedin_url: string | null;
           updated_at: string;
           profile_picture_url: string | null;
+          contact_email: string | null;
+          phone: string | null;
+          default_show_email: boolean;
+          default_show_phone: boolean;
+          default_show_profile_picture: boolean;
+          default_show_location: boolean;
+          default_show_linkedin: boolean;
+          default_show_portfolio: boolean;
         };
         Insert: {
           user_id: string;
@@ -130,6 +144,14 @@ export interface Database {
           linkedin_url?: string | null;
           updated_at?: string;
           profile_picture_url?: string | null;
+          contact_email?: string | null;
+          phone?: string | null;
+          default_show_email?: boolean;
+          default_show_phone?: boolean;
+          default_show_profile_picture?: boolean;
+          default_show_location?: boolean;
+          default_show_linkedin?: boolean;
+          default_show_portfolio?: boolean;
         };
         Update: {
           public_id?: string;
@@ -140,6 +162,14 @@ export interface Database {
           linkedin_url?: string | null;
           updated_at?: string;
           profile_picture_url?: string | null;
+          contact_email?: string | null;
+          phone?: string | null;
+          default_show_email?: boolean;
+          default_show_phone?: boolean;
+          default_show_profile_picture?: boolean;
+          default_show_location?: boolean;
+          default_show_linkedin?: boolean;
+          default_show_portfolio?: boolean;
         };
       };
     };

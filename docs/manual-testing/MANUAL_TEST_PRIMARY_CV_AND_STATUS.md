@@ -52,7 +52,8 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 
 **Delete primary (profile or Manage library modal)**
 
-- [ ] Delete a primary **not** used by any application → confirm asks if you are sure (no app preview); Cancel keeps it; **Delete** removes it
+- [ ] Delete a primary **not** used by any application → confirm asks if you are sure (no app preview); Cancel keeps it; **Delete** removes it. In the Manage library modal, the confirm sits **under that CV’s row** (not at the bottom of the list) with the short “Delete this primary CV…” copy only
+- [ ] Each library row shows a usage count before ⋯ (including **0** when unused)
 - [ ] Attach a primary to 1+ applications, then Delete → confirm shows the **exact count** and a preview list (company — role, status; links to edit)
 - [ ] If more than 10 apps use it, preview shows the first 10 plus “and N more”
 - [ ] Cancel → CV still in list and in R2
@@ -66,7 +67,7 @@ Use this after applying migrations **`021_application_status_and_archived_at.sql
 **From New / Edit application (same library)**
 
 - [ ] Open `/admin/new` (or edit) → CV section shows **Manage library**
-- [ ] With empty library: **Upload one to your library** / **Upload primary CV** opens the modal
+- [ ] With empty library: **Manage** (create) or **Upload primary CV** (edit) opens the modal
 - [ ] Upload a PDF in the modal → list updates; create form switches to **primary** and selects the new file
 - [ ] That selection **stays** even if the new-application page was still loading the library in the background (does not flip to tailored or drop the new CV from the dropdown)
 - [ ] Close modal while Loading…, reopen and upload → selection still sticks (a late response from the closed modal must not wipe the new CV)

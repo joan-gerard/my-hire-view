@@ -27,6 +27,12 @@ describe("profileUpdateSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts collapse_about_you boolean", () => {
+    expect(
+      profileUpdateSchema.safeParse({ collapse_about_you: false }).success,
+    ).toBe(true);
+  });
+
   it("coerces blank URL strings to null", () => {
     const result = profileUpdateSchema.safeParse({ portfolio_url: "  " });
     expect(result.success).toBe(true);

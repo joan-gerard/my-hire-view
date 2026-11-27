@@ -16,6 +16,8 @@ export interface ApplicationCardDropdownProps {
   applicationId: string;
   isArchived: boolean;
   isDraft?: boolean;
+  /** Draft is complete and may be published from the menu. */
+  canPublish?: boolean;
   onDelete: (id: string) => void;
   onArchive?: (id: string) => void;
   onRestore?: (id: string) => void;
@@ -26,6 +28,7 @@ export default function ApplicationCardDropdown({
   applicationId,
   isArchived,
   isDraft = false,
+  canPublish = false,
   onDelete,
   onArchive,
   onRestore,
@@ -81,7 +84,7 @@ export default function ApplicationCardDropdown({
             <PencilIcon className="h-4 w-4" />
             Edit
           </Link>
-          {isDraft && onPublish ? (
+          {isDraft && canPublish && onPublish ? (
             <button
               type="button"
               className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--status-success-fg)] hover:bg-[var(--status-success-bg)]"

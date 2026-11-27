@@ -41,6 +41,7 @@ export function useLeaveConfirm(
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const enabledRef = useRef(enabled);
+  const openRef = useRef(open);
   const bypassRef = useRef(false);
   /** True until the intentional sentinel-removal `popstate` is consumed. */
   const pendingRemovalRef = useRef(false);
@@ -53,6 +54,7 @@ export function useLeaveConfirm(
   /** True while we believe our sentinel entry is on top of history. */
   const guardActiveRef = useRef(false);
   enabledRef.current = enabled;
+  openRef.current = open;
   onDiscardRef.current = onDiscard;
 
   const pushSentinel = useCallback(() => {
@@ -150,8 +152,12 @@ export function useLeaveConfirm(
   // Arm / disarm the sentinel from draft progress.
   useEffect(() => {
     if (!enabled) {
-      setOpen(false);
-      pendingRef.current = null;
+      // Keep an open dialog (e.g. after in-dialog Save Draft cleared dirty)
+      // so the user can still choose leave vs stay. Clear pending only when
+      // the dialog is not showing.
+      if (!openRef.current) {
+        pendingRef.current = null;
+      }
       removeSentinel();
       return;
     }

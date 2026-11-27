@@ -43,8 +43,9 @@ export function shouldBlockSameOriginNavigation(
 }
 
 /**
- * Fields that count as user progress for leave-confirm (ignores auto slug and
- * automatic CV library defaults; keeps manual slug text when edited).
+ * Fields that count as user progress for leave-confirm (ignores auto slug,
+ * automatic CV library defaults, and read-only About you identity text;
+ * keeps include/show toggles and manual slug text when edited).
  */
 export function leaveRelevantDraftSnapshot(
   draft: CreateApplicationDraftInput,
@@ -53,16 +54,19 @@ export function leaveRelevantDraftSnapshot(
     company: draft.company,
     role: draft.role,
     video_url: draft.video_url,
-    first_name: draft.first_name,
-    last_name: draft.last_name,
-    location: draft.location,
-    portfolio_url: draft.portfolio_url,
-    linkedin_url: draft.linkedin_url,
-    include: draft.include,
+    include: {
+      email: draft.include.email,
+      phone: draft.include.phone,
+      location: draft.include.location,
+      portfolio_url: draft.include.portfolio_url,
+      linkedin_url: draft.include.linkedin_url,
+    },
     slugSegmentOrder: draft.slugSegmentOrder,
     slugManuallyEdited: draft.slugManuallyEdited,
     slug: draft.slugManuallyEdited ? draft.slug : null,
-    showProfilePicture: draft.showProfilePicture,
+    showProfilePicture: draft.showProfilePictureUserChosen
+      ? draft.showProfilePicture
+      : null,
     showProfilePictureUserChosen: draft.showProfilePictureUserChosen,
     use_original_cv_filename: draft.use_original_cv_filename,
     cvModeUserChosen: draft.cvModeUserChosen,

@@ -2,7 +2,8 @@ import type { ApplicationStatus } from '@/lib/types/application';
 
 /** Visual keys for the left-side status badge on application cards. */
 export type ApplicationStatusVisualKey =
-  | 'draft'
+  | 'draft_incomplete'
+  | 'draft_complete'
   | 'active_unviewed'
   | 'active_viewed'
   | 'archived';
@@ -16,11 +17,17 @@ export type ApplicationStatusDisplay = {
 
 const STATUS_DISPLAY: Record<ApplicationStatusVisualKey, ApplicationStatusDisplay> =
   {
-    draft: {
-      key: 'draft',
-      label: 'Draft',
+    draft_incomplete: {
+      key: 'draft_incomplete',
+      label: 'Draft (incomplete)',
       description:
-        'Saved but not visible to recruiters yet. Publish when you are ready to share.',
+        'Saved but not ready to publish yet. Finish the required fields, then publish when you are ready to share.',
+    },
+    draft_complete: {
+      key: 'draft_complete',
+      label: 'Draft (complete)',
+      description:
+        'Saved and ready to publish. Recruiters cannot see it until you publish.',
     },
     active_unviewed: {
       key: 'active_unviewed',
@@ -45,7 +52,8 @@ const STATUS_DISPLAY: Record<ApplicationStatusVisualKey, ApplicationStatusDispla
 /** Ordered legend rows for status icons (matches card badge visuals). */
 export const APPLICATION_STATUS_LEGEND_ITEMS: readonly ApplicationStatusDisplay[] =
   [
-    STATUS_DISPLAY.draft,
+    STATUS_DISPLAY.draft_incomplete,
+    STATUS_DISPLAY.draft_complete,
     STATUS_DISPLAY.active_unviewed,
     STATUS_DISPLAY.active_viewed,
     STATUS_DISPLAY.archived,
@@ -73,7 +81,7 @@ export const DRAFT_ACTION_LEGEND_ITEMS: readonly DraftActionLegendItem[] = [
   {
     label: 'Publish',
     description:
-      'Makes the application live so recruiters can open the share link.',
+      'Shown on complete drafts. Makes the application live so recruiters can open the share link.',
   },
   {
     label: 'Preview',
@@ -87,20 +95,31 @@ export const DRAFT_ACTION_LEGEND_ITEMS: readonly DraftActionLegendItem[] = [
   },
 ];
 
+export type ResolveApplicationStatusVisualOptions = {
+  /** Draft only: true when the publish completeness set is ready. */
+  publishReady?: boolean;
+};
+
 export function resolveApplicationStatusVisual(
   status: ApplicationStatus,
   viewCount: number,
+  options?: ResolveApplicationStatusVisualOptions,
 ): ApplicationStatusVisualKey {
   if (status === 'archived') return 'archived';
-  if (status === 'draft') return 'draft';
+  if (status === 'draft') {
+    return options?.publishReady ? 'draft_complete' : 'draft_incomplete';
+  }
   return viewCount > 0 ? 'active_viewed' : 'active_unviewed';
 }
 
 export function getApplicationStatusDisplay(
   status: ApplicationStatus,
   viewCount: number,
+  options?: ResolveApplicationStatusVisualOptions,
 ): ApplicationStatusDisplay {
-  return STATUS_DISPLAY[resolveApplicationStatusVisual(status, viewCount)];
+  return STATUS_DISPLAY[
+    resolveApplicationStatusVisual(status, viewCount, options)
+  ];
 }
 
 export function getApplicationStatusDisplayByKey(

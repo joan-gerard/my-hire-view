@@ -19,7 +19,9 @@ export function AuthNoticeAlert({ message }: AuthAlertProps) {
       className="rounded-2xl border border-[var(--ink)]/10 bg-[var(--status-success-bg)] p-4"
       role="status"
     >
-      <div className="text-sm text-[var(--status-success-fg)]">{message}</div>
+      <div className="text-balance text-center text-sm text-[var(--status-success-fg)]">
+        {message}
+      </div>
     </div>
   );
 }

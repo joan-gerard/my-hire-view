@@ -9,6 +9,9 @@ import {
   applicationUpdateSchema,
   formatApplicationCreateZodError,
   formatApplicationUpdateZodError,
+  formatPublishBlockersError,
+  getApplicationPublishBlockers,
+  getListItemPublishBlockers,
 } from "@/lib/validation/application";
 import {
   PROFILE_NAME_MAX_LENGTH,
@@ -45,7 +48,7 @@ describe("applicationCreateSchema", () => {
     }
   });
 
-  it("rejects missing required fields", () => {
+  it("rejects missing company, role, or slug", () => {
     const result = applicationCreateSchema.safeParse({
       company: "Volvo",
       role: "Engineer",
@@ -53,8 +56,24 @@ describe("applicationCreateSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(formatApplicationCreateZodError(result.error)).toMatch(
-        /required|Slug|CV URL|Video URL/i,
+        /required|Slug/i,
       );
+    }
+  });
+
+  it("accepts a draft body without CV or video", () => {
+    const result = applicationCreateSchema.safeParse({
+      company: "Volvo",
+      role: "Software Engineer",
+      slug: "volvo-software-engineer",
+      cv_url: null,
+      video_url: "",
+      status: "draft",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.cv_url).toBeNull();
+      expect(result.data.video_url).toBe("");
     }
   });
 
@@ -253,5 +272,87 @@ describe("applicationUpdateSchema", () => {
         primary_cv_id: "11111111-1111-4111-8111-111111111111",
       }).success,
     ).toBe(true);
+  });
+
+  it("allows clearing draft CV and video on update", () => {
+    expect(
+      applicationUpdateSchema.safeParse({
+        id: APP_ID,
+        cv_url: null,
+        video_url: "",
+      }).success,
+    ).toBe(true);
+  });
+});
+
+describe("getApplicationPublishBlockers", () => {
+  const complete = {
+    company: "Volvo",
+    role: "Engineer",
+    slug: "volvo-engineer",
+    cv_url: "https://r2.example.com/cv.pdf",
+    video_url: "https://youtube.com/watch?v=abc",
+    first_name: "Joan",
+    last_name: "Gerard",
+    cv_type: "tailored" as const,
+    primary_cv_id: null,
+    email: "joan@example.com",
+    phone: null,
+    linkedin_url: null,
+  };
+
+  it("returns no blockers for a complete application", () => {
+    expect(getApplicationPublishBlockers(complete)).toEqual([]);
+  });
+
+  it("lists missing publish fields", () => {
+    expect(
+      getApplicationPublishBlockers({
+        company: "Volvo",
+        role: "Engineer",
+        slug: "volvo-engineer",
+        cv_url: null,
+        video_url: "",
+        first_name: null,
+        last_name: null,
+        cv_type: "tailored",
+        primary_cv_id: null,
+        email: null,
+        phone: null,
+        linkedin_url: null,
+      }),
+    ).toEqual([
+      "First name",
+      "Last name",
+      "Your résumé",
+      "YouTube intro",
+      "Contact method",
+    ]);
+  });
+
+  it("blocks publish when email and phone are hidden and LinkedIn is unset", () => {
+    expect(
+      getApplicationPublishBlockers({
+        ...complete,
+        email: null,
+        phone: null,
+        linkedin_url: null,
+      }),
+    ).toEqual(["Contact method"]);
+  });
+
+  it("formats a publish error message", () => {
+    expect(formatPublishBlockersError(["Your résumé", "YouTube intro"])).toBe(
+      "Required before publishing: Your résumé, YouTube intro",
+    );
+  });
+
+  it("treats a missing CV file as a résumé blocker on list items", () => {
+    expect(
+      getListItemPublishBlockers({
+        ...complete,
+        cv_exists: false,
+      }),
+    ).toEqual(["Your résumé"]);
   });
 });

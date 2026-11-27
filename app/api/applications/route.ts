@@ -23,6 +23,7 @@ import {
   isOwnedTailoredCvUrl,
   toCanonicalCvPublicUrl,
 } from "@/lib/utils/cv-storage";
+import { resolveApplicationContactEmail } from "@/lib/utils/profile-contact";
 import {
   SLUG_COLLISION_USER_MESSAGE,
   validateSlugForApplication,
@@ -32,6 +33,8 @@ import {
   applicationUpdateSchema,
   formatApplicationCreateZodError,
   formatApplicationUpdateZodError,
+  formatPublishBlockersError,
+  getApplicationPublishBlockers,
 } from "@/lib/validation/application";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -140,11 +143,14 @@ export async function GET(request: NextRequest) {
 
     const items = rows.map((row, i) => {
       const { show_profile_picture, ...listFields } = row;
+      const hasCvUrl =
+        typeof row.cv_url === "string" && row.cv_url.trim().length > 0;
       return {
         ...listFields,
         public_id: publicId,
-        // Non-R2 / unchecked URLs → true so they are not flagged missing
-        cv_exists: existence[i] ?? true,
+        // Incomplete drafts may omit a résumé — that is not “CV missing”.
+        // Only report existence when a URL is set (non-R2 / unchecked → true).
+        ...(hasCvUrl ? { cv_exists: existence[i] ?? true } : {}),
         profile_picture_missing:
           show_profile_picture === true && !hasLiveProfilePicture,
       };
@@ -170,18 +176,29 @@ export async function GET(request: NextRequest) {
 async function getProfileSnapshot(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
+  accountEmail: string | null | undefined,
 ) {
   const { data } = await supabase
     .from("profiles")
-    .select("first_name, last_name, location, portfolio_url, linkedin_url")
+    .select(
+      "first_name, last_name, location, portfolio_url, linkedin_url, contact_email, phone",
+    )
     .eq("user_id", userId)
     .single();
+
+  const email = resolveApplicationContactEmail(
+    { contact_email: data?.contact_email },
+    accountEmail,
+  );
+
   return {
     first_name: data?.first_name ?? null,
     last_name: data?.last_name ?? null,
     location: data?.location ?? null,
     portfolio_url: data?.portfolio_url ?? null,
     linkedin_url: data?.linkedin_url ?? null,
+    email,
+    phone: data?.phone?.trim() || null,
   };
 }
 
@@ -354,7 +371,11 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
     const ensuredPublicId = await ensureProfilePublicId(supabase, user);
-    const snapshot = await getProfileSnapshot(supabase, user.id);
+    const snapshot = await getProfileSnapshot(
+      supabase,
+      user.id,
+      user.email,
+    );
 
     const candidateFields = {
       first_name:
@@ -370,13 +391,18 @@ export async function POST(request: NextRequest) {
         body.linkedin_url !== undefined
           ? body.linkedin_url
           : snapshot.linkedin_url,
+      email: body.email !== undefined ? body.email : snapshot.email,
+      phone: body.phone !== undefined ? body.phone : snapshot.phone,
     };
 
     const showProfilePicture = body.show_profile_picture === true;
 
     const cvType: ApplicationCvType =
       body.cv_type === "primary" ? "primary" : "tailored";
-    let cvUrl = body.cv_url;
+    let cvUrl: string | null =
+      typeof body.cv_url === "string" && body.cv_url.trim()
+        ? body.cv_url.trim()
+        : null;
     let cvFilename = body.cv_filename ?? null;
     let primaryCvId: string | null = null;
 
@@ -401,7 +427,7 @@ export async function POST(request: NextRequest) {
       cvUrl = primary.url;
       cvFilename = primary.filename;
       primaryCvId = body.primary_cv_id;
-    } else {
+    } else if (cvUrl) {
       const canonical = toCanonicalCvPublicUrl(cvUrl);
       if (!canonical || !isOwnedTailoredCvUrl(canonical, user.id)) {
         return invalidTailoredCvResponse();
@@ -421,6 +447,30 @@ export async function POST(request: NextRequest) {
     // F16-050: create defaults to draft so candidates preview before publish.
     // Callers may still send status: "active" to publish immediately.
     const status: ApplicationStatus = body.status ?? "draft";
+    const videoUrl = body.video_url ?? "";
+
+    if (status === "active") {
+      const blockers = getApplicationPublishBlockers({
+        company: body.company,
+        role: body.role,
+        slug: body.slug,
+        cv_url: cvUrl,
+        video_url: videoUrl,
+        first_name: candidateFields.first_name,
+        last_name: candidateFields.last_name,
+        cv_type: cvType,
+        primary_cv_id: primaryCvId,
+        email: candidateFields.email,
+        phone: candidateFields.phone,
+        linkedin_url: candidateFields.linkedin_url,
+      });
+      if (blockers.length > 0) {
+        return NextResponse.json(
+          { error: formatPublishBlockersError(blockers) },
+          { status: 400 },
+        );
+      }
+    }
 
     const { data, error } = await supabase
       .from("applications")
@@ -429,7 +479,7 @@ export async function POST(request: NextRequest) {
         role: body.role,
         slug: body.slug,
         cv_url: cvUrl,
-        video_url: body.video_url,
+        video_url: videoUrl,
         user_id: user.id,
         status,
         archived_at: status === "archived" ? new Date().toISOString() : null,
@@ -508,6 +558,8 @@ export async function PUT(request: NextRequest) {
     if (body.first_name !== undefined) updatePayload.first_name = body.first_name;
     if (body.last_name !== undefined) updatePayload.last_name = body.last_name;
     if (body.location !== undefined) updatePayload.location = body.location;
+    if (body.email !== undefined) updatePayload.email = body.email;
+    if (body.phone !== undefined) updatePayload.phone = body.phone;
     if (body.portfolio_url !== undefined) {
       updatePayload.portfolio_url = body.portfolio_url;
     }
@@ -526,7 +578,9 @@ export async function PUT(request: NextRequest) {
 
     const { data: existing } = await supabase
       .from("applications")
-      .select("user_id, cv_url, cv_type, primary_cv_id, status")
+      .select(
+        "user_id, company, role, slug, cv_url, video_url, first_name, last_name, email, phone, linkedin_url, cv_type, primary_cv_id, status",
+      )
       .eq("id", id)
       .single();
 
@@ -569,7 +623,10 @@ export async function PUT(request: NextRequest) {
         nextCvType = body.cv_type;
       }
 
-      let nextCvUrl = existing.cv_url as string;
+      let nextCvUrl: string | null =
+        typeof existing.cv_url === "string" && existing.cv_url.trim()
+          ? existing.cv_url
+          : null;
 
       if (nextCvType === "primary") {
         const primaryId =
@@ -602,7 +659,10 @@ export async function PUT(request: NextRequest) {
         updatePayload.cv_type = "primary";
       } else {
         if (body.cv_url !== undefined) {
-          nextCvUrl = body.cv_url;
+          nextCvUrl =
+            typeof body.cv_url === "string" && body.cv_url.trim()
+              ? body.cv_url.trim()
+              : null;
         }
         if (body.cv_filename !== undefined) {
           updatePayload.cv_filename = body.cv_filename;
@@ -610,35 +670,93 @@ export async function PUT(request: NextRequest) {
         updatePayload.primary_cv_id = null;
         updatePayload.cv_type = "tailored";
 
-        const canonical = toCanonicalCvPublicUrl(nextCvUrl);
-        if (!canonical || !isOwnedTailoredCvUrl(canonical, user.id)) {
-          return invalidTailoredCvResponse();
-        }
-        nextCvUrl = canonical;
-        updatePayload.cv_url = canonical;
+        if (nextCvUrl) {
+          const canonical = toCanonicalCvPublicUrl(nextCvUrl);
+          if (!canonical || !isOwnedTailoredCvUrl(canonical, user.id)) {
+            return invalidTailoredCvResponse();
+          }
+          nextCvUrl = canonical;
+          updatePayload.cv_url = canonical;
 
-        const usage = await isTailoredCvUrlInUse(
-          supabase,
-          user.id,
-          nextCvUrl,
-          id,
-        );
-        if (usage.error) {
-          const status = usage.error === "Invalid tailored CV URL" ? 400 : 500;
-          return NextResponse.json({ error: usage.error }, { status });
-        }
-        if (usage.inUse) {
-          return tailoredCvInUseResponse();
+          const usage = await isTailoredCvUrlInUse(
+            supabase,
+            user.id,
+            nextCvUrl,
+            id,
+          );
+          if (usage.error) {
+            const status =
+              usage.error === "Invalid tailored CV URL" ? 400 : 500;
+            return NextResponse.json({ error: usage.error }, { status });
+          }
+          if (usage.inUse) {
+            return tailoredCvInUseResponse();
+          }
+        } else {
+          updatePayload.cv_url = null;
         }
       }
 
       const previousKey = getCvObjectKeyFromPublicUrl(existing.cv_url);
       const nextKey = getCvObjectKeyFromPublicUrl(nextCvUrl);
-      if (previousKey !== nextKey) {
+      if (previousKey && previousKey !== nextKey) {
         previousCvToDelete = {
-          url: existing.cv_url,
+          url: existing.cv_url as string,
           cvType: (existing.cv_type as ApplicationCvType) ?? "tailored",
         };
+      }
+    }
+
+    const resultingStatus =
+      (updatePayload.status as ApplicationStatus | undefined) ??
+      (existing.status as ApplicationStatus);
+    if (resultingStatus === "active") {
+      const merged = {
+        company:
+          (updatePayload.company as string | undefined) ?? existing.company,
+        role: (updatePayload.role as string | undefined) ?? existing.role,
+        slug: (updatePayload.slug as string | undefined) ?? existing.slug,
+        cv_url:
+          (updatePayload.cv_url as string | null | undefined) !== undefined
+            ? (updatePayload.cv_url as string | null)
+            : existing.cv_url,
+        video_url:
+          (updatePayload.video_url as string | undefined) ?? existing.video_url,
+        first_name:
+          (updatePayload.first_name as string | null | undefined) !== undefined
+            ? (updatePayload.first_name as string | null)
+            : existing.first_name,
+        last_name:
+          (updatePayload.last_name as string | null | undefined) !== undefined
+            ? (updatePayload.last_name as string | null)
+            : existing.last_name,
+        cv_type:
+          (updatePayload.cv_type as string | undefined) ?? existing.cv_type,
+        primary_cv_id:
+          (updatePayload.primary_cv_id as string | null | undefined) !==
+          undefined
+            ? (updatePayload.primary_cv_id as string | null)
+            : existing.primary_cv_id,
+        email:
+          (updatePayload.email as string | null | undefined) !== undefined
+            ? (updatePayload.email as string | null)
+            : (existing.email as string | null),
+        phone:
+          (updatePayload.phone as string | null | undefined) !== undefined
+            ? (updatePayload.phone as string | null)
+            : (existing.phone as string | null),
+        linkedin_url:
+          (updatePayload.linkedin_url as string | null | undefined) !==
+          undefined
+            ? (updatePayload.linkedin_url as string | null)
+            : (existing.linkedin_url as string | null),
+      };
+      const blockers = getApplicationPublishBlockers(merged);
+      if (blockers.length > 0) {
+        return NextResponse.json(
+          { error: formatPublishBlockersError(blockers) },
+          { status: 400 },
+        );
       }
     }
 

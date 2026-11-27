@@ -76,15 +76,16 @@ On dark chrome, focus may use `--lime`. Body secondary on dark may use `--mist`.
 
 ### Dashboard status markers
 
-Account preference (Account settings → **Preferences**): colorful dots (default) or high-contrast wash + ink glyphs. The badge shell sizes to the glyph — compact for dots, 36px for the wash circle — so card layout does not reserve icon space when using dots.
+Account preference (Account settings → **Preferences**): colorful dots (default) or high-contrast wash + ink glyphs. Each status keeps a distinct shape (pencil / document / clock / check / archive); incomplete vs complete draft also use different washes. The badge shell sizes to the glyph — compact for dots, 36px for the wash circle — so card layout does not reserve icon space when using dots.
 
 | Token                   | Hex                 | Role                              |
 | ----------------------- | ------------------- | --------------------------------- |
-| `--status-dot-draft`    | `#fcdc65`           | Colorful draft                    |
-| `--status-dot-active`   | `#6ed4fc`           | Colorful active (not viewed)      |
-| `--status-dot-viewed`   | `#9efc65`           | Colorful active (viewed)          |
-| `--status-dot-archived` | `#c5c9c9`           | Colorful archived                 |
-| `--status-wash-*`       | (see `globals.css`) | High-contrast washes under glyphs |
+| `--status-dot-draft-incomplete` | `#ffd08a`     | Colorful draft (incomplete)       |
+| `--status-dot-draft`            | `#fcdc65`     | Colorful draft (complete)         |
+| `--status-dot-active`           | `#6ed4fc`     | Colorful active (not viewed)      |
+| `--status-dot-viewed`           | `#9efc65`     | Colorful active (viewed)          |
+| `--status-dot-archived`         | `#c5c9c9`     | Colorful archived                 |
+| `--status-wash-*`               | (see `globals.css`) | High-contrast washes under glyphs |
 
 Do **not** reintroduce teal as a brand accent. Red stays for destructive only.
 
@@ -108,7 +109,7 @@ Local FunnelSans / FaunaOne / Varela Round `@font-face` rules remain for leftove
 
 | Pattern          | Guidance                                                                                                                                                                                                                                                                         |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Page wash        | Admin: `--white` page; content in bordered panels (`ADMIN_PANEL_CLASS`) when grouping chrome is needed                                                                                                                                                                            |
+| Page wash        | Admin: `--white` page; content in bordered panels (`ADMIN_PANEL_CLASS`) when grouping chrome is needed                                                                                                                                                                           |
 | Primary CTAs     | Pill (`rounded-full` / ~100px) — ink fill + white text                                                                                                                                                                                                                           |
 | Dense controls   | Inputs, secondary/danger buttons, fieldsets: `rounded-xl`                                                                                                                                                                                                                        |
 | Panels / dialogs | In-flow panels (`ADMIN_PANEL_CLASS`): `rounded-2xl` (16px). Floating dialogs/modals: larger radius (`rounded-[28px]` ≈ 28px). Soft shadow (`shadow-lg` / similar) for **floating** surfaces: menus, confirm/status dialogs, library/picture modals — not for in-flow page panels |
@@ -140,10 +141,12 @@ Header **Sign Out** uses `ArrowCtaButton` — ink pill + white arrow disc + labe
 
 ### Forms
 
-- Labels: `text-sm font-medium` in `--ink`.
+- Labels: `text-sm font-medium` in `--ink`. Required fields (`Input` with `required`) show a red `*` after the label.
 - Helper / muted: `--muted`.
 - Errors: `--status-danger-fg`; ring tint on the field.
 - Auth: `components/auth/auth-form-styles.ts` + Reslink-inspired shells (white card / split ink panel).
+- **Switch** (`components/ui/Switch.tsx`): compact `role="switch"` for on/off choices (e.g. show picture). Checked track is `--ink` with a lime thumb; unchecked is a light ink wash with a white thumb. Prefer under the related content, right-aligned, with an `aria-label`.
+- **Visibility toggle:** for picture / email / phone / location / LinkedIn / portfolio on the application form, use the shared **Visible** / **Hidden** label + Switch (neutral grey when Hidden — not warning pink).
 
 ### Status chips & dialogs
 
@@ -153,14 +156,14 @@ Pair `*-bg` + `*-fg` tokens. Confirm / library modals use paper/white + ink; des
 
 ## 6. Surfaces by route
 
-| Surface              | Expectation                                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------------------- |
-| `/admin`             | White page, bordered day-group panels, ink nav pills, **Sign Out** as ink arrow CTA (same family as marketing Login / Dashboard; `ArrowCtaButton`), lime Create CTA, status dots/glyphs |
-| `/admin/new` | Checklist. Heading **New application**, one chapter open, the others a single clickable row. Centered column. |
-| `/admin/edit/[id]` | Split bands. The edit title stays fixed under the admin header. At 1920px the left title is 80px/600, the step pill is 14px/500, and the left description and recommendations are 18px/400. Field labels are 18px/500. Placeholders and typed text are 16px/400. Below 1920 those sizes step down (title 56px from 1200px, 44px from 720px, 36px on a phone; description, recommendations, and labels 17px from 1200px and 16px below). The step pill stays 14px/500. Typed text stays 16px. Profile keeps the shared `text-sm` labels. |
-| `/login`, `/signup`  | White/ink auth shells, Switzer headings, pill submit; soft pink/lime atmosphere OK on auth only      |
-| `/view`              | Quiet paper/ink chrome so CV / video stay primary; draft banner uses pink-text warning + ink Publish |
-| Marketing `/`, legal | **Frozen for product work** — `.mhv-landing` / marketing components; see marketing guide             |
+| Surface              | Expectation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/admin`             | White page, bordered day-group panels, ink nav pills, **Sign Out** as ink arrow CTA (same family as marketing Login / Dashboard; `ArrowCtaButton`), lime Create CTA, status dots/glyphs                                                                                                                                                                                                                                                                                                                                                 |
+| `/admin/new`         | Max width `2xl`. Page title (`text-2xl`, semibold) and description (`text-base`, regular) at the top. Each section title (`text-xl`, semibold) sits above its card. Field titles and descriptions are `text-sm` at regular weight, title on the left and control on the right; on a narrow screen the title sits above. **Cancel** and **Save Draft** at the bottom; **Publish** appears beside Save when the full set is ready.                                                                                                                                                          |
+| `/admin/edit/[id]`   | Split bands. The edit title stays fixed under the admin header. At 1920px the left title is 80px/600, the step pill is 14px/500, and the left description and recommendations are 18px/400. Field labels are 18px/500. Placeholders and typed text are 16px/400. Below 1920 those sizes step down (title 56px from 1200px, 44px from 720px, 36px on a phone; description, recommendations, and labels 17px from 1200px and 16px below). The step pill stays 14px/500. Typed text stays 16px. Profile keeps the shared `text-sm` labels. |
+| `/login`, `/signup`  | White/ink auth shells, Switzer headings, pill submit; soft pink/lime atmosphere OK on auth only                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `/view`              | Quiet paper/ink chrome so CV / video stay primary; draft banner uses pink-text warning + ink Publish                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Marketing `/`, legal | **Frozen for product work** — `.mhv-landing` / marketing components; see marketing guide                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 Product and marketing share tokens and fonts; they do **not** share layout CSS. Never pull `mhv-demo.css` into admin.
 

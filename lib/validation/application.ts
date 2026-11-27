@@ -1,10 +1,16 @@
 import {
+  applicationHasVisibleRecruiterContact,
+  RECRUITER_CONTACT_BLOCKER_NAME,
+} from "@/lib/utils/profile-contact";
+import {
   SLUG_SEGMENT_ORDER_VALUES,
   validateSlugFormat,
 } from "@/lib/utils/slug-generate";
 import {
+  PROFILE_CONTACT_EMAIL_MAX_LENGTH,
   PROFILE_LOCATION_MAX_LENGTH,
   PROFILE_NAME_MAX_LENGTH,
+  PROFILE_PHONE_MAX_LENGTH,
   PROFILE_URL_MAX_LENGTH,
 } from "@/lib/validation/profile";
 import { z } from "zod";
@@ -27,6 +33,8 @@ const FIELD_LABELS: Record<string, string> = {
   location: "Location",
   portfolio_url: "Portfolio URL",
   linkedin_url: "LinkedIn URL",
+  email: "Email",
+  phone: "Phone",
   slugSegmentOrder: "URL segment order",
   cv_filename: "CV filename",
   use_original_cv_filename: "Use original CV filename",
@@ -64,36 +72,6 @@ function optionalTrimmedString(max: number, label: string) {
   );
 }
 
-function requiredHttpUrl(label: string) {
-  return z.preprocess(
-    (value) => {
-      if (typeof value !== "string") return value;
-      return value.trim();
-    },
-    z
-      .httpUrl({ error: `${label}: Please enter a valid URL` })
-      .max(PROFILE_URL_MAX_LENGTH, {
-        error: `${label} must be at most ${PROFILE_URL_MAX_LENGTH} characters`,
-      }),
-  );
-}
-
-function optionalHttpUrl(label: string) {
-  return z.preprocess(
-    (value) => {
-      if (value === undefined) return undefined;
-      if (typeof value !== "string") return value;
-      return value.trim();
-    },
-    z
-      .httpUrl({ error: `${label}: Please enter a valid URL` })
-      .max(PROFILE_URL_MAX_LENGTH, {
-        error: `${label} must be at most ${PROFILE_URL_MAX_LENGTH} characters`,
-      })
-      .optional(),
-  );
-}
-
 function optionalNullableString(max: number, label: string) {
   return z
     .string()
@@ -114,6 +92,24 @@ function optionalNullableHttpUrl(label: string) {
       .httpUrl({ error: `${label}: Please enter a valid URL` })
       .max(PROFILE_URL_MAX_LENGTH, {
         error: `${label} must be at most ${PROFILE_URL_MAX_LENGTH} characters`,
+      })
+      .nullable()
+      .optional(),
+  );
+}
+
+/** Empty / whitespace become null; otherwise a trimmed email. */
+function optionalNullableEmail(label: string) {
+  return z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return value;
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    },
+    z
+      .email({ error: `${label}: Please enter a valid email` })
+      .max(PROFILE_CONTACT_EMAIL_MAX_LENGTH, {
+        error: `${label} must be at most ${PROFILE_CONTACT_EMAIL_MAX_LENGTH} characters`,
       })
       .nullable()
       .optional(),
@@ -169,6 +165,11 @@ const candidateFields = {
   ),
   portfolio_url: optionalNullableHttpUrl(FIELD_LABELS.portfolio_url),
   linkedin_url: optionalNullableHttpUrl(FIELD_LABELS.linkedin_url),
+  email: optionalNullableEmail(FIELD_LABELS.email),
+  phone: optionalNullableString(
+    PROFILE_PHONE_MAX_LENGTH,
+    FIELD_LABELS.phone,
+  ),
   slugSegmentOrder: z
     .enum(SLUG_SEGMENT_ORDER_VALUES, {
       error: "URL segment order must be company_role or role_company",
@@ -189,8 +190,30 @@ const candidateFields = {
 } as const;
 
 /**
- * Strict body schema for POST /api/applications.
- * Rejects unexpected keys; enforces required fields, URL formats, and slug format.
+ * Draft create may omit a CV (`null` / empty → null). Active create still needs one.
+ */
+const createCvUrlSchema = optionalNullableHttpUrl(FIELD_LABELS.cv_url);
+
+/**
+ * Draft create may omit a video (`""`). Active create still needs a valid URL.
+ */
+const createVideoUrlSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  return value.trim();
+}, z.union([
+  z.literal(""),
+  z
+    .httpUrl({ error: `${FIELD_LABELS.video_url}: Please enter a valid URL` })
+    .max(PROFILE_URL_MAX_LENGTH, {
+      error: `${FIELD_LABELS.video_url} must be at most ${PROFILE_URL_MAX_LENGTH} characters`,
+    }),
+]));
+
+/**
+ * Body schema for POST /api/applications.
+ * Draft saves require company, role, and slug; CV and video may be empty.
+ * Creating with `status: "active"` must pass the publish completeness gate
+ * (enforced in the route via `getApplicationPublishBlockers`).
  */
 export const applicationCreateSchema = z
   .object({
@@ -203,8 +226,8 @@ export const applicationCreateSchema = z
       FIELD_LABELS.role,
     ),
     slug: requiredSlugSchema,
-    cv_url: requiredHttpUrl(FIELD_LABELS.cv_url),
-    video_url: requiredHttpUrl(FIELD_LABELS.video_url),
+    cv_url: createCvUrlSchema.optional(),
+    video_url: createVideoUrlSchema.optional(),
     ...candidateFields,
   })
   .strict()
@@ -225,6 +248,7 @@ export type ApplicationCreateSchemaInput = z.infer<
 /**
  * Strict body schema for PUT /api/applications.
  * Requires UUID `id`; all other fields optional (partial update).
+ * `cv_url: null` clears a draft résumé; empty `video_url` clears the pitch.
  */
 export const applicationUpdateSchema = z
   .object({
@@ -238,8 +262,8 @@ export const applicationUpdateSchema = z
       FIELD_LABELS.role,
     ),
     slug: optionalSlugSchema,
-    cv_url: optionalHttpUrl(FIELD_LABELS.cv_url),
-    video_url: optionalHttpUrl(FIELD_LABELS.video_url),
+    cv_url: optionalNullableHttpUrl(FIELD_LABELS.cv_url),
+    video_url: createVideoUrlSchema.optional(),
     ...candidateFields,
   })
   .strict()
@@ -291,4 +315,77 @@ export function formatApplicationCreateZodError(error: z.ZodError): string {
 /** First Zod issue as a client-facing `{ error }` message (PUT update). */
 export function formatApplicationUpdateZodError(error: z.ZodError): string {
   return formatApplicationZodError(error);
+}
+
+/** Fields checked before `status → active` (publish or create-as-active). */
+export type ApplicationCompletenessFields = {
+  company?: string | null;
+  role?: string | null;
+  slug?: string | null;
+  cv_url?: string | null;
+  video_url?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  cv_type?: string | null;
+  primary_cv_id?: string | null;
+  /** Snapshot contact — null when Hidden / unset. */
+  email?: string | null;
+  phone?: string | null;
+  linkedin_url?: string | null;
+};
+
+/**
+ * Missing pieces that block publish / go-live.
+ * Draft saves only need company, role, and slug (enforced by create schema + form).
+ */
+export function getApplicationPublishBlockers(
+  app: ApplicationCompletenessFields,
+): string[] {
+  const blockers: string[] = [];
+  if (!app.company?.trim()) blockers.push("Company");
+  if (!app.role?.trim()) blockers.push("Role");
+  const slug = app.slug?.trim() ?? "";
+  if (!slug) {
+    blockers.push("Your application link");
+  } else {
+    const format = validateSlugFormat(slug);
+    if (!format.ok) blockers.push("Your application link");
+  }
+  if (!app.first_name?.trim()) blockers.push("First name");
+  if (!app.last_name?.trim()) blockers.push("Last name");
+  const cvType = app.cv_type === "primary" ? "primary" : "tailored";
+  if (cvType === "primary") {
+    if (!app.primary_cv_id || !app.cv_url?.trim()) blockers.push("Your résumé");
+  } else if (!app.cv_url?.trim()) {
+    blockers.push("Your résumé");
+  }
+  if (!app.video_url?.trim()) blockers.push("YouTube intro");
+  if (
+    !applicationHasVisibleRecruiterContact({
+      email: app.email,
+      phone: app.phone,
+      linkedin_url: app.linkedin_url,
+    })
+  ) {
+    blockers.push(RECRUITER_CONTACT_BLOCKER_NAME);
+  }
+  return blockers;
+}
+
+export function formatPublishBlockersError(blockers: string[]): string {
+  if (blockers.length === 0) return "Application is not ready to publish";
+  return `Required before publishing: ${blockers.join(", ")}`;
+}
+
+/**
+ * Publish blockers for a dashboard list row. Treats a confirmed-missing CV file
+ * (`cv_exists === false`) as no usable résumé even when `cv_url` is still set.
+ */
+export function getListItemPublishBlockers(
+  app: ApplicationCompletenessFields & { cv_exists?: boolean },
+): string[] {
+  return getApplicationPublishBlockers({
+    ...app,
+    cv_url: app.cv_exists === false ? null : app.cv_url,
+  });
 }

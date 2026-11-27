@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import Button from '@/components/ui/Button';
+import Button from "@/components/ui/Button";
 
 interface ApplicationFormActionsProps {
   loading?: boolean;
@@ -21,20 +21,44 @@ interface ApplicationFormActionsProps {
   disabledReason?: string | null;
   /** Called when a blocked Save or its reason is activated, so the page can move to the first problem. */
   onBlocked?: () => void;
+  /**
+   * When true, show Publish next to Save on create/draft (even when disabled so
+   * people learn publishing needs more than a draft).
+   */
+  showPublish?: boolean;
+  /**
+   * When true with `showPublish`, also show Preview (only once the publish set
+   * is ready).
+   */
+  showPreview?: boolean;
+  /** Opens the in-form recruiter preview (does not save or go live). */
+  onPreview?: () => void;
+  /** Publishes the application (create/draft → live). */
+  onPublish?: () => void;
+  /** Publish confirm stays off while the form is busy or incomplete. */
+  canPublish?: boolean;
+  publishLoading?: boolean;
 }
 
 export default function ApplicationFormActions({
   loading = false,
-  loadingLabel = 'Saving…',
-  submitLabel = 'Save Application',
+  loadingLabel = "Saving…",
+  submitLabel = "Save Application",
   canSubmit = true,
   disabledReason = null,
   onBlocked,
   dimWhenBlocked = false,
+  showPublish = false,
+  showPreview = false,
+  onPreview,
+  onPublish,
+  canPublish = false,
+  publishLoading = false,
 }: ApplicationFormActionsProps) {
   const blocked = !canSubmit && !loading;
   const showReason = blocked && Boolean(disabledReason) && !dimWhenBlocked;
-  const reasonId = showReason ? 'save-application-disabled-reason' : undefined;
+  const reasonId = showReason ? "save-application-disabled-reason" : undefined;
+  const busy = loading || publishLoading;
 
   return (
     <div className="flex flex-col items-end gap-2">
@@ -49,30 +73,64 @@ export default function ApplicationFormActions({
           </button>
         </p>
       ) : null}
-      <div className="group relative inline-flex">
-        <Button
-          type="submit"
-          variant="primary"
-          loading={loading}
-          loadingLabel={loadingLabel}
-          disabled={dimWhenBlocked && blocked}
-          aria-disabled={!dimWhenBlocked && blocked ? true : undefined}
-          aria-describedby={reasonId}
-          onClick={(event) => {
-            if (!blocked || dimWhenBlocked) return;
-            event.preventDefault();
-            onBlocked?.();
-          }}
-        >
-          {submitLabel}
-        </Button>
-        {showReason ? (
-          <span
-            role="tooltip"
-            className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-sm text-[var(--white)] shadow-lg group-hover:block group-focus-within:block"
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="group relative inline-flex">
+          <Button
+            type="submit"
+            variant={showPublish ? "secondary" : "primary"}
+            shape={showPublish ? "rounded" : "pill"}
+            loading={loading}
+            loadingLabel={loadingLabel}
+            disabled={(dimWhenBlocked && blocked) || publishLoading}
+            aria-disabled={!dimWhenBlocked && blocked ? true : undefined}
+            aria-describedby={reasonId}
+            onClick={(event) => {
+              if (!blocked || dimWhenBlocked) return;
+              event.preventDefault();
+              onBlocked?.();
+            }}
           >
-            {disabledReason}
-          </span>
+            {submitLabel}
+          </Button>
+          {showReason ? (
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 hidden max-w-xs rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-sm text-[var(--white)] shadow-lg group-hover:block group-focus-within:block"
+            >
+              {disabledReason}
+            </span>
+          ) : null}
+        </div>
+        {showPublish ? (
+          <>
+            {showPreview ? (
+              <Button
+                type="button"
+                variant="secondary"
+                shape="rounded"
+                disabled={busy || !canPublish}
+                onClick={() => {
+                  if (busy || !canPublish) return;
+                  onPreview?.();
+                }}
+              >
+                Preview
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="primary"
+              loading={publishLoading}
+              loadingLabel="Publishing…"
+              disabled={busy || !canPublish}
+              onClick={() => {
+                if (busy || !canPublish) return;
+                onPublish?.();
+              }}
+            >
+              Publish
+            </Button>
+          </>
         ) : null}
       </div>
     </div>

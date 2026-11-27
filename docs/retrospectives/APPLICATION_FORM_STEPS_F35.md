@@ -10,6 +10,12 @@
 
 **3 November 2026 — wizard routes and the form demo removed.** Create is the checklist on `/admin/new`. Edit stays the scrolling page. `/admin/wizard/*` and `/demo/application-form` are gone. The notes below are the record of the wizard, not a live route.
 
+**3 November 2026 — create is one page.** The checklist on `/admin/new` is replaced by a single form: one card, at most `2xl` wide, name on the left and control on the right, Cancel and Save at the bottom. Edit stays the scrolling page. The checklist is no longer the live create page.
+
+**3 November 2026 — identity is profile-owned.** Name, location, portfolio, and LinkedIn are not edited on create or edit. Names are always shown. Location, portfolio, and LinkedIn can be shown or hidden when the profile has a value; otherwise the form links to Profile. Pictures are added on Profile. New saves use a generated CV download name. Detail: [CREATE_FORM_FIELD_TRIM.md](../product/CREATE_FORM_FIELD_TRIM.md).
+
+**18 November 2026 — wizard layout code removed.** Create stays the one-page form (`ApplicationFormSinglePageLayout`); edit stays the scrolling split bands. `ApplicationFormWizardLayout`, wizard presentation branches, and the unused wizard page shells under `components/admin/wizard/` are gone. The notes below remain the record of the experiment.
+
 ---
 
 ## The wish
@@ -42,21 +48,21 @@ The switch was an **evaluation tool**, not a candidate-facing setting: a compact
 
 ## What we ship
 
-### Step map
+**Live (24 November 2026):** create **and** edit use `ApplicationFormSinglePageLayout` (`/admin/new`, `/admin/edit/[id]`). Shared field brain: `ApplicationForm`. The scrolling split-edit shell is removed. Step ids in `application-form-steps.ts` still help map save errors to rows.
 
-Order matches the backlog example:
+### Step map (shared field order)
 
-1. **Role & share URL** — company + position + name-in-URL, slug, live preview
+1. **Role & share URL** — company + position + slug order/ending, live preview
 2. **About you** — candidate fields + profile picture
 3. **CV** — primary/tailored CV
 4. **Video** — YouTube intro URL
-5. **Review & save** — collapsible summary grouped like the steps (Role, About you, CV, Video) with status chips, then **Show preview**, which opens the recruiter page (header, CV, video) in a dialog without leaving the form, then Save. Leave the form from the header or the browser Back button, not a button on the step. Publish-from-this-step is still `F41-127`.
+5. **Review & save** — edit only: summary + preview + save. Create saves from the bottom of the one-page form. Publish-from-create is still `F41-127`.
 
-Defined in `components/forms/application-form-steps.ts`. `ApplicationForm` owns the fields; `ApplicationFormWizardLayout` is the only shell. Draft persistence (F15), preview/publish path (F16), share URL preview (F19-046), and primary-CV library behavior stay on that one path.
+Draft persistence (F15), preview/publish path (F16), share URL preview (F19-046), and primary-CV library behavior stay on that one path.
 
-### Wizard shell
+### Wizard shell (removed)
 
-`ApplicationFormWizardLayout` — left progress rail + right form (desktop); compact horizontal step rail on smaller screens; gated Continue; Save on review.
+`ApplicationFormWizardLayout` — left progress rail + right form (desktop); compact horizontal step rail on smaller screens; gated Continue; Save on review. Deleted when the one-page create form won.
 
 Create/edit sit in **one** bordered white shell (`ADMIN_FORM_SHELL_CLASS`) on the paper page. The wizard splits that shell with a hairline (no nested white card): **desktop** sticky vertical step list with progress label + bar; **mobile/tablet** sticky progress chrome + scrollable compact step strip under the admin header, then the form. The progress bar and “N of M complete” count checked steps only (not the step you are viewing). Active step is ink; other completed steps use success wash + check; locked steps stay muted. Check marks follow step readiness (`isWizardStepCompleted` + `stepReady`) so clearing Role, CV, or Video drops the check. A tick stays on every step before the furthest one reached with Continue, including after you click back to an earlier pill. On edit, every step that still has its required fields starts complete, including CV and Review while the primary-CV library is still loading. If that saved primary is gone once the library returns, those ticks drop. Save still waits for the library. When the saved CV file is missing, choosing another primary or a new tailored file does not tick CV until Continue on the CV step. Review stays unticked until save, and is green on open only when the saved application already had every required field.
 
@@ -74,8 +80,9 @@ Deep dives for draft/CV/preview still live in [MANUAL_TEST_CREATE_APP_DRAFT_AND_
 
 | Surface                 | Save control         | Must pass                                      |
 | ----------------------- | -------------------- | ---------------------------------------------- |
-| Create `/admin/new`        | **Save draft & preview** | Draft leave, CV, slug, save → preview          |
-| Edit `/admin/edit/[id]`    | **Save draft** or **Save application** | CV, slug, save → dashboard |
+| Create `/admin/new`        | **Save Draft**; **Publish** when complete | Draft leave, CV, slug, save → edit; Publish → share page |
+| Edit `/admin/edit/[id]`    | **Save Draft** or **Save application**; **Publish** on drafts when complete | Save → stay on edit; Publish → share page |
+
 
 - [ ] Create
 - [ ] Edit

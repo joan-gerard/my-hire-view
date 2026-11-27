@@ -6,7 +6,7 @@ import Button from "@/components/ui/Button";
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
-  message: string;
+  message: ReactNode;
   /** Optional extra content below the message (e.g. a preview list). */
   children?: ReactNode;
   /** Primary button label (destructive / confirm). */
@@ -23,6 +23,15 @@ interface ConfirmDialogProps {
   confirmLoadingLabel?: string;
   /** Confirm button look. Use `danger` for irreversible deletes. */
   confirmVariant?: "primary" | "danger";
+  /**
+   * Optional middle action (e.g. Save Draft on leave confirm), between
+   * cancel and confirm.
+   */
+  midActionLabel?: string;
+  midActionLoading?: boolean;
+  midActionLoadingLabel?: string;
+  midActionDisabled?: boolean;
+  onMidAction?: () => void;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -46,6 +55,11 @@ export default function ConfirmDialog({
   confirming = false,
   confirmLoadingLabel = "Working…",
   confirmVariant = "primary",
+  midActionLabel,
+  midActionLoading = false,
+  midActionLoadingLabel = "Saving…",
+  midActionDisabled = false,
+  onMidAction,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -53,13 +67,15 @@ export default function ConfirmDialog({
   const confirmedRef = useRef(false);
   const cancelEmittedRef = useRef(false);
   const confirmingRef = useRef(confirming);
+  const midActionLoadingRef = useRef(midActionLoading);
   const titleId = useId();
   const messageId = useId();
 
   confirmingRef.current = confirming;
+  midActionLoadingRef.current = midActionLoading;
 
   const requestDismiss = () => {
-    if (confirmingRef.current) return;
+    if (confirmingRef.current || midActionLoadingRef.current) return;
     confirmedRef.current = false;
     dialogRef.current?.close();
   };
@@ -96,7 +112,7 @@ export default function ConfirmDialog({
       aria-describedby={messageId}
       aria-busy={confirming || undefined}
       onCancel={(e) => {
-        if (confirmingRef.current) {
+        if (confirmingRef.current || midActionLoadingRef.current) {
           e.preventDefault();
           return;
         }
@@ -117,28 +133,58 @@ export default function ConfirmDialog({
         >
           {title}
         </h2>
-        <p id={messageId} className="text-sm text-[var(--muted)]">
-          {message}
-        </p>
+        <div id={messageId} className="space-y-2 text-sm text-[var(--muted)]">
+          {typeof message === "string" ? <p>{message}</p> : message}
+        </div>
         {children}
         <div className="flex flex-wrap justify-end gap-2">
           {!confirmOnly && (
             <Button
               type="button"
               variant="secondary"
-              disabled={confirming}
+              disabled={confirming || midActionLoading}
               onClick={requestDismiss}
             >
               {cancelLabel}
             </Button>
           )}
+          {midActionLabel ? (
+            <Button
+              type="button"
+              variant="secondary"
+              loading={midActionLoading}
+              loadingLabel={midActionLoadingLabel}
+              disabled={
+                confirming ||
+                midActionDisabled ||
+                midActionLoading ||
+                !onMidAction
+              }
+              onClick={() => {
+                if (
+                  !onMidAction ||
+                  confirmingRef.current ||
+                  midActionLoadingRef.current ||
+                  midActionDisabled
+                ) {
+                  return;
+                }
+                onMidAction();
+              }}
+            >
+              {midActionLabel}
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant={confirmVariant}
             loading={confirming}
             loadingLabel={confirmLoadingLabel}
+            disabled={midActionLoading}
             onClick={() => {
-              if (confirmingRef.current) return;
+              if (confirmingRef.current || midActionLoadingRef.current) {
+                return;
+              }
               confirmedRef.current = true;
               onConfirm();
             }}

@@ -45,12 +45,16 @@ describe("leaveRelevantDraftSnapshot", () => {
     video_url: "",
     first_name: "Ada",
     last_name: "",
+    email: "",
+    phone: "",
     location: "",
     portfolio_url: "",
     linkedin_url: "",
     include: {
       first_name: true,
       last_name: false,
+      email: false,
+      phone: false,
       location: false,
       portfolio_url: false,
       linkedin_url: false,
@@ -62,7 +66,7 @@ describe("leaveRelevantDraftSnapshot", () => {
     cvMode: "primary" as ApplicationCvType,
     cvModeUserChosen: false,
     selectedPrimaryId: "cv-1",
-    use_original_cv_filename: true,
+    use_original_cv_filename: false,
   };
 
   it("ignores auto slug and automatic primary selection", () => {
@@ -110,6 +114,30 @@ describe("leaveRelevantDraftSnapshot", () => {
         cvModeUserChosen: true,
         cvMode: "tailored",
         selectedPrimaryId: null,
+      }),
+    ).toBe(true);
+  });
+
+  it("ignores read-only About you identity text", () => {
+    const baseline = leaveRelevantDraftSnapshot(blank);
+    expect(
+      hasLeaveRelevantDraftChanges(baseline, {
+        ...blank,
+        first_name: "Other",
+        last_name: "Name",
+        location: "Paris",
+        portfolio_url: "https://example.com",
+        linkedin_url: "https://linkedin.com/in/x",
+      }),
+    ).toBe(false);
+  });
+
+  it("detects About you show/hide include changes", () => {
+    const baseline = leaveRelevantDraftSnapshot(blank);
+    expect(
+      hasLeaveRelevantDraftChanges(baseline, {
+        ...blank,
+        include: { ...blank.include, location: true },
       }),
     ).toBe(true);
   });

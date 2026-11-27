@@ -31,7 +31,8 @@ export interface Application {
   slug: string;
   company: string;
   role: string;
-  cv_url: string;
+  /** Null while a draft has no résumé yet (F40). */
+  cv_url: string | null;
   video_url: string;
   created_at: string;
   updated_at: string;
@@ -50,6 +51,10 @@ export interface Application {
   location: string | null;
   portfolio_url: string | null;
   linkedin_url: string | null;
+  /** Snapshot of contact email for recruiters; null = hidden. Omitted before migration 031. */
+  email?: string | null;
+  /** Snapshot of phone for recruiters; null = hidden. Omitted before migration 031. */
+  phone?: string | null;
   /** Order of company vs role in auto-derived slugs. */
   slug_segment_order: "company_role" | "role_company";
   /** Original filename of the uploaded CV (e.g. My Resume.pdf). Used for download when use_original_cv_filename is true. Omitted before migration 011. */
@@ -89,6 +94,8 @@ export type PublicApplication = Pick<
   | "location"
   | "portfolio_url"
   | "linkedin_url"
+  | "email"
+  | "phone"
   | "cv_url"
   | "video_url"
 > & {
@@ -168,6 +175,8 @@ function mapApplicationToPublicDto(
     location: application.location,
     portfolio_url: application.portfolio_url,
     linkedin_url: application.linkedin_url,
+    email: application.email ?? null,
+    phone: application.phone ?? null,
     profile_picture_url: application.profile_picture_url ?? null,
     cv_url: application.cv_url,
     video_url: application.video_url,
@@ -234,7 +243,7 @@ export function toPublicApplicationResponse(
 
 /**
  * Fields returned by `GET /api/applications` for the admin dashboard list.
- * Omits candidate/CV/video/profile fields that the list UI does not use.
+ * Includes the F40 publish-completeness fields so draft cards can gate Publish.
  */
 export type ApplicationListItem = Pick<
   Application,
@@ -249,6 +258,14 @@ export type ApplicationListItem = Pick<
   | "created_at"
   | "last_viewed_at"
   | "cv_url"
+  | "video_url"
+  | "first_name"
+  | "last_name"
+  | "cv_type"
+  | "primary_cv_id"
+  | "email"
+  | "phone"
+  | "linkedin_url"
 > & {
   /**
    * Opaque candidate id for public share URLs. Null when neither a profiles row
@@ -256,11 +273,11 @@ export type ApplicationListItem = Pick<
    */
   public_id: string | null;
   /**
-   * True when `cv_url` is an R2 object that exists, or when existence was not
-   * checked (URL outside our R2 public base). False only when HeadObject
-   * confirms missing.
+   * When `cv_url` is set: true if the R2 object exists (or the URL is outside
+   * our public base / unchecked), false only when HeadObject confirms missing.
+   * Omitted when there is no `cv_url` yet (incomplete draft — not “CV missing”).
    */
-  cv_exists: boolean;
+  cv_exists?: boolean;
   /**
    * True when this application is set to show the profile picture but the
    * account has no live `profiles.profile_picture_url` (dashboard badge).
@@ -270,8 +287,7 @@ export type ApplicationListItem = Pick<
 
 /** Supabase `.select()` projection for `ApplicationListItem` (before attaching public_id / cv_exists). */
 export const APPLICATION_LIST_SELECT =
-  "id, slug, company, role, status, archived_at, view_count, download_count, created_at, last_viewed_at, cv_url, show_profile_picture" as const;
-
+  "id, slug, company, role, status, archived_at, view_count, download_count, created_at, last_viewed_at, cv_url, video_url, first_name, last_name, cv_type, primary_cv_id, email, phone, linkedin_url, show_profile_picture" as const;
 /** Default page size for `GET /api/applications`. */
 export const APPLICATION_LIST_DEFAULT_LIMIT = 20;
 
@@ -307,7 +323,8 @@ export interface ApplicationFormData {
   company: string;
   role: string;
   slug: string;
-  cv_url: string;
+  /** Null while a draft has no résumé yet (F40). */
+  cv_url: string | null;
   video_url: string;
   /** Candidate fields shown to recruiters; null = do not show. Set from form toggles. */
   first_name?: string | null;
@@ -315,6 +332,8 @@ export interface ApplicationFormData {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
+  email?: string | null;
+  phone?: string | null;
   /** Company/role order in auto-derived slug. Stored as slug_segment_order. */
   slugSegmentOrder?: "company_role" | "role_company";
   /** Original CV filename (set when file selected or from server). Used for download when use_original_cv_filename is true. */
@@ -332,19 +351,27 @@ export interface ApplicationFormData {
   cv_type?: ApplicationCvType;
   /** When cv_type is primary, the selected library id. */
   primary_cv_id?: string | null;
+  /**
+   * Set by ApplicationForm when the user chooses Publish.
+   * Create/edit parents send this as the API status (draft save omits or sends draft).
+   */
+  status?: ApplicationStatus;
 }
 
 export interface ApplicationCreateInput {
   company: string;
   role: string;
   slug: string;
-  cv_url: string;
+  /** Null while a draft has no résumé yet (F40). */
+  cv_url: string | null;
   video_url: string;
   first_name?: string | null;
   last_name?: string | null;
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
+  email?: string | null;
+  phone?: string | null;
   slugSegmentOrder?: "company_role" | "role_company";
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;
@@ -360,7 +387,7 @@ export interface ApplicationUpdateInput {
   company?: string;
   role?: string;
   slug?: string;
-  cv_url?: string;
+  cv_url?: string | null;
   video_url?: string;
   status?: ApplicationStatus;
   first_name?: string | null;
@@ -368,6 +395,8 @@ export interface ApplicationUpdateInput {
   location?: string | null;
   portfolio_url?: string | null;
   linkedin_url?: string | null;
+  email?: string | null;
+  phone?: string | null;
   slugSegmentOrder?: "company_role" | "role_company";
   cv_filename?: string | null;
   use_original_cv_filename?: boolean;

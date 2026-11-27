@@ -93,6 +93,7 @@
 
   /* Colorful status dots (default dashboard preference) */
   --status-dot-draft: #fcdc65;
+  --status-dot-draft-incomplete: #ffd08a;
   --status-dot-active: #6ed4fc;
   --status-dot-viewed: #9efc65;
   --status-dot-archived: #c5c9c9;
@@ -102,6 +103,8 @@
    * from distinct ink glyphs on the wash (WCAG 1.4.11 / 1.4.1), not color alone.
    */
   --status-wash-draft: #fff1b8;
+  /* Same hue as the colorful incomplete-draft dot. */
+  --status-wash-draft-incomplete: var(--status-dot-draft-incomplete);
   /* Soft amber notice (warnings that are not the draft status). Same hex today. */
   --status-wash-notice: #fff1b8;
   --status-wash-active: #d3f2ff;

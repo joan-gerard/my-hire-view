@@ -181,7 +181,7 @@ sequenceDiagram
   Panel->>U: Updated ticks / All set / Dismiss
 ```
 
-Notify call sites include (non-exhaustive): `ProfileForm`, `ProfilePictureModal`, `PrimaryCvLibrarySection`, `app/admin/new` create success, and `lib/api/applications` publish / restore / archive / delete.
+Notify call sites include (non-exhaustive): `ProfileForm`, `PrimaryCvLibrarySection`, `app/admin/new` create success, and `lib/api/applications` publish / restore / archive / delete.
 
 ---
 

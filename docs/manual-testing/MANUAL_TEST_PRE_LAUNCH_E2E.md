@@ -10,6 +10,7 @@ Work ticket: [Backlog.md](../product/Backlog.md) `F32-115`. Product copy: [USER_
 
 - [MANUAL_TEST_PROFILE_CREATE_ON_PUT.md](MANUAL_TEST_PROFILE_CREATE_ON_PUT.md) — signup → profiles row, picture from New/Edit
 - [MANUAL_TEST_ONBOARDING_CHECKLIST.md](MANUAL_TEST_ONBOARDING_CHECKLIST.md) — Getting started prefs, skip/dismiss, no extra GETs
+- [MANUAL_TEST_CREATE_AND_EDIT_APPLICATION.md](MANUAL_TEST_CREATE_AND_EDIT_APPLICATION.md) — one-page create + edit smoke (layout, About you show/hide, save)
 - [MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md](MANUAL_TEST_CREATE_APP_DRAFT_AND_CV_MODE.md) — local create draft + CV radios while library loads
 - [MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md](MANUAL_TEST_APPLICATION_PREVIEW_DRAFT.md) — Save & Preview → owner banner → Publish
 - [MANUAL_TEST_APPLICATION_STATUS_LEGEND.md](MANUAL_TEST_APPLICATION_STATUS_LEGEND.md) — status legend modal
@@ -41,17 +42,17 @@ Work ticket: [Backlog.md](../product/Backlog.md) `F32-115`. Product copy: [USER_
 
 Create these as you go so later sections have the right mix. Reuse the same primary CV unless a step says otherwise. Short company/role names are fine.
 
-| #   | Company / role (example)                    | Status by the end          | Notes                                                                                                                         |
-| --- | ------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Acme / Software Engineer                    | **active**, viewed         | Full: all candidate fields on, picture shown, primary CV, YouTube, segment order **company-role**                             |
-| 2   | Globex / Product Manager                    | **active**, never viewed   | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required**                                      |
-| 3   | Initech / Designer                          | **draft**                  | Tailored CV; segment order **company-role**; custom slug                                                                      |
-| 4   | Umbrella / Data Analyst                     | **archived**               | Publish first, then archive; segment order **role-company**                                                                   |
-| 5   | Soylent / QA Engineer                       | **active**                 | Same **primary CV** as #1 (reuse)                                                                                             |
-| 6   | MissingCvCo / Intern                        | **active**, **CV missing** | Point at a primary, then delete that primary from the library                                                                 |
-| 7   | Café Müller / Senior Engineer               | **active**                 | Accents / unicode in company; slug must strip special chars (`cafe-muller-…`)                                                 |
-| 8   | (very long company + role, ~200 chars each) | **draft**                  | Hits **128-char slug clamp** (no trailing hyphen)                                                                             |
-| 9+  | PageFill-01 …                               | whatever                   | Extra rows so the dashboard has **more than 20** applications (page size is 20)                                               |
+| #   | Company / role (example)                    | Status by the end          | Notes                                                                                             |
+| --- | ------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
+| 1   | Acme / Software Engineer                    | **active**, viewed         | Full: all candidate fields on, picture shown, primary CV, YouTube, segment order **company-role** |
+| 2   | Globex / Product Manager                    | **active**, never viewed   | Picture **off**; location + LinkedIn on; portfolio off; primary CV; **YouTube required**          |
+| 3   | Initech / Designer                          | **draft**                  | Tailored CV; segment order **company-role**; custom slug                                          |
+| 4   | Umbrella / Data Analyst                     | **archived**               | Publish first, then archive; segment order **role-company**                                       |
+| 5   | Soylent / QA Engineer                       | **active**                 | Same **primary CV** as #1 (reuse)                                                                 |
+| 6   | MissingCvCo / Intern                        | **active**, **CV missing** | Point at a primary, then delete that primary from the library                                     |
+| 7   | Café Müller / Senior Engineer               | **active**                 | Accents / unicode in company; slug must strip special chars (`cafe-muller-…`)                     |
+| 8   | (very long company + role, ~200 chars each) | **draft**                  | Hits **128-char slug clamp** (no trailing hyphen)                                                 |
+| 9+  | PageFill-01 …                               | whatever                   | Extra rows so the dashboard has **more than 20** applications (page size is 20)                   |
 
 ---
 
@@ -230,21 +231,24 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 ### Profile details (Profile tab)
 
 - [ ] First and last name prefilled from signup
-- [ ] Save disabled until something changes; disabled reason if names are empty (“First name and last name are required”) or “No changes to save”
+- [ ] First name and last name labels show a required `*`; Save disabled until something changes; disabled reason if names are empty (“First name and last name are required”) or “No changes to save”
 - [ ] Clearing a name to spaces-only cannot save
 - [ ] Names at **100** chars save; the field does not accept more (or API rejects)
 - [ ] Location at **200** chars; over-long location rejected
 - [ ] Save location, portfolio URL, LinkedIn URL
+- [ ] Portfolio field: paste a LinkedIn URL → soft warning; LinkedIn field: paste a non-LinkedIn URL → soft warning; both still save
 - [ ] `http://` and `https://` URLs accepted; `javascript:`, `ftp://`, and bare `not-a-url` rejected
 - [ ] Leading/trailing spaces on URLs are trimmed, not stored as-is
 - [ ] Changing name updates the account name used in Name-in-URL suggestions
 - [ ] Empty location / URLs are allowed (stored as empty/null)
+- [ ] **Visible** / **Hidden** sits under Email, Phone, Location, LinkedIn, and Portfolio (and under the picture in the header); no separate “Shown by default” section
+- [ ] Toggle is disabled (reads Hidden) until that field has a value / picture; after filling, toggle works and Save persists the default for new applications
 - [ ] Completing **only LinkedIn** (no location, no portfolio) still satisfies the checklist “location or a link” step; same for portfolio-only or location-only
 - [ ] Success / saving labels: **Uploading…** then **Saving…** when a picture is included
 
 ### Profile picture (Profile tab — identity header only)
 
-- [ ] Avatar preview, Change picture / Remove picture (or Choose picture), and help copy live in the identity header — not a second picture block lower on the page
+- [ ] Avatar preview, Change picture / Remove picture (or Choose picture), Visible/Hidden default, and help copy live in the identity header — not a second picture block lower on the page
 - [ ] Choose JPEG → preview → Save → thumbnail persists after refresh
 - [ ] Replace with PNG (and WebP if you have one) → new image shows (cache-bust, not a stale JPEG)
 - [ ] **Remove** picture → Save → initials/placeholder in the header; applications that **show** the picture no longer display an avatar on `/view`
@@ -256,7 +260,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Primary CV library (CVs tab)
 
-- [ ] While **Loading…**, **Upload primary CV** is disabled
+- [ ] While **Loading…**, **Upload library résumé** is disabled
 - [ ] Empty library copy when none exist
 - [ ] Upload PDF → listed with filename; **View** opens the PDF
 - [ ] PDF whose filename has **spaces** or unicode still Views/downloads
@@ -272,6 +276,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Preferences tab
 
+- [ ] **About you on applications** → **Collapse About you after your first live application** (default on); toggle saves without visiting Profile
 - [ ] **Status indicators** offers colorful dots vs high-contrast icons with live previews
 - [ ] Choice persists across refresh and updates dashboard / legend
 
@@ -293,46 +298,59 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 
 ### Page chrome
 
-- [ ] Page title **New application**. The checklist and form are centered. One chapter is open; the others are a single line. A **This application** checklist shows the count, and clicking a row opens that chapter. **Save draft & preview** sits at the top and is greyed out until the application can be saved. There is no **Preview** button. `/admin/wizard` and `/demo/application-form` are gone
+- [ ] Page title **New application** and its description sit above the sections, no wider than `2xl`. Sections **Your link**, **About you**, **Your résumé**, and **Your pitch** are headings, each above its own card. Each entry has its title on the left and the control on the right; a description sits under the title when there is one. On a narrow screen the title sits above the control. **Your link** defaults to Company, Role, Your application link, and **Customize link** (order/ending hidden until expanded). Your application link is a full-width tinted result under Company/Role. **Cancel** and **Save Draft** stay fixed at the bottom while scrolling. Save is greyed out until the application can be saved, and a line above the buttons names what is still missing (each item scrolls to its field). **Publish** is always visible on create (disabled with a **To publish, add…** line until ready); **Preview** appears when the full set is ready. Intro covers draft vs publish; asterisks mark save-required fields only. There is no chapter checklist. `/admin/wizard` and `/demo/application-form` are gone
 - [ ] If location, links, and picture are still empty: nudge to complete profile; arrow goes to Profile
 - [ ] After profile has location/link/picture, nudge is gone
 - [ ] Form skeleton/pulse while profile loads; then the form
 
-### About you (create checklist)
+### About you (create)
 
-- [ ] Prefills first/last name from profile; location and URLs if set
-- [ ] **Profile picture** uses **Show picture** / **Hide picture** cards; the thumbnail appears only when showing
-- [ ] **Manage picture** / **Add profile picture** sits under those choices and opens the modal (JPEG/PNG/WebP, preview, Save, Cancel, type/size errors)
-- [ ] **Hide picture** hides the thumbnail and keeps **Manage picture**; no avatar on `/view` even if the account still has a picture
-- [ ] First and last name sit side by side; then location, **Portfolio**, and **LinkedIn**. Each field is **Show** / **Hidden**; **Hidden** mutes the field and blocks editing
+- [ ] No live apps yet: About you fully expanded. After ≥1 live app (collapse preference on): one-line summary (e.g. Showing photo, name, portfolio) + **Edit**; **Hide details** after expand. Preference off → always expanded
+- [ ] Under **About you** when expanded: short note to choose what this page shows from your profile; **Edit profile** / **Hide details** on the right
+- [ ] Order: **First name**, **Last name**, **Picture**, then Location / LinkedIn / Portfolio
+- [ ] **First name** and **Last name** are read-only; always included when present; there is no show switch for the name; empty says add on Profile; name fields have a slightly stronger fill than show/hide fields
+- [ ] **Your link:** Company and Role show a grey status dot before the label until valid, then green. When **Customize link** is open, Link ending does the same and **How the link reads** always shows a green status dot
+- [ ] **About you** text fields are read-only: green “From your profile” when a value exists; grey when empty; no yellow write-through tip
+- [ ] **Picture** shows green when a profile photo exists, grey when not; toggling show/hide does not turn it yellow
+- [ ] **Résumé:** green once a library or role-specific résumé is chosen; grey until then
+- [ ] **Pitch:** YouTube is grey until a valid URL is entered, then green
+- [ ] With no picture: **Add a picture on your profile** links to Profile. There are no Show / Hide cards
+- [ ] With a picture: thumbnail always visible; a right-aligned switch under it turns show on/off; off lowers the thumbnail opacity
+- [ ] Without a picture: initials (or avatar icon) show, plus a link to Profile; no show switch
+- [ ] Switch off: no avatar on `/view` even if the account still has a picture
+- [ ] Email, Phone, Location, **LinkedIn**, and **Portfolio** are read-only (LinkedIn before Portfolio). When non-empty, a **Visible** / **Hidden** switch sits under the value (same as Picture; Hidden is neutral grey, not pink); empty fields link to Profile
+- [ ] There is no typing into About you location/link fields on this form (read-only)
+- [ ] Soft URL warnings for portfolio/LinkedIn are not shown on About you (those fields are not editable here)
 - [ ] There is no collapsible **Info shown to recruiters** block and no `(N/5)` count on create
-- [ ] Toggle **off** a field → it will not appear on `/view` (verify later)
-- [ ] Toggle **on** a field but leave it blank → stored/shown as empty (no placeholder junk)
-- [ ] Edit a value here (e.g. location) → **does not** change Profile
-- [ ] Adding a picture from New Application ticks the checklist **photo** step without visiting Profile
+- [ ] Set location, portfolio, or LinkedIn to **Hidden** → it will not appear on `/view` (verify later)
+- [ ] Saving the application does **not** update the profile; it only snapshots shown fields onto the application
+- [ ] Adding a picture on Profile ticks the checklist **photo** step. New Application only links there for the picture
 
-### Info shown to recruiters (edit)
+### About you (edit)
 
-- [ ] Picture block is above **Info shown to recruiters**. Each field is **Show** / **Hidden**, label above the value; **Hidden** mutes the field and blocks editing
-- [ ] Count e.g. `(N/5)` for included fields; collapse / expand remembered (`localStorage`)
-- [ ] **Profile picture:** Yes/No hidden until a picture exists; **Add profile picture** / **Manage picture** beside the large thumbnail
-- [ ] After adding a picture, Yes/No appears; **Yes** shows the thumbnail and the avatar on `/view` after publish
-- [ ] **No** hides the thumbnail and keeps **Manage picture**
+- [ ] With ≥1 live app: starts collapsed on a summary line with **Edit**; draft-only stays expanded
+- [ ] The form waits until the profile request finishes, then shows profile name, location, and links as read-only values when expanded (same as create), plus **Edit profile**
+- [ ] A field the saved application left empty starts **Hidden** even when the profile now has a value. The next save includes that value only if you set it to **Visible**
+- [ ] **Profile picture:** **Visible** / **Hidden** switch under the preview when a picture exists; Hidden dims the thumbnail
+- [ ] With no picture, the row links to Profile. There is no Add / Manage picture control
+- [ ] Names are read-only. Saving does not update the profile; it only snapshots shown fields onto the application
 
-### Résumé (create checklist)
+### Résumé (create)
 
-- [ ] **Choose one résumé** lists library files as cards under **From your library**, then **A PDF just for this role**
-- [ ] **Manage library** sits beside the library heading and opens the same library as Profile
-- [ ] Selecting a library card sets that primary CV; tailored shows **Choose a PDF**
-- [ ] Once a file is chosen, the line says **Recruiters download it as…** with **Use a generated name** / **Use the original file name**
-- [ ] There is no separate **Download name for recruiters** heading block on create
+- [ ] **Your résumé** has one **File** row: **Use library résumé** / **Upload one for this role**. Filenames truncate with ellipsis + **Preview**. **Manage library** opens the **Résumé library** modal (bordered rows, radio + usage count + ⋯ View/Delete, upload). Role upload uses **Choose a PDF** / **Manage**
+- [ ] Selecting a radio in the library modal sets that primary on the form; **Upload one for this role** does not auto-open a dialog — tailored **Choose a PDF** / **Manage** opens its own modal
+- [ ] Once a file is chosen, a bottom **Recruiters download it as** row names the generated `{First}-{Last}-{Slug}.pdf` (muted `First-Last` / `Company-Role` placeholders until real values exist); **Original name** switches to the PDF filename
+- [ ] There is no separate **Download name for recruiters** heading block on create or edit
 
 ### Create Role, preview, and edit notes
 
-- [ ] **Edit link** reveals **Order in the link** (**Company, then role** / **Role, then company**) and **Link ending**. There is no segment-order explanation, no examples, and no Public id preview. **Use the suggested link** appears after the ending is edited, and hides again if the ending matches the suggestion. The checklist footer shows `/view/{publicId}/{slug}`
-- [ ] With company and role filled, the Role line says **Checking...** in grey italic while the ending is checked, **Add a link ending** when it is empty, **Fix the link ending** when it is invalid, **Link already used** when another of your applications has it, and **Couldn't check the link** when the check fails. A ready link shows the company and role
-- [ ] On edit, **Review & save** summary starts open and can be collapsed; groups match the steps (Role, About you, CV, Video) with stacked labels and status chips (**Hidden** / **Empty** / **Shown** / **None** / **Available** / **Missing** / **Ready**); About you lists profile picture before the recruiter fields
-- [ ] On edit, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, CV including a not-yet-uploaded tailored file, Watch Video Pitch). Close, Escape, and the backdrop return to the form. It does not leave the form, save, or count a view. Create has no preview dialog
+- [ ] Default **Your link** shows Company, Role, **Your application link**, and **Customize link**. Expanding Customize reveals **How the link reads** and **Link ending**. **How the link reads** is a custom dropdown (not the browser menu): **Company + Role** is selected, and **Role + Company** is the other choice. An info icon beside the title opens a dialog: choose whether the company or the role comes first. The sentence is not shown under the title. The dialog has a close icon on the right of **How the link reads**, and no Close button. There is no **Order in the link** label, no examples, and no Public id preview
+- [ ] **Link ending** (when Customize is open) is its own row. An info icon beside the title opens a dialog: pre-filled for you, edit it if you like, and each ending must be unique. The sentence is not under the title. The dialog closes from an icon on the right of **Link ending**, and has no Close button. **Use the suggested link** appears after the ending is edited, and hides again if the ending matches the suggestion. Link problems stay on this row when open; they do not auto-expand Customize
+- [ ] **Your application link** is a full-width tinted row under Company/Role, with **Customize link** beneath the field. The title and a note sit above a read-only field with the not-allowed cursor. From `sm` up it shows the full URL, wrapped so the ending is visible. On create/draft, a broken-link icon replaces Copy once the URL looks ready (**Publish before sharing this link** or **Finish required fields before publishing and sharing**); on a live edit, Copy works when ready
+- [ ] With company and role filled, the result field end control shows a spinner while checking and a danger icon when invalid/taken. An invalid, already used, or failed check does not expand Customize by itself; **Checking...** / error copy appear on the ending row when Customize is open. A ready link shows the ending in the path
+- [ ] Edit with a custom ending or Role+Company order opens Customize by default
+- [ ] On edit, the page matches create’s one-page sections (**Your link**, **About you**, **Your résumé**, **Your pitch**) with title **Edit application** (no Review summary band)
+- [ ] On create and draft edit, when the full set is ready, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, résumé including a not-yet-uploaded tailored file, Watch Video Pitch). Preview is look-only (no Publish in the dialog). Footer **Publish** goes live without requiring the dialog. Close, Escape, and the backdrop return to the form without publishing. Preview does not leave the form, save, publish, or count a view
 
 ### Company, role, slug, URL segment order
 
@@ -354,11 +372,11 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Save while the slug row still says **checking** is blocked (“wait until the slug has finished updating”)
 - [ ] Save while slug is **unavailable** is blocked; no row is created
 
-### CV (shared rules; create uses the checklist cards above)
+### CV (shared rules; create uses the résumé cards above)
 
 - [ ] While library is loading (create only), primary / tailored choices are **disabled**
 - [ ] If the library request is slow/blocked, choices unlock within ~**12s** so a tailored CV can still be chosen
-- [ ] With primaries in the library: create defaults to a library card; edit defaults to **Use a primary CV** with a dropdown
+- [ ] With résumés in the library: create defaults to a library card; edit defaults to **Use a library résumé** with a dropdown
 - [ ] **Manage library** opens the same library as Profile; upload/delete there updates the list
 - [ ] Uploading the first primary from the modal can switch create to primary (if you had not already chosen tailored)
 - [ ] If you already chose **tailored** before adding a primary, mode stays tailored
@@ -369,23 +387,26 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Empty library: primary disabled until you upload via Manage library; tailored still works
 - [ ] Restore a browser draft whose primary was **deleted** meanwhile: stale id is not saveable; falls back to another primary or tailored
 - [ ] Failed Save then retry **the same** tailored file does not upload a second R2 object (idempotency); changing the file does
-- [ ] Download-name control: original filename vs generated `CV-{Slug}.pdf` — verify later on `/view` Download. Edit keeps the **Download name for recruiters** block
+- [ ] After save, `/view` Download uses the generated `{First}-{Last}-{Slug}.pdf`. An older application keeps its previous download name until the next edit save
 
 ### YouTube
 
+- [ ] Valid URL shows full-width playable preview (click play) + title after check; tip turns green
+- [ ] Line under the field: unlisted videos work; private / non-embeddable → error (Save blocked while URL remains)
+- [ ] **Reuse a video from an earlier application** lists prior apps with videos and fills the URL
 - [ ] Valid `youtube.com/watch?v=…` accepted (extra query params like `&t=30` still work)
 - [ ] Valid `youtu.be/…` accepted
 - [ ] Valid `youtube.com/embed/…` accepted
 - [ ] Valid Shorts URL accepted
 - [ ] Invalid URL (Vimeo, example.com, garbage) → “Please enter a valid YouTube URL”; Save blocked
-- [ ] Empty video is **not** allowed — Save stays blocked. On create, the checklist **Pitch** row says **Still needed**, and there is no **Required before saving** line beside **Save draft & preview**. On edit, that reason line names **YouTube intro**
+- [ ] Empty video is allowed on **draft** save (F40); **Publish** (and saving a live app) still requires YouTube. The create blocked-reason line does not require **YouTube intro** for draft save
 
 ### Local browser draft (create only)
 
 - [ ] Fill fields → refresh → values restore (about **7 days** max; scoped to this signed-in user)
 - [ ] Personal-only edits (e.g. location) also restore
 - [ ] Tailored **file** is not restored; re-select the PDF
-- [ ] Dashboard / Profile / Back with progress → confirm “Leaving this page will discard this draft…”
+- [ ] Dashboard / Profile / Cancel / Edit profile / Back with progress → confirm “Leaving this page will discard unsaved changes…”; without progress, those exits do not confirm. Incomplete company/role → hint to add them; ready draft → in-dialog **Save Draft** then continues to the intended page
 - [ ] **No, stay** keeps the form; **Yes, I'm sure** leaves and **clears** the draft — next New Application is empty
 - [ ] After confirming leave, Back does **not** return to a filled `/admin/new`
 - [ ] Untouched form (prefills only) does **not** prompt on leave
@@ -393,19 +414,18 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] Manual slug edits **are** protected by the leave dialog; auto slug updates from typing company/role alone are **not**
 - [ ] Opening `/admin/new` as the first history entry, then confirming Back, still leaves create (falls back to dashboard if needed)
 - [ ] Leave a fully empty new form idle: no stale draft on a later visit
-- [ ] Successful **Save draft & preview** clears the browser draft; a **failed** save keeps it
+- [ ] Successful **Save Draft** clears the browser draft; a **failed** save keeps it
 - [ ] Account B on the same browser does **not** see Account A’s create draft
 
-### Save & Preview
+### Save Draft
 
-- [ ] Submit label is **Save draft & preview**
+- [ ] Submit label is **Save Draft**; **Publish** appears only when the full publish set is ready and goes to the live share page
 - [ ] Double-click submit does not create two rows
 - [ ] Save with the network offline (DevTools) shows an error; **no** application row; browser draft **kept**
 - [ ] Session expired mid-form (optional: delete cookies then Save): 401 surfaces in the form/alert; no half-created app; tailored file is not “lost” into an orphan row
-- [ ] Success → `/view/{publicId}/{slug}` with amber **Draft preview** banner (Edit / Publish / Dashboard). If Public id were missing, fallback is `/admin` + **Preview** on the card
+- [ ] Success → `/admin/edit/[id]` for the new draft (not the owner preview). Fallback is `/admin` if the create response has no id
 - [ ] Two `/admin/new` tabs: save in tab 1; tab 2 save with a **different** slug creates a second draft (or a clear collision error — not a 500 / silent overwrite)
-- [ ] Owner sees full page (CV, video, candidate fields) behind the banner
-- [ ] Same URL in incognito → **unavailable** empty state (recruiters cannot see drafts)
+- [ ] Opening the draft’s share link as owner still shows the amber **Draft preview** banner (Edit / Publish / Dashboard); same URL in incognito → **unavailable**
 - [ ] Owner draft preview does **not** increment Views
 
 Create applications **#1–#8** (and extras for pagination) using the matrix above. Publish #1, #2, #5, #7 now or in §12; leave #3 and #8 as drafts; publish then archive #4; use #6 for CV missing.
@@ -426,7 +446,7 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 ### Status legend
 
 - [ ] Button opens modal **Status icons & draft actions**
-- [ ] Lists Draft, Active (not viewed yet), Active (viewed), Archived, CV missing, Picture missing — icons match cards
+- [ ] Lists Draft (incomplete), Draft (complete), Active (not viewed yet), Active (viewed), Archived, CV missing, Picture missing — icons match cards
 - [ ] Explains **Publish**, **Preview**, **Publish to share**
 - [ ] Close via Close, Escape, or backdrop; focus returns; heading focused on open
 - [ ] Body scroll locked while open
@@ -439,10 +459,11 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 **Draft**
 
 - [ ] Amber clock icon
-- [ ] Labeled **Publish** button on the card
-- [ ] Copy-link icon is disabled; tooltip explains publish-before-share (not an enabled Copy link)
+- [ ] Incomplete draft (missing résumé / YouTube / names): orange **Draft (incomplete)** status marker; **no** Publish button (edit via ⋯ or opening the card’s edit action)
+- [ ] Complete draft: labeled **Publish** button on the card
+- [ ] Share control shows a broken-link icon (not Copy); tooltip explains publish-before-share or finish-required-fields
 - [ ] External-link icon tooltip is **Preview**; opens the share URL with the banner
-- [ ] **More options** (⋯) tooltip; menu: Edit, Publish, Delete — **no Archive**
+- [ ] **More options** (⋯) tooltip; incomplete: Edit, Delete (no Publish); complete: Edit, Publish, Delete — **no Archive**
 
 **Active, 0 views**
 
@@ -518,27 +539,27 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 ## 11. Edit application (`/admin/edit/[id]`)
 
 - [ ] From 3-dot **Edit**
-- [ ] Snapshot notice: candidate text fields come from **this application**, not live profile; **picture is live**
-- [ ] Changing Profile name/location/links does **not** change this form until you edit and save here
+- [ ] One-page edit layout matches create (sections + `2xl` width); title **Edit application**; no wizard Continue / step rail / split bands
+- [ ] Form shows **live profile** name/location/links; a previously hidden field starts **Hidden**; saving writes profile then snapshots shown fields
+- [ ] Changing Profile alone does **not** change a saved application’s public text until you edit and save here
 - [ ] Changing the profile picture **does** show on `/view` if this app has show-picture on (no need to re-save the app)
-- [ ] Submit label **Save Application**
+- [ ] Submit label **Save Draft** (draft) or **Save application** (active); Save disabled with **No changes to save.** until something changes; successful save stays on edit (not dashboard); draft with full set shows **Publish** → live share page
 - [ ] Save a **draft** → stays draft (not auto-published)
 - [ ] Save an **active** app → stays active
-- [ ] Company/role change updates auto slug unless you customized it; custom slug is kept on load
-- [ ] **Reset to suggested** after a custom slug
+- [ ] Company/role change does **not** rewrite a saved slug until Reset / suggested or a manual ending edit
+- [ ] **Reset to suggested** / Use suggested after a custom ending
 - [ ] Switch primary A → primary B → public PDF changes; library still has both
 - [ ] Switch primary → tailored (upload) → save → tailored PDF on `/view`; old primary remains in library
 - [ ] Switch tailored → primary → confirm that the tailored file will be deleted → after save, tailored R2 object is gone; public view uses the primary
 - [ ] **Cancel** that confirm → stays on tailored; tailored file still there after save
-- [ ] Toggle candidate fields and picture Yes/No; `/view` matches
-- [ ] Change/remove picture from the modal; Profile library/picture stays in sync
+- [ ] Toggle show/hide on location/links and picture; `/view` matches after save
+- [ ] Missing picture links to Profile (no upload modal on the edit form)
 - [ ] Invalid / foreign / Account B’s edit id → redirected to dashboard (no crash, no leak)
 - [ ] **Check again** on a missing CV shows **Checking…**, then either the warning clears or **Checked just now. The file is still not in storage.** A failed check says to try again. No full-page spinner
 - [ ] No leave-confirm browser draft on edit (create-only feature)
 - [ ] Edit radios stay **usable** while the primary library loads (saved source is not overwritten)
-- [ ] On edit, CV and Review ticks are green immediately for a saved primary CV; they drop only if that primary is gone after the library loads. Save stays unavailable until the library confirms it
-- [ ] On edit of a **missing** CV file, choosing another primary or a new tailored PDF does not turn CV green until **Continue** on the CV step. Changing that choice again waits for Continue once more. Review stays unticked through that Continue
-- [ ] On edit of an application that already has company, role, slug, CV, and video, Review is green on open. Clearing a required field drops it. It does not turn green merely because an earlier step was continued
+- [ ] Save stays unavailable until a usable CV is confirmed (library still loading does not unlock a missing primary)
+- [ ] Review Summary stays open with complete counts; Required chips jump to the owning band; Preview does not save
 - [ ] Two tabs editing the **same** app: last save wins; no 500; reload shows one consistent row
 
 ---
@@ -546,7 +567,8 @@ Create applications **#1–#8** (and extras for pagination) using the matrix abo
 ## 12. Publish, archive, restore
 
 - [ ] Publish from **draft banner** → banner gone; page is the live public view; dashboard card becomes active; Copy Link enabled
-- [ ] Publish from **card button** and from **3-dot** both work
+- [ ] Publish from **card button** and from **3-dot** both work (only when the draft is complete)
+- [ ] Incomplete draft card shows orange status (not gold) and no Publish button; complete draft shows gold + Publish
 - [ ] Publishing twice (button mash / two tabs) does not error; stays active once
 - [ ] Archive only for **active** apps → public URL unavailable for everyone (including owner)
 - [ ] Restore → live again with the **same slug, CV, video**, and **insights counts preserved**
@@ -569,13 +591,13 @@ Use incognito / signed-out (and owner, where noted).
 
 - [ ] MyHireView wordmark → home
 - [ ] Company and role
-- [ ] Candidate name, location, Portfolio and LinkedIn buttons only for **included** fields
+- [ ] Candidate name, location, LinkedIn and Portfolio buttons only for **included** fields (LinkedIn before Portfolio when both show)
 - [ ] Profile picture when show-picture is on
 - [ ] **Watch Video Pitch** opens the YouTube modal; video plays; close via X, backdrop, and **Escape**
 - [ ] Opening/closing the video modal does **not** increment Views
 - [ ] PDF viewer loads all pages (multi-page PDF if you have one)
 - [ ] **View CV** / open-in-tab works
-- [ ] **Download CV** downloads; filename is original **or** `CV-{Slug}.pdf` per the toggle
+- [ ] **Download CV** downloads; filename is original **or** `{First}-{Last}-{Slug}.pdf` per the toggle
 - [ ] Download failure (block the PDF URL once) does not crash the page
 - [ ] Compact footer: MyHireView, Terms, Privacy, Cookies, © — present for owners and recruiters
 - [ ] Page is `noindex` / does not invite indexing (optional: view source / head)

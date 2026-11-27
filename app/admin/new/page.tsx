@@ -1,5 +1,5 @@
-import CreateApplicationWizardPage from "@/components/admin/wizard/CreateApplicationWizardPage";
+import CreateApplicationPage from "@/components/admin/CreateApplicationPage";
 
 export default function NewApplicationPage() {
-  return <CreateApplicationWizardPage presentation="checklist" />;
+  return <CreateApplicationPage />;
 }

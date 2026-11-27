@@ -12,7 +12,7 @@ The create/edit form has been a long scroll for a while — company, role, candi
 
 Once both shells existed, the day shifted to shaking them down — saving too early from the middle of the form, focus and keyboard rough edges, sections that felt too rigid. The fixes are logged in the F35 retrospective; the lesson for later is that trying both patterns only helps if the shared form stays boring and we find the sharp edges before picking a winner.
 
-Along the way we talked through forks we are *not* shipping yet. Letting candidates pick wizard vs sections in Profile feels like a last resort — only if people ask after launch. Wizard on create and sections on edit is more interesting, because create and edit are different jobs. Splitting by viewport (mobile wizard / desktop sections) is a useful test lens but a shaky default, especially stacked with other hybrids. Stances are in the F35 doc so we do not re-litigate them cold.
+Along the way we talked through forks we are _not_ shipping yet. Letting candidates pick wizard vs sections in Profile feels like a last resort — only if people ask after launch. Wizard on create and sections on edit is more interesting, because create and edit are different jobs. Splitting by viewport (mobile wizard / desktop sections) is a useful test lens but a shaky default, especially stacked with other hybrids. Stances are in the F35 doc so we do not re-litigate them cold.
 
 Late in the day: should people save a real draft on the server even when required fields are empty, while still blocking go-live until everything is complete? Right instinct — browser drafts are not dashboard applications, and Publish today is basically a status flip — but the wrong change to land inside F35. Form layout and Save/publish rules are different risks. Parked as F40 ([INCOMPLETE_DRAFT_SAVES.md](../product/INCOMPLETE_DRAFT_SAVES.md)) for after we pick a layout. A leave-dialog “save draft and leave” idea is mostly a wording trap: the browser draft already keeps work; the missing choice would be leave-but-keep versus discard, and that stays out of F40 for now.
 
@@ -59,3 +59,53 @@ Save, the browser draft, and the leave prompt did not change. The share link sta
 ## 3 November 2026
 
 The checklist won for create, so the comparison surfaces came down. `/admin/wizard` and the application-form demo are gone. Edit stays the scrolling page. The wizard layout code is still in the form, unused by a route.
+
+Later the same day the checklist itself felt like too many doors for a short form. Create is one card again: every field on the page, the name beside the control, Save at the bottom. The width stays tight (`2xl`) so it reads as a form, not a dashboard. Edit is unchanged. What you fill in, and what blocks a save, did not change.
+
+The same pass cut the identity editors. A name, a location, a portfolio, and a LinkedIn belong on the profile, not on every application. Create and edit show those values and only choose what this page includes: the name is always on, and location, portfolio, and LinkedIn can be hidden when the profile has them. A missing picture or link points at Profile instead of a second field. Saving still copies the current profile onto the application, so a public page does not follow a later profile edit until the next save. The résumé download name is the generated one; the original-filename switch is gone. The inventory and the calls are in [CREATE_FORM_FIELD_TRIM.md](../product/CREATE_FORM_FIELD_TRIM.md).
+
+A missing portfolio or LinkedIn should not send someone away from a half-finished application. Those two open a small dialog, save onto the profile, and come back as Show / Hidden. Location still sends you to Profile. The profile remains the only copy of the URL.
+
+Link order and the ending no longer hide behind a toggle. They stay on the share-link row, and the read-only URL with the copy button sits under them.
+
+---
+
+## 4 November 2026
+
+About you kept shifting under our feet, so the day is worth keeping as one thread.
+
+We started from the trim: identity lives on the profile; create only chooses what this page shows. Empty portfolio and LinkedIn briefly used a dialog so people did not have to leave a half-finished application. Location followed. Then the dialogs felt wrong next to Your link — so name, location, portfolio, and LinkedIn became dense fields like Company and Role, with a show switch under each optional value. The picture stayed a preview. Saving the application writes those text fields to the profile first, then snapshots what this page shows. Soft warnings catch a LinkedIn URL in portfolio and the reverse.
+
+That write-through raised the honesty problem. Editable account fields make people think the profile already changed. We debated a dedicated About you Save (section or per row) versus one form Save. Dedicated Save would match “update my account now,” but it splits the form into two commit models and invites partial profile saves before an application exists. We chose one Save: the bottom create or edit button. Transparency has to carry the timing. The About you note now says those details update the profile when you save this application — not if you cancel or leave — and that this page only chooses what recruiters see. Edit and the split recommendations say the same. Revisit a section Save only if people still edit About you and leave without saving. Inventory and calls: [CREATE_FORM_FIELD_TRIM.md](../product/CREATE_FORM_FIELD_TRIM.md).
+
+---
+
+## 18 November 2026
+
+Came back to the create-form spike after a break and closed the layout fork. The one-page create form stays; edit keeps the scrolling bands. The parked wizard shell is gone from the codebase — no second presentation mode to maintain, and the page components left the `admin/wizard` folder for ordinary create/edit names. The F35 notes keep the experiment history; live behavior is [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_WORKFLOW.md).
+
+---
+
+## 24 November 2026
+
+Locked the incomplete-draft decision that had been parked as F40. Feedback was that drafts asked for too much — especially YouTube — before the first real save. The rule we kept: a **draft** can persist once company and role are in (the link ending and shareable link come along because they are auto-built from those). Résumé, pitch, and names wait for **publish** (and for saving an already-live app). Publish is no longer a bare status flip; the server lists what is still missing. Owner preview shows a résumé placeholder when none is attached yet. Details: [INCOMPLETE_DRAFT_SAVES.md](../product/INCOMPLETE_DRAFT_SAVES.md).
+
+Same day we locked the create layout onto edit. The scrolling split bands on `/admin/edit/[id]` are gone; edit uses the same one-page section cards as `/admin/new`. One form shell to maintain, and F35 is closed as shipped rather than “create one way, edit another.”
+
+Create’s primary action is now **Save Draft** only: it persists the draft and lands on that application’s edit page, not the owner preview. On edit, **Save Draft** stays off until something changes since the last save, and a successful save stays on the edit page instead of bouncing to the dashboard. When the full publish set is ready on create or a draft edit, **Publish** appears beside Save and goes live to the share page (F41 partial). Dashboard draft cards follow the same gate: **Publish** only when complete; incomplete drafts use a distinct status color instead of a **Finish to publish** chip.
+
+Feedback that About you “says one thing and does another” landed: editable identity fields with profile write-through contradicted “this page only chooses what recruiters see.” About you is now read-only values from the profile, with show/hide and an **Edit profile** link. Saving the application only snapshots what this page shows.
+
+Leave confirm now only fires when there is real progress, and covers Cancel, Edit profile, admin links, and Back on create and dirty edit. The dialog can save a draft when company, role, and the link are ready, then continues to the page you were heading to.
+
+Contact was the next honesty gap. The product promises recruiters a page they can act on, but About you only offered presence — name, location, links — not email or phone. Feedback asked for contact that is visible and controllable on the form. We kept the profile-owned pattern: email is a normal editable profile field (prefilled from the account email, changeable like a name), plus an optional phone. Default show/hide for email, phone, picture, location, LinkedIn, and portfolio lives on the profile so new applications start from a preference, not a guess. Create and edit still only choose what this page includes; `/view` shows what was snapshotted. Field inventory: [CREATE_FORM_FIELD_TRIM.md](../product/CREATE_FORM_FIELD_TRIM.md).
+
+---
+
+## 25 November 2026
+
+Closed the remaining F41 gap: Publish on a filled create/draft form went live without a way to see the page first (especially before the first save, when there is no share URL to open). **Preview** opens an in-form recruiter preview from current form values (look-only; close with the X). Footer **Publish** goes live directly — routing both buttons through preview confused people who expected Publish to publish. Dashboard / draft-banner Preview stays the saved-page path.
+
+Feedback then caught that asterisks and the footer only taught the draft bar — Publish hid until ready, so people never learned publishing needs a résumé and video. Asterisks on create/draft now mean save-required only (Company, Role). **Publish** stays visible but disabled with a **To publish, add…** line; the intro states both bars in plain language.
+
+Same session we started standardizing product language on **Résumé** instead of CV on the create/edit surface, with `F42-130` left for the rest of the app.

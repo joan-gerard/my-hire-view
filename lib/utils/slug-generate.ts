@@ -118,3 +118,19 @@ export function isCustomSlug(
   if (!trimmed) return false;
   return trimmed !== buildSlug(company, role, order);
 }
+
+/**
+ * Whether create/edit should expand “How the link reads” and “Link ending”.
+ * Open when the ending was customized or segment order is not the default.
+ */
+export function shouldOpenLinkCustomize({
+  slugManuallyEdited,
+  slugSegmentOrder,
+}: {
+  slugManuallyEdited: boolean;
+  slugSegmentOrder: SlugSegmentOrder;
+}): boolean {
+  return (
+    slugManuallyEdited || slugSegmentOrder !== SLUG_SEGMENT_ORDER_DEFAULT
+  );
+}

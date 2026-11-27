@@ -17,6 +17,11 @@ import {
   tryAcquireUserProfilePictureSlot,
 } from "@/lib/rate-limit";
 import {
+  hasVisibleRecruiterContact,
+  RECRUITER_CONTACT_PROFILE_WARNING,
+  resolveApplicationContactEmail,
+} from "@/lib/utils/profile-contact";
+import {
   formatProfileUpdateZodError,
   PROFILE_NAME_MAX_LENGTH,
   profileUpdateSchema,
@@ -173,6 +178,42 @@ export async function PUT(request: NextRequest) {
           ? (body.linkedin_url ?? null)
           : (existing?.linkedin_url ?? null),
       profile_picture_url: newPictureUrl,
+      contact_email:
+        body.contact_email !== undefined
+          ? (body.contact_email ?? null)
+          : (existing?.contact_email ?? null),
+      phone:
+        body.phone !== undefined
+          ? (body.phone ?? null)
+          : (existing?.phone ?? null),
+      default_show_email:
+        body.default_show_email !== undefined
+          ? body.default_show_email
+          : (existing?.default_show_email ?? true),
+      default_show_phone:
+        body.default_show_phone !== undefined
+          ? body.default_show_phone
+          : (existing?.default_show_phone ?? true),
+      default_show_profile_picture:
+        body.default_show_profile_picture !== undefined
+          ? body.default_show_profile_picture
+          : (existing?.default_show_profile_picture ?? true),
+      default_show_location:
+        body.default_show_location !== undefined
+          ? body.default_show_location
+          : (existing?.default_show_location ?? true),
+      default_show_linkedin:
+        body.default_show_linkedin !== undefined
+          ? body.default_show_linkedin
+          : (existing?.default_show_linkedin ?? true),
+      default_show_portfolio:
+        body.default_show_portfolio !== undefined
+          ? body.default_show_portfolio
+          : (existing?.default_show_portfolio ?? true),
+      collapse_about_you:
+        body.collapse_about_you !== undefined
+          ? body.collapse_about_you
+          : (existing?.collapse_about_you ?? true),
     };
 
     const firstName =
@@ -209,6 +250,26 @@ export async function PUT(request: NextRequest) {
     }
     merged.first_name = firstName;
     merged.last_name = lastName;
+
+    const effectiveContactEmail = resolveApplicationContactEmail(
+      { contact_email: merged.contact_email as string | null },
+      user.email,
+    );
+    if (
+      !hasVisibleRecruiterContact({
+        email: effectiveContactEmail,
+        phone: merged.phone as string | null,
+        linkedin_url: merged.linkedin_url as string | null,
+        showEmail: Boolean(merged.default_show_email),
+        showPhone: Boolean(merged.default_show_phone),
+        showLinkedin: Boolean(merged.default_show_linkedin),
+      })
+    ) {
+      return NextResponse.json(
+        { error: RECRUITER_CONTACT_PROFILE_WARNING },
+        { status: 400 },
+      );
+    }
 
     const { data, error } = await supabase
       .from("profiles")

@@ -4,6 +4,7 @@ import {
   generateSlug,
   buildSlug,
   isCustomSlug,
+  shouldOpenLinkCustomize,
   SLUG_MAX_LENGTH,
 } from "@/lib/utils/slug-generate";
 
@@ -224,5 +225,37 @@ describe("isCustomSlug", () => {
 
   it("trims before comparing", () => {
     expect(isCustomSlug("  volvo-engineer  ", "Volvo", "Engineer")).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// shouldOpenLinkCustomize
+// ---------------------------------------------------------------------------
+describe("shouldOpenLinkCustomize", () => {
+  it("stays collapsed for the default auto link", () => {
+    expect(
+      shouldOpenLinkCustomize({
+        slugManuallyEdited: false,
+        slugSegmentOrder: "company_role",
+      }),
+    ).toBe(false);
+  });
+
+  it("opens when the ending was customized", () => {
+    expect(
+      shouldOpenLinkCustomize({
+        slugManuallyEdited: true,
+        slugSegmentOrder: "company_role",
+      }),
+    ).toBe(true);
+  });
+
+  it("opens when segment order is not the default", () => {
+    expect(
+      shouldOpenLinkCustomize({
+        slugManuallyEdited: false,
+        slugSegmentOrder: "role_company",
+      }),
+    ).toBe(true);
   });
 });

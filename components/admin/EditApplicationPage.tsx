@@ -1,0 +1,299 @@
+"use client";
+
+/**
+ * Edit application — same one-page form layout as `/admin/new`.
+ */
+
+import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
+import ApplicationForm, {
+  type ApplicationFormInitialData,
+} from "@/components/forms/ApplicationForm";
+import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
+import { createClient } from "@/lib/supabase/client";
+import type { Application, ApplicationFormData } from "@/lib/types/application";
+import type { Profile } from "@/lib/types/profile";
+import { resolveApplicationContactEmail } from "@/lib/utils/profile-contact";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+
+export default function EditApplicationPage() {
+  const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+  const idRef = useRef(id);
+  idRef.current = id;
+  const [application, setApplication] = useState<Application | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [publicId, setPublicId] = useState<string | null>(null);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [profileSettled, setProfileSettled] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadApplication() {
+      try {
+        setFetching(true);
+        const response = await fetch(`/api/applications/by-id/${id}`);
+        if (cancelled) return;
+        if (!response.ok) {
+          if (response.status === 404) {
+            router.push("/admin");
+            return;
+          }
+          throw new Error("Failed to fetch application");
+        }
+        const { data } = await response.json();
+        if (cancelled) return;
+        setApplication(data);
+      } catch (err) {
+        if (cancelled) return;
+        alert(
+          err instanceof Error ? err.message : "Failed to fetch application",
+        );
+        router.push("/admin");
+      } finally {
+        if (!cancelled) setFetching(false);
+      }
+    }
+
+    loadApplication();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadProfile() {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!cancelled && user?.email) {
+          setAccountEmail(user.email);
+        }
+
+        const res = await fetch("/api/profile", { credentials: "include" });
+        const json = await res.json().catch(() => ({}));
+        if (!cancelled && json.data) {
+          setProfile(json.data);
+          if (typeof json.data.public_id === "string") {
+            setPublicId(json.data.public_id);
+          }
+          return;
+        }
+        if (!cancelled && user) {
+          const pid = publicIdFromUserMetadata(user);
+          if (pid) setPublicId(pid);
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setProfileSettled(true);
+      }
+    }
+    loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /**
+   * Re-check whether the saved CV is still in storage, without a full-page load.
+   * Returns false when the file is still missing so the form can say so.
+   * A response for a previous id is ignored after the route changes.
+   */
+  const refetchCvCheck = async (): Promise<boolean> => {
+    const requestedId = idRef.current;
+    const response = await fetch(`/api/applications/by-id/${requestedId}`);
+    if (!response.ok) {
+      throw new Error("Could not check the CV.");
+    }
+    const { data } = await response.json();
+    if (idRef.current !== requestedId) {
+      return data?.cv_exists !== false;
+    }
+    setApplication(data);
+    return data?.cv_exists !== false;
+  };
+
+  const handleSubmit = async (data: ApplicationFormData) => {
+    try {
+      setLoading(true);
+
+      // Manual edits are validated by ApplicationForm (/api/slug/validate); keep them.
+      // Auto mode: if company/role/segment order changed, re-derive via /api/slug.
+      const savedOrder = application?.slug_segment_order ?? "company_role";
+      const slugOrPreferenceChanged =
+        data.slug !== application?.slug ||
+        (data.slugSegmentOrder ?? "company_role") !== savedOrder;
+      let slug = data.slug.trim();
+      if (slugOrPreferenceChanged && data.slugManuallyEdited !== true) {
+        const slugResponse = await fetch("/api/slug", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            company: data.company,
+            role: data.role,
+            excludeId: id,
+            slugSegmentOrder: data.slugSegmentOrder ?? "company_role",
+          }),
+        });
+
+        if (!slugResponse.ok) {
+          const errJson: { error?: string } = await slugResponse
+            .json()
+            .catch(() => ({}));
+          throw new Error(errJson.error || "Failed to generate slug");
+        }
+
+        const { slug: uniqueSlug } = await slugResponse.json();
+        if (typeof uniqueSlug !== "string" || !uniqueSlug.trim()) {
+          throw new Error("Failed to generate slug");
+        }
+        slug = uniqueSlug.trim();
+      }
+
+      const { slugManuallyEdited, ...dataForApi } = data;
+      void slugManuallyEdited;
+      const publishNow = data.status === "active";
+
+      const response = await fetch("/api/applications", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          ...dataForApi,
+          slug,
+          ...(publishNow ? { status: "active" } : {}),
+        }),
+      });
+
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error || "Failed to update application");
+      }
+
+      const json: { data?: Application } = await response
+        .json()
+        .catch(() => ({}));
+
+      if (publishNow) {
+        const shareSlug =
+          (typeof json.data?.slug === "string" && json.data.slug.trim()) ||
+          slug;
+        if (publicId && shareSlug) {
+          router.push(`/view/${publicId}/${shareSlug}`);
+        } else {
+          router.push("/admin");
+        }
+        return;
+      }
+
+      if (json.data) {
+        setApplication((prev) => {
+          if (!prev) return json.data!;
+          const next = json.data!;
+          const cvUrlChanged = (next.cv_url ?? "") !== (prev.cv_url ?? "");
+          return {
+            ...prev,
+            ...next,
+            // PUT returns the row without cv_exists; keep or infer from URL change.
+            cv_exists: next.cv_url
+              ? cvUrlChanged
+                ? true
+                : prev.cv_exists
+              : undefined,
+          };
+        });
+      }
+    } catch (err) {
+      alert(
+        err instanceof Error ? err.message : "Failed to update application",
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetching || !profileSettled) {
+    return <AdminPageSkeleton variant="create" />;
+  }
+
+  if (!application) {
+    return null;
+  }
+
+  // Identity text comes from the live profile. Include flags come from
+  // whether this application currently stores a value (hidden means null).
+  const identity = profile ?? application;
+  const resolvedEmail =
+    resolveApplicationContactEmail(profile, accountEmail) ??
+    application.email ??
+    "";
+  const resolvedPhone = profile?.phone ?? application.phone ?? "";
+  const initialData: ApplicationFormInitialData = {
+    company: application.company,
+    role: application.role,
+    slug: application.slug,
+    cv_url: application.cv_url,
+    video_url: application.video_url,
+    first_name: identity.first_name ?? undefined,
+    last_name: identity.last_name ?? undefined,
+    email: resolvedEmail,
+    phone: resolvedPhone,
+    location: identity.location ?? undefined,
+    portfolio_url: identity.portfolio_url ?? undefined,
+    linkedin_url: identity.linkedin_url ?? undefined,
+    slugSegmentOrder: application.slug_segment_order ?? "company_role",
+    cv_filename: application.cv_filename ?? null,
+    use_original_cv_filename: false,
+    cvUrlExists: application.cv_exists,
+    show_profile_picture: application.show_profile_picture ?? false,
+    cv_type: application.cv_type ?? "tailored",
+    primary_cv_id: application.primary_cv_id ?? null,
+    status: application.status,
+  };
+
+  return (
+    <div className="mx-auto w-full max-w-2xl">
+      <ApplicationForm
+        initialData={initialData}
+        onSubmit={handleSubmit}
+        loading={loading}
+        onRetryCvCheck={refetchCvCheck}
+        profilePictureUrl={
+          profile
+            ? (profile.profile_picture_url ?? null)
+            : (application.profile_picture_url ?? null)
+        }
+        profilePictureVersion={profile?.updated_at ?? null}
+        initialInclude={{
+          first_name: true,
+          last_name: true,
+          email: Boolean(application.email?.trim()),
+          phone: Boolean(application.phone?.trim()),
+          location: Boolean(application.location?.trim()),
+          portfolio_url: Boolean(application.portfolio_url?.trim()),
+          linkedin_url: Boolean(application.linkedin_url?.trim()),
+        }}
+        publicId={publicId ?? undefined}
+        slugExcludeApplicationId={id}
+        submitLabel={
+          application.status === "draft" ? "Save Draft" : "Save application"
+        }
+        collapseAboutYou={profile?.collapse_about_you !== false}
+      />
+    </div>
+  );
+}

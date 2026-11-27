@@ -1,5 +1,5 @@
 /**
- * Step map for the create/edit application wizard.
+ * Step map for create/edit application forms (split edit bands and error routing).
  * Order: Role & share URL → Candidate → CV → Video → Review/save.
  */
 
@@ -60,7 +60,7 @@ export function applicationFormStepForErrors(
 
 export type ApplicationFormStepDef = {
   id: ApplicationFormStepId;
-  /** Full section / wizard title */
+  /** Full section title */
   title: string;
   /** Short label for progress chips */
   shortLabel: string;
@@ -80,13 +80,14 @@ export const APPLICATION_FORM_STEPS: readonly ApplicationFormStepDef[] = [
     id: "candidate",
     title: "About you",
     shortLabel: "You",
-    description: "What recruiters see about you on this application.",
+    description:
+      "From your profile. Choose what recruiters see on this page. Change details on Profile.",
   },
   {
     id: "materials",
-    title: "CV",
-    shortLabel: "CV",
-    description: "Attach a primary or tailored CV for this role.",
+    title: "Résumé",
+    shortLabel: "Résumé",
+    description: "Attach a library or tailored résumé for this role.",
   },
   {
     id: "video",
@@ -101,40 +102,3 @@ export const APPLICATION_FORM_STEPS: readonly ApplicationFormStepDef[] = [
     description: "Check the essentials, then save when everything is ready.",
   },
 ] as const;
-
-export function applicationFormStepIndex(
-  id: ApplicationFormStepId,
-): number {
-  return APPLICATION_FORM_STEP_IDS.indexOf(id);
-}
-
-/**
- * Wizard progress-pill reachability.
- * Create uses a Continue frontier; edit allows every step.
- */
-export function isWizardStepReachable(
-  stepIndex: number,
-  furthestIndex: number,
-  allowAllSteps: boolean,
-): boolean {
-  if (allowAllSteps) return true;
-  return stepIndex <= furthestIndex;
-}
-
-/**
- * Wizard progress-pill "done" mark.
- * Create: before the furthest step reached via Continue, and still ready.
- * Going back does not clear ticks on steps already passed.
- * Edit (`allowAllSteps`): every ready step is already saved, so it stays done
- * until Role, CV, or Video is cleared.
- */
-export function isWizardStepCompleted(
-  stepIndex: number,
-  furthestIndex: number,
-  stepReady: boolean,
-  allowAllSteps = false,
-): boolean {
-  if (!stepReady) return false;
-  if (allowAllSteps) return true;
-  return stepIndex < furthestIndex;
-}

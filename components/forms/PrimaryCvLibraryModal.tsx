@@ -11,16 +11,26 @@ export interface PrimaryCvLibraryModalProps {
   onClose: () => void;
   /** Fired when the library list changes (load / upload / delete). */
   onLibraryChange: (items: PrimaryCv[]) => void;
+  /**
+   * Library already known on the form. Pass `[]` when empty so the modal does
+   * not flash Loading… before the refresh finishes.
+   */
+  initialItems?: PrimaryCv[];
+  selectedPrimaryId?: string | null;
+  onSelectPrimary?: (id: string) => void;
 }
 
 /**
- * Modal to manage the primary CV library from application new/edit flows
+ * Modal to manage the résumé library from application new/edit flows
  * so users need not leave for /admin/profile.
  */
 export default function PrimaryCvLibraryModal({
   open,
   onClose,
   onLibraryChange,
+  initialItems,
+  selectedPrimaryId = null,
+  onSelectPrimary,
 }: PrimaryCvLibraryModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -70,17 +80,23 @@ export default function PrimaryCvLibraryModal({
             id={titleId}
             className="font-heading text-lg font-semibold tracking-[-0.02em]"
           >
-            Primary CV library
+            Résumé library
           </h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             Upload up to {PRIMARY_CV_MAX_PER_USER} résumé PDFs to reuse across
             applications. Changes are saved to your library immediately.
+            {onSelectPrimary
+              ? " Select one for this application below."
+              : null}
           </p>
         </div>
 
         {open && (
           <PrimaryCvLibrarySection
             embedded
+            initialItems={initialItems}
+            selectedId={selectedPrimaryId}
+            onSelect={onSelectPrimary}
             onLibraryChange={onLibraryChange}
             onMutationBusyChange={setMutationBusy}
           />

@@ -6,10 +6,10 @@ import type {
   ApplicationFormData,
 } from "@/lib/types/application";
 import type { PrimaryCv } from "@/lib/types/primary-cv";
-import { roleChecklistSummary } from "@/lib/utils/role-checklist-summary";
 import {
   buildSlug,
   isCustomSlug,
+  shouldOpenLinkCustomize,
   SLUG_SEGMENT_ORDER_DEFAULT,
   validateSlugFormat,
 } from "@/lib/utils/slug-generate";
@@ -34,48 +34,143 @@ import {
   type CreateApplicationDraft,
 } from "@/lib/utils/create-application-draft";
 import {
+  applicationFormDirtySnapshot,
+  hasApplicationFormDirtyChanges,
+} from "@/lib/utils/application-form-dirty";
+import { buildApplicationFormPreview } from "@/lib/utils/application-form-preview";
+import {
   hasLeaveRelevantDraftChanges,
   leaveRelevantDraftSnapshot,
 } from "@/lib/utils/leave-confirm";
 import { useLeaveConfirm } from "@/hooks/useLeaveConfirm";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import ApplicationFormActions from "./ApplicationFormActions";
-import ApplicationFormChecklistLayout, {
-  type ChecklistChapter,
-  type ChecklistChapterId,
-} from "./ApplicationFormChecklistLayout";
-import ApplicationFormSplitLayout from "./ApplicationFormSplitLayout";
-import ApplicationFormWizardLayout from "./ApplicationFormWizardLayout";
+import ApplicationFormPreviewDialog from "./ApplicationFormPreviewDialog";
+import ApplicationFormSinglePageLayout, {
+  ApplicationFormFieldRow,
+  FIELD_IDLE_TIP,
+  FIELD_READY_TIP,
+  PROFILE_EMPTY_TIP,
+  PROFILE_INITIAL_DATA_TIP,
+  type ApplicationFormPageRow,
+} from "./ApplicationFormSinglePageLayout";
 import {
   applicationFormStepForErrors,
-  applicationFormStepIndex,
   type ApplicationFormStepId,
 } from "./application-form-steps";
 import CandidateFieldsSection, {
+  EditProfileLink,
   type CandidateFieldKey,
 } from "./CandidateFieldsSection";
-import ApplicationReviewPreview from "./ApplicationReviewPreview";
-import ApplicationReviewSummary from "./ApplicationReviewSummary";
 import CvSourceField from "./CvSourceField";
-import SlugSegmentOrderField, {
-  type SlugSegmentOrder,
-} from "./SlugSegmentOrderField";
 import ProfilePictureField from "./ProfilePictureField";
-import ShareUrlPreview from "./ShareUrlPreview";
-import YouTubeUrlInput from "./YouTubeUrlInput";
+import YouTubeUrlInput, {
+  type YouTubeFieldStatus,
+} from "./YouTubeUrlInput";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { FiAlertCircle, FiCheck, FiRefreshCw } from "react-icons/fi";
+import AdminTooltip from "@/components/admin/AdminTooltip";
+import { BrokenLinkIcon, CopyIcon } from "@/components/admin/icons";
+import SlugOrderDropdown from "./SlugOrderDropdown";
+import { copyToClipboard } from "@/lib/utils/clipboard";
+import type { SlugSegmentOrder } from "@/lib/utils/slug-generate";
+import { getApplicationUrl, getBaseUrl } from "@/lib/utils/url";
+import { validateYouTubeUrl } from "@/lib/utils/youtube";
+import { YOUTUBE_UNAVAILABLE_MESSAGE } from "@/lib/utils/youtube-preview";
+import {
+  buildAboutYouSummary,
+  shouldCollapseAboutYouByDefault,
+} from "@/lib/utils/about-you-summary";
+import {
+  hasVisibleRecruiterContact,
+  RECRUITER_CONTACT_APPLICATION_WARNING,
+  RECRUITER_CONTACT_BLOCKER_NAME,
+  RECRUITER_CONTACT_PUBLISH_NOTE,
+} from "@/lib/utils/profile-contact";
+import { FiAlertCircle } from "react-icons/fi";
 
 function hasValue(v: string | null | undefined): boolean {
   return v != null && String(v).trim() !== "";
+}
+
+function checklistErrorTarget(
+  errors: Partial<Record<keyof ApplicationFormData, string>>,
+): { rowId: string; inputId?: string } | null {
+  if (errors.company) {
+    return { rowId: "application-row-company", inputId: "application-company" };
+  }
+  if (errors.role) {
+    return { rowId: "application-row-role", inputId: "application-role" };
+  }
+  if (errors.slug) {
+    return { rowId: "application-row-ending", inputId: "application-slug" };
+  }
+  if (errors.first_name) {
+    return {
+      rowId: "application-row-first_name",
+      inputId: "application-first-name",
+    };
+  }
+  if (errors.last_name) {
+    return {
+      rowId: "application-row-last_name",
+      inputId: "application-last-name",
+    };
+  }
+  if (errors.location) {
+    return { rowId: "application-row-location", inputId: "application-location" };
+  }
+  if (errors.linkedin_url) {
+    return {
+      rowId: "application-row-linkedin_url",
+      inputId: "application-linkedin_url",
+    };
+  }
+  if (errors.portfolio_url) {
+    return {
+      rowId: "application-row-portfolio_url",
+      inputId: "application-portfolio_url",
+    };
+  }
+  if (errors.cv_url || errors.cv_filename) {
+    return { rowId: "application-row-resume" };
+  }
+  if (errors.video_url) {
+    return { rowId: "application-row-pitch", inputId: "application-video" };
+  }
+  const step = applicationFormStepForErrors(errors);
+  if (step === "materials") return { rowId: "application-row-resume" };
+  if (step === "video") {
+    return { rowId: "application-row-pitch", inputId: "application-video" };
+  }
+  if (step === "candidate") return { rowId: "application-section-about" };
+  if (step === "role") {
+    return { rowId: "application-row-company", inputId: "application-company" };
+  }
+  return null;
+}
+
+/** Scroll a create-form row into view and focus its control. */
+function focusApplicationRow(rowId: string, inputId?: string) {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const row = document.getElementById(rowId);
+  row?.scrollIntoView({
+    behavior: reduce ? "auto" : "smooth",
+    block: "center",
+  });
+  const target =
+    (inputId ? document.getElementById(inputId) : null) ??
+    row?.querySelector<HTMLElement>("input, textarea, select");
+  target?.focus();
 }
 
 function defaultInclude(
   initialData?: Partial<ApplicationFormData>,
 ): Record<CandidateFieldKey, boolean> {
   return {
-    first_name: hasValue(initialData?.first_name),
-    last_name: hasValue(initialData?.last_name),
+    first_name: true,
+    last_name: true,
+    email: hasValue(initialData?.email),
+    phone: hasValue(initialData?.phone),
     location: hasValue(initialData?.location),
     portfolio_url: hasValue(initialData?.portfolio_url),
     linkedin_url: hasValue(initialData?.linkedin_url),
@@ -84,6 +179,8 @@ function defaultInclude(
 
 /** initialData can include application row fields used to seed form state. */
 export type ApplicationFormInitialData = Partial<ApplicationFormData> & {
+  /** Saved application status — active edits keep the full publish-ready gate. */
+  status?: "active" | "draft" | "archived";
   cvUrlExists?: boolean;
   /** Stored preference: show profile picture on this application. */
   show_profile_picture?: boolean;
@@ -98,24 +195,36 @@ type SlugLiveStatus =
   | { kind: "invalid"; message: string }
   | { kind: "unavailable"; message: string };
 
+export type ApplicationSubmitOptions = {
+  /**
+   * Create only: when false, persist the draft without navigating away
+   * (leave-confirm Save Draft). Defaults to true.
+   */
+  navigate?: boolean;
+};
+
 interface ApplicationFormProps {
   initialData?: ApplicationFormInitialData;
-  onSubmit: (data: ApplicationFormData) => Promise<void>;
+  onSubmit: (
+    data: ApplicationFormData,
+    options?: ApplicationSubmitOptions,
+  ) => Promise<{ id?: string } | void>;
   loading?: boolean;
-  /** Primary submit button label. Create uses “Save draft & preview”. */
+  /** Primary submit button label. Create uses “Save Draft”. */
   submitLabel?: string;
   /** When provided, passed to FileUpload so user can re-check CV existence (edit page). */
   /** Resolves false when the saved CV is still missing from storage. */
   onRetryCvCheck?: () => Promise<boolean | void>;
-  /** Profile picture URL; when set, Yes/No toggle is enabled; when null, toggle is disabled with No selected. */
+  /** Profile picture URL. Show/Hide appears only when this is set. */
   profilePictureUrl?: string | null;
   /** Cache-bust key for the live profile picture (e.g. profiles.updated_at). */
   profilePictureVersion?: string | null;
-  /** When set, the field offers Add/Manage picture via a modal (new/edit flows). */
-  onProfilePictureSaved?: (result: {
-    url: string | null;
-    updated_at?: string | null;
-  }) => void;
+  /**
+   * Which optional profile fields this application currently shares.
+   * Names are always shared. Edit passes this from the saved row so a
+   * hidden location stays hidden even when the live profile has a value.
+   */
+  initialInclude?: Partial<Record<CandidateFieldKey, boolean>>;
   /** Opaque public id for share URL preview (from profile or auth metadata). */
   publicId?: string;
   /**
@@ -134,9 +243,10 @@ interface ApplicationFormProps {
    */
   persistDraftKey?: string;
   /**
-   * `checklist` is `/admin/new`. `split` is the edit page. `wizard` is parked.
+   * Profile preference: collapse About you after the first live application.
+   * Defaults to true when omitted.
    */
-  presentation?: "wizard" | "split" | "checklist";
+  collapseAboutYou?: boolean;
 }
 
 export default function ApplicationForm({
@@ -147,37 +257,21 @@ export default function ApplicationForm({
   onRetryCvCheck,
   profilePictureUrl,
   profilePictureVersion,
-  onProfilePictureSaved,
+  initialInclude,
   publicId,
   slugExcludeApplicationId,
   resolveSlugOnCreate = false,
   persistDraftKey,
-  presentation = "wizard",
+  collapseAboutYou = true,
 }: ApplicationFormProps) {
   const serverSlugValidation = Boolean(slugExcludeApplicationId);
   const isEdit = Boolean(slugExcludeApplicationId);
   const hasProfilePicture = Boolean(profilePictureUrl?.trim());
-  const [currentStepId, setCurrentStepId] =
-    useState<ApplicationFormStepId>("role");
-  /** Bumps when a failed save should scroll the split layout to that band. */
-  const [errorScroll, setErrorScroll] = useState<{
-    stepId: ApplicationFormStepId;
-    nonce: number;
-  } | null>(null);
-  /**
-   * Edit of a missing CV file: the replacement does not count as done until
-   * Continue. Stores the choice that was confirmed, so a later swap waits again.
-   */
-  const [confirmedMissingCvKey, setConfirmedMissingCvKey] = useState<
-    string | null
-  >(null);
-  /** Review tick after a successful save. Navigation usually leaves before it shows. */
-  const [reviewSaved, setReviewSaved] = useState(false);
-  /** Create wizard: furthest step unlocked via Continue (survives Back). */
-  const [furthestStepId, setFurthestStepId] =
-    useState<ApplicationFormStepId>("role");
-  /** Checklist create: slug order and ending stay behind Edit link. */
-  const [linkOpen, setLinkOpen] = useState(false);
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  /** Leave-confirm Save Draft button: idle or saving (then leave to pending). */
+  const [leaveDialogSave, setLeaveDialogSave] = useState<"idle" | "saving">(
+    "idle",
+  );
 
   /** Load once per mount; ignore later key changes while the form is open. */
   const restoredDraftRef = useRef<CreateApplicationDraft | null | undefined>(
@@ -202,10 +296,10 @@ export default function ApplicationForm({
   );
   /** After a successful create, ignore further draft writes (F15-045). */
   const skipDraftSaveRef = useRef(false);
-  /** Disarm leave confirm after discard or successful save. */
-  const [leaveGuardArmed, setLeaveGuardArmed] = useState(
-    Boolean(persistDraftKey),
-  );
+  /** Disarm leave confirm after discard or successful navigating save. */
+  const [leaveGuardArmed, setLeaveGuardArmed] = useState(true);
+  /** Edit: baseline of last saved values — Save stays off until something changes. */
+  const editBaselineRef = useRef<string | null>(null);
   /** True when mount restored a non-blank draft (cleared once the form is blank again). */
   const hadRestoredDraftRef = useRef(
     Boolean(restoredDraft && !isCreateApplicationDraftBlank(restoredDraft)),
@@ -230,26 +324,48 @@ export default function ApplicationForm({
     slug: restoredDraft?.slug || initialData?.slug || "",
     cv_url: initialData?.cv_url || "",
     video_url: restoredDraft?.video_url || initialData?.video_url || "",
-    first_name:
-      restoredDraft?.first_name ?? initialData?.first_name ?? "",
-    last_name: restoredDraft?.last_name ?? initialData?.last_name ?? "",
-    location: restoredDraft?.location ?? initialData?.location ?? "",
-    portfolio_url:
-      restoredDraft?.portfolio_url ?? initialData?.portfolio_url ?? "",
-    linkedin_url:
-      restoredDraft?.linkedin_url ?? initialData?.linkedin_url ?? "",
+    first_name: initialData?.first_name ?? "",
+    last_name: initialData?.last_name ?? "",
+    email: initialData?.email ?? "",
+    phone: initialData?.phone ?? "",
+    location: initialData?.location ?? "",
+    portfolio_url: initialData?.portfolio_url ?? "",
+    linkedin_url: initialData?.linkedin_url ?? "",
     cv_filename: initialData?.cv_filename ?? null,
     use_original_cv_filename:
       restoredDraft?.use_original_cv_filename ??
       initialData?.use_original_cv_filename ??
-      true,
+      false,
     cv_type: restoredDraft?.cvMode ?? initialData?.cv_type,
     primary_cv_id:
       restoredDraft?.selectedPrimaryId ?? initialData?.primary_cv_id ?? null,
   });
 
   const [include, setInclude] = useState<Record<CandidateFieldKey, boolean>>(
-    () => restoredDraft?.include ?? defaultInclude(initialData),
+    () => {
+      const fallback = defaultInclude(initialData);
+      const base = restoredDraft?.include ?? fallback;
+      const fromDraft = Boolean(restoredDraft?.include);
+      return {
+        first_name: true,
+        last_name: true,
+        email: fromDraft
+          ? base.email
+          : (initialInclude?.email ?? fallback.email),
+        phone: fromDraft
+          ? base.phone
+          : (initialInclude?.phone ?? fallback.phone),
+        location: fromDraft
+          ? base.location
+          : (initialInclude?.location ?? fallback.location),
+        portfolio_url: fromDraft
+          ? base.portfolio_url
+          : (initialInclude?.portfolio_url ?? fallback.portfolio_url),
+        linkedin_url: fromDraft
+          ? base.linkedin_url
+          : (initialInclude?.linkedin_url ?? fallback.linkedin_url),
+      };
+    },
   );
 
   const [slugSegmentOrder, setSlugSegmentOrder] = useState<SlugSegmentOrder>(
@@ -273,6 +389,26 @@ export default function ApplicationForm({
       initialData?.slugSegmentOrder ?? SLUG_SEGMENT_ORDER_DEFAULT,
     );
   });
+  /**
+   * Advanced link controls (order + ending) stay collapsed unless the link is
+   * already customized, the user opens Customize link, or a link error appears.
+   */
+  const [linkCustomizeOpen, setLinkCustomizeOpen] = useState(() =>
+    shouldOpenLinkCustomize({
+      slugManuallyEdited: restoredDraft
+        ? restoredDraft.slugManuallyEdited
+        : isCustomSlug(
+            initialData?.slug ?? "",
+            initialData?.company ?? "",
+            initialData?.role ?? "",
+            initialData?.slugSegmentOrder ?? SLUG_SEGMENT_ORDER_DEFAULT,
+          ),
+      slugSegmentOrder:
+        restoredDraft?.slugSegmentOrder ??
+        initialData?.slugSegmentOrder ??
+        SLUG_SEGMENT_ORDER_DEFAULT,
+    }),
+  );
   const slugManuallyEditedRef = useRef(false);
   slugManuallyEditedRef.current = slugManuallyEdited;
   /**
@@ -287,9 +423,6 @@ export default function ApplicationForm({
   const [slugPinned, setSlugPinned] = useState(
     () => isEdit && Boolean((initialData?.slug ?? "").trim()),
   );
-  const [previewNonce, setPreviewNonce] = useState(0);
-  const resumePreviewTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const [reviewSummaryOpen, setReviewSummaryOpen] = useState(true);
   /** File selected but not yet uploaded (upload happens on submit). */
   const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
   /** True while SHA-256 digest of the pending CV is in flight. */
@@ -301,6 +434,12 @@ export default function ApplicationForm({
   const [submitPhase, setSubmitPhase] = useState<"idle" | "uploading" | "saving">(
     "idle",
   );
+  /** Which footer action is in flight — drives Save vs Publish busy labels. */
+  const [submitIntent, setSubmitIntent] = useState<"save" | "publish" | null>(
+    null,
+  );
+  /** In-form recruiter preview before Publish (F41-127). */
+  const [previewOpen, setPreviewOpen] = useState(false);
   const isSubmittingRef = useRef(false);
   const uploadedPendingFileRef = useRef<{
     signature: string;
@@ -346,9 +485,62 @@ export default function ApplicationForm({
   selectedPrimaryIdRef.current = selectedPrimaryId;
   const [switchToPrimaryConfirmOpen, setSwitchToPrimaryConfirmOpen] =
     useState(false);
+  /** YouTube URL format + oEmbed embeddability (private / blocked embeds fail). */
+  const [videoStatus, setVideoStatus] = useState<YouTubeFieldStatus>(() => {
+    const initial = (initialData?.video_url ?? "").trim();
+    if (!initial) return { kind: "empty" };
+    return validateYouTubeUrl(initial)
+      ? { kind: "checking" }
+      : { kind: "invalid_url" };
+  });
+  /**
+   * Live (active) apps for the account — About you collapses only after the
+   * first publish (drafts alone do not count).
+   */
+  const [liveApplicationCount, setLiveApplicationCount] = useState<
+    number | null
+  >(null);
+  const [aboutYouExpanded, setAboutYouExpanded] = useState(true);
+  const aboutYouExpandUserChosenRef = useRef(false);
   /** Tracks whether the current edit still has an unsaved tailored file that would be abandoned. */
   const hadTailoredCvOnLoad =
     initialData?.cv_type === "tailored" && Boolean(initialData?.cv_url?.trim());
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadLiveApplicationCount() {
+      try {
+        const res = await fetch("/api/applications/counts", {
+          credentials: "include",
+        });
+        if (!res.ok || cancelled) return;
+        const json = (await res.json().catch(() => ({}))) as {
+          data?: { active?: number };
+        };
+        const active =
+          typeof json.data?.active === "number" && json.data.active >= 0
+            ? json.data.active
+            : 0;
+        if (!cancelled) setLiveApplicationCount(active);
+      } catch {
+        if (!cancelled) setLiveApplicationCount(0);
+      }
+    }
+    void loadLiveApplicationCount();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (aboutYouExpandUserChosenRef.current) return;
+    setAboutYouExpanded(
+      !shouldCollapseAboutYouByDefault({
+        liveApplicationCount,
+        collapseAboutYou,
+      }),
+    );
+  }, [liveApplicationCount, collapseAboutYou]);
 
   useEffect(() => {
     let cancelled = false;
@@ -366,14 +558,14 @@ export default function ApplicationForm({
         return;
       }
       setPrimaryCvsLoading(false);
-      // No list yet — unlock tailored upload when defaults would have applied.
+      // Keep library as the default (Free tier); user can still pick tailored.
       if (
         shouldApplyInitialCvModeDefault({
           hasSavedCvType: Boolean(initialData?.cv_type),
           userChoseCvMode: cvModeUserChosenRef.current,
         })
       ) {
-        setCvMode("tailored");
+        setCvMode("primary");
       }
     }, PRIMARY_CV_LOAD_TIMEOUT_MS);
 
@@ -416,7 +608,16 @@ export default function ApplicationForm({
               cv_type: "primary",
             }));
           } else {
-            setCvMode("tailored");
+            // Empty library: still default to primary (Free path); Manage library CTA shows.
+            setCvMode("primary");
+            setSelectedPrimaryId(null);
+            setFormData((prev) => ({
+              ...prev,
+              cv_url: "",
+              cv_filename: null,
+              primary_cv_id: null,
+              cv_type: "primary",
+            }));
           }
         } else if (!initialData?.cv_type) {
           // Draft / explicit choice: keep mode when possible; repair stale primary ids.
@@ -424,13 +625,12 @@ export default function ApplicationForm({
           if (cvModeRef.current === "primary") {
             if (list.length === 0) {
               setSelectedPrimaryId(null);
-              setCvMode("tailored");
               setFormData((prev) => ({
                 ...prev,
                 cv_url: "",
                 cv_filename: null,
                 primary_cv_id: null,
-                cv_type: "tailored",
+                cv_type: "primary",
               }));
             } else {
               const currentSelected = selectedPrimaryIdRef.current;
@@ -493,13 +693,12 @@ export default function ApplicationForm({
     if (list.length === 0) {
       setSelectedPrimaryId(null);
       if (cvMode === "primary") {
-        setCvMode("tailored");
         setFormData((prev) => ({
           ...prev,
           cv_url: "",
           cv_filename: null,
           primary_cv_id: null,
-          cv_type: "tailored",
+          cv_type: "primary",
         }));
       }
       return;
@@ -558,6 +757,8 @@ export default function ApplicationForm({
         video_url: formData.video_url,
         first_name: formData.first_name ?? "",
         last_name: formData.last_name ?? "",
+        email: formData.email ?? "",
+        phone: formData.phone ?? "",
         location: formData.location ?? "",
         portfolio_url: formData.portfolio_url ?? "",
         linkedin_url: formData.linkedin_url ?? "",
@@ -569,7 +770,7 @@ export default function ApplicationForm({
         cvMode,
         cvModeUserChosen: cvModeUserChosenRef.current,
         selectedPrimaryId,
-        use_original_cv_filename: formData.use_original_cv_filename ?? true,
+        use_original_cv_filename: formData.use_original_cv_filename ?? false,
       });
     }, 400);
     return () => window.clearTimeout(timer);
@@ -581,6 +782,8 @@ export default function ApplicationForm({
     formData.video_url,
     formData.first_name,
     formData.last_name,
+    formData.email,
+    formData.phone,
     formData.location,
     formData.portfolio_url,
     formData.linkedin_url,
@@ -601,6 +804,8 @@ export default function ApplicationForm({
     video_url: formData.video_url,
     first_name: formData.first_name ?? "",
     last_name: formData.last_name ?? "",
+    email: formData.email ?? "",
+    phone: formData.phone ?? "",
     location: formData.location ?? "",
     portfolio_url: formData.portfolio_url ?? "",
     linkedin_url: formData.linkedin_url ?? "",
@@ -612,10 +817,39 @@ export default function ApplicationForm({
     cvMode,
     cvModeUserChosen: cvModeUserChosenRef.current,
     selectedPrimaryId,
-    use_original_cv_filename: formData.use_original_cv_filename ?? true,
+    use_original_cv_filename: formData.use_original_cv_filename ?? false,
+  };
+  const editDirtyInput = {
+    company: formData.company,
+    role: formData.role,
+    slug: formData.slug,
+    video_url: formData.video_url,
+    first_name: formData.first_name ?? "",
+    last_name: formData.last_name ?? "",
+    location: formData.location ?? "",
+    portfolio_url: formData.portfolio_url ?? "",
+    linkedin_url: formData.linkedin_url ?? "",
+    email: formData.email ?? "",
+    phone: formData.phone ?? "",
+    includeEmail: include.email,
+    includePhone: include.phone,
+    includeLocation: include.location,
+    includePortfolio: include.portfolio_url,
+    includeLinkedin: include.linkedin_url,
+    slugSegmentOrder,
+    showProfilePicture,
+    cvMode,
+    selectedPrimaryId,
+    cv_url: formData.cv_url ?? "",
+    cv_filename: formData.cv_filename ?? null,
+    use_original_cv_filename: formData.use_original_cv_filename ?? false,
+    hasPendingCvFile: Boolean(cvPendingFile),
   };
   if (persistDraftKey && leaveBaselineRef.current === null) {
     leaveBaselineRef.current = leaveRelevantDraftSnapshot(draftSnapshot);
+  }
+  if (isEdit && editBaselineRef.current === null) {
+    editBaselineRef.current = applicationFormDirtySnapshot(editDirtyInput);
   }
   if (
     hadRestoredDraftRef.current &&
@@ -647,22 +881,36 @@ export default function ApplicationForm({
           leaveBaselineRef.current,
           draftSnapshot,
         )));
-  const leaveConfirmEnabled =
-    Boolean(persistDraftKey) && leaveGuardArmed && hasCreateProgress;
+  const hasEditProgress =
+    isEdit &&
+    editBaselineRef.current != null &&
+    hasApplicationFormDirtyChanges(
+      editBaselineRef.current,
+      editDirtyInput,
+    );
+  const hasLeaveProgress = hasCreateProgress || hasEditProgress;
+  const leaveConfirmEnabled = leaveGuardArmed && hasLeaveProgress;
 
-  const discardCreateDraft = () => {
-    if (!persistDraftKey) return;
-    skipDraftSaveRef.current = true;
+  const discardOnLeave = () => {
+    if (persistDraftKey) {
+      skipDraftSaveRef.current = true;
+      clearCreateApplicationDraft(persistDraftKey);
+    }
     setLeaveGuardArmed(false);
-    clearCreateApplicationDraft(persistDraftKey);
+    setLeaveDialogSave("idle");
   };
 
   const {
     open: leaveConfirmOpen,
     onConfirm: onConfirmLeave,
-    onCancel: onCancelLeave,
+    onCancel: onCancelLeaveFromHook,
     disarmForNavigation,
-  } = useLeaveConfirm(leaveConfirmEnabled, discardCreateDraft);
+  } = useLeaveConfirm(leaveConfirmEnabled, discardOnLeave);
+
+  useEffect(() => {
+    if (leaveConfirmOpen) return;
+    setLeaveDialogSave("idle");
+  }, [leaveConfirmOpen]);
 
   const hasCompany = Boolean(formData.company.trim());
   const hasRole = Boolean(formData.role.trim());
@@ -689,78 +937,71 @@ export default function ApplicationForm({
         selectedPrimaryId === (initialData.primary_cv_id ?? null)
       : cvMode === "tailored");
   const hasUsableCv = hasCv && !stillUsingMissingSavedCv;
-  const cvChoiceKey =
-    cvMode === "primary"
-      ? selectedPrimaryId
-        ? `primary:${selectedPrimaryId}`
-        : ""
-      : cvPendingFile
-        ? `tailored:${cvPendingFile.name}:${cvPendingFile.size}:${cvPendingFile.lastModified}`
-        : "";
-  const hasVideo = Boolean(formData.video_url.trim());
+  const hasValidVideo = videoStatus.kind === "ready";
+  const videoUrlEntered = Boolean(formData.video_url.trim());
+  /** Entered URL that failed format or oEmbed — blocks Save until fixed or cleared. */
+  const videoHardBlock =
+    videoUrlEntered &&
+    (videoStatus.kind === "invalid_url" ||
+      videoStatus.kind === "unavailable");
+  /** Still resolving oEmbed — Save may wait on submit. */
+  const videoStillChecking =
+    videoUrlEntered && videoStatus.kind === "checking";
   const savedSlug = (initialData?.slug ?? "").trim();
   const slugUnchangedFromSave =
     slugPinned && hasSlug && formData.slug.trim() === savedSlug;
   const slugReady =
     hasSlug &&
     (slugLiveStatus.kind === "available" || slugUnchangedFromSave);
-  /**
-   * Segment-order (and other auto) rechecks set status to "checking" while the
-   * previous slug is still in the field. Treat that as still complete for the
-   * progress bar so the check does not flicker off and back on.
-   * Save / Continue stay blocked until the new check is "available".
-   */
-  const slugHoldsStepComplete =
-    hasSlug &&
-    (slugReady || slugLiveStatus.kind === "checking");
-  /**
-   * Edit (and a restored draft) already know the primary CV id, but the library
-   * list starts empty. Keep the CV and Review ticks while that list loads.
-   * Continue / Save still use `hasCv`, so they wait until the id is confirmed
-   * or cleared if that primary was deleted.
-   */
-  const cvHoldsStepComplete =
-    hasCv ||
-    (!savedCvFileMissing &&
-      primaryCvsLoading &&
-      cvMode === "primary" &&
-      Boolean(selectedPrimaryId));
-  /**
-   * A missing saved file stays unchecked after a new primary or tailored file
-   * is chosen. Continue on the CV step is what marks that choice done.
-   */
-  const cvCountsForProgress = savedCvFileMissing
-    ? hasUsableCv &&
-      cvChoiceKey !== "" &&
-      confirmedMissingCvKey === cvChoiceKey
-    : cvHoldsStepComplete;
-  /**
-   * Review is not a Continue checkpoint. It is green on edit only when the
-   * saved application already had every required field, and after a successful
-   * save. Fixing a missing CV must not light it early.
-   */
-  const savedReviewWasComplete =
-    isEdit &&
-    Boolean(initialData?.company?.trim()) &&
-    Boolean(initialData?.role?.trim()) &&
-    Boolean(initialData?.slug?.trim()) &&
-    Boolean(initialData?.video_url?.trim()) &&
-    initialData?.cvUrlExists !== false &&
-    Boolean(initialData?.cv_url?.trim());
-  const reviewCountsForProgress =
-    (savedReviewWasComplete || reviewSaved) &&
-    hasCompany &&
-    hasRole &&
-    (savedCvFileMissing ? hasUsableCv : cvHoldsStepComplete) &&
-    hasVideo &&
-    slugHoldsStepComplete;
 
-  const requiredReady =
-    hasCompany && hasRole && hasUsableCv && hasVideo && slugReady;
+  const hasFirstName = Boolean(formData.first_name?.trim());
+  const hasLastName = Boolean(formData.last_name?.trim());
+  const hasRecruiterContact = hasVisibleRecruiterContact({
+    email: formData.email,
+    phone: formData.phone,
+    linkedin_url: formData.linkedin_url,
+    showEmail: include.email,
+    showPhone: include.phone,
+    showLinkedin: include.linkedin_url,
+  });
+
+  /**
+   * F40: draft create/edit only needs company, role, and a ready share link
+   * (auto-filled from company + role). Live apps keep the full publish set.
+   */
+  const requiresPublishCompleteSet =
+    isEdit && initialData?.status === "active";
+
+  const draftSaveReady =
+    hasCompany && hasRole && slugReady && !videoHardBlock;
+  const publishSaveReady =
+    draftSaveReady &&
+    hasFirstName &&
+    hasLastName &&
+    hasUsableCv &&
+    hasValidVideo &&
+    hasRecruiterContact;
+  const requiredReady = requiresPublishCompleteSet
+    ? publishSaveReady
+    : draftSaveReady;
 
   const formBusy =
     loading || submitPhase !== "idle" || cvPendingDigesting;
-  const canSubmit = requiredReady && !formBusy;
+  const hasUnsavedEditChanges =
+    !isEdit ||
+    (editBaselineRef.current != null &&
+      hasApplicationFormDirtyChanges(
+        editBaselineRef.current,
+        editDirtyInput,
+      ));
+  const canSubmit = requiredReady && !formBusy && hasUnsavedEditChanges;
+  /**
+   * Create or draft edit: always show Publish (disabled until ready) so people
+   * learn publishing needs more than a draft. Live apps have no Publish here.
+   */
+  const showPublish = !requiresPublishCompleteSet;
+  const canPublish = showPublish && publishSaveReady && !formBusy;
+  const showPreview = canPublish;
   const saveLoadingLabel =
     cvPendingDigesting
       ? "Preparing…"
@@ -775,37 +1016,120 @@ export default function ApplicationForm({
     if (!hasRole) items.push({ name: "Role", stepId: "role" });
     if (slugLiveStatus.kind === "checking") {
       items.push({
-        name: "Share link",
-        note: "Share link is still being checked",
+        name: "Your application link",
+        note: "Your application link is still being checked",
         stepId: "role",
       });
     } else if (slugLiveStatus.kind === "invalid") {
       items.push({
-        name: "Share link",
-        note: slugLiveStatus.message || "Share link is not valid",
+        name: "Your application link",
+        note: slugLiveStatus.message || "Your application link is not valid",
         stepId: "role",
       });
     } else if (slugLiveStatus.kind === "unavailable") {
       items.push({
-        name: "Share link",
-        note: slugLiveStatus.message || "Share link is taken",
+        name: "Your application link",
+        note: slugLiveStatus.message || "Your application link is taken",
         stepId: "role",
       });
     } else if (!hasSlug || !slugReady) {
-      items.push({ name: "Share link", stepId: "role" });
+      items.push({ name: "Your application link", stepId: "role" });
     }
-    if (!hasUsableCv) items.push({ name: "Résumé", stepId: "materials" });
-    if (!hasVideo) items.push({ name: "YouTube intro", stepId: "video" });
+    if (requiresPublishCompleteSet) {
+      if (!hasFirstName) {
+        items.push({ name: "First name", stepId: "candidate" });
+      }
+      if (!hasLastName) {
+        items.push({ name: "Last name", stepId: "candidate" });
+      }
+      if (!hasRecruiterContact) {
+        items.push({
+          name: RECRUITER_CONTACT_BLOCKER_NAME,
+          note: RECRUITER_CONTACT_PUBLISH_NOTE,
+          stepId: "candidate",
+        });
+      }
+      if (!hasUsableCv) items.push({ name: "Your résumé", stepId: "materials" });
+      if (!hasValidVideo) items.push({ name: "YouTube intro", stepId: "video" });
+    } else if (videoHardBlock) {
+      items.push({
+        name: "YouTube intro",
+        note:
+          videoStatus.kind === "unavailable"
+            ? videoStatus.message || YOUTUBE_UNAVAILABLE_MESSAGE
+            : "Enter a valid YouTube URL",
+        stepId: "video",
+      });
+    }
     return items;
   })();
 
-  const disabledReason = (() => {
-    if (saveBlockers.length === 0) return null;
-    const phrases = saveBlockers.map((item) => item.note ?? item.name);
-    return `Required before saving: ${phrases.join(", ")}`;
+  const blockedPrefix =
+    !formBusy && saveBlockers.length > 0
+      ? requiresPublishCompleteSet
+        ? "Required before saving"
+        : "Required before saving draft"
+      : null;
+
+  /**
+   * Publish-only gaps on create/draft (names, résumé, video). Company / role /
+   * link stay on the draft Save line so the two footers do not repeat.
+   */
+  const publishBlockers = (() => {
+    if (!showPublish || formBusy || publishSaveReady) {
+      return [] as { name: string; note?: string; stepId: ApplicationFormStepId }[];
+    }
+    const items: { name: string; note?: string; stepId: ApplicationFormStepId }[] =
+      [];
+    if (!hasFirstName) {
+      items.push({ name: "First name", note: "a first name", stepId: "candidate" });
+    }
+    if (!hasLastName) {
+      items.push({ name: "Last name", note: "a last name", stepId: "candidate" });
+    }
+    if (!hasRecruiterContact) {
+      items.push({
+        name: RECRUITER_CONTACT_BLOCKER_NAME,
+        note: RECRUITER_CONTACT_PUBLISH_NOTE,
+        stepId: "candidate",
+      });
+    }
+    if (!hasUsableCv) {
+      items.push({ name: "Your résumé", note: "a résumé", stepId: "materials" });
+    }
+    if (!hasValidVideo) {
+      items.push({
+        name: "YouTube intro",
+        note:
+          videoHardBlock && videoStatus.kind === "unavailable"
+            ? videoStatus.message || YOUTUBE_UNAVAILABLE_MESSAGE
+            : videoHardBlock
+              ? "a valid video"
+              : "a video",
+        stepId: "video",
+      });
+    }
+    return items;
   })();
 
-  const firstBlockedStep = saveBlockers[0]?.stepId ?? null;
+  const publishPrefix =
+    !formBusy && publishBlockers.length > 0 ? "To publish, add" : null;
+
+  /** Plain footer note when edit has nothing to save (not a clickable list). */
+  const blockedNote =
+    !formBusy &&
+    saveBlockers.length === 0 &&
+    publishBlockers.length === 0 &&
+    isEdit &&
+    !hasUnsavedEditChanges
+      ? "No changes to save."
+      : null;
+  /** Kept for ApplicationFormActions aria / tooltip when not dimmed. */
+  const disabledReason = blockedPrefix
+    ? `${blockedPrefix}: ${saveBlockers
+        .map((item) => item.note ?? item.name)
+        .join(", ")}`
+    : blockedNote;
 
   /** Drop slug field errors when inputs that affect slug change so live status can show success again. */
   useEffect(() => {
@@ -1060,32 +1384,46 @@ export default function ApplicationForm({
     runManualSlugValidate,
   ]);
 
-  /** Surface field errors on the step that still mounts those inputs. */
+  /** Surface field errors on the step / row that owns those inputs. */
   const revealFormErrors = (
     nextErrors: Partial<Record<keyof ApplicationFormData, string>>,
   ) => {
+    const needsLinkCustomize = Boolean(nextErrors.slug);
+    if (needsLinkCustomize) setLinkCustomizeOpen(true);
     setErrors(nextErrors);
-    const step = applicationFormStepForErrors(nextErrors);
-    if (!step) return;
-    setCurrentStepId(step);
-    if (presentation === "split") {
-      setErrorScroll({ stepId: step, nonce: Date.now() });
-    }
-    if (presentation === "checklist" && nextErrors.slug) {
-      setLinkOpen(true);
+    const target = checklistErrorTarget(nextErrors);
+    if (target) {
+      window.setTimeout(
+        () => focusApplicationRow(target.rowId, target.inputId),
+        needsLinkCustomize ? 50 : 0,
+      );
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Wizard: implicit Enter from an earlier step must not save. The split
-    // page keeps Save on Review, but every field is on the page, so Enter may save.
-    // Checklist blocks Enter in inputs separately, and Save stays available.
-    if (presentation === "wizard" && currentStepId !== "review") return;
-    if (formBusy || isSubmittingRef.current || !canSubmit) return;
+  const runSubmit = async (
+    intent: "save" | "publish",
+    options?: { fromLeaveDialog?: boolean },
+  ) => {
+    const fromLeaveDialog = options?.fromLeaveDialog === true;
+    // Single-page create blocks Enter in inputs separately.
+    if (isSubmittingRef.current) return;
+    if (!fromLeaveDialog && formBusy) return;
+    if (intent === "save" && !fromLeaveDialog && !canSubmit) return;
+    if (intent === "publish" && !canPublish) return;
+    if (fromLeaveDialog && intent === "save") {
+      if (!requiredReady || leaveDialogSave === "saving") return;
+      if (isEdit && !hasUnsavedEditChanges) return;
+      setLeaveDialogSave("saving");
+    }
     isSubmittingRef.current = true;
+    setSubmitIntent(intent);
     setErrors({});
     setSubmitPhase("saving");
+
+    const mustBeComplete =
+      requiresPublishCompleteSet || intent === "publish";
+    /** Tracks leave-dialog save so early returns still reset the button. */
+    let leaveSaveCompleted = false;
 
     try {
       const newErrors: Partial<Record<keyof ApplicationFormData, string>> = {};
@@ -1094,20 +1432,45 @@ export default function ApplicationForm({
       if (!formData.role.trim()) newErrors.role = "Role is required";
       const slugTrimmed = formData.slug.trim();
       if (!slugTrimmed) newErrors.slug = "Slug is required";
-      if (cvMode === "primary") {
-        if (!selectedPrimaryId) newErrors.cv_url = "Select a primary CV";
-      } else {
-        const hasTailoredCv =
-          cvPendingFile ||
-          (initialData?.cv_type === "tailored" &&
-            formData.cv_url &&
-            formData.cv_url.trim());
-        if (!hasTailoredCv) {
-          newErrors.cv_url = "Upload a CV file for this application";
+
+      const firstName = formData.first_name?.trim() ?? "";
+      const lastName = formData.last_name?.trim() ?? "";
+
+      if (mustBeComplete) {
+        if (cvMode === "primary") {
+          if (!selectedPrimaryId) newErrors.cv_url = "Select a library résumé";
+        } else {
+          const hasTailoredCv =
+            cvPendingFile ||
+            (initialData?.cv_type === "tailored" &&
+              formData.cv_url &&
+              formData.cv_url.trim());
+          if (!hasTailoredCv) {
+            newErrors.cv_url = "Upload a résumé for this application";
+          }
+        }
+        if (!formData.video_url.trim())
+          newErrors.video_url = "YouTube intro is required";
+        else if (videoStatus.kind === "unavailable")
+          newErrors.video_url =
+            videoStatus.message || YOUTUBE_UNAVAILABLE_MESSAGE;
+        else if (videoStatus.kind === "checking")
+          newErrors.video_url = "Wait for the video check to finish";
+        else if (!hasValidVideo)
+          newErrors.video_url = "Enter a valid YouTube URL";
+        if (!firstName) newErrors.first_name = "First name is required";
+        if (!lastName) newErrors.last_name = "Last name is required";
+      } else if (videoUrlEntered && (videoHardBlock || videoStillChecking)) {
+        // Draft: when a URL is entered, require a usable (embeddable) video.
+        if (videoStatus.kind === "unavailable") {
+          newErrors.video_url =
+            videoStatus.message || YOUTUBE_UNAVAILABLE_MESSAGE;
+        } else if (videoStatus.kind === "checking") {
+          newErrors.video_url = "Wait for the video check to finish";
+        } else {
+          newErrors.video_url = "Enter a valid YouTube URL";
         }
       }
-      if (!formData.video_url.trim())
-        newErrors.video_url = "YouTube intro is required";
 
       if (Object.keys(newErrors).length > 0) {
         revealFormErrors(newErrors);
@@ -1165,19 +1528,29 @@ export default function ApplicationForm({
         }
       }
 
-      let cvUrl = formData.cv_url.trim();
+      // About you values come from the profile (read-only here). Snapshot
+      // shown fields onto the application; edit identity on /admin/profile.
+      let cvUrl = formData.cv_url?.trim() ?? "";
       let cvFilename = formData.cv_filename ?? null;
       let primaryCvId: string | null = null;
 
       if (cvMode === "primary") {
-        const primary = primaryCvs.find((m) => m.id === selectedPrimaryId);
-        if (!primary) {
-          revealFormErrors({ cv_url: "Select a primary CV" });
+        if (selectedPrimaryId) {
+          const primary = primaryCvs.find((m) => m.id === selectedPrimaryId);
+          if (!primary) {
+            revealFormErrors({ cv_url: "Select a library résumé" });
+            return;
+          }
+          cvUrl = primary.url;
+          cvFilename = primary.filename;
+          primaryCvId = primary.id;
+        } else if (mustBeComplete) {
+          revealFormErrors({ cv_url: "Select a library résumé" });
           return;
+        } else {
+          cvUrl = "";
+          primaryCvId = null;
         }
-        cvUrl = primary.url;
-        cvFilename = primary.filename;
-        primaryCvId = primary.id;
       } else if (cvPendingFile) {
         const signature =
           cvPendingSignatureRef.current ??
@@ -1247,18 +1620,38 @@ export default function ApplicationForm({
           setSubmitPhase("saving");
         }
         cvFilename = cvPendingFile.name;
+      } else {
+        // Tailored mode, no new file. Keep a saved tailored URL on edit; otherwise
+        // clear so a leftover primary-library URL is not sent as tailored (draft
+        // may select "Upload one for this role" before choosing a PDF).
+        const savedTailoredUrl =
+          isEdit && initialData?.cv_type === "tailored"
+            ? (initialData.cv_url ?? "").trim()
+            : "";
+        const currentUrl = formData.cv_url?.trim() ?? "";
+        if (savedTailoredUrl && currentUrl === savedTailoredUrl) {
+          cvUrl = savedTailoredUrl;
+          cvFilename = initialData?.cv_filename ?? cvFilename;
+        } else {
+          cvUrl = "";
+          cvFilename = null;
+        }
       }
 
       const includePicture = hasProfilePicture && showProfilePicture;
 
+      const resolvedCvType: ApplicationCvType =
+        cvMode === "primary" && primaryCvId ? "primary" : "tailored";
+
       const payload: ApplicationFormData = {
         ...formData,
         slug: slugTrimmed,
-        cv_url: cvUrl,
-        first_name: include.first_name
-          ? formData.first_name?.trim() || null
-          : null,
-        last_name: include.last_name ? formData.last_name?.trim() || null : null,
+        cv_url: cvUrl || null,
+        video_url: formData.video_url.trim(),
+        first_name: formData.first_name?.trim() || null,
+        last_name: formData.last_name?.trim() || null,
+        email: include.email ? formData.email?.trim() || null : null,
+        phone: include.phone ? formData.phone?.trim() || null : null,
         location: include.location ? formData.location?.trim() || null : null,
         portfolio_url: include.portfolio_url
           ? formData.portfolio_url?.trim() || null
@@ -1268,28 +1661,107 @@ export default function ApplicationForm({
           : null,
         slugSegmentOrder,
         cv_filename: cvFilename,
-        use_original_cv_filename: formData.use_original_cv_filename ?? true,
+        use_original_cv_filename: formData.use_original_cv_filename ?? false,
         show_profile_picture: includePicture,
-        cv_type: cvMode,
+        // Draft without a selected primary must not send cv_type primary
+        // (API requires primary_cv_id in that case).
+        cv_type: resolvedCvType,
         primary_cv_id: primaryCvId,
         // Create and edit both need this so handlers keep a validated typed slug.
         slugManuallyEdited,
+        ...(intent === "publish" ? { status: "active" as const } : {}),
       };
       // Disarm leave-confirm before parent navigates. Clearing the history
       // sentinel after router.push can race and cancel the redirect (F16).
-      if (persistDraftKey) {
+      // Leave-dialog save keeps the dialog open and does not navigate yet.
+      if (persistDraftKey && !fromLeaveDialog) {
         skipDraftSaveRef.current = true;
         setLeaveGuardArmed(false);
         await disarmForNavigation();
       }
       try {
-        await onSubmit(payload);
-        setReviewSaved(true);
+        await onSubmit(
+          payload,
+          fromLeaveDialog ? { navigate: false } : undefined,
+        );
         if (persistDraftKey) {
           clearCreateApplicationDraft(persistDraftKey);
+          skipDraftSaveRef.current = true;
+          leaveBaselineRef.current = leaveRelevantDraftSnapshot({
+            ...draftSnapshot,
+            company: payload.company,
+            role: payload.role,
+            slug: payload.slug,
+            video_url: payload.video_url,
+          });
+          hadRestoredDraftRef.current = false;
+        }
+        // Publish navigates away (view/dashboard). Draft/live save on edit stays put
+        // unless this save came from the leave dialog (then continue to pending).
+        if (isEdit && intent === "save" && !fromLeaveDialog) {
+          // Stay on edit: clear pending upload and realign the dirty baseline
+          // so Save turns off until the next change.
+          clearPendingCvSelection();
+          const nextCvMode: ApplicationCvType = resolvedCvType;
+          setCvMode(nextCvMode);
+          setSelectedPrimaryId(primaryCvId);
+          setShowProfilePicture(includePicture);
+          setSlugPinned(Boolean(payload.slug.trim()));
+          setFormData((prev) => ({
+            ...prev,
+            company: payload.company,
+            role: payload.role,
+            slug: payload.slug,
+            video_url: payload.video_url,
+            first_name: payload.first_name ?? "",
+            last_name: payload.last_name ?? "",
+            email: formData.email ?? "",
+            phone: formData.phone ?? "",
+            location: formData.location ?? "",
+            portfolio_url: formData.portfolio_url ?? "",
+            linkedin_url: formData.linkedin_url ?? "",
+            cv_url: payload.cv_url ?? "",
+            cv_filename: payload.cv_filename ?? null,
+            use_original_cv_filename:
+              payload.use_original_cv_filename ?? false,
+            cv_type: nextCvMode,
+            primary_cv_id: primaryCvId,
+          }));
+          editBaselineRef.current = applicationFormDirtySnapshot({
+            company: payload.company,
+            role: payload.role,
+            slug: payload.slug,
+            video_url: payload.video_url,
+            first_name: payload.first_name ?? "",
+            last_name: payload.last_name ?? "",
+            email: formData.email ?? "",
+            phone: formData.phone ?? "",
+            location: formData.location ?? "",
+            portfolio_url: formData.portfolio_url ?? "",
+            linkedin_url: formData.linkedin_url ?? "",
+            includeEmail: include.email,
+            includePhone: include.phone,
+            includeLocation: include.location,
+            includePortfolio: include.portfolio_url,
+            includeLinkedin: include.linkedin_url,
+            slugSegmentOrder,
+            showProfilePicture: includePicture,
+            cvMode: nextCvMode,
+            selectedPrimaryId: primaryCvId,
+            cv_url: payload.cv_url ?? "",
+            cv_filename: payload.cv_filename ?? null,
+            use_original_cv_filename:
+              payload.use_original_cv_filename ?? false,
+            hasPendingCvFile: false,
+          });
+        }
+        if (fromLeaveDialog) {
+          leaveSaveCompleted = true;
+          // Continue to Cancel / Dashboard / Profile / Back — not stay on the form.
+          onConfirmLeave();
         }
       } catch {
-        if (persistDraftKey) {
+        if (persistDraftKey && !fromLeaveDialog) {
           skipDraftSaveRef.current = false;
           setLeaveGuardArmed(true);
         }
@@ -1298,25 +1770,43 @@ export default function ApplicationForm({
     } catch {
       // Validation / upload errors above — parent or field UI already informed.
     } finally {
+      if (fromLeaveDialog && !leaveSaveCompleted) {
+        setLeaveDialogSave("idle");
+      }
       isSubmittingRef.current = false;
       setSubmitPhase("idle");
+      setSubmitIntent(null);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await runSubmit("save");
   };
 
   const candidateValues: Record<CandidateFieldKey, string> = {
     first_name: formData.first_name ?? "",
     last_name: formData.last_name ?? "",
+    email: formData.email ?? "",
+    phone: formData.phone ?? "",
     location: formData.location ?? "",
     portfolio_url: formData.portfolio_url ?? "",
     linkedin_url: formData.linkedin_url ?? "",
   };
 
-  const handleCandidateValueChange = (
-    field: CandidateFieldKey,
-    value: string,
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  const aboutYouSummary = buildAboutYouSummary({
+    hasProfilePicture,
+    showProfilePicture: hasProfilePicture && showProfilePicture,
+    firstName: formData.first_name ?? "",
+    lastName: formData.last_name ?? "",
+    values: candidateValues,
+    include,
+  });
+
+  const preferCollapsedAboutYou = shouldCollapseAboutYouByDefault({
+    liveApplicationCount,
+    collapseAboutYou,
+  });
 
   const handleCandidateIncludeChange = (
     field: CandidateFieldKey,
@@ -1325,310 +1815,251 @@ export default function ApplicationForm({
     setInclude((prev) => ({ ...prev, [field]: included }));
   };
 
-  const stepReady = (id: ApplicationFormStepId): boolean => {
-    switch (id) {
-      case "role":
-        return hasCompany && hasRole && slugHoldsStepComplete;
-      case "candidate":
-        return true;
-      case "materials":
-        return cvCountsForProgress;
-      case "video":
-        return hasVideo;
-      case "review":
-        return reviewCountsForProgress;
-      default:
-        return false;
+  const trimmedPublicId = publicId?.trim() || "";
+  const trimmedSlug = formData.slug.trim();
+  const shareLinkPath = `/view/${trimmedPublicId || "…"}/${trimmedSlug || "…"}`;
+  const shareLinkFull = `${getBaseUrl()}${shareLinkPath}`;
+  const shareableUrl =
+    trimmedPublicId && trimmedSlug
+      ? getApplicationUrl(trimmedPublicId, trimmedSlug)
+      : null;
+  /** Copy is a share action: only live apps. Create/draft still show the URL preview. */
+  const isLiveApplication = isEdit && initialData?.status === "active";
+  const canCopyShareLink = Boolean(shareableUrl) && isLiveApplication;
+  const shareLinkCopyUnavailableLabel = !trimmedPublicId
+    ? "Complete your profile to get a share link"
+    : !trimmedSlug
+      ? "Add a company and role to build the link"
+      : !isLiveApplication && slugReady
+        ? publishSaveReady
+          ? "Publish before sharing this link"
+          : "Finish required fields before publishing and sharing"
+        : "Link is not ready to copy";
+
+  const handleCopyShareLink = async () => {
+    if (!shareableUrl || !canCopyShareLink) return;
+    const success = await copyToClipboard(shareableUrl);
+    if (success) {
+      setShareLinkCopied(true);
+      window.setTimeout(() => setShareLinkCopied(false), 2000);
     }
   };
 
-  const continueBlockedReasonFor = (
-    id: ApplicationFormStepId,
-  ): string | null => {
-    if (formBusy) return "Please wait until the current action finishes.";
-    switch (id) {
-      case "role":
-        if (!hasCompany) return "Company name is required.";
-        if (!hasRole) return "Role is required.";
-        if (slugLiveStatus.kind === "checking") {
-          return "Please wait until the slug has finished updating.";
-        }
-        if (slugLiveStatus.kind === "invalid") {
-          return slugLiveStatus.message || "Fix the slug before continuing.";
-        }
-        if (slugLiveStatus.kind === "unavailable") {
-          return (
-            slugLiveStatus.message ||
-            "This slug is not available. Change it before continuing."
-          );
-        }
-        if (!hasSlug) return "Slug is required.";
-        if (!slugReady) return "Wait until the slug is available.";
-        return null;
-      case "candidate":
-        return null;
-      case "materials":
-        if (!hasUsableCv) {
-          return cvMode === "primary"
-            ? "Select a primary CV, or upload a tailored CV."
-            : "Upload a CV file for this application.";
-        }
-        return null;
-      case "video":
-        if (!hasVideo) return "YouTube intro is required.";
-        return null;
-      case "review":
-        return null;
-      default:
-        return null;
-    }
-  };
+  const shareLinkCopyClass =
+    "inline-flex size-7 items-center justify-center rounded-lg border border-[var(--ink)]/15 bg-[var(--white)] shadow-sm focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]";
 
-  const roleStep = (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
-        <Input
-          label="Company Name *"
-          value={formData.company}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, company: e.target.value }))
-          }
-          error={errors.company}
-          required
-        />
-        <Input
-          label="Role/Position *"
-          value={formData.role}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, role: e.target.value }))
-          }
-          error={errors.role}
-          required
-        />
-      </div>
-      <SlugSegmentOrderField
-        value={slugSegmentOrder}
-        onChange={handleSlugSegmentOrderChange}
-      />
-      <div>
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-          <label
-            htmlFor="application-slug"
-            className="block text-sm font-medium text-[var(--ink)]"
-          >
-            Slug *
-          </label>
-          <button
-            type="button"
-            onClick={handleResetSlugToSuggested}
-            disabled={!hasCompany || !hasRole || formBusy}
-            className="cursor-pointer text-sm font-medium text-[var(--ink)] hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
-          >
-            Reset to suggested
-          </button>
-        </div>
-        <Input
-          id="application-slug"
-          value={formData.slug}
-          onChange={(e) => handleSlugFieldChange(e.target.value)}
-          error={errors.slug}
-          placeholder="auto-generated-slug"
-          required
-        />
-      </div>
-      {slugLiveStatus.kind === "checking" && (
-        <p
-          className="flex items-center gap-1.5 text-xs text-[var(--muted)]"
-          role="status"
-        >
-          <FiRefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden />
-          Checking slug…
-        </p>
-      )}
-      {slugLiveStatus.kind === "available" && !errors.slug && (
-        <p
-          className="flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"
-          role="status"
-        >
-          <FiCheck
-            className="mt-0.5 size-3.5 shrink-0"
-            strokeWidth={2.5}
-            aria-hidden
-          />
-          <span>This slug is available.</span>
-        </p>
-      )}
-      {(slugLiveStatus.kind === "invalid" ||
-        slugLiveStatus.kind === "unavailable") &&
-        !errors.slug && (
-          <p
-            className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
-            role="alert"
-          >
-            <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-            <span>{slugLiveStatus.message}</span>
-          </p>
-        )}
-      <ShareUrlPreview publicId={publicId} slug={formData.slug} />
-    </div>
+  const linkCustomizeHasError = Boolean(
+    errors.slug ||
+      slugLiveStatus.kind === "invalid" ||
+      slugLiveStatus.kind === "unavailable",
   );
+  const linkCustomizeLabel = linkCustomizeOpen
+    ? "Hide link options"
+    : "Customize link";
+  const linkCustomizeErrorMessage =
+    errors.slug ||
+    (slugLiveStatus.kind === "invalid" || slugLiveStatus.kind === "unavailable"
+      ? slugLiveStatus.message
+      : null);
 
-  const checklistRoleStep = (
-    <div className="space-y-5">
+  const linkEndingControl = (
+    <div className="space-y-3">
       <Input
-        label="Company"
-        value={formData.company}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, company: e.target.value }))
-        }
-        error={errors.company}
-        required
-        autoComplete="organization"
+        id="application-slug"
+        dense
+        value={formData.slug}
+        onChange={(e) => handleSlugFieldChange(e.target.value)}
+        error={errors.slug}
+        autoComplete="off"
+        spellCheck={false}
       />
-      <Input
-        label="Role"
-        value={formData.role}
-        onChange={(e) =>
-          setFormData((prev) => ({ ...prev, role: e.target.value }))
-        }
-        error={errors.role}
-        required
-        autoComplete="organization-title"
-      />
-      <div className="rounded-xl bg-[var(--pink)] px-4 py-3.5">
-        <p className="text-sm font-medium text-[var(--ink)]">Share link</p>
-        <p className="mt-1 text-sm leading-relaxed break-words">
-          <span className="text-[var(--muted)]">/view/{publicId?.trim() || "…"}/</span>
-          <span>{formData.slug.trim() || "…"}</span>
-        </p>
+      {slugManuallyEdited ? (
         <button
           type="button"
-          className="mt-2 rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
-          onClick={() => setLinkOpen((open) => !open)}
+          onClick={handleResetSlugToSuggested}
+          disabled={!hasCompany || !hasRole || formBusy}
+          className="rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
         >
-          {linkOpen ? "Hide link options" : "Edit link"}
+          Use the suggested link
         </button>
-        {linkOpen ? (
-          <div className="mt-4 space-y-4">
-            <fieldset>
-              <legend className="text-sm font-medium text-[var(--ink)]">
-                Order in the link
-              </legend>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {(
-                  [
-                    ["company_role", "Company, then role"],
-                    ["role_company", "Role, then company"],
-                  ] as const
-                ).map(([order, label]) => (
-                  <label
-                    key={order}
-                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm ring-1 ring-inset ${
-                      slugSegmentOrder === order
-                        ? "bg-[var(--paper)] text-[var(--ink)] ring-[var(--ink)]"
-                        : "bg-[var(--white)] text-[var(--ink)] ring-[var(--ink)]/15 hover:bg-[var(--paper)]/70"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="checklist-slug-segment-order"
-                      value={order}
-                      checked={slugSegmentOrder === order}
-                      onChange={() => handleSlugSegmentOrderChange(order)}
-                      className="size-4 shrink-0 accent-[var(--ink)]"
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <Input
-              id="application-slug"
-              label="Link ending"
-              value={formData.slug}
-              onChange={(e) => handleSlugFieldChange(e.target.value)}
-              error={errors.slug}
-              autoComplete="off"
-              spellCheck={false}
-            />
-            {(slugLiveStatus.kind === "invalid" ||
-              slugLiveStatus.kind === "unavailable") &&
-              !errors.slug && (
-                <p
-                  className="flex items-start gap-1.5 text-xs text-[var(--status-danger-fg)]"
-                  role="alert"
-                >
-                  <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                  <span>{slugLiveStatus.message}</span>
-                </p>
-              )}
-            {slugManuallyEdited ? (
-              <button
-                type="button"
-                onClick={handleResetSlugToSuggested}
-                disabled={!hasCompany || !hasRole || formBusy}
-                className="rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
-              >
-                Use the suggested link
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
+      ) : null}
+      {slugLiveStatus.kind === "checking" ? (
+        <p
+          className="text-sm leading-relaxed text-[var(--muted)] italic"
+          role="status"
+        >
+          Checking...
+        </p>
+      ) : null}
+      {(slugLiveStatus.kind === "invalid" ||
+        slugLiveStatus.kind === "unavailable") &&
+      !errors.slug ? (
+        <p
+          className="flex items-start gap-1.5 text-sm text-[var(--status-danger-fg)]"
+          role="alert"
+        >
+          <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          <span>{slugLiveStatus.message}</span>
+        </p>
+      ) : null}
     </div>
   );
 
-  const candidateStep =
-    presentation === "checklist" ? (
-      <div className="space-y-5">
-        <ProfilePictureField
-          variant="checklist"
-          profilePictureUrl={profilePictureUrl}
-          profilePictureVersion={profilePictureVersion}
-          firstName={formData.first_name}
-          lastName={formData.last_name}
-          onProfilePictureSaved={onProfilePictureSaved}
-          showProfilePicture={showProfilePicture}
-          onShowProfilePictureChange={(next) => {
-            showProfilePictureUserChosenRef.current = true;
-            setShowProfilePicture(next);
-          }}
-        />
-        <CandidateFieldsSection
-          variant="checklist"
-          values={candidateValues}
-          include={include}
-          onValueChange={handleCandidateValueChange}
-          onIncludeChange={handleCandidateIncludeChange}
-        />
+  const shareLinkControl = (
+    <div className="space-y-3">
+      <div className="relative">
+        <div
+          id="application-share-link"
+          role="textbox"
+          aria-readonly="true"
+          aria-label="Your application link"
+          className="block w-full cursor-not-allowed break-all rounded-xl border-0 bg-[var(--white)] py-1.5 pr-12 pl-3.5 text-[var(--ink)] ring-1 ring-inset ring-[var(--ink)]/15 sm:text-sm sm:leading-6"
+        >
+          <span className="sm:hidden">{shareLinkPath}</span>
+          <span className="hidden sm:inline">{shareLinkFull}</span>
+        </div>
+        <div className="absolute inset-y-0 right-1.5 flex items-center">
+          {slugLiveStatus.kind === "checking" ? (
+            <span
+              role="status"
+              className={`${shareLinkCopyClass} text-[var(--muted)]`}
+              aria-label="Checking link availability"
+            >
+              <span
+                className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin"
+                aria-hidden
+              />
+            </span>
+          ) : linkCustomizeHasError ? (
+            <AdminTooltip
+              label={
+                linkCustomizeErrorMessage?.trim() ||
+                "Link needs attention"
+              }
+              side="top"
+            >
+              <span
+                role="img"
+                className={`${shareLinkCopyClass} text-[var(--status-danger-fg)]`}
+                aria-label={
+                  linkCustomizeErrorMessage?.trim() ||
+                  "Link needs attention"
+                }
+              >
+                <FiAlertCircle className="h-4 w-4" aria-hidden />
+              </span>
+            </AdminTooltip>
+          ) : canCopyShareLink ? (
+            <AdminTooltip
+              label={shareLinkCopied ? "Copied!" : "Copy link"}
+              side="top"
+            >
+              <button
+                type="button"
+                onClick={handleCopyShareLink}
+                className={`${shareLinkCopyClass} cursor-pointer text-[var(--ink)] hover:bg-[var(--paper)]`}
+                aria-label={shareLinkCopied ? "Copied!" : "Copy link"}
+              >
+                <CopyIcon className="h-4 w-4" />
+              </button>
+            </AdminTooltip>
+          ) : (
+            <AdminTooltip label={shareLinkCopyUnavailableLabel} side="top">
+              <span
+                role="img"
+                className={`${shareLinkCopyClass} text-[var(--muted)]`}
+                aria-label={shareLinkCopyUnavailableLabel}
+              >
+                <BrokenLinkIcon className="h-4 w-4" />
+              </span>
+            </AdminTooltip>
+          )}
+        </div>
       </div>
-    ) : (
-      <>
-        <ProfilePictureField
-          profilePictureUrl={profilePictureUrl}
-          profilePictureVersion={profilePictureVersion}
-          firstName={formData.first_name}
-          lastName={formData.last_name}
-          onProfilePictureSaved={onProfilePictureSaved}
-          showProfilePicture={showProfilePicture}
-          onShowProfilePictureChange={(next) => {
-            showProfilePictureUserChosenRef.current = true;
-            setShowProfilePicture(next);
-          }}
-        />
-        <CandidateFieldsSection
-          values={candidateValues}
-          include={include}
-          onValueChange={handleCandidateValueChange}
-          onIncludeChange={handleCandidateIncludeChange}
-        />
-      </>
-    );
+      <button
+        type="button"
+        aria-expanded={linkCustomizeOpen}
+        aria-controls={
+          linkCustomizeOpen ? "application-row-slug-order" : undefined
+        }
+        aria-label={
+          linkCustomizeHasError
+            ? `${linkCustomizeLabel}. Link needs attention${
+                linkCustomizeErrorMessage
+                  ? `: ${linkCustomizeErrorMessage}`
+                  : ""
+              }`
+            : linkCustomizeLabel
+        }
+        onClick={() => setLinkCustomizeOpen((open) => !open)}
+        className="inline-flex items-center gap-1.5 rounded-sm text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-4 outline-none hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+      >
+        {linkCustomizeLabel}
+        {linkCustomizeHasError ? (
+          <FiAlertCircle
+            className="size-3.5 shrink-0 text-[var(--status-danger-fg)]"
+            aria-hidden
+          />
+        ) : null}
+      </button>
+    </div>
+  );
+
+  const candidateStep = (
+    <>
+      {!hasRecruiterContact ? (
+        <div
+          id="application-contact-safety"
+          className="scroll-mt-[calc(var(--admin-header-height,72px)+0.75rem)] border-t border-[var(--ink)]/10 p-4 first:border-t-0"
+        >
+          <p
+            role="status"
+            className="flex gap-2 rounded-xl border border-[var(--status-warning-fg)]/25 bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--status-warning-fg)]"
+          >
+            <FiAlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            <span>{RECRUITER_CONTACT_APPLICATION_WARNING}</span>
+          </p>
+        </div>
+      ) : null}
+      <CandidateFieldsSection
+        layout="rows"
+        values={candidateValues}
+        include={include}
+        onIncludeChange={handleCandidateIncludeChange}
+        markNamesRequired={requiresPublishCompleteSet}
+        afterNames={
+          <ApplicationFormFieldRow
+            id="application-row-picture"
+            label="Picture"
+            tip={
+              hasProfilePicture ? PROFILE_INITIAL_DATA_TIP : PROFILE_EMPTY_TIP
+            }
+            tipTone={hasProfilePicture ? "ready" : "idle"}
+            align="top"
+          >
+            <ProfilePictureField
+              variant="checklist"
+              hideLegend
+              profilePictureUrl={profilePictureUrl}
+              profilePictureVersion={profilePictureVersion}
+              firstName={formData.first_name}
+              lastName={formData.last_name}
+              showProfilePicture={showProfilePicture}
+              onShowProfilePictureChange={(next) => {
+                showProfilePictureUserChosenRef.current = true;
+                setShowProfilePicture(next);
+              }}
+            />
+          </ApplicationFormFieldRow>
+        }
+      />
+    </>
+  );
 
   const materialsStep = (
     <>
       <CvSourceField
-        variant={presentation === "checklist" ? "checklist" : "default"}
+        variant="checklist"
         isEdit={isEdit}
         currentFilename={initialData?.cv_filename ?? null}
         currentType={initialData?.cv_type ?? null}
@@ -1835,11 +2266,16 @@ export default function ApplicationForm({
           }
         }}
         onCancelSwitchToPrimary={() => setSwitchToPrimaryConfirmOpen(false)}
-        useOriginalCvFilename={formData.use_original_cv_filename ?? true}
-        onUseOriginalCvFilenameChange={(use) =>
-          setFormData((prev) => ({ ...prev, use_original_cv_filename: use }))
-        }
         slug={formData.slug}
+        firstName={formData.first_name}
+        lastName={formData.last_name}
+        useOriginalCvFilename={formData.use_original_cv_filename ?? false}
+        onUseOriginalCvFilenameChange={(useOriginal) => {
+          setFormData((prev) => ({
+            ...prev,
+            use_original_cv_filename: useOriginal,
+          }));
+        }}
         uploading={submitPhase === "uploading"}
         preparing={cvPendingDigesting}
         disabled={submitPhase !== "idle"}
@@ -1847,265 +2283,472 @@ export default function ApplicationForm({
     </>
   );
 
-  const videoStep = (
-    <YouTubeUrlInput
-      value={formData.video_url}
-      onChange={(url) => setFormData((prev) => ({ ...prev, video_url: url }))}
-      error={errors.video_url}
-    />
-  );
-
-  const reviewCvLabel = (() => {
-    if (!hasCv) return null;
-    if (cvMode === "primary") {
-      const primaryName = primaryCvs.find(
-        (m) => m.id === selectedPrimaryId,
-      )?.filename;
-      return primaryName || "Primary CV selected";
-    }
-    return (
-      cvPendingFile?.name || formData.cv_filename || "Tailored CV ready"
+  const focusSaveBlocker = (item: {
+    name: string;
+    stepId: ApplicationFormStepId;
+  }) => {
+    const needsLinkCustomize = item.name === "Your application link";
+    const needsAboutYou =
+      item.name === "First name" ||
+      item.name === "Last name" ||
+      item.name === RECRUITER_CONTACT_BLOCKER_NAME;
+    if (needsLinkCustomize) setLinkCustomizeOpen(true);
+    if (needsAboutYou) setAboutYouExpanded(true);
+    const target =
+      item.name === "Company"
+        ? { rowId: "application-row-company", inputId: "application-company" }
+        : item.name === "Role"
+          ? { rowId: "application-row-role", inputId: "application-role" }
+          : needsLinkCustomize
+            ? { rowId: "application-row-ending", inputId: "application-slug" }
+            : item.name === "First name"
+              ? {
+                  rowId: "application-row-first_name",
+                  inputId: "application-first-name",
+                }
+              : item.name === "Last name"
+                ? {
+                    rowId: "application-row-last_name",
+                    inputId: "application-last-name",
+                  }
+                : item.name === RECRUITER_CONTACT_BLOCKER_NAME
+                  ? { rowId: "application-contact-safety" }
+                  : item.stepId === "materials"
+                    ? { rowId: "application-row-resume" }
+                    : item.stepId === "video"
+                      ? {
+                          rowId: "application-row-pitch",
+                          inputId: "application-video",
+                        }
+                      : {
+                          rowId: "application-row-company",
+                          inputId: "application-company",
+                        };
+    window.setTimeout(
+      () => focusApplicationRow(target.rowId, target.inputId),
+      needsLinkCustomize || needsAboutYou ? 50 : 0,
     );
-  })();
+  };
 
-  const jumpToStep = (stepId: ApplicationFormStepId) => {
-    setCurrentStepId(stepId);
-    if (presentation === "split") {
-      setErrorScroll({ stepId, nonce: Date.now() });
+  const focusFirstGap = () => {
+    const item = saveBlockers[0];
+    if (!item) return;
+    focusSaveBlocker(item);
+  };
+
+  const blockedItems = saveBlockers.map((item) => ({
+    id: item.name,
+    label: item.note ?? item.name,
+    onActivate: () => focusSaveBlocker(item),
+  }));
+
+  const publishItems = publishBlockers.map((item) => ({
+    id: `publish-${item.name}`,
+    label: item.note ?? item.name,
+    onActivate: () => focusSaveBlocker(item),
+  }));
+
+  const openFormPreview = () => setPreviewOpen(true);
+
+  /** Object URL for a not-yet-uploaded tailored PDF while the preview is open. */
+  const [pendingPreviewObjectUrl, setPendingPreviewObjectUrl] = useState<
+    string | null
+  >(null);
+  useEffect(() => {
+    if (!previewOpen || !cvPendingFile) {
+      setPendingPreviewObjectUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
     }
-  };
+    const url = URL.createObjectURL(cvPendingFile);
+    setPendingPreviewObjectUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [previewOpen, cvPendingFile]);
 
-  const reviewPreview = (
-    <ApplicationReviewPreview
-      company={formData.company.trim()}
-      role={formData.role.trim()}
-      firstName={include.first_name ? formData.first_name : null}
-      lastName={include.last_name ? formData.last_name : null}
-      location={include.location ? formData.location : null}
-      portfolioUrl={include.portfolio_url ? formData.portfolio_url : null}
-      linkedinUrl={include.linkedin_url ? formData.linkedin_url : null}
-      profilePictureUrl={profilePictureUrl}
-      profilePictureVersion={profilePictureVersion}
-      showProfilePicture={hasProfilePicture && showProfilePicture}
-      cvUrl={formData.cv_url}
-      cvPendingFile={cvPendingFile}
-      cvFilename={formData.cv_filename}
-      useOriginalCvFilename={formData.use_original_cv_filename ?? true}
-      slug={formData.slug}
-      videoUrl={formData.video_url}
-      label={presentation === "wizard" ? "Show preview" : "Preview"}
-      openSignal={previewNonce}
-      hint={presentation === "wizard" ? undefined : "Does not save."}
-      externalReturnRef={resumePreviewTriggerRef}
-    />
-  );
+  const previewApplication = useMemo(() => {
+    const visible = (key: CandidateFieldKey, value: string) =>
+      include[key] ? value : null;
 
-  const reviewStep = (
-    <>
-      <ApplicationReviewSummary
-        open={reviewSummaryOpen}
-        onOpenChange={setReviewSummaryOpen}
-        company={formData.company}
-        role={formData.role}
-        slug={formData.slug}
-        slugReady={slugReady}
-        fieldValues={candidateValues}
-        include={include}
-        hasProfilePicture={hasProfilePicture}
-        showProfilePicture={showProfilePicture}
-        cvLabel={reviewCvLabel}
-        hasVideo={hasVideo}
-        videoUrl={formData.video_url}
-        slugState={slugLiveStatus}
-        publicId={publicId}
-        profilePictureUrl={profilePictureUrl}
-        variant={presentation === "split" ? "split" : "wizard"}
-        savedSlug={savedSlug}
-        profilePictureVersion={profilePictureVersion}
-        onJumpToStep={jumpToStep}
-        onPreview={
-          presentation === "split"
-            ? (trigger) => {
-                resumePreviewTriggerRef.current = trigger;
-                setPreviewNonce((n) => n + 1);
-              }
-            : undefined
-        }
-      />
-      {presentation === "wizard" ? reviewPreview : null}
-    </>
-  );
+    let cvUrl: string | null = null;
+    let cvFilename: string | null = null;
+    let cvExists: boolean | undefined;
 
-  const stepContents = {
-    role: roleStep,
-    candidate: candidateStep,
-    materials: materialsStep,
-    video: videoStep,
-    review: reviewStep,
-  };
+    if (cvMode === "primary") {
+      const primary = primaryCvs.find((m) => m.id === selectedPrimaryId);
+      cvUrl = primary?.url?.trim() || null;
+      cvFilename = primary?.filename ?? null;
+      cvExists = cvUrl ? true : undefined;
+    } else if (cvPendingFile && pendingPreviewObjectUrl) {
+      cvUrl = pendingPreviewObjectUrl;
+      cvFilename = cvPendingFile.name;
+      cvExists = true;
+    } else {
+      cvUrl = formData.cv_url?.trim() || null;
+      cvFilename = formData.cv_filename ?? null;
+      if (stillUsingMissingSavedCv) {
+        cvExists = false;
+      } else if (cvUrl) {
+        cvExists = true;
+      }
+    }
+
+    return buildApplicationFormPreview({
+      company: formData.company,
+      role: formData.role,
+      first_name: formData.first_name ?? "",
+      last_name: formData.last_name ?? "",
+      location: visible("location", formData.location ?? ""),
+      email: visible("email", formData.email ?? ""),
+      phone: visible("phone", formData.phone ?? ""),
+      portfolio_url: visible("portfolio_url", formData.portfolio_url ?? ""),
+      linkedin_url: visible("linkedin_url", formData.linkedin_url ?? ""),
+      profile_picture_url:
+        hasProfilePicture && showProfilePicture
+          ? (profilePictureUrl ?? null)
+          : null,
+      cv_url: cvUrl,
+      cv_filename: cvFilename,
+      use_original_cv_filename: formData.use_original_cv_filename ?? false,
+      cv_exists: cvExists,
+      video_url: formData.video_url,
+    });
+  }, [
+    include,
+    cvMode,
+    primaryCvs,
+    selectedPrimaryId,
+    cvPendingFile,
+    pendingPreviewObjectUrl,
+    formData.company,
+    formData.role,
+    formData.first_name,
+    formData.last_name,
+    formData.location,
+    formData.email,
+    formData.phone,
+    formData.portfolio_url,
+    formData.linkedin_url,
+    formData.cv_url,
+    formData.cv_filename,
+    formData.use_original_cv_filename,
+    formData.video_url,
+    stillUsingMissingSavedCv,
+    hasProfilePicture,
+    showProfilePicture,
+    profilePictureUrl,
+  ]);
 
   const formActions = (
     <ApplicationFormActions
-      loading={formBusy}
+      loading={formBusy && submitIntent !== "publish"}
       loadingLabel={saveLoadingLabel}
       submitLabel={submitLabel}
       canSubmit={canSubmit}
-      dimWhenBlocked={presentation === "checklist"}
+      dimWhenBlocked
       disabledReason={disabledReason}
-      onBlocked={() => {
-        if (firstBlockedStep) jumpToStep(firstBlockedStep);
+      onBlocked={focusFirstGap}
+      showPublish={showPublish}
+      showPreview={showPreview}
+      canPublish={canPublish}
+      publishLoading={formBusy && submitIntent === "publish"}
+      onPreview={openFormPreview}
+      onPublish={() => {
+        void runSubmit("publish");
       }}
     />
   );
 
-  /** Split Review puts Preview beside Save in the card footer. */
-  const splitReviewActions = (
+  const leaveSaveLabel = requiresPublishCompleteSet
+    ? "Save application"
+    : "Save Draft";
+  const canSaveFromLeaveDialog =
+    requiredReady &&
+    leaveDialogSave !== "saving" &&
+    (!isEdit || hasUnsavedEditChanges);
+  const leaveDialogMessage = (
     <>
-      {reviewPreview}
-      {formActions}
+      <p>Leaving this page will discard unsaved changes. Are you sure?</p>
+      {!hasCompany || !hasRole ? (
+        <p>
+          Add a company and role first if you want to save a draft before
+          leaving.
+        </p>
+      ) : !requiredReady ? (
+        <p>
+          {requiresPublishCompleteSet
+            ? "Finish the required fields first if you want to save before leaving."
+            : "Wait until the share link is ready, then you can save a draft here."}
+        </p>
+      ) : null}
     </>
   );
 
-  const leaveDialog =
-    persistDraftKey ? (
-      <ConfirmDialog
-        open={leaveConfirmOpen}
-        title="Want to leave this page?"
-        message="Leaving this page will discard this draft. Are you sure?"
-        confirmLabel="Yes, I'm sure"
-        cancelLabel="No, stay on this page"
-        onConfirm={onConfirmLeave}
-        onCancel={onCancelLeave}
-      />
-    ) : null;
+  const handleLeaveDialogStay = () => {
+    onCancelLeaveFromHook();
+    setLeaveDialogSave("idle");
+  };
 
-  const checklistOpenId: ChecklistChapterId =
-    currentStepId === "role" ||
-    currentStepId === "candidate" ||
-    currentStepId === "materials" ||
-    currentStepId === "video"
-      ? currentStepId
-      : "video";
+  const handleLeaveDialogSave = () => {
+    void runSubmit("save", { fromLeaveDialog: true });
+  };
 
-  const roleSummary = roleChecklistSummary({
-    company: formData.company,
-    role: formData.role,
-    slug: formData.slug,
-    roleReady: stepReady("role"),
-    slugStatus: slugLiveStatus,
-  });
-
-  const aboutYouParts = [
-    hasProfilePicture && showProfilePicture ? "Picture" : "",
-    [
-      include.first_name ? formData.first_name?.trim() : "",
-      include.last_name ? formData.last_name?.trim() : "",
-    ]
-      .filter(Boolean)
-      .join(" "),
-    include.location ? formData.location?.trim() : "",
-    include.portfolio_url && formData.portfolio_url?.trim() ? "Portfolio" : "",
-    include.linkedin_url && formData.linkedin_url?.trim() ? "LinkedIn" : "",
-  ].filter(Boolean);
-
-  const checklistChapters: ChecklistChapter[] = [
-    {
-      id: "role",
-      title: "Role",
-      description: "Company, role, and the link recruiters open.",
-      summary: roleSummary.text,
-      summaryPending: roleSummary.pending,
-      summaryProgress: roleSummary.progress,
-      tone: stepReady("role") ? "done" : "pending",
-      content: checklistRoleStep,
-    },
-    {
-      id: "candidate",
-      title: "About you",
-      description: "Choose what this page shows about you. None of this is required.",
-      summary: aboutYouParts.length > 0 ? aboutYouParts.join(", ") : "Optional",
-      summaryPending: false,
-      tone: aboutYouParts.length > 0 ? "done" : "optional",
-      content: candidateStep,
-    },
-    {
-      id: "materials",
-      title: "Résumé",
-      description: "A résumé from your library, or a PDF only for this role.",
-      summary: reviewCvLabel || "Choose a file",
-      summaryPending: !cvCountsForProgress,
-      tone: cvCountsForProgress ? "done" : "pending",
-      content: materialsStep,
-    },
-    {
-      id: "video",
-      title: "Pitch",
-      description: "A YouTube video they can watch on the page.",
-      summary: hasVideo ? "YouTube link added" : "Still needed",
-      summaryPending: !hasVideo,
-      tone: stepReady("video") ? "done" : "pending",
-      content: videoStep,
-    },
-  ];
+  const leaveDialog = (
+    <ConfirmDialog
+      open={leaveConfirmOpen}
+      title="Want to leave this page?"
+      message={leaveDialogMessage}
+      confirmLabel="Yes, I'm sure"
+      cancelLabel="No, stay on this page"
+      midActionLabel={
+        hasCompany && hasRole ? leaveSaveLabel : undefined
+      }
+      midActionLoading={leaveDialogSave === "saving"}
+      midActionLoadingLabel="Saving…"
+      midActionDisabled={!canSaveFromLeaveDialog}
+      onMidAction={handleLeaveDialogSave}
+      onConfirm={onConfirmLeave}
+      onCancel={handleLeaveDialogStay}
+    />
+  );
 
   return (
     <form
       onSubmit={handleSubmit}
-      onKeyDown={
-        presentation === "checklist"
-          ? (event) => {
-              if (
-                event.key === "Enter" &&
-                event.target instanceof HTMLInputElement
-              ) {
-                event.preventDefault();
-              }
-            }
-          : undefined
-      }
-      className={presentation === "wizard" ? "space-y-4 sm:space-y-6" : undefined}
+      onKeyDown={(event) => {
+        if (
+          event.key === "Enter" &&
+          event.target instanceof HTMLInputElement
+        ) {
+          event.preventDefault();
+        }
+      }}
     >
-      {presentation === "checklist" ? (
-        <ApplicationFormChecklistLayout
-          chapters={checklistChapters}
-          openId={checklistOpenId}
-          onOpen={setCurrentStepId}
-          sharePath={`/view/${publicId?.trim() || "…"}/${formData.slug.trim() || "…"}`}
+      <ApplicationFormSinglePageLayout
+          title={isEdit ? "Edit application" : "New application"}
+          description={
+            requiresPublishCompleteSet
+              ? "Update this role’s page and share link. Save when company, role, names, résumé, and video are ready."
+              : "Add a company and role to save a draft. Select a résumé and add a video to publish."
+          }
+          cancelHref="/admin"
           actions={formActions}
+          blockedPrefix={blockedPrefix}
+          blockedItems={blockedItems}
+          publishPrefix={publishPrefix}
+          publishItems={publishItems}
+          blockedNote={blockedNote}
+          rows={(
+            [
+              {
+                type: "section",
+                id: "application-section-link",
+                label: "Your link",
+              },
+              {
+                type: "field",
+                id: "application-row-company",
+                label: "Company",
+                labelFor: "application-company",
+                align: "field",
+                required: true,
+                tip: hasCompany ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+                tipTone: hasCompany ? "ready" : "idle",
+                children: (
+                  <Input
+                    id="application-company"
+                    dense
+                    value={formData.company}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        company: e.target.value,
+                      }))
+                    }
+                    error={errors.company}
+                    required
+                    autoComplete="organization"
+                    placeholder="e.g. Spotify"
+                    autoFocus={!isEdit}
+                  />
+                ),
+              },
+              {
+                type: "field",
+                id: "application-row-role",
+                label: "Role",
+                labelFor: "application-role",
+                align: "field",
+                required: true,
+                tip: hasRole ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+                tipTone: hasRole ? "ready" : "idle",
+                children: (
+                  <Input
+                    id="application-role"
+                    dense
+                    value={formData.role}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, role: e.target.value }))
+                    }
+                    error={errors.role}
+                    required
+                    autoComplete="organization-title"
+                    placeholder="e.g. Software Engineer"
+                  />
+                ),
+              },
+              {
+                type: "field",
+                id: "application-row-share",
+                label: "Your application link",
+                layout: "result",
+                hint: linkCustomizeOpen
+                  ? "The link you will send, built from the choices above."
+                  : "The link you will send. It updates as you type company and role.",
+                children: shareLinkControl,
+              },
+              ...(linkCustomizeOpen
+                ? ([
+                    {
+                      type: "field",
+                      id: "application-row-slug-order",
+                      label: "How the link reads",
+                      align: "field",
+                      info: "Choose whether the company or the role comes first.",
+                      tip: FIELD_READY_TIP,
+                      tipTone: "ready",
+                      className: "relative z-10",
+                      children: (
+                        <SlugOrderDropdown
+                          id="application-slug-order"
+                          fieldLabel="How the link reads"
+                          value={slugSegmentOrder}
+                          onChange={handleSlugSegmentOrderChange}
+                        />
+                      ),
+                    },
+                    {
+                      type: "field",
+                      id: "application-row-ending",
+                      label: "Link ending",
+                      labelFor: "application-slug",
+                      align: "field",
+                      info: "Pre-filled for you. Edit it if you like. Each ending must be unique.",
+                      tip: slugReady ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+                      tipTone: slugReady ? "ready" : "idle",
+                      children: linkEndingControl,
+                    },
+                  ] satisfies ApplicationFormPageRow[])
+                : []),
+              {
+                type: "section",
+                id: "application-section-about",
+                label: "About you",
+                description: aboutYouExpanded ? (
+                  <div className="flex items-baseline justify-between gap-x-3 gap-y-1">
+                    <p className="min-w-0">
+                      Choose what this page shows from your profile.
+                    </p>
+                    <div className="ml-auto flex shrink-0 items-baseline gap-3">
+                      <EditProfileLink />
+                      {preferCollapsedAboutYou ? (
+                        <button
+                          type="button"
+                          className="font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-2 hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                          onClick={() => {
+                            aboutYouExpandUserChosenRef.current = true;
+                            setAboutYouExpanded(false);
+                          }}
+                        >
+                          Hide details
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : undefined,
+              },
+              {
+                type: "block",
+                id: "application-row-about",
+                children: aboutYouExpanded ? (
+                  candidateStep
+                ) : (
+                  <div
+                    id="application-row-about-summary"
+                    className="flex scroll-mt-[calc(var(--admin-header-height,72px)+0.75rem)] items-baseline justify-between gap-x-3 gap-y-1 border-t border-[var(--ink)]/10 p-4 first:border-t-0"
+                  >
+                    <p className="min-w-0 text-sm text-[var(--ink)]">
+                      {aboutYouSummary}
+                    </p>
+                    <button
+                      type="button"
+                      className="ml-auto shrink-0 text-sm font-medium text-[var(--ink)] underline decoration-[var(--ink)]/30 underline-offset-2 hover:decoration-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+                      onClick={() => {
+                        aboutYouExpandUserChosenRef.current = true;
+                        setAboutYouExpanded(true);
+                      }}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                ),
+              },
+              {
+                type: "section",
+                id: "application-section-resume",
+                label: "Your résumé",
+                required: requiresPublishCompleteSet,
+              },
+              {
+                type: "block",
+                id: "application-row-resume",
+                children: materialsStep,
+              },
+              {
+                type: "section",
+                id: "application-section-pitch",
+                label: "Your pitch",
+              },
+              {
+                type: "field",
+                id: "application-row-pitch",
+                label: "YouTube",
+                labelFor: "application-video",
+                align: "field",
+                required: requiresPublishCompleteSet,
+                hint: "A YouTube video they can watch on the page.",
+                tip: hasValidVideo ? FIELD_READY_TIP : FIELD_IDLE_TIP,
+                tipTone: hasValidVideo ? "ready" : "idle",
+                children: (
+                  <YouTubeUrlInput
+                    id="application-video"
+                    hideLabel
+                    dense
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    value={formData.video_url}
+                    onChange={(url) =>
+                      setFormData((prev) => ({ ...prev, video_url: url }))
+                    }
+                    error={errors.video_url}
+                    excludeApplicationId={slugExcludeApplicationId}
+                    onStatusChange={setVideoStatus}
+                  />
+                ),
+              },
+            ] satisfies ApplicationFormPageRow[]
+          )}
         />
-      ) : presentation === "split" ? (
-        <ApplicationFormSplitLayout
-          mode={isEdit ? "edit" : "create"}
-          stepContents={stepContents}
-          errorScroll={errorScroll}
-          actions={splitReviewActions}
-        />
-      ) : (
-        <ApplicationFormWizardLayout
-          stepContents={stepContents}
-          currentStepId={currentStepId}
-          furthestStepId={furthestStepId}
-          allowAllSteps={isEdit}
-          onStepChange={(id) => {
-            setCurrentStepId(id);
-            if (
-              !isEdit &&
-              applicationFormStepIndex(id) >
-                applicationFormStepIndex(furthestStepId)
-            ) {
-              setFurthestStepId(id);
-            }
-          }}
-          onContinue={(fromId) => {
-            if (fromId === "materials" && hasUsableCv && cvChoiceKey) {
-              setConfirmedMissingCvKey(cvChoiceKey);
-            }
-          }}
-          continueBlockedReason={continueBlockedReasonFor(currentStepId)}
-          stepReady={stepReady}
-          actions={formActions}
-        />
-      )}
+
+      <ApplicationFormPreviewDialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        application={previewApplication}
+        publicId={trimmedPublicId}
+        slug={trimmedSlug}
+      />
 
       {leaveDialog}
     </form>

@@ -1,30 +1,35 @@
 "use client";
 
-import type { ApplicationListItem } from "@/lib/types/application";
-import { getApplicationUrl } from "@/lib/utils/url";
-import { copyToClipboard } from "@/lib/utils/clipboard";
-import { formatApplicationTime } from "@/lib/utils/group-applications-by-day";
-import Link from "next/link";
-import { useState } from "react";
+import {
+    ADMIN_ICON_DISABLED_CLASS,
+    ADMIN_ICON_SECONDARY_CLASS,
+    ADMIN_PRIMARY_CLASS,
+} from "@/components/admin/admin-chrome";
+import AdminTooltip from "@/components/admin/AdminTooltip";
 import ApplicationCardDropdown from "@/components/admin/ApplicationCardDropdown";
 import ApplicationCardInsights from "@/components/admin/ApplicationCardInsights";
-import AdminTooltip from "@/components/admin/AdminTooltip";
 import {
-  ApplicationStatusIcon,
-  MissingCvBadge,
-  MissingProfilePictureBadge,
+    ApplicationStatusIcon,
+    MissingCvBadge,
+    MissingProfilePictureBadge,
 } from "@/components/admin/ApplicationStatusIcon";
 import {
-  ChartIcon,
-  CheckIcon,
-  CopyIcon,
-  ExternalLinkIcon,
+    ChartIcon,
+    CheckIcon,
+    BrokenLinkIcon,
+    CopyIcon,
+    ExternalLinkIcon,
 } from "@/components/admin/icons";
+import type { ApplicationListItem } from "@/lib/types/application";
+import { copyToClipboard } from "@/lib/utils/clipboard";
+import { formatApplicationTime } from "@/lib/utils/group-applications-by-day";
+import { getApplicationUrl } from "@/lib/utils/url";
 import {
-  ADMIN_ICON_DISABLED_CLASS,
-  ADMIN_ICON_SECONDARY_CLASS,
-  ADMIN_PRIMARY_CLASS,
-} from "@/components/admin/admin-chrome";
+    formatPublishBlockersError,
+    getListItemPublishBlockers,
+} from "@/lib/validation/application";
+import Link from "next/link";
+import { useState } from "react";
 
 interface ApplicationCardProps {
   application: ApplicationListItem;
@@ -49,6 +54,14 @@ export default function ApplicationCard({
     : null;
   const isArchived = application.status === "archived";
   const isDraft = application.status === "draft";
+  const publishBlockers = isDraft
+    ? getListItemPublishBlockers(application)
+    : [];
+  const canPublish = isDraft && publishBlockers.length === 0;
+  const publishBlockedReason =
+    publishBlockers.length > 0
+      ? formatPublishBlockersError(publishBlockers)
+      : null;
   const canCopyLink = canShare && !isDraft && !isArchived;
   const createdLabel = formatApplicationTime(application.created_at);
   const companyRole =
@@ -57,7 +70,10 @@ export default function ApplicationCard({
       .join(" - ") || "Untitled application";
 
   const copyUnavailableLabel = isDraft
-    ? "Publish this application before sharing the link"
+    ? canPublish
+      ? "Publish this application before sharing the link"
+      : (publishBlockedReason ??
+        "Finish required fields before publishing and sharing")
     : isArchived
       ? "Restore this application before sharing the link"
       : "Complete your profile to get a share link";
@@ -92,6 +108,7 @@ export default function ApplicationCard({
             <ApplicationStatusIcon
               status={application.status}
               viewCount={application.view_count}
+              publishReady={canPublish}
             />
           </div>
 
@@ -110,7 +127,7 @@ export default function ApplicationCard({
           <div
             className={`flex min-w-0 flex-wrap items-center justify-end gap-1.5 transition-opacity ${actionsVisibleClass}`}
           >
-            {isDraft && onPublish ? (
+            {canPublish && onPublish ? (
               <AdminTooltip label="Make this application live so recruiters can open the share link">
                 <button
                   type="button"
@@ -147,7 +164,7 @@ export default function ApplicationCard({
                         : "Link unavailable"
                   }
                 >
-                  <CopyIcon className="h-4 w-4" aria-hidden />
+                  <BrokenLinkIcon className="h-4 w-4" />
                 </span>
               </AdminTooltip>
             )}
@@ -201,6 +218,7 @@ export default function ApplicationCard({
               applicationId={application.id}
               isArchived={isArchived}
               isDraft={isDraft}
+              canPublish={canPublish}
               onDelete={onDelete}
               onArchive={onArchive}
               onRestore={onRestore}

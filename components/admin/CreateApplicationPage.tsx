@@ -1,18 +1,12 @@
 "use client";
 
 /**
- * Create application. Default presentation is the parked wizard.
- * `/admin/new` passes `presentation="checklist"`.
+ * Create application — one-page form on `/admin/new`.
  */
 
-import ApplicationForm from "@/components/forms/ApplicationForm";
-import ApplicationFormPageHeader from "@/components/forms/ApplicationFormPageHeader";
 import AdminPageSkeleton from "@/components/admin/AdminPageSkeleton";
-import {
-  ADMIN_FORM_SHELL_CLASS,
-  ADMIN_TIP_CLASS,
-} from "@/components/admin/admin-chrome";
 import { ArrowRightIcon } from "@/components/admin/icons";
+import ApplicationForm from "@/components/forms/ApplicationForm";
 import { namesFromUserMetadata } from "@/lib/auth/ensure-profile";
 import { publicIdFromUserMetadata } from "@/lib/auth/ensure-public-id";
 import { createClient } from "@/lib/supabase/client";
@@ -20,17 +14,16 @@ import type { ApplicationFormData } from "@/lib/types/application";
 import type { Profile } from "@/lib/types/profile";
 import { createApplicationDraftStorageKey } from "@/lib/utils/create-application-draft";
 import { notifyOnboardingChecklistChanged } from "@/lib/utils/onboarding-checklist-sync";
+import {
+  hasContactValue,
+  resolveApplicationContactEmail,
+} from "@/lib/utils/profile-contact";
 import { validateSlugFormat } from "@/lib/utils/slug-generate";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export default function CreateApplicationWizardPage({
-  presentation = "wizard",
-}: {
-  /** Parked wizard, the edit split page, or the checklist on `/admin/new`. */
-  presentation?: "wizard" | "split" | "checklist";
-}) {
+export default function CreateApplicationPage() {
   const router = useRouter();
   const isSubmittingRef = useRef(false);
   const [loading, setLoading] = useState(false);
@@ -42,6 +35,7 @@ export default function CreateApplicationWizardPage({
   const [publicId, setPublicId] = useState<string | null>(null);
   /** Stable auth id for draft scoping — never a shared fallback (F15-045). */
   const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
@@ -55,6 +49,9 @@ export default function CreateApplicationWizardPage({
         if (cancelled) return;
         if (user?.id) {
           setAuthUserId(user.id);
+        }
+        if (user?.email) {
+          setAccountEmail(user.email);
         }
 
         const res = await fetch("/api/profile", { credentials: "include" });
@@ -91,9 +88,13 @@ export default function CreateApplicationWizardPage({
     };
   }, []);
 
-  const handleSubmit = async (data: ApplicationFormData) => {
+  const handleSubmit = async (
+    data: ApplicationFormData,
+    options?: { navigate?: boolean },
+  ): Promise<{ id?: string } | void> => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
+    const shouldNavigate = options?.navigate !== false;
     try {
       setLoading(true);
 
@@ -178,6 +179,7 @@ export default function CreateApplicationWizardPage({
 
       const { slugManuallyEdited, ...dataForApi } = data;
       void slugManuallyEdited;
+      const publishNow = data.status === "active";
 
       const response = await fetch("/api/applications", {
         method: "POST",
@@ -187,8 +189,8 @@ export default function CreateApplicationWizardPage({
         body: JSON.stringify({
           ...dataForApi,
           slug: finalSlug,
-          // F16-050: save as draft, then preview / publish on the share URL.
-          status: "draft",
+          // Save Draft → draft then edit. Publish → go live immediately.
+          status: publishNow ? "active" : "draft",
         }),
       });
 
@@ -199,15 +201,36 @@ export default function CreateApplicationWizardPage({
 
       notifyOnboardingChecklistChanged();
 
-      const json: { data?: { slug?: string }; public_id?: string } =
-        await response.json().catch(() => ({}));
+      const json: {
+        data?: { id?: string; slug?: string };
+        public_id?: string;
+      } = await response.json().catch(() => ({}));
+      const createdId =
+        typeof json.data?.id === "string" ? json.data.id.trim() : "";
       const createdSlug =
         typeof json.data?.slug === "string" ? json.data.slug.trim() : "";
       const responsePublicId =
         typeof json.public_id === "string" ? json.public_id.trim() : "";
       const sharePublicId = responsePublicId || publicId;
-      if (sharePublicId && createdSlug) {
-        router.push(`/view/${sharePublicId}/${createdSlug}`);
+
+      if (publishNow) {
+        if (!shouldNavigate) {
+          return createdId ? { id: createdId } : undefined;
+        }
+        if (sharePublicId && createdSlug) {
+          router.push(`/view/${sharePublicId}/${createdSlug}`);
+        } else {
+          router.push("/admin");
+        }
+        return;
+      }
+
+      if (!shouldNavigate) {
+        return createdId ? { id: createdId } : undefined;
+      }
+
+      if (createdId) {
+        router.push(`/admin/edit/${createdId}`);
       } else {
         router.push("/admin");
       }
@@ -226,17 +249,26 @@ export default function CreateApplicationWizardPage({
   };
 
   const hasSavedProfile = Boolean(profile);
+  const resolvedEmail = resolveApplicationContactEmail(profile, accountEmail);
   const profileNeedsOptionalFields =
     hasSavedProfile &&
     !profile?.location?.trim() &&
     !profile?.portfolio_url?.trim() &&
     !profile?.linkedin_url?.trim() &&
-    !profile?.profile_picture_url?.trim();
+    !profile?.profile_picture_url?.trim() &&
+    !resolvedEmail &&
+    !profile?.phone?.trim();
   const showProfileNudge =
     !profileLoading && (!hasSavedProfile || profileNeedsOptionalFields);
   const draftStorageKey = authUserId
     ? createApplicationDraftStorageKey(authUserId)
     : null;
+  const locationValue = profile?.location ?? "";
+  const portfolioValue = profile?.portfolio_url ?? "";
+  const linkedinValue = profile?.linkedin_url ?? "";
+  const phoneValue = profile?.phone ?? "";
+  const emailValue = resolvedEmail ?? "";
+  const hasPicture = Boolean(profile?.profile_picture_url?.trim());
   const initialData: Partial<ApplicationFormData> = {
     company: "",
     role: "",
@@ -245,73 +277,34 @@ export default function CreateApplicationWizardPage({
     video_url: "",
     first_name: profile?.first_name ?? metaNames?.first_name ?? "",
     last_name: profile?.last_name ?? metaNames?.last_name ?? "",
-    location: profile?.location ?? "",
-    portfolio_url: profile?.portfolio_url ?? "",
-    linkedin_url: profile?.linkedin_url ?? "",
+    email: emailValue,
+    phone: phoneValue,
+    location: locationValue,
+    portfolio_url: portfolioValue,
+    linkedin_url: linkedinValue,
+    show_profile_picture:
+      profile?.default_show_profile_picture !== false && hasPicture,
   };
 
   if (profileLoading) {
-    return <AdminPageSkeleton variant="form" />;
+    return <AdminPageSkeleton variant="create" />;
   }
 
-  const form = (
-    <ApplicationForm
-      initialData={initialData}
-      onSubmit={handleSubmit}
-      loading={loading}
-      submitLabel="Save draft & preview"
-      profilePictureUrl={profile?.profile_picture_url ?? null}
-      profilePictureVersion={profile?.updated_at ?? null}
-      onProfilePictureSaved={({ url, updated_at }) =>
-        setProfile((prev) => {
-          if (prev) {
-            return {
-              ...prev,
-              profile_picture_url: url,
-              updated_at: updated_at ?? prev.updated_at,
-            };
-          }
-          return {
-            user_id: "",
-            public_id: publicId ?? undefined,
-            first_name: metaNames?.first_name ?? null,
-            last_name: metaNames?.last_name ?? null,
-            location: null,
-            portfolio_url: null,
-            linkedin_url: null,
-            updated_at: updated_at ?? new Date().toISOString(),
-            profile_picture_url: url,
-          };
-        })
-      }
-      publicId={publicId ?? undefined}
-      resolveSlugOnCreate
-      persistDraftKey={draftStorageKey ?? undefined}
-      presentation={presentation}
-    />
-  );
-
   return (
-    <div
-      className={
-        presentation === "checklist"
-          ? "mx-auto w-full max-w-6xl space-y-4 sm:space-y-6"
-          : "space-y-4 sm:space-y-6"
-      }
-    >
-      {presentation === "wizard" ? (
-        <ApplicationFormPageHeader title="Create New Application" />
-      ) : null}
+    <div className="mx-auto w-full max-w-2xl space-y-4">
       {showProfileNudge && (
-        <p className={`flex items-start gap-2 ${ADMIN_TIP_CLASS}`}>
+        <p
+          className="flex items-start gap-2 rounded-xl border border-[var(--ink)]/10 bg-[var(--status-wash-active)] px-4 py-3 text-sm text-[var(--ink)]"
+          role="status"
+        >
           <span className="min-w-0 flex-1">
             {hasSavedProfile
-              ? "Add location, links, or a picture on your profile for richer prefills — or use Add picture below."
-              : "Complete your profile to prefill location, links, and picture on new applications. Your name from signup is used below until then."}
+              ? "Add location, links, or a picture on your profile so this page can offer them."
+              : "Complete your profile to add location, links, and a picture. Your name from signup is shown below until then."}
           </span>
           <Link
             href="/admin/profile"
-            className="mt-0.5 inline-flex shrink-0 cursor-pointer rounded-lg p-0.5 text-[var(--muted)] hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
+            className="mt-0.5 inline-flex shrink-0 cursor-pointer rounded-lg p-0.5 text-[var(--ink)] hover:bg-[var(--ink)]/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
             aria-label="Go to profile"
             title="Go to profile"
           >
@@ -319,11 +312,37 @@ export default function CreateApplicationWizardPage({
           </Link>
         </p>
       )}
-      {presentation === "wizard" ? (
-        <div className={ADMIN_FORM_SHELL_CLASS}>{form}</div>
-      ) : (
-        form
-      )}
+      <ApplicationForm
+        initialData={initialData}
+        onSubmit={handleSubmit}
+        loading={loading}
+        submitLabel="Save Draft"
+        profilePictureUrl={profile?.profile_picture_url ?? null}
+        profilePictureVersion={profile?.updated_at ?? null}
+        initialInclude={{
+          first_name: true,
+          last_name: true,
+          email:
+            profile?.default_show_email !== false &&
+            hasContactValue(emailValue),
+          phone:
+            profile?.default_show_phone !== false &&
+            hasContactValue(phoneValue),
+          location:
+            profile?.default_show_location !== false &&
+            hasContactValue(locationValue),
+          linkedin_url:
+            profile?.default_show_linkedin !== false &&
+            hasContactValue(linkedinValue),
+          portfolio_url:
+            profile?.default_show_portfolio !== false &&
+            hasContactValue(portfolioValue),
+        }}
+        publicId={publicId ?? undefined}
+        resolveSlugOnCreate
+        persistDraftKey={draftStorageKey ?? undefined}
+        collapseAboutYou={profile?.collapse_about_you !== false}
+      />
     </div>
   );
 }

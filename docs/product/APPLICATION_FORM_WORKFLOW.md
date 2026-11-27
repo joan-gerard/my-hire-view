@@ -1,34 +1,32 @@
 # Application form workflow
 
-Create is `/admin/new`. Edit is `/admin/edit/[id]`. They share the same fields, CV, and save rules. Only create keeps a browser draft. A saved application still needs a company, a role, an available share link, a résumé, and a YouTube intro.
+Create is `/admin/new`. Edit is `/admin/edit/[id]`. They share the same fields and CV model. Only create keeps a browser draft. **Saving a draft** needs company, role, and a ready share link (the ending is auto-filled from company + role). Résumé, YouTube, and names can wait. **Publishing** (and saving an already-live app) needs the full set: company, role, share link, names, résumé, and YouTube intro.
 
 ## Create
 
-`/admin/new` keeps one chapter open: **Role**, **About you**, **Résumé**, **Pitch**. The others stay as a single line you can reopen. The checklist and chapters sit in a centered column. From 1100px wide, a checklist titled **This application** stays beside the chapters, under the admin header. It shows how many parts are ready, a bar, and a row for each chapter. A lime check means that part is ready. **About you** is optional: a dashed circle and **Optional** when nothing is shown, and it still counts. Clicking a row opens that chapter. **Next** moves to the next chapter without waiting for the current one to be finished. Below 1100px the checklist sits above the chapters.
+`/admin/new` is one form no wider than `2xl`. The title and a short description sit at the top, above the sections. Sections are **Your link**, **About you**, **Your résumé**, and **Your pitch**. Each section name sits above its own card. Inside the card, every entry has its title on the left and the control on the right. A short description, when there is one, sits under that title. On a narrow screen the title sits above the control. A red asterisk marks fields required to **save** (Company, Role on create/draft; the full set on a live edit). Résumé, YouTube, and names are needed to **publish**, not to save a draft — they are not starred on create/draft. The intro states both bars: company and role to save a draft; résumé and video to publish. **Cancel** returns to the dashboard. **Save Draft** sits in a fixed bar at the bottom of the viewport so it stays in view while you scroll. It stays greyed out until company, role, and the share link are ready. A line above the buttons names what is still missing for the draft; another line lists publish gaps (**To publish, add…**); each item scrolls to its field. **Publish** is always visible on create/draft (disabled until ready) so people learn what publishing needs; **Preview** appears once the full set is ready and opens an in-form recruiter preview (look-only — close with the X). Footer **Publish** goes live and opens the share page. Preview itself does not save, publish, or count a view. Pressing Enter in a field does not save. A successful draft save opens `/admin/edit/[id]`.
 
-**Save draft & preview** stays at the top. It stays greyed out until company, role, the share link, a résumé, and a YouTube intro are ready. The checklist names those gaps. Pressing Enter in a field does not save.
+**Your link** defaults to **Company**, **Role**, and **Your application link** (result + copy), then **Customize link**. The link updates live from company and role. **Customize link** expands **How the link reads** and **Link ending**; **Hide link options** collapses them again. Customize opens by default when the ending or segment order is already customized (edit, or a restored create draft). A taken or invalid ending stays collapsed and shows a danger icon after **Customize link** / **Hide link options** (the label stays ink-colored) plus a danger icon in the result field’s end control; opening Customize shows the detail on the ending row. On the result field, the copy control becomes a spinner while checking and a danger icon when invalid or taken. **How the link reads** is a custom dropdown, **Company + Role** (the default) or **Role + Company**, with an info dialog. **Link ending** is pre-filled with an info dialog and **Use the suggested link** after a manual edit. **Your application link** is a full-width tinted result under Company/Role: full URL from `sm` up (path on a narrow screen). The URL always previews what you are building. **Copy** is enabled only on a live application; on create and draft edit a broken-link icon replaces Copy, with **Publish before sharing this link** when Publish is ready, or **Finish required fields before publishing and sharing** otherwise (or an earlier tip if the profile id or ending is still missing).
 
-**Role** shows company and role. The share link is taken from those two. While both names are filled, the closed Role line says what the link is doing. **Checking...** is grey and italic while the ending is checked. The gaps stay pink: **Add a link ending**, **Fix the link ending**, **Link already used**, or **Couldn't check the link**. A ready link shows the company and role. **Edit link** opens **Order in the link** (**Company, then role** or **Role, then company**) and **Link ending**. **Use the suggested link** appears after the ending is changed. The checklist ends with `/view/{publicId}/{slug}`.
+Under **About you**: when expanded, a short line says **Choose what this page shows from your profile**, with **Edit profile** and (when collapse mode applies) **Hide details** on the right. **After the first live (active) application**, About you collapses to one line (e.g. **Showing photo, name, portfolio**) with **Edit** on the right — drafts alone do not collapse it. Account settings → **Preferences** → **Collapse About you after your first live application** (default on) turns that summary mode off if you prefer the full section every time. First and last name are required to publish (red asterisk on those fields). Expanded order: **First name**, **Last name**, then **Picture**, then **Location**, **LinkedIn**, and **Portfolio**. Names and the other text fields are read-only. Names are always shown when present and use a slightly stronger field fill so they read apart from the show/hide rows. The picture row always shows a preview (photo or initials); when a picture exists, a **Visible** / **Hidden** switch under it chooses whether this page shows it (off dims the photo); when it does not, the row links to Profile. Email, Phone, Location, LinkedIn, and Portfolio use the same **Visible** / **Hidden** switch when non-empty (neutral grey when Hidden, not warning pink); empty fields say to add them on Profile. Saving the application snapshots the shown values onto this page — it does not write back to the profile. Status dots: **Your link** grey until valid, then green; **How the link reads** always green; **About you** green with “From your profile” when a value exists, grey when empty; **Picture** green when a photo exists; **Your résumé** / **Your pitch** as before.
 
-**About you** starts with **Profile picture**: short copy, **Show picture** / **Hide picture** cards, and **Manage picture** or **Add profile picture** under those choices. First and last name sit side by side, then location, **Portfolio**, and **LinkedIn**, each with **Show** / **Hidden**. There is no collapsible **Info shown to recruiters** block on create.
-
-**Résumé** uses **Choose one résumé**: library files as cards under **From your library**, then **A PDF just for this role**. **Manage library** sits beside the library heading. Once a file is chosen, the download line says **Recruiters download it as…**, with a toggle for the original or generated name.
+**Your résumé** is one source row plus a result row. Radios: **Use library résumé** (create default for Free, including an empty library) or **Upload one for this role** (**Pro**; one helper — replaces the library résumé on this application only). Empty library shows **No résumés…** + **Manage library** under the library option. Product copy says **résumé**, not CV. Selecting the tailored radio only switches mode — it does not open a dialog. The selected filename truncates with an ellipsis and a **Preview** link; **Manage library** / **Choose a PDF** (or **Manage**) open the existing modals (**Résumé library**). Once a file is chosen, **Recruiters download it as** sits at the bottom (like Your application link) with the generated name by default and an **Original name** switch; that filename also truncates with an ellipsis.
 
 Leaving create from the header or with the browser Back button still asks before discarding the browser draft. A successful save clears that draft. A failed save keeps it.
 
 ## Edit
 
-Edit is one scrolling page of five bands: Role & share URL, About you, CV, Video, Review & save. From 1200px wide, each band is split in half. The left side is a step pill, the title, one sentence, and a few recommendations, and it stays in view while that band’s fields scroll. The right side is the fields on a paper panel. On Review, that panel is a white summary card: progress across four sections, then company, role, and the share link, with About you beside CV and Video. Required gaps are labeled Required and jump back to that step. Preview does not save. Save stays blocked for the same required pieces as create. The reason is one link beside the button and jumps to the first gap. A saved share link stays put when company or role change, until you edit the slug or choose Reset to suggested. Edit keeps its title, fixed under the admin header. Through 1199px, phone and tablet stack each band: pill, title, description, recommendations, then the fields.
+`/admin/edit/[id]` uses the **same one-page layout** as create: title and description at the top, then **Your link**, **About you**, **Your résumé**, and **Your pitch**. The title is **Edit application**. Submit is **Save Draft** while the application is still a draft, and **Save application** once it is live. Save stays in the same fixed bottom bar as create. It stays greyed out with **No changes to save.** (plain text, not a link) until something differs from the last successful save. Missing required fields still appear as scroll-to-field links. A successful draft/live save stays on the edit page. While the application is still a draft, **Publish** stays beside Save Draft (disabled with a **To publish, add…** line until ready); **Preview** joins it once the full set is ready. **Preview** opens the in-form recruiter preview (look-only — close with the X); footer **Publish** goes live immediately. Live apps do not show Preview/Publish on the form. Draft save and live/publish completeness follow the same F40 rules as create. A saved share link stays put when company or role change, until you edit the ending or choose **Use the suggested link**. There is no browser localStorage draft and no leave-confirm on edit.
 
-The comparison wizard routes and the form demo are gone. The sections below describe that earlier wizard (Continue, check marks, one step at a time).
+The comparison wizard routes, form demo, wizard layout, and scrolling split-edit shell are gone. Create and edit share `ApplicationFormSinglePageLayout`. Older sections below keep the wizard journey as history only.
 
 This is the behavior reference. The decision record is in [APPLICATION_FORM_STEPS_F35.md](../retrospectives/APPLICATION_FORM_STEPS_F35.md). Candidate-facing steps are in [USER_GUIDE.md](../engineering/USER_GUIDE.md).
 
 ---
 
-## The journey in one pass
+## The journey in one pass (historical — wizard)
 
-This is the parked wizard, not the create page.
+This described the removed wizard, not the live create page.
 
 1. **Role & share URL** — who the application is for, and the link recruiters will use.
 2. **About you** — which profile details appear on that link. Nothing here is required.
@@ -68,7 +66,7 @@ Continue does two things: it opens the next step, and it remembers how far you h
 
 About you has no required fields, so passing it is enough for its check.
 
-**Save draft & preview** saves a **draft**. Recruiters cannot open it yet. If your account has a Public id, you land on your own preview of the share link. If it does not, you land on the dashboard and can open **Preview** from the card once the id exists. Publish is a separate action, on the preview banner or the dashboard card.
+**Save Draft** saves a **draft** and opens that application’s edit page. Recruiters cannot open it yet. **Publish** (when the full set is ready) creates the application as live and opens the share page. Dashboard and owner-preview Publish remain available too.
 
 The browser Back button or another admin link asks you to confirm. Confirming throws away the browser draft so the next New Application starts empty. A successful save clears that draft too. A failed save keeps it. The draft remembers what you typed for about a week, in this browser, for this account. It does not remember a tailored PDF you had selected — choose the file again.
 
@@ -82,7 +80,7 @@ Steps that already have their required data start done. The step you land on (Ro
 
 **Save Application** returns you to the dashboard. A draft stays a draft. A live application stays live. Saving does not publish.
 
-There is no browser draft and no leave confirmation on edit. Leave from the header or with the browser Back button.
+There is no browser localStorage draft on edit. Leave confirm still appears when the form is dirty (Cancel, header links, Edit profile, or browser Back). The dialog can save from there when the form is ready, then continues to the page you were heading to.
 
 A notice at the top tells you that name, location, and links on this form come from the application as it was saved, not from your live profile. The profile picture is live: if this application shows it, recruiters see the current picture.
 
@@ -111,12 +109,13 @@ Changing the segment order rechecks the slug. The check stays put during that re
 
 ### 2. About you
 
-**You enter**
+**You choose what recruiters see**
 
-- Profile picture first. **Yes** shows the picture. **No** hides it and keeps **Manage picture**. Until a picture exists, the choice is **Add profile picture**.
-- Then first name, last name, location, portfolio, and LinkedIn. Each is **Show** or **Hidden**, with the label above the value. A hidden field is muted and not editable. Hidden fields are not shown to recruiters. A shown field that is blank is shown as empty, not as a placeholder.
+- First and last name first (always shown when present), then picture (**Visible** / **Hidden** switch; link to Profile when missing), then email, phone, location, LinkedIn, and Portfolio with the same **Visible** / **Hidden** switch when non-empty.
+- All identity values are **read-only** from the profile (**Edit profile** to change them). Saving snapshots shown fields onto the application — it does not write back to the profile.
 
 Nothing here blocks Continue.
+
 
 **The check**
 
@@ -127,9 +126,9 @@ Nothing here blocks Continue.
 
 **You choose one**
 
-- A **primary CV** from your library (up to five, the same library as on Profile). **Manage library** uploads or deletes without leaving the page.
+- A **library résumé** (up to five, the same library as on Profile). **Manage library** uploads or deletes without leaving the page.
 - A **tailored PDF** for this application only.
-- **Download name for recruiters**, once a CV is selected: the original file name, or a generated `CV-{slug}.pdf`. The section stays hidden until then.
+- Once a CV is selected, the form shows **Recruiters download it as** with the generated `{First}-{Last}-{Slug}.pdf` by default (e.g. `Joan-Gerard-Spotify-Software-Engineer.pdf`). Missing parts use muted placeholders (`First-Last`, `Company-Role`) so the preview always shows the full pattern. **Original name** stores `use_original_cv_filename` so the download keeps the PDF’s filename instead.
 
 On create, the source choices stay locked for a moment while the library loads, so a slow load cannot overwrite your choice.
 
@@ -141,14 +140,14 @@ On create, the source choices stay locked for a moment while the library loads, 
 **The check**
 
 - **Create:** appears after you Continue past this step, and drops if the CV is cleared. It returns when a CV is chosen again, without another Continue, because you had already passed the step.
-- **Edit, file still in storage:** the step starts done. While the library is loading, the check stays if a primary CV was already saved. If that primary is gone when the library returns, the check drops.
+- **Edit, file still in storage:** the step starts done. While the library is loading, the check stays if a library résumé was already saved. If that résumé is gone when the library returns, the check drops.
 - **Edit, file missing from storage:** the step stays undone when you pick another primary or upload a new tailored PDF. It turns green only after **Continue** on this step. If you then pick a different file, the check drops again until the next Continue. The missing file itself does not count, even if its name is still shown.
 
 **Check again**, under the missing-file warning, looks in storage once more. The button reads **Checking…**. If the file is still gone, it says so. If the check fails, it asks you to try again. If the file is back, the warning goes away.
 
 ### 4. Video
 
-**You enter** a YouTube URL. It is required.
+**You enter** a YouTube URL (or reuse one from an earlier application). After the URL parses, the form shows a full-width playable preview (thumbnail with play, then embed) and the title. Private videos and videos that block embedding show an error; unlisted videos work. It is required to publish.
 
 **The check**
 
@@ -163,7 +162,7 @@ On create, the source choices stay locked for a moment while the library loads, 
 - **Show preview** opens the recruiter page in a dialog: header, CV (including a tailored file you have chosen but not uploaded yet), and video. **Watch Video Pitch** plays here. Closing the dialog, Escape, or the backdrop returns you to the form. This does not count a view and does not leave the form. If the video is open, Escape closes the video first.
 - **Save & Preview** on create, or **Save Application** on edit.
 
-Save stays disabled until company, role, an available slug, a usable CV, and a YouTube URL are all in place. The button explains which one is missing. On the last step, Continue is not shown.
+On create and draft edit, Save stays disabled until company, role, and an available slug are in place. **Upload one for this role** without a PDF yet is allowed on draft saves (a leftover library URL is not sent as tailored). On a live (active) edit, Save also needs names, a usable CV, and a YouTube URL. The button explains which one is missing. On the last step, Continue is not shown.
 
 **The check**
 
@@ -196,9 +195,9 @@ A tailored PDF is uploaded as part of save. The button can read **Preparing…**
 
 |                | Create                                                                    | Edit                                                                           |
 | -------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Button         | **Save draft & preview**                                                  | **Save draft** while it is still a draft; **Save application** once it is live |
-| What is stored | A draft                                                                   | The same status it already had                                                 |
-| Where you go   | Owner preview of the share link, or the dashboard if Public id is missing | Dashboard                                                                      |
-| Who can see it | Only you, until you publish                                               | Unchanged: drafts stay private, live links stay live                           |
+| Button         | **Save Draft**; **Publish** when the full set is ready                   | **Save Draft** (draft) or **Save application** (live); **Publish** on drafts when ready |
+| What is stored | Draft, or **active** when Publish                                         | Same status on Save; **active** when Publish                                   |
+| Where you go   | Edit (draft save) or share page (Publish)                                 | Stay on edit (Save); share page (Publish)                                      |
+| Who can see it | Only you until Publish; recruiters after Publish                          | Unchanged on Save; recruiters after Publish                                    |
 
-Publishing from the review step, and saving a draft that is still missing required fields, are not part of this flow. Those are `F41-127` and `F40-124`.
+Form Publish on create/edit drafts ships as part of `F41-127` (in-form Preview is look-only). Incomplete draft saves and the publish completeness gate are `F40-124` (shipped).
