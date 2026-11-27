@@ -93,7 +93,7 @@ Behavior reference: [APPLICATION_FORM_WORKFLOW.md](../product/APPLICATION_FORM_W
 ## 5. Create — save path (smoke)
 
 - [ ] Happy path: fill draft pieces → **Save Draft** → `/admin/edit/[id]` for the new draft
-- [ ] Fill the full publish set → Publish enables and **Preview** appears → **Preview** opens the recruiter dialog; footer **Publish** goes live to `/view/{publicId}/{slug}` (no draft banner); Publish in the dialog also goes live
+- [ ] Fill the full publish set → Publish enables and **Preview** appears → **Preview** opens the recruiter dialog (look-only; close with X); footer **Publish** goes live to `/view/{publicId}/{slug}` (no draft banner)
 - [ ] Owner draft preview does not increment Views; same URL in incognito is unavailable
 - [ ] Failed save (e.g. offline) keeps the browser draft; successful save clears it
 - [ ] Double-click submit does not create two rows

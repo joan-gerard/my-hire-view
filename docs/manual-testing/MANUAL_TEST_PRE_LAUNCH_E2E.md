@@ -350,7 +350,7 @@ Header nav still says **Profile**. Page title is **Account settings** with tabs:
 - [ ] With company and role filled, the result field end control shows a spinner while checking and a danger icon when invalid/taken. An invalid, already used, or failed check does not expand Customize by itself; **Checking...** / error copy appear on the ending row when Customize is open. A ready link shows the ending in the path
 - [ ] Edit with a custom ending or Role+Company order opens Customize by default
 - [ ] On edit, the page matches create’s one-page sections (**Your link**, **About you**, **Your résumé**, **Your pitch**) with title **Edit application** (no Review summary band)
-- [ ] On create and draft edit, when the full set is ready, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, résumé including a not-yet-uploaded tailored file, Watch Video Pitch). Footer **Publish** goes live without requiring the dialog; Publish in the dialog also goes live. Close, Escape, and the backdrop return to the form without publishing. Preview does not leave the form, save, or count a view
+- [ ] On create and draft edit, when the full set is ready, **Preview** opens a dialog with the recruiter page (name and links only when included, profile picture only when shown, résumé including a not-yet-uploaded tailored file, Watch Video Pitch). Preview is look-only (no Publish in the dialog). Footer **Publish** goes live without requiring the dialog. Close, Escape, and the backdrop return to the form without publishing. Preview does not leave the form, save, publish, or count a view
 
 ### Company, role, slug, URL segment order
 

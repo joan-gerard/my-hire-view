@@ -104,7 +104,7 @@ Contact was the next honesty gap. The product promises recruiters a page they ca
 
 ## 25 November 2026
 
-Closed the remaining F41 gap: Publish on a filled create/draft form went live without a way to see the page first (especially before the first save, when there is no share URL to open). **Preview** opens an in-form recruiter preview from current form values (optional Publish there). Footer **Publish** goes live directly — routing both buttons through preview confused people who expected Publish to publish. Dashboard / draft-banner Preview stays the saved-page path.
+Closed the remaining F41 gap: Publish on a filled create/draft form went live without a way to see the page first (especially before the first save, when there is no share URL to open). **Preview** opens an in-form recruiter preview from current form values (look-only; close with the X). Footer **Publish** goes live directly — routing both buttons through preview confused people who expected Publish to publish. Dashboard / draft-banner Preview stays the saved-page path.
 
 Feedback then caught that asterisks and the footer only taught the draft bar — Publish hid until ready, so people never learned publishing needs a résumé and video. Asterisks on create/draft now mean save-required only (Company, Role). **Publish** stays visible but disabled with a **To publish, add…** line; the intro states both bars in plain language.
 

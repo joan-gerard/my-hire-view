@@ -3,7 +3,6 @@
 import AdminModal from "@/components/admin/AdminModal";
 import ApplicationPageHeader from "@/components/public/ApplicationPageHeader";
 import ApplicationPageContent from "@/components/view/ApplicationPageContent";
-import Button from "@/components/ui/Button";
 import type { PublicApplication } from "@/lib/types/application";
 import { useEffect, useState, type SyntheticEvent } from "react";
 
@@ -13,17 +12,12 @@ export type ApplicationFormPreviewDialogProps = {
   application: PublicApplication;
   publicId: string;
   slug: string;
-  /** Confirm go-live from the preview. */
-  onPublish: () => void;
-  publishLoading?: boolean;
-  canPublish?: boolean;
-  /** Block Escape / backdrop while Publish is in flight. */
-  dismissDisabled?: boolean;
 };
 
 /**
- * In-form recruiter page preview (F41-127). Does not save, leave the form, or
- * count a view. Escape closes the video pitch first when it is open.
+ * In-form recruiter page preview (F41-127). Look-only: close with the header
+ * X, Escape, or backdrop. Does not save, publish, leave the form, or count a
+ * view. Escape closes the video pitch first when it is open.
  */
 export default function ApplicationFormPreviewDialog({
   open,
@@ -31,10 +25,6 @@ export default function ApplicationFormPreviewDialog({
   application,
   publicId,
   slug,
-  onPublish,
-  publishLoading = false,
-  canPublish = true,
-  dismissDisabled = false,
 }: ApplicationFormPreviewDialogProps) {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
@@ -52,42 +42,12 @@ export default function ApplicationFormPreviewDialog({
       layout="viewport"
       bodyClassName="min-h-0 flex-1 overflow-y-auto bg-[var(--white)] p-0"
       headerClose
-      dismissDisabled={dismissDisabled}
       onCancel={(event: SyntheticEvent<HTMLDialogElement>) => {
-        if (dismissDisabled) {
-          event.preventDefault();
-          return;
-        }
         if (isVideoModalOpen) {
           event.preventDefault();
           setIsVideoModalOpen(false);
         }
       }}
-      footer={
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={dismissDisabled}
-            onClick={onClose}
-          >
-            Back to form
-          </Button>
-          <Button
-            type="button"
-            variant="primary"
-            loading={publishLoading}
-            loadingLabel="Publishing…"
-            disabled={!canPublish || publishLoading}
-            onClick={() => {
-              if (!canPublish || publishLoading) return;
-              onPublish();
-            }}
-          >
-            Publish
-          </Button>
-        </div>
-      }
     >
       <div className="flex min-h-0 flex-col bg-[var(--white)]">
         <ApplicationPageHeader

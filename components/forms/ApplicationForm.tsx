@@ -2748,12 +2748,6 @@ export default function ApplicationForm({
         application={previewApplication}
         publicId={trimmedPublicId}
         slug={trimmedSlug}
-        canPublish={canPublish}
-        publishLoading={formBusy && submitIntent === "publish"}
-        dismissDisabled={formBusy && submitIntent === "publish"}
-        onPublish={() => {
-          void runSubmit("publish");
-        }}
       />
 
       {leaveDialog}
