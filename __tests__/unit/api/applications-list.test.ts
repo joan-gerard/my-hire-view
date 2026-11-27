@@ -47,6 +47,7 @@ import { GET } from "@/app/api/applications/route";
 import {
   APPLICATION_LIST_DEFAULT_LIMIT,
   APPLICATION_LIST_MAX_LIMIT,
+  APPLICATION_LIST_SELECT,
 } from "@/lib/types/application";
 import {
   ok,
@@ -162,6 +163,32 @@ describe("GET /api/applications", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.data[0]).not.toHaveProperty("cv_exists");
+  });
+
+  it("returns email, phone, and LinkedIn so a complete draft can publish from its card", async () => {
+    const chain = okWithCount(
+      [
+        {
+          ...LIST_ITEM,
+          status: "draft",
+          email: "ada@example.com",
+          phone: null,
+          linkedin_url: null,
+        },
+      ],
+      1,
+    );
+    mockListClient(chain);
+
+    const response = await GET(makeGetRequest());
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(chain.select).toHaveBeenCalledWith(APPLICATION_LIST_SELECT, {
+      count: "exact",
+    });
+    expect(json.data[0].email).toBe("ada@example.com");
+    expect(json.data[0].phone).toBeNull();
+    expect(json.data[0].linkedin_url).toBeNull();
   });
 
   it("sets profile_picture_missing:true when show is on and the profile has no picture", async () => {

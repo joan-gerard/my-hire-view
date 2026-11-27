@@ -263,6 +263,9 @@ export type ApplicationListItem = Pick<
   | "last_name"
   | "cv_type"
   | "primary_cv_id"
+  | "email"
+  | "phone"
+  | "linkedin_url"
 > & {
   /**
    * Opaque candidate id for public share URLs. Null when neither a profiles row
@@ -284,7 +287,7 @@ export type ApplicationListItem = Pick<
 
 /** Supabase `.select()` projection for `ApplicationListItem` (before attaching public_id / cv_exists). */
 export const APPLICATION_LIST_SELECT =
-  "id, slug, company, role, status, archived_at, view_count, download_count, created_at, last_viewed_at, cv_url, video_url, first_name, last_name, cv_type, primary_cv_id, show_profile_picture" as const;
+  "id, slug, company, role, status, archived_at, view_count, download_count, created_at, last_viewed_at, cv_url, video_url, first_name, last_name, cv_type, primary_cv_id, email, phone, linkedin_url, show_profile_picture" as const;
 /** Default page size for `GET /api/applications`. */
 export const APPLICATION_LIST_DEFAULT_LIMIT = 20;
 

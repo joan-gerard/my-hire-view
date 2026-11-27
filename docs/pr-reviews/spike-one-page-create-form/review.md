@@ -49,13 +49,11 @@ Cleanup done: removed the unused Preview footer and the Publish-from-preview pro
 ### V02 — Dashboard treats every draft as missing a way to be reached
 
 **Severity:** High. **Effort:** Small.
-**Status:** In Progress.
+**Status:** Done.
 
-A draft can be published from its card only when every publish requirement is present. One requirement is a visible email, phone, or LinkedIn link. The dashboard list never asks the server for those three fields, so every draft looks like it has no contact method.
+A draft can be published from its card only when every publish requirement is present. One requirement is a visible email, phone, or LinkedIn link. The dashboard list was not loading those three fields, so every draft looked like it had no contact method.
 
-If we leave it, a finished draft stays unpublished from the card. The card also looks unfinished. The person has to open the form and publish there, even when the page is already complete.
-
-Include email, phone, and LinkedIn in the list the dashboard loads, and in the type that describes a card.
+**Fix:** the list query and the card type now include email, phone, and LinkedIn. A finished draft can publish from its card. A draft that really has no contact method still stays blocked.
 
 ### V03 — Saving a live page re-checks the full publish set
 
